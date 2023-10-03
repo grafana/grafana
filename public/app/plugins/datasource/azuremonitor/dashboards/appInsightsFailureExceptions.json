@@ -1022,21 +1022,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "severityLevel"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 211
-              },
-              {
-                "id": "links"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "OperationID"
             },
             "properties": [
@@ -1049,18 +1034,6 @@
                     "url": "/explore?left={\r\n\t\"datasource\": \"${ds}\",\r\n\t\"queries\": [{\r\n\t\t\"azureTraces\": {\r\n\r\n\t\t\t\"operationId\": \"${__data.fields.OperationID}\",\r\n\r\n\t\t\t\"resources\": [\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\r\r\n\r\n\t\t\t\"resultFormat\": \"trace\"\r\n\r\n\r\n\r\n\r\n\t\t},\r\n\t\t\"datasource\": \"${ds}\",\r\n\t\t\"refId\": \"A\",\r\n\r\n\t\t\"queryType\": \"Azure Traces\"\r\n\t}],\r\n\t\"range\": {\r\n\t\t\"from\": \"${__from}\",\r\n\t\t\"to\": \"${__to}\"\r\n\t}\r\n}"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "severityLevel"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 259
               }
             ]
           },
@@ -1105,7 +1078,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nexceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where type in ($exception_type)\n| where problemId in ($exception)\n| where isnotempty(operation_Id)\n| project Exception=problemId, severityLevel, OperationID=operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nexceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where type in ($exception_type)\n| where problemId in ($exception)\n| where isnotempty(operation_Id)\n| project Exception=problemId, OperationID=operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],

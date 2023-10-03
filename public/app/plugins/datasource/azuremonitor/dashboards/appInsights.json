@@ -443,7 +443,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<a href=\"/d/Azure-AppInsights--Failures?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"/d/Azure-AppInsights-Failures-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "10.0.3",
@@ -484,7 +484,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<a href=\"/d/Azure-AppInsights--Perf?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"/d/Azure-AppInsights-Perf-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "10.0.3",

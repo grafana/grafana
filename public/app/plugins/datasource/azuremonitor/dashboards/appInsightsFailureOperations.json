@@ -510,7 +510,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open Exceptions Dashboard",
-                    "url": "/d/Azure-AppInsights-Failures-Exceptions?${ds:queryparam}﻿﻿&﻿﻿${sub:queryparam}﻿﻿&﻿﻿${rg:queryparam}﻿﻿&﻿﻿${ns:queryparam}﻿﻿&﻿﻿${res:queryparam}﻿﻿&var-exception_type=${__data.fields.type}"
+                    "url": "/d/Azure-AppInsights-Failures-Exceptions?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-exception_type=${__data.fields.type}"
                   }
                 ]
               }
@@ -1168,16 +1168,12 @@
     },
     {
       "datasource": {
-        "type": "grafana-azure-monitor-datasource",
-        "uid": "${ds}"
+        "uid": "${ds}",
+        "type": "grafana-azure-monitor-datasource"
       },
       "description": "Click on the Operation name to filter dashboard.",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "fixedColor": "green",
-            "mode": "thresholds"
-          },
           "custom": {
             "align": "auto",
             "cellOptions": {
@@ -1185,14 +1181,7 @@
             },
             "inspect": false
           },
-          "links": [
-            {
-              "title": "View transactions with Operation name",
-              "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/Microsoft.Insights/components/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.operation_Name}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
-            }
-          ],
           "mappings": [],
-          "noValue": "--",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1201,7 +1190,18 @@
                 "value": null
               }
             ]
-          }
+          },
+          "color": {
+            "fixedColor": "green",
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "title": "View transactions with Operation name",
+              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Insights/components/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields.operation_Name}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+            }
+          ],
+          "noValue": "--"
         },
         "overrides": [
           {
@@ -1230,7 +1230,7 @@
                   {
                     "targetBlank": true,
                     "title": "View transactions with Operation Name",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/Microsoft.Insights/components/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.operation_Name}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[﻿${result_code:doublequote}﻿],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Insights/components/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields[\"Operation name\"]}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1262,7 +1262,7 @@
                   {
                     "targetBlank": true,
                     "title": "View transactions with Operation name",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/Microsoft.Insights/components/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.operation_Name}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[﻿${result_code:doublequote}﻿],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Insights/components/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields[\"Operation name\"]}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1306,7 +1306,7 @@
                 "value": [
                   {
                     "title": "Filter dashboard to this failing operation",
-                    "url": "/d/Azure-AppInsights-Failures-Operations/?&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${ns:queryparam}&var-operation_name=${__data.fields.operation_Name}&${result_code:queryparam}"
+                    "url": "/d/Azure-AppInsights-Failures-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-operation_name=${__data.fields[\"Operation name\"]}&${result_code:queryparam}"
                   }
                 ]
               }
@@ -1325,16 +1325,16 @@
       "links": [],
       "maxDataPoints": 150,
       "options": {
+        "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "countRows": false,
-          "fields": "",
+          "show": false,
           "reducer": [
             "sum"
           ],
-          "show": false
+          "countRows": false,
+          "fields": ""
         },
-        "showHeader": true,
         "sortBy": [
           {
             "desc": true,
@@ -1342,19 +1342,20 @@
           }
         ]
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "10.2.0-pre",
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
           "azureLogAnalytics": {
             "query": "let dataset =\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\";\ndataset\n| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and resultCode in ($result_code)),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and resultCode in ($result_code)),\n    [\"Total count\"]=sum(itemCount)\n| project [\"Operation name\"]=\"All\", [\"Failed count\"], [\"Impacted users\"], [\"Total count\"]\n| union (dataset| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and resultCode in ($result_code)),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and resultCode in ($result_code)),\n    [\"Total count\"]=sum(itemCount)\n    by [\"Operation name\"]=operation_Name\n| where [\"Failed count\"] > 0\n| top 10 by [\"Failed count\"] desc)\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
-            "resultFormat": "table"
-          },
-          "datasource": {
-            "type": "grafana-azure-monitor-datasource",
-            "uid": "${ds}"
+            "resultFormat": "table",
+            "dashboardTime": false
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -1439,7 +1440,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open explorer with this name",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/Microsoft.Insights/components/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.Name}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[﻿${result_code:doublequote}﻿],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Insights/components/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields.Name}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }

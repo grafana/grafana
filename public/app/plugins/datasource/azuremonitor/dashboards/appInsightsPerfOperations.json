@@ -949,7 +949,26 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open Failures Dashboard",
+                    "url": "/d/Azure-AppInsights-Failures-Operations/?${__all_variables}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
