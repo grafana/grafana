@@ -23,7 +23,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
 
-      <div className={styles.linkText}>{children}</div>
+      {children}
 
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
@@ -82,11 +82,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     gap: '0.5rem',
     height: '100%',
     width: '100%',
-  }),
-  linkText: css({
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
   }),
   externalLinkIcon: css({
     color: theme.colors.text.secondary,
