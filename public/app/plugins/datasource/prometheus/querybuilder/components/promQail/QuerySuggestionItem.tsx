@@ -121,21 +121,21 @@ export function QuerySuggestionItem(props: Props) {
               )}
             </div>
 
-            {historical && !last && <hr />}
+            {!last && <hr />}
           </>
         )}
-        {historical && last && (
+        {last && (
           <div className={cx(styles.feedbackPadding)}>
-            <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
-              Give feedback on suggestions
-            </Button>
-          </div>
-        )}
-        {!historical && (
-          <div className={cx(styles.feedbackPadding)}>
-            <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
-              Give feedback on suggestions
-            </Button>
+            <a
+              href="https://forms.gle/2EqJ4GqmgVcH2gkV7"
+              className={styles.floatRight}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <Button fill="outline" variant="secondary" size="sm">
+                Give feedback on suggestions
+              </Button>
+            </a>
           </div>
         )}
       </div>
