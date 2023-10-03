@@ -17,7 +17,12 @@ import {
 function getData() {
   const data = new MutableDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [] },
+      {
+        name: 'Time',
+        type: FieldType.time,
+        values: [],
+        config: { custom: { align: 'center', cellOptions: { type: 'auto' } } },
+      },
       {
         name: 'Value',
         type: FieldType.number,
@@ -25,6 +30,7 @@ function getData() {
         config: {
           custom: {
             width: 100,
+            cellOptions: { type: 'auto' },
           },
         },
       },
@@ -35,6 +41,7 @@ function getData() {
         config: {
           custom: {
             align: 'center',
+            cellOptions: { type: 'auto' },
           },
         },
       },
