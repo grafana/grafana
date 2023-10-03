@@ -852,6 +852,7 @@ export class DashboardMigrator {
     if (oldVersion < 39) {
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const tableCellOptions = panel.fieldConfig.defaults?.custom?.cellOptions as TableCellOptions;
 
           migrateCellMinMax(tableCellOptions);
@@ -860,6 +861,7 @@ export class DashboardMigrator {
             for (const override of panel.fieldConfig.overrides) {
               for (let j = 0; j < override.properties?.length ?? 0; j++) {
                 if (override.properties[j].id === 'custom.cellOptions') {
+                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                   let overrideCellOptions = override.properties[j].value as TableCellOptions;
                   migrateCellMinMax(overrideCellOptions);
                 }
