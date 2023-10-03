@@ -251,7 +251,7 @@
     "@grafana/lezer-traceql": "0.0.6",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^1.5.1",
+    "@grafana/scenes": "^1.11.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",
