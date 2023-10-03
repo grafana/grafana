@@ -125,7 +125,8 @@ export function getColumns(
       }
     };
 
-    if (shouldRecalculateScaleRange(fieldTableOptions.cellOptions, field)) {
+    const cellOptions = getCellOptions(field);
+    if (shouldRecalculateScaleRange(cellOptions, field)) {
       field.state!.range = getMinMaxAndDelta(field);
       field.config.min = field.state!.range.min;
       field.config.max = field.state!.range.max;
