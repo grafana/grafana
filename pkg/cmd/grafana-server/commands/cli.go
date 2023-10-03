@@ -52,7 +52,11 @@ func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp st
 
 func RunServer(opts ServerOptions) error {
 	if Version || VerboseVersion {
-		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		if opts.EnterpriseCommit != "NA" && opts.EnterpriseCommit != "" {
+			fmt.Printf("Version %s (commit: %s, branch: %s, enterprise-commit: %s)\n", opts.Version, opts.Commit, opts.BuildBranch, opts.EnterpriseCommit)
+		} else {
+			fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		}
 		if VerboseVersion {
 			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
