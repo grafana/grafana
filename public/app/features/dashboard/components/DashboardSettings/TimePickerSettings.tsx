@@ -68,11 +68,11 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   render() {
     return (
       <CollapsableSection
-        label={t('dashboard-settings.general-settings.time-options-label', 'Time options')}
+        label={t('dashboard-settings.time-picker.time-options-label', 'Time options')}
         isOpen={true}
       >
         <Field
-          label={t('dashboard-settings.general-settings.time-picker-label', 'Time zone')}
+          label={t('dashboard-settings.time-picker.time-zone-label', 'Time zone')}
           data-testid={selectors.components.TimeZonePicker.containerV2}
         >
           <TimeZonePicker
