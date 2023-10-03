@@ -15,9 +15,8 @@ import {
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
+import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-
-import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions } from './types';
@@ -50,7 +49,7 @@ describe('PostgreSQLDatasource', () => {
       },
     } as unknown as DataSourceInstanceSettings<PostgresOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
-    const variable = { ...initialCustomVariableModelState };
+    const variable = makeVariable('id1', 'name1');
     const ds = new PostgresDatasource(instanceSettings);
     Reflect.set(ds, 'templateSrv', templateSrv);
     return { ds, templateSrv, variable };
