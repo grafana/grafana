@@ -192,10 +192,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
     }),
-    exportRules: build.query<string, { format: ExportFormats }>({
-      query: ({ format }) => ({
+    exportRules: build.query<string, { format: ExportFormats; folderUid?: string; group?: string }>({
+      query: ({ format, folderUid, group }) => ({
         url: `/api/v1/provisioning/alert-rules/export`,
-        params: { format: format },
+        params: { format: format, folderUid: folderUid, group: group },
         responseType: 'text',
       }),
     }),
