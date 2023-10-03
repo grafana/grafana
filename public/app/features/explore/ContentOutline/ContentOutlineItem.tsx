@@ -14,8 +14,6 @@ interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
 }
 
 const baseStyle = css({
-  // acounts for the height of the sticky ExploreToolbar
-  scrollMarginTop: '60px',
   /**
    * when the pane is narrow enough to have horizontal scroll, this prevents
    * the pane from scrolling horizontally and pushing the content outline off screen
@@ -27,8 +25,6 @@ function ContentOutlineItem({ title, icon, children, className }: ContentOutline
   const { register, unregister } = useContentOutlineContext();
   const ref = useRef(null);
   const styles = cx(baseStyle, className);
-
-  // const styles = cx(baseStyle, className);
 
   useEffect(() => {
     // When the component mounts, register it and get its unique ID.
