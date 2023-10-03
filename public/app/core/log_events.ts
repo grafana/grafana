@@ -7,7 +7,7 @@ export enum PanelLogEvents {
   NEW_CUSTOM_FIELD_CONFIG_EVENT = 'new custom field config',
   CUSTOM_FIELD_CONFIG_CHANGED_EVENT = 'custom field config changed',
   MEASURE_PANEL_LOAD_TIME_EVENT = 'measure panel load time',
+  PANEL_ERROR = 'panel error',
 }
 
-export const FIELD_CONFIG_OVERRIDES_KEY = 'overrides';
 export const FIELD_CONFIG_CUSTOM_KEY = 'custom';

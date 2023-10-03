@@ -20,6 +20,7 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
@@ -31,6 +32,7 @@ import {
   AdHocFilterItem,
 } from '@grafana/ui';
 import config from 'app/core/config';
+import { PanelLogEvents } from 'app/core/log_events';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -375,8 +377,27 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
+  logPanelInfoOnError(error: Error) {
+    const logObj = {
+      error: error.message,
+      options: JSON.stringify(this.props.panel.getOptions()),
+      fieldConfig: JSON.stringify(this.props.panel.fieldConfig.defaults),
+      overrides: JSON.stringify(this.props.panel.fieldConfig.overrides),
+      panelId: String(this.props.panel.id),
+      panelType: this.props.panel.type,
+      panelTitle: this.props.panel.title,
+    };
+
+    faro.api.pushEvent(PanelLogEvents.PANEL_ERROR, logObj);
+  }
+
   onPanelError = (error: Error) => {
     const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+
+    if (config.featureToggles.panelMonitoring) {
+      this.logPanelInfoOnError(error);
+    }
+
     if (this.state.errorMessage !== errorMessage) {
       this.setState({ errorMessage });
     }

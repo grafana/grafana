@@ -4,7 +4,7 @@ import { FieldConfigSource } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { FIELD_CONFIG_CUSTOM_KEY, FIELD_CONFIG_OVERRIDES_KEY, PanelLogEvents } from 'app/core/log_events';
+import { FIELD_CONFIG_CUSTOM_KEY, PanelLogEvents } from 'app/core/log_events';
 import { DashboardSavedEvent } from 'app/types/events';
 
 interface PanelOptionsLoggerProps {
@@ -82,17 +82,6 @@ export const usePanelOptionsLogger = (props: PanelOptionsLoggerProps) => {
     fieldConfig: FieldConfigSource<unknown>,
     oldFieldConfig: FieldConfigSource<unknown>
   ) => {
-    // overrides are an array of objects, so stringify it all and log changes
-    // in lack of an index, we can't tell which override changed
-    if (oldFieldConfig.overrides !== fieldConfig.overrides) {
-      logPanelEvent(
-        PanelLogEvents.FIELD_CONFIG_OVERRIDES_CHANGED_EVENT,
-        FIELD_CONFIG_OVERRIDES_KEY,
-        JSON.stringify(fieldConfig.overrides),
-        JSON.stringify(oldFieldConfig.overrides)
-      );
-    }
-
     const oldDefaults: { [key: string]: unknown } = { ...oldFieldConfig.defaults };
 
     // go through field config keys except custom, we treat that below

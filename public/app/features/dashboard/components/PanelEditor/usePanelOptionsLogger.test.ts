@@ -142,14 +142,6 @@ describe('OptionsPane', () => {
 
     const expectedLogResults = [
       {
-        key: 'overrides',
-        newValue: '[]',
-        oldValue: '[{"matcher":{"id":"byName","options":""},"properties":[]}]',
-        panelTitle: 'Panel Title',
-        panelId: '1',
-        panelType: 'timeseries',
-      },
-      {
         key: 'unit',
         newValue: 'metres',
         oldValue: 'bytes',
@@ -191,13 +183,12 @@ describe('OptionsPane', () => {
 
     appEvents.publish(new DashboardSavedEvent());
 
-    expect(mockPushEvent).toHaveBeenCalledTimes(5);
+    expect(mockPushEvent).toHaveBeenCalledTimes(4);
     expect(mockPushEvent.mock.calls).toEqual([
-      ['field config overrides changed', expectedLogResults[0]],
-      ['default field config changed', expectedLogResults[1]],
-      ['new default field config', expectedLogResults[2]],
-      ['custom field config changed', expectedLogResults[3]],
-      ['new custom field config', expectedLogResults[4]],
+      ['default field config changed', expectedLogResults[0]],
+      ['new default field config', expectedLogResults[1]],
+      ['custom field config changed', expectedLogResults[2]],
+      ['new custom field config', expectedLogResults[3]],
     ]);
   });
 });
