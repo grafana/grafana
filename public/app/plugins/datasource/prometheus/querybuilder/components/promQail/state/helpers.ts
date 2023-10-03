@@ -39,19 +39,6 @@ interface TemplateSearchResult {
   promql: string | null;
 }
 
-// export function getExplainMessage({
-//   documentation,
-//   metricName,
-//   metricType,
-//   metricMetadata,
-//   query,
-// }: ExplainUserPromptParams): llms.openai.Message[] {
-//   return [
-//     { role: 'system', content: ExplainSystemPrompt },
-//     { role: 'user', content: GetExplainUserPrompt({ documentation, metricName, metricType, metricMetadata, query }) },
-//   ];
-// }
-
 export function getExplainMessage(
   query: string,
   metric: string,
