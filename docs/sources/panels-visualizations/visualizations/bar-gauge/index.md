@@ -67,6 +67,22 @@ Choose a display mode.
 - **Retro LCD -** The gauge is split into small cells that are lit or unlit.
 - **Basic -** Single color based on the matching threshold.
 
+### Value display
+
+Choose a value display mode.
+
+- **Value color -** Value color is determined by value.
+- **Text color -** Value color is default text color.
+- **Hidden -** Values are hidden.
+
+### Value placement
+
+Choose a value placement mode. Note: This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, values are always placed at the bottom of each bar gauge.
+
+- **Auto -** Grafana selects what it thinks is the best placement.
+- **Top -** Values are placed on top of each bar gauge.
+- **Left -** Values are placed to the left of each bar gauge.
+
 ### Show unfilled area
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
