@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
-import { useOpenAIStream } from './hooks';
+import { useOpenAIStream, StreamStatus } from './hooks';
 import { Role, isLLMPluginEnabled } from './utils';
 
 jest.mock('./utils', () => ({
@@ -18,13 +18,17 @@ jest.mock('./utils', () => ({
 const mockedUseOpenAiStreamState = {
   setMessages: jest.fn(),
   reply: 'I am a robot',
-  isGenerationResponse: false,
+  streamStatus: StreamStatus.IDLE,
   error: null,
   value: null,
 };
 
 jest.mock('./hooks', () => ({
   useOpenAIStream: jest.fn(() => mockedUseOpenAiStreamState),
+  StreamStatus: {
+    IDLE: 'idle',
+    GENERATING: 'generating',
+  },
 }));
 
 describe('GenAIButton', () => {
@@ -76,7 +80,7 @@ describe('GenAIButton', () => {
       jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
-        isGenerating: false,
+        streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: setMessagesMock,
         value: {
@@ -128,7 +132,7 @@ describe('GenAIButton', () => {
       jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
-        isGenerating: true,
+        streamStatus: StreamStatus.GENERATING,
         reply: 'Some incompleted generated text',
         setMessages: jest.fn(),
         value: {
@@ -174,7 +178,7 @@ describe('GenAIButton', () => {
       jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: new Error('Something went wrong'),
-        isGenerating: false,
+        streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
         value: {
