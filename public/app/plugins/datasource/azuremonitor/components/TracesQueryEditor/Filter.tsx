@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { RefCallback, SyntheticEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import {
   HorizontalGroup,
@@ -97,7 +97,7 @@ const getTraceProperties = async (
           queryType: AzureQueryType.LogAnalytics,
         },
       ],
-      range: range || {} as TimeRange,
+      range: range || getDefaultTimeRange()
     })
   );
   if (results.data.length > 0) {
