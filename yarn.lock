@@ -2778,24 +2778,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@date-io/core@npm:^1.3.13":
-  version: 1.3.13
-  resolution: "@date-io/core@npm:1.3.13"
-  checksum: 5a9e9d1de20f0346a3c7d2d5946190caef4bfb0b64d82ba1f4c566657a9192667c94ebe7f438d11d4286d9c190974daad4fb2159294225cd8af4d9a140239879
-  languageName: node
-  linkType: hard
-
-"@date-io/moment@npm:^1.3.13":
-  version: 1.3.13
-  resolution: "@date-io/moment@npm:1.3.13"
-  dependencies:
-    "@date-io/core": ^1.3.13
-  peerDependencies:
-    moment: ^2.24.0
-  checksum: c4847f9d1bf09bb22c1acc5806fc50825c0bdb52408c9fec8cc5f9a65f16a8014870b5890a0eeb73b2c53a6487c35acbd2ab2a5c49068ff5a5dccbcb5c9e654b
-  languageName: node
-  linkType: hard
-
 "@daybrush/utils@npm:1.13.0, @daybrush/utils@npm:^1.13.0":
   version: 1.13.0
   resolution: "@daybrush/utils@npm:1.13.0"
@@ -4260,9 +4242,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.5.1":
-  version: 1.8.0
-  resolution: "@grafana/scenes@npm:1.8.0"
+"@grafana/scenes@npm:^1.11.0":
+  version: 1.11.0
+  resolution: "@grafana/scenes@npm:1.11.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -4274,7 +4256,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 7eef4391988b116b0c95923b9025cb509c08c5254058caacaf1e33cc3e6bc68458ec488132b8390ae8d781002a671ce03728670ce2e34968d2b0fa3e4cf8e7bd
+  checksum: fb7e21e11af29d861de2a47db25fc87fa6ffa4bc2c80784afcbf24d273f4aad1e21e7aa4cb176838cf5d869ae03b14822da235c9a398a2c41f816a93ef48c7e5
   languageName: node
   linkType: hard
 
@@ -6169,39 +6151,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-base@npm:0.12.15":
-  version: 0.12.15
-  resolution: "@locker/near-membrane-base@npm:0.12.15"
+"@locker/near-membrane-base@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@locker/near-membrane-base@npm:0.13.3"
   dependencies:
-    "@locker/near-membrane-shared": 0.12.15
-  checksum: 353b172bcd3a1d3790ca0baef4b8d0aabb7c1077cfb4452df9f4b36b44bafe054ab5d9b9cb4ec47deb6504bbaa4b516554a0406cbfa948cea2ceb4b4926a5d67
+    "@locker/near-membrane-shared": 0.13.3
+  checksum: c523503566823cd82ef8e7f0a848b903c8b0d547c04d2498028497f8ccc63f2fc552c86f0196164627f391cec050d8df46244ba21b8675907a7581c0e7b5194a
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-dom@npm:^0.12.15":
-  version: 0.12.15
-  resolution: "@locker/near-membrane-dom@npm:0.12.15"
+"@locker/near-membrane-dom@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@locker/near-membrane-dom@npm:0.13.3"
   dependencies:
-    "@locker/near-membrane-base": 0.12.15
-    "@locker/near-membrane-shared": 0.12.15
-    "@locker/near-membrane-shared-dom": 0.12.15
-  checksum: cd0d692f36665031f2485c8e4ff40e8cf051b7cecdf34b34171446585791f59b0b69b4570490918084178b37a26986f501b128b52c49b9b25aa8958e0cea15a8
+    "@locker/near-membrane-base": 0.13.3
+    "@locker/near-membrane-shared": 0.13.3
+    "@locker/near-membrane-shared-dom": 0.13.3
+  checksum: 3f226a6d4eb60d46fbacee6c837110321e958758b23c0669a85e938f5b4282ba5c46356938948eb40b7339431165904149ebd935a40f6e4e71cc173ce023bea3
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared-dom@npm:0.12.15, @locker/near-membrane-shared-dom@npm:^0.12.15":
-  version: 0.12.15
-  resolution: "@locker/near-membrane-shared-dom@npm:0.12.15"
+"@locker/near-membrane-shared-dom@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@locker/near-membrane-shared-dom@npm:0.13.3"
   dependencies:
-    "@locker/near-membrane-shared": 0.12.15
-  checksum: 2faabd8dc7d508d35f17f8573a78a5ec48aaa232e53791e182792516dec285e60c32e811ffd00bd1c916e56ba1e1ff7199fc8e4cdcf061b388a8ba6f22ad44c4
+    "@locker/near-membrane-shared": 0.13.3
+  checksum: d6428c57702ecbee660b4c57f7d1de6f3068a44218795547697f506f07aab56dca919f289163e0c61c397ca605a446b3b78e47a2fa39b86da57d7fcecd9fe42d
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared@npm:0.12.15, @locker/near-membrane-shared@npm:^0.12.15":
-  version: 0.12.15
-  resolution: "@locker/near-membrane-shared@npm:0.12.15"
-  checksum: de5d44022148f7f9183781d50d591a40d8b54cc7692bbd54ee865c0a7ddb6bf15d465fb0e804ad86cbea9135cc7d31983eaed9c8cdbbe9dc94d9e74eaac75134
+"@locker/near-membrane-shared@npm:0.13.3":
+  version: 0.13.3
+  resolution: "@locker/near-membrane-shared@npm:0.13.3"
+  checksum: ccab2a50a01abb84be0428eb77c817d86a292d954e58eb56d9df0e69793bbfb1557611e21a4d3220af9d959f2129f8e170527ba9d994cd0208a3164b3a29c69c
   languageName: node
   linkType: hard
 
@@ -7457,6 +7439,38 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: c46f0ccb4d19bf9cd4f6a017badc9b52aa793e35111cbaadc1fe90b87b1ae437960e8cfd75ab9b0ea884bfb2107adc4e1037fa6cb4c8880b1200fc51cb230d55
+  languageName: node
+  linkType: hard
+
+"@react-awesome-query-builder/core@npm:^6.4.1":
+  version: 6.4.1
+  resolution: "@react-awesome-query-builder/core@npm:6.4.1"
+  dependencies:
+    clone: ^2.1.2
+    immutable: ^3.8.2
+    json-logic-js: ^2.0.2
+    lodash: ^4.17.21
+    moment: ^2.29.4
+    spel2js: ^0.2.8
+    sqlstring: ^2.3.3
+  checksum: 0eafbe012ab25aa2e918207e46950d2f39ee56c542d4a34c74b64a17f4228eb9323320f38820cf18a93e90f570a2b3517a37c9a80ddbc5d6919f3efda76a2260
+  languageName: node
+  linkType: hard
+
+"@react-awesome-query-builder/ui@npm:6.4.1":
+  version: 6.4.1
+  resolution: "@react-awesome-query-builder/ui@npm:6.4.1"
+  dependencies:
+    "@react-awesome-query-builder/core": ^6.4.1
+    classnames: ^2.3.1
+    lodash: ^4.17.21
+    prop-types: ^15.7.2
+    react-redux: ^7.2.2
+    redux: ^4.2.0
+  peerDependencies:
+    react: ^16.8.4 || ^17.0.1 || ^18.0.0
+    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
+  checksum: 34103e9dd2a76d0d57310436babd35d7aabe70d34ed60de6338ceb75b9e2faad73372d799e0b26d2766d33df7ca959e17026a13e600c27469023e19fddce89f8
   languageName: node
   linkType: hard
 
@@ -19975,7 +19989,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.6
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.5.1
+    "@grafana/scenes": ^1.11.0
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -19984,9 +19998,9 @@ __metadata:
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
     "@lezer/lr": 1.3.3
-    "@locker/near-membrane-dom": ^0.12.15
-    "@locker/near-membrane-shared": ^0.12.15
-    "@locker/near-membrane-shared-dom": ^0.12.15
+    "@locker/near-membrane-dom": 0.13.3
+    "@locker/near-membrane-shared": 0.13.3
+    "@locker/near-membrane-shared-dom": 0.13.3
     "@opentelemetry/api": 1.4.1
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.15.0
@@ -20000,6 +20014,7 @@ __metadata:
     "@react-aria/menu": 3.10.0
     "@react-aria/overlays": 3.15.0
     "@react-aria/utils": 3.18.0
+    "@react-awesome-query-builder/ui": 6.4.1
     "@react-stately/collections": 3.9.0
     "@react-stately/menu": 3.5.3
     "@react-stately/tree": 3.7.0
@@ -20205,7 +20220,6 @@ __metadata:
     rc-tree: 5.7.9
     re-resizable: 6.9.9
     react: 18.2.0
-    react-awesome-query-builder: 5.4.0
     react-beautiful-dnd: 13.1.1
     react-diff-viewer: ^3.1.1
     react-dom: 18.2.0
@@ -20309,9 +20323,9 @@ __metadata:
   linkType: hard
 
 "graphql@npm:^15.0.0 || ^16.0.0":
-  version: 16.6.0
-  resolution: "graphql@npm:16.6.0"
-  checksum: bf1d9e3c1938ce3c1a81e909bd3ead1ae4707c577f91cff1ca2eca474bfbc7873d5d7b942e1e9777ff5a8304421dba57a4b76d7a29eb19de8711cb70e3c2415e
+  version: 16.8.1
+  resolution: "graphql@npm:16.8.1"
+  checksum: 8d304b7b6f708c8c5cc164b06e92467dfe36aff6d4f2cf31dd19c4c2905a0e7b89edac4b7e225871131fd24e21460836b369de0c06532644d15b461d55b1ccc0
   languageName: node
   linkType: hard
 
@@ -23531,6 +23545,13 @@ __metadata:
   bin:
     jsesc: bin/jsesc
   checksum: 4dc190771129e12023f729ce20e1e0bfceac84d73a85bc3119f7f938843fe25a4aeccb54b6494dce26fcf263d815f5f31acdefac7cc9329efb8422a4f4d9fa9d
+  languageName: node
+  linkType: hard
+
+"json-logic-js@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "json-logic-js@npm:2.0.2"
+  checksum: 34846500b76a25a86de65560afe358e844b384f0f61c1832fed6a9dfc8f45d884be0b0c8ab033d1a2df7c92b33910d8cee1b3d28e0f461cc55c715d2761219ef
   languageName: node
   linkType: hard
 
@@ -28323,46 +28344,6 @@ __metadata:
     react: ^16.13.1 || ^17.0.0 || ^18.0.0
     react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0
   checksum: a2c8bfe86646fb02d5c9c624b1da26f9e6a5e2f552cd96ce4db690588bee6b21177065ce8e98646c6ca0b1a9c4ce233824b75eb346800d8248ac8a87b40f1b28
-  languageName: node
-  linkType: hard
-
-"react-awesome-query-builder@npm:5.4.0":
-  version: 5.4.0
-  resolution: "react-awesome-query-builder@npm:5.4.0"
-  dependencies:
-    "@date-io/moment": ^1.3.13
-    classnames: ^2.3.1
-    clone: ^2.1.2
-    immutable: ^3.8.2
-    lodash: ^4.17.21
-    moment: ^2.29.4
-    prop-types: ^15.7.2
-    react-redux: ^7.2.2
-    redux: ^4.2.0
-    spel2js: ^0.2.8
-    sqlstring: ^2.3.3
-  peerDependencies:
-    "@ant-design/icons": ^4.0.0
-    "@emotion/react": ^11.7.1
-    "@emotion/styled": ^11.6.0
-    "@fortawesome/fontawesome-svg-core": ^1.2.0 || ^6.1.0
-    "@fortawesome/free-solid-svg-icons": ^5.15.4 || ^6.0.0
-    "@fortawesome/react-fontawesome": ^0.1.16 || ^0.2.0
-    "@material-ui/core": ^4.12.3
-    "@material-ui/icons": ^4.0.0
-    "@material-ui/lab": ^4.0.0-alpha.57
-    "@material-ui/pickers": ^3.2.10
-    "@mui/icons-material": ^5.2.4
-    "@mui/lab": ^5.0.0-alpha.60
-    "@mui/material": ^5.2.4
-    "@mui/x-date-pickers": ^5.0.0-beta.2
-    antd: ^4.0.0
-    bootstrap: ^5.1.3
-    material-ui-confirm: ^2.0.1 || ^3.0.0
-    react: ^16.8.4 || ^17.0.1 || ^18.0.0
-    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-    reactstrap: ^9.0.0
-  checksum: 96f97b94c6544549e9d0991cec3f7753db722066ed2c24ba75cc0c8f90f2b04ab7f338c6a4a124bac78a0916c53ea864af4382ecb552e283602941c40ae9a035
   languageName: node
   linkType: hard
 

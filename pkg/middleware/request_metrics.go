@@ -42,7 +42,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	}
 
 	if cfg.MetricsIncludeTeamLabel {
-		histogramLabels = append(histogramLabels, "team")
+		histogramLabels = append(histogramLabels, "grafana_team")
 	}
 
 	if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
