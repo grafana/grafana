@@ -36,6 +36,7 @@ export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
           },
         ],
       })
+      .setNoValue('0')
       .build(),
   });
 }

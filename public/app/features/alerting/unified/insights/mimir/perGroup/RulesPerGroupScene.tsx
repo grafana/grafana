@@ -31,6 +31,7 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
           fixedColor: 'blue',
         })
       )
+      .setNoValue('0')
       .build(),
   });
 }

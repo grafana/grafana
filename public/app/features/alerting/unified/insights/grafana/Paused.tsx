@@ -36,6 +36,7 @@ export function getPausedGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
           },
         ],
       })
+      .setNoValue('0')
       .build(),
   });
 }

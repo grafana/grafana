@@ -36,6 +36,7 @@ export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource
           },
         ],
       })
+      .setNoValue('0')
       .build(),
   });
 }

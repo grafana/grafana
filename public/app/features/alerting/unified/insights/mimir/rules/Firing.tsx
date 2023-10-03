@@ -36,6 +36,7 @@ export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource:
           },
         ],
       })
+      .setNoValue('0')
       .build(),
   });
 }
