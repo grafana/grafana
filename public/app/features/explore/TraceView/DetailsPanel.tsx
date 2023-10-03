@@ -170,7 +170,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
     gap: 0 1rem;
     margin-bottom: 0.25rem;
-    padding: 0.5rem;
+    padding: 0.6rem;
+    overflow: scroll;
   `,
   flexSpaceBetween: css`
     display: flex;
