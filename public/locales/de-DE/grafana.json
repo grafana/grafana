@@ -239,7 +239,6 @@
       "tags-expected-strings": ""
     }
   },
-  "dashboard-delete-button": "",
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "",
@@ -261,26 +260,20 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "folder-label": "",
+      "tags-label": "",
+      "title-label": ""
+    },
     "general-settings": {
-      "auto-refresh": {
-        "description": "",
-        "label": ""
-      },
-      "description": {
-        "label": ""
-      },
       "editable": {
         "label": ""
       },
       "editable-description": "",
-      "folder": {
-        "label": ""
-      },
-      "hide-time-picker": "",
-      "now_delay": {
-        "description": "",
-        "label": ""
-      },
       "panel-options": {
         "label": ""
       },
@@ -288,26 +281,22 @@
         "description": "",
         "label": ""
       },
-      "refresh-live-dashboards": {
-        "description": "",
-        "label": ""
-      },
-      "tags": {
-        "label": ""
-      },
-      "tags-input": "",
       "time-options-label": "",
-      "time-picker-label": "",
-      "title": {
-        "label": ""
-      },
-      "week-start": {
-        "label": ""
-      }
+      "time-picker-label": ""
     },
     "json-editor": {
       "save-button": "",
       "subtitle": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "week-start": {
+        "label": ""
+      }
     }
   },
   "data-source-picker": {

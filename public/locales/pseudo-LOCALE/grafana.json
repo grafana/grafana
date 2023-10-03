@@ -239,7 +239,6 @@
       "tags-expected-strings": "ŧäģş ęχpęčŧęđ äřřäy őƒ şŧřįŉģş"
     }
   },
-  "dashboard-delete-button": "Đęľęŧę Đäşĥþőäřđ",
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Ůpľőäđ đäşĥþőäřđ ĴŜØŃ ƒįľę",
@@ -261,26 +260,20 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "Đęľęŧę Đäşĥþőäřđ",
+    "general": {
+      "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
+      "auto-refresh-label": "Åūŧő řęƒřęşĥ",
+      "description-label": "Đęşčřįpŧįőŉ",
+      "folder-label": "Főľđęř",
+      "tags-label": "Ŧäģş",
+      "title-label": "Ŧįŧľę"
+    },
     "general-settings": {
-      "auto-refresh": {
-        "description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
-        "label": "Åūŧő řęƒřęşĥ"
-      },
-      "description": {
-        "label": "Đęşčřįpŧįőŉ"
-      },
       "editable": {
         "label": "Ēđįŧäþľę"
       },
       "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
-      "folder": {
-        "label": "Főľđęř"
-      },
-      "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
-      "now_delay": {
-        "description": "Ēχčľūđę řęčęŉŧ đäŧä ŧĥäŧ mäy þę įŉčőmpľęŧę.",
-        "label": "Ńőŵ đęľäy"
-      },
       "panel-options": {
         "label": "Päŉęľ őpŧįőŉş"
       },
@@ -288,26 +281,22 @@
         "description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
         "label": "Ğřäpĥ ŧőőľŧįp"
       },
-      "refresh-live-dashboards": {
-        "description": "Cőŉŧįŉūőūşľy řę-đřäŵ päŉęľş ŵĥęřę ŧĥę ŧįmę řäŉģę řęƒęřęŉčęş 'ŉőŵ'",
-        "label": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş"
-      },
-      "tags": {
-        "label": "Ŧäģş"
-      },
-      "tags-input": "<0></0>",
       "time-options-label": "Ŧįmę őpŧįőŉş",
-      "time-picker-label": "Ŧįmę žőŉę",
-      "title": {
-        "label": "Ŧįŧľę"
-      },
-      "week-start": {
-        "label": "Ŵęęĸ şŧäřŧ"
-      }
+      "time-picker-label": "Ŧįmę žőŉę"
     },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
       "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
+    },
+    "time-picker": {
+      "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
+      "now-delay-description": "Ēχčľūđę řęčęŉŧ đäŧä ŧĥäŧ mäy þę įŉčőmpľęŧę.",
+      "now-delay-label": "Ńőŵ đęľäy",
+      "refresh-live-dashboards-description": "Cőŉŧįŉūőūşľy řę-đřäŵ päŉęľş ŵĥęřę ŧĥę ŧįmę řäŉģę řęƒęřęŉčęş 'ŉőŵ'",
+      "refresh-live-dashboards-label": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
+      "week-start": {
+        "label": "Ŵęęĸ şŧäřŧ"
+      }
     }
   },
   "data-source-picker": {

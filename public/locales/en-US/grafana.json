@@ -239,7 +239,6 @@
       "tags-expected-strings": "tags expected array of strings"
     }
   },
-  "dashboard-delete-button": "Delete Dashboard",
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -261,26 +260,20 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "Delete Dashboard",
+    "general": {
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-label": "Auto refresh",
+      "description-label": "Description",
+      "folder-label": "Folder",
+      "tags-label": "Tags",
+      "title-label": "Title"
+    },
     "general-settings": {
-      "auto-refresh": {
-        "description": "Define the auto refresh intervals that should be available in the auto refresh list.",
-        "label": "Auto refresh"
-      },
-      "description": {
-        "label": "Description"
-      },
       "editable": {
         "label": "Editable"
       },
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
-      "folder": {
-        "label": "Folder"
-      },
-      "hide-time-picker": "Hide time picker",
-      "now_delay": {
-        "description": "Exclude recent data that may be incomplete.",
-        "label": "Now delay"
-      },
       "panel-options": {
         "label": "Panel options"
       },
@@ -288,26 +281,22 @@
         "description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
         "label": "Graph tooltip"
       },
-      "refresh-live-dashboards": {
-        "description": "Continuously re-draw panels where the time range references 'now'",
-        "label": "Refresh live dashboards"
-      },
-      "tags": {
-        "label": "Tags"
-      },
-      "tags-input": "<0></0>",
       "time-options-label": "Time options",
-      "time-picker-label": "Time zone",
-      "title": {
-        "label": "Title"
-      },
-      "week-start": {
-        "label": "Week start"
-      }
+      "time-picker-label": "Time zone"
     },
     "json-editor": {
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
+    },
+    "time-picker": {
+      "hide-time-picker": "Hide time picker",
+      "now-delay-description": "Exclude recent data that may be incomplete.",
+      "now-delay-label": "Now delay",
+      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "week-start": {
+        "label": "Week start"
+      }
     }
   },
   "data-source-picker": {
