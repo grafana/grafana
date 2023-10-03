@@ -46,7 +46,7 @@ describe('<ContentOutline />', () => {
     expect(showContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByText('Collapse content outline');
+    const hideContentOutlineButton = screen.getByText('Collapse outline');
     expect(hideContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(hideContentOutlineButton);
