@@ -126,7 +126,7 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="title-input">
-                  <Trans i18nKey="dashboard-settings.general-settings.title.label">Title</Trans>
+                  <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
 
                 {config.featureToggles.dashgpt && (
