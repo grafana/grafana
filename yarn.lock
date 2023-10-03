@@ -75,29 +75,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:7.22.9, @babel/core@npm:^7.11.6, @babel/core@npm:^7.12.10, @babel/core@npm:^7.12.3, @babel/core@npm:^7.13.16, @babel/core@npm:^7.20.2, @babel/core@npm:^7.7.5":
-  version: 7.22.9
-  resolution: "@babel/core@npm:7.22.9"
-  dependencies:
-    "@ampproject/remapping": ^2.2.0
-    "@babel/code-frame": ^7.22.5
-    "@babel/generator": ^7.22.9
-    "@babel/helper-compilation-targets": ^7.22.9
-    "@babel/helper-module-transforms": ^7.22.9
-    "@babel/helpers": ^7.22.6
-    "@babel/parser": ^7.22.7
-    "@babel/template": ^7.22.5
-    "@babel/traverse": ^7.22.8
-    "@babel/types": ^7.22.5
-    convert-source-map: ^1.7.0
-    debug: ^4.1.0
-    gensync: ^1.0.0-beta.2
-    json5: ^2.2.2
-    semver: ^6.3.1
-  checksum: 7bf069aeceb417902c4efdaefab1f7b94adb7dea694a9aed1bda2edf4135348a080820529b1a300c6f8605740a00ca00c19b2d5e74b5dd489d99d8c11d5e56d1
-  languageName: node
-  linkType: hard
-
 "@babel/core@npm:7.23.0":
   version: 7.23.0
   resolution: "@babel/core@npm:7.23.0"
@@ -118,6 +95,29 @@ __metadata:
     json5: ^2.2.3
     semver: ^6.3.1
   checksum: cebd9b48dbc970a7548522f207f245c69567e5ea17ebb1a4e4de563823cf20a01177fe8d2fe19b6e1461361f92fa169fd0b29f8ee9d44eeec84842be1feee5f2
+  languageName: node
+  linkType: hard
+
+"@babel/core@npm:^7.11.6, @babel/core@npm:^7.12.10, @babel/core@npm:^7.12.3, @babel/core@npm:^7.13.16, @babel/core@npm:^7.20.2, @babel/core@npm:^7.7.5":
+  version: 7.22.9
+  resolution: "@babel/core@npm:7.22.9"
+  dependencies:
+    "@ampproject/remapping": ^2.2.0
+    "@babel/code-frame": ^7.22.5
+    "@babel/generator": ^7.22.9
+    "@babel/helper-compilation-targets": ^7.22.9
+    "@babel/helper-module-transforms": ^7.22.9
+    "@babel/helpers": ^7.22.6
+    "@babel/parser": ^7.22.7
+    "@babel/template": ^7.22.5
+    "@babel/traverse": ^7.22.8
+    "@babel/types": ^7.22.5
+    convert-source-map: ^1.7.0
+    debug: ^4.1.0
+    gensync: ^1.0.0-beta.2
+    json5: ^2.2.2
+    semver: ^6.3.1
+  checksum: 7bf069aeceb417902c4efdaefab1f7b94adb7dea694a9aed1bda2edf4135348a080820529b1a300c6f8605740a00ca00c19b2d5e74b5dd489d99d8c11d5e56d1
   languageName: node
   linkType: hard
 
@@ -3860,69 +3860,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/testdata@workspace:*, @grafana-plugins/testdata@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/testdata@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
-  dependencies:
-    "@babel/core": 7.22.9
-    "@emotion/css": 11.11.2
-    "@grafana/data": 10.2.0-pre
-    "@grafana/e2e-selectors": 10.2.0-pre
-    "@grafana/eslint-config": 6.0.0
-    "@grafana/eslint-plugin": "link:../../../packages/grafana-eslint-rules"
-    "@grafana/experimental": 1.7.0
-    "@grafana/runtime": 10.2.0-pre
-    "@grafana/schema": 10.2.0-pre
-    "@grafana/tsconfig": ^1.3.0-rc1
-    "@grafana/ui": 10.2.0-pre
-    "@swc/core": 1.3.38
-    "@swc/helpers": 0.4.14
-    "@swc/jest": ^0.2.26
-    "@testing-library/dom": 9.3.1
-    "@testing-library/jest-dom": 5.16.5
-    "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
-    "@types/jest": 29.2.3
-    "@types/lodash": 4.14.195
-    "@types/node": 18.16.16
-    "@types/react": 18.2.15
-    "@types/testing-library__jest-dom": 5.14.8
-    "@typescript-eslint/eslint-plugin": 5.42.0
-    "@typescript-eslint/parser": 5.42.0
-    app: "link:../../public/app"
-    copy-webpack-plugin: 11.0.0
-    css-loader: 6.8.1
-    eslint: 8.44.0
-    eslint-plugin-jsdoc: 46.4.3
-    eslint-plugin-react: 7.32.2
-    eslint-plugin-react-hooks: 4.6.0
-    eslint-webpack-plugin: 4.0.1
-    fork-ts-checker-webpack-plugin: 8.0.0
-    glob: 10.3.3
-    identity-obj-proxy: 3.0.0
-    jest: 29.3.1
-    jest-environment-jsdom: 29.3.1
-    lodash: 4.17.21
-    prettier: 3.0.0
-    react: 18.2.0
-    react-dom: 18.2.0
-    react-use: 17.4.0
-    replace-in-file-webpack-plugin: ^1.0.6
-    rxjs: 7.8.1
-    sass: 1.63.6
-    sass-loader: 13.3.2
-    style-loader: 3.3.3
-    swc-loader: ^0.2.3
-    ts-node: 10.9.1
-    tsconfig-paths: ^4.2.0
-    tslib: 2.6.0
-    typescript: 4.8.4
-    webpack: 5.88.1
-    webpack-cli: 5.1.4
-    webpack-livereload-plugin: ^3.0.2
-  languageName: unknown
-  linkType: soft
-
 "@grafana/async-query-data@npm:0.1.4":
   version: 0.1.4
   resolution: "@grafana/async-query-data@npm:0.1.4"
@@ -4084,22 +4021,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:6.0.0":
-  version: 6.0.0
-  resolution: "@grafana/eslint-config@npm:6.0.0"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": 5.59.9
-    "@typescript-eslint/parser": 5.59.9
-    eslint: 8.42.0
-    eslint-config-prettier: 8.8.0
-    eslint-plugin-jsdoc: 46.2.6
-    eslint-plugin-react: 7.32.2
-    eslint-plugin-react-hooks: 4.6.0
-    typescript: 4.8.4
-  checksum: a22d21282ba88a3b27d7a68ca6cbd01fe18c39aa3227b23079a0303d3c4265937c8371f8a0ea87acb843c9cec9fc82c649e2a8f47698613af8259edc85fd027c
-  languageName: node
-  linkType: hard
-
 "@grafana/eslint-config@npm:6.0.1":
   version: 6.0.1
   resolution: "@grafana/eslint-config@npm:6.0.1"
@@ -4115,12 +4036,6 @@ __metadata:
   checksum: 6744cc4b48d7504f574798fc442e1c794f784bc408b435ed43cb1baef8d0ab83554c5ac2a6437af352ee5df241055050217d5a67e15491a6116555c92c349c31
   languageName: node
   linkType: hard
-
-"@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Fgrafana-testdata-datasource":
-  version: 0.0.0-use.local
-  resolution: "@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Fgrafana-testdata-datasource"
-  languageName: node
-  linkType: soft
 
 "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
@@ -4283,7 +4198,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@10.2.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -4776,15 +4691,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/create-cache-key-function@npm:^27.4.2":
-  version: 27.5.1
-  resolution: "@jest/create-cache-key-function@npm:27.5.1"
-  dependencies:
-    "@jest/types": ^27.5.1
-  checksum: a6c3a8c769aca6f66f5dc80f1c77e66980b4f213a6b2a15a92ba3595f032848a1261c06c9c798dcf2b672b1ffbefad5085af89d130548741c85ddbe0cf4284e7
-  languageName: node
-  linkType: hard
-
 "@jest/environment@npm:^29.3.1":
   version: 29.3.1
   resolution: "@jest/environment@npm:29.3.1"
@@ -5148,19 +5054,6 @@ __metadata:
     "@types/yargs": ^16.0.0
     chalk: ^4.0.0
   checksum: 322603c24354a5333b5b7a670464422a46e0244a5a96a35552a7018eb4ac2e84c3b7657336b0ea6aa114963f9b6d0da8b8f6f963cb044fea9e7bc04d464b0ab1
-  languageName: node
-  linkType: hard
-
-"@jest/types@npm:^27.5.1":
-  version: 27.5.1
-  resolution: "@jest/types@npm:27.5.1"
-  dependencies:
-    "@types/istanbul-lib-coverage": ^2.0.0
-    "@types/istanbul-reports": ^3.0.0
-    "@types/node": "*"
-    "@types/yargs": ^16.0.0
-    chalk: ^4.0.0
-  checksum: d1f43cc946d87543ddd79d49547aab2399481d34025d5c5f2025d3d99c573e1d9832fa83cef25e9d9b07a8583500229d15bbb07b8e233d127d911d133e2f14b1
   languageName: node
   linkType: hard
 
@@ -9837,18 +9730,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/jest@npm:^0.2.26":
-  version: 0.2.29
-  resolution: "@swc/jest@npm:0.2.29"
-  dependencies:
-    "@jest/create-cache-key-function": ^27.4.2
-    jsonc-parser: ^3.2.0
-  peerDependencies:
-    "@swc/core": "*"
-  checksum: 9eaad322310f34e81f67d41411a7d60663341af1bd9fb65456faa914c936d849d6f643fa3b942a187d52e71e62c33097098c639d25c2047fa874f49bf51cec76
-  languageName: node
-  linkType: hard
-
 "@testing-library/dom@npm:9.3.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
   version: 9.3.1
   resolution: "@testing-library/dom@npm:9.3.1"
@@ -10796,16 +10677,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.2.3":
-  version: 29.2.3
-  resolution: "@types/jest@npm:29.2.3"
-  dependencies:
-    expect: ^29.0.0
-    pretty-format: ^29.0.0
-  checksum: 55370906711b600a05b9e497c22aa74d80d8adcdbe4ac2f1bc9311f6f6ca0dd192862b6f38df6ac0d45e92396bcd796e377b1d8058c10bdfd584aeee580c3ce1
-  languageName: node
-  linkType: hard
-
 "@types/jest@npm:29.5.4, @types/jest@npm:^29.5.4":
   version: 29.5.4
   resolution: "@types/jest@npm:29.5.4"
@@ -11504,6 +11375,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/source-list-map@npm:*":
+  version: 0.1.3
+  resolution: "@types/source-list-map@npm:0.1.3"
+  checksum: a001098786d75b82eef00a6e4f1f7bb73f9f2fdf3e97333f8b741183c3fbf92db91af8bcfc410c7e6c23c4497523a3210f3eee2077b1be93595206f9baf3d909
+  languageName: node
+  linkType: hard
+
 "@types/stack-utils@npm:^2.0.0":
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
@@ -11529,6 +11407,13 @@ __metadata:
   version: 6.13.1
   resolution: "@types/systemjs@npm:6.13.1"
   checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
+  languageName: node
+  linkType: hard
+
+"@types/tapable@npm:^1":
+  version: 1.0.9
+  resolution: "@types/tapable@npm:1.0.9"
+  checksum: 12bc0a0a949334777bd58e6467447004b8f921b38e5d18d0f7fb84f7fe978c6e8df0b8ae2e4519ab10b1e038c24f3f89807c13ef5caa932095dbeace8d3938c6
   languageName: node
   linkType: hard
 
@@ -11578,6 +11463,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/uglify-js@npm:*":
+  version: 3.17.2
+  resolution: "@types/uglify-js@npm:3.17.2"
+  dependencies:
+    source-map: ^0.6.1
+  checksum: 6cd3ae5befd2bf147c6a37e94b1454dc85d9102ec1a6ab242268f37fe84ba8373904db2ed56fa418233fd93366bde8e0bb4f49c137b92f165b45c957296ac28a
+  languageName: node
+  linkType: hard
+
 "@types/unist@npm:*, @types/unist@npm:^2.0.0":
   version: 2.0.6
   resolution: "@types/unist@npm:2.0.6"
@@ -11603,6 +11497,40 @@ __metadata:
   version: 1.18.1
   resolution: "@types/webpack-env@npm:1.18.1"
   checksum: 3173c069763e51a96565d602af7e6dac9d772ae4aa6f26cac187cbf599a7f0b88f790b4b050b9dbdb0485daed3061b4a337863f3b8ce66f8a4e51f75ad387c6a
+  languageName: node
+  linkType: hard
+
+"@types/webpack-livereload-plugin@npm:^2.3.4":
+  version: 2.3.4
+  resolution: "@types/webpack-livereload-plugin@npm:2.3.4"
+  dependencies:
+    "@types/webpack": ^4
+  checksum: f313002c7394d7142ec8a747af99d833f725d23755a5901238d596d0102bc256a4f174f6579b21a1952d9c1b47aba87f74a9c6e6c8844e6f312466e94165a840
+  languageName: node
+  linkType: hard
+
+"@types/webpack-sources@npm:*":
+  version: 3.2.1
+  resolution: "@types/webpack-sources@npm:3.2.1"
+  dependencies:
+    "@types/node": "*"
+    "@types/source-list-map": "*"
+    source-map: ^0.7.3
+  checksum: c347c91ac4d3244c3c47519a797d0e73569fbabadfd95ff4ece5b731a2790276b4b484c7038b4a561e025f508d292395f7a072db849120626d7f64040bd1127a
+  languageName: node
+  linkType: hard
+
+"@types/webpack@npm:^4":
+  version: 4.41.34
+  resolution: "@types/webpack@npm:4.41.34"
+  dependencies:
+    "@types/node": "*"
+    "@types/tapable": ^1
+    "@types/uglify-js": "*"
+    "@types/webpack-sources": "*"
+    anymatch: ^3.0.0
+    source-map: ^0.6.0
+  checksum: 10bdbd6cabafa58b7d4263bbf23134196c606034f84886ee9906c9951a62ffe9d52f0b74b084cd59ad0ef7521742e958ce9e0794fd7ed04e7ca6bc475455e04d
   languageName: node
   linkType: hard
 
@@ -13049,6 +12977,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"anymatch@npm:^3.0.0, anymatch@npm:^3.1.1":
+  version: 3.1.3
+  resolution: "anymatch@npm:3.1.3"
+  dependencies:
+    normalize-path: ^3.0.0
+    picomatch: ^2.0.4
+  checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
+  languageName: node
+  linkType: hard
+
 "anymatch@npm:^3.0.3, anymatch@npm:~3.1.2":
   version: 3.1.2
   resolution: "anymatch@npm:3.1.2"
@@ -13059,28 +12997,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"anymatch@npm:^3.1.1":
-  version: 3.1.3
-  resolution: "anymatch@npm:3.1.3"
-  dependencies:
-    normalize-path: ^3.0.0
-    picomatch: ^2.0.4
-  checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
-  languageName: node
-  linkType: hard
-
 "app-root-dir@npm:^1.0.2":
   version: 1.0.2
   resolution: "app-root-dir@npm:1.0.2"
   checksum: d4b1653fc60b6465b982bf5a88b12051ed2d807d70609386a809306e1c636496f53522d61fa30f9f98c71aaae34f34e1651889cf17d81a44e3dafd2859d495ad
   languageName: node
   linkType: hard
-
-"app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Fgrafana-testdata-datasource":
-  version: 0.0.0-use.local
-  resolution: "app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fapp%2Fplugins%2Fdatasource%2Fgrafana-testdata-datasource"
-  languageName: node
-  linkType: soft
 
 "app@link:./public/app::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
@@ -20164,7 +20086,6 @@ __metadata:
     "@emotion/react": 11.11.1
     "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana-plugins/testdata": "workspace:*"
     "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -20277,6 +20198,7 @@ __metadata:
     "@types/trusted-types": 2.0.3
     "@types/uuid": 9.0.2
     "@types/webpack-env": 1.18.1
+    "@types/webpack-livereload-plugin": ^2.3.4
     "@types/yargs": 17.0.24
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
@@ -20447,6 +20369,7 @@ __metadata:
     redux-mock-store: 1.5.4
     redux-thunk: 2.4.2
     regenerator-runtime: 0.13.11
+    replace-in-file-webpack-plugin: 1.0.6
     reselect: 4.1.8
     rimraf: 5.0.1
     rudder-sdk-js: 2.37.0
@@ -20464,6 +20387,7 @@ __metadata:
     stylelint: 15.10.1
     stylelint-config-prettier: 9.0.5
     stylelint-config-sass-guidelines: 10.0.0
+    swc-loader: 0.2.3
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.9
     test: "link:./public/test"
@@ -20474,6 +20398,7 @@ __metadata:
     ts-jest: 29.1.1
     ts-loader: 9.3.1
     ts-node: 10.9.1
+    tsconfig-paths: 4.2.0
     tslib: 2.6.0
     tween-functions: ^1.2.0
     typescript: 4.8.4
@@ -20486,6 +20411,7 @@ __metadata:
     webpack-bundle-analyzer: 4.9.0
     webpack-cli: 5.1.4
     webpack-dev-server: 4.15.1
+    webpack-livereload-plugin: 3.0.2
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.9.0
     whatwg-fetch: 3.6.2
@@ -20613,13 +20539,6 @@ __metadata:
   version: 2.1.0
   resolution: "hard-rejection@npm:2.1.0"
   checksum: 7baaf80a0c7fff4ca79687b4060113f1529589852152fa935e6787a2bc96211e784ad4588fb3048136ff8ffc9dfcf3ae385314a5b24db32de20bea0d1597f9dc
-  languageName: node
-  linkType: hard
-
-"harmony-reflect@npm:^1.4.6":
-  version: 1.6.2
-  resolution: "harmony-reflect@npm:1.6.2"
-  checksum: 2e5bae414cd2bfae5476147f9935dc69ee9b9a413206994dcb94c5b3208d4555da3d4313aff6fd14bd9991c1e3ef69cdda5c8fac1eb1d7afc064925839339b8c
   languageName: node
   linkType: hard
 
@@ -21291,15 +21210,6 @@ __metadata:
   peerDependencies:
     postcss: ^8.1.0
   checksum: 5c324d283552b1269cfc13a503aaaa172a280f914e5b81544f3803bc6f06a3b585fb79f66f7c771a2c052db7982c18bf92d001e3b47282e3abbbb4c4cc488d68
-  languageName: node
-  linkType: hard
-
-"identity-obj-proxy@npm:3.0.0":
-  version: 3.0.0
-  resolution: "identity-obj-proxy@npm:3.0.0"
-  dependencies:
-    harmony-reflect: ^1.4.6
-  checksum: 97559f8ea2aeaa1a880d279d8c49550dce01148321e00a2102cda5ddf9ce622fa1d7f3efc7bed63458af78889de888fdaebaf31c816312298bb3fdd0ef8aaf2c
   languageName: node
   linkType: hard
 
@@ -29926,7 +29836,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"replace-in-file-webpack-plugin@npm:^1.0.6":
+"replace-in-file-webpack-plugin@npm:1.0.6":
   version: 1.0.6
   resolution: "replace-in-file-webpack-plugin@npm:1.0.6"
   checksum: 0c00a074e544ebe1aef0615e594f6daad47427950a2454e88f94dcb185839d68ce07854b83bbcb5f9b2336f8e8ae24017db4eca085135a9be84e43585163301a
@@ -32103,7 +32013,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"swc-loader@npm:^0.2.3":
+"swc-loader@npm:0.2.3":
   version: 0.2.3
   resolution: "swc-loader@npm:0.2.3"
   peerDependencies:
@@ -32970,6 +32880,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tsconfig-paths@npm:4.2.0":
+  version: 4.2.0
+  resolution: "tsconfig-paths@npm:4.2.0"
+  dependencies:
+    json5: ^2.2.2
+    minimist: ^1.2.6
+    strip-bom: ^3.0.0
+  checksum: 28c5f7bbbcabc9dabd4117e8fdc61483f6872a1c6b02a4b1c4d68c5b79d06896c3cc9547610c4c3ba64658531caa2de13ead1ea1bf321c7b53e969c4752b98c7
+  languageName: node
+  linkType: hard
+
 "tsconfig-paths@npm:^3.14.1, tsconfig-paths@npm:^3.9.0":
   version: 3.14.1
   resolution: "tsconfig-paths@npm:3.14.1"
@@ -32979,17 +32900,6 @@ __metadata:
     minimist: ^1.2.6
     strip-bom: ^3.0.0
   checksum: 8afa01c673ebb4782ba53d3a12df97fa837ce524f8ad38ee4e2b2fd57f5ac79abc21c574e9e9eb014d93efe7fe8214001b96233b5c6ea75bd1ea82afe17a4c6d
-  languageName: node
-  linkType: hard
-
-"tsconfig-paths@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "tsconfig-paths@npm:4.2.0"
-  dependencies:
-    json5: ^2.2.2
-    minimist: ^1.2.6
-    strip-bom: ^3.0.0
-  checksum: 28c5f7bbbcabc9dabd4117e8fdc61483f6872a1c6b02a4b1c4d68c5b79d06896c3cc9547610c4c3ba64658531caa2de13ead1ea1bf321c7b53e969c4752b98c7
   languageName: node
   linkType: hard
 
@@ -34135,7 +34045,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-livereload-plugin@npm:^3.0.2":
+"webpack-livereload-plugin@npm:3.0.2":
   version: 3.0.2
   resolution: "webpack-livereload-plugin@npm:3.0.2"
   dependencies:

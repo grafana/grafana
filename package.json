@@ -25,7 +25,7 @@
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "test:ci": "yarn i18n:compile && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint:ts --fix",
-    "packages:build": "lerna run build --ignore '@grafana-plugins/*'",
+    "packages:build": "lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:clean": "rimraf ./npm-artifacts && lerna run clean --parallel",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
@@ -52,7 +52,10 @@
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
-    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts"
+    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
+    "build:plugin": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -c ./tools/plugins/shared/webpack/webpack.config.ts --env production --env dir=${0}",
+    "build:plugin:commit": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -c ./tools/plugins/shared/webpack/webpack.config.ts --env production --env dir=${0} --env commit=$(git rev-parse --short HEAD)",
+    "build:plugin:dev": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -w -c ./tools/plugins/shared/webpack/webpack.config.ts --env development --env dir=${0}"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-1/",
@@ -145,6 +148,7 @@
     "@types/testing-library__jest-dom": "5.14.8",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "9.0.2",
+    "@types/webpack-livereload-plugin": "^2.3.4",
     "@types/yargs": "17.0.24",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
@@ -207,6 +211,7 @@
     "react-simple-compat": "1.2.3",
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "1.5.4",
+    "replace-in-file-webpack-plugin": "1.0.6",
     "rimraf": "5.0.1",
     "rudder-sdk-js": "2.37.0",
     "sass": "1.63.6",
@@ -216,18 +221,21 @@
     "stylelint": "15.10.1",
     "stylelint-config-prettier": "9.0.5",
     "stylelint-config-sass-guidelines": "10.0.0",
+    "swc-loader": "0.2.3",
     "terser-webpack-plugin": "5.3.9",
     "testing-library-selector": "0.2.1",
     "tracelib": "1.0.1",
     "ts-jest": "29.1.1",
     "ts-loader": "9.3.1",
     "ts-node": "10.9.1",
+    "tsconfig-paths": "4.2.0",
     "typescript": "4.8.4",
     "wait-on": "7.0.1",
     "webpack": "5.88.1",
     "webpack-bundle-analyzer": "4.9.0",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "4.15.1",
+    "webpack-livereload-plugin": "3.0.2",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.9.0",
     "yaml": "^2.0.0",
@@ -239,7 +247,6 @@
     "@emotion/react": "11.11.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@glideapps/glide-data-grid": "^5.2.1",
-    "@grafana-plugins/testdata": "workspace:*",
     "@grafana/aws-sdk": "0.1.3",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
@@ -431,8 +438,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "plugins-bundled/internal/*",
-      "public/app/plugins/datasource/*"
+      "plugins-bundled/internal/*"
     ]
   },
   "engines": {
