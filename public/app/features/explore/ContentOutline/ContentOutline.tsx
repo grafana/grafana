@@ -23,6 +23,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'content',
       position: 'sticky',
+      top: 0,
       height: '81vh',
     }),
     buttonStyles: css({
