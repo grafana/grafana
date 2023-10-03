@@ -10,7 +10,7 @@ import (
 const (
 	TeamAlerting = "alerting"
 	TeamAuth     = "auth"
-	TeamBackend  = "grafana_backend"
+	TeamBackend  = "backend"
 )
 
 type StatusSource string
