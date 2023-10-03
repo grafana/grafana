@@ -134,4 +134,6 @@ export interface FeatureToggles {
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  alertingModifiedExport?: boolean;
 }

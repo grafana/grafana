@@ -41,12 +41,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transform: 'rotate(180deg)',
     },
   }),
-  stickyToolbar: css({
-    position: 'sticky',
-    top: 0,
-    // reducing zIndex to prevent overlapping the top nav
-    zIndex: theme.zIndex.navbarFixed - 1,
-  }),
 });
 
 interface Props {
@@ -144,7 +138,7 @@ export function ExploreToolbar({
   };
 
   return (
-    <div ref={topOfViewRef} className={styles.stickyToolbar}>
+    <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <div ref={topOfViewRef}>
         <AppChromeUpdate

@@ -77,7 +77,7 @@ dashboardEmbed,experimental,@grafana/grafana-as-code,false,false,false,true
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,false,true
-cloudWatchLogsMonacoEditor,preview,@grafana/aws-datasources,false,false,false,true
+cloudWatchLogsMonacoEditor,GA,@grafana/aws-datasources,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
@@ -115,3 +115,5 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,fal
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
+externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
+alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false
