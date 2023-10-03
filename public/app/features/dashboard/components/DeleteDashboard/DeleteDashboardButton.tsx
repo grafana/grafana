@@ -24,7 +24,7 @@ export const DeleteDashboardButton = ({ dashboard }: Props) => (
         }}
         aria-label="Dashboard settings page delete dashboard button"
       >
-        <Trans i18nKey="dashboard-delete-button">Delete Dashboard</Trans>
+        <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete Dashboard</Trans>
       </Button>
     )}
   </ModalsController>
