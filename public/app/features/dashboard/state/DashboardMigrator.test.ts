@@ -2383,27 +2383,27 @@ describe('when migrating table cell display mode to cell options', () => {
 
   it('should migrate gradient color background option to the new option format', () => {
     const cellOptions = model.panels[0].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient', minMaxMode: 'global' });
   });
 
   it('should migrate solid color background option to the new option format', () => {
     const cellOptions = model.panels[1].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'color-background', mode: 'basic', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'basic', minMaxMode: 'global' });
   });
 
   it('should migrate LCD gauge option to the new option format', () => {
     const cellOptions = model.panels[2].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'gauge', mode: 'lcd', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'lcd', minMaxMode: 'global' });
   });
 
   it('should migrate gradient gauge option to the new option format', () => {
     const cellOptions = model.panels[3].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'gauge', mode: 'gradient', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'gradient', minMaxMode: 'global' });
   });
 
   it('should migrate basic gauge option to the new option format', () => {
     const cellOptions = model.panels[4].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic', minMaxMode: 'global' });
   });
 
   it('should migrate from display mode to cell options in field overrides', () => {
@@ -2411,17 +2411,17 @@ describe('when migrating table cell display mode to cell options', () => {
 
     expect(fieldConfig.overrides[0].properties[0]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'color-background', mode: 'gradient', minMaxMode: 'row' },
+      value: { type: 'color-background', mode: 'gradient', minMaxMode: 'global' },
     });
 
     expect(fieldConfig.overrides[1].properties[0]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'gauge', mode: 'lcd', minMaxMode: 'row' },
+      value: { type: 'gauge', mode: 'lcd', minMaxMode: 'global' },
     });
 
     expect(fieldConfig.overrides[2].properties[0]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'row' },
+      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'global' },
     });
   });
 
@@ -2429,7 +2429,7 @@ describe('when migrating table cell display mode to cell options', () => {
     const override = model.panels[5].fieldConfig.overrides[3];
     expect(override.properties[1]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'row' },
+      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'global' },
     });
   });
 
@@ -2443,7 +2443,7 @@ describe('when migrating table cell display mode to cell options', () => {
 
     expect(fieldConfig.overrides[2].properties[0]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'row' },
+      value: { type: 'gauge', mode: 'gradient', minMaxMode: 'global' },
     });
   });
 });
@@ -2523,7 +2523,7 @@ describe('when migrating table cells to use minMaxMode', () => {
 
   it('should migrate background-color to have minMaxMode set to row', () => {
     const cellOptions = model.panels[0].fieldConfig.defaults.custom.cellOptions;
-    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient', minMaxMode: 'row' });
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient', minMaxMode: 'global' });
   });
 
   it('should not set minMaxMode on image cells', () => {
@@ -2535,7 +2535,7 @@ describe('when migrating table cells to use minMaxMode', () => {
     const fieldConfig = model.panels[2].fieldConfig;
     expect(fieldConfig.overrides[0].properties[0]).toEqual({
       id: 'custom.cellOptions',
-      value: { type: 'color-background', mode: 'gradient', minMaxMode: 'row' },
+      value: { type: 'color-background', mode: 'gradient', minMaxMode: 'global' },
     });
   });
 });

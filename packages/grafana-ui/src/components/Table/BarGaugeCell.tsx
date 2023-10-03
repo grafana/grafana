@@ -42,7 +42,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   let config = getFieldConfigWithMinMax(
     field,
-    cellOptions.type === TableCellDisplayMode.Gauge && cellOptions.minMaxMode !== CellMinMaxMode.Row
+    cellOptions.type === TableCellDisplayMode.Gauge && cellOptions.minMaxMode !== CellMinMaxMode.Global
   );
   if (!config.thresholds) {
     config = {

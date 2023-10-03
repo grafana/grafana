@@ -107,7 +107,7 @@ Gauge cell options
 | Property           | Type   | Required | Default | Description                                                                                                                                   |
 |--------------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `type`             | string | **Yes**  |         |                                                                                                                                               |
-| `minMaxMode`       | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `field`, `row`.                                  |
+| `minMaxMode`       | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `local`, `global`.                               |
 | `mode`             | string | No       |         | Enum expressing the possible display modes<br/>for the bar gauge component of Grafana UI<br/>Possible values are: `basic`, `lcd`, `gradient`. |
 | `valueDisplayMode` | string | No       |         | Allows for the table cell gauge display type to set the gauge mode.<br/>Possible values are: `color`, `text`, `hidden`.                       |
 
@@ -115,10 +115,10 @@ Gauge cell options
 
 Colored text cell options
 
-| Property     | Type   | Required | Default | Description                                                                                                  |
-|--------------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `type`       | string | **Yes**  |         |                                                                                                              |
-| `minMaxMode` | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `field`, `row`. |
+| Property     | Type   | Required | Default | Description                                                                                                     |
+|--------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------|
+| `type`       | string | **Yes**  |         |                                                                                                                 |
+| `minMaxMode` | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `local`, `global`. |
 
 ### TableColoredBackgroundCellOptions
 
@@ -127,7 +127,7 @@ Colored background cell options
 | Property     | Type   | Required | Default | Description                                                                                                                                                                            |
 |--------------|--------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `type`       | string | **Yes**  |         |                                                                                                                                                                                        |
-| `minMaxMode` | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `field`, `row`.                                                                           |
+| `minMaxMode` | string | No       |         | The method to calculate the min/max for the cells that have a range<br/>Possible values are: `local`, `global`.                                                                        |
 | `mode`       | string | No       |         | Display mode to the "Colored Background" display<br/>mode for table cells. Either displays a solid color (basic mode)<br/>or a gradient.<br/>Possible values are: `basic`, `gradient`. |
 
 ### TableImageCellOptions

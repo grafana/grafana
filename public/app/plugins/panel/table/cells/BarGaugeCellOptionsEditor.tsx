@@ -44,9 +44,9 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
           options={valueModes}
         />
       </Field>
-      <Field label="Min/max">
+      <Field label="Calculate min/max from">
         <RadioButtonGroup
-          value={cellOptions?.minMaxMode ?? CellMinMaxMode.Field}
+          value={cellOptions?.minMaxMode ?? CellMinMaxMode.Local}
           onChange={onMinMaxModeChange}
           options={minMaxModes}
         />

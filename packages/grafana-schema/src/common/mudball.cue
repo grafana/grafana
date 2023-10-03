@@ -247,7 +247,7 @@ BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
 
 // The method to calculate the min/max for the cells that have a range
-CellMinMaxMode: "field" | "row" @cuetsy(kind="enum")
+CellMinMaxMode: "local" | "global" @cuetsy(kind="enum")
 
 // TODO docs
 VizTooltipOptions: {

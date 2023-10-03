@@ -639,8 +639,8 @@ export enum BarGaugeValueMode {
  * The method to calculate the min/max for the cells that have a range
  */
 export enum CellMinMaxMode {
-  Field = 'field',
-  Row = 'row',
+  Global = 'global',
+  Local = 'local',
 }
 
 /**

@@ -19,9 +19,9 @@ export const ColorTextCellOptionsEditor = ({
 
   return (
     <Stack direction="column" gap={0}>
-      <Field label="Min/max">
+      <Field label="Calculate min/max from">
         <RadioButtonGroup
-          value={cellOptions?.minMaxMode ?? CellMinMaxMode.Field}
+          value={cellOptions?.minMaxMode ?? CellMinMaxMode.Local}
           onChange={onMinMaxModeChange}
           options={minMaxModes}
         />

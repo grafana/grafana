@@ -186,7 +186,7 @@ export function shouldRecalculateScaleRange(cellOptions: TableCellOptions, field
       cellOptions.type
     ) &&
     field.state !== undefined &&
-    minMaxMode !== CellMinMaxMode.Row
+    minMaxMode !== CellMinMaxMode.Global
   );
 }
 
@@ -494,7 +494,7 @@ export function migrateCellMinMax(tableCellOptions: TableCellOptions) {
       case TableCellDisplayMode.Gauge:
       case TableCellDisplayMode.ColorBackground:
       case TableCellDisplayMode.ColorText:
-        tableCellOptions.minMaxMode = CellMinMaxMode.Row;
+        tableCellOptions.minMaxMode = CellMinMaxMode.Global;
     }
   }
 }
