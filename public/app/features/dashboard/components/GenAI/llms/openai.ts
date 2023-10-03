@@ -20,7 +20,6 @@ import {
 import { getBackendSrv, getGrafanaLiveSrv, logDebug } from '@grafana/runtime';
 
 import { LLM_PLUGIN_ID, LLM_PLUGIN_ROUTE, setLLMPluginVersion } from './constants';
-import { LLMAppHealthCheck } from './types';
 
 const OPENAI_CHAT_COMPLETIONS_PATH = 'openai/v1/chat/completions';
 
@@ -371,6 +370,7 @@ export const enabled = async () => {
       showSuccessAlert: false,
       showErrorAlert: false,
     });
+    setLLMPluginVersion(settings.info.version);
     return settings.enabled ?? false;
   } catch (e) {
     if (!loggedWarning) {
