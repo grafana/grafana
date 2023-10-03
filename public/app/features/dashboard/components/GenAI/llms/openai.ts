@@ -366,13 +366,12 @@ let loggedWarning = false;
 
 /** Check if the OpenAI API is enabled via the LLM plugin. */
 export const enabled = async () => {
-  // Run a health check to see if the plugin is installed.
-  let response: LLMAppHealthCheck;
   try {
-    response = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/health`, undefined, undefined, {
+    const settings = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/settings`, undefined, undefined, {
       showSuccessAlert: false,
       showErrorAlert: false,
     });
+    return settings.enabled ?? false;
   } catch (e) {
     if (!loggedWarning) {
       logDebug(String(e));
@@ -383,12 +382,4 @@ export const enabled = async () => {
     }
     return false;
   }
-
-  const { details } = response;
-  // Update the version if it's present on the response.
-  if (details.version !== undefined) {
-    setLLMPluginVersion(details.version);
-  }
-  // If the plugin is installed then check if it is configured.
-  return details?.openAI ?? false;
 };
