@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"net/http"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -9,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
@@ -27,6 +30,10 @@ func RegisterAPIService(apiregistration grafanaapiserver.APIRegistrar) *TestingA
 	builder := &TestingAPIBuilder{}
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+func (b *TestingAPIBuilder) GetGroupVersion() schema.GroupVersion {
+	return SchemeGroupVersion
 }
 
 func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -67,7 +74,48 @@ func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
 // Register additional routes with the server
 func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return nil
+	return &grafanaapiserver.APIRoutes{
+		Root: []grafanaapiserver.APIRouteHandler{
+			{
+				Path: "aaa",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{ParameterProps: spec3.ParameterProps{
+									Name: "a",
+								}},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("Root level handler (aaa)"))
+				},
+			},
+			{
+				Path: "bbb",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{ParameterProps: spec3.ParameterProps{
+									Name: "a",
+								}},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("Root level handler (bbb)"))
+				},
+			},
+		},
+	}
 }
 
 // SchemeGroupVersion is group version used to register these objects

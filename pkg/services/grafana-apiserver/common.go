@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -14,6 +15,9 @@ import (
 // TODO: this (or something like it) belongs in grafana-app-sdk,
 // but lets keep it here while we iterate on a few simple examples
 type APIGroupBuilder interface {
+	// Get the main group name
+	GetGroupVersion() schema.GroupVersion
+
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
@@ -27,7 +31,7 @@ type APIGroupBuilder interface {
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Get explicit API routes
+	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
 }
 

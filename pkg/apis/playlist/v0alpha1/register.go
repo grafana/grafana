@@ -35,6 +35,10 @@ func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.API
 	return builder
 }
 
+func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
+	return SchemeGroupVersion
+}
+
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := AddToScheme(scheme)
 	if err != nil {
