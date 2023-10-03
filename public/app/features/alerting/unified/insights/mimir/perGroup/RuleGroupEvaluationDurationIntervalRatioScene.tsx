@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, ThresholdsMode, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { getPanelMenu, PANEL_STYLES } from '../../../home/Insights';
 
 export function getRuleGroupEvaluationDurationIntervalRatioScene(
   timeRange: SceneTimeRange,
@@ -48,6 +48,7 @@ export function getRuleGroupEvaluationDurationIntervalRatioScene(
           },
         ],
       })
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

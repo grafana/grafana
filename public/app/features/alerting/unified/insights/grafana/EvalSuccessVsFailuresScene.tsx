@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { getPanelMenu, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
 export function getGrafanaEvalSuccessVsFailuresScene(
   timeRange: SceneTimeRange,
@@ -42,6 +42,7 @@ export function getGrafanaEvalSuccessVsFailuresScene(
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

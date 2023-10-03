@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { getPanelMenu, overrideToFixedColor } from '../../home/Insights';
 
 export function getInstanceStatByStatusScene(
   timeRange: SceneTimeRange,
@@ -30,6 +30,7 @@ export function getInstanceStatByStatusScene(
       .setData(query)
       .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

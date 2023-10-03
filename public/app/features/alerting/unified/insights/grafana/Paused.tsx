@@ -2,7 +2,7 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
 
 export function getPausedGrafanaAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -37,6 +37,7 @@ export function getPausedGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
         ],
       })
       .setNoValue('0')
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

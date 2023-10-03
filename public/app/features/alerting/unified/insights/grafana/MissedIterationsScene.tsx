@@ -11,7 +11,7 @@ import {
 } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
 
 export function getGrafanaMissedIterationsScene(
   timeRange: SceneTimeRange,
@@ -66,6 +66,7 @@ export function getGrafanaMissedIterationsScene(
       .setData(transformation)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }
