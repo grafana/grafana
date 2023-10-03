@@ -1,5 +1,5 @@
 import { buildMetadataQuery } from './influxql_query_builder';
-import { templateSrvStub as templateService } from './specs/mocks';
+import { templateSrvStub as templateService } from './mocks';
 import { DEFAULT_POLICY } from './types';
 
 describe('influxql-query-builder', () => {

@@ -16,10 +16,10 @@ weight: 15
 
 Explore is a powerful tool for logging and log analysis. It allows you to investigate logs from different data sources including:
 
-- [Loki]({{< relref "../datasources/loki/" >}})
-- [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
-- [Cloudwatch]({{< relref "../datasources/cloudwatch/" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb/" >}})
+- [Loki]({{< relref "../datasources/loki" >}})
+- [Elasticsearch]({{< relref "../datasources/elasticsearch" >}})
+- [Cloudwatch]({{< relref "../datasources/aws-cloudwatch" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb" >}})
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying the root causes. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 

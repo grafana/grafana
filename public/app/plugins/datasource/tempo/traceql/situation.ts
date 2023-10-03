@@ -86,7 +86,7 @@ type Path = Array<[Direction, NodeType[]]>;
 
 type Resolver = {
   path: NodeType[];
-  fun: (node: SyntaxNode, text: string, pos: number) => SituationType | null;
+  fun: (node: SyntaxNode, text: string, pos: number, originalPos: number) => SituationType | null;
 };
 
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
@@ -181,7 +181,7 @@ export function getSituation(text: string, offset: number): Situation | null {
   let situationType: SituationType | null = null;
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
-      situationType = resolver.fun(currentNode, text, shiftedOffset);
+      situationType = resolver.fun(currentNode, text, shiftedOffset, offset);
     }
   }
 
@@ -191,7 +191,7 @@ export function getSituation(text: string, offset: number): Situation | null {
 const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
-  // Incomplete query cases
+  // Curson on error node cases
   {
     path: [ERROR_NODE_ID, AttributeField],
     fun: resolveAttribute,
@@ -230,12 +230,10 @@ const RESOLVERS: Resolver[] = [
       };
     },
   },
-  // Valid query cases
+  // Curson on valid node cases (the whole query could contain errors nevertheless)
   {
     path: [FieldExpression],
-    fun: () => ({
-      type: 'SPANSET_EXPRESSION_OPERATORS',
-    }),
+    fun: resolveSpanset,
   },
   {
     path: [SpansetFilter],
@@ -251,30 +249,53 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
-function resolveSpanset(node: SyntaxNode): SituationType {
-  const firstChild = walk(node, [
+const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number): SituationType | void => {
+  // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
+  // enough to automatically detect that there are some characters before the cursor and to take them into
+  // account when providing suggestions.
+  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
+  if (endOfPathNode && text[pos - 1] !== ' ') {
+    const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+    const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
+    const indexOfDot = attributeFieldParentText.indexOf('.');
+    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+
+    return {
+      type: 'SPANSET_IN_NAME_SCOPE',
+      scope: attributeFieldUpToDot,
+    };
+  }
+};
+
+function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
+  let endOfPathNode = walk(node, [
     ['firstChild', [FieldExpression]],
     ['firstChild', [AttributeField]],
   ]);
-  if (firstChild) {
+  if (endOfPathNode) {
     return {
       type: 'SPANSET_EXPRESSION_OPERATORS',
     };
   }
 
-  const lastFieldExpression1 = walk(node, [
+  endOfPathNode = walk(node, [
     ['lastChild', [FieldExpression]],
     ['lastChild', [FieldExpression]],
     ['lastChild', [Static]],
   ]);
-  if (lastFieldExpression1) {
+  if (endOfPathNode) {
     return {
       type: 'SPANFIELD_COMBINING_OPERATORS',
     };
   }
 
-  const lastFieldExpression = walk(node, [['lastChild', [FieldExpression]]]);
-  if (lastFieldExpression) {
+  endOfPathNode = walk(node, [['lastChild', [FieldExpression]]]);
+  if (endOfPathNode) {
     return {
       type: 'SPANSET_EXPRESSION_OPERATORS',
     };
@@ -309,7 +330,12 @@ function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   };
 }
 
-function resolveExpression(node: SyntaxNode, text: string): SituationType {
+function resolveExpression(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
   if (node.prevSibling?.type.id === FieldOp) {
     let attributeField = node.prevSibling.prevSibling;
     if (attributeField) {

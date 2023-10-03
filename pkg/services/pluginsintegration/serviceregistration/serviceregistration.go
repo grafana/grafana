@@ -3,7 +3,7 @@ package serviceregistration
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -21,7 +21,7 @@ func ProvideService(os oauthserver.OAuth2Server) *Service {
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	impersonation := oauthserver.ImpersonationCfg{}
 	if svc.Impersonation != nil {
 		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
@@ -56,7 +56,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		return nil, err
 	}
 
-	return &oauth.ExternalService{
+	return &auth.ExternalService{
 		ClientID:     extSvc.ID,
 		ClientSecret: extSvc.Secret,
 		PrivateKey:   extSvc.KeyResult.PrivatePem,
