@@ -14,6 +14,8 @@ var (
 
 type Service struct{}
 
+// ProvideService is an entry point for each service that will force initialization
+// and give each builder the chance to register itself with the main server
 func ProvideService(
 	_ *playlistsv0alpha1.PlaylistAPIBuilder,
 	_ *testingv0alpha1.TestingAPIBuilder,
