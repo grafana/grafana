@@ -5,6 +5,8 @@ import { DataLinkTransformationConfig, ExploreCorrelationHelperData } from '@gra
 import { Collapse, Alert, Field, Input, Button } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
+import { getTransformationVars } from '../correlations/transformations';
+
 import { CorrelationTransformationAddModal } from './CorrelationTransformationAddModal';
 import { changeCorrelationEditorDetails } from './state/main';
 import { selectCorrelationDetails } from './state/selectors';
@@ -21,6 +23,7 @@ interface FormValues {
 export const CorrelationHelper = ({ correlations }: Props) => {
   const dispatch = useDispatch();
   const { register, watch } = useForm<FormValues>();
+  const [correlationVars, setCorrelationVars] = useState(correlations.vars);
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
@@ -54,6 +57,24 @@ export const CorrelationHelper = ({ correlations }: Props) => {
   useEffect(() => {
     const dirty = !correlationDetails?.dirty && transformations.length > 0 ? true : correlationDetails?.dirty;
     dispatch(changeCorrelationEditorDetails({ transformations: transformations, dirty: dirty }));
+    transformations.forEach((transformation) => {
+      const transformationVars = getTransformationVars(
+        {
+          type: transformation.type,
+          expression: transformation.expression,
+          mapValue: transformation.mapValue,
+        },
+        correlations.vars[transformation.field!],
+        transformation.field!
+      );
+
+      const transVarRecords: Record<string, string> = {};
+      Object.keys(transformationVars).forEach((key) => {
+        transVarRecords[key] = transformationVars[key]?.value;
+      });
+
+      setCorrelationVars({ ...correlationVars, ...transVarRecords });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, transformations]);
 
@@ -73,7 +94,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
         The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
         variables to set up your correlations:
         <pre>
-          {Object.entries(correlations.vars).map((entry) => {
+          {Object.entries(correlationVars).map((entry) => {
             return `\$\{${entry[0]}\} = ${entry[1]}\n`;
           })}
         </pre>
@@ -111,9 +132,15 @@ export const CorrelationHelper = ({ correlations }: Props) => {
           </Button>
           {transformations.map((transformation, i) => {
             const { type, field, expression, mapValue } = transformation;
+            const detailsString = [
+              mapValue !== undefined ? `Variable name: ${mapValue}` : undefined,
+              expression !== undefined ? `Expression: ${expression}` : undefined,
+            ]
+              .filter((val) => val)
+              .join(', ');
             return (
               <p key={`trans-${i}`}>
-                {field}: {type} {expression || mapValue ? `(${mapValue}, ${expression})` : ''}
+                {field}: {type} {detailsString.length > 0 ? `(${detailsString})` : ''}
               </p>
             );
           })}

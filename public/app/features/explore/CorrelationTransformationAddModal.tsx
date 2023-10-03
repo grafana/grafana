@@ -36,7 +36,7 @@ export const CorrelationTransformationAddModal = ({
 
     const transformationVars = getTransformationVars(
       {
-        type: getValues('type') as SupportedTransformationType,
+        type: getValues('type'),
         expression: getValues('expression'),
         mapValue: getValues('mapValue'),
       },
