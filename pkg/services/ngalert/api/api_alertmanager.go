@@ -75,7 +75,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("user is not authorized to %s silences", errAction), "")
 	}
 
-	silenceID, err := am.CreateSilence(&postableSilence)
+	silenceID, err := am.CreateSilence(c.Req.Context(), &postableSilence)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -112,7 +112,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 		return errResp
 	}
 
-	if err := am.DeleteSilence(silenceID); err != nil {
+	if err := am.DeleteSilence(c.Req.Context(), silenceID); err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
@@ -199,7 +199,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID
 		return errResp
 	}
 
-	gettableSilence, err := am.GetSilence(silenceID)
+	gettableSilence, err := am.GetSilence(c.Req.Context(), silenceID)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -216,7 +216,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	gettableSilences, err := am.ListSilences(c.QueryStrings("filter"))
+	gettableSilences, err := am.ListSilences(c.Req.Context(), c.QueryStrings("filter"))
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")

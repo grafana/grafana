@@ -82,7 +82,7 @@ def build_e2e(trigger, ver_mode):
 
     build_steps.extend(
         [
-            rgm_package_step(distros = "linux/amd64,linux/arm64,linux/arm/v7", file = "packages.txt"),
+            rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

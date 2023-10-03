@@ -76,7 +76,6 @@ export const InspectContent = ({
       title={title}
       subtitle={data && formatStats(data)}
       onClose={onClose}
-      scrollableContent
       tabs={
         <TabsBar>
           {tabs.map((tab, index) => {

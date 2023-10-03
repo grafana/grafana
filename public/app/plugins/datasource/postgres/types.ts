@@ -23,5 +23,5 @@ export interface PostgresOptions extends SQLOptions {
 }
 
 export interface SecureJsonData {
-  password: string;
+  password?: string;
 }

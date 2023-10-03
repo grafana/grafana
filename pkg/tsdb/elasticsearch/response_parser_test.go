@@ -3534,7 +3534,7 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"), tracing.NewFakeTracer())
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"), tracing.InitializeTracerForTest())
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {
