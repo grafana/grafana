@@ -79,20 +79,14 @@ tag_trigger = {
 nightly_trigger = {
     "event": {
         "include": [
-            "promote",
-            # "cron",
+            "cron",
         ],
     },
-    "target": {
+    "cron": {
         "include": [
             "nightly",
         ],
     },
-    # "cron": {
-    #     "include": [
-    #         "nightly-release",
-    #     ],
-    # },
 }
 
 version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
