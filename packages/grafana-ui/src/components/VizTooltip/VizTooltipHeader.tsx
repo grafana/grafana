@@ -17,7 +17,7 @@ interface Props {
 export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const renderKeyValue = () => {
+  const renderValue = () => {
     if (customValueDisplay) {
       return customValueDisplay;
     }
@@ -27,7 +27,7 @@ export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDispla
   return (
     <div className={styles.wrapper}>
       <HeaderLabel headerLabel={headerLabel} />
-      {renderKeyValue()}
+      {renderValue()}
     </div>
   );
 };
