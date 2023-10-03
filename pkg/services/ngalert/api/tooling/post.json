@@ -4098,7 +4098,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4282,6 +4281,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4488,7 +4488,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5826,6 +5825,67 @@
     ]
    }
   },
+  "/api/ruler/grafana/api/v1/export/rules": {
+   "get": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "description": "List rules in provisioning format",
+    "operationId": "RouteGetRulesForExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "UIDs of folders from which to export rules",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "folderUid",
+      "type": "array"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+      "in": "query",
+      "name": "group",
+      "type": "string"
+     },
+     {
+      "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+      "in": "query",
+      "name": "ruleUid",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
   "/api/ruler/grafana/api/v1/rules": {
    "get": {
     "description": "List rule groups",
@@ -5940,6 +6000,59 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules/{Namespace}/export": {
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "description": "Converts submitted rule group to provisioning format",
+    "operationId": "RoutePostRulesGroupForExport",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableRuleGroupConfig"
+      }
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
      }
     },
     "tags": [

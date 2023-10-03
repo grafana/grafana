@@ -1,6 +1,8 @@
 import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
@@ -205,4 +207,14 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   }
 
   return result;
+}
+
+export function isOpenSourceEdition() {
+  const buildInfo = config.buildInfo;
+  return buildInfo.edition === GrafanaEdition.OpenSource;
+}
+
+export function isLocalDevEnv() {
+  const buildInfo = config.buildInfo;
+  return buildInfo.env === 'development';
 }

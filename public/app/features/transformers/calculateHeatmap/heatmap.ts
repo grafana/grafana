@@ -33,7 +33,7 @@ export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
 export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransformerOptions> = {
   id: DataTransformerID.heatmap,
   name: 'Create heatmap',
-  description: 'Calculate heatmap from source data.',
+  description: 'Generate heatmap data from source data.',
   defaultOptions: {},
 
   operator: (options, ctx) => (source) =>
