@@ -253,18 +253,13 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	values.Add("api-version", "2022-12-01")
 	req.URL.RawQuery = values.Encode()
 
-	ctx, span := tracing.DefaultTracer().Start(
-		ctx,
-		"azuremonitor subscription query",
-		trace.WithAttributes(
-			attribute.String("subscription", subscriptionId),
-			attribute.Int64("datasource_id", dsId),
-			attribute.Int64("org_id", orgId),
-		),
+	_, span := tracing.DefaultTracer().Start(ctx, "azuremonitor subscription query", trace.WithAttributes(
+		attribute.String("subscription", subscriptionId),
+		attribute.Int64("datasource_id", dsId),
+		attribute.Int64("org_id", orgId),
+	),
 	)
 	defer span.End()
-	sctx := trace.SpanContextFromContext(ctx)
-	backend.Logger.Debug("azuremonitor query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
 
 	res, err := cli.Do(req)
 	if err != nil {
@@ -308,18 +303,15 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
-	ctx, span := tracing.DefaultTracer().Start(ctx, "azuremonitor query",
-		trace.WithAttributes(
-			attribute.String("target", query.Target),
-			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
-			attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
-			attribute.Int64("datasource_id", dsInfo.DatasourceID),
-			attribute.Int64("org_id", dsInfo.OrgID),
-		),
+	_, span := tracing.DefaultTracer().Start(ctx, "azuremonitor query", trace.WithAttributes(
+		attribute.String("target", query.Target),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
+	),
 	)
 	defer span.End()
-	sctx := trace.SpanContextFromContext(ctx)
-	backend.Logger.Debug("azuremonitor query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
 
 	res, err := cli.Do(req)
 	if err != nil {

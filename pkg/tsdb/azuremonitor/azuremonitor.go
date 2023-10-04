@@ -31,6 +31,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, f
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Features: features},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
+		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
