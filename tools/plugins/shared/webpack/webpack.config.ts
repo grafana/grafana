@@ -156,8 +156,10 @@ const config = async (env: any): Promise<Configuration> => {
           files: ['plugin.json', 'README.md'],
           rules: [
             {
-              search: /\%VERSION\%/g,
-              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
+              search: /"version": .*/g,
+              replace: `"version": "${
+                env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version
+              }"`,
             },
             {
               search: /\%TODAY\%/g,

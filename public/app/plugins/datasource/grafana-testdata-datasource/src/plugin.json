@@ -26,10 +26,7 @@
       "small": "img/testdata.svg",
       "large": "img/testdata.svg"
     },
-    "links": [],
-    "screenshots": [],
-    "version": "%VERSION%",
-    "updated": "%TODAY%"
+    "version": ""
   },
 
   "includes": [

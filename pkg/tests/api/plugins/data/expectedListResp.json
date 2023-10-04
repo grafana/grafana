@@ -1609,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
-        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
+        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/src/img/testdata.svg",
+        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/src/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,

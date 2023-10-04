@@ -95,10 +95,7 @@
       }
     },
     {
-      "files": [
-        "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
-        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}"
-      ],
+      "files": ["public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}"],
       "settings": {
         "import/resolver": {
           "node": {
