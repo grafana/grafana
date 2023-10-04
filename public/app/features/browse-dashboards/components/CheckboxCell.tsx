@@ -33,7 +33,7 @@ export default function CheckboxCell({
   return (
     <Checkbox
       data-testid={selectors.pages.BrowseDashboards.table.checkbox(item.uid)}
-      aria-labelledby={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
+      aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
