@@ -1,8 +1,8 @@
 import fs from 'fs';
-import process from 'process';
+import { glob } from 'glob';
 import os from 'os';
 import path from 'path';
-import { glob } from 'glob';
+import process from 'process';
 
 export function isWSL() {
   if (process.platform !== 'linux') {

@@ -1,13 +1,13 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-import LiveReloadPlugin from 'webpack-livereload-plugin';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import { Configuration } from 'webpack';
+import LiveReloadPlugin from 'webpack-livereload-plugin';
 
-import { getPackageJson, getPluginJson, getEntries, isWSL } from './utils';
 import { DIST_DIR } from './constants';
+import { getPackageJson, getPluginJson, getEntries, isWSL } from './utils';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {

@@ -49,9 +49,8 @@ func TestService(t *testing.T) {
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 
-				"one":                         {ID: "one", Info: plugins.Info{Version: "1.0.0"}},
-				"two":                         {ID: "two", Info: plugins.Info{Version: "2.0.0"}},
-				"grafana-testdata-datasource": {ID: "grafana-testdata-datasource", Info: plugins.Info{Version: "1.0.0"}},
+				"one": {ID: "one", Info: plugins.Info{Version: "1.0.0"}},
+				"two": {ID: "two", Info: plugins.Info{Version: "2.0.0"}},
 			}
 
 			t.Run("CDN Base URL", func(t *testing.T) {
