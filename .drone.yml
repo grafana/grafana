@@ -1061,6 +1061,8 @@ steps:
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
+  - 'echo -e ''---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned:
+    true\n---\n'' > /hugo/content/docs/grafana/_index.md'
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
@@ -1347,6 +1349,8 @@ steps:
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
+  - 'echo -e ''---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned:
+    true\n---\n'' > /hugo/content/docs/grafana/_index.md'
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
@@ -4212,6 +4216,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c14ca5e053041018df6b66df642accd7e7eee7e2b43ba8c8f7dee6c446a41bb0
+hmac: 852af171d897f0a2cc0b03375fa8dfeacc65c2df7113c5efd0e21b03195dd7af
 
 ...
