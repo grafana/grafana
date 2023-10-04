@@ -95,8 +95,7 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 	}
 
 	fic.Frame.Meta = &data.FrameMeta{
-		Custom:                 &LogAnalyticsMeta{ColumnTypes: colTypes},
-		PreferredVisualization: data.VisTypeLogs,
+		Custom: &LogAnalyticsMeta{ColumnTypes: colTypes},
 	}
 
 	return fic, nil
