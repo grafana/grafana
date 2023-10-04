@@ -93,6 +93,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
+//nolint:gocyclo
 func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool,
 	validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
