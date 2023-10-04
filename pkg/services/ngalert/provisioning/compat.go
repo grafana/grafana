@@ -23,7 +23,7 @@ func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContac
 	}, nil
 }
 
-func GrafanaIntegrationConfigToEmbeddedContactPoint(contactPoint *alertingNotify.GrafanaIntegrationConfig, provenance models.Provenance, decryptValue func(string) string) (definitions.EmbeddedContactPoint, error) {
+func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.PostableGrafanaReceiver, provenance models.Provenance, decryptValue func(string) string) (definitions.EmbeddedContactPoint, error) {
 	simpleJson, err := simplejson.NewJson(contactPoint.Settings)
 	if err != nil {
 		return definitions.EmbeddedContactPoint{}, err

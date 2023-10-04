@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -84,8 +83,8 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 			continue
 		}
 
-		embeddedContactPoint, err := GrafanaIntegrationConfigToEmbeddedContactPoint(
-			notifier.PostableGrafanaReceiverToGrafanaIntegrationConfig(contactPoint),
+		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
+			contactPoint,
 			provenances[contactPoint.UID],
 			ecp.decryptValueOrRedacted(q.Decrypt, contactPoint.UID),
 		)
@@ -117,9 +116,9 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		if receiver.UID != uid {
 			continue
 		}
-		embeddedContactPoint, err := GrafanaIntegrationConfigToEmbeddedContactPoint(
-			notifier.PostableGrafanaReceiverToGrafanaIntegrationConfig(receiver),
-			"",
+		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
+			receiver,
+			models.ProvenanceNone,
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)
 		if err != nil {
