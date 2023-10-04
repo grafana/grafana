@@ -80,13 +80,17 @@ export const GraphContainer = ({
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
-              <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
+            <span className={styles.warningMessage}>
+              <Icon name="exclamation-triangle" aria-hidden="true" />
+              Showing only {MAX_NUMBER_OF_TIME_SERIES} series
+            </span>
+            <Tooltip
+              content={`Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.`}
+            >
+              <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
+                Show all {data.length}
+              </Button>
             </Tooltip>
-
-            <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
-              Show all {data.length} series
-            </Button>
           </div>
         ),
       ].filter(Boolean)}
@@ -120,14 +124,15 @@ export const GraphContainer = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   timeSeriesDisclaimer: css({
     label: 'time-series-disclaimer',
-    textSlign: 'center',
-    fontSize: theme.typography.bodySmall.fontSize,
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
   }),
-  disclaimerIcon: css({
-    label: 'disclaimer-icon',
+  warningMessage: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
     color: theme.colors.warning.main,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });
