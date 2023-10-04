@@ -8,7 +8,11 @@ import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+<<<<<<< HEAD
 import { VariablesChanged } from 'app/features/variables/types';
+=======
+import { TextBoxVariableModel, VariablesChanged } from 'app/features/variables/types';
+>>>>>>> edfb8f1bc4 (DashboardGrid: Add support to filter panels using variable)
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
@@ -20,7 +24,11 @@ import { GridPos } from '../state/PanelModel';
 import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
+<<<<<<< HEAD
 export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
+=======
+const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
+>>>>>>> edfb8f1bc4 (DashboardGrid: Add support to filter panels using variable)
 
 export interface Props {
   dashboard: DashboardModel;
