@@ -144,9 +144,6 @@ func ProvideService(
 
 	s.rr.Group("/apis", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
-	s.rr.Group("/healthz", proxyHandler)
-	s.rr.Group("/livez", proxyHandler)
-	s.rr.Group("/readyz", proxyHandler)
 
 	return s, nil
 }
