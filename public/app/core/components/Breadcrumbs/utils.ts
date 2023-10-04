@@ -31,13 +31,16 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       return;
     }
 
-    // This enabled app plugins to control breadcrumbs of their root pages
-    const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
-    // Remember this path for the next breadcrumb
-    lastPath = urlToMatch;
+    if (!node.hideFromBreadcrumbs) {
+      // This enabled app plugins to control breadcrumbs of their root pages
+      const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
 
-    if (!node.hideFromBreadcrumbs && !isSamePathAsLastBreadcrumb) {
-      crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      // Remember this path for the next breadcrumb
+      lastPath = urlToMatch;
+
+      if (!isSamePathAsLastBreadcrumb) {
+        crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      }
     }
 
     if (node.parentItem) {

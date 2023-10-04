@@ -141,5 +141,28 @@ describe('breadcrumb utils', () => {
         { text: 'My page', href: '/my-page' },
       ]);
     });
+
+    it('does ignore duplicates but not when hideFromBreadcrumbs:true', () => {
+      const pageNav: NavModelItem = {
+        text: 'My page',
+        url: '/my-page',
+        parentItem: {
+          text: 'My section',
+          // same url as section nav, but this one should win/overwrite it
+          url: '/my-section?from=1h&to=now',
+          hideFromBreadcrumbs: true,
+        },
+      };
+
+      const sectionNav: NavModelItem = {
+        text: 'My section',
+        url: '/my-section',
+      };
+
+      expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
+        { text: 'My section', href: '/my-section' },
+        { text: 'My page', href: '/my-page' },
+      ]);
+    });
   });
 });
