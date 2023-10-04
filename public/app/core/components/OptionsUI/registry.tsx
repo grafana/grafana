@@ -27,7 +27,6 @@ import {
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
-  Field,
 } from '@grafana/data';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
@@ -248,20 +247,19 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
     id: 'localMinMax',
     path: 'localMinMax',
     name: 'Local min/max',
     description: 'Calculate min max per field',
 
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     editor: standardEditorsRegistry.get('boolean').editor as any,
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     override: standardEditorsRegistry.get('boolean').editor as any,
     process: booleanOverrideProcessor,
 
-    // eslint-disable-next-line
     shouldApply: (field) => field.type === FieldType.number,
     showIf: (options: FieldConfig) => {
       return options.min === undefined || options.max === undefined;
