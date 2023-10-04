@@ -1,8 +1,6 @@
-import { createTwoFilesPatch } from 'diff';
-
 import { DashboardModel, PanelModel } from '../../state';
-import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
+import { getDashboardStringDiff } from './jsonDiffText';
 import { openai } from './llms';
 
 export enum Role {
@@ -30,34 +28,17 @@ export const OPEN_AI_MODEL = 'gpt-4';
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: Diffs;
-  migrationChanges: Diffs;
+  userChanges: string;
+  migrationChanges: string;
 } {
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = dashboard.getSaveModelClone();
-  const currentDashboardString = JSON.stringify(dashboard.getSaveModelClone(), null, 2);
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-  const originalDashboardString = JSON.stringify(originalDashboard, null, 2);
-  const dashboardAfterMigration = JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone(), null, 2);
-
-  console.log(
-    createTwoFilesPatch(
-      originalDashboard.title!,
-      currentDashboard.title,
-      originalDashboardString,
-      currentDashboardString,
-      '',
-      '',
-      { context: 20 }
-    )
-  );
+  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
 
   // 1) parse through full diff (all context) and remove all lines that arent additions / deletions or not important context like title / description
   // 2) JSON entire diff and delete non changes things but also not keep important context  (title / description)
 
   return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+    userChanges: userDiff,
+    migrationChanges: migrationDiff,
   };
 }
 

@@ -56,13 +56,11 @@ function getMessages(dashboard: DashboardModel): Message[] {
       role: Role.system,
     },
     {
-      content: `Group the following diff under "User changes" as a bullet list: ${JSON.stringify(userChanges)}`,
+      content: `Group the following diff under "User changes" as a bullet list:\n${userChanges}`,
       role: Role.system,
     },
     {
-      content: `Group the following diff under "Migration changes" as a bullet list: ${JSON.stringify(
-        migrationChanges
-      )}`,
+      content: `Group the following diff under "Migration changes" as a bullet list:\n${migrationChanges}`,
       role: Role.system,
     },
   ];
