@@ -1,8 +1,11 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
-import { Button } from '@grafana/ui';
+import { Button, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
@@ -40,6 +43,8 @@ export const defaultStyleConfig: ButtonStyleConfig = {
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
   render() {
     const { data } = this.props;
+    const styles = getStyles(config.theme2, data);
+
     const onClick = () => {
       if (data?.api && data?.api?.endpoint) {
         callApi(data.api);
@@ -47,12 +52,20 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
     };
 
     return (
-      <Button type="submit" variant={data?.style?.variant} onClick={onClick}>
+      <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
         {data?.text}
       </Button>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefined) => ({
+  button: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+  }),
+}));
 
 export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
@@ -83,8 +96,8 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       },
     },
     placement: {
-      width: options?.placement?.width,
-      height: options?.placement?.height,
+      width: options?.placement?.width ?? 32,
+      height: options?.placement?.height ?? 78,
       top: options?.placement?.top ?? 100,
       left: options?.placement?.left ?? 100,
     },
