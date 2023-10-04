@@ -10,10 +10,8 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
-  VizPanelMenu,
 } from '@grafana/scenes';
 
-import { trackInsightsFeedback } from '../Analytics';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
 import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
@@ -85,25 +83,6 @@ const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }
 
 export function SectionSubheader({ children }: React.PropsWithChildren) {
   return <div>{children}</div>;
-}
-
-export function getPanelMenu(panel: string) {
-  const menu = new VizPanelMenu({});
-
-  menu.setItems([
-    {
-      text: 'I find this useful',
-      iconClassName: 'plus',
-      onClick: () => trackInsightsFeedback({ useful: true, panel }),
-    },
-    {
-      text: "I don't find this useful",
-      iconClassName: 'minus',
-      onClick: () => trackInsightsFeedback({ useful: false, panel }),
-    },
-  ]);
-
-  return menu;
 }
 
 export function getInsightsScenes() {

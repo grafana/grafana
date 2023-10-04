@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { getPanelMenu, overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getGrafanaAlertmanagerNotificationsScene(
   timeRange: SceneTimeRange,
@@ -41,7 +44,7 @@ export function getGrafanaAlertmanagerNotificationsScene(
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
-      .setMenu(getPanelMenu(panelTitle))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
