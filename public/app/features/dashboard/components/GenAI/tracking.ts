@@ -9,6 +9,7 @@ export enum EventTrackingSrc {
   dashboardChanges = 'dashboard-changes',
   dashboardTitle = 'dashboard-title',
   dashboardDescription = 'dashboard-description',
+  unknown = 'unknown',
 }
 
 // Item of the interaction for the improve button and history poppover

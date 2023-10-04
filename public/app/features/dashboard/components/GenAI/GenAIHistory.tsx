@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
-  Divider,
   HorizontalGroup,
   Icon,
   IconButton,

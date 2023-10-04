@@ -8,7 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
-import { useOpenAIStream, StreamStatus } from './hooks';
+import { StreamStatus, useOpenAIStream } from './hooks';
+import { EventTrackingSrc } from './tracking';
 import { Role } from './utils';
 
 const mockedUseOpenAiStreamState = {
@@ -29,8 +30,9 @@ jest.mock('./hooks', () => ({
 
 describe('GenAIButton', () => {
   const onGenerate = jest.fn();
+  const eventTrackingSrc = EventTrackingSrc.unknown;
 
-  function setup(props: GenAIButtonProps = { onGenerate, messages: [] }) {
+  function setup(props: GenAIButtonProps = { onGenerate, messages: [], eventTrackingSrc }) {
     return render(
       <Router history={locationService.getHistory()}>
         <GenAIButton text="Auto-generate" {...props} />
@@ -86,7 +88,7 @@ describe('GenAIButton', () => {
     });
 
     it('should send the configured messages', async () => {
-      setup({ onGenerate, messages: [{ content: 'Generate X', role: 'system' as Role }] });
+      setup({ onGenerate, messages: [{ content: 'Generate X', role: 'system' as Role }], eventTrackingSrc });
       const generateButton = await screen.findByRole('button');
 
       // Click the button
@@ -102,7 +104,7 @@ describe('GenAIButton', () => {
       const onGenerate = jest.fn();
       const onClick = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      setup({ onGenerate, messages, temperature: 3, onClick });
+      setup({ onGenerate, messages, temperature: 3, onClick, eventTrackingSrc });
 
       const generateButton = await screen.findByRole('button');
       await fireEvent.click(generateButton);
@@ -147,11 +149,11 @@ describe('GenAIButton', () => {
 
     it('should call onGenerate when the text is generating', async () => {
       const onGenerate = jest.fn();
-      setup({ onGenerate, messages: [] });
+      setup({ onGenerate, messages: [], eventTrackingSrc: eventTrackingSrc });
 
       await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
 
-      expect(onGenerate).toHaveBeenCalledWith('Some incompleted generated text');
+      expect(onGenerate).toHaveBeenCalledWith('Some incomplete generated text');
     });
   });
 
@@ -184,7 +186,7 @@ describe('GenAIButton', () => {
     it('should retry when clicking', async () => {
       const onGenerate = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      const { getByText } = setup({ onGenerate, messages, temperature: 3 });
+      const { getByText } = setup({ onGenerate, messages, temperature: 3, eventTrackingSrc });
       const generateButton = getByText('Retry');
 
       await fireEvent.click(generateButton);
@@ -213,7 +215,7 @@ describe('GenAIButton', () => {
       const onGenerate = jest.fn();
       const onClick = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      setup({ onGenerate, messages, temperature: 3, onClick });
+      setup({ onGenerate, messages, temperature: 3, onClick, eventTrackingSrc });
 
       const generateButton = await screen.findByRole('button');
       await fireEvent.click(generateButton);
