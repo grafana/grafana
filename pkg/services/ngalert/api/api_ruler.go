@@ -367,8 +367,29 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	if finalChanges.IsEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
+	body := util.DynMap{"message": "rule group updated successfully"}
+	if len(finalChanges.New) > 0 {
+		uids := make([]string, 0, len(finalChanges.New))
+		for _, r := range finalChanges.New {
+			uids = append(uids, r.UID)
+		}
+		body["created"] = uids
+	}
+	if len(finalChanges.Update) > 0 {
+		uids := make([]string, 0, len(finalChanges.Update))
+		for _, r := range finalChanges.Update {
+			uids = append(uids, r.Existing.UID)
+		}
+		body["updated"] = uids
+	}
+	if len(finalChanges.Delete) > 0 {
+		uids := make([]string, 0, len(finalChanges.Delete))
+		for _, r := range finalChanges.Delete {
+			uids = append(uids, r.UID)
+		}
+		body["deleted"] = uids
+	}
+	return response.JSON(http.StatusAccepted, body)
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
