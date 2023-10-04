@@ -57,7 +57,7 @@ export function orderObjectProperties(obj1: JSONObject, obj2: JSONObject) {
 }
 
 export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
-  const orderedObj2: any[] = new Array(obj1.length).fill(undefined);
+  const orderedObj2: JSONValue[] = new Array(obj1.length).fill(undefined);
 
   const unseen1 = new Set<number>([...Array(obj1.length).keys()]);
   const unseen2 = new Set<number>([...Array(obj2.length).keys()]);
@@ -92,8 +92,12 @@ export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
 // O(n^2), which is more or less unavoidable
 // Can be made a better match by using levenshtein distance and Hungarian matching
 export function fillBySimilarity(
+  // TODO: Investigate not using any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj1: any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj2: any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orderedObj2: any[],
   unseen1: Set<number>,
   unseen2: Set<number>
