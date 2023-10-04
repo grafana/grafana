@@ -87,6 +87,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   trustedTypesDefaultPolicyEnabled = false;
   cspReportOnlyEnabled = false;
   liveEnabled = true;
+  stackId = '';
+  pluginInstallToken = '';
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;

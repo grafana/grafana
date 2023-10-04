@@ -141,6 +141,7 @@ type FrontendSettingsDTO struct {
 	AlertingMinInterval        int64                            `json:"alertingMinInterval"`
 	LiveEnabled                bool                             `json:"liveEnabled"`
 	AutoAssignOrg              bool                             `json:"autoAssignOrg"`
+	StackID                    string                           `json:"stackId"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
 	SigV4AuthEnabled    bool `json:"sigV4AuthEnabled"`
@@ -196,6 +197,7 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
+	PluginInstallToken               string                         `json:"pluginInstallToken"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
