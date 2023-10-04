@@ -55,6 +55,27 @@ const grafanaCloudPromDs = {
   uid: 'grafanacloud-prom',
 };
 
+const SERIES_COLORS = {
+  alerting: 'red',
+  firing: 'red',
+  active: 'red',
+  missed: 'red',
+  failed: 'red',
+  pending: 'yellow',
+  nodata: 'blue',
+  'active evaluation': 'blue',
+  normal: 'green',
+  success: 'green',
+  error: 'orange',
+};
+
+export function overrideToFixedColor(key: keyof typeof SERIES_COLORS) {
+  return {
+    mode: 'fixed',
+    fixedColor: SERIES_COLORS[key],
+  };
+}
+
 export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });

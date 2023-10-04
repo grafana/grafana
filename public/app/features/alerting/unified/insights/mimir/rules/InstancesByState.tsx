@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 
 export function getInstancesByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -25,12 +25,7 @@ export function getInstancesByStateScene(timeRange: SceneTimeRange, datasource: 
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setOverrides((b) =>
-        b.matchFieldsWithName('firing').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'red',
-        })
-      )
+      .setOverrides((b) => b.matchFieldsWithName('firing').overrideColor(overrideToFixedColor('firing')))
       .build(),
   });
 }

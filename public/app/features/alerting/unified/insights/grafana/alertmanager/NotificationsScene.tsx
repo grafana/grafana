@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 
 export function getGrafanaAlertmanagerNotificationsScene(
   timeRange: SceneTimeRange,
@@ -37,30 +37,15 @@ export function getGrafanaAlertmanagerNotificationsScene(
       .setOverrides((b) =>
         b
           .matchFieldsWithName('alerting')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'red',
-          })
+          .overrideColor(overrideToFixedColor('alerting'))
           .matchFieldsWithName('normal')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'green',
-          })
+          .overrideColor(overrideToFixedColor('normal'))
           .matchFieldsWithName('pending')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'yellow',
-          })
+          .overrideColor(overrideToFixedColor('pending'))
           .matchFieldsWithName('error')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'orange',
-          })
+          .overrideColor(overrideToFixedColor('error'))
           .matchFieldsWithName('nodata')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'blue',
-          })
+          .overrideColor(overrideToFixedColor('nodata'))
       )
       .build(),
   });

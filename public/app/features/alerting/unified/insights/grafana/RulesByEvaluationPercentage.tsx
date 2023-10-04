@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
 export function getGrafanaRulesByEvaluationPercentageScene(
   timeRange: SceneTimeRange,
@@ -33,10 +33,7 @@ export function getGrafanaRulesByEvaluationPercentageScene(
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setMax(1)
       .setOverrides((b) =>
-        b.matchFieldsWithName('active evaluation').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'blue',
-        })
+        b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
       )
       .build(),
   });

@@ -1,13 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const STATUS_COLORS = {
-  alerting: 'red',
-  pending: 'yellow',
-  nodata: 'blue',
-  normal: 'green',
-  error: 'orange',
-};
+import { overrideToFixedColor } from '../../home/Insights';
 
 export function getInstanceStatByStatusScene(
   timeRange: SceneTimeRange,
@@ -33,12 +27,7 @@ export function getInstanceStatByStatusScene(
       .setTitle(panelTitle)
       .setDescription(panelTitle)
       .setData(query)
-      .setOverrides((b) =>
-        b.matchFieldsWithName(status).overrideColor({
-          mode: 'fixed',
-          fixedColor: STATUS_COLORS[status],
-        })
-      )
+      .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')
       .build(),
   });

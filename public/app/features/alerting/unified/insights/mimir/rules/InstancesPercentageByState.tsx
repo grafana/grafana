@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 
 export function getInstancesPercentageByStateScene(
   timeRange: SceneTimeRange,
@@ -32,12 +32,7 @@ export function getInstancesPercentageByStateScene(
       .setUnit('percentunit')
       .setMax(1)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setOverrides((b) =>
-        b.matchFieldsWithName('firing').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'red',
-        })
-      )
+      .setOverrides((b) => b.matchFieldsWithName('firing').overrideColor(overrideToFixedColor('firing')))
       .build(),
   });
 }

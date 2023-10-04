@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
 export function getGrafanaEvalSuccessVsFailuresScene(
   timeRange: SceneTimeRange,
@@ -38,15 +38,9 @@ export function getGrafanaEvalSuccessVsFailuresScene(
       .setOverrides((b) =>
         b
           .matchFieldsWithName('success')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'green',
-          })
+          .overrideColor(overrideToFixedColor('success'))
           .matchFieldsWithName('failed')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'red',
-          })
+          .overrideColor(overrideToFixedColor('failed'))
       )
       .build(),
   });

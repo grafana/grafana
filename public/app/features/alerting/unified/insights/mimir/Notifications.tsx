@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
 export function getNotificationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -34,15 +34,9 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
       .setOverrides((b) =>
         b
           .matchFieldsWithName('success')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'green',
-          })
+          .overrideColor(overrideToFixedColor('success'))
           .matchFieldsWithName('failed')
-          .overrideColor({
-            mode: 'fixed',
-            fixedColor: 'red',
-          })
+          .overrideColor(overrideToFixedColor('failed'))
       )
       .build(),
   });
