@@ -319,6 +319,8 @@ Permission validation only occurs when permission validation is enabled (`rbac.p
 
 ##### Invalid action
 
+The following example shows a request with an invalid action. The action `serviceaccounts.permissions:reader` is not a valid action. The valid action should be `serviceaccounts.permissions:read`.
+
 ```http
 POST /api/access-control/roles HTTP/1.1
 Content-Type: application/json
@@ -348,6 +350,8 @@ Content-Type: application/json
 ```
 
 ##### Invalid scope
+
+The following example shows a request with an invalid scope. The scope `serviceaccounts:serviceaccount6` is not a valid scope for the action `serviceaccounts.permissions:read`. The valid scopes for this action are `*`, `serviceaccounts:*` and `serviceaccounts:id:*`.
 
 ```http
 POST /api/access-control/roles HTTP/1.1
@@ -490,7 +494,7 @@ Permission validation only occurs when permission validation is enabled (`rbac.p
 
 > It has been enabled by default since Grafana 10.2.
 
-[Same as the create role validation errors.]({{< relref "#create-role-validation-errors" >}})
+For more information, refer to [Create role validation errors]({{< ref "#create-role-validation-errors" >}}).
 
 #### Status codes
 
