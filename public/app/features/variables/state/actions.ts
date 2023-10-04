@@ -618,6 +618,7 @@ export const variableUpdated = (
       : {
           refreshAll: false,
           panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
+          variable: getVariable(identifier, state),
         };
 
     const node = g.getNode(variableInState.name);
