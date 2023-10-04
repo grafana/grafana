@@ -3,14 +3,16 @@ import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 
-export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'topk(10, sum by (alertname) (ALERTS))',
-        range: true,
+        expr: 'topk(10, sum by(alertname) (ALERTS{alertstate="firing"}))',
+        instant: true,
+        range: false,
+        format: 'table',
       },
     ],
 
@@ -21,16 +23,14 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
     $data: query,
     transformations: [
       {
-        id: 'timeSeriesTable',
-        options: {},
-      },
-      {
         id: 'organize',
         options: {
-          excludeByName: {},
+          excludeByName: {
+            Time: true,
+          },
           indexByName: {},
           renameByName: {
-            Trend: '',
+            Value: 'Fires this week',
             alertname: 'Alert Rule Name',
           },
         },
@@ -40,6 +40,6 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
+    body: PanelBuilders.table().setTitle(panelTitle).setDescription(panelTitle).setData(transformation).build(),
   });
 }

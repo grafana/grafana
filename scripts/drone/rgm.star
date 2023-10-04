@@ -25,9 +25,14 @@ load(
     "get_windows_steps",
 )
 load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
     "scripts/drone/utils/utils.star",
     "ignore_failure",
     "pipeline",
+    "with_deps",
 )
 load(
     "scripts/drone/variables.star",
@@ -36,28 +41,15 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "npm_token",
+    "rgm_cdn_destination",
     "rgm_dagger_token",
     "rgm_destination",
+    "rgm_downloads_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
+    "rgm_storybook_destination",
 )
-
-def rgm_env_secrets(env):
-    """Adds the rgm secret ENV variables to the given env arg
-
-    Args:
-      env: A map of environment varables. This function will adds the necessary secrets to it (and potentially overwrite them).
-    Returns:
-        Drone step.
-    """
-    env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
-    env["DESTINATION"] = from_secret(rgm_destination)
-    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
-    env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
-    env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
-    env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
-    env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
-    return env
 
 docs_paths = {
     "exclude": [
@@ -69,11 +61,6 @@ docs_paths = {
 }
 
 tag_trigger = {
-    "repo": {
-        "exclude": [
-            "grafana/grafana",
-        ],
-    },
     "event": {
         "exclude": [
             "promote",
@@ -89,22 +76,61 @@ tag_trigger = {
     },
 }
 
+nightly_trigger = {
+    "event": {
+        "include": [
+            "cron",
+        ],
+    },
+    "cron": {
+        "include": [
+            "nightly",
+        ],
+    },
+}
+
 version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
 
-def rgm_build(script = "drone_publish_main.sh", canFail = True):
+def rgm_env_secrets(env):
+    """Adds the rgm secret ENV variables to the given env arg
+
+    Args:
+      env: A map of environment varables. This function will adds the necessary secrets to it (and potentially overwrite them).
+    Returns:
+        Drone step.
+    """
+    env["DESTINATION"] = from_secret(rgm_destination)
+    env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
+    env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
+    env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
+    env["PACKAGES_DESTINATION"] = "gs://grafana-packages-testing"
+
+    env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
+    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
+    env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
+    env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
+    env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
+    env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
+    env["DOCKER_USERNAME"] = from_secret("docker_username")
+    env["DOCKER_PASSWORD"] = from_secret("docker_password")
+    env["NPM_TOKEN"] = from_secret(npm_token)
+    env["GCOM_API_KEY"] = from_secret("grafana_api_key_dev")
+    return env
+
+def rgm_run(name, script):
     """Returns a pipeline that does a full build & package of Grafana.
 
     Args:
+      name: The name of the pipeline step.
       script: The script in the container to run.
-      canFail: if true, then this pipeline can fail while the entire build will still succeed.
     Returns:
         Drone step.
     """
     env = {
         "GO_VERSION": golang_version,
     }
-    rgm_build_step = {
-        "name": "rgm-build",
+    rgm_run_step = {
+        "name": name,
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
@@ -117,14 +143,72 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-    if canFail:
-        rgm_build_step["failure"] = "ignore"
-
     return [
-        rgm_build_step,
+        rgm_run_step,
     ]
 
+def rgm_copy(src, dst):
+    """Copies file from/to GCS.
+
+    Args:
+      src: source of the files.
+      dst: destination of the files.
+
+    Returns:
+      Drone steps.
+    """
+    commands = [
+        "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
+        "gcloud auth activate-service-account --key-file=/tmp/key.json",
+        "gcloud storage cp -r {} {}".format(src, dst),
+    ]
+
+    if not dst.startswith("gs://"):
+        commands.insert(0, "mkdir -p {}".format(dst))
+
+    rgm_copy_step = {
+        "name": "rgm-copy",
+        "image": "google/cloud-sdk:alpine",
+        "commands": commands,
+        "environment": rgm_env_secrets({}),
+    }
+
+    return [
+        rgm_copy_step,
+    ]
+
+def rgm_publish_packages(bucket = "grafana-packages"):
+    """Publish deb and rpm packages.
+
+    Args:
+      bucket: target bucket to publish the packages.
+
+    Returns:
+      Drone steps.
+    """
+    steps = []
+    for package_manager in ["deb", "rpm"]:
+        steps.append({
+            "name": "publish-{}".format(package_manager),
+            # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
+            "image": images["package_publish"],
+            "privileged": True,
+            "settings": {
+                "access_key_id": from_secret("packages_access_key_id"),
+                "secret_access_key": from_secret("packages_secret_access_key"),
+                "service_account_json": from_secret("packages_service_account"),
+                "target_bucket": bucket,
+                "gpg_passphrase": from_secret("packages_gpg_passphrase"),
+                "gpg_public_key": from_secret("packages_gpg_public_key"),
+                "gpg_private_key": from_secret("packages_gpg_private_key"),
+                "package_path": "file:///drone/src/dist/*.{}".format(package_manager),
+            },
+        })
+
+    return steps
+
 def rgm_main():
+    # Runs a package / build process (with some distros) when commits are merged to main
     trigger = {
         "event": [
             "push",
@@ -139,15 +223,16 @@ def rgm_main():
     return pipeline(
         name = "rgm-main-prerelease",
         trigger = trigger,
-        steps = rgm_build(canFail = True),
+        steps = rgm_run("rgm-build", "drone_publish_main.sh"),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
 def rgm_tag():
+    # Runs a package / build process (with all distros) when a tag is made
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
+        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
@@ -166,22 +251,61 @@ def rgm_tag_windows():
     )
 
 def rgm_version_branch():
+    # Runs a package / build proces (with all distros) when a commit lands on a version branch
     return pipeline(
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
-        steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
+        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
-def rgm():
+def rgm_nightly_build():
+    src = "$${DRONE_WORKSPACE}/dist/*"
+    dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
+
+    copy_steps = with_deps(rgm_copy(src, dst), ["rgm-build"])
+
+    return pipeline(
+        name = "rgm-nightly-build",
+        trigger = nightly_trigger,
+        steps = rgm_run("rgm-build", "drone_build_nightly_grafana.sh") + copy_steps,
+        depends_on = ["nightly-test-backend", "nightly-test-frontend"],
+    )
+
+def rgm_nightly_publish():
+    """Nightly publish pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
+    src = "$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*"
+    dst = "$${DRONE_WORKSPACE}/dist"
+
+    publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
+    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
+
+    return pipeline(
+        name = "rgm-nightly-publish",
+        trigger = nightly_trigger,
+        steps = rgm_copy(src, dst) + publish_steps + package_steps,
+        depends_on = ["rgm-nightly-build"],
+    )
+
+def rgm_nightly_pipeline():
+    return [
+        test_frontend(nightly_trigger, "nightly"),
+        test_backend(nightly_trigger, "nightly"),
+        rgm_nightly_build(),
+        rgm_nightly_publish(),
+    ]
+
+def rgm_tag_pipeline():
     return [
         whats_new_checker_pipeline(tag_trigger),
         test_frontend(tag_trigger, "release"),
         test_backend(tag_trigger, "release"),
-        rgm_main(),  # Runs a package / build process (with some distros) when commits are merged to main
-        rgm_tag(),  # Runs a package / build process (with all distros) when a tag is made
+        rgm_tag(),
         rgm_tag_windows(),
-        rgm_version_branch(),  # Runs a package / build proces (with all distros) when a commit lands on a version branch
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
@@ -191,6 +315,11 @@ def rgm():
                 "rgm-tag-prerelease-windows",
             ],
         ),
+    ]
+
+def rgm_version_branch_pipeline():
+    return [
+        rgm_version_branch(),
         verify_release_pipeline(
             trigger = version_branch_trigger,
             name = "rgm-prerelease-verify-prerelease-assets",
@@ -200,3 +329,16 @@ def rgm():
             ],
         ),
     ]
+
+def rgm_main_pipeline():
+    return [
+        rgm_main(),
+    ]
+
+def rgm():
+    return (
+        rgm_main_pipeline() +
+        rgm_tag_pipeline() +
+        rgm_version_branch_pipeline() +
+        rgm_nightly_pipeline()
+    )
