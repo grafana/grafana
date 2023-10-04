@@ -1,3 +1,4 @@
+import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame } from '@grafana/data';
@@ -11,7 +12,8 @@ import {
 } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaMissedIterationsScene(
   timeRange: SceneTimeRange,
@@ -66,7 +68,7 @@ export function getGrafanaMissedIterationsScene(
       .setData(transformation)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setMenu(getPanelMenu(panelTitle))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

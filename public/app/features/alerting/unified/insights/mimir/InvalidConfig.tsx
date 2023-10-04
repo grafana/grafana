@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
-import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -25,7 +28,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
       .setData(query)
       .setUnit('bool_yes_no')
       .setOption('graphMode', BigValueGraphMode.None)
-      .setMenu(getPanelMenu(panelTitle))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

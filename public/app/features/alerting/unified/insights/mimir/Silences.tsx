@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -25,7 +28,7 @@ export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSour
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setMenu(getPanelMenu(panelTitle))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { getPanelMenu, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getNotificationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -38,7 +41,7 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
-      .setMenu(getPanelMenu(panelTitle))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
