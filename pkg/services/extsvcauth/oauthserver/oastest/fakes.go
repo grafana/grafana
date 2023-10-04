@@ -18,7 +18,7 @@ type FakeService struct {
 var _ oauthserver.OAuth2Server = &FakeService{}
 
 func (s *FakeService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalServiceDTO, error) {
-	return s.ExpectedClient.ToDTO(), s.ExpectedErr
+	return s.ExpectedClient.ToDTO(nil), s.ExpectedErr
 }
 
 func (s *FakeService) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {

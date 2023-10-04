@@ -40,6 +40,8 @@ type ExternalService struct {
 	ImpersonateScopes []string
 }
 
+// ToDTO converts the ExternalService in an ExternalServiceDTO
+// If the DTO must contain Key pairs, pass them as parameters.
 func (c *ExternalService) ToDTO(keys *KeyResult) *extsvcauth.ExternalServiceDTO {
 	extra := ExternalServiceDTOExtra{
 		GrantTypes:  c.GrantTypes,
@@ -47,18 +49,18 @@ func (c *ExternalService) ToDTO(keys *KeyResult) *extsvcauth.ExternalServiceDTO 
 		RedirectURI: c.RedirectURI,
 		KeyResult:   keys,
 	}
-	c2 := ExternalServiceDTO{
-		Name:        c.Name,
-		ID:          c.ClientID,
-		Secret:      c.Secret,
-		GrantTypes:  c.GrantTypes,
-		Audiences:   c.Audiences,
-		RedirectURI: c.RedirectURI,
+
+	// Fallback to only display the public pem
+	if keys == nil && len(c.PublicPem) > 0 {
+		extra.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
 	}
-	if len(c.PublicPem) > 0 {
-		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+
+	return &extsvcauth.ExternalServiceDTO{
+		Extra:  extra,
+		ID:     c.ClientID,
+		Name:   c.Name,
+		Secret: c.Secret,
 	}
-	return &c2
 }
 
 func (c *ExternalService) LogID() string {
