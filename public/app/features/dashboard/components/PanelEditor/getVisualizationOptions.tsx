@@ -97,16 +97,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (
-      fieldOption.isCustom &&
-      fieldOption.showIf &&
-      !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
-    ) {
-      continue;
-    }
-
-    if (fieldOption.hideFromDefaults) {
-      continue;
+    if (fieldOption.isCustom) {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)) {
+        continue;
+      }
+    } else {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series)) {
+        continue;
+      }
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);

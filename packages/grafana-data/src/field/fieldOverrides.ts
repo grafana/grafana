@@ -40,6 +40,7 @@ import { mapInternalLinkToExplore } from '../utils/dataLinks';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 interface OverrideProps {
@@ -168,12 +169,21 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // Set the Min/Max value automatically
       let range: NumericRange | undefined = undefined;
       if (field.type === FieldType.number) {
-        if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
-          globalRange = findNumericFieldMinMax(options.data!);
+        if (!isNumber(config.min) || !isNumber(config.max)) {
+          if (config.localMinMax) {
+            const localRange = getMinMaxAndDelta(field);
+            const min = config.min ?? localRange!.min;
+            const max = config.max ?? localRange!.max;
+            range = { min, max, delta: max! - min! };
+          } else {
+            if (!globalRange) {
+              globalRange = findNumericFieldMinMax(options.data!);
+            }
+            const min = config.min ?? globalRange!.min;
+            const max = config.max ?? globalRange!.max;
+            range = { min, max, delta: max! - min! };
+          }
         }
-        const min = config.min ?? globalRange!.min;
-        const max = config.max ?? globalRange!.max;
-        range = { min, max, delta: max! - min! };
       }
 
       field.state!.seriesIndex = seriesIndex;
