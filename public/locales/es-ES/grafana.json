@@ -222,6 +222,97 @@
       "label": ""
     }
   },
+  "explore": {
+    "history": {
+      "rich-history": {
+        "close-tooltip": "",
+        "datasource-a-z": "",
+        "datasource-z-a": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "query-history": "",
+        "settings": "",
+        "starred": ""
+      },
+      "rich-history-card": {
+        "add-comment-form": "",
+        "add-comment-tooltip": "",
+        "cancel": "",
+        "copy-query-tooltip": "",
+        "copy-shortened-link-tooltip": "",
+        "datasource-icon-label": "",
+        "datasource-name-label": "",
+        "datasource-not-exist": "",
+        "delete-query-confirmation-title": "",
+        "delete-query-title": "",
+        "delete-query-tooltip": "",
+        "delete-starred-query-confirmation-text": "",
+        "delete-yes-text": "",
+        "edit-comment-tooltip": "",
+        "enter-key": "",
+        "escape-key": "",
+        "loading-text": "",
+        "optional-description": "",
+        "query-comment-label": "",
+        "query-copied": "",
+        "query-deleted": "",
+        "query-text-label": "",
+        "run-query-button": "",
+        "save-comment": "",
+        "star-query-tooltip": "",
+        "switch-datasource-button": "",
+        "unstar-query-tooltip": "",
+        "update-comment-form": ""
+      },
+      "rich-history-container": {
+        "loading": ""
+      },
+      "rich-history-queries-tab": {
+        "displaying-queries": "",
+        "filter-aria-label": "",
+        "filter-history": "",
+        "filter-placeholder": "",
+        "history-local": "",
+        "loading": "",
+        "loading-results": "",
+        "search-placeholder": "",
+        "showing-queries": "",
+        "sort-aria-label": "",
+        "sort-placeholder": ""
+      },
+      "rich-history-settings-tab": {
+        "alert-info": "",
+        "change-default-tab": "",
+        "clear-history-info": "",
+        "clear-query-history": "",
+        "clear-query-history-button": "",
+        "delete-confirm-text": "",
+        "delete-title": "",
+        "delete-yes-text": "",
+        "history-time-span": "",
+        "history-time-span-description": "",
+        "only-show-active-datasource": "",
+        "query-history-deleted": "",
+        "retention-period": {
+          "1-week": "",
+          "2-days": "",
+          "2-weeks": "",
+          "5-days": ""
+        }
+      },
+      "rich-history-starred-tab": {
+        "filter-queries-aria-label": "",
+        "filter-queries-placeholder": "",
+        "loading": "",
+        "loading-results": "",
+        "local-history-message": "",
+        "search-queries-placeholder": "",
+        "showing-queries": "",
+        "sort-queries-aria-label": "",
+        "sort-queries-placeholder": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
