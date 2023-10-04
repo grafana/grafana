@@ -45,7 +45,7 @@ type Dashboard struct {
 	// FolderUID it participates in the unique index
 	// and should be only used for now to guarantee title uniqueness under a folder
 	// It will replace FolderID in the future when we will store dashboards only in the folder store
-	FolderUID string `xorm:"folder_uid"`
+	FolderUID *string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
@@ -190,7 +190,9 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderID = cmd.FolderID
-	dash.FolderUID = cmd.FolderUID
+	if cmd.FolderUID != "" {
+		dash.FolderUID = &cmd.FolderUID
+	}
 	dash.UpdateSlug()
 	return dash
 }

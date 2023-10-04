@@ -8,6 +8,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -389,7 +390,16 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
-	exists, err := sess.Where("org_id=? AND title=? AND folder_uid=?", dash.OrgID, dash.Title, dash.FolderUID).Get(&existing)
+	q := "org_id=? AND title=?"
+	args := []any{dash.OrgID, dash.Title}
+	if dash.FolderUID != nil {
+		q += " AND (is_folder=? OR folder_uid=?)"
+		args = append(args, dialect.BooleanStr(true), dash.FolderUID)
+	} else if dash.FolderID > 0 {
+		q += " AND (is_folder=? OR folder_id=?)"
+		args = append(args, dialect.BooleanStr(true), dash.FolderID)
+	}
+	exists, err := sess.Where(q, args...).Get(&existing)
 	if err != nil {
 		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}
@@ -467,6 +477,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
 		metrics.MApiDashboardInsert.Inc()
+		spew.Dump(">>>> save 1", dash.FolderID, dash.FolderUID)
 		affectedRows, err = sess.Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)
@@ -479,7 +490,8 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		dash.UpdatedBy = userId
 
-		affectedRows, err = sess.MustCols("folder_id").ID(dash.ID).Update(dash)
+		spew.Dump(">>>> save 2 ", dash.FolderID, dash.FolderUID)
+		affectedRows, err = sess.MustCols("folder_id", "folder_uid").ID(dash.ID).Update(dash)
 	}
 
 	if err != nil {
@@ -1064,9 +1076,14 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		session := sess.In("folder_uid", req.FolderUID).In("org_id", req.OrgID).
+		s := sess.In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))
-		count, err = session.Count(&dashboards.Dashboard{})
+		if req.FolderUID != "" {
+			s = s.In("folder_uid", req.FolderUID)
+		} else {
+			s = s.Where("folder_uid IS NULL")
+		}
+		count, err = s.Count(&dashboards.Dashboard{})
 		return err
 	})
 	return count, err

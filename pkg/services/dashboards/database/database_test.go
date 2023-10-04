@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -42,10 +43,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
-		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, false, "prod", "webapp")
-		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, false, "prod")
-		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, nil, true, "prod", "webapp")
+		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder, false, "prod", "webapp")
+		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder, false, "prod")
+		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, nil, false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgID, savedFolder.UID)
 	}
 
@@ -174,7 +175,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to delete dashboard", func(t *testing.T) {
 		setup()
-		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, false, "delete this")
+		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, nil, false, "delete this")
 
 		err := dashboardStore.DeleteDashboard(context.Background(), &dashboards.DeleteDashboardCommand{
 			ID:    dash.ID,
@@ -248,7 +249,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to delete empty folder", func(t *testing.T) {
 		setup()
-		emptyFolder := insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
+		emptyFolder := insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, nil, true, "prod", "webapp")
 
 		deleteCmd := &dashboards.DeleteDashboardCommand{ID: emptyFolder.ID}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
@@ -509,22 +510,22 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUID: "", OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUID: savedFolder.UID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
 
 	t.Run("Can delete dashboards in folder", func(t *testing.T) {
 		setup()
-		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, 0, true, "prod", "webapp")
-		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, false, "delete this 1")
-		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, false, "delete this 2")
+		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, nil, true, "prod", "webapp")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder, false, "delete this 1")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder, false, "delete this 2")
 
 		err := dashboardStore.DeleteDashboardsInFolder(
 			context.Background(),
@@ -534,7 +535,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
+		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUID: folder.UID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
 	})
@@ -577,8 +578,8 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 
-	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
-	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, nil, false)
+	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, nil, false)
 	assert.NotZero(t, dashA.ID)
 	assert.Less(t, dashB.ID, dashA.ID)
 	qNoSort := &dashboards.FindPersistedDashboardsQuery{
@@ -629,8 +630,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
-	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+	insertTestDashboard(t, dashboardStore, "Alfa", 1, nil, false)
+	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, nil, false)
 	qNoFilter := &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
 			OrgID:   1,
@@ -674,7 +675,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
+	insertTestDashboard(t, dashboardStore, "Apple", 1, nil, false)
 	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
@@ -692,8 +693,8 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	})
 
 	t.Run("Finds a dashboard with existing name in specific folder and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
-		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, true, "prod", "webapp")
-		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, false, "prod", "webapp")
+		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, nil, true, "prod", "webapp")
+		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder, false, "prod", "webapp")
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderID: savedFolder.ID, OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
@@ -715,13 +716,13 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	orgID := int64(1)
-	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, false)
+	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, nil, false)
 
-	f0 := insertTestDashboard(t, dashboardStore, "f0", orgID, 0, true)
-	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, f0.ID, false)
+	f0 := insertTestDashboard(t, dashboardStore, "f0", orgID, nil, true)
+	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, f0, false)
 
-	f1 := insertTestDashboard(t, dashboardStore, "f1", orgID, 0, true)
-	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, f1.ID, false)
+	f1 := insertTestDashboard(t, dashboardStore, "f1", orgID, nil, true)
+	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, f1, false)
 
 	testCases := []struct {
 		desc           string
@@ -881,11 +882,11 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+	folder *dashboards.Dashboard, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
+
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
-		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -893,6 +894,13 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 			"tags":  tags,
 		}),
 	}
+	if folder != nil {
+		cmd.FolderID = folder.ID
+		cmd.FolderUID = folder.UID
+	}
+
+	spew.Dump(">>>>> insertTestDashboard:", cmd.FolderID, cmd.FolderUID)
+
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)

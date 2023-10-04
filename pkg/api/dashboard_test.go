@@ -1091,7 +1091,6 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,
 	mock *dashboards.FakeDashboardService, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService,
 	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore db.DB) {
-
 	folderSvc := foldertest.NewFakeService()
 	folderSvc.ExpectedFolder = &folder.Folder{}
 
