@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
-import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
+import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '350px';
@@ -17,7 +17,7 @@ export interface Props extends DOMAttributes {
   onClose: () => void;
 }
 
-export const DockedMegaMenu = React.memo(
+export const MegaMenu = React.memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navBarTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
@@ -49,7 +49,7 @@ export const DockedMegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
-                <NavBarMenuItemWrapper link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+                <MegaMenuItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
               ))}
             </ul>
           </CustomScrollbar>
@@ -59,7 +59,7 @@ export const DockedMegaMenu = React.memo(
   })
 );
 
-DockedMegaMenu.displayName = 'DockedMegaMenu';
+MegaMenu.displayName = 'MegaMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   content: css({
@@ -82,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
     gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
+    listStyleType: 'none',
     minWidth: MENU_WIDTH,
   }),
 });

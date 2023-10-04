@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.15.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 type KeyValue struct {

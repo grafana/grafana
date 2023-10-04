@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useOpenAIStream } from './hooks';
@@ -36,10 +36,10 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
+  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+
   const [history, setHistory] = useState<string[]>([]);
   const [shouldCloseHistory, setShouldCloseHistory] = useState(false);
-
-  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const hasHistory = history.length > 0;
   const isFirstGeneration = streamStatus === StreamStatus.GENERATING && !hasHistory;
@@ -73,6 +73,11 @@ export const GenAIButton = ({
       updateHistory(reply.replace(/^"|"$/g, ''));
     }
   }, [history, streamStatus, reply, updateHistory]);
+
+  // The button is disabled if the plugin is not installed or enabled
+  if (!value?.enabled) {
+    return null;
+  }
 
   const onApplySuggestion = (suggestion: string) => {
     onGenerate(suggestion);
@@ -109,21 +114,6 @@ export const GenAIButton = ({
     }
 
     return buttonText;
-  };
-
-  const getTooltipContent = () => {
-    if (error) {
-      return `Unexpected error: ${error.message}`;
-    }
-    if (!value?.enabled) {
-      return (
-        <span>
-          The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-          and enable your plugin.
-        </span>
-      );
-    }
-    return '';
   };
 
   const button = (
@@ -169,7 +159,7 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isFirstGeneration && <Spinner size={14} />}
       {!hasHistory && (
-        <Tooltip show={value?.enabled && !error ? false : undefined} interactive content={getTooltipContent()}>
+        <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
           {button}
         </Tooltip>
       )}

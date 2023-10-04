@@ -9,10 +9,9 @@ import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { getIconForKind } from 'app/features/search/service/utils';
 
+import { Indent } from '../../../core/components/Indent/Indent';
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
-
-import { Indent } from './Indent';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -31,7 +30,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   if (item.kind === 'ui') {
     return (
       <>
-        <Indent level={level} />
+        <Indent
+          level={level}
+          spacing={{
+            xs: 1,
+            md: 3,
+          }}
+        />
         <span className={styles.folderButtonSpacer} />
         {item.uiKind === 'empty-folder' ? (
           <em className={styles.emptyText}>
@@ -48,7 +53,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
   return (
     <>
-      <Indent level={level} />
+      <Indent
+        level={level}
+        spacing={{
+          xs: 1,
+          md: 3,
+        }}
+      />
 
       {item.kind === 'folder' ? (
         <IconButton

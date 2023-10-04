@@ -2,7 +2,7 @@ import { Placement } from '@popperjs/core';
 import { uniqueId } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Icon } from '../../..';
+import { Icon } from '../../../Icon/Icon';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 
 export interface Props {
