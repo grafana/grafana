@@ -1,5 +1,7 @@
 import { createTwoFilesPatch } from 'diff';
 
+import { Dashboard } from '@grafana/schema';
+
 import { DashboardModel } from '../../state';
 
 export type JSONValue = null | boolean | number | string | JSONArray | JSONObject;
@@ -10,35 +12,33 @@ export type JSONObject = {
   [key: string]: JSONValue;
 };
 
-export function orderProperties(obj1: JSONValue, obj2: JSONValue): JSONValue {
-  // Both must be arrays, or non-array objects, or we cannot do anything
-  if (
-    typeof obj1 !== typeof obj2
-    || obj1 === null
-    || obj2 === null
-    || typeof obj1 !== 'object'
-    || typeof obj2 !== 'object'
-    || (Array.isArray(obj1)) !== (Array.isArray(obj2))
-  ) {
-    return obj2;
+export function orderProperties(obj1: JSONValue, obj2: JSONValue) {
+  // If obj1 and obj2 are the same object, return obj2
+  if (obj1 === obj2) {
+    return obj2; // No need to order properties, they are already the same
   }
 
-  if (Array.isArray(obj1) && Array.isArray(obj2)) { // They are both arrays
-    return orderArrayProperties(obj1, obj2)
+  if (Array.isArray(obj1) && Array.isArray(obj2)) {
+    // They are both arrays
+    return orderArrayProperties(obj1, obj2);
   }
 
-  // Typescript doesn't understand that they are both or neither arrays
-  // Necessitates type assertion
-  else if (typeof obj1 === 'object') { // Both non-array objects
-    return orderObjectProperties(obj1 as JSONObject, obj2 as JSONObject)
+  // Use a type guard to check if they are both non-array objects
+  else if (isObject(obj1) && isObject(obj2)) {
+    // Both non-array objects
+    return orderObjectProperties(obj1, obj2);
   }
 
   return obj2;
 }
 
+export function isObject(obj: JSONValue): obj is JSONObject {
+  return typeof obj === 'object' && !Array.isArray(obj) && obj !== null;
+}
+
 export function orderObjectProperties(obj1: JSONObject, obj2: JSONObject) {
   const orderedProperties = Object.keys(obj1);
-  const orderedObj2: Record<string, any> = {};
+  const orderedObj2: Record<string, JSONValue> = {};
 
   for (const prop of orderedProperties) {
     if (obj2.hasOwnProperty(prop)) {
@@ -64,10 +64,14 @@ export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
 
   // Loop to match up elements that match exactly
   for (let i = 0; i < obj1.length; i++) {
-    if (unseen2.size === 0) {break;}
+    if (unseen2.size === 0) {
+      break;
+    }
     let item1 = obj1[i];
     for (let j = 0; j < obj2.length; j++) {
-      if (!(unseen2.has(j))) {continue;}
+      if (!unseen2.has(j)) {
+        continue;
+      }
       let item2 = obj2[j];
       item2 = orderProperties(item1, item2);
       if (JSON.stringify(item1) === JSON.stringify(item2)) {
@@ -77,7 +81,6 @@ export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
       }
     }
   }
-
 
   fillBySimilarity(obj1, obj2, orderedObj2, unseen1, unseen2);
 
@@ -93,12 +96,13 @@ export function fillBySimilarity(
   obj2: any[],
   orderedObj2: any[],
   unseen1: Set<number>,
-  unseen2: Set<number>): void {
-
+  unseen2: Set<number>
+): void {
   let rankings: Record<number, number[][]> = {}; // Maps scores to arrays of value pairs
   // Unpacking it because I'm not sure removing items while iterating is safe
 
-  unseen2.forEach((j: number) => { // Index name matches calling function
+  unseen2.forEach((j: number) => {
+    // Index name matches calling function
     let item2 = obj2[j];
 
     // If not object, or if array, just push item2 to orderedObj2 and remove j from unseen2
@@ -123,11 +127,7 @@ export function fillBySimilarity(
           continue;
         }
         let val2 = item2[key];
-        if (
-          (typeof val1 !== 'string' && typeof val1 !== 'number')
-          ||
-          (typeof val1 !== typeof val2)
-        ){
+        if ((typeof val1 !== 'string' && typeof val1 !== 'number') || typeof val1 !== typeof val2) {
           continue;
         }
         if (val1 === val2) {
@@ -139,10 +139,10 @@ export function fillBySimilarity(
         if (rankings[score] === undefined) {
           rankings[score] = [];
         }
-        rankings[score].push([i, j])
+        rankings[score].push([i, j]);
       }
-    })
-  })
+    });
+  });
 
   const keys: number[] = Object.keys(rankings).map(Number); // Get keys as an array of numbers
   keys.sort((a, b) => b - a); // Sort in descending order
@@ -161,11 +161,11 @@ export function fillBySimilarity(
 
   // Get anything that had no matches whatsoever
   for (const j of unseen2) {
-    orderedObj2.push(obj2[j])
+    orderedObj2.push(obj2[j]);
   }
 }
 
-export function jsonSanitize(obj: any) {
+export function jsonSanitize(obj: Dashboard | DashboardModel | null) {
   return JSON.parse(JSON.stringify(obj, null, 2));
 }
 
@@ -185,7 +185,7 @@ export function getDashboardStringDiff(dashboard: DashboardModel) {
     '',
     '',
     { context: 5 }
-  )
+  );
 
   let userDiff = createTwoFilesPatch(
     dashboardAfterMigration.title ?? 'Before user changes',
@@ -195,7 +195,7 @@ export function getDashboardStringDiff(dashboard: DashboardModel) {
     '',
     '',
     { context: 5 }
-  )
+  );
 
-  return { migrationDiff, userDiff }
+  return { migrationDiff, userDiff };
 }

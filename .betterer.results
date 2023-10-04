@@ -3123,6 +3123,12 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DeleteDashboard/DeleteDashboardModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/features/dashboard/components/GenAI/jsonDiffText.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
     "public/app/features/dashboard/components/GenAI/llms/openai.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
