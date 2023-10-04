@@ -32,8 +32,10 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     rawQuery += `FROM ${dataset}.${table} `;
   }
 
+  // $__timeFrom and $__timeTo will be interpolated on the backend
+  rawQuery += `WHERE time >= $__timeFrom AND time <= $__timeTo `;
   if (sql.whereString) {
-    rawQuery += `WHERE ${sql.whereString} `;
+    rawQuery += `AND ${sql.whereString} `;
   }
 
   if (sql.groupBy?.[0]?.property.name) {
