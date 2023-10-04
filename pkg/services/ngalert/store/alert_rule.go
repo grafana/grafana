@@ -115,8 +115,9 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 }
 
 // InsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) (map[string]int64, error) {
-	ids := make(map[string]int64, len(rules))
+// Returns the UID and ID of rules that were created in the same order as the input rules.
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
@@ -166,7 +167,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
-				ids[newRules[i].UID] = newRules[i].ID
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{
+					AlertRuleKey: newRules[i].GetKey(),
+					ID:           newRules[i].ID,
+				})
 			}
 		}
 

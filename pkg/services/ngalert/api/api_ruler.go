@@ -328,9 +328,17 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
-			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
+			added, err := srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
 				return fmt.Errorf("failed to add rules: %w", err)
+			}
+			if len(added) != len(finalChanges.New) {
+				logger.Error("Cannot match inserted rules with final changes", "insertedCount", len(added), "changes", len(finalChanges.New))
+			} else {
+				for i, newRule := range finalChanges.New {
+					newRule.ID = added[i].ID
+					newRule.UID = added[i].UID
+				}
 			}
 		}
 
