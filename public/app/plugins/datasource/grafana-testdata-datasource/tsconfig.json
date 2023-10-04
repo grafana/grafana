@@ -1,4 +1,4 @@
 {
   "extends": "../../../../../tools/plugins/shared/tsconfig.json",
-  "include": ["./src"]
+  "include": ["./src", "../../../../../tools/plugins/shared/types"]
 }
