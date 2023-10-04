@@ -32,8 +32,8 @@ import {
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
 import {
-  AnchorX,
-  AnchorY,
+  HorizontalAlign,
+  VerticalAlign,
   defaultStyleConfig,
   GeometryTypeId,
   StyleConfig,
@@ -109,12 +109,12 @@ export const StyleEditor = (props: Props) => {
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
   };
 
-  const onAnchorXChange = (anchorX: AnchorX) => {
-    onChange({ ...value, symbolAnchor: { ...value.symbolAnchor, anchorX } });
+  const onAnchorXChange = (alignHorizontal: HorizontalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value.symbolAlign, horizontal: alignHorizontal } });
   };
 
-  const onAnchorYChange = (anchorY: AnchorY) => {
-    onChange({ ...value, symbolAnchor: { ...value.symbolAnchor, anchorY } });
+  const onAnchorYChange = (alignVertical: VerticalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value.symbolAlign, vertical: alignVertical } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
@@ -235,25 +235,25 @@ export const StyleEditor = (props: Props) => {
               }
             />
           </Field>
-          <Field label={'Anchor Position'}>
+          <Field label={'Symbol Vertical Align'}>
             <RadioButtonGroup
-              value={value?.symbolAnchor?.anchorY ?? defaultStyleConfig.symbolAnchor.anchorY}
+              value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAnchorYChange}
               options={[
-                { value: AnchorY.Top, label: capitalize(AnchorY.Top) },
-                { value: AnchorY.Center, label: capitalize(AnchorY.Center) },
-                { value: AnchorY.Bottom, label: capitalize(AnchorY.Bottom) },
+                { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
+                { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
+                { value: VerticalAlign.Bottom, label: capitalize(VerticalAlign.Bottom) },
               ]}
             />
           </Field>
-          <Field>
+          <Field label={'Symbol Horizontal Align'}>
             <RadioButtonGroup
-              value={value?.symbolAnchor?.anchorX ?? defaultStyleConfig.symbolAnchor.anchorX}
+              value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
               onChange={onAnchorXChange}
               options={[
-                { value: AnchorX.Left, label: capitalize(AnchorX.Left) },
-                { value: AnchorX.Center, label: capitalize(AnchorX.Center) },
-                { value: AnchorX.Right, label: capitalize(AnchorX.Right) },
+                { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
+                { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
+                { value: HorizontalAlign.Right, label: capitalize(HorizontalAlign.Right) },
               ]}
             />
           </Field>

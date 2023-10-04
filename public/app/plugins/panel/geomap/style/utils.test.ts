@@ -1,6 +1,6 @@
 import { ResourceDimensionMode } from '@grafana/schema';
 
-import { AnchorX, AnchorY, StyleConfig, SymbolAnchor } from './types';
+import { HorizontalAlign, VerticalAlign, StyleConfig, SymbolAlign } from './types';
 import { getDisplacement, getStyleConfigState } from './utils';
 
 describe('style utils', () => {
@@ -57,21 +57,21 @@ describe('style utils', () => {
     `);
   });
   it('should return correct displacement array for top left', async () => {
-    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Left, anchorY: AnchorY.Top };
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Left, vertical: VerticalAlign.Top };
     const radius = 10;
-    const displacement = getDisplacement(symbolAnchor, radius);
-    expect(displacement).toEqual([10, -10]);
-  });
-  it('should return correct displacement array for bottom right', async () => {
-    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Right, anchorY: AnchorY.Bottom };
-    const radius = 10;
-    const displacement = getDisplacement(symbolAnchor, radius);
+    const displacement = getDisplacement(symbolAlign, radius);
     expect(displacement).toEqual([-10, 10]);
   });
-  it('should return correct displacement array for center center', async () => {
-    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Center, anchorY: AnchorY.Center };
+  it('should return correct displacement array for bottom right', async () => {
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Right, vertical: VerticalAlign.Bottom };
     const radius = 10;
-    const displacement = getDisplacement(symbolAnchor, radius);
+    const displacement = getDisplacement(symbolAlign, radius);
+    expect(displacement).toEqual([10, -10]);
+  });
+  it('should return correct displacement array for center center', async () => {
+    const symbolAlign: SymbolAlign = { horizontal: HorizontalAlign.Center, vertical: VerticalAlign.Center };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAlign, radius);
     expect(displacement).toEqual([0, 0]);
   });
 });

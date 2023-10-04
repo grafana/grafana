@@ -29,7 +29,7 @@ export interface StyleConfig {
   // Used for points and dynamic text
   size?: ScaleDimensionConfig;
   symbol?: ResourceDimensionConfig;
-  symbolAnchor?: SymbolAnchor;
+  symbolAlign?: SymbolAlign;
 
   // Can show markers and text together!
   text?: TextDimensionConfig;
@@ -51,12 +51,12 @@ export enum TextBaseline {
   Middle = 'middle',
   Bottom = 'bottom',
 }
-export enum AnchorX {
+export enum HorizontalAlign {
   Left = 'left',
   Center = 'center',
   Right = 'right',
 }
-export enum AnchorY {
+export enum VerticalAlign {
   Top = 'top',
   Center = 'center',
   Bottom = 'bottom',
@@ -76,9 +76,9 @@ export const defaultStyleConfig = Object.freeze({
     mode: ResourceDimensionMode.Fixed,
     fixed: 'img/icons/marker/circle.svg',
   },
-  symbolAnchor: {
-    anchorX: AnchorX.Center,
-    anchorY: AnchorY.Center,
+  symbolAlign: {
+    horizontal: HorizontalAlign.Center,
+    vertical: VerticalAlign.Center,
   },
   textConfig: {
     fontSize: 12,
@@ -95,9 +95,9 @@ export const defaultStyleConfig = Object.freeze({
   },
 });
 
-export interface SymbolAnchor {
-  anchorX?: AnchorX;
-  anchorY?: AnchorY;
+export interface SymbolAlign {
+  horizontal?: HorizontalAlign;
+  vertical?: VerticalAlign;
 }
 
 /**
@@ -119,7 +119,7 @@ export interface StyleConfigValues {
   lineWidth?: number;
   size?: number;
   symbol?: string; // the point symbol
-  symbolAnchor?: SymbolAnchor;
+  symbolAlign?: SymbolAlign;
   rotation?: number;
   text?: string;
 
