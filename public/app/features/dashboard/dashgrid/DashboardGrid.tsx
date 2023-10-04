@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { TextBoxVariableModel, VariablesChanged } from 'app/features/variables/types';
+import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
@@ -69,8 +69,15 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.eventSubs.add(
       appEvents.subscribe(VariablesChanged, (e) => {
         if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
-          let regex = (e.payload.variable as TextBoxVariableModel).current.value as string;
-          this.setPanelFilter(regex);
+          if ('current' in e.payload.variable) {
+            let variable = e.payload.variable.current;
+            if ('value' in variable) {
+              let value = variable.value;
+              if (typeof value === 'string') {
+                this.setPanelFilter(value as string);
+              }
+            }
+          }
         }
       })
     );
