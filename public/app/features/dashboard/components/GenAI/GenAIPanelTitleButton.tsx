@@ -4,7 +4,7 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { EventSource, reportGenerateAIButtonClicked } from './tracking';
+import { EventTrackingSrc } from './tracking';
 import { Message, QuickFeedbackType, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
@@ -19,15 +19,14 @@ const TITLE_GENERATION_STANDARD_PROMPT =
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
-  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelTitle), []);
 
   return (
     <GenAIButton
       messages={messages}
-      onClick={onClick}
       onGenerate={onGenerate}
       loadingText={'Generating title'}
       toggleTipTitle={'Improving your panel title'}
+      eventTrackingSrc={EventTrackingSrc.panelTitle}
     />
   );
 };

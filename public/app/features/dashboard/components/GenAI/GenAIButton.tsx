@@ -6,6 +6,7 @@ import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/
 
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useOpenAIStream } from './hooks';
+import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
 import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
@@ -23,6 +24,8 @@ export interface GenAIButtonProps {
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
+  // Event tracking source. Send as `src` to Rudderstack event
+  eventTrackingSrc: EventTrackingSrc;
 }
 
 export const GenAIButton = ({
@@ -33,6 +36,7 @@ export const GenAIButton = ({
   messages,
   onGenerate,
   temperature = 1,
+  eventTrackingSrc,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -44,12 +48,19 @@ export const GenAIButton = ({
   const hasHistory = history.length > 0;
   const isFirstGeneration = streamStatus === StreamStatus.GENERATING && !hasHistory;
   const isButtonDisabled = isFirstGeneration || (value && !value.enabled && !error);
+  const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!hasHistory) {
       onClickProp?.(e);
       setMessages(messages);
     }
+    const buttonItem = error
+      ? AutoGenerateItem.erroredRetryButton
+      : hasHistory
+      ? AutoGenerateItem.improveButton
+      : AutoGenerateItem.autoGenerateButton;
+    reportInteraction(buttonItem);
   };
 
   const updateHistory = useCallback(
@@ -80,6 +91,7 @@ export const GenAIButton = ({
   }
 
   const onApplySuggestion = (suggestion: string) => {
+    reportInteraction(AutoGenerateItem.applySuggestion);
     onGenerate(suggestion);
     setShouldCloseHistory(true);
 
@@ -142,6 +154,7 @@ export const GenAIButton = ({
               messages={messages}
               onApplySuggestion={onApplySuggestion}
               updateHistory={updateHistory}
+              eventTrackingSrc={eventTrackingSrc}
             />
           }
           placement="bottom-start"

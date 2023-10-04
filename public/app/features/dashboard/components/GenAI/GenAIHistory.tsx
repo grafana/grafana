@@ -20,6 +20,7 @@ import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
+import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
 import { Message, OPEN_AI_MODEL, QuickFeedbackType } from './utils';
 
 export interface GenAIHistoryProps {
@@ -27,17 +28,27 @@ export interface GenAIHistoryProps {
   messages: Message[];
   onApplySuggestion: (suggestion: string) => void;
   updateHistory: (historyEntry: string) => void;
+  eventTrackingSrc: EventTrackingSrc;
 }
 
 const temperature = 0.5;
 
-export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHistory }: GenAIHistoryProps) => {
+export const GenAIHistory = ({
+  eventTrackingSrc,
+  history,
+  messages,
+  onApplySuggestion,
+  updateHistory,
+}: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [showError, setShowError] = useState(false);
 
   const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+
+  const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
+    reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -67,6 +78,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       onGenerateWithFeedback(event.currentTarget.value);
+      reportInteraction(AutoGenerateItem.customPrompt, { customPrompt: event.currentTarget.value });
     }
   };
 
@@ -76,6 +88,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
 
   const onNavigate = (index: number) => {
     setCurrentIndex(index);
+    reportInteraction(index > currentIndex ? AutoGenerateItem.backHistoryItem : AutoGenerateItem.forwardHistoryItem);
   };
 
   const onGenerateWithFeedback = (suggestion: string | QuickFeedbackType) => {
@@ -84,6 +97,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
     }
 
     setMessages(messages);
+    reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
   };
 
   return (
@@ -126,7 +140,12 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" element="p" color="secondary">
           Be aware that this content was AI-generated.{' '}
-          <Link className={styles.linkText} href={'https://grafana.com/docs/grafana/latest/'} target="_blank">
+          <Link
+            className={styles.linkText}
+            href={'https://grafana.com/docs/grafana/latest/'}
+            target="_blank"
+            onClick={() => reportInteraction(AutoGenerateItem.linkToDocs)}
+          >
             Learn more
           </Link>
         </Text>

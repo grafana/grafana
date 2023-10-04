@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { EventSource, reportGenerateAIButtonClicked } from './tracking';
+import { EventTrackingSrc } from './tracking';
 import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
@@ -27,15 +27,14 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
-  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardChanges), []);
 
   return (
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      onClick={onClick}
       loadingText={'Generating changes summary'}
       temperature={0}
+      eventTrackingSrc={EventTrackingSrc.dashboardChanges}
     />
   );
 };

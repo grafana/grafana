@@ -4,7 +4,7 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { EventSource, reportGenerateAIButtonClicked } from './tracking';
+import { EventTrackingSrc } from './tracking';
 import { Message, Role } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
@@ -22,15 +22,14 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
-  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelDescription), []);
 
   return (
     <GenAIButton
       messages={messages}
-      onClick={onClick}
       onGenerate={onGenerate}
       loadingText={'Generating description'}
       toggleTipTitle={'Improving your panel description'}
+      eventTrackingSrc={EventTrackingSrc.panelDescription}
     />
   );
 };
