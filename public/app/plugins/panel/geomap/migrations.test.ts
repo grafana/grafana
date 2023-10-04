@@ -79,9 +79,9 @@ describe('Worldmap Migrations', () => {
                     "fixed": "img/icons/marker/circle.svg",
                     "mode": "fixed",
                   },
-                  "symbolAnchor": {
-                    "anchorX": "center",
-                    "anchorY": "center",
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
                   },
                   "textConfig": {
                     "fontSize": 12,
@@ -226,9 +226,9 @@ describe('geomap migrations', () => {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
                   },
-                  "symbolAnchor": {
-                    "anchorX": "center",
-                    "anchorY": "center",
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
                   },
                   "textConfig": {
                     "fontSize": 12,
