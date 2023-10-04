@@ -29,7 +29,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [serviceAccount, setServiceAccount] = useState<ServiceAccountDTO>({
     id: 0,
     orgId: contextSrv.user.orgId,
-    role: OrgRole.Viewer,
+    role: OrgRole.None,
     tokens: 0,
     name: '',
     login: '',

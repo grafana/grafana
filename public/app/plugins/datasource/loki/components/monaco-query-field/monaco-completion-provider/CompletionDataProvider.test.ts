@@ -110,6 +110,57 @@ describe('CompletionDataProvider', () => {
 
   test('Returns the expected parser and label keys', async () => {
     expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns the expected parser and label keys, cache duplicate query', async () => {
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns the expected parser and label keys, unique query is not cached', async () => {
+    //1
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+
+    //2
+    expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
+
+    // 3
+    expect(await completionProvider.getParserAndLabelKeys('uffdah')).toEqual(parserAndLabelKeys);
+
+    // 4
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
+  });
+
+  test('Returns the expected parser and label keys, cache size is 2', async () => {
+    //1
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+
+    //2
+    expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
+
+    // 2
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(2);
+
+    // 3
+    expect(await completionProvider.getParserAndLabelKeys('new')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('unique')).toEqual(parserAndLabelKeys);
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(3);
+
+    // 4
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
   });
 
   test('Returns the expected series labels', async () => {

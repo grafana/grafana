@@ -15,14 +15,13 @@ import (
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/go-kit/log/level"
@@ -44,7 +43,7 @@ const (
 	w3cPropagator    string = "w3c"
 )
 
-type Opentelemetry struct {
+type TracingService struct {
 	enabled       string
 	Address       string
 	Propagation   string
@@ -57,7 +56,7 @@ type Opentelemetry struct {
 	log log.Logger
 
 	tracerProvider tracerProvider
-	tracer         trace.Tracer
+	trace.Tracer
 
 	Cfg *setting.Cfg
 }
@@ -68,24 +67,10 @@ type tracerProvider interface {
 	Shutdown(ctx context.Context) error
 }
 
-type OpentelemetrySpan struct {
-	span trace.Span
-}
-
-type EventValue struct {
-	Str string
-	Num int64
-}
-
 // Tracer defines the service used to create new spans.
 type Tracer interface {
-	// Run implements registry.BackgroundService.
-	Run(context.Context) error
-	// Start creates a new [Span] and places trace metadata on the
-	// [context.Context] passed to the method.
-	// Chose a low cardinality spanName and use [Span.SetAttributes]
-	// or [Span.AddEvents] for high cardinality data.
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
+	trace.Tracer
+
 	// Inject adds identifying information for the span to the
 	// headers defined in [http.Header] map (this mutates http.Header).
 	//
@@ -94,47 +79,10 @@ type Tracer interface {
 	// information passed as [Span] is preferred.
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
-	Inject(context.Context, http.Header, Span)
-
-	// OtelTracer returns the trace.Tracer if available or nil.
-	OtelTracer() trace.Tracer
+	Inject(context.Context, http.Header, trace.Span)
 }
 
-// Span defines a time range for an operation. This is equivalent to a
-// single line in a flame graph.
-type Span interface {
-	// End finalizes the Span and adds its end timestamp.
-	// Any further operations on the Span are not permitted after
-	// End has been called.
-	End()
-	// SetAttributes adds additional data to a span.
-	// SetAttributes repeats the key value pair with [string] and [any]
-	// used for OpenTracing and [attribute.KeyValue] used for
-	// OpenTelemetry.
-	SetAttributes(key string, value any, kv attribute.KeyValue)
-	// SetName renames the span.
-	SetName(name string)
-	// SetStatus can be used to indicate whether the span was
-	// successfully or unsuccessfully executed.
-	//
-	// Only useful for OpenTelemetry.
-	SetStatus(code codes.Code, description string)
-	// RecordError adds an error to the span.
-	//
-	// Only useful for OpenTelemetry.
-	RecordError(err error, options ...trace.EventOption)
-	// AddEvents adds additional data with a temporal dimension to the
-	// span.
-	//
-	// Panics if the length of keys is shorter than the length of values.
-	AddEvents(keys []string, values []EventValue)
-
-	// contextWithSpan returns a context.Context that holds the parent
-	// context plus a reference to this span.
-	ContextWithSpan(ctx context.Context) context.Context
-}
-
-func ProvideService(cfg *setting.Cfg) (Tracer, error) {
+func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	ots, err := ParseSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -153,8 +101,8 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	return ots, nil
 }
 
-func ParseSettings(cfg *setting.Cfg) (*Opentelemetry, error) {
-	ots := &Opentelemetry{
+func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
+	ots := &TracingService{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
@@ -162,38 +110,13 @@ func ParseSettings(cfg *setting.Cfg) (*Opentelemetry, error) {
 	return ots, err
 }
 
-type traceKey struct{}
-type traceValue struct {
-	ID        string
-	IsSampled bool
-}
-
-func TraceIDFromContext(c context.Context, requireSampled bool) string {
-	v := c.Value(traceKey{})
-	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
-	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
-		return trace.ID
+func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
+		return ""
 	}
-	return ""
-}
 
-// SpanFromContext returns the Span previously associated with ctx, or nil, if no such span could be found.
-// It is the equivalent of opentracing.SpanFromContext and trace.SpanFromContext.
-func SpanFromContext(ctx context.Context) Span {
-	if span := trace.SpanFromContext(ctx); span != nil {
-		return OpentelemetrySpan{span: span}
-	}
-	return nil
-}
-
-// ContextWithSpan returns a new context.Context that holds a reference to the given span.
-// If span is nil, a new context without an active span is returned.
-// It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
-func ContextWithSpan(ctx context.Context, span Span) context.Context {
-	if span != nil {
-		return span.ContextWithSpan(ctx)
-	}
-	return ctx
+	return spanCtx.TraceID().String()
 }
 
 type noopTracerProvider struct {
@@ -204,7 +127,7 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) parseSettings() error {
+func (ots *TracingService) parseSettings() error {
 	legacyAddress, legacyTags := "", ""
 	if section, err := ots.Cfg.Raw.GetSection("tracing.jaeger"); err == nil {
 		legacyAddress = section.Key("address").MustString("")
@@ -263,7 +186,7 @@ func (ots *Opentelemetry) parseSettings() error {
 	return nil
 }
 
-func (ots *Opentelemetry) OTelExporterEnabled() bool {
+func (ots *TracingService) OTelExporterEnabled() bool {
 	return ots.enabled == otlpExporter
 }
 
@@ -283,7 +206,7 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	return res, nil
 }
 
-func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
 	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
@@ -328,7 +251,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
 	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.Address), otlptracegrpc.WithInsecure())
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
@@ -343,7 +266,7 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 	return initTracerProvider(exp, ots.Cfg.BuildVersion, sampler, ots.customAttribs...)
 }
 
-func (ots *Opentelemetry) initSampler() (tracesdk.Sampler, error) {
+func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 	switch ots.sampler {
 	case "const", "":
 		if ots.samplerParam >= 1 {
@@ -390,11 +313,11 @@ func initTracerProvider(exp tracesdk.SpanExporter, version string, sampler trace
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
+func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
 	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
 }
 
-func (ots *Opentelemetry) initOpentelemetryTracer() error {
+func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
 	switch ots.enabled {
@@ -450,12 +373,12 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 		ots.tracerProvider = tp
 	}
 
-	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
+	ots.Tracer = otel.GetTracerProvider().Tracer("component-main")
 
 	return nil
 }
 
-func (ots *Opentelemetry) Run(ctx context.Context) error {
+func (ots *TracingService) Run(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
@@ -478,68 +401,12 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
-	opentelemetrySpan := OpentelemetrySpan{
-		span: span,
-	}
-
-	if traceID := span.SpanContext().TraceID(); traceID.IsValid() {
-		ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), span.SpanContext().IsSampled()})
-	}
-
-	return ctx, opentelemetrySpan
-}
-
-func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
+func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
-func (ots *Opentelemetry) OtelTracer() trace.Tracer {
-	return ots.tracer
-}
-
-func (s OpentelemetrySpan) End() {
-	s.span.End()
-}
-
-func (s OpentelemetrySpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
-	s.span.SetAttributes(kv)
-}
-
-func (s OpentelemetrySpan) SetName(name string) {
-	s.span.SetName(name)
-}
-
-func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
-	s.span.SetStatus(code, description)
-}
-
-func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	s.span.RecordError(err, options...)
-}
-
-func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
-	for i, v := range values {
-		if v.Str != "" {
-			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
-		}
-		if v.Num != 0 {
-			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
-		}
-	}
-}
-
-func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context {
-	if s.span != nil {
-		ctx = trace.ContextWithSpan(ctx, s.span)
-		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
-		// It's derived from the span. Ensure that we propagate this too.
-		if traceID := s.span.SpanContext().TraceID(); traceID.IsValid() {
-			ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), s.span.SpanContext().IsSampled()})
-		}
-	}
-	return ctx
+func (ots *TracingService) OtelTracer() trace.Tracer {
+	return ots
 }
 
 type rateLimiter struct {

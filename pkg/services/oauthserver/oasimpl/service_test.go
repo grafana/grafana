@@ -2,6 +2,7 @@ package oasimpl
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -89,7 +91,13 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		teamService:   env.TeamService,
 		publicKey:     &pk.PublicKey,
 	}
-	env.S.oauthProvider = newProvider(config, env.S, pk)
+
+	env.S.oauthProvider = newProvider(config, env.S, &signingkeystest.FakeSigningKeysService{
+		ExpectedKeys: map[string]crypto.Signer{
+			"default": pk,
+		},
+		ExpectedError: nil,
+	})
 
 	return env
 }
