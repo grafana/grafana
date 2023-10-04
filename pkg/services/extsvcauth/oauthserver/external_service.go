@@ -8,6 +8,7 @@ import (
 	"github.com/ory/fosite"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -16,16 +17,6 @@ type KeyResult struct {
 	PrivatePem string `json:"private,omitempty"`
 	PublicPem  string `json:"public,omitempty"`
 	Generated  bool   `json:"generated,omitempty"`
-}
-
-type ExternalServiceDTO struct {
-	Name        string     `json:"name"`
-	ID          string     `json:"clientId"`
-	Secret      string     `json:"clientSecret"`
-	RedirectURI string     `json:"redirectUri,omitempty"` // Not used yet (code flow)
-	GrantTypes  string     `json:"grantTypes"`            // CSV value
-	Audiences   string     `json:"audiences"`             // CSV value
-	KeyResult   *KeyResult `json:"key,omitempty"`
 }
 
 type ExternalService struct {
@@ -49,7 +40,13 @@ type ExternalService struct {
 	ImpersonateScopes []string
 }
 
-func (c *ExternalService) ToDTO() *ExternalServiceDTO {
+func (c *ExternalService) ToDTO(keys *KeyResult) *extsvcauth.ExternalServiceDTO {
+	extra := ExternalServiceDTOExtra{
+		GrantTypes:  c.GrantTypes,
+		Audiences:   c.Audiences,
+		RedirectURI: c.RedirectURI,
+		KeyResult:   keys,
+	}
 	c2 := ExternalServiceDTO{
 		Name:        c.Name,
 		ID:          c.ClientID,
