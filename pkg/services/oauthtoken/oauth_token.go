@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -33,6 +34,8 @@ type Service struct {
 	SocialService     social.Service
 	AuthInfoService   login.AuthInfoService
 	singleFlightGroup *singleflight.Group
+
+	tokenRefreshDuration *prometheus.HistogramVec
 }
 
 type OAuthTokenService interface {
@@ -43,12 +46,24 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer) *Service {
+	tokenRefreshDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Subsystem: "oauth",
+		Name:      "token_refresh_fetch_duration_seconds",
+		Help:      "Time taken to fetch access token using refresh token",
+	},
+		[]string{"auth_provider", "success"})
+	if registerer != nil {
+		registerer.MustRegister(tokenRefreshDuration)
+	}
+
 	return &Service{
-		Cfg:               cfg,
-		SocialService:     socialService,
-		AuthInfoService:   authInfoService,
-		singleFlightGroup: new(singleflight.Group),
+		Cfg:                  cfg,
+		SocialService:        socialService,
+		AuthInfoService:      authInfoService,
+		singleFlightGroup:    new(singleflight.Group),
+		tokenRefreshDuration: tokenRefreshDuration,
 	}
 }
 
@@ -212,8 +227,12 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 
 	persistedToken := buildOAuthTokenFromAuthInfo(usr)
 
+	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
+	duration := time.Since(start)
+	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+
 	if err != nil {
 		logger.Error("Failed to retrieve oauth access token",
 			"provider", usr.AuthModule, "userId", usr.UserId, "error", err)
