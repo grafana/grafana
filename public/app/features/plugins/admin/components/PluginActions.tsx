@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, useStyles2, VerticalGroup, Modal, Button } from '@grafana/ui';
+import configCore from 'app/core/config';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
@@ -36,19 +37,28 @@ export const PluginActions = ({ plugin }: Props) => {
   return (
     <>
       <VerticalGroup>
-        <HorizontalGroup>
-          {!isInstallControlsDisabled && (
-            <InstallControlsButton
-              plugin={plugin}
-              latestCompatibleVersion={latestCompatibleVersion}
-              pluginStatus={pluginStatus}
-              setNeedReload={setNeedReload}
-              isExternallyManaged={isExternallyManaged}
-              onManagedInstallCallback={setShowInstallationInfoModal}
-            />
-          )}
-          <GetStartedWithPlugin plugin={plugin} />
-        </HorizontalGroup>
+      <HorizontalGroup>
+        {!isInstallControlsDisabled && (
+          <>
+            {(isExternallyManaged && ! configCore.featureToggles.managedPluginsInstall) ? (
+              <ExternallyManagedButton
+                pluginId={plugin.id}
+                pluginStatus={pluginStatus}
+                angularDetected={plugin.angularDetected}
+              />
+            ) : (
+              <InstallControlsButton
+                plugin={plugin}
+                latestCompatibleVersion={latestCompatibleVersion}
+                pluginStatus={pluginStatus}
+                setNeedReload={setNeedReload}
+                isExternallyManaged={isExternallyManaged}
+              />
+            )}
+          </>
+        )}
+        <GetStartedWithPlugin plugin={plugin} />
+      </HorizontalGroup>
         {needReload && (
           <HorizontalGroup>
             <Icon name="exclamation-triangle" />
@@ -57,10 +67,10 @@ export const PluginActions = ({ plugin }: Props) => {
         )}
       </VerticalGroup>
       {showInstallationInfoModal && (
-        <Modal title={'Please acknoledge'} isOpen={true} onDismiss={() => setShowInstallationInfoModal(false)}>
+        <Modal title={'Please acknowledge'} isOpen={true} onDismiss={() => setShowInstallationInfoModal(false)}>
           <div>
             {
-              'Please note, that installation can take a while, it can take from 30 sec to 5 minutes to plugin appeares in the list.'
+              'Please note, that installation can take a while, it can take from 30 sec to 5 minutes to plugin appears in the list.'
             }
           </div>
           <Button variant="primary" onClick={() => setShowInstallationInfoModal(false)}>

@@ -292,3 +292,7 @@ export type PluginVersion = {
   isCompatible: boolean;
   grafanaDependency: string | null;
 };
+
+export type InstancePlugin = {
+  pluginSlug: string;
+}

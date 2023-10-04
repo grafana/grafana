@@ -1,8 +1,9 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
-import { from, forkJoin, timeout, lastValueFrom, catchError, throwError } from 'rxjs';
+import { from, forkJoin, timeout, lastValueFrom, catchError, throwError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import configCore from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
@@ -16,10 +17,11 @@ import {
   installManagedPlugin,
   uninstallPlugin,
   uninstallManagedPlugin,
+  getInstancePlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin } from '../types';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin } from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -29,11 +31,13 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
 
     const local$ = from(getLocalPlugins());
     const remote$ = from(getRemotePlugins());
+    const instance$ = (config.stackId && configCore.featureToggles.managedPluginsInstall) ? from(getInstancePlugins(config.stackId)) : of(undefined);
     const pluginErrors$ = from(getPluginErrors());
 
     forkJoin({
       local: local$,
       remote: remote$,
+      instance: instance$,
       pluginErrors: pluginErrors$,
     })
       .pipe(
@@ -57,9 +61,10 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
 
                 if (remote.length > 0) {
                   const local = await lastValueFrom(local$);
+                  const instance = await lastValueFrom(instance$);
                   const pluginErrors = await lastValueFrom(pluginErrors$);
 
-                  thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes(local, remote, pluginErrors)));
+                  thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({local, remote, instance, pluginErrors})));
                 }
               });
 
@@ -71,21 +76,23 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
         ({
           local,
           remote,
+          instance,
           pluginErrors,
         }: {
           local: LocalPlugin[];
           remote?: RemotePlugin[];
+          instance?: InstancePlugin[];
           pluginErrors: PluginError[];
         }) => {
           thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
 
           // Both local and remote plugins are loaded
           if (local && remote) {
-            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes(local, remote, pluginErrors)));
+            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({local, remote, instance, pluginErrors})));
 
             // Only remote plugins are loaded (remote timed out)
           } else if (local) {
-            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes(local, [], pluginErrors)));
+            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({local, pluginErrors})));
           }
         }
       );

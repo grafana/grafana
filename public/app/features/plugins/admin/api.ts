@@ -4,7 +4,7 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
 import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
-import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
+import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion, InstancePlugin } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
@@ -102,6 +102,20 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   );
 
   return localPlugins.filter(isLocalPluginVisibleByConfig);
+}
+
+
+export async function getInstancePlugins(instanceId: string): Promise<InstancePlugin[]> {
+  const { items: instancePlugins }: { items: InstancePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/instances/${instanceId}/plugins`,
+  undefined,
+  undefined,
+  {
+    headers: {
+      "Authorization": "Bearer " + config.pluginInstallToken,
+    },
+  });
+
+  return instancePlugins;
 }
 
 export async function installPlugin(id: string) {

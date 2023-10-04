@@ -24,6 +24,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -168,6 +169,10 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
+		// For managed plugins it's possible that the plugin is installed but not present in the instance yet.
+		if hs.Cfg.StackID != "" && hs.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagManagedPluginsInstall) {
+			return response.Error(http.StatusNotFound, "Plugin not found, if you have recently installed it, please wait", nil)
+		}
 		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
 	}
 
