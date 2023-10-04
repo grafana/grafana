@@ -72,8 +72,11 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
+    // Sanitize field by removing hovered property to fix unique display name issue
+    const { hovered, ...sanitizedField } = field;
+
     displayValues.push({
-      name: getFieldDisplayName(field, data),
+      name: getFieldDisplayName(sanitizedField, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
       highlight: field.hovered,

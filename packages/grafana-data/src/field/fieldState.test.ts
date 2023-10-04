@@ -15,6 +15,11 @@ function checkScenario(scenario: TitleScenario): string {
   return getFieldDisplayName(field, frame, scenario.frames);
 }
 
+jest.mock('lodash', () => ({
+  ...jest.requireActual('lodash'),
+  isEqual: jest.fn().mockImplementation((obj1, obj2) => obj1 === obj2),
+}));
+
 describe('getFrameDisplayName', () => {
   it('Should return frame name if set', () => {
     const frame = toDataFrame({
