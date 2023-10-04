@@ -767,6 +767,21 @@ describe('Plugin details page', () => {
         expect(queryByText(/plugin is deprecated and removed from the catalog/i)).not.toBeInTheDocument()
       );
     });
+
+    it('should display a custom deprecation message if the plugin has it set', async () => {
+      const statusContext = 'A detailed explanation of why this plugin is deprecated.';
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      await waitFor(() => expect(queryByText(statusContext)).toBeInTheDocument());
+    });
   });
 
   describe('viewed as user without grafana admin permissions', () => {
