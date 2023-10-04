@@ -2,7 +2,19 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Divider, HorizontalGroup, Icon, Input, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Divider,
+  HorizontalGroup,
+  Icon,
+  Input,
+  Link,
+  Spinner,
+  Text,
+  useStyles2,
+  VerticalGroup,
+} from '@grafana/ui';
 
 import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -23,8 +35,9 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
+  const [showError, setShowError] = useState(false);
 
-  const { setMessages, reply, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -33,6 +46,23 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
       setCurrentIndex(1);
     }
   }, [isStreamGenerating, reply]);
+
+  useEffect(() => {
+    if (streamStatus === StreamStatus.COMPLETED) {
+      // TODO: Break out sanitize regex into shared util function
+      updateHistory(reply.replace(/^"|"$/g, ''));
+    }
+  }, [streamStatus, reply, updateHistory]);
+
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+    }
+
+    if (streamStatus === StreamStatus.GENERATING) {
+      setShowError(false);
+    }
+  }, [error, streamStatus]);
 
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -56,15 +86,18 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
     setMessages(messages);
   };
 
-  useEffect(() => {
-    if (streamStatus === StreamStatus.COMPLETED) {
-      // TODO: Break out sanitize regex into shared util function
-      updateHistory(reply.replace(/^"|"$/g, ''));
-    }
-  }, [streamStatus, reply, updateHistory]);
-
   return (
     <div className={styles.wrapper}>
+      {showError && (
+        <div>
+          <Alert title="">
+            <VerticalGroup>
+              <div>Sorry, I was unable to complete your request. Please try again.</div>
+            </VerticalGroup>
+          </Alert>
+        </div>
+      )}
+
       <Input
         placeholder="Tell AI what to do next..."
         suffix={<Icon name="corner-down-right-alt" />}
