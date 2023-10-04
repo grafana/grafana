@@ -145,6 +145,7 @@ export const GenAIButton = ({
             />
           }
           placement="bottom-start"
+          fitContent={true}
           shouldClose={shouldCloseHistory}
         >
           {button}
