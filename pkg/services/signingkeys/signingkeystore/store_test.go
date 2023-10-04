@@ -72,7 +72,7 @@ func TestIntegrationSigningKeyStore(t *testing.T) {
 			assert.NoError(t, err)
 
 			retrievedKey, err := store.GetPrivateKey(ctx, tc.keyID)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, key.Public(), retrievedKey.Public())
 
