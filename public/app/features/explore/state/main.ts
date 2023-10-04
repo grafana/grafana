@@ -5,7 +5,7 @@ import { SplitOpenOptions, TimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreItemState, ExploreState } from 'app/types/explore';
+import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -83,6 +83,7 @@ export const splitOpen = createAsyncThunk(
         queries: withUniqueRefIds(queries),
         range: options?.range || originState?.range.raw || DEFAULT_RANGE,
         panelsState: options?.panelsState || originState?.panelsState,
+        correlationHelperData: options?.correlationHelperData,
       })
     );
   },
@@ -102,6 +103,13 @@ const createNewSplitOpenPane = createAsyncThunk(
   async (options: InitializeExploreOptions, { dispatch }) => {
     await dispatch(initializeExplore(options));
   }
+);
+
+/**
+ * Moves explore into and out of correlations editor mode
+ */
+export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetailsUpdate>(
+  'explore/changeCorrelationEditorDetails'
 );
 
 export interface NavigateToExploreDependencies {
@@ -140,6 +148,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
+  correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -249,6 +258,22 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       panes: {},
+    };
+  }
+
+  if (changeCorrelationEditorDetails.match(action)) {
+    const { editorMode, label, description, canSave, dirty, isExiting, postConfirmAction } = action.payload;
+    return {
+      ...state,
+      correlationEditorDetails: {
+        editorMode: Boolean(editorMode ?? state.correlationEditorDetails?.editorMode),
+        canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
+        label: label ?? state.correlationEditorDetails?.label,
+        description: description ?? state.correlationEditorDetails?.description,
+        dirty: Boolean(dirty ?? state.correlationEditorDetails?.dirty),
+        isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
+        postConfirmAction,
+      },
     };
   }
 

@@ -136,4 +136,5 @@ export interface FeatureToggles {
   externalServiceAccounts?: boolean;
   alertingModifiedExport?: boolean;
   panelMonitoring?: boolean;
+  enableNativeHTTPHistogram?: boolean;
 }

@@ -332,7 +332,7 @@ const (
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
-	// Split panels between vizualizations and widgets
+	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
 	// FlagPrometheusIncrementalQueryInstrumentation
@@ -478,4 +478,8 @@ const (
 	// FlagPanelMonitoring
 	// Enables panel monitoring through logs and measurements
 	FlagPanelMonitoring = "panelMonitoring"
+
+	// FlagEnableNativeHTTPHistogram
+	// Enables native HTTP Histograms
+	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 )

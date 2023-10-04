@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -52,13 +53,15 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 	if responses == nil {
 		return &result, nil
 	}
-	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse")
-	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
+	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse", trace.WithAttributes(
+		attribute.Int("responseLength", len(responses)),
+	))
 	defer span.End()
 
 	for i, res := range responses {
-		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
-		resSpan.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
+		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response", trace.WithAttributes(
+			attribute.String("queryMetricType", targets[i].Metrics[0].Type),
+		))
 		start := time.Now()
 		target := targets[i]
 

@@ -560,7 +560,7 @@ var (
 		},
 		{
 			Name:         "vizAndWidgetSplit",
-			Description:  "Split panels between vizualizations and widgets",
+			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -822,6 +822,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "enableNativeHTTPHistogram",
+			Description:  "Enables native HTTP Histograms",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
 		},
 	}
 )

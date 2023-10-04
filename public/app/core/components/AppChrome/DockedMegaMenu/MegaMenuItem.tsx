@@ -3,38 +3,36 @@ import React from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2, Text } from '@grafana/ui';
 
-import { NavBarItemIcon } from './NavBarItemIcon';
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { NavFeatureHighlight } from './NavFeatureHighlight';
+import { Indent } from '../../Indent/Indent';
+
+import { FeatureHighlight } from './FeatureHighlight';
+import { MegaMenuItemIcon } from './MegaMenuItemIcon';
+import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
-export function NavBarMenuSection({
-  link,
-  activeItem,
-  children,
-  className,
-  onClose,
-}: {
+interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  children: React.ReactNode;
-  className?: string;
   onClose?: () => void;
-}) {
+  level?: number;
+}
+
+export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
+  const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
+  const showExpandButton = linkHasChildren(link) || link.emptyMessage;
 
   return (
-    <>
-      <div className={cx(styles.collapsibleSectionWrapper, className)}>
-        <NavBarMenuItem
-          isActive={link === activeItem}
+    <li>
+      <div className={styles.collapsibleSectionWrapper}>
+        <MegaMenuItemText
+          isActive={isActive}
           onClick={() => {
             link.onClick?.();
             onClose?.();
@@ -49,12 +47,13 @@ export function NavBarMenuSection({
             })}
           >
             <FeatureHighlightWrapper>
-              <NavBarItemIcon link={link} />
+              <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
             </FeatureHighlightWrapper>
-            {link.text}
+            <Indent level={Math.max(0, level - 1)} spacing={2} />
+            <Text truncate>{link.text}</Text>
           </div>
-        </NavBarMenuItem>
-        {children && (
+        </MegaMenuItemText>
+        {showExpandButton && (
           <Button
             aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
             variant="secondary"
@@ -66,12 +65,35 @@ export function NavBarMenuSection({
           </Button>
         )}
       </div>
-      {sectionExpanded && children}
-    </>
+      {showExpandButton && sectionExpanded && (
+        <ul className={styles.children}>
+          {linkHasChildren(link) ? (
+            link.children
+              .filter((childLink) => !childLink.isCreateAction)
+              .map((childLink) => (
+                <MegaMenuItem
+                  key={`${link.text}-${childLink.text}`}
+                  link={childLink}
+                  activeItem={activeItem}
+                  onClose={onClose}
+                  level={level + 1}
+                />
+              ))
+          ) : (
+            <div className={styles.emptyMessage}>{link.emptyMessage}</div>
+          )}
+        </ul>
+      )}
+    </li>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  children: css({
+    display: 'flex',
+    listStyleType: 'none',
+    flexDirection: 'column',
+  }),
   collapsibleSectionWrapper: css({
     alignItems: 'center',
     display: 'flex',
@@ -81,18 +103,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0, 0.5),
     marginRight: theme.spacing(1),
   }),
-  collapseWrapperActive: css({
-    backgroundColor: theme.colors.action.disabledBackground,
+  emptyMessage: css({
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+    padding: theme.spacing(1, 1.5, 1, 7),
   }),
-  collapseContent: css({
-    padding: 0,
+  iconWrapper: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   }),
   labelWrapper: css({
     display: 'grid',
     fontSize: theme.typography.pxToRem(14),
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
-    placeItems: 'center',
+    alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
   }),
   isActive: css({
@@ -115,3 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
   }),
 });
+
+function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
+  return Boolean(link.children && link.children.length > 0);
+}
