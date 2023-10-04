@@ -52,7 +52,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-) folder.Service {
+) (folder.Service, error) {
 	store := ProvideStore(db, cfg, features)
 	srv := &Service{
 		cfg:                  cfg,
@@ -67,14 +67,13 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 	}
 	if err := srv.DBMigration(db); err != nil {
-		// TODO: fix this
-		panic(err)
+		return nil, folder.ErrInternal.Errorf("failed to migrate folder service: %w", err)
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
-	return srv
+	return srv, nil
 }
 
 func (s *Service) DBMigration(db db.DB) error {

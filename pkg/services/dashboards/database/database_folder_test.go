@@ -294,7 +294,8 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+		folderSvc, err := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+		require.NoError(t, err)
 
 		parentUID := ""
 		for i := 0; ; i++ {

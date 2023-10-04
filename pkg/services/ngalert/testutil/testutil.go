@@ -29,7 +29,9 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStor
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
 
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features)
+	folderService, err := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features)
+	require.NoError(tb, err)
+	return folderService
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
