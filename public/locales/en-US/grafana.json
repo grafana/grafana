@@ -59,6 +59,7 @@
       "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
       "select-all-header-checkbox": "Select all",
+      "select-checkbox": "Select",
       "tags-column": "Tags"
     },
     "folder-actions-button": {
