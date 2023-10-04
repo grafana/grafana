@@ -47,9 +47,9 @@ function GrafanaRuleGroupExportPreview({
   exportFormat,
   onClose,
 }: GrafanaRuleGroupExportPreviewProps) {
-  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.useExportRuleGroupQuery({
+  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
     folderUid,
-    groupName,
+    group: groupName,
     format: exportFormat,
   });
 

@@ -337,6 +337,48 @@ export function mockProvisioningApi(server: SetupServer) {
   };
 }
 
+export function mockExportApi(server: SetupServer) {
+  // exportRule, exportRulesGroup, exportRulesFolder use the same API endpoint but with different parameters
+  return {
+    // exportRule requires ruleUid parameter and doesn't allow folderUid and group parameters
+    exportRule: (ruleUid: string, response: Record<string, string>) => {
+      server.use(
+        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
+          if (req.url.searchParams.get('ruleUid') === ruleUid) {
+            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+          }
+
+          return res(ctx.status(500));
+        })
+      );
+    },
+    // exportRulesGroup requires folderUid and group parameters and doesn't allow ruleUid parameter
+    exportRulesGroup: (folderUid: string, group: string, response: Record<string, string>) => {
+      server.use(
+        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
+          if (req.url.searchParams.get('folderUid') === folderUid && req.url.searchParams.get('group') === group) {
+            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+          }
+
+          return res(ctx.status(500));
+        })
+      );
+    },
+    // exportRulesFolder requires folderUid parameter
+    exportRulesFolder: (folderUid: string, response: Record<string, string>) => {
+      server.use(
+        rest.get('/api/ruler/grafana/api/v1/export/rules', (req, res, ctx) => {
+          if (req.url.searchParams.get('folderUid') === folderUid) {
+            return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+          }
+
+          return res(ctx.status(500));
+        })
+      );
+    },
+  };
+}
+
 export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
