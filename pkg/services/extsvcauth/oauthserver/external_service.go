@@ -41,7 +41,7 @@ type ExternalService struct {
 }
 
 // ToDTO converts the ExternalService in an ExternalServiceDTO
-// If the DTO must contain Key pairs, pass them as parameters.
+// If the DTO must contain Key pairs, pass them as parameters, otherwise only the client PublicPem will be added to the DTO.
 func (c *ExternalService) ToDTO(keys *KeyResult) *extsvcauth.ExternalServiceDTO {
 	extra := ExternalServiceDTOExtra{
 		GrantTypes:  c.GrantTypes,
