@@ -46,8 +46,8 @@ export const GenAIButton = ({
   const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
-  const isFirstGeneration = streamStatus === StreamStatus.GENERATING && !hasHistory;
-  const isButtonDisabled = isFirstGeneration || (value && !value.enabled && !error);
+  const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
+  const isButtonDisabled = isFirstHistoryEntry || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -67,7 +67,7 @@ export const GenAIButton = ({
     reportInteraction(buttonItem);
   };
 
-  const updateHistory = useCallback(
+  const pushHistoryEntry = useCallback(
     (historyEntry: string) => {
       if (history.indexOf(historyEntry) === -1) {
         setHistory([historyEntry, ...history]);
@@ -78,16 +78,16 @@ export const GenAIButton = ({
 
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
-    if (isFirstGeneration && reply) {
+    if (isFirstHistoryEntry && reply) {
       onGenerate(reply.replace(/^"|"$/g, ''));
     }
-  }, [streamStatus, reply, onGenerate, isFirstGeneration]);
+  }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
-      updateHistory(reply.replace(/^"|"$/g, ''));
+      pushHistoryEntry(reply.replace(/^"|"$/g, ''));
     }
-  }, [history, streamStatus, reply, updateHistory]);
+  }, [history, streamStatus, reply, pushHistoryEntry]);
 
   // The button is disabled if the plugin is not installed or enabled
   if (!value?.enabled) {
@@ -101,7 +101,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isFirstGeneration) {
+    if (isFirstHistoryEntry) {
       return undefined;
     }
     if (error || (value && !value?.enabled)) {
@@ -117,7 +117,7 @@ export const GenAIButton = ({
       buttonText = 'Retry';
     }
 
-    if (isFirstGeneration) {
+    if (isFirstHistoryEntry) {
       buttonText = loadingText;
     }
 
@@ -153,7 +153,7 @@ export const GenAIButton = ({
               history={history}
               messages={messages}
               onApplySuggestion={onApplySuggestion}
-              updateHistory={updateHistory}
+              updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
             />
           }
@@ -171,7 +171,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstGeneration && <Spinner size={14} />}
+      {isFirstHistoryEntry && <Spinner size={14} />}
       {!hasHistory && (
         <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
           {button}
