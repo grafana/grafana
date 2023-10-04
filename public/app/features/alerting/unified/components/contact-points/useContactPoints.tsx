@@ -7,12 +7,16 @@ import { produce } from 'immer';
 import { remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { onCallApi } from '../../api/onCallApi';
+import { usePluginBridge } from '../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
 export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
 export const RECEIVER_META_KEY = Symbol('receiver_metadata');
+export const RECEIVER_PLUGIN_META_KEY = Symbol('receiver_plugin_metadata');
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 /**
@@ -22,6 +26,9 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  */
 export function useContactPointsWithStatus(selectedAlertmanager: string) {
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const { installed: onCallPluginInstalled, loading: onCallPluginStatusLoading } = usePluginBridge(
+    SupportedPlugin.OnCall
+  );
 
   // fetch receiver status if we're dealing with a Grafana Managed Alertmanager
   const fetchContactPointsStatus = alertmanagerApi.endpoints.getContactPointsStatus.useQuery(undefined, {
@@ -39,6 +46,12 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
     skip: !isGrafanaManagedAlertmanager,
   });
 
+  // if the OnCall plugin is installed, fetch its list of integrations so we can match those to the Grafana Managed contact points
+  const { data: onCallIntegrations, isLoading: onCallPluginIntegrationsLoading } =
+    onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
+      skip: !onCallPluginInstalled,
+    });
+
   // fetch the latest config from the Alertmanager
   const fetchAlertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
     selectedAlertmanager,
@@ -48,14 +61,24 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
       selectFromResult: (result) => ({
         ...result,
         contactPoints: result.data
-          ? enhanceContactPointsWithMetadata(result.data, fetchContactPointsStatus.data, fetchReceiverMetadata.data)
+          ? enhanceContactPointsWithMetadata(
+              result.data,
+              fetchContactPointsStatus.data,
+              fetchReceiverMetadata.data,
+              onCallPluginInstalled ? onCallIntegrations ?? [] : null
+            )
           : [],
       }),
     }
   );
 
+  // we will fail silently for fetching OnCall plugin status and integrations
   const error = fetchAlertmanagerConfiguration.error ?? fetchContactPointsStatus.error;
-  const isLoading = fetchAlertmanagerConfiguration.isLoading || fetchContactPointsStatus.isLoading;
+  const isLoading =
+    fetchAlertmanagerConfiguration.isLoading ||
+    fetchContactPointsStatus.isLoading ||
+    onCallPluginStatusLoading ||
+    onCallPluginIntegrationsLoading;
 
   const contactPoints = fetchAlertmanagerConfiguration.contactPoints;
 

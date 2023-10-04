@@ -9,10 +9,13 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
 
+import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
+import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
+import { getOnCallMetadata, ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { RECEIVER_META_KEY, RECEIVER_STATUS_KEY } from './useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './useContactPoints';
 
 export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
   // for some reason the provenance is on the receiver and not the entire contact point
@@ -72,6 +75,8 @@ export interface ReceiverConfigWithMetadata extends GrafanaManagedReceiverConfig
     name: string;
     description?: string;
   };
+  // optional metadata that comes from a particular plugin (like Grafana OnCall)
+  [RECEIVER_PLUGIN_META_KEY]?: ReceiverPluginMetadata;
 }
 
 export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
@@ -87,7 +92,8 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
 export function enhanceContactPointsWithMetadata(
   result: AlertManagerCortexConfig,
   status: ReceiversStateDTO[] = [],
-  notifiers: NotifierDTO[] = []
+  notifiers: NotifierDTO[] = [],
+  onCallIntegrations: OnCallIntegrationDTO[] | null
 ): ContactPointWithMetadata[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
 
@@ -103,11 +109,17 @@ export function enhanceContactPointsWithMetadata(
     return {
       ...contactPoint,
       numberOfPolicies: usedContactPointsByName[contactPoint.name] ?? 0,
-      grafana_managed_receiver_configs: receivers.map((receiver, index) => ({
-        ...receiver,
-        [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
-        [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
-      })),
+      grafana_managed_receiver_configs: receivers.map((receiver, index) => {
+        const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
+
+        return {
+          ...receiver,
+          [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
+          [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
+          // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
+          [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver ? getOnCallMetadata(onCallIntegrations, receiver) : undefined,
+        };
+      }),
     };
   });
 }
@@ -120,6 +132,7 @@ export function getUsedContactPoints(route: Route): string[] {
 
   return childrenContactPoints;
 }
+
 function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedReceiverConfig) {
   const match = notifiers.find((notifier) => notifier.type === receiver.type);
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
-import { groupBy, size, uniqueId, upperFirst } from 'lodash';
+import { groupBy, size, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -40,11 +40,14 @@ import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
 import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
+import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
+import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
 import {
   RECEIVER_META_KEY,
+  RECEIVER_PLUGIN_META_KEY,
   RECEIVER_STATUS_KEY,
   useContactPointsWithStatus,
   useDeleteContactPoint,
@@ -229,18 +232,21 @@ export const ContactPoint = ({
         />
         {showFullMetadata ? (
           <div>
-            {receivers?.map((receiver) => {
+            {receivers?.map((receiver, index) => {
               const diagnostics = receiver[RECEIVER_STATUS_KEY];
               const metadata = receiver[RECEIVER_META_KEY];
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
+              const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
+              const key = metadata.name + index;
 
               return (
                 <ContactPointReceiver
-                  key={uniqueId()}
+                  key={key}
                   name={metadata.name}
                   type={receiver.type}
                   description={getReceiverDescription(receiver)}
                   diagnostics={diagnostics}
+                  pluginMetadata={pluginMetadata}
                   sendingResolved={sendingResolved}
                 />
               );
@@ -363,10 +369,11 @@ interface ContactPointReceiverProps {
   description?: ReactNode;
   sendingResolved?: boolean;
   diagnostics?: NotifierStatus;
+  pluginMetadata?: ReceiverPluginMetadata;
 }
 
 const ContactPointReceiver = (props: ContactPointReceiverProps) => {
-  const { name, type, description, diagnostics, sendingResolved = true } = props;
+  const { name, type, description, diagnostics, pluginMetadata, sendingResolved = true } = props;
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
@@ -378,9 +385,13 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
         <Stack direction="row" alignItems="center" gap={1}>
           <Stack direction="row" alignItems="center" gap={0.5}>
             {iconName && <Icon name={iconName} />}
-            <Text variant="body" color="primary">
-              {name}
-            </Text>
+            {pluginMetadata ? (
+              <ReceiverMetadataBadge metadata={pluginMetadata} />
+            ) : (
+              <Text variant="body" color="primary">
+                {name}
+              </Text>
+            )}
           </Stack>
           {description && (
             <Text variant="bodySmall" color="secondary">
