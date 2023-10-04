@@ -1,20 +1,19 @@
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, TimeRange } from '@grafana/data/src';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
-// @todo These are being imported for PoC, but should probably be reimplemented within the influx datasource?
-import { mapFieldsToTypes } from '../../../../../mysql/fields';
-import { buildColumnQuery, buildTableQuery, showDatabases } from '../../../../../mysql/mySqlMetaQuery';
-import { getSqlCompletionProvider } from '../../../../../mysql/sqlCompletionProvider';
-import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from '../../../../../mysql/sqlUtil';
-import { MySQLOptions } from '../../../../../mysql/types';
+import { mapFieldsToTypes } from './fields';
+import { buildColumnQuery, buildTableQuery, showDatabases } from './flightsqlMetaQuery';
+import { getSqlCompletionProvider } from './sqlCompletionProvider';
+import { quoteLiteral, quoteIdentifierIfNecessary, toRawSql } from './sqlUtil';
+import { FlightSQLOptions } from './types';
 
 export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+  constructor(private instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>) {
     super(instanceSettings);
   }
 
@@ -31,7 +30,7 @@ export class FlightSQLDatasource extends SqlDatasource {
       getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
     this.sqlLanguageDefinition = {
-      id: 'mysql',
+      id: 'flightsql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };
