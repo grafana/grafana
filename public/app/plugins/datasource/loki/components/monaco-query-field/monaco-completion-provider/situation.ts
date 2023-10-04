@@ -1,4 +1,4 @@
-import type { Tree, SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, TreeCursor } from '@lezer/common';
 
 import {
   parser,
@@ -158,11 +158,10 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [[Selector]],
-    fun: resolveSelector,
-  },
-  {
-    paths: [[ERROR_NODE_ID, Matchers, Selector]],
+    paths: [
+      [Selector],
+      [ERROR_NODE_ID, Matchers, Selector]
+    ],
     fun: resolveSelector,
   },
   {
@@ -178,7 +177,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogfmtParser,
   },
   {
-    paths: [[LogQL]],
+    paths: [
+      [LogQL],
+      [ERROR_NODE_ID, Selector],
+    ],
     fun: resolveTopLevel,
   },
   {
@@ -210,7 +212,10 @@ const RESOLVERS: Resolver[] = [
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
-    paths: [[ERROR_NODE_ID, PipelineStage, PipelineExpr]],
+    paths: [
+      [ERROR_NODE_ID, PipelineStage, PipelineExpr],
+      [PipelineStage, PipelineExpr],
+    ],
     fun: resolvePipeError,
   },
   {
@@ -308,24 +313,23 @@ function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situat
 }
 
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // for example `{level="info"} |`
-  const exprNode = walk(node, [
-    ['parent', PipelineStage],
-    ['parent', PipelineExpr],
-  ]);
-
-  if (exprNode === null) {
-    return null;
+  /**
+   * Examples:
+   * - {level="info"} |^
+   * - count_over_time({level="info"} |^ [4m])
+   */
+  let exprNode: SyntaxNode | null = null;
+  if (node.type.id === ERROR_NODE_ID) {
+    exprNode = walk(node, [
+      ['parent', PipelineStage],
+      ['parent', PipelineExpr],
+    ]);
+  } else if (node.type.id === PipelineStage) {
+    exprNode = walk(node, [['parent', PipelineExpr]]);
   }
 
-  const { parent } = exprNode;
-
-  if (parent === null) {
-    return null;
-  }
-
-  if (parent.type.id === LogExpr || parent.type.id === LogRangeExpr) {
-    return resolveLogOrLogRange(parent, text, pos, true);
+  if (exprNode?.parent?.type.id === LogExpr || exprNode?.parent?.type.id === LogRangeExpr) {
+    return resolveLogOrLogRange(exprNode.parent, text, pos, true);
   }
 
   return null;
@@ -427,7 +431,11 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
 function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
   // We want to know if the cursor if after a log query with logfmt parser.
   // E.g. `{x="y"} | logfmt ^`
-
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise 
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes or commas.
+   */ 
   const tree = parser.parse(text);
 
   // Adjust the cursor position if there are spaces at the end of the text.
@@ -470,15 +478,23 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
 }
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we try a couply specific paths here.
-  // `{x="y"}` situation, with the cursor at the end
-
+  /**
+   * Top level examples:
+   * - Empty query
+   * - {label="value"}
+   * - {label="value"} | parser 
+   */
   const logExprNode = walk(node, [
     ['lastChild', Expr],
     ['lastChild', LogExpr],
   ]);
 
-  if (logExprNode != null) {
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise 
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes.
+   */ 
+  if (logExprNode != null && text.endsWith(' ')) {
     return resolveLogOrLogRange(logExprNode, text, pos, false);
   }
 
@@ -615,8 +631,6 @@ function resolveCursor(text: string, cursorPos: number): TreeCursor {
 
   const tree = parser.parse(text);
   const cursor = tree.cursorAt(pos);
-
-  console.log(cursor.node.type.name, text.substring(cursor.node.from, cursor.node.to))
 
   do {
     if (cursor.from === pos && cursor.to === pos && cursor.node.type.isError) {

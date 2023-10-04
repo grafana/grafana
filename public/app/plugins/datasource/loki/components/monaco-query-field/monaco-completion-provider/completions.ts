@@ -359,48 +359,37 @@ export async function getLogfmtCompletions(
     // The user is typing a new label, so we remove the last comma
     logQuery = trimEnd(logQuery, ', ');
   }
-  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
-  const hasQueryParser = isQueryWithParser(logQuery).queryWithParser;
-
+  
   let completions: Completion[] = [];
 
-  const parserCompletions = await getParserCompletions(
-    '| ',
-    hasJSON,
-    hasLogfmt,
-    hasPack,
-    extractedLabelKeys,
-    hasQueryParser
-  );
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
   const pipeOperations = getPipeOperationsCompletions('| ');
 
   if (!flags && !trailingComma) {
-    completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations];
+    completions = [...LOGFMT_ARGUMENT_COMPLETIONS, ...pipeOperations];
   } else if (!trailingComma) {
-    completions = [...completions, ...parserCompletions, ...pipeOperations];
+    completions = [...pipeOperations];
   }
 
-  const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+  /**
+   * We want to offer labels if there are no other labels or if there is a trailing comma.
+   * Otherwise, there are situations where the label suggestion will be inserted with an extra comma.
+   */ 
+  if (trailingComma || otherLabels.length === 0) {
+    const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
 
-  // No other labels or trailing comma, so we don't need to add a prefix
-  let labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
+    // No other labels or trailing comma, so we don't need to add a prefix
+    let labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
+    
+    const labelCompletions: Completion[] = labels.map((label) => ({
+      type: 'LABEL_NAME',
+      label,
+      insertText: labelPrefix + label,
+      triggerOnInsert: false,
+    }));
 
-  // But the user can be in the process of writing a label and, for example, backspaced one character.
-  if (otherLabels.length === 1 && !trailingComma) {
-    const matchingLabel = labels.find(label => {
-      return label.startsWith(otherLabels[0]) && label !== otherLabels[0];
-    });
-    labelPrefix = matchingLabel ? '' : labelPrefix;
+    completions = [...completions, ...labelCompletions];
   }
-  
-  const labelCompletions: Completion[] = labels.map((label) => ({
-    type: 'LABEL_NAME',
-    label,
-    insertText: labelPrefix + label,
-    triggerOnInsert: false,
-  }));
-
-  completions = [...completions, ...labelCompletions];
 
   return completions;
 }
