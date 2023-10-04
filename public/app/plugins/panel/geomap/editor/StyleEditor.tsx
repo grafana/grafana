@@ -109,11 +109,11 @@ export const StyleEditor = (props: Props) => {
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
   };
 
-  const onAnchorXChange = (alignHorizontal: HorizontalAlign) => {
+  const onAlignHorizontalChange = (alignHorizontal: HorizontalAlign) => {
     onChange({ ...value, symbolAlign: { ...value.symbolAlign, horizontal: alignHorizontal } });
   };
 
-  const onAnchorYChange = (alignVertical: VerticalAlign) => {
+  const onAlignVerticalChange = (alignVertical: VerticalAlign) => {
     onChange({ ...value, symbolAlign: { ...value.symbolAlign, vertical: alignVertical } });
   };
 
@@ -238,7 +238,7 @@ export const StyleEditor = (props: Props) => {
           <Field label={'Symbol Vertical Align'}>
             <RadioButtonGroup
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
-              onChange={onAnchorYChange}
+              onChange={onAlignVerticalChange}
               options={[
                 { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
                 { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
@@ -249,7 +249,7 @@ export const StyleEditor = (props: Props) => {
           <Field label={'Symbol Horizontal Align'}>
             <RadioButtonGroup
               value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
-              onChange={onAnchorXChange}
+              onChange={onAlignHorizontalChange}
               options={[
                 { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
                 { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
