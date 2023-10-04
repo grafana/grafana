@@ -280,11 +280,11 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
-	ids := make(map[string]int64, len(q))
+	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}
