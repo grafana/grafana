@@ -55,7 +55,10 @@
       "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
+      "expand-folder-button": "Ēχpäŉđ ƒőľđęř {{title}}",
       "name-column": "Ńämę",
+      "select-all-header-checkbox": "Ŝęľęčŧ äľľ",
       "tags-column": "Ŧäģş"
     },
     "folder-actions-button": {

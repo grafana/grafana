@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { t } from 'app/core/internationalization';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
@@ -70,7 +71,15 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
             onFolderClick(item.uid, !isOpen);
           }}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+          aria-label={
+            isOpen
+              ? t('browse-dashboards.dashboards-tree.collapse-folder-button', 'Collapse folder {{title}}', {
+                  title: item.title,
+                })
+              : t('browse-dashboards.dashboards-tree.expand-folder-button', 'Expand folder {{title}}', {
+                  title: item.title,
+                })
+          }
         />
       ) : (
         <span className={styles.folderButtonSpacer} />

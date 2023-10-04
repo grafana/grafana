@@ -55,7 +55,10 @@
       "total__other": "{{count}} items"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Collapse folder {{title}}",
+      "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
+      "select-all-header-checkbox": "Select all",
       "tags-column": "Tags"
     },
     "folder-actions-button": {
