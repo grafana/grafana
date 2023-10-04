@@ -13,8 +13,10 @@ interface GenAIPanelTitleButtonProps {
 }
 
 const TITLE_GENERATION_STANDARD_PROMPT =
-  'You are an expert in creating Grafana Panels.' +
-  'Your goal is to write short, descriptive, and concise panel title for a panel.' +
+  'You are an expert in creating Grafana Panels.\n' +
+  'You will be given the title and description of the dashboard the panel is in as well as the JSON for the panel.\n' +
+  'Your goal is to write a concise panel title.\n' +
+  'There should be no numbers in the title except for thresholds.\n' +
   'The title should be shorter than 50 characters.';
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
