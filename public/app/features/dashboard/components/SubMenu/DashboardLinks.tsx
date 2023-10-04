@@ -29,6 +29,19 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
     return null;
   }
 
+  // NI fork: Use iframe location for links
+  const getCorrectedHref = function (href: string) {
+    try {
+      // If absolute URL, return
+      new URL(href);
+      return href;
+    } catch {
+      // If relative URL, build in context of iframe location
+      const split = window.parent.location.href.split('/d/');
+      return `${split[0]}/${href}`;
+    }
+  };
+
   return (
     <>
       {links.map((link: DashboardLink, index: number) => {
@@ -43,7 +56,7 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
 
         const linkElement = (
           <DashboardLinkButton
-            href={sanitizeUrl(linkInfo.href)}
+            href={getCorrectedHref(sanitizeUrl(linkInfo.href))}
             target={link.targetBlank ? '_blank' : undefined}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
