@@ -371,31 +371,28 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
+	return changesToResponse(finalChanges)
+}
 
+func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+	body := apimodels.UpdateRuleGroupResponse{
+		Message: "rule group updated successfully",
+		Created: make([]string, 0, len(finalChanges.New)),
+		Updated: make([]string, 0, len(finalChanges.Update)),
+		Deleted: make([]string, 0, len(finalChanges.Delete)),
+	}
 	if finalChanges.IsEmpty() {
-		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
-	}
-	body := util.DynMap{"message": "rule group updated successfully"}
-	if len(finalChanges.New) > 0 {
-		uids := make([]string, 0, len(finalChanges.New))
+		body.Message = "no changes detected in the rule group"
+	} else {
 		for _, r := range finalChanges.New {
-			uids = append(uids, r.UID)
+			body.Created = append(body.Created, r.UID)
 		}
-		body["created"] = uids
-	}
-	if len(finalChanges.Update) > 0 {
-		uids := make([]string, 0, len(finalChanges.Update))
 		for _, r := range finalChanges.Update {
-			uids = append(uids, r.Existing.UID)
+			body.Updated = append(body.Updated, r.Existing.UID)
 		}
-		body["updated"] = uids
-	}
-	if len(finalChanges.Delete) > 0 {
-		uids := make([]string, 0, len(finalChanges.Delete))
 		for _, r := range finalChanges.Delete {
-			uids = append(uids, r.UID)
+			body.Deleted = append(body.Deleted, r.UID)
 		}
-		body["deleted"] = uids
 	}
 	return response.JSON(http.StatusAccepted, body)
 }
