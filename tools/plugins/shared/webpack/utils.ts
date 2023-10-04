@@ -46,7 +46,7 @@ export async function getEntries(pdir: string): Promise<Record<string, string>> 
   );
 
   return plugins.reduce((result, modules) => {
-    return modules.reduce((result: any, module) => {
+    return modules.reduce((result: { [s: string]: string }, module) => {
       result['module'] = module;
       return result;
     }, result);
