@@ -8,7 +8,8 @@ import {
   isDataFrame,
   Field,
   DataFrameWithValue,
-  getDisplayProcessor,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -22,6 +23,8 @@ import {
 } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
+import { measureText } from '../../utils';
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { TableCellProps } from './types';
@@ -83,15 +86,28 @@ export const SparklineCell = (props: TableCellProps) => {
 
   const value = (cell.value as DataFrameWithValue).value;
 
-  const dsp = getDisplayProcessor({ field, theme });
-  console.log(dsp(value));
+  const displayValue = field.display!(value);
+
+  const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
+
+  const valueWidth = measureText(
+    `${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`,
+    16
+  ).width;
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {value}
+      <FormattedValueDisplay
+        style={{
+          width: `${valueWidth}px`,
+          textAlign: 'right',
+          marginRight: theme.spacing(1),
+        }}
+        value={displayValue}
+      />
       <div>
         <Sparkline
-          width={innerWidth}
+          width={innerWidth - valueWidth - theme.spacing.gridSize}
           height={tableStyles.cellHeightInner}
           sparkline={sparkline}
           config={config}
@@ -135,4 +151,35 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
     return options;
   }
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
+}
+
+function getAlignmentFactor(field: Field, displayValue: DisplayValue, rowIndex: number): DisplayValueAlignmentFactors {
+  let alignmentFactor = field.state?.alignmentFactors;
+
+  if (alignmentFactor) {
+    // check if current alignmentFactor is still the longest
+    if (alignmentFactor.text.length < displayValue.text.length) {
+      alignmentFactor.text = displayValue.text;
+    }
+    return alignmentFactor;
+  } else {
+    // look at the next 1000 rows
+    alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
+
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
+      const nextDisplayValue = field.display!(field.values[i]);
+      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
+        alignmentFactor.text = displayValue.text;
+      }
+    }
+
+    if (field.state) {
+      field.state.alignmentFactors = alignmentFactor;
+    } else {
+      field.state = { alignmentFactors: alignmentFactor };
+    }
+
+    return alignmentFactor;
+  }
 }

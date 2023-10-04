@@ -15,6 +15,7 @@ import {
   reduceField,
   GrafanaTheme2,
   isDataFrame,
+  isDataFrameWithValue,
   isTimeSeriesFrame,
 } from '@grafana/data';
 import {
@@ -115,6 +116,7 @@ export function getColumns(
     const selectSortType = (type: FieldType) => {
       switch (type) {
         case FieldType.number:
+        case FieldType.frame:
           return 'number';
         case FieldType.time:
           return 'basic';
@@ -131,9 +133,7 @@ export function getColumns(
       id: fieldIndex.toString(),
       field: field,
       Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
-      accessor: (_row, i) => {
-        return field.values[i];
-      },
+      accessor: (_row, i) => field.values[i],
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
@@ -305,6 +305,10 @@ export function sortNumber(rowA: Row, rowB: Row, id: string) {
 }
 
 function toNumber(value: any): number {
+  if (isDataFrameWithValue(value)) {
+    return value.value ?? Number.NEGATIVE_INFINITY;
+  }
+
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
   }

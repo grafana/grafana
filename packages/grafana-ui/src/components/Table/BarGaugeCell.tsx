@@ -119,7 +119,7 @@ function getAlignmentFactor(field: Field, displayValue: DisplayValue, rowIndex: 
     }
     return alignmentFactor;
   } else {
-    // look at the next 100 rows
+    // look at the next 1000 rows
     alignmentFactor = { ...displayValue };
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
