@@ -43,7 +43,7 @@ export const GenAIButton = ({
   const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
-  const [shouldCloseHistory, setShouldCloseHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
   const isFirstGeneration = streamStatus === StreamStatus.GENERATING && !hasHistory;
@@ -54,6 +54,10 @@ export const GenAIButton = ({
     if (!hasHistory) {
       onClickProp?.(e);
       setMessages(messages);
+    } else {
+      if (setShowHistory) {
+        setShowHistory(true);
+      }
     }
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
@@ -93,11 +97,7 @@ export const GenAIButton = ({
   const onApplySuggestion = (suggestion: string) => {
     reportInteraction(AutoGenerateItem.applySuggestion);
     onGenerate(suggestion);
-    setShouldCloseHistory(true);
-
-    setTimeout(() => {
-      setShouldCloseHistory(false);
-    });
+    setShowHistory(false);
   };
 
   const getIcon = () => {
@@ -159,7 +159,7 @@ export const GenAIButton = ({
           }
           placement="bottom-start"
           fitContent={true}
-          shouldClose={shouldCloseHistory}
+          show={showHistory ? undefined : false}
         >
           {button}
         </Toggletip>
