@@ -3,6 +3,7 @@ package grafanaapiserver
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	restclient "k8s.io/client-go/rest"
@@ -16,6 +17,7 @@ type requestHandler struct {
 func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
+	var err error
 
 	for _, builder := range builders {
 		routes := builder.GetAPIRoutes()
@@ -29,6 +31,11 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		// Root handlers
 		var sub *mux.Router
 		for _, route := range routes.Root {
+			err = validPath(route.Path)
+			if err != nil {
+				return nil, err
+			}
+
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -45,8 +52,12 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 
 		// Namespace handlers
 		sub = nil
-		prefix += "/namespaces/{ns}"
+		prefix += "/namespaces/{namespace}"
 		for _, route := range routes.Namespace {
+			err = validPath(route.Path)
+			if err != nil {
+				return nil, err
+			}
 			if sub == nil {
 				sub = router.PathPrefix(prefix).Subrouter()
 				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
@@ -63,6 +74,10 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 
 		//	getter := makeGetter(restConfig)
 		for resource, route := range routes.Resource {
+			err = validPath(route.Path)
+			if err != nil {
+				return nil, err
+			}
 			fmt.Printf("TODO: %s/%v\n", resource, route)
 
 			// get a client for that resource kind
@@ -85,6 +100,16 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 	return &requestHandler{
 		router: router,
 	}, nil
+}
+
+func validPath(p string) error {
+	if !strings.HasPrefix(p, "/") {
+		return fmt.Errorf("path must start with slash")
+	}
+	if strings.Count(p, "/") > 1 {
+		return fmt.Errorf("path can only have one slash (for now)")
+	}
+	return nil
 }
 
 func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -129,8 +154,6 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 
 func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-
-		// fmt.Printf("POST: %s // %v\n", s.Info.Title, maps.Keys(s.Paths.Paths))
 		for _, builder := range builders {
 			routes := builder.GetAPIRoutes()
 			if routes == nil {
@@ -145,6 +168,18 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 
 				for _, route := range routes.Root {
 					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
+						PathProps: *route.Spec,
+					}
+				}
+
+				for _, route := range routes.Namespace {
+					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
+						PathProps: *route.Spec,
+					}
+				}
+
+				for resource, route := range routes.Resource {
+					copy.Paths.Paths[prefix+"/namespaces/{namespace}/"+resource+"{name}"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
 					}
 				}
