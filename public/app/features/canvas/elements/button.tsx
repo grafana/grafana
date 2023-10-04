@@ -20,7 +20,7 @@ interface ButtonData {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
   borderColor?: string;
-  width?: number;
+  borderWidth?: number;
 }
 
 interface ButtonConfig {
@@ -28,7 +28,7 @@ interface ButtonConfig {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
   borderColor?: ColorDimensionConfig;
-  width?: number;
+  borderWidth?: number;
 }
 
 export const defaultApiConfig: APIEditorConfig = {
@@ -43,6 +43,8 @@ export const defaultApiConfig: APIEditorConfig = {
 export const defaultStyleConfig: ButtonStyleConfig = {
   variant: 'primary',
 };
+
+export const defaultBorderWidth = 0;
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
   render() {
@@ -89,7 +91,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       borderColor: {
         fixed: 'transparent',
       },
-      width: 1,
+      borderWidth: defaultBorderWidth,
       background: {
         color: {
           fixed: 'transparent',
@@ -123,7 +125,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
       api: getCfgApi(),
       style: cfg?.style ?? defaultStyleConfig,
-      width: cfg.width,
+      borderWidth: cfg.borderWidth,
     };
 
     if (cfg.borderColor) {
@@ -162,10 +164,10 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       })
       .addNumberInput({
         category,
-        path: 'config.width',
+        path: 'config.borderWidth',
         name: 'Button border width',
         settings: {
-          placeholder: 'Auto',
+          placeholder: '0',
         },
       })
       .addCustomEditor({
@@ -181,6 +183,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css`
     background-color: ${data?.backgroundColor};
-    border: ${data?.width}px solid ${data?.borderColor};
+    border: ${data?.borderWidth}px solid ${data?.borderColor};
   `,
 }));
