@@ -16,6 +16,7 @@ export function getInstanceStatByStatusScene(
         refId: 'A',
         instant: true,
         expr: `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}"})`,
+        legendFormat: '{{state}}',
       },
     ],
     $timeRange: timeRange,
