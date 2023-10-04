@@ -341,8 +341,8 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // Scenes can set this global object to the current time range.
     // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
-    if (window.__grafanaScene && window.__grafanaScene.isActive) {
-      return sceneGraph.getTimeRange(window.__grafanaScene).state.value;
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
     }
 
     return getTimeRange(this.time, this.timeModel);

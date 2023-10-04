@@ -252,9 +252,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     // Scenes compatability: (secondary method) is using the current active scene as the scope for evaluation.
-    if (window.__grafanaScene && window.__grafanaScene.isActive) {
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
       return sceneGraph.interpolate(
-        window.__grafanaScene,
+        window.__grafanaSceneContext,
         target,
         scopedVars,
         format as string | VariableCustomFormatterFn | undefined

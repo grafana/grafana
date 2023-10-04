@@ -4242,9 +4242,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.5.1":
-  version: 1.8.0
-  resolution: "@grafana/scenes@npm:1.8.0"
+"@grafana/scenes@npm:^1.13.0":
+  version: 1.13.0
+  resolution: "@grafana/scenes@npm:1.13.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -4256,7 +4256,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 7eef4391988b116b0c95923b9025cb509c08c5254058caacaf1e33cc3e6bc68458ec488132b8390ae8d781002a671ce03728670ce2e34968d2b0fa3e4cf8e7bd
+  checksum: 3a6c4419ee324d49f41b9569dc86ca7ffa926438eedd762aa79c3327c39cd16b9671047ad02f5de3c52190a81b4139cdb75653a4b3741753f851ca0c9155b9bf
   languageName: node
   linkType: hard
 
@@ -19989,7 +19989,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.6
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.5.1
+    "@grafana/scenes": ^1.13.0
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"

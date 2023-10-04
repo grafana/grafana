@@ -348,7 +348,7 @@ describe('timeSrv', () => {
     it('should use scene provided range if active', () => {
       timeSrv.setTime({ from: 'now-6h', to: 'now' });
 
-      window.__grafanaScene = new EmbeddedScene({
+      window.__grafanaSceneContext = new EmbeddedScene({
         $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
         body: new SceneCanvasText({ text: 'hello' }),
       });
@@ -357,7 +357,7 @@ describe('timeSrv', () => {
       expect(time.raw.from).toBe('now-6h');
       expect(time.raw.to).toBe('now');
 
-      window.__grafanaScene.activate();
+      window.__grafanaSceneContext.activate();
       time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-1h');
       expect(time.raw.to).toBe('now');

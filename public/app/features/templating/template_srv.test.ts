@@ -826,19 +826,19 @@ describe('templateSrv', () => {
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
     });
 
-    it('should use scene interpolator global __grafanaScene is active', () => {
-      window.__grafanaScene = new EmbeddedScene({
+    it('should use scene interpolator global __grafanaSceneContext is active', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
         $variables: new SceneVariableSet({
           variables: [new ConstantVariable({ name: 'sceneVar', value: 'hello' })],
         }),
         body: new SceneCanvasText({ text: 'hello' }),
       });
 
-      window.__grafanaScene.activate();
+      window.__grafanaSceneContext.activate();
 
       _templateSrv.replace('test ${sceneVar}');
       expect(interpolateMock).toHaveBeenCalledTimes(1);
-      expect(interpolateMock.mock.calls[0][0]).toEqual(window.__grafanaScene);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(window.__grafanaSceneContext);
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${sceneVar}');
     });
   });
