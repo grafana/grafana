@@ -313,9 +313,9 @@ Content-Type: application/json; charset=UTF-8
 
 #### Create role validation errors
 
-Permission validation only takes place when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
 
-> It has been enabled by default since Grafana 10.2
+> It has been enabled by default since Grafana 10.2.
 
 ##### Invalid action
 
@@ -486,9 +486,9 @@ Content-Type: application/json; charset=UTF-8
 
 #### Update role validation errors
 
-Permission validation only takes place when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
 
-> It has been enabled by default since Grafana 10.2
+> It has been enabled by default since Grafana 10.2.
 
 [Same as the create role validation errors.]({{< relref "#create-role-validation-errors" >}})
 
