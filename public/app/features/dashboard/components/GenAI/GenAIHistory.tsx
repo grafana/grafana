@@ -10,9 +10,9 @@ import {
   Icon,
   IconButton,
   Input,
-  Link,
   Spinner,
   Text,
+  TextLink,
   useStyles2,
   VerticalGroup,
 } from '@grafana/ui';
@@ -104,7 +104,7 @@ export const GenAIHistory = ({
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.container}>
       {showError && (
         <div>
           <Alert title="">
@@ -140,27 +140,26 @@ export const GenAIHistory = ({
           streamStatus={streamStatus}
         />
       </div>
-      <div className={styles.footerActions}>
+      <div className={styles.applySuggestion}>
         <HorizontalGroup justify={'flex-end'}>
           {isStreamGenerating && <Spinner />}
-          <Button onClick={onApply} className={styles.applyButton} disabled={isStreamGenerating}>
+          <Button onClick={onApply} disabled={isStreamGenerating}>
             Apply
           </Button>
         </HorizontalGroup>
       </div>
-      <Divider />
-      <div className={styles.textWrapper}>
+      <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" element="p" color="secondary">
           Be aware that this content was AI-generated.{' '}
-          <Link
-            className={styles.linkText}
-            href={'https://grafana.com/docs/grafana/latest/'}
-            target="_blank"
+          <TextLink
+            variant="bodySmall"
+            href="https://grafana.com/grafana/dashboards/"
+            external
             onClick={() => reportInteraction(AutoGenerateItem.linkToDocs)}
           >
             Learn more
-          </Link>
+          </TextLink>
         </Text>
       </div>
     </div>
@@ -168,34 +167,38 @@ export const GenAIHistory = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
+  container: css({
     display: 'flex',
     flexDirection: 'column',
     width: 520,
+    // This is the space the footer height
+    paddingBottom: 35,
   }),
-  footerActions: css({
-    marginTop: 30,
-  }),
-  applyButton: css({
-    width: 70,
+  applySuggestion: css({
+    marginTop: theme.spacing(1),
   }),
   actions: css({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
   }),
-  textWrapper: css({
+  footer: css({
+    // Absolute positioned since Toggletip doesn't support footer
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '100%',
     display: 'flex',
     flexDirection: 'row',
-    marginBottom: -15,
-    lineHeight: 18,
-    gap: 5,
+    margin: 0,
+    padding: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    marginTop: theme.spacing(2),
   }),
   infoColor: css({
     color: theme.colors.info.main,
-  }),
-  linkText: css({
-    color: theme.colors.text.link,
-    textDecoration: 'none !important',
   }),
 });
