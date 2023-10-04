@@ -65,6 +65,7 @@ func (sc *SmtpClient) buildEmail(msg *Message) *gomail.Message {
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
+	m.SetHeader("X-Grafana-Notification", "true")
 	sc.setFiles(m, msg)
 	for _, replyTo := range msg.ReplyTo {
 		m.SetAddressHeader("Reply-To", replyTo, "")
