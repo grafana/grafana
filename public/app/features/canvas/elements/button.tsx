@@ -87,11 +87,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         },
         api: defaultApiConfig,
         style: defaultStyleConfig,
+        borderColor: {
+          fixed: 'text',
+        },
+        borderWidth: defaultBorderWidth,
       },
-      borderColor: {
-        fixed: 'transparent',
-      },
-      borderWidth: defaultBorderWidth,
       background: {
         color: {
           fixed: 'transparent',
@@ -135,8 +135,8 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     return data;
   },
 
-  // Heatmap overlay options
-  registerOptionsUI: (builder) => {
+  // Button options
+  registerOptionsUI: (builder, ctx) => {
     const category = ['Button'];
     builder
       .addCustomEditor({
@@ -153,15 +153,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         name: 'Style',
         editor: ButtonStyleEditor,
       })
-      .addCustomEditor({
-        category,
-        id: 'config.borderColor',
-        path: 'config.borderColor',
-        name: 'Button border color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {},
-      })
       .addNumberInput({
         category,
         path: 'config.borderWidth',
@@ -169,14 +160,25 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         settings: {
           placeholder: '0',
         },
-      })
-      .addCustomEditor({
-        category,
-        id: 'apiSelector',
-        path: 'config.api',
-        name: 'API',
-        editor: APIEditor,
       });
+    if (ctx.options?.config?.borderWidth) {
+      builder.addCustomEditor({
+        category,
+        id: 'config.borderColor',
+        path: 'config.borderColor',
+        name: 'Button border color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {},
+      });
+    }
+    builder.addCustomEditor({
+      category,
+      id: 'apiSelector',
+      path: 'config.api',
+      name: 'API',
+      editor: APIEditor,
+    });
   },
 };
 
