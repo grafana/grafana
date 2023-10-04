@@ -83,7 +83,7 @@ describe('ServiceAccountCreatePage tests', () => {
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/serviceaccounts/', {
         name: 'Data source scavenger',
-        role: 'Viewer',
+        role: 'None',
       })
     );
   });

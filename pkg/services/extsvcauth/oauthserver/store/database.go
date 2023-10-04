@@ -9,8 +9,8 @@ import (
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
