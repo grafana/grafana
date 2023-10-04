@@ -1,4 +1,5 @@
 import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { Breadcrumb } from './types';
 
@@ -15,6 +16,13 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     // construct the URL to match
     const urlParts = node.url?.split('?') ?? ['', ''];
     let urlToMatch = urlParts[0];
+
+    if (config.featureToggles.dockedMegaMenu) {
+      const urlSearchParams = new URLSearchParams(urlParts[1]);
+      if (urlSearchParams.has('editview')) {
+        urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
+      }
+    }
 
     // Check if we found home/root if if so return early
     if (homeNav && urlToMatch === homeNav.url) {
