@@ -60,11 +60,11 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefined) => ({
-  button: css`
-    position: absolute;
-    height: 100%;
-    width: 100%;
-  `,
+  button: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+  }),
 }));
 
 export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
