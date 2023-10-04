@@ -1,6 +1,6 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
-import { TestVariable } from '@grafana/scenes';
+import { ConstantVariable, EmbeddedScene, SceneCanvasText, SceneVariableSet, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
@@ -813,7 +813,9 @@ describe('templateSrv', () => {
   describe('scenes compatibility', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv(key, []);
+      interpolateMock.mockClear();
     });
+
     it('should use scene interpolator when scoped var provided', () => {
       const variable = new TestVariable({});
 
@@ -822,6 +824,22 @@ describe('templateSrv', () => {
       expect(interpolateMock).toHaveBeenCalledTimes(1);
       expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
+    });
+
+    it('should use scene interpolator global __grafanaSceneContext is active', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $variables: new SceneVariableSet({
+          variables: [new ConstantVariable({ name: 'sceneVar', value: 'hello' })],
+        }),
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+
+      window.__grafanaSceneContext.activate();
+
+      _templateSrv.replace('test ${sceneVar}');
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(window.__grafanaSceneContext);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${sceneVar}');
     });
   });
 });

@@ -823,5 +823,12 @@ var (
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
 		},
+		{
+			Name:         "transformationsVariableSupport",
+			Description:  "Allows using variables in transformations",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

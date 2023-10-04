@@ -1,37 +1,34 @@
 package signingkeysimpl
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
+	"strings"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
-)
-
-const (
-	serverPrivateKeyID = "default"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService() (*Service, error) {
+func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service,
+	remoteCache remotecache.CacheStorage,
+) (*Service, error) {
 	s := &Service{
-		log:  log.New("auth.key_service"),
-		keys: map[string]crypto.Signer{},
-	}
-
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		s.log.Error("Error generating private key", "err", err)
-		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
-	}
-
-	if err := s.AddPrivateKey(serverPrivateKeyID, privateKey); err != nil {
-		return nil, err
+		log:         log.New("auth.key_service"),
+		store:       signingkeystore.NewSigningKeyStore(dbStore, secretsService),
+		remoteCache: remoteCache,
 	}
 
 	return s, nil
@@ -42,81 +39,49 @@ func ProvideEmbeddedSigningKeysService() (*Service, error) {
 //
 // The service is under active development and is not yet ready for production use.
 type Service struct {
-	log  log.Logger
-	keys map[string]crypto.Signer
+	log         log.Logger
+	store       signingkeystore.SigningStore
+	remoteCache remotecache.CacheStorage
 }
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
-func (s *Service) GetJWKS() jose.JSONWebKeySet {
-	result := jose.JSONWebKeySet{}
-
-	for keyID := range s.keys {
-		// Skip error check because keyID must be a valid key ID
-		jwk, _ := s.GetJWK(keyID)
-		result.Keys = append(result.Keys, jwk)
-	}
-
-	return result
+func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
+	jwks, err := s.store.GetJWKS(ctx)
+	return jwks, err
 }
 
-// GetJWK returns the JSON Web Key (JWK) with the specified key ID which can be used to verify tokens (public key)
-func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return jose.JSONWebKey{}, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
+// GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
+// created with the specified algorithm.
+// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
+	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
+	if alg != jose.ES256 {
+		s.log.Error("Only ES256 is supported", "alg", alg)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Only ES256 is supported: %v", alg)
 	}
 
-	result := jose.JSONWebKey{
-		Key: privateKey.Public(),
-		Use: "sig",
+	keyID := keyMonthScopedID(keyPrefix, alg)
+	signer, err := s.store.GetPrivateKey(ctx, keyID)
+	if err == nil {
+		return keyID, signer, nil
+	}
+	s.log.Debug("Private key not found, generating new key", "keyID", keyID, "err", err)
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		s.log.Error("Error generating private key", "err", err)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
 	}
 
-	return result, nil
-}
-
-// GetPublicKey returns the public key with the specified key ID
-func (s *Service) GetPublicKey(keyID string) (crypto.PublicKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
+	expiry := time.Now().Add(30 * 24 * time.Hour)
+	if signer, err = s.store.AddPrivateKey(ctx, keyID, alg, privateKey, &expiry, false); err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {
+		return "", nil, err
 	}
 
-	return privateKey.Public(), nil
+	return keyID, signer, nil
 }
 
-// GetPrivateKey returns the private key with the specified key ID
-func (s *Service) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
-	}
-
-	return privateKey, nil
-}
-
-// AddPrivateKey adds a private key to the service
-func (s *Service) AddPrivateKey(keyID string, privateKey crypto.PrivateKey) error {
-	if _, ok := s.keys[keyID]; ok {
-		s.log.Error("The specified key ID is already in use", "keyID", keyID)
-		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key ID is already in use: %s", keyID)
-	}
-	s.keys[keyID] = privateKey.(crypto.Signer)
-	return nil
-}
-
-// GetServerPrivateKey returns the private key used to sign tokens
-func (s *Service) GetServerPrivateKey() crypto.PrivateKey {
-	// The server private key is always available
-	pk, _ := s.GetPrivateKey(serverPrivateKeyID)
-	return pk
-}
-
-// GetServerPrivateKey returns the private key used to sign tokens
-func (s *Service) GetServerPublicKey() crypto.PublicKey {
-	// The server public key is always available
-	publicKey, _ := s.GetPublicKey(serverPrivateKeyID)
-	return publicKey
+func keyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {
+	keyID := keyPrefix + "-" + time.Now().UTC().Format("2006-01") + "-" + strings.ToLower(string(alg))
+	return keyID
 }

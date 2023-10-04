@@ -1,10 +1,9 @@
-import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, ThresholdsMode, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { PANEL_STYLES } from '../../../home/Insights';
 
-export function getGrafanaInstancesPercentageByStateScene(
+export function getRuleGroupEvaluationDurationIntervalRatioScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -14,9 +13,9 @@ export function getGrafanaInstancesPercentageByStateScene(
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules) / ignoring(state) group_left sum(grafanacloud_grafana_instance_alerting_rule_group_rules)',
+        expr: `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"} / grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`,
         range: true,
-        legendFormat: '{{alertstate}}',
+        legendFormat: 'duration / interval',
       },
     ],
     $timeRange: timeRange,
@@ -26,13 +25,14 @@ export function getGrafanaInstancesPercentageByStateScene(
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setCustomFieldConfig('fillOpacity', 45)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false })
       .setUnit('percentunit')
-      .setMax(1)
       .setThresholds({
-        mode: ThresholdsMode.Absolute,
+        mode: ThresholdsMode.Percentage,
         steps: [
           {
             color: 'green',
@@ -41,6 +41,10 @@ export function getGrafanaInstancesPercentageByStateScene(
           {
             color: 'red',
             value: 80,
+          },
+          {
+            color: 'yellow',
+            value: 60,
           },
         ],
       })
