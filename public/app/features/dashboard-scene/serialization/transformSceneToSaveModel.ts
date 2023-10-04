@@ -87,6 +87,24 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
     h = 0;
 
   if (gridItem instanceof SceneGridItem) {
+    // Handle library panels, early exit
+    if (gridItem.state.body instanceof LibraryVizPanel) {
+      x = gridItem.state.x ?? 0;
+      y = gridItem.state.y ?? 0;
+      w = gridItem.state.width ?? 0;
+      h = gridItem.state.height ?? 0;
+
+      return {
+        id: getPanelIdForVizPanel(gridItem.state.body),
+        title: gridItem.state.body.state.title,
+        gridPos: { x, y, w, h },
+        libraryPanel: {
+          name: gridItem.state.body.state.name,
+          uid: gridItem.state.body.state.uid,
+        },
+      } as Panel;
+    }
+
     if (!(gridItem.state.body instanceof VizPanel)) {
       throw new Error('SceneGridItem body expected to be VizPanel');
     }
