@@ -40,6 +40,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/grafana", "grafana", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/grafana-pyroscope-datasource", "grafana_pyroscope_datasource", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/grafana-testdata-datasource", "grafana_testdata_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/graphite", "graphite", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/jaeger", "jaeger", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/loki", "loki", rt),

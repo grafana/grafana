@@ -6,8 +6,20 @@ import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import { Configuration } from 'webpack';
 
-import { getPackageJson, getPluginJson, hasReadme, getEntries, isWSL } from './utils';
-import { SOURCE_DIR, DIST_DIR } from './constants';
+import { getPackageJson, getPluginJson, getEntries, isWSL } from './utils';
+import { DIST_DIR } from './constants';
+
+function skipFiles(f: string): boolean {
+  if (f.includes('/dist/')) {
+    // avoid copying files already in dist
+    return false;
+  }
+  if (f.includes('/tsconfig.json')) {
+    // avoid copying tsconfig.json
+    return false;
+  }
+  return true;
+}
 
 const config = async (env: any): Promise<Configuration> => {
   const pluginDir = env.dir;
@@ -20,7 +32,7 @@ const config = async (env: any): Promise<Configuration> => {
       },
     },
 
-    context: path.join(process.cwd(), pluginDir, SOURCE_DIR),
+    context: path.join(process.cwd(), pluginDir),
 
     devtool: env.production ? 'source-map' : 'eval-source-map',
 
@@ -75,7 +87,7 @@ const config = async (env: any): Promise<Configuration> => {
             loader: 'swc-loader',
             options: {
               jsc: {
-                baseUrl: './src',
+                baseUrl: '.',
                 target: 'es2015',
                 loose: false,
                 parser: {
@@ -134,19 +146,18 @@ const config = async (env: any): Promise<Configuration> => {
     plugins: [
       new CopyWebpackPlugin({
         patterns: [
-          // If src/README.md exists use it; otherwise the root README
           // To `compiler.options.output`
-          { from: hasReadme() ? 'README.md' : '../README.md', to: '.', force: true },
+          { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
           { from: path.resolve(process.cwd(), 'LICENSE'), to: '.' }, // Point to Grafana License
-          { from: '../CHANGELOG.md', to: '.', force: true },
-          { from: '**/*.json', to: '.' }, // TODO<Add an error for checking the basic structure of the repo>
-          { from: '**/*.svg', to: '.', noErrorOnMissing: true }, // Optional
-          { from: '**/*.png', to: '.', noErrorOnMissing: true }, // Optional
-          { from: '**/*.html', to: '.', noErrorOnMissing: true }, // Optional
-          { from: 'img/**/*', to: '.', noErrorOnMissing: true }, // Optional
-          { from: 'libs/**/*', to: '.', noErrorOnMissing: true }, // Optional
-          { from: 'static/**/*', to: '.', noErrorOnMissing: true }, // Optional
+          { from: 'CHANGELOG.md', to: '.', force: true },
+          { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
+          { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: '**/*.png', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: '**/*.html', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'libs/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'static/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
         ],
       }),
       // Replace certain template-variables in the README and plugin.json
@@ -156,10 +167,8 @@ const config = async (env: any): Promise<Configuration> => {
           files: ['plugin.json', 'README.md'],
           rules: [
             {
-              search: /"version": .*/g,
-              replace: `"version": "${
-                env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version
-              }"`,
+              search: /\%VERSION\%/g,
+              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
             },
             {
               search: /\%TODAY\%/g,
@@ -199,6 +208,7 @@ const config = async (env: any): Promise<Configuration> => {
     };
   }
 
+  console.log('baseConfig', JSON.stringify(baseConfig, null, 2));
   return baseConfig;
 };
 

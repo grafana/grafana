@@ -26,7 +26,7 @@
       "small": "img/testdata.svg",
       "large": "img/testdata.svg"
     },
-    "version": ""
+    "version": "%VERSION%"
   },
 
   "includes": [

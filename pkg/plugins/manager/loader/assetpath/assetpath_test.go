@@ -46,7 +46,6 @@ func TestService(t *testing.T) {
 			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
 			tableOldFS := fakes.NewFakePluginFiles("/grafana/public/app/plugins/panel/table-old")
-			testdataFS := fakes.NewFakePluginFiles("/grafana/public/plugins/grafana-testdata-datasource/src")
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 
@@ -76,10 +75,6 @@ func TestService(t *testing.T) {
 				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
 				require.NoError(t, err)
 				require.Equal(t, "/public/app/plugins/table-old", base)
-
-				base, err = svc.Base(NewPluginInfo(jsonData["grafana-testdata-datasource"], plugins.ClassCore, testdataFS))
-				require.NoError(t, err)
-				require.Equal(t, "/public/app/plugins/grafana-testdata-datasource/src", base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
@@ -97,10 +92,6 @@ func TestService(t *testing.T) {
 				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
 				require.NoError(t, err)
 				require.Equal(t, "core:plugin/table-old", module)
-
-				module, err = svc.Module(NewPluginInfo(jsonData["grafana-testdata-datasource"], plugins.ClassCore, testdataFS))
-				require.NoError(t, err)
-				require.Equal(t, "core:plugin/grafana-testdata-datasource", module)
 			})
 
 			t.Run("RelativeURL", func(t *testing.T) {

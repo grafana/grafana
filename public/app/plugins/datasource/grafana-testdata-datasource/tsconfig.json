@@ -1,4 +1,5 @@
 {
   "extends": "../../../../../tools/plugins/shared/tsconfig.json",
-  "include": ["./src", "../../../../../tools/plugins/shared/types"]
+  "exclude": ["./dist", "./tsconfig.json"],
+  "include": [".", "../../../../../tools/plugins/shared/types"]
 }
