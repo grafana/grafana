@@ -1,4 +1,4 @@
-import { countBy, split, trim, upperFirst } from 'lodash';
+import { countBy, last, split, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
@@ -25,7 +25,7 @@ export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
 }
 
 // TODO we should really add some type information to these receiver settings...
-export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): ReactNode | undefined {
+export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): ReactNode | undefined {
   switch (receiver.type) {
     case 'email': {
       const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
@@ -43,8 +43,13 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
       const url = receiver.settings['url'];
       return url;
     }
+    case ReceiverTypes.OnCall: {
+      const url = receiver[RECEIVER_PLUGIN_META_KEY]?.externalUrl;
+      const integrationID = last(url?.split('/'));
+      return integrationID;
+    }
     default:
-      return undefined;
+      return receiver[RECEIVER_META_KEY]?.description;
   }
 }
 
