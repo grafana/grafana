@@ -20,7 +20,12 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeValueMode, BarGaugeValuePlacement, VizTextDisplayOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeFieldLabelPlacement,
+  BarGaugeValueMode,
+  VizTextDisplayOptions,
+} from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -50,7 +55,7 @@ export interface Props extends Themeable2 {
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
-  valuePlacement?: BarGaugeValuePlacement;
+  fieldLabelPlacement?: BarGaugeFieldLabelPlacement;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -238,7 +243,7 @@ function isVertical(orientation: VizOrientation) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, alignmentFactors, orientation, text, valuePlacement } = props;
+  const { height, width, alignmentFactors, orientation, text, fieldLabelPlacement } = props;
   const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
@@ -256,7 +261,8 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   }
 
   const shouldDisplayValueAbove =
-    (height > 40 && valuePlacement === BarGaugeValuePlacement.Auto) || valuePlacement === BarGaugeValuePlacement.Top;
+    (height > 40 && fieldLabelPlacement === BarGaugeFieldLabelPlacement.Auto) ||
+    fieldLabelPlacement === BarGaugeFieldLabelPlacement.Top;
 
   if (shouldDisplayValueAbove) {
     if (text?.titleSize) {

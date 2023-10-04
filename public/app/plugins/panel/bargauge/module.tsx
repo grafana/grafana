@@ -1,5 +1,5 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeValueMode, BarGaugeValuePlacement } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeFieldLabelPlacement, BarGaugeValueMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -42,13 +42,13 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         defaultValue: defaultOptions.valueMode,
       })
       .addRadio({
-        path: 'valuePlacement',
-        name: 'Value placement',
+        path: 'fieldLabelPlacement',
+        name: 'Field label placement',
         settings: {
           options: [
-            { value: BarGaugeValuePlacement.Auto, label: 'Auto' },
-            { value: BarGaugeValuePlacement.Top, label: 'Top' },
-            { value: BarGaugeValuePlacement.Left, label: 'Left' },
+            { value: BarGaugeFieldLabelPlacement.Auto, label: 'Auto' },
+            { value: BarGaugeFieldLabelPlacement.Top, label: 'Top' },
+            { value: BarGaugeFieldLabelPlacement.Left, label: 'Left' },
           ],
         },
         defaultValue: defaultOptions.valuePlacement,

@@ -50,7 +50,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         alignmentFactors={count > 1 ? alignmentFactors : undefined}
         showUnfilled={options.showUnfilled}
         valueDisplayMode={options.valueMode}
-        valuePlacement={options.valuePlacement}
+        fieldLabelPlacement={options.fieldLabelPlacement}
       />
     );
   };

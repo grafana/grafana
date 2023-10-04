@@ -29,7 +29,7 @@ composableKinds: PanelCfg: {
 					common.SingleStatBaseOptions
 					displayMode:    common.BarGaugeDisplayMode & (*"gradient" | _)
 					valueMode:      common.BarGaugeValueMode & (*"color" | _)
-					valuePlacement: common.BarGaugeValuePlacement & (*"auto" | _)
+					valuePlacement: common.BarGaugeFieldLabelPlacement & (*"auto" | _)
 					showUnfilled:   bool | *true
 					minVizWidth:    uint32 | *0
 					minVizHeight:   uint32 | *10

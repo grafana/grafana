@@ -55,7 +55,7 @@ Adjust how the bar gauge is displayed.
 
 Choose a stacking direction.
 
-- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Auto -** Grafana determines the best orientation.
 - **Horizontal -** Bars stretch horizontally, left to right.
 - **Vertical -** Bars stretch vertically, bottom to top.
 
@@ -75,13 +75,17 @@ Choose a value display mode.
 - **Text color -** Value color is default text color.
 - **Hidden -** Values are hidden.
 
-### Value placement
+### Field label placement
 
-Choose a value placement mode. Note: This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, values are always placed at the bottom of each bar gauge.
+Choose a field label placement mode.
 
-- **Auto -** Grafana selects what it thinks is the best placement.
-- **Top -** Values are placed on top of each bar gauge.
-- **Left -** Values are placed to the left of each bar gauge.
+{{% admonition type="note" %}}
+This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, field labels are always placed at the bottom of each bar gauge.
+{{% /admonition %}}
+
+- **Auto -** Grafana determines the best placement.
+- **Top -** Field labels are placed on top of each bar gauge.
+- **Left -** Field labels are placed to the left of each bar gauge.
 
 ### Show unfilled area
 
