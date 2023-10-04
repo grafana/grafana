@@ -236,7 +236,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "default/default",
+			"file": "/default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -294,7 +294,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "default/default",
+			"file": "/default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -445,7 +445,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "anotherrulegroup",
-			"file": "default/default",
+			"file": "/default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -486,7 +486,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "anotherrulegroup",
-			"file": "default/default",
+			"file": "/default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -703,8 +703,8 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Len(t, body.Data.Groups, 2)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
 		require.Len(t, body.Data.Groups[1].Rules, 1)
-		require.Equal(t, "folder1/folder1", body.Data.Groups[0].File)
-		require.Equal(t, "folder2/folder2", body.Data.Groups[1].File)
+		require.Equal(t, "/folder1", body.Data.Groups[0].File)
+		require.Equal(t, "/folder2", body.Data.Groups[1].File)
 	}
 
 	// remove permissions from folder2org.ROLE
@@ -729,7 +729,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "success", body.Status)
 		require.Len(t, body.Data.Groups, 1)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
-		require.Equal(t, "folder1/folder1", body.Data.Groups[0].File)
+		require.Equal(t, "/folder1", body.Data.Groups[0].File)
 	}
 
 	// remove permissions from folder1org.ROLE
