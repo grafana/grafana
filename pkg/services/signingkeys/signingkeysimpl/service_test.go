@@ -1,17 +1,22 @@
 package signingkeysimpl
 
 import (
-	"crypto"
+	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"io"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
 const (
@@ -28,84 +33,23 @@ func getPrivateKey(t *testing.T) *ecdsa.PrivateKey {
 	return privateKey.(*ecdsa.PrivateKey)
 }
 
-func setupTestService(t *testing.T) *Service {
-	svc := &Service{
-		log:  log.NewNopLogger(),
-		keys: map[string]crypto.Signer{serverPrivateKeyID: getPrivateKey(t)},
-	}
-	return svc
-}
-
-func TestEmbeddedKeyService_GetJWK(t *testing.T) {
-	tests := []struct {
-		name    string
-		keyID   string
-		want    jose.JSONWebKey
-		wantErr bool
-	}{
-		{name: "creates a JSON Web Key successfully",
-			keyID: "default",
-			want: jose.JSONWebKey{
-				Key: getPrivateKey(t).Public(),
-				Use: "sig",
-			},
-			wantErr: false,
-		},
-		{name: "returns error when the specified key was not found",
-			keyID:   "not-existing-key-id",
-			want:    jose.JSONWebKey{},
-			wantErr: true,
-		},
-	}
-	svc := setupTestService(t)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetJWK(tt.keyID)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, got, tt.want)
-		})
-	}
-}
-
-func TestEmbeddedKeyService_GetJWK_OnlyPublicKeyShared(t *testing.T) {
-	svc := setupTestService(t)
-	jwk, err := svc.GetJWK("default")
-
-	require.NoError(t, err)
-
-	jwkJson, err := jwk.MarshalJSON()
-	require.NoError(t, err)
-
-	kvs := make(map[string]any)
-	err = json.Unmarshal(jwkJson, &kvs)
-	require.NoError(t, err)
-
-	// check that the private key is not shared
-	require.NotContains(t, kvs, "d")
-	require.NotContains(t, kvs, "p")
-	require.NotContains(t, kvs, "q")
-}
-
-func TestEmbeddedKeyService_GetJWKS(t *testing.T) {
-	svc := &Service{
-		log: log.NewNopLogger(),
-		keys: map[string]crypto.Signer{
-			serverPrivateKeyID: getPrivateKey(t),
-			"other":            getPrivateKey(t),
-		},
-	}
-	jwk := svc.GetJWKS()
-
-	require.Equal(t, 2, len(jwk.Keys))
-}
-
 func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
-	svc := setupTestService(t)
-	jwks := svc.GetJWKS()
+	mockStore := signingkeystore.NewFakeStore()
+
+	_, err := mockStore.AddPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID, jose.ES256, getPrivateKey(t), nil, false)
+	require.NoError(t, err)
+
+	_, err = mockStore.AddPrivateKey(context.Background(), "other", jose.ES256, getPrivateKey(t), nil, false)
+	require.NoError(t, err)
+
+	svc := &Service{
+		log:   log.NewNopLogger(),
+		store: mockStore,
+	}
+	jwks, err := svc.GetJWKS(context.Background())
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(jwks.Keys))
 
 	jwksJson, err := json.Marshal(jwks)
 	require.NoError(t, err)
@@ -115,6 +59,7 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	}
 
 	var kvs keys
+
 	err = json.Unmarshal(jwksJson, &kvs)
 	require.NoError(t, err)
 
@@ -126,120 +71,34 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	}
 }
 
-func TestEmbeddedKeyService_GetPublicKey(t *testing.T) {
-	tests := []struct {
-		name    string
-		keyID   string
-		want    crypto.PublicKey
-		wantErr bool
-	}{
-		{
-			name:    "returns the public key successfully",
-			keyID:   "default",
-			want:    getPrivateKey(t).Public(),
-			wantErr: false,
-		},
-		{
-			name:    "returns error when the specified key was not found",
-			keyID:   "not-existent-key-id",
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	svc := setupTestService(t)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetPublicKey(tt.keyID)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, got, tt.want)
-		})
-	}
-}
+func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
+	mockStore := signingkeystore.NewFakeStore()
 
-func TestEmbeddedKeyService_GetPrivateKey(t *testing.T) {
-	tests := []struct {
-		name    string
-		keyID   string
-		want    crypto.PrivateKey
-		wantErr bool
-	}{
-		{
-			name:    "returns the private key successfully",
-			keyID:   "default",
-			want:    getPrivateKey(t),
-			wantErr: false,
-		},
-		{
-			name:    "returns error when the specified key was not found",
-			keyID:   "not-existent-key-id",
-			want:    nil,
-			wantErr: true,
-		},
+	svc := &Service{
+		log:   log.NewNopLogger(),
+		store: mockStore,
 	}
-	svc := setupTestService(t)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetPrivateKey(tt.keyID)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, got, tt.want)
-		})
-	}
-}
 
-func TestEmbeddedKeyService_AddPrivateKey(t *testing.T) {
-	tests := []struct {
-		name    string
-		keyID   string
-		wantErr bool
-	}{
-		{
-			name:    "adds the private key successfully",
-			keyID:   "new-key-id",
-			wantErr: false,
-		},
-		{
-			name:    "returns error when the specified key is already in the store",
-			keyID:   serverPrivateKeyID,
-			wantErr: true,
-		},
-	}
-	svc := setupTestService(t)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := svc.AddPrivateKey(tt.keyID, &dummyPrivateKey{})
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
+	wantedKeyID := keyMonthScopedID("test", jose.ES256)
+	assert.Equal(t, wantedKeyID, fmt.Sprintf("test-%s-es256", time.Now().UTC().Format("2006-01")))
 
-func TestProvideEmbeddedSigningKeysService(t *testing.T) {
-	s, err := ProvideEmbeddedSigningKeysService()
+	// only ES256 is supported
+	_, _, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.RS256)
+	require.Error(t, err)
+
+	// first call should generate a key
+	_, key, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
 	require.NoError(t, err)
-	require.NotNil(t, s)
+	require.NotNil(t, key)
 
-	// Verify that ProvideEmbeddedSigningKeysService generates an ECDSA private key by default
-	require.IsType(t, &ecdsa.PrivateKey{}, s.GetServerPrivateKey())
-}
+	assert.Contains(t, mockStore.PrivateKeys, wantedKeyID)
 
-type dummyPrivateKey struct {
-}
+	// second call should return the same key
+	id, key2, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	require.NoError(t, err)
+	require.NotNil(t, key2)
+	require.Equal(t, key, key2)
+	require.Equal(t, wantedKeyID, id)
 
-func (d dummyPrivateKey) Public() crypto.PublicKey {
-	return ""
-}
-
-func (d dummyPrivateKey) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) ([]byte, error) {
-	return nil, nil
+	assert.Len(t, mockStore.PrivateKeys, 1)
 }
