@@ -1,9 +1,9 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
-export function getRuleGroupEvaluationDurationScene(
+export function getGrafanaInstancesByStateScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -13,9 +13,9 @@ export function getRuleGroupEvaluationDurationScene(
     queries: [
       {
         refId: 'A',
-        expr: `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"}`,
+        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_alerts)',
         range: true,
-        legendFormat: '{{rule_group}}',
+        legendFormat: '{{state}}',
       },
     ],
     $timeRange: timeRange,
@@ -23,19 +23,25 @@ export function getRuleGroupEvaluationDurationScene(
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
+    height: '400px',
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setUnit('s')
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setOption('legend', { showLegend: false })
       .setOverrides((b) =>
-        b.matchFieldsByQuery('A').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'blue',
-        })
+        b
+          .matchFieldsWithName('alerting')
+          .overrideColor(overrideToFixedColor('alerting'))
+          .matchFieldsWithName('normal')
+          .overrideColor(overrideToFixedColor('normal'))
+          .matchFieldsWithName('pending')
+          .overrideColor(overrideToFixedColor('pending'))
+          .matchFieldsWithName('error')
+          .overrideColor(overrideToFixedColor('error'))
+          .matchFieldsWithName('nodata')
+          .overrideColor(overrideToFixedColor('nodata'))
       )
       .build(),
   });

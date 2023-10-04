@@ -1,9 +1,9 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
-export function getRuleGroupEvaluationDurationScene(
+export function getGrafanaRulesByEvaluationPercentageScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -13,9 +13,9 @@ export function getRuleGroupEvaluationDurationScene(
     queries: [
       {
         refId: 'A',
-        expr: `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"}`,
+        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules) / ignoring(state) group_left sum(grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
-        legendFormat: '{{rule_group}}',
+        legendFormat: '{{state}} evaluation',
       },
     ],
     $timeRange: timeRange,
@@ -28,14 +28,12 @@ export function getRuleGroupEvaluationDurationScene(
       .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setUnit('s')
+      .setCustomFieldConfig('fillOpacity', 45)
+      .setUnit('percentunit')
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setOption('legend', { showLegend: false })
+      .setMax(1)
       .setOverrides((b) =>
-        b.matchFieldsByQuery('A').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'blue',
-        })
+        b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
       )
       .build(),
   });

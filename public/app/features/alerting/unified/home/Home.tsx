@@ -8,7 +8,7 @@ import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/c
 import { isLocalDevEnv, isOpenSourceEdition } from '../utils/misc';
 
 import { getOverviewScene, WelcomeHeader } from './GettingStarted';
-import { getGrafanaScenes } from './Insights';
+import { getInsightsScenes } from './Insights';
 
 let homeApp: SceneApp | undefined;
 
@@ -27,12 +27,12 @@ export function getHomeApp(insightsEnabled: boolean) {
           hideFromBreadcrumbs: true,
           tabs: [
             new SceneAppPage({
-              title: 'Grafana',
+              title: 'Insights',
               url: '/alerting/home/insights',
-              getScene: getGrafanaScenes,
+              getScene: getInsightsScenes,
             }),
             new SceneAppPage({
-              title: 'Overview',
+              title: 'Get started',
               url: '/alerting/home/overview',
               getScene: getOverviewScene,
             }),
