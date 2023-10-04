@@ -232,7 +232,7 @@ def validate_openapi_spec_step():
         "image": images["go"],
         "commands": [
             "apk add --update make",
-            "make validate-api-spec",
+            "make swagger-validate",
         ],
     }
 
@@ -788,6 +788,7 @@ def build_docs_website_step():
         "image": images["docs"],
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
+            "echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /hugo/content/docs/grafana/_index.md",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],

@@ -90,7 +90,8 @@
   &:hover,
   &:active,
   &:focus {
-    z-index: 100 !important;
+    // above other panels, but below lowest pre-defined index in zIndex.ts
+    z-index: 999 !important;
   }
 }
 

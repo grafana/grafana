@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -42,6 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -63,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -240,6 +244,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	metrics.ProvideService,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -359,6 +364,10 @@ var wireBasicSet = wire.NewSet(
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	idimpl.ProvideService,
+	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(
