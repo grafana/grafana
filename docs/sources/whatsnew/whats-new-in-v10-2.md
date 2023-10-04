@@ -39,3 +39,14 @@ You must use relative references when linking to docs within the Grafana repo. P
 
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
+
+## Authentication and authorization
+
+### No Basic Role
+Generally available in all editions of Grafana
+
+Introducing a new basic role with no permissions, called "No Basic Role." This role is perfect for when users would like their service accounts or users to have tailored customized RBAC permissions. This can be set as a basic role via the API or UI.
+
+To access this feature, the `noBasicRole` feature toggle must be enabled.
+
+Note: It's important to remember that this role cannot be modified like other basic roles.
