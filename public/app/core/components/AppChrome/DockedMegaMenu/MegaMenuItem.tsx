@@ -31,6 +31,17 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   return (
     <li>
       <div className={styles.collapsibleSectionWrapper}>
+        {showExpandButton && (
+          <Button
+            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+            variant="secondary"
+            fill="text"
+            className={styles.collapseButton}
+            onClick={() => setSectionExpanded(!sectionExpanded)}
+          >
+            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
+          </Button>
+        )}
         <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
@@ -53,17 +64,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
             <Text truncate>{link.text}</Text>
           </div>
         </MegaMenuItemText>
-        {showExpandButton && (
-          <Button
-            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-            variant="secondary"
-            fill="text"
-            className={styles.collapseButton}
-            onClick={() => setSectionExpanded(!sectionExpanded)}
-          >
-            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
-          </Button>
-        )}
       </div>
       {showExpandButton && sectionExpanded && (
         <ul className={styles.children}>
