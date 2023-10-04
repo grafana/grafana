@@ -10,14 +10,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
+const idSignerKeyPrefix = "id"
+
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
 func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
-	key := keyService.GetServerPrivateKey() // FIXME: replace with signing specific key
+	id, key, err := keyService.GetOrCreatePrivateKey(context.Background(), idSignerKeyPrefix, jose.ES256)
+	if err != nil {
+		return nil, err
+	}
 
+	// FIXME: Handle key rotation
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": "default", // FIXME: replace with specific key id
+			"kid": id,
 		},
 	})
 	if err != nil {

@@ -38,6 +38,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator v
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
 		secretsService:         secretsService,
+		features:               features,
 	}
 }
 
@@ -51,7 +52,7 @@ type DataSourceProxyService struct {
 	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
 	secretsService         secrets.Service
-	fetures                featuremgmt.FeatureToggles
+	features               featuremgmt.FeatureToggles
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -122,7 +123,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.fetures)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
 		if errors.As(err, &urlValidationError) {
