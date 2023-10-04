@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"net"
+	"os"
+	"strconv"
 	"testing"
 	_ "time/tzdata" // for timeZone support in CronJob
 
@@ -26,12 +28,20 @@ import (
 )
 
 const (
-	DefaultServerPort    = 6443
-	DefaultAPIServerIp   = "127.0.0.1"
-	DefaultAPIServerHost = "http://" + DefaultAPIServerIp + ":6443"
+	DefaultAPIServerIp = "127.0.0.1"
 )
 
+var DefaultServerPort = int(6443)
+var DefaultAPIServerHost = "http://" + DefaultAPIServerIp + ":" + strconv.Itoa(DefaultServerPort)
+
 func main() {
+	if os.Getenv("APISERVER_PORT") != "" {
+		p, err := strconv.Atoi(os.Getenv("APISERVER_PORT"))
+		if err != nil {
+			panic(err)
+		}
+		DefaultServerPort = p
+	}
 	ctx := context.Background()
 
 	// TODO: add unified storage RESTOptionsGetter here

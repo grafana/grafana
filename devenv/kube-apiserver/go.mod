@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/devenv/kube-apiserver
 
-go 1.21.1
+go 1.20
 
 replace k8s.io/kubernetes => k8s.io/kubernetes v1.28.2
 
