@@ -17,7 +17,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Distributed Tracing in Grafana Cloud k6
+## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->
 
@@ -30,7 +30,7 @@ Distributed tracing in Grafana Cloud k6 only requires two things:
 - An application instrumented for tracing with Grafana Cloud Traces.
 - Adding a few lines of code to your existing k6 scripts.
 
-The integration works by having k6 inject tracing metadata into the requests it sends to users’ backend services when they run a test. The tracing data is then correlated with k6 test run data, so users can understand how their services and operations behaved during the whole test run. The collected tracing data is aggregated to generate real-time metrics, such as frequency of calls, error rates, and percentile latencies, that help users narrow their search space and quickly spot anomalies.
+The integration works by having k6 inject tracing metadata into the requests it sends to users’ backend services when they run a test. The tracing data is then correlated with k6 test run data, so users can understand how their services and operations behaved during the whole test run. The collected tracing data is aggregated to generate real-time metrics—such as frequency of calls, error rates, and percentile latencies—that help users narrow their search space and quickly spot anomalies.
 
 To learn more, refer to the [Integration with Grafana Cloud Traces documentation](/docs/grafana-cloud/k6/analyze-results/integration-with-grafana-cloud-traces/) and [Distributed Tracing in Grafana Cloud k6 blog post](https://grafana.com/blog/2023/09/19/troubleshoot-failed-performance-tests-faster-with-distributed-tracing-in-grafana-cloud-k6/).
 
