@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import {
   BinaryOperationID,
   binaryOperators,
+  unaryOperators,
   DataFrame,
   DataTransformerID,
   FieldType,
@@ -17,9 +18,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  UnaryOperationID,
 } from '@grafana/data';
 import {
   BinaryOptions,
+  UnaryOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
@@ -38,6 +41,7 @@ interface CalculateFieldTransformerEditorState {
 
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
+  { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
@@ -303,7 +307,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   };
 
   renderBinaryOperation(options?: BinaryOptions) {
-    options = defaults(options, { reducer: ReducerID.sum });
+    options = defaults(options, { operator: BinaryOperationID.Add });
 
     let foundLeft = !options?.left;
     let foundRight = !options?.right;
@@ -357,6 +361,78 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   //---------------------------------------------------------
+  // Unary Operator
+  //---------------------------------------------------------
+
+  updateUnaryOptions = (v: UnaryOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.UnaryOperation,
+      unary: v,
+    });
+  };
+
+  onUnaryOperationChanged = (v: SelectableValue<string>) => {
+    const { unary } = this.props.options;
+    this.updateUnaryOptions({
+      ...unary!,
+      operator: v.value! as UnaryOperationID,
+    });
+  };
+
+  onUnaryValueChanged = (v: SelectableValue<string>) => {
+    const { unary } = this.props.options;
+    this.updateUnaryOptions({
+      ...unary!,
+      fieldName: v.value!,
+    });
+  };
+
+  renderUnaryOperation(options?: UnaryOptions) {
+    options = defaults(options, { operator: UnaryOperationID.Abs });
+
+    let found = !options?.fieldName;
+    const names = this.state.names.map((v) => {
+      if (v === options?.fieldName) {
+        found = true;
+      }
+      return { label: v, value: v };
+    });
+
+    const ops = unaryOperators.list().map((v) => {
+      return { label: v.id, value: v.id };
+    });
+
+    const fieldName = found ? names : [...names, { label: options?.fieldName, value: options?.fieldName }];
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <div className="gf-form-label width-8">Operation</div>
+        </div>
+        <div className="gf-form">
+          <Select
+            className="width-8 gf-form-spacing"
+            options={ops}
+            value={options.operator ?? ops[0].value}
+            onChange={this.onUnaryOperationChanged}
+          />
+          <div className="gf-form-label width-1">(</div>
+          <Select
+            placeholder="Field"
+            className="min-width-7 gf-form-spacing"
+            options={fieldName}
+            value={options?.fieldName}
+            onChange={this.onUnaryValueChanged}
+          />
+          <div className="gf-form-label width-1">)</div>
+        </div>
+      </div>
+    );
+  }
+
+  //---------------------------------------------------------
   // Render
   //---------------------------------------------------------
 
@@ -379,6 +455,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           </div>
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
+        {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <div className="gf-form-inline">
