@@ -427,7 +427,6 @@
     }
   ],
   "schemaVersion": 21,
-  "style": "dark",
   "tags": ["gdev", "postgres", "datasource-test"],
   "templating": {
     "list": [

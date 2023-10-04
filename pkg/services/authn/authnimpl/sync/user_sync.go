@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -14,33 +15,27 @@ import (
 )
 
 var (
-	errUserSignupDisabled = errutil.NewBase(
-		errutil.StatusUnauthorized,
+	errUserSignupDisabled = errutil.Unauthorized(
 		"user.sync.signup-disabled",
 		errutil.WithPublicMessage("Sign up is disabled"),
 	)
-	errSyncUserForbidden = errutil.NewBase(
-		errutil.StatusForbidden,
+	errSyncUserForbidden = errutil.Forbidden(
 		"user.sync.forbidden",
 		errutil.WithPublicMessage("User sync forbidden"),
 	)
-	errSyncUserInternal = errutil.NewBase(
-		errutil.StatusInternal,
+	errSyncUserInternal = errutil.Internal(
 		"user.sync.internal",
 		errutil.WithPublicMessage("User sync failed"),
 	)
-	errUserProtection = errutil.NewBase(
-		errutil.StatusForbidden,
+	errUserProtection = errutil.Forbidden(
 		"user.sync.protected-role",
 		errutil.WithPublicMessage("Unable to sync due to protected role"),
 	)
-	errFetchingSignedInUser = errutil.NewBase(
-		errutil.StatusInternal,
+	errFetchingSignedInUser = errutil.Internal(
 		"user.sync.fetch",
 		errutil.WithPublicMessage("Insufficient information to authenticate user"),
 	)
-	errFetchingSignedInUserNotFound = errutil.NewBase(
-		errutil.StatusUnauthorized,
+	errFetchingSignedInUserNotFound = errutil.Unauthorized(
 		"user.sync.fetch-not-found",
 		errutil.WithPublicMessage("User not found"),
 	)
@@ -168,12 +163,8 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
-func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if !identity.ClientParams.EnableDisabledUsers {
-		return nil
-	}
-
-	if !identity.IsDisabled {
+func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if !identity.ClientParams.EnableUser {
 		return nil
 	}
 
@@ -240,7 +231,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", updateCmd)
+		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}

@@ -86,7 +86,7 @@ const hiddenRangeOptions: TimeOption[] = [
   { from: 'now', to: 'now+5y', display: 'Next 5 years' },
 ];
 
-const rangeIndex: Record<string, any> = {};
+const rangeIndex: Record<string, TimeOption> = {};
 each(rangeOptions, (frame) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
@@ -100,7 +100,7 @@ each(hiddenRangeOptions, (frame) => {
 // now/d to now
 // now/d
 // if no to <expr> then to now is assumed
-export function describeTextRange(expr: string) {
+export function describeTextRange(expr: string): TimeOption {
   const isLast = expr.indexOf('+') !== 0;
   if (expr.indexOf('now') === -1) {
     expr = (isLast ? 'now-' : 'now') + expr;
@@ -112,9 +112,9 @@ export function describeTextRange(expr: string) {
   }
 
   if (isLast) {
-    opt = { from: expr, to: 'now' };
+    opt = { from: expr, to: 'now', display: '' };
   } else {
-    opt = { from: 'now', to: expr };
+    opt = { from: 'now', to: expr, display: '' };
   }
 
   const parts = /^now([-+])(\d+)(\w)/.exec(expr);
@@ -328,7 +328,7 @@ export function describeInterval(str: string) {
     );
   }
   return {
-    sec: (intervals_in_seconds as any)[matches[2]] as number,
+    sec: intervals_in_seconds[matches[2] as keyof typeof intervals_in_seconds],
     type: matches[2],
     count: parseInt(matches[1], 10),
   };

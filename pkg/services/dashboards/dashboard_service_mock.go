@@ -42,23 +42,23 @@ func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, d
 	return r0, r1
 }
 
-// CountInFolder provides a mock function with given fields: ctx, orgID, uid, _a3
-func (_m *FakeDashboardService) CountInFolder(ctx context.Context, orgID int64, uid string, _a3 *user.SignedInUser) (int64, error) {
-	ret := _m.Called(ctx, orgID, uid, _a3)
+// CountInFolder provides a mock function with given fields: ctx, orgID, folderUID, _a3
+func (_m *FakeDashboardService) CountInFolder(ctx context.Context, orgID int64, folderUID string, _a3 *user.SignedInUser) (int64, error) {
+	ret := _m.Called(ctx, orgID, folderUID, _a3)
 
 	var r0 int64
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, string, *user.SignedInUser) (int64, error)); ok {
-		return rf(ctx, orgID, uid, _a3)
+		return rf(ctx, orgID, folderUID, _a3)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int64, string, *user.SignedInUser) int64); ok {
-		r0 = rf(ctx, orgID, uid, _a3)
+		r0 = rf(ctx, orgID, folderUID, _a3)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64, string, *user.SignedInUser) error); ok {
-		r1 = rf(ctx, orgID, uid, _a3)
+		r1 = rf(ctx, orgID, folderUID, _a3)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -274,20 +274,6 @@ func (_m *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDa
 	}
 
 	return r0, r1
-}
-
-// MakeUserAdmin provides a mock function with given fields: ctx, orgID, userID, dashboardID, setViewAndEditPermissions
-func (_m *FakeDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
-	ret := _m.Called(ctx, orgID, userID, dashboardID, setViewAndEditPermissions)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, bool) error); ok {
-		r0 = rf(ctx, orgID, userID, dashboardID, setViewAndEditPermissions)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // SaveDashboard provides a mock function with given fields: ctx, dto, allowUiUpdate

@@ -11,7 +11,7 @@ import { PromVisualQuery } from '../types';
 export function LabelParamEditor({
   onChange,
   index,
-  operationIndex,
+  operationId,
   value,
   query,
   datasource,
@@ -23,7 +23,7 @@ export function LabelParamEditor({
 
   return (
     <Select
-      inputId={getOperationParamId(operationIndex, index)}
+      inputId={getOperationParamId(operationId, index)}
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {

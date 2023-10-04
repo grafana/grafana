@@ -348,7 +348,7 @@ func allowedTSVeneersString() string {
 	return strings.Join(list, "|")
 }
 
-func valError(v cue.Value, format string, args ...interface{}) error {
+func valError(v cue.Value, format string, args ...any) error {
 	s := v.Source()
 	if s == nil {
 		return fmt.Errorf(format, args...)

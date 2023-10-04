@@ -72,9 +72,11 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           });
         };
         field.config = {
+          ...field.config,
           custom: {
             filterable: true,
             inspect: true,
+            ...field.config.custom,
           },
         };
       }

@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import {
   DataFrame,
@@ -8,8 +10,17 @@ import {
   SplitOpen,
   LoadingState,
   ThresholdsConfig,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
+import {
+  GraphThresholdsStyleConfig,
+  PanelChrome,
+  PanelChromeProps,
+  Icon,
+  Button,
+  useStyles2,
+  Tooltip,
+} from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -17,6 +28,8 @@ import { storeGraphStyle } from '../state/utils';
 import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import { loadGraphStyle } from './utils';
+
+const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   width: number;
@@ -48,16 +61,35 @@ export const GraphContainer = ({
   loadingState,
   statusMessage,
 }: Props) => {
+  const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
+  const styles = useStyles2(getStyles);
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
     setGraphStyle(graphStyle);
   }, []);
 
+  const slicedData = useMemo(() => {
+    return showAllSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+  }, [data, showAllSeries]);
+
   return (
     <PanelChrome
       title="Graph"
+      titleItems={[
+        !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
+          <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
+            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
+              <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
+            </Tooltip>
+
+            <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
+              Show all {data.length} series
+            </Button>
+          </div>
+        ),
+      ].filter(Boolean)}
       width={width}
       height={height}
       loadingState={loadingState}
@@ -67,7 +99,7 @@ export const GraphContainer = ({
       {(innerWidth, innerHeight) => (
         <ExploreGraph
           graphStyle={graphStyle}
-          data={data}
+          data={slicedData}
           height={innerHeight}
           width={innerWidth}
           absoluteRange={absoluteRange}
@@ -84,3 +116,18 @@ export const GraphContainer = ({
     </PanelChrome>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  timeSeriesDisclaimer: css({
+    label: 'time-series-disclaimer',
+    textSlign: 'center',
+    fontSize: theme.typography.bodySmall.fontSize,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  disclaimerIcon: css({
+    label: 'disclaimer-icon',
+    color: theme.colors.warning.main,
+  }),
+});

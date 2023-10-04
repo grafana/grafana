@@ -27,6 +27,9 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
+	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
+	IDToken string `json:"-" xorm:"-"`
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -43,12 +46,33 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
+// TODO: There's a need to remove this struct since it creates a circular dependency
+
+// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
+// In order to retrieve the user URL, we need the dto library. However, adding
+// the dto library to the user service creates a circular dependency
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
+		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
 	}
+}
+
+// Static function to parse a requester into a UserDisplayDTO
+func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
+	userID := int64(0)
+	namespaceID, identifier := requester.GetNamespacedID()
+	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
+		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	}
+
+	return &UserDisplayDTO{
+		ID:    userID,
+		Login: requester.GetLogin(),
+		Name:  requester.GetDisplayName(),
+	}, nil
 }
 
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
@@ -84,17 +108,15 @@ func (u *SignedInUser) HasUniqueId() bool {
 
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
-func (u *SignedInUser) GetCacheKey() (string, error) {
-	if u.IsRealUser() {
-		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+func (u *SignedInUser) GetCacheKey() string {
+	namespace, id := u.GetNamespacedID()
+	if !u.HasUniqueId() {
+		// Hack use the org role as id for identities that do not have a unique id
+		// e.g. anonymous and render key.
+		id = string(u.GetOrgRole())
 	}
-	if u.IsApiKeyUser() {
-		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
-	}
-	if u.IsServiceAccountUser() { // not considered a real user
-		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
-	}
-	return "", ErrNoUniqueID
+
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -140,6 +162,9 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+	if u.OrgRole == "" {
+		return roletype.RoleNone
+	}
 	return u.OrgRole
 }
 
@@ -156,7 +181,11 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 	case u.IsAnonymous:
 		return identity.NamespaceAnonymous, ""
 	case u.AuthenticatedBy == "render": //import cycle render
-		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		if u.UserID == 0 {
+			return identity.NamespaceRenderService, "0"
+		} else { // this should never happen as u.UserID > 0 already catches this
+			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+		}
 	}
 
 	// backwards compatibility
@@ -178,4 +207,13 @@ func (u *SignedInUser) GetEmail() string {
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
+}
+
+// DEPRECATEAD: Returns the authentication method used
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
+}
+
+func (u *SignedInUser) GetIDToken() string {
+	return u.IDToken
 }

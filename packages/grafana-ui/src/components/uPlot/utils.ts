@@ -117,12 +117,12 @@ export function getStackingGroups(frame: DataFrame) {
     let transform = custom.transform;
     let stackDir = getStackDirection(transform, values);
 
-    let drawStyle = custom.drawStyle as GraphDrawStyle;
-    let drawStyle2 =
+    let drawStyle: GraphDrawStyle = custom.drawStyle;
+    let drawStyle2: BarAlignment | LineInterpolation | null =
       drawStyle === GraphDrawStyle.Bars
-        ? (custom.barAlignment as BarAlignment)
+        ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? (custom.lineInterpolation as LineInterpolation)
+        ? custom.lineInterpolation
         : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
@@ -153,7 +153,7 @@ export function preparePlotData2(
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
-  let data = Array(frame.fields.length) as AlignedData;
+  let data: AlignedData = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 

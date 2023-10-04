@@ -9,28 +9,18 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
+	orgID            = 1
 	dashUID          = "1"
 	folderID         = 42
 	folderUID        = "42"
@@ -201,7 +191,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil)
 			can, err := guardian.CanSave()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
@@ -373,7 +363,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.ViewersCanEdit = tt.viewersCanEdit
-			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, cfg, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, cfg)
 
 			can, err := guardian.CanEdit()
 			require.NoError(t, err)
@@ -531,7 +521,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil)
 
 			can, err := guardian.CanView()
 			require.NoError(t, err)
@@ -784,7 +774,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil)
 
 			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
@@ -942,7 +932,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil)
 
 			can, err := guardian.CanDelete()
 			require.NoError(t, err)
@@ -1006,7 +996,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "0", IsFolder: tt.isFolder}, tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "0", IsFolder: tt.isFolder}, tt.permissions, nil)
 
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
@@ -1015,69 +1005,11 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 	}
 }
 
-type accessControlGuardianGetHiddenACLTestCase struct {
-	desc        string
-	permissions []accesscontrol.ResourcePermission
-	hiddenUsers map[string]struct{}
-	isFolder    bool
-}
-
-func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
-	tests := []accessControlGuardianGetHiddenACLTestCase{
-		{
-			desc: "should only return permissions containing hidden users",
-			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
-			},
-			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
-		},
-		{
-			desc: "should only return permissions containing hidden users",
-			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
-			},
-			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
-			isFolder:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			mocked := accesscontrolmock.NewMockedPermissionsService()
-			mocked.On("MapActions", mock.Anything).Return("View")
-			mocked.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
-			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "1", IsFolder: tt.isFolder}, nil, nil, mocked, mocked)
-
-			cfg := setting.NewCfg()
-			cfg.HiddenUsers = tt.hiddenUsers
-			permissions, err := guardian.GetHiddenACL(cfg)
-			require.NoError(t, err)
-			var hiddenUserNames []string
-			for name := range tt.hiddenUsers {
-				hiddenUserNames = append(hiddenUserNames, name)
-			}
-			assert.Len(t, permissions, len(hiddenUserNames))
-			for _, p := range permissions {
-				assert.Contains(t, hiddenUserNames, fmt.Sprintf("user%d", p.UserID))
-			}
-		})
-	}
-}
-
-func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
-	permissions []accesscontrol.Permission,
-	cfg *setting.Cfg,
-	dashboardPermissions accesscontrol.DashboardPermissionsService, folderPermissions accesscontrol.FolderPermissionsService) DashboardGuardian {
+func setupAccessControlGuardianTest(
+	t *testing.T, d *dashboards.Dashboard,
+	permissions []accesscontrol.Permission, cfg *setting.Cfg,
+) DashboardGuardian {
 	t.Helper()
-	store := db.InitTestDB(t)
 
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
@@ -1094,21 +1026,6 @@ func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
-	require.NoError(t, err)
-
-	acSvc := acimpl.ProvideOSSService(cfg, acdb.ProvideService(store), localcache.ProvideService(), featuremgmt.WithFeatures())
-	if folderPermissions == nil {
-		folderPermissions, err = ossaccesscontrol.ProvideFolderPermissions(
-			featuremgmt.WithFeatures(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
-		require.NoError(t, err)
-	}
-	if dashboardPermissions == nil {
-		dashboardPermissions, err = ossaccesscontrol.ProvideDashboardPermissions(
-			featuremgmt.WithFeatures(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
-		require.NoError(t, err)
-	}
 
 	userPermissions := map[int64]map[string][]string{}
 	for _, p := range permissions {
@@ -1118,7 +1035,7 @@ func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
 		userPermissions[orgID][p.Action] = append(userPermissions[orgID][p.Action], p.Scope)
 	}
 
-	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, store, ac, folderPermissions, dashboardPermissions, fakeDashboardService)
+	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, ac, fakeDashboardService)
 	require.NoError(t, err)
 	return g
 }

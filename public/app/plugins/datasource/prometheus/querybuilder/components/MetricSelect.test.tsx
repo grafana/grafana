@@ -72,6 +72,18 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
   });
 
+  it('truncates list of metrics to 1000', async () => {
+    const manyMockValues = [...Array(1001).keys()].map((idx: number) => {
+      return { label: 'random_metric' + idx };
+    });
+
+    props.onGetMetrics = jest.fn().mockResolvedValue(manyMockValues);
+
+    render(<MetricSelect {...props} />);
+    await openMetricSelect();
+    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(1000));
+  });
+
   it('shows option to set custom value when typing', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();

@@ -74,7 +74,7 @@ export class UPlotConfigBuilder {
       this.hooks[type] = [];
     }
 
-    this.hooks[type]!.push(hook as any);
+    this.hooks[type].push(hook);
   }
 
   addThresholds(options: UPlotThresholdOptions) {
@@ -295,7 +295,7 @@ export type Renderers = Array<{
 }>;
 
 /** @alpha */
-type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
+type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZones: TimeZone[];

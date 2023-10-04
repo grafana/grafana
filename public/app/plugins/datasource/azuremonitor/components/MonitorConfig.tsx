@@ -9,11 +9,11 @@ import { AzureDataSourceSettings, AzureCredentials } from '../types';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
 
-const azureClouds = [
+const azureClouds: SelectableValue[] = [
   { value: 'azuremonitor', label: 'Azure' },
   { value: 'govazuremonitor', label: 'Azure US Government' },
   { value: 'chinaazuremonitor', label: 'Azure China' },
-] as SelectableValue[];
+];
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -45,6 +45,7 @@ export const MonitorConfig = (props: Props) => {
     <>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={azureClouds}
         onCredentialsChange={onCredentialsChange}

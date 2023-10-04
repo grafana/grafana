@@ -847,7 +847,6 @@
   ],
   "refresh": false,
   "schemaVersion": 33,
-  "style": "dark",
   "tags": [
     "gdev",
     "panel-tests",

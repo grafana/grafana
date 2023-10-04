@@ -12,13 +12,13 @@ import {
   getParserFromQuery,
   obfuscate,
   requestSupportsSplitting,
-  isQueryWithDistinct,
   isQueryWithRangeVariable,
   isQueryPipelineErrorFiltering,
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
   formatLogqlQuery,
+  getLogQueryFromMetricsQueryAtPosition,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -310,18 +310,6 @@ describe('isQueryWithLabelFormat', () => {
   });
 });
 
-describe('isQueryWithDistinct', () => {
-  it('identifies queries using distinct', () => {
-    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
-    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
-  });
-
-  it('does not return false positives', () => {
-    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
-    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
-  });
-});
-
 describe('isQueryWithRangeVariableDuration', () => {
   it('identifies queries using $__range variable', () => {
     expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range])')).toBe(true);
@@ -354,6 +342,26 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
+  });
+
+  it('supports json parser with arguments', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | json')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField"')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField", label="field2"')).toBe('json');
+  });
+
+  it('supports logfmt parser with arguments and flags', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | logfmt')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField"')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField", label')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict field="otherField"')).toBe('logfmt');
+    expect(
+      getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty field="otherField", label="field2"')
+    ).toBe('logfmt');
   });
 });
 
@@ -419,6 +427,39 @@ describe('getLogQueryFromMetricsQuery', () => {
         'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
       )
     ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+  it('does not return a query when there is no log query', () => {
+    expect(getLogQueryFromMetricsQuery('1+1')).toBe('');
+    expect(getLogQueryFromMetricsQuery('count_over_time([1s])')).toBe('');
+  });
+});
+
+describe('getLogQueryFromMetricsQueryAtPosition', () => {
+  it('works like getLogQueryFromMetricsQuery for simple queries', () => {
+    expect(
+      getLogQueryFromMetricsQueryAtPosition('count_over_time({job="grafana"} | logfmt | label="value" [1m])', 57)
+    ).toBe('{job="grafana"} | logfmt | label="value"');
+    expect(getLogQueryFromMetricsQueryAtPosition('count_over_time({job="grafana"} [1m])', 37)).toBe('{job="grafana"}');
+    expect(
+      getLogQueryFromMetricsQueryAtPosition(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))',
+        45
+      )
+    ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+  it.each([
+    [
+      'count_over_time({place="moon"} | json test="test" [1m]) + avg_over_time({place="luna"} | logfmt test="test" [1m])',
+      '{place="moon"} | json test="test"',
+      49,
+    ],
+    [
+      'count_over_time({place="moon"} | json test="test" [1m]) + avg_over_time({place="luna"} | logfmt test="test" [1m])',
+      '{place="luna"} | logfmt test="test"',
+      107,
+    ],
+  ])('gets the right query for complex queries', (metric: string, log: string, position: number) => {
+    expect(getLogQueryFromMetricsQueryAtPosition(metric, position)).toBe(log);
   });
 });
 

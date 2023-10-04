@@ -50,7 +50,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
       description={
         <ConfigDescriptionLink
           description="Derived fields can be used to extract new fields from a log message and create a link from its value."
-          suffix="loki/#configure-derived-fields"
+          suffix="loki/configure-loki-data-source/#derived-fields"
           feature="derived fields"
         />
       }

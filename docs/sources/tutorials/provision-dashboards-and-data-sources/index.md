@@ -227,7 +227,6 @@ For more information on how to configure dashboard providers, refer to [Dashboar
      "refresh": "",
      "rows": [],
      "schemaVersion": 16,
-     "style": "dark",
      "tags": ["kubernetes"],
      "templating": {
        "list": []

@@ -91,10 +91,7 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (this.contextSrv.minRefreshInterval) {
-      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
-    }
-    return intervals;
+    return this.contextSrv.getValidIntervals(intervals);
   }
 
   private parseTime() {
@@ -149,7 +146,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 
@@ -341,6 +338,12 @@ export class TimeSrv {
   };
 
   timeRange(): TimeRange {
+    // Scenes can set this global object to the current time range.
+    // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
+    if (window.__timeRangeSceneObject && window.__timeRangeSceneObject.isActive) {
+      return window.__timeRangeSceneObject.state.value;
+    }
+
     return getTimeRange(this.time, this.timeModel);
   }
 

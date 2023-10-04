@@ -143,6 +143,43 @@ type AlertRuleGroupWithFolderTitle struct {
 	FolderTitle string
 }
 
+func NewAlertRuleGroupWithFolderTitle(groupKey AlertRuleGroupKey, rules []AlertRule, folderTitle string) AlertRuleGroupWithFolderTitle {
+	SortAlertRulesByGroupIndex(rules)
+	var interval int64
+	if len(rules) > 0 {
+		interval = rules[0].IntervalSeconds
+	}
+	var result = AlertRuleGroupWithFolderTitle{
+		AlertRuleGroup: &AlertRuleGroup{
+			Title:     groupKey.RuleGroup,
+			FolderUID: groupKey.NamespaceUID,
+			Interval:  interval,
+			Rules:     rules,
+		},
+		FolderTitle: folderTitle,
+		OrgID:       groupKey.OrgID,
+	}
+	return result
+}
+
+func NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderTitle string) AlertRuleGroupWithFolderTitle {
+	derefRules := make([]AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		derefRules = append(derefRules, *rule)
+	}
+	return NewAlertRuleGroupWithFolderTitle(groupKey, derefRules, folderTitle)
+}
+
+// SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
+func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderTitle) {
+	sort.SliceStable(g, func(i, j int) bool {
+		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
+			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		}
+		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+	})
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -305,8 +342,8 @@ type AlertRuleKey struct {
 	UID   string `xorm:"uid"`
 }
 
-func (k AlertRuleKey) LogContext() []interface{} {
-	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+func (k AlertRuleKey) LogContext() []any {
+	return []any{"rule_uid", k.UID, "org_id", k.OrgID}
 }
 
 type AlertRuleKeyWithVersion struct {
@@ -556,6 +593,15 @@ func (g RulesGroup) SortByGroupIndex() {
 	})
 }
 
+func SortAlertRulesByGroupIndex(rules []AlertRule) {
+	sort.Slice(rules, func(i, j int) bool {
+		if rules[i].RuleGroupIndex == rules[j].RuleGroupIndex {
+			return rules[i].ID < rules[j].ID
+		}
+		return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+	})
+}
+
 const (
 	QuotaTargetSrv quota.TargetSrv = "ngalert"
 	QuotaTarget    quota.Target    = "alert_rule"
@@ -570,4 +616,16 @@ func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
 func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
 	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
 	return key, ok
+}
+
+// GroupByAlertRuleGroupKey groups all rules by AlertRuleGroupKey. Returns map of RulesGroup sorted by AlertRule.RuleGroupIndex
+func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGroup {
+	result := make(map[AlertRuleGroupKey]RulesGroup)
+	for _, rule := range rules {
+		result[rule.GetGroupKey()] = append(result[rule.GetGroupKey()], rule)
+	}
+	for _, group := range result {
+		group.SortByGroupIndex()
+	}
+	return result
 }

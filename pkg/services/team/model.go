@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 // Typed errors
@@ -91,6 +91,7 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
+	SortOpts     []model.SortOption
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }
@@ -160,7 +161,7 @@ type GetTeamMembersQuery struct {
 	TeamUID      string
 	UserID       int64
 	External     bool
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 // ----------------------

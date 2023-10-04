@@ -22,22 +22,22 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 	}{
 		{
 			name:     "when a query has a sub query - it is extracted",
-			input:    simplejson.NewFromAny(map[string]interface{}{"targetFull": "thisisafullquery", "target": "ahalfquery"}),
+			input:    simplejson.NewFromAny(map[string]any{"targetFull": "thisisafullquery", "target": "ahalfquery"}),
 			expected: `{"target":"thisisafullquery"}`,
 		},
 		{
 			name:     "when a query does not have a sub query - it no-ops",
-			input:    simplejson.NewFromAny(map[string]interface{}{"target": "ahalfquery"}),
+			input:    simplejson.NewFromAny(map[string]any{"target": "ahalfquery"}),
 			expected: `{"target":"ahalfquery"}`,
 		},
 		{
 			name:     "when query was hidden, it removes the flag",
-			input:    simplejson.NewFromAny(map[string]interface{}{"hide": true}),
+			input:    simplejson.NewFromAny(map[string]any{"hide": true}),
 			expected: `{}`,
 		},
 		{
 			name: "when prometheus both type query, convert to range",
-			input: simplejson.NewFromAny(map[string]interface{}{
+			input: simplejson.NewFromAny(map[string]any{
 				"datasource": map[string]string{
 					"type": "prometheus",
 				},
@@ -48,7 +48,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		},
 		{
 			name: "when prometheus instant type query, do nothing",
-			input: simplejson.NewFromAny(map[string]interface{}{
+			input: simplejson.NewFromAny(map[string]any{
 				"datasource": map[string]string{
 					"type": "prometheus",
 				},
@@ -58,7 +58,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		},
 		{
 			name: "when non-prometheus with instant and range, do nothing",
-			input: simplejson.NewFromAny(map[string]interface{}{
+			input: simplejson.NewFromAny(map[string]any{
 				"datasource": map[string]string{
 					"type": "something",
 				},
@@ -194,6 +194,20 @@ func TestMakeAlertRule(t *testing.T) {
 		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 		require.Nil(t, err)
 		require.Equal(t, string(models.ErrorErrState), ar.ExecErrState)
+	})
+
+	t.Run("migrate message template", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.Message = "Instance ${instance} is down"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.Nil(t, err)
+		expected :=
+			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
+				"Instance {{$mergedLabels.instance}} is down"
+		require.Equal(t, expected, ar.Annotations["message"])
 	})
 }
 

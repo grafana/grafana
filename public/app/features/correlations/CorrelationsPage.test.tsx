@@ -47,7 +47,7 @@ const renderWithContext = async (
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
       if (matches?.groups) {
         const { sourceUID } = matches.groups;
-        const correlation = { sourceUID, ...data, uid: uniqueId() };
+        const correlation = { sourceUID, ...data, uid: uniqueId(), provisioned: false };
         correlations.push(correlation);
         return createCreateCorrelationResponse(correlation);
       }
@@ -66,7 +66,7 @@ const renderWithContext = async (
           }
           return c;
         });
-        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId() });
+        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId(), provisioned: false });
       }
 
       throw createFetchCorrelationsError();
@@ -358,6 +358,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Some label',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -373,6 +374,7 @@ describe('CorrelationsPage', () => {
             uid: '2',
             label: 'Prometheus to Loki',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
         ]
       );
@@ -580,6 +582,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Loki to Loki',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -594,6 +597,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '2',
             label: 'Loki to Prometheus',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -609,6 +613,7 @@ describe('CorrelationsPage', () => {
             uid: '3',
             label: 'Prometheus to Loki',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
           {
             sourceUID: 'prometheus',
@@ -616,6 +621,7 @@ describe('CorrelationsPage', () => {
             uid: '4',
             label: 'Prometheus to Prometheus',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
         ]
       );
@@ -638,6 +644,7 @@ describe('CorrelationsPage', () => {
         targetUID: 'loki',
         uid: '1',
         label: 'Some label',
+        provisioned: true,
         config: {
           field: 'line',
           target: {},

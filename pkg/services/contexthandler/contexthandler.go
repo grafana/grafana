@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
@@ -61,19 +63,19 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
 	}
 	reqCtx := &contextmodel.ReqContext{
-		Context:               webCtx,
-		SignedInUser:          origReqCtx.SignedInUser,
-		UserToken:             origReqCtx.UserToken,
-		IsSignedIn:            origReqCtx.IsSignedIn,
-		IsRenderCall:          origReqCtx.IsRenderCall,
-		AllowAnonymous:        origReqCtx.AllowAnonymous,
-		SkipDSCache:           origReqCtx.SkipDSCache,
-		SkipQueryCache:        origReqCtx.SkipQueryCache,
-		Logger:                origReqCtx.Logger,
-		Error:                 origReqCtx.Error,
-		RequestNonce:          origReqCtx.RequestNonce,
-		IsPublicDashboardView: origReqCtx.IsPublicDashboardView,
-		LookupTokenErr:        origReqCtx.LookupTokenErr,
+		Context:                    webCtx,
+		SignedInUser:               origReqCtx.SignedInUser,
+		UserToken:                  origReqCtx.UserToken,
+		IsSignedIn:                 origReqCtx.IsSignedIn,
+		IsRenderCall:               origReqCtx.IsRenderCall,
+		AllowAnonymous:             origReqCtx.AllowAnonymous,
+		SkipDSCache:                origReqCtx.SkipDSCache,
+		SkipQueryCache:             origReqCtx.SkipQueryCache,
+		Logger:                     origReqCtx.Logger,
+		Error:                      origReqCtx.Error,
+		RequestNonce:               origReqCtx.RequestNonce,
+		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
+		LookupTokenErr:             origReqCtx.LookupTokenErr,
 	}
 	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }
@@ -119,19 +121,17 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		} else {
 			reqContext.SignedInUser = identity.SignedInUser()
 			reqContext.UserToken = identity.SessionToken
-			reqContext.IsSignedIn = !identity.IsAnonymous
-			reqContext.AllowAnonymous = identity.IsAnonymous
+			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
+			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
-		span.AddEvents(
-			[]string{"uname", "orgId", "userId"},
-			[]tracing.EventValue{
-				{Str: reqContext.Login},
-				{Num: reqContext.OrgID},
-				{Num: reqContext.UserID}},
-		)
+		span.AddEvent("user", trace.WithAttributes(
+			attribute.String("uname", reqContext.Login),
+			attribute.Int64("orgId", reqContext.OrgID),
+			attribute.Int64("userId", reqContext.UserID),
+		))
 
 		next.ServeHTTP(w, r)
 	})

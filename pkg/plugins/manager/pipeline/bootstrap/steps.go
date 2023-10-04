@@ -7,9 +7,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -27,10 +27,11 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-var DefaultDecorateFuncs = []DecorateFunc{
-	AliasDecorateFunc,
-	AppDefaultNavURLDecorateFunc,
-	AppChildDecorateFunc,
+func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
+	return []DecorateFunc{
+		AppDefaultNavURLDecorateFunc,
+		AppChildDecorateFunc(cfg),
+	}
 }
 
 // NewDefaultConstructor returns a new DefaultConstructor.
@@ -77,17 +78,6 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 	return res, nil
 }
 
-// AliasDecorateFunc is a DecorateFunc that sets the alias for the plugin.
-func AliasDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	switch p.ID {
-	case "grafana-pyroscope-datasource": // rebranding
-		p.Alias = "phlare"
-	case "debug": // panel plugin used for testing
-		p.Alias = "debugX"
-	}
-	return p, nil
-}
-
 // AppDefaultNavURLDecorateFunc is a DecorateFunc that sets the default nav URL for app plugins.
 func AppDefaultNavURLDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsApp() {
@@ -123,24 +113,26 @@ func setDefaultNavURL(p *plugins.Plugin) {
 }
 
 // AppChildDecorateFunc is a DecorateFunc that configures child plugins of app plugins.
-func AppChildDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.Parent != nil && p.Parent.IsApp() {
-		configureAppChildPlugin(p.Parent, p)
+func AppChildDecorateFunc(cfg *config.Cfg) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		if p.Parent != nil && p.Parent.IsApp() {
+			configureAppChildPlugin(cfg, p.Parent, p)
+		}
+		return p, nil
 	}
-	return p, nil
 }
 
-func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
-	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 
+	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	if parent.IsCorePlugin() {
-		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
+		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
-		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
+		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
 	}
 }

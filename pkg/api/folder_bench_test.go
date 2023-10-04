@@ -498,7 +498,7 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 		UID:      uid,
 		Version:  1,
 		Title:    title,
-		Data:     simplejson.NewFromAny(map[string]interface{}{"schemaVersion": 17, "title": title, "uid": uid, "version": 1}),
+		Data:     simplejson.NewFromAny(map[string]any{"schemaVersion": 17, "title": title, "uid": uid, "version": 1}),
 		IsFolder: true,
 		Created:  now,
 		Updated:  now,

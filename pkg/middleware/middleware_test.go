@@ -236,7 +236,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 				}
 			} else {
 				t.Log("Returning JSON OK")
-				resp := make(map[string]interface{})
+				resp := make(map[string]any)
 				resp["message"] = "OK"
 				c.JSON(http.StatusOK, resp)
 			}
@@ -251,6 +251,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Service) *contexthandler.ContextHandler {
 	t.Helper()
 
-	tracer := tracing.NewFakeTracer()
+	tracer := tracing.InitializeTracerForTest()
 	return contexthandler.ProvideService(cfg, tracer, featuremgmt.WithFeatures(), authnService)
 }

@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -23,7 +24,10 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: 'Edit' }),
     view: byRole('link', { name: 'View' }),
-    delete: byRole('button', { name: 'Delete' }),
+    more: byRole('button', { name: 'More' }),
+  },
+  moreActionItems: {
+    delete: byRole('menuitem', { name: 'Delete' }),
   },
 };
 
@@ -50,10 +54,11 @@ describe('RulesTable RBAC', () => {
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
-    it('Should not render Delete button for users without the delete permission', () => {
+    it('Should not render Delete button for users without the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+
       renderRulesTable(grafanaRule);
-      expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
+      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {
@@ -62,10 +67,15 @@ describe('RulesTable RBAC', () => {
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
-    it('Should render Delete button for users with the delete permission', () => {
+    it('Should render Delete button for users with the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      const user = userEvent.setup();
+
       renderRulesTable(grafanaRule);
-      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+
+      expect(ui.actionButtons.more.get()).toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
+      expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
   });
 
@@ -77,10 +87,11 @@ describe('RulesTable RBAC', () => {
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
     });
 
-    it('Should not render Delete button for users without the delete permission', () => {
+    it('Should not render Delete button for users without the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+
       renderRulesTable(cloudRule);
-      expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
+      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {
@@ -89,10 +100,13 @@ describe('RulesTable RBAC', () => {
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
-    it('Should render Delete button for users with the delete permission', () => {
+    it('Should render Delete button for users with the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      const user = userEvent.setup();
+
       renderRulesTable(cloudRule);
-      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
+      expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
   });
 });

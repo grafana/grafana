@@ -4,15 +4,22 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
+)
+
+const (
+	customConfigPrefix = "GF_PLUGIN"
 )
 
 type Provider interface {
@@ -31,7 +38,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
+func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -56,13 +63,101 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		)
 	}
 
+	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
-	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	ev := getPluginSettings(p.ID, s.cfg).asEnvVar(customConfigPrefix, hostEnv...)
 	return ev
+}
+
+// GetConfigMap returns a map of configuration that should be passed in a plugin request.
+func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
+	m := make(map[string]string)
+
+	// TODO add support via plugin SDK
+	//if externalService != nil {
+	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
+	//	m[oauthtokenretriever.AppClientID] = externalService.ClientID
+	//	m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
+	//	m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
+	//}
+
+	if s.cfg.Features != nil {
+		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+		if len(enabledFeatures) > 0 {
+			features := make([]string, 0, len(enabledFeatures))
+			for feat := range enabledFeatures {
+				features = append(features, feat)
+			}
+			sort.Strings(features)
+			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
+		}
+	}
+	// TODO add support via plugin SDK
+	//if s.cfg.AWSAssumeRoleEnabled {
+	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
+	//}
+	//if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+	//	m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+	//}
+	//if s.cfg.AWSExternalId != "" {
+	//	m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+	//}
+
+	if s.cfg.ProxySettings.Enabled {
+		m[proxy.PluginSecureSocksProxyEnabled] = "true"
+		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
+		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
+		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
+		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+	}
+
+	// TODO add support via plugin SDK
+	//azureSettings := s.cfg.Azure
+	//if azureSettings != nil {
+	//	if azureSettings.Cloud != "" {
+	//		m[azsettings.AzureCloud] = azureSettings.Cloud
+	//	}
+	//
+	//	if azureSettings.ManagedIdentityEnabled {
+	//		m[azsettings.ManagedIdentityEnabled] = "true"
+	//
+	//		if azureSettings.ManagedIdentityClientId != "" {
+	//			m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+	//		}
+	//	}
+	//
+	//	if azureSettings.UserIdentityEnabled {
+	//		m[azsettings.UserIdentityEnabled] = "true"
+	//
+	//		if azureSettings.UserIdentityTokenEndpoint != nil {
+	//			if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+	//				m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+	//				m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+	//				m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+	//				m[azsettings.UserIdentityAssertion] = "username"
+	//			}
+	//		}
+	//	}
+	//}
+
+	// TODO add support via plugin SDK
+	//ps := getPluginSettings(pluginID, s.cfg)
+	//for k, v := range ps {
+	//	m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
+	//}
+
+	return m
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
@@ -82,6 +177,25 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
+	var variables []string // an array is used for consistency and keep the logic simpler for no features case
+
+	if s.cfg.Features == nil {
+		return variables
+	}
+
+	enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+	if len(enabledFeatures) > 0 {
+		features := make([]string, 0, len(enabledFeatures))
+		for feat := range enabledFeatures {
+			features = append(features, feat)
+		}
+		variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
+	}
+
+	return variables
 }
 
 func (s *Service) awsEnvVars() []string {
@@ -127,7 +241,7 @@ func getPluginSettings(pluginID string, cfg *config.Cfg) pluginSettings {
 	return ps
 }
 
-func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
+func (ps pluginSettings) asEnvVar(prefix string, hostEnv ...string) []string {
 	env := make([]string, 0, len(ps))
 	for k, v := range ps {
 		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))

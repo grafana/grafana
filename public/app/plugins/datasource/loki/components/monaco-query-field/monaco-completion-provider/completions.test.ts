@@ -126,8 +126,14 @@ const afterSelectorCompletions = [
   },
   {
     documentation: 'Operator docs',
-    insertText: '| distinct',
-    label: 'distinct',
+    insertText: '| drop',
+    label: 'drop',
+    type: 'PIPE_OPERATION',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| keep',
+    label: 'keep',
     type: 'PIPE_OPERATION',
   },
 ];
@@ -388,8 +394,8 @@ describe('getCompletions', () => {
     expect(functionCompletions).toHaveLength(3);
   });
 
-  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
-    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+  test('Returns completion options when the situation is AFTER_KEEP_AND_DROP', async () => {
+    const situation: Situation = { type: 'AFTER_KEEP_AND_DROP', logQuery: '{label="value"}' };
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([
@@ -463,7 +469,7 @@ describe('getAfterSelectorCompletions', () => {
     expect(parsersInSuggestions).toStrictEqual(['unpack (detected)', 'json', 'logfmt', 'pattern', 'regexp']);
   });
 
-  it('should not show detected parser if query already has parser', async () => {
+  it('should not show the detected parser if query already has parser', async () => {
     const suggestions = await getAfterSelectorCompletions(
       `{job="grafana"} | logfmt | `,
       true,
@@ -503,5 +509,348 @@ describe('getAfterSelectorCompletions', () => {
       .filter((suggestion) => suggestion.type === 'LABEL_NAME')
       .map((label) => label.label);
     expect(labelFiltersInSuggestions.length).toBe(0);
+  });
+});
+
+describe('IN_LOGFMT completions', () => {
+  let datasource: LokiDatasource;
+  let languageProvider: LokiLanguageProvider;
+  let completionProvider: CompletionDataProvider;
+
+  beforeEach(() => {
+    datasource = createLokiDatasource();
+    languageProvider = new LokiLanguageProvider(datasource);
+    completionProvider = new CompletionDataProvider(languageProvider, {
+      current: history,
+    });
+
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys: ['label1', 'label2'],
+      unwrapLabelKeys: [],
+      hasJSON: true,
+      hasLogfmt: false,
+      hasPack: false,
+    });
+  });
+  it('autocompleting logfmt should return flags, parsers, pipe operations, and labels', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt`,
+      flags: false,
+      otherLabels: [],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "documentation": "Strict parsing. The logfmt parser stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.",
+          "insertText": "--strict",
+          "label": "--strict",
+          "type": "FUNCTION",
+        },
+        {
+          "documentation": "Retain standalone keys with empty value. The logfmt parser retains standalone keys (keys without a value) as labels with value set to empty string.",
+          "insertText": "--keep-empty",
+          "label": "--keep-empty",
+          "type": "FUNCTION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| logfmt",
+          "label": "logfmt",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| pattern",
+          "label": "pattern",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| regexp",
+          "label": "regexp",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unpack",
+          "label": "unpack",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "insertText": "label1",
+          "label": "label1",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt with flags should return parser, pipe operations, and labels', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt`,
+      flags: true,
+      otherLabels: [],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| logfmt",
+          "label": "logfmt",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| pattern",
+          "label": "pattern",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| regexp",
+          "label": "regexp",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unpack",
+          "label": "unpack",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "insertText": "label1",
+          "label": "label1",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt should exclude already used labels from the suggestions', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt`,
+      flags: true,
+      otherLabels: ['label1', 'label2'],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| logfmt",
+          "label": "logfmt",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| pattern",
+          "label": "pattern",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| regexp",
+          "label": "regexp",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unpack",
+          "label": "unpack",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt without flags should only offer labels when the user has a trailing comma', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt --strict label3,`,
+      flags: false,
+      otherLabels: ['label1'],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt with flags should only offer labels when the user has a trailing comma', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt --strict label3,`,
+      flags: true,
+      otherLabels: ['label1'],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
   });
 });

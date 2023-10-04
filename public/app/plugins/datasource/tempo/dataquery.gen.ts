@@ -13,6 +13,10 @@ import * as common from '@grafana/schema';
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
   /**
+   * Filters that are used to query the metrics summary
+   */
+  groupBy?: Array<TraceqlFilter>;
+  /**
    * Defines the maximum number of traces that are returned from Tempo
    */
   limit?: number;
@@ -48,10 +52,19 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Query traces by span name
    */
   spanName?: string;
+  /**
+   * Defines the maximum number of spans per spanset that are returned from Tempo
+   */
+  spss?: number;
+  /**
+   * The type of the table that is used to display the search results
+   */
+  tableType?: SearchTableType;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
   filters: [],
+  groupBy: [],
 };
 
 /**
@@ -70,9 +83,18 @@ export enum SearchStreamingState {
 }
 
 /**
+ * The type of the table that is used to display the search results
+ */
+export enum SearchTableType {
+  Spans = 'spans',
+  Traces = 'traces',
+}
+
+/**
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Intrinsic = 'intrinsic',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',
