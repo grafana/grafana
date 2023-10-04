@@ -17,6 +17,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -197,8 +198,9 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	}
 
 	start = time.Now()
-	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse")
-	span.SetAttributes("metricDataplane", responseOpts.metricDataplane, attribute.Key("metricDataplane").Bool(responseOpts.metricDataplane))
+	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse", trace.WithAttributes(
+		attribute.Bool("metricDataplane", responseOpts.metricDataplane),
+	))
 	defer span.End()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
