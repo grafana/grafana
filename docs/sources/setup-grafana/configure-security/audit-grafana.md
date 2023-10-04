@@ -426,7 +426,7 @@ The HTTP option for the Loki exporter is available only in Grafana Enterprise ve
 [auditing.logs.loki]
 # Set the communication protocol to use with Loki (can be grpc or http)
 type = grpc
-# Set the address for writing logs to Loki (format must be host:port)
+# Set the address for writing logs to Loki
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
@@ -440,6 +440,15 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 - **host** - OS hostname on which the Grafana instance is running.
 - **grafana_instance** - Application URL.
 - **kind** - `auditing`
+
+When basic authentication is needed to ingest logs in your loki instance, you can specify credentials in the URL field. Here is an example:
+
+```ini
+# Set the communication protocol to use with Loki (can be grpc or http)
+type = http
+# Set the address for writing logs to Loki
+url = user:password@localhost:3000
+```
 
 ### Console exporter
 
