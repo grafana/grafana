@@ -8,6 +8,7 @@ import {
   Divider,
   HorizontalGroup,
   Icon,
+  IconButton,
   Input,
   Link,
   Spinner,
@@ -44,6 +45,7 @@ export const GenAIHistory = ({
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [showError, setShowError] = useState(false);
+  const [customFeedback, setCustomPrompt] = useState('');
 
   const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
@@ -75,11 +77,9 @@ export const GenAIHistory = ({
     }
   }, [error, streamStatus]);
 
-  const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      onGenerateWithFeedback(event.currentTarget.value);
-      reportInteraction(AutoGenerateItem.customPrompt, { customPrompt: event.currentTarget.value });
-    }
+  const onSubmitCustomFeedback = (text: string) => {
+    onGenerateWithFeedback(text);
+    reportInteraction(AutoGenerateItem.customFeedback, { customFeedback: text });
   };
 
   const onApply = () => {
@@ -97,7 +97,10 @@ export const GenAIHistory = ({
     }
 
     setMessages(messages);
-    reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
+
+    if (suggestion in QuickFeedbackType) {
+      reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
+    }
   };
 
   return (
@@ -114,8 +117,18 @@ export const GenAIHistory = ({
 
       <Input
         placeholder="Tell AI what to do next..."
-        suffix={<Icon name="corner-down-right-alt" />}
-        onKeyDown={onSubmit}
+        suffix={
+          <IconButton
+            name="corner-down-right-alt"
+            variant="secondary"
+            aria-label="Send custom suggestion"
+            onClick={() => onSubmitCustomFeedback(customFeedback)}
+            disabled={customFeedback === ''}
+          />
+        }
+        value={customFeedback}
+        onChange={(e) => setCustomPrompt(e.currentTarget.value)}
+        onKeyDown={(e) => e.key === 'Enter' && onSubmitCustomFeedback(customFeedback)}
       />
       <div className={styles.actions}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />

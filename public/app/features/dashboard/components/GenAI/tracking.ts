@@ -16,15 +16,15 @@ export enum AutoGenerateItem {
   autoGenerateButton = 'auto-generate-button',
   erroredRetryButton = 'errored-retry-button',
   improveButton = 'improve-button',
-  closeHistory = 'close-history',
-  backHistoryItem = 'next-history-item',
-  forwardHistoryItem = 'previous-history-item',
+  backHistoryItem = 'back-history-item',
+  forwardHistoryItem = 'forward-history-item',
   quickFeedback = 'quick-feedback',
   linkToDocs = 'link-to-docs',
-  customPrompt = 'custom-prompt',
+  customFeedback = 'custom-feedback',
   applySuggestion = 'apply-suggestion',
 }
 
 export function reportAutoGenerateInteraction(src: EventTrackingSrc, item: AutoGenerateItem, otherMeta?: object) {
+  console.log('reportAutoGenerateInteraction', src, item, otherMeta);
   reportInteraction(GENERATE_AI_INTERACTION_EVENT_NAME, { src, item, ...otherMeta });
 }
