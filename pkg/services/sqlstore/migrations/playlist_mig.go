@@ -63,9 +63,9 @@ func addPlaylistMigrations(mg *Migrator) {
 
 	// Add columns used for kubernetes dual write synchronization
 	mg.AddMigration("Add playlist column created_at", NewAddColumnMigration(playlistV2, &Column{
-		Name: "created_at", Type: DB_DateTime, Nullable: false, Default: "0",
+		Name: "created_at", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
 	mg.AddMigration("Add playlist column updated_at", NewAddColumnMigration(playlistV2, &Column{
-		Name: "updated_at", Type: DB_DateTime, Nullable: false, Default: "0",
+		Name: "updated_at", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
 }

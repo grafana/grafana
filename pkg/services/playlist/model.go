@@ -27,8 +27,9 @@ type Playlist struct {
 
 	// Added for kubernetes migration + synchronization
 	// Hidden from json because this is used for openapi generation
-	CreatedAt time.Time `json:"-" db:"created_at"`
-	UpdatedAt time.Time `json:"-" db:"updated_at"`
+	// Using int64 rather than time.Time to avoid database issues with time support
+	CreatedAt int64 `json:"-" db:"created_at"`
+	UpdatedAt int64 `json:"-" db:"updated_at"`
 }
 
 type PlaylistDTO = playlist.Spec
@@ -102,12 +103,12 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
 			UID:               types.UID(v.UID),
-			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(v.CreatedAt),
+			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
-			Annotations: map[string]string{
-				"grafana.com/updatedTime": v.UpdatedAt.Format(time.RFC3339),
-			},
+			// Annotations: map[string]string{
+			// 	"grafana.com/updatedTime": time.UnixMilli(v.UpdatedAt).Format(time.RFC3339),
+			// },
 		},
 		Spec: &playlist.Spec{
 			Uid:      v.UID,

@@ -3,6 +3,7 @@ package playlistimpl
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,7 @@ type getStore func(db.DB) store
 func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	t.Helper()
 
+	start := time.Now().UnixMilli()
 	ss := db.InitTestDB(t)
 	playlistStore := fn(ss)
 
@@ -33,6 +35,8 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			pl, err := playlistStore.Get(context.Background(), get)
 			require.NoError(t, err)
 			require.Equal(t, p.Id, pl.Id)
+			require.GreaterOrEqual(t, pl.CreatedAt, start)
+			require.GreaterOrEqual(t, pl.UpdatedAt, start)
 		})
 
 		t.Run("Can get playlist items", func(t *testing.T) {

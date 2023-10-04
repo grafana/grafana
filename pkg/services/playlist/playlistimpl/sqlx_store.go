@@ -28,7 +28,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 		}
 	}
 
-	ts := time.Now()
+	ts := time.Now().UnixMilli()
 	p = playlist.Playlist{
 		Name:      cmd.Name,
 		Interval:  cmd.Interval,
@@ -88,7 +88,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		OrgId:     cmd.OrgId,
 		Name:      cmd.Name,
 		Interval:  cmd.Interval,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UnixMilli(),
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
