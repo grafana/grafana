@@ -22,7 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -609,7 +609,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 
 			env.S.HandleTokenRequest(resp, req)
 
-			require.Equal(t, tt.wantCode, resp.Code)
+			require.Equal(t, tt.wantCode, resp.Code, resp.Body.String())
 			if tt.wantCode != http.StatusOK {
 				return
 			}
