@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -898,8 +897,6 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 		cmd.FolderID = folder.ID
 		cmd.FolderUID = folder.UID
 	}
-
-	spew.Dump(">>>>> insertTestDashboard:", cmd.FolderID, cmd.FolderUID)
 
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,7 +50,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, nil, true, "prod", "webapp")
-			spew.Dump(">>>>>>> folder", flder)
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, nil, false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, flder, false, "prod", "webapp")
 			insertTestDashboard(t, dashboardStore, "test dash 45", 1, flder, false, "prod")

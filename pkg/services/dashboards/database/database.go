@@ -8,7 +8,6 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -477,7 +476,6 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
 		metrics.MApiDashboardInsert.Inc()
-		spew.Dump(">>>> save 1", dash.FolderID, dash.FolderUID)
 		affectedRows, err = sess.Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)
@@ -490,7 +488,6 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		dash.UpdatedBy = userId
 
-		spew.Dump(">>>> save 2 ", dash.FolderID, dash.FolderUID)
 		affectedRows, err = sess.MustCols("folder_id", "folder_uid").ID(dash.ID).Update(dash)
 	}
 
