@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { PluginSignatureType } from '@grafana/data';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -21,7 +20,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
-  if (Boolean(version)) {
+  if (Boolean(version) && version !== '%VERSION%') {
     info.push({
       label: 'Version',
       value: version,
@@ -72,14 +71,4 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   });
 
   return info;
-};
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    subtitle: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
-  };
 };
