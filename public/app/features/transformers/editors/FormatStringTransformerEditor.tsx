@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -15,8 +15,9 @@ import {
   FormatStringOutput,
   FormatStringTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/formatString';
-import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {
@@ -58,26 +59,26 @@ function FormatStringTransfomerEditor({
   );
 
   const onSubstringStartChange = useCallback(
-    (e: FormEvent<HTMLInputElement>) => {
-      const startVal = Number(e.currentTarget.value) ?? 0;
+    (value?: number) => {
       onChange({
         ...options,
-        substringStart: startVal,
+        substringStart: value ?? 0,
       });
     },
     [onChange, options]
   );
 
   const onSubstringEndChange = useCallback(
-    (e: FormEvent<HTMLInputElement>) => {
-      const endVal = Number(e.currentTarget.value) ?? 0;
+    (value?: number) => {
       onChange({
         ...options,
-        substringEnd: endVal,
+        substringEnd: value ?? 0,
       });
     },
     [onChange, options]
   );
+
+  const ops = Object.values(FormatStringOutput).map((value) => ({ label: value, value }));
 
   return (
     <>
@@ -92,33 +93,17 @@ function FormatStringTransfomerEditor({
         </InlineField>
 
         <InlineField label="Format" labelWidth={10}>
-          <Select
-            options={[
-              { label: FormatStringOutput.UpperCase, value: FormatStringOutput.UpperCase },
-              { label: FormatStringOutput.LowerCase, value: FormatStringOutput.LowerCase },
-              { label: FormatStringOutput.SentenceCase, value: FormatStringOutput.SentenceCase },
-              { label: FormatStringOutput.TitleCase, value: FormatStringOutput.TitleCase },
-              { label: FormatStringOutput.PascalCase, value: FormatStringOutput.PascalCase },
-              { label: FormatStringOutput.CamelCase, value: FormatStringOutput.CamelCase },
-              { label: FormatStringOutput.SnakeCase, value: FormatStringOutput.SnakeCase },
-              { label: FormatStringOutput.KebabCase, value: FormatStringOutput.KebabCase },
-              { label: FormatStringOutput.Trim, value: FormatStringOutput.Trim },
-              { label: FormatStringOutput.Substring, value: FormatStringOutput.Substring },
-            ]}
-            value={options.outputFormat}
-            onChange={onFormatChange}
-            width={20}
-          />
+          <Select options={ops} value={options.outputFormat} onChange={onFormatChange} width={20} />
         </InlineField>
       </InlineFieldRow>
 
       {options.outputFormat === FormatStringOutput.Substring && (
         <InlineFieldRow>
           <InlineField label="Substring range" labelWidth={15}>
-            <Input pattern="[0-9]*" value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
+            <NumberInput value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
           </InlineField>
           <InlineField>
-            <Input pattern="[0-9]*" value={options.substringEnd ?? 0} onChange={onSubstringEndChange} width={7} />
+            <NumberInput value={options.substringEnd ?? 0} onChange={onSubstringEndChange} width={7} />
           </InlineField>
         </InlineFieldRow>
       )}

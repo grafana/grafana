@@ -67,19 +67,19 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
 export const formatStringTransformer: DataTransformerInfo<FormatStringTransformerOptions> = {
   id: DataTransformerID.formatString,
   name: 'Format string',
-  description: 'Set the capitalisation of a string field',
-  defaultOptions: { stringField: '', outputFormat: '' },
+  description: 'Set the letter case of a string field',
+  defaultOptions: { stringField: '', outputFormat: FormatStringOutput.UpperCase },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
+        if (data.length === 0) {
+          return data;
+        }
+
         const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options.stringField);
         const formatStringFunction = getFormatStringFunction(options);
 
         const formatter = createStringFormatter(fieldMatches, formatStringFunction);
-
-        if (data.length === 0) {
-          return data;
-        }
 
         return data.map((frame) => ({
           ...frame,
