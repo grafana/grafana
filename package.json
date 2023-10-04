@@ -211,7 +211,6 @@
     "rudder-sdk-js": "2.37.0",
     "sass": "1.63.6",
     "sass-loader": "13.3.2",
-    "sinon": "15.2.0",
     "style-loader": "3.3.3",
     "stylelint": "15.10.1",
     "stylelint-config-prettier": "9.0.5",
