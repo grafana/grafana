@@ -4,7 +4,8 @@ import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ScopedVars, SupportedTransformationType } from '@grafana/data';
-import { Button, Field, Input, InputControl, Modal, Select } from '@grafana/ui';
+import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 
 import { getSupportedTransTypeDetails, getTransformOptions } from '../correlations/Forms/types';
 import { getTransformationVars } from '../correlations/transformations';
@@ -29,23 +30,46 @@ export const CorrelationTransformationAddModal = ({
   const [exampleValue, setExampleValue] = useState<string | undefined>(undefined);
   const [transformationVars, setTransformationVars] = useState<ScopedVars>();
   const [formFieldsVis, setFormFieldsVis] = useState<ShowFormFields>({ showMapValue: false, showExpression: false });
+  const [isExpValid, setIsExpValid] = useState(false); // keep the highlighter from erroring on bad expressions
+  const [validToSave, setValidToSave] = useState(false);
   const id = useId();
 
   const calcTransformationVars = () => {
     setTransformationVars(undefined);
 
+    const expression = getValues('expression');
+    let isExpressionValid = false;
+    if (expression !== undefined) {
+      isExpressionValid = true;
+      try {
+        new RegExp(expression);
+      } catch (e) {
+        isExpressionValid = false;
+      }
+    } else {
+      isExpressionValid = !formFieldsVis.showExpression;
+    }
+    setIsExpValid(isExpressionValid);
+
     const transformationVars = getTransformationVars(
       {
         type: getValues('type'),
-        expression: getValues('expression'),
+        expression: isExpressionValid ? expression : '',
         mapValue: getValues('mapValue'),
       },
       exampleValue || '',
       getValues('field')!
     );
 
-    if (Object.keys(transformationVars).length > 0) {
+    const transKeys = Object.keys(transformationVars);
+    if (transKeys.length > 0) {
       setTransformationVars({ ...transformationVars });
+    }
+
+    if (transKeys.length === 0 || !isExpressionValid) {
+      setValidToSave(false);
+    } else {
+      setValidToSave(true);
     }
   };
 
@@ -82,7 +106,7 @@ export const CorrelationTransformationAddModal = ({
           <pre>
             <Highlighter
               textToHighlight={exampleValue}
-              searchWords={[getValues('expression') ?? '']}
+              searchWords={[isExpValid ? getValues('expression') ?? '' : '']}
               autoEscape={false}
             />
           </pre>
@@ -116,7 +140,17 @@ export const CorrelationTransformationAddModal = ({
             </Field>
           )}
           {formFieldsVis.showMapValue && (
-            <Field label="Map Value" htmlFor={`${id}-mapValue`}>
+            <Field
+              label={
+                <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+                  <Label>Variable Name</Label>
+                  <Tooltip content="The name of the variable that will be used, if a name is not defined in the expression. It will overwrite the field variable if one is ultimately not defined.">
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Flex>
+              }
+              htmlFor={`${id}-mapValue`}
+            >
               <Input {...register('mapValue')} id={`${id}-mapValue`} onKeyUp={calcTransformationVars} />
             </Field>
           )}
@@ -136,7 +170,7 @@ export const CorrelationTransformationAddModal = ({
         <Button variant="secondary" onClick={onCancel} fill="outline">
           Cancel
         </Button>
-        <Button variant="primary" onClick={() => onSave(getValues())}>
+        <Button variant="primary" onClick={() => onSave(getValues())} disabled={!validToSave}>
           Add transformation to correlation
         </Button>
       </Modal.ButtonRow>
