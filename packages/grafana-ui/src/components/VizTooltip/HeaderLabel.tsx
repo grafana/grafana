@@ -3,27 +3,33 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup, Tooltip } from '..';
+import { Tooltip, VerticalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
 import { LabelValue } from './types';
 
 interface Props {
-  headerLabel: LabelValue;
+  headerLabel: LabelValue[];
 }
 
 export const HeaderLabel = ({ headerLabel }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <HorizontalGroup justify-content="space-between" spacing="lg" wrap>
+    <VerticalGroup justify-content="space-between" spacing="lg">
       <div className={styles.wrapper}>
-        <span className={styles.label}>{headerLabel.label}</span>
-        <Tooltip content={headerLabel.value ? headerLabel.value.toString() : ''}>
-          <span className={styles.value}>{headerLabel.value}</span>
-        </Tooltip>
+        {headerLabel.map((label, index) => {
+          return (
+            <div key={index} className={styles.header}>
+              <span className={styles.label}>{label.label}</span>
+              <Tooltip content={label.value ? label.value.toString() : ''}>
+                <span className={styles.value}>{label.value}</span>
+              </Tooltip>
+            </div>
+          );
+        })}
       </div>
-    </HorizontalGroup>
+    </VerticalGroup>
   );
 };
 
@@ -38,13 +44,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     lineHeight: '18px',
     alignSelf: 'center',
   }),
+  header: css({
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
+  }),
   wrapper: css({
     display: 'flex',
-    flexDirection: 'row',
-    textOverflow: 'ellipsis',
+    flexDirection: 'column',
+    gap: 4,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     width: '250px',
-    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
   }),
 });
