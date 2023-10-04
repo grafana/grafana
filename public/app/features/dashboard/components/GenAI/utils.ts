@@ -32,10 +32,6 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   migrationChanges: string;
 } {
   const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
-
-  // 1) parse through full diff (all context) and remove all lines that arent additions / deletions or not important context like title / description
-  // 2) JSON entire diff and delete non changes things but also not keep important context  (title / description)
-
   return {
     userChanges: userDiff,
     migrationChanges: migrationDiff,
