@@ -260,9 +260,53 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
     "json-editor": {
       "save-button": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
     }
   },
   "data-source-picker": {
@@ -364,6 +408,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "",
+      "body__other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
       "success": "Bibliotheks-Panel wurde gespeichert"

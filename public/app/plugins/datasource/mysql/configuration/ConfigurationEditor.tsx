@@ -50,7 +50,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
     };
   };
 
-  const WIDTH_SHORT = 15;
   const WIDTH_LONG = 40;
 
   return (
@@ -228,7 +227,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
 
       <Divider />
 
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
 

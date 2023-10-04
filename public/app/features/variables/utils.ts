@@ -1,12 +1,12 @@
 import { isArray, isEqual } from 'lodash';
 
-import { UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
+import { LegacyMetricFindQueryOptions, ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
 import { StoreState } from '../../types';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
@@ -131,8 +131,14 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
   return templateSrv.replace(variable.regex, {}, 'regex');
 }
 
-export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
-  const queryOptions: any = { range: undefined, variable, searchFilter };
+export function getLegacyQueryOptions(
+  variable: QueryVariableModel,
+  searchFilter: string | undefined,
+  timeSrv: TimeSrv,
+  scopedVars: ScopedVars | undefined
+): LegacyMetricFindQueryOptions {
+  const queryOptions: LegacyMetricFindQueryOptions = { range: undefined, variable, searchFilter, scopedVars };
+
   if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }

@@ -40,14 +40,13 @@ export function useOpenAIStream(
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
 
+  const { error: enabledError, value: enabled } = useAsync(
+    async () => await isLLMPluginEnabled(),
+    [isLLMPluginEnabled]
+  );
+
   const { error: asyncError, value } = useAsync(async () => {
-    // Check if the LLM plugin is enabled and configured.
-    // If not, we won't be able to make requests, so return early.
-    const enabled = await isLLMPluginEnabled();
-    if (!enabled) {
-      return { enabled };
-    }
-    if (messages.length === 0) {
+    if (!enabled || !messages.length) {
       return { enabled };
     }
 
@@ -89,10 +88,10 @@ export function useOpenAIStream(
         },
       }),
     };
-  }, [messages]);
+  }, [messages, enabled]);
 
-  if (asyncError) {
-    setError(asyncError);
+  if (asyncError || enabledError) {
+    setError(asyncError || enabledError);
   }
 
   return {
