@@ -125,7 +125,7 @@ func ProvideService(
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
-	s.rr.Group("/apis", func(k8sRoute routing.RouteRegister) {
+	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
@@ -140,7 +140,13 @@ func ProvideService(
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
+	}
+
+	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/openapi", proxyHandler)
+	s.rr.Group("/healthz", proxyHandler)
+	s.rr.Group("/livez", proxyHandler)
+	s.rr.Group("/readyz", proxyHandler)
 
 	return s, nil
 }
