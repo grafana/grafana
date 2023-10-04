@@ -261,6 +261,36 @@ describe('situation', () => {
     });
   });
 
+  describe('tests that should return IN_LABEL_SELECTOR_NO_LABEL_NAME, but currently are null', () => {
+    it('fails to identify when cursor is before any labels with no comma before first label', () => {
+      assertSituation('{^ one="val1",two!="val2",three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing space within label list', () => {
+      assertSituation('{one="val1",two!="val2"^ three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing comma within label list', () => {
+      assertSituation('{one="val1",two!="val2" ^ three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing comma at end of label list', () => {
+      assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4" ^ }', null);
+    });
+  });
+
+  it('identifies all labels correctly when error node is from missing comma within label list', () => {
+    assertSituation('{one="val1",two!="val2",^ three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
+
   it('identifies all labels from queries when cursor is in middle', () => {
     // Note the extra whitespace, if the cursor is after whitespace, the situation will fail to resolve
     assertSituation('{one="val1", ^,two!="val2",three=~"val3",four!~"val4"}', {
