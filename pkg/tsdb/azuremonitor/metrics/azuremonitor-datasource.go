@@ -255,7 +255,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	ctx, span := tracing.DefaultTracer().Start(
 		ctx,
-		"azuremonitor query",
+		"azuremonitor subscription query",
 		trace.WithAttributes(
 			attribute.String("subscription", subscriptionId),
 			attribute.Int64("datasource_id", dsId),
