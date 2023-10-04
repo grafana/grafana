@@ -47,23 +47,12 @@ type OAuthTokenService interface {
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer) *Service {
-	tokenRefreshDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "grafana",
-		Subsystem: "oauth",
-		Name:      "token_refresh_fetch_duration_seconds",
-		Help:      "Time taken to fetch access token using refresh token",
-	},
-		[]string{"auth_provider", "success"})
-	if registerer != nil {
-		registerer.MustRegister(tokenRefreshDuration)
-	}
-
 	return &Service{
 		Cfg:                  cfg,
 		SocialService:        socialService,
 		AuthInfoService:      authInfoService,
 		singleFlightGroup:    new(singleflight.Group),
-		tokenRefreshDuration: tokenRefreshDuration,
+		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 	}
 }
 
@@ -271,6 +260,20 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
 func IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
+}
+
+func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {
+	tokenRefreshDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Subsystem: "oauth",
+		Name:      "token_refresh_fetch_duration_seconds",
+		Help:      "Time taken to fetch access token using refresh token",
+	},
+		[]string{"auth_provider", "success"})
+	if registerer != nil {
+		registerer.MustRegister(tokenRefreshDuration)
+	}
+	return tokenRefreshDuration
 }
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
