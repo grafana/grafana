@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -252,12 +253,13 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	values.Add("api-version", "2022-12-01")
 	req.URL.RawQuery = values.Encode()
 
-	ctx, span := tracer.Start(ctx, "azuremonitor query")
-	span.SetAttributes("subscription", subscriptionId, attribute.Key("subscription").String(subscriptionId))
-	span.SetAttributes("datasource_id", dsId, attribute.Key("datasource_id").Int64(dsId))
-	span.SetAttributes("org_id", orgId, attribute.Key("org_id").Int64(orgId))
-
+	ctx, span := tracer.Start(ctx, "azuremonitor query", trace.WithAttributes(
+		attribute.String("subscription", subscriptionId),
+		attribute.Int64("datasource_id", dsId),
+		attribute.Int64("org_id", orgId),
+	))
 	defer span.End()
+
 	tracer.Inject(ctx, req.Header, span)
 	res, err := cli.Do(req)
 	if err != nil {
@@ -302,14 +304,15 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
-	ctx, span := tracer.Start(ctx, "azuremonitor query")
-	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
-
+	ctx, span := tracer.Start(ctx, "azuremonitor query", trace.WithAttributes(
+		attribute.String("target", query.Target),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
+	))
 	defer span.End()
+
 	tracer.Inject(ctx, req.Header, span)
 
 	res, err := cli.Do(req)
