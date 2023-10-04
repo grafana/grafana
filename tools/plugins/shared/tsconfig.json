@@ -14,15 +14,5 @@
   },
   "extends": "@grafana/tsconfig",
 
-  "exclude": [
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "dist",
-    "**/dist",
-    "**/dist/**",
-    "tsconfig.json",
-    "**/tsconfig.json"
-  ]
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
 }

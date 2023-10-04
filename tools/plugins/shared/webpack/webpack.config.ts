@@ -208,7 +208,6 @@ const config = async (env: any): Promise<Configuration> => {
     };
   }
 
-  console.log('baseConfig', JSON.stringify(baseConfig, null, 2));
   return baseConfig;
 };
 
