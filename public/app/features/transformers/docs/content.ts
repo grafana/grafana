@@ -1,3 +1,16 @@
+/*
+  NOTE: This file is used to generate the transformation docs markdown content. If you change/update the content here,
+  please then rebuild the markdown by doing the following:
+
+  $ cd /docs (from the root of the repository)
+  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make docs
+
+  Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
+
+  Refer to ./docs/README.md for more information about building docs. 
+*/
+
 interface Link {
   title: string;
   url: string;
