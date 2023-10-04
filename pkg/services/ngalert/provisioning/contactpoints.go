@@ -393,29 +393,23 @@ func isContactPointInUse(name string, routes []*apimodels.Route) bool {
 	return false
 }
 
-func (ecp *ContactPointService) decryptValue(value string) (string, error) {
-	decodeValue, err := base64.StdEncoding.DecodeString(value)
-	if err != nil {
-		return "", err
-	}
-
-	decryptedValue, err := ecp.encryptionService.Decrypt(context.Background(), decodeValue)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decryptedValue), nil
-}
-
+// decryptValueOrRedacted returns a function that decodes a string from Base64 and then decrypts using secrets.Service.
+// If argument 'decrypt' is true, then returns definitions.RedactedValue regardless of the decrypted value.
+// Otherwise, it returns the decoded and decrypted value. The function returns empty string in the case of errors, which are logged
 func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integrationUID string) func(v string) string {
-	return func(v string) string {
-		decryptedValue, err := ecp.decryptValue(v)
+	return func(value string) string {
+		decodeValue, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
-			ecp.log.Warn("Decrypting value failed", "error", err.Error(), "integrationUid", integrationUID)
+			ecp.log.Warn("Failed to decode secret value from Base64", "error", err.Error(), "integrationUid", integrationUID)
+			return ""
+		}
+		decryptedValue, err := ecp.encryptionService.Decrypt(context.Background(), decodeValue)
+		if err != nil {
+			ecp.log.Warn("Failed to decrypt secret value", "error", err.Error(), "integrationUid", integrationUID)
 			return ""
 		}
 		if decrypt {
-			return decryptedValue
+			return string(decryptedValue)
 		} else {
 			return apimodels.RedactedValue
 		}
