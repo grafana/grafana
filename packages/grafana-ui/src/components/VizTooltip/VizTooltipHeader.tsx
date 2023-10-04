@@ -10,7 +10,7 @@ import { VizTooltipHeaderLabelValue } from './VizTooltipHeaderLabelValue';
 import { LabelValue } from './types';
 
 interface Props {
-  headerLabel: LabelValue;
+  headerLabel: LabelValue[];
   keyValuePairs?: LabelValue[];
   customValueDisplay?: ReactElement | null;
 }

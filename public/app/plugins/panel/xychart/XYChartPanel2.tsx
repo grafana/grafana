@@ -27,6 +27,7 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
+import { XYChartTooltip } from './XYChartTooltip';
 import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
@@ -217,13 +218,24 @@ export const XYChartPanel2 = (props: Props) => {
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight}>
-            <TooltipPlugin2
-              config={builder}
-              render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                // console.log('render', dataIdxs, seriesIdx);
-                return <pre>{JSON.stringify({ dataIdxs, seriesIdx }, null, 2)}</pre>;
-              }}
-            />
+            {props.options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
+                config={builder}
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                  return (
+                    <XYChartTooltip
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      isPinned={isPinned}
+                      dismiss={dismiss}
+                      allSeries={series}
+                      options={props.options}
+                      data={props.data.series}
+                    />
+                  );
+                }}
+              />
+            )}
           </UPlotChart>
         )}
       </VizLayout>
