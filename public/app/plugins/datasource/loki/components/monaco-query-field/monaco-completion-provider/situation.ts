@@ -603,28 +603,28 @@ function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): S
   };
 }
 
-// we find the first error-node in the tree that is at the cursor-position.
-// NOTE: this might be too slow, might need to optimize it
-// (ideas: we do not need to go into every subtree, based on from/to)
-// also, only go to places that are in the sub-tree of the node found
-// by default by lezer. problem is, `next()` will go upward too,
-// and we do not want to go higher than our node
-function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode | null {
-  // sometimes the cursor is a couple spaces after the end of the expression.
-  // to account for this situation, we "move" the cursor position back,
-  // so that there are no spaces between the end-of-expression and the cursor
+// If there is an error in the current cursor position, it's likely that the user is
+// in the middle of writing a query. If we can't find an error node, we use the node
+// at the cursor position to identify the situation. 
+function resolveCursor(text: string, cursorPos: number): TreeCursor {
+  // Sometimes the cursor is a couple spaces after the end of the expression.
+  // To account for this situation, we "move" the cursor position back to the real end
+  // of the expression.
   const trimRightTextLen = text.trimEnd().length;
   const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
-  const cur = tree.cursorAt(pos);
+
+  const tree = parser.parse(text);
+  const cursor = tree.cursorAt(pos);
+
+  console.log(cursor.node.type.name, text.substring(cursor.node.from, cursor.node.to))
+
   do {
-    if (cur.from === pos && cur.to === pos) {
-      const { node } = cur;
-      if (node.type.isError) {
-        return node;
-      }
+    if (cursor.from === pos && cursor.to === pos && cursor.node.type.isError) {
+      return cursor;
     }
-  } while (cur.next());
-  return null;
+  } while (cursor.next());
+
+  return tree.cursorAt(pos);
 }
 
 export function getSituation(text: string, pos: number): Situation | null {
@@ -637,22 +637,12 @@ export function getSituation(text: string, pos: number): Situation | null {
     };
   }
 
-  const tree = parser.parse(text);
+  const cursor = resolveCursor(text, pos);
+  const currentNode = cursor.node;
 
-  // if the tree contains error, it is very probable that
-  // our node is one of those error nodes.
-  // also, if there are errors, the node lezer finds us,
-  // might not be the best node.
-  // so first we check if there is an error node at the cursor position
-  const maybeErrorNode = getErrorNode(tree, text, pos);
-
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
-
-  const currentNode = cur.node;
-
-  const ids = [cur.type.id];
-  while (cur.parent()) {
-    ids.push(cur.type.id);
+  const ids = [cursor.type.id];
+  while (cursor.parent()) {
+    ids.push(cursor.type.id);
   }
 
   for (let resolver of RESOLVERS) {
