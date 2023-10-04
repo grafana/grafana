@@ -224,13 +224,13 @@ export const XYChartPanel2 = (props: Props) => {
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <XYChartTooltip
-                      dataIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      isPinned={isPinned}
-                      dismiss={dismiss}
-                      allSeries={series}
-                      options={props.options}
                       data={props.data.series}
+                      dataIdxs={dataIdxs}
+                      allSeries={series}
+                      dismiss={dismiss}
+                      isPinned={isPinned}
+                      options={props.options}
+                      seriesIdx={seriesIdx}
                     />
                   );
                 }}
@@ -239,44 +239,44 @@ export const XYChartPanel2 = (props: Props) => {
           </UPlotChart>
         )}
       </VizLayout>
-      {/*<Portal>*/}
-      {/*  {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (*/}
-      {/*    <VizTooltipContainer*/}
-      {/*      position={{ x: hover.pageX, y: hover.pageY }}*/}
-      {/*      offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}*/}
-      {/*      allowPointerEvents={isToolTipOpen.current}*/}
-      {/*    >*/}
-      {/*      {shouldDisplayCloseButton && (*/}
-      {/*        <div*/}
-      {/*          style={{*/}
-      {/*            width: '100%',*/}
-      {/*            display: 'flex',*/}
-      {/*            justifyContent: 'flex-end',*/}
-      {/*          }}*/}
-      {/*        >*/}
-      {/*          <CloseButton*/}
-      {/*            onClick={onCloseToolTip}*/}
-      {/*            style={{*/}
-      {/*              position: 'relative',*/}
-      {/*              top: 'auto',*/}
-      {/*              right: 'auto',*/}
-      {/*              marginRight: 0,*/}
-      {/*            }}*/}
-      {/*          />*/}
-      {/*        </div>*/}
-      {/*      )}*/}
-      {/*      <TooltipView*/}
-      {/*        options={props.options.tooltip}*/}
-      {/*        allSeries={series}*/}
-      {/*        manualSeriesConfigs={props.options.series}*/}
-      {/*        seriesMapping={props.options.seriesMapping!}*/}
-      {/*        rowIndex={hover.xIndex}*/}
-      {/*        hoveredPointIndex={hover.scatterIndex}*/}
-      {/*        data={props.data.series}*/}
-      {/*      />*/}
-      {/*    </VizTooltipContainer>*/}
-      {/*  )}*/}
-      {/*</Portal>*/}
+      {/* <Portal>
+        {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
+          <VizTooltipContainer
+            position={{ x: hover.pageX, y: hover.pageY }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {shouldDisplayCloseButton && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <CloseButton
+                  onClick={onCloseToolTip}
+                  style={{
+                    position: 'relative',
+                    top: 'auto',
+                    right: 'auto',
+                    marginRight: 0,
+                  }}
+                />
+              </div>
+            )}
+            <TooltipView
+              options={props.options.tooltip}
+              allSeries={series}
+              manualSeriesConfigs={props.options.series}
+              seriesMapping={props.options.seriesMapping!}
+              rowIndex={hover.xIndex}
+              hoveredPointIndex={hover.scatterIndex}
+              data={props.data.series}
+            />
+          </VizTooltipContainer>
+        )}
+      </Portal> */}
     </>
   );
 };

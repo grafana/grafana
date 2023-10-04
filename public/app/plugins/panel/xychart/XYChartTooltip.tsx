@@ -3,6 +3,8 @@ import React from 'react';
 
 import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
@@ -96,16 +98,38 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       header.push({
         label: yValue.name,
         value: fmt(yValue.field, yValue.val),
+        color: yValue.color,
       });
     }
 
     return header;
   };
 
+  const getContentLabel = (): LabelValue[] => {
+    const content: LabelValue[] = [
+      {
+        label: getFieldDisplayName(xField, frame),
+        value: fmt(xField, xField.values[rowIndex]),
+      },
+    ];
+
+    if (yValue) {
+      content.push({
+        label: yValue.name,
+        value: fmt(yValue.field, yValue.val),
+        color: yValue.color,
+      });
+    }
+
+    return content;
+  };
+
   // @TODO Add content and footer
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} />
+      <VizTooltipContent contentLabelValue={getContentLabel()} />
+      <VizTooltipFooter dataLinks={[]} canAnnotate={false} />
     </div>
   );
 };
