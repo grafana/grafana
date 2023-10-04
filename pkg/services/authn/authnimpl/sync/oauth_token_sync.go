@@ -105,6 +105,9 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	defer cancel()
 
 	if err := s.service.TryTokenRefresh(updateCtx, token); err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
 			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
 		}
