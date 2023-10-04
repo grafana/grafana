@@ -100,7 +100,7 @@ function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?
   return (
     <div className={cx(className, styles.container)}>
       <p className={styles.message}>
-        <Trans i18nKey="data-source-picker.list.no-data-source-message"> No data sources found</Trans>
+        <Trans i18nKey="data-source-picker.list.no-data-source-message">No data sources found</Trans>
       </p>
       <AddNewDataSourceButton onClick={onClickCTA} />
     </div>
