@@ -92,7 +92,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     // is a non-empty string
     let panelFilter = undefined;
     if (regex.length > 0) {
-      panelFilter = new RegExp(regex, "i");
+      panelFilter = new RegExp(regex, 'i');
     }
 
     this.setState({
@@ -362,7 +362,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
-  children: any;
+  children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
