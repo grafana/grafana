@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { PluginError } from '@grafana/data';
+import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
 import { sortPlugins, Sorters } from '../helpers';
@@ -48,10 +48,10 @@ export const useGetSingleLocalWithoutDetails = (id: string): CatalogPlugin | und
   return useSelector((state) => selectById(state, id));
 };
 
-export const useGetErrors = (): PluginError[] => {
+export const useGetErrors = (filterByPluginType?: PluginType): PluginError[] => {
   useFetchAll();
 
-  return useSelector(selectPluginErrors);
+  return useSelector(selectPluginErrors(filterByPluginType));
 };
 
 export const useInstall = () => {

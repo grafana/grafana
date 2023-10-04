@@ -64,15 +64,21 @@ jobs:
 
       - name: "Check that issue author is not part of the team"
         if: ${{ env.TEAM != 'null' }}
-        uses: tspascoal/get-user-teams-membership@v2
-        id: checkUserMember
-        with:
-          username: ${{ github.event.issue.user.login }}
-          team: "${{ env.TEAM }}"
+        run: |
+          response=$(gh api /orgs/grafana/teams/${{ env.TEAM }}/memberships/${{ github.event.issue.user.login }} -i -H "Accept: application/vnd.github.v3+json")
+          STATUS_CODE=$(echo "$response" | head -n 1 | cut -d' ' -f2)
+          if [ "$status_code" -eq 404 ]; then
+            echo "The user was not found in the team."
+            echo "USER_FOUND=false" >> $GITHUB_ENV
+          else
+            echo "The user was potentially found in the team"
+            echo "USER_FOUND=maybe" >> $GITHUB_ENV
+          fi
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Send Slack notification"
-        if: ${{ (env.CHANNEL != 'null') && ((steps.checkUserMember.outputs.isTeamMember == 'false') || (env.TEAM != 'null')) }}
+        if: ${{ (env.CHANNEL != 'null') && ((env.USER_FOUND == 'false') || (env.TEAM != 'null')) }}
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: >

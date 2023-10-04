@@ -91,7 +91,7 @@ export function TraceView(props: Props) {
   /**
    * Keeps state of resizable name column width
    */
-  const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
+  const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.4);
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,

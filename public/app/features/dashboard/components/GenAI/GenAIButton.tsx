@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip } from '@grafana/ui';
 
 import { useOpenAIStream } from './hooks';
 import { OPEN_AI_MODEL, Message } from './utils';
@@ -33,44 +33,56 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+
+  useEffect(() => {
+    // Todo: Consider other options for `"` sanitation
+    if (isGenerating && reply) {
+      onGenerate(reply.replace(/^"|"$/g, ''));
+    }
+  }, [isGenerating, reply, onGenerate]);
+
+  // The button is disabled if the plugin is not installed or enabled
+  if (!value?.enabled) {
+    return null;
+  }
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
     setMessages(messages);
   };
 
-  // Todo: Consider other options for `"` sanitation
-  if (isGenerating) {
-    onGenerate(reply.replace(/^"|"$/g, ''));
-  }
-
   const getIcon = () => {
+    if (error || !value?.enabled) {
+      return 'exclamation-circle';
+    }
     if (isGenerating) {
       return undefined;
     }
-    if (!value?.enabled) {
-      return 'exclamation-circle';
-    }
     return 'ai';
+  };
+
+  const getText = () => {
+    if (error) {
+      return 'Retry';
+    }
+
+    return !isGenerating ? text : loadingText;
   };
 
   return (
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size={14} />}
-      <Tooltip
-        show={value?.enabled ? false : undefined}
-        interactive
-        content={
-          <span>
-            The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-            and enable your plugin.
-          </span>
-        }
-      >
-        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
-          {!isGenerating ? text : loadingText}
+      <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
+        <Button
+          icon={getIcon()}
+          onClick={onClick}
+          fill="text"
+          size="sm"
+          disabled={isGenerating || (!value?.enabled && !error)}
+          variant={error ? 'destructive' : 'primary'}
+        >
+          {getText()}
         </Button>
       </Tooltip>
     </div>
@@ -78,7 +90,7 @@ export const GenAIButton = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-  `,
+  wrapper: css({
+    display: 'flex',
+  }),
 });

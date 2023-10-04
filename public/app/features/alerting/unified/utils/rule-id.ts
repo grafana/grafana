@@ -106,11 +106,11 @@ function unescapeDollars(value: string): string {
  * we'll use some non-printable characters from the ASCII table that will get encoded properly but very unlikely
  * to ever be used in a rule name or namespace
  */
-function escapePathSeparators(value: string): string {
+export function escapePathSeparators(value: string): string {
   return value.replace(/\//g, '\x1f').replace(/\\/g, '\x1e');
 }
 
-function unescapePathSeparators(value: string): string {
+export function unescapePathSeparators(value: string): string {
   return value.replace(/\x1f/g, '/').replace(/\x1e/g, '\\');
 }
 
