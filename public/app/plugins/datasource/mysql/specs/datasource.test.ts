@@ -9,19 +9,32 @@ import {
   FieldType,
   createDataFrame,
 } from '@grafana/data';
-import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { BackendSrv, FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { SQLQuery } from 'app/features/plugins/sql/types';
 import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
 
 import { MySqlDatasource } from '../MySqlDatasource';
 import { MySQLOptions } from '../types';
 
+const backendSrv: BackendSrv = {
+  // this will get mocked below, it only needs to exist
+  fetch: () => undefined,
+} as unknown as BackendSrv; // we cast it so that we do not have to implement all the methods
+
+let origBackendSrv: BackendSrv;
+beforeAll(() => {
+  origBackendSrv = getBackendSrv();
+  setBackendSrv(backendSrv);
+});
+
+afterAll(() => {
+  setBackendSrv(origBackendSrv);
+});
+
 describe('MySQLDatasource', () => {
   const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const setupTestContext = (response: unknown, templateSrv?: unknown) => {
     jest.clearAllMocks();
-    setBackendSrv(backendSrv);
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
     const instanceSettings = {
       jsonData: {
