@@ -19,6 +19,20 @@
       "webRoot": "${workspaceFolder}"
     },
     {
+      "name": "Attach to Firefox",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "http://localhost:3000/",
+      "webRoot": "${workspaceFolder}",
+      "pathMappings": [
+        {
+          "url": "webpack://grafana/",
+          "path": "${workspaceFolder}/"
+        }
+      ]
+    },
+    {
       "name": "Debug Jest test",
       "type": "node",
       "request": "launch",

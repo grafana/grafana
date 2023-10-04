@@ -18,6 +18,8 @@ export default () => {
     ),
     rest.get(`/api/datasources/proxy/uid/${MIMIR_DATASOURCE_UID}/api/v1/status/buildinfo`, (_req, res, ctx) =>
       res(ctx.status(404))
-    )
+    ),
+    // this endpoint will respond if the OnCall plugin is installed
+    rest.get('/api/plugins/grafana-oncall-app/settings', (_req, res, ctx) => res(ctx.status(404)))
   );
 };

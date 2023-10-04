@@ -26,7 +26,7 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  */
 export function useContactPointsWithStatus(selectedAlertmanager: string) {
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-  const { installed: onCallPluginInstalled, loading: onCallPluginStatusLoading } = usePluginBridge(
+  const { installed: onCallPluginInstalled = false, loading: onCallPluginStatusLoading } = usePluginBridge(
     SupportedPlugin.OnCall
   );
 
@@ -49,7 +49,7 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
   // if the OnCall plugin is installed, fetch its list of integrations so we can match those to the Grafana Managed contact points
   const { data: onCallIntegrations, isLoading: onCallPluginIntegrationsLoading } =
     onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-      skip: !onCallPluginInstalled,
+      skip: !onCallPluginInstalled || !isGrafanaManagedAlertmanager,
     });
 
   // fetch the latest config from the Alertmanager
