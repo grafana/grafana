@@ -752,7 +752,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).toBeInTheDocument()
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
       );
     });
 
@@ -764,7 +764,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).not.toBeInTheDocument()
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
       );
     });
 
@@ -780,7 +780,9 @@ describe('Plugin details page', () => {
         },
       });
 
-      await waitFor(() => expect(queryByText(statusContext)).toBeInTheDocument());
+      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+
+      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
     });
   });
 
