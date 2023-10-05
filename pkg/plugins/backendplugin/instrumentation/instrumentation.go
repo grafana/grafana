@@ -20,7 +20,7 @@ var (
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status", "target"})
+	}, []string{"plugin_id", "endpoint", "status", "target", "errorSource"})
 
 	pluginRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
@@ -57,10 +57,25 @@ const (
 	endpointQueryData      = "queryData"
 )
 
+type PluginError struct {
+	ErrorSource backend.ErrorSource
+
+	Err error
+}
+
+func (r PluginError) Error() string {
+	return r.Err.Error()
+}
+
+func (r PluginError) Source() string {
+	return string(r.ErrorSource)
+}
+
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
+	var errorSource string
 
 	ctx = instrumentContext(ctx, endpoint, *pluginCtx)
 	err := fn(ctx)
@@ -69,12 +84,16 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		if errors.Is(err, context.Canceled) {
 			status = statusCancelled
 		}
+		pluginErr, ok := err.(PluginError)
+		if ok {
+			errorSource = string(pluginErr.ErrorSource)
+		}
 	}
 
 	elapsed := time.Since(start)
 
 	pluginRequestDurationWithLabels := pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target))
-	pluginRequestCounterWithLabels := pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target))
+	pluginRequestCounterWithLabels := pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target), errorSource)
 	pluginRequestDurationSecondsWithLabels := PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, string(cfg.Target))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {

@@ -60,6 +60,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Target: p.Target(),
 	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
+		if resp != nil && innerErr != nil {
+			innerErr = &instrumentation.PluginError{Err: innerErr, ErrorSource: errorSource(resp)}
+		}
 		return
 	})
 
@@ -337,4 +340,14 @@ type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) erro
 
 func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
 	return fn(res)
+}
+
+func errorSource(resp *backend.QueryDataResponse) backend.ErrorSource {
+	for _, r := range resp.Responses {
+		if r.ErrorSource == backend.ErrorSourcePlugin {
+			// give plugin source precedence
+			return backend.ErrorSourcePlugin
+		}
+	}
+	return backend.ErrorSourceDownstream
 }
