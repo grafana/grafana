@@ -184,7 +184,7 @@ func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 func TestMigratePromQueryToInstant(t *testing.T) {
 	original := createMigrateablePromRule(t)
 	mirgrated := createMigrateablePromRule(t, func(r *models.AlertRule) {
-		r.Data[0] = promethesQuery(t, "A", "grafanacloud-prom", promIsInstant)
+		r.Data[0] = prometheusQuery(t, "A", "grafanacloud-prom", promIsInstant)
 	})
 
 	optimizableIndices, canBeOptimized := canBeInstant(original)
@@ -205,8 +205,8 @@ func TestMigratePromQueryToInstant(t *testing.T) {
 func TestMigrateMultiPromQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratablePromRule(t)
 	mirgrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
-		r.Data[0] = promethesQuery(t, "TotalRequests", "grafanacloud-prom", promIsInstant)
-		r.Data[1] = promethesQuery(t, "TotalErrors", "grafanacloud-prom", promIsInstant)
+		r.Data[0] = prometheusQuery(t, "TotalRequests", "grafanacloud-prom", promIsInstant)
+		r.Data[1] = prometheusQuery(t, "TotalErrors", "grafanacloud-prom", promIsInstant)
 	})
 
 	optimizableIndices, canBeOptimized := canBeInstant(original)
@@ -265,7 +265,7 @@ func createMigrateablePromRule(t *testing.T, muts ...func(*models.AlertRule)) *m
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			promethesQuery(t, "A", "grafanacloud-prom", promIsNotInstant),
+			prometheusQuery(t, "A", "grafanacloud-prom", promIsNotInstant),
 			reducer(t, "B", "A", "last"),
 		},
 	}
@@ -279,8 +279,8 @@ func createMultiQueryMigratablePromRule(t *testing.T, muts ...func(*models.Alert
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			promethesQuery(t, "TotalRequests", "grafanacloud-prom", promIsNotInstant),
-			promethesQuery(t, "TotalErrors", "grafanacloud-prom", promIsNotInstant),
+			prometheusQuery(t, "TotalRequests", "grafanacloud-prom", promIsNotInstant),
+			prometheusQuery(t, "TotalErrors", "grafanacloud-prom", promIsNotInstant),
 			reducer(t, "TotalRequests_Last", "TotalRequests", "last"),
 			reducer(t, "TotalErrors_Last", "TotalErrors", "last"),
 		},
@@ -312,7 +312,7 @@ func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.Aler
 	}
 }
 
-func promethesQuery(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
+func prometheusQuery(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
 	t.Helper()
 	return models.AlertQuery{
 		RefID:         refID,
