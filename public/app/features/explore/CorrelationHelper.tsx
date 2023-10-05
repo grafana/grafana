@@ -137,17 +137,30 @@ export const CorrelationHelper = ({ correlations }: Props) => {
             const { type, field, expression, mapValue } = transformation;
             const detailsString = [
               mapValue !== undefined ? `Variable name: ${mapValue}` : undefined,
-              expression !== undefined ? `Expression: ${expression}` : undefined,
+              expression !== undefined ? (
+                <>
+                  Expression: <pre className={styles.expressionPre}>{expression}</pre>
+                </>
+              ) : undefined,
             ].filter((val) => val);
             return (
               <Card key={`trans-${i}`}>
                 <Card.Heading>
                   {field}: {type}
                 </Card.Heading>
-                {detailsString.length > 0 && <Card.Meta>{detailsString}</Card.Meta>}
+                {detailsString.length > 0 && (
+                  <Card.Meta className={styles.transformationMeta}>{detailsString}</Card.Meta>
+                )}
                 <Card.SecondaryActions>
                   <IconButton key="edit" name="edit" aria-label="edit transformation" />
-                  <IconButton key="delete" name="trash-alt" aria-label="delete transformation" />
+                  <IconButton
+                    key="delete"
+                    name="trash-alt"
+                    aria-label="delete transformation"
+                    onClick={() => {
+                      setTransformations(transformations.filter((_, idx) => i !== idx));
+                    }}
+                  />
                 </Card.SecondaryActions>
               </Card>
             );
@@ -163,5 +176,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     transformationAction: css({
       marginBottom: theme.spacing(2),
     }),
+    expressionPre: css({
+      lineHeight: 0,
+      marginBottom: 0,
+    }),
+    transformationMeta: css({
+      alignItems: 'baseline',
+    }),
   };
 };
+//Expression: <span className={styles.expressionText}>{expression}</span>
