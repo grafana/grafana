@@ -2,7 +2,7 @@ package serviceregistration
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
@@ -64,7 +64,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 
 	extSvcExtra, ok := extSvc.Extra.(oauthserver.ExternalServiceDTOExtra)
 	if !ok {
-		return nil, fmt.Errorf("could not parse dto extra config")
+		return nil, errors.New("could not parse dto extra config")
 	}
 	dto.PrivateKey = extSvcExtra.KeyResult.PrivatePem
 
