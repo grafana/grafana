@@ -14,7 +14,7 @@ import TagsInput from './TagsInput';
 import { v1Tags, v2Tags } from './utils.test';
 
 describe('TagsInput', () => {
-  let templateSrv = initTemplateSrv('key', []);
+  let templateSrv = initTemplateSrv('key', [{ name: 'templateVariable1' }, { name: 'templateVariable2' }]);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
@@ -40,6 +40,8 @@ describe('TagsInput', () => {
       await waitFor(() => {
         expect(screen.getByText('foo')).toBeInTheDocument();
         expect(screen.getByText('bar')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -53,6 +55,8 @@ describe('TagsInput', () => {
       await waitFor(() => {
         expect(screen.getByText('cluster')).toBeInTheDocument();
         expect(screen.getByText('container')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -65,6 +69,8 @@ describe('TagsInput', () => {
       jest.advanceTimersByTime(1000);
       await waitFor(() => {
         expect(screen.getByText('db')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -79,6 +85,8 @@ describe('TagsInput', () => {
         expect(screen.getByText('cluster')).toBeInTheDocument();
         expect(screen.getByText('container')).toBeInTheDocument();
         expect(screen.getByText('db')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
   });

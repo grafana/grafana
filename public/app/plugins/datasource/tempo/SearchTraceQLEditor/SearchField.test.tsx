@@ -36,7 +36,7 @@ jest.mock('../language_provider', () => {
 });
 
 describe('SearchField', () => {
-  let templateSrv = initTemplateSrv('key', []);
+  let templateSrv = initTemplateSrv('key', [{ name: 'templateVariable1' }, { name: 'templateVariable2' }]);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
@@ -175,6 +175,8 @@ describe('SearchField', () => {
       expect(await screen.findByText('span')).toBeInTheDocument();
       expect(await screen.findByText('unscoped')).toBeInTheDocument();
       expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+      expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
+      expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
   });
 });
