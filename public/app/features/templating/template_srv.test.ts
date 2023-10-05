@@ -198,7 +198,7 @@ describe('templateSrv', () => {
         {
           type: 'datasource',
           name: 'ds',
-          current: { value: 'logstash', text: 'logstash' },
+          current: { value: 'logstash-id', text: 'logstash' },
         },
         { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
         { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
@@ -208,6 +208,10 @@ describe('templateSrv', () => {
           oogle: mockDataSource({
             name: 'oogle',
             uid: 'oogle',
+          }),
+          logstash: mockDataSource({
+            name: 'logstash',
+            uid: 'logstash-id',
           }),
         })
       );
