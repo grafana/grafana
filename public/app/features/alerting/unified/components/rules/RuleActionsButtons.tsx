@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -31,7 +30,6 @@ import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -51,7 +49,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
-  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
@@ -144,8 +141,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
     }
 
     if (isGrafanaRulerRule(rulerRule) && canReadProvisioning) {
-      moreActions.push(<Menu.Item label="Export" icon="download-alt" onClick={toggleShowExportDrawer} />);
-
       if (config.featureToggles.alertingModifiedExport) {
         moreActions.push(
           <Menu.Item
@@ -213,9 +208,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             onDismiss={() => setRuleToDelete(undefined)}
           />
         )}
-        {showExportDrawer && isGrafanaRulerRule(rule.rulerRule) && (
-          <GrafanaRuleExporter alertUid={rule.rulerRule.grafana_alert.uid} onClose={toggleShowExportDrawer} />
-        )}
+
         {redirectToClone && (
           <RedirectToCloneRule
             identifier={redirectToClone.identifier}
