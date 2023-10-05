@@ -827,6 +827,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -991,6 +996,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - pull_request
@@ -1187,6 +1205,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2107,6 +2130,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2250,6 +2278,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   branch: main
   event:
@@ -3787,6 +3828,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3923,6 +3969,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - promote
@@ -4337,6 +4396,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4370,6 +4430,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4650,6 +4711,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e5cfb38f6cdd490756b1528e27153a95daa675e8ace2c58c0c58bb8064f1e22c
+hmac: 3f71fd4dab5e14bb69e9d7ba3881afc91fbac7db3207d48d11c1c66a05bae0dd
 
 ...
