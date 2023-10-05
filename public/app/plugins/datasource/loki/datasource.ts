@@ -34,6 +34,7 @@ import {
   ToggleFilterAction,
   QueryFilterOptions,
   renderLegendFormat,
+  LegacyMetricFindQueryOptions,
 } from '@grafana/data';
 import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
@@ -539,20 +540,20 @@ export class LokiDatasource
     return Object.values(response).every((v) => v === 0) ? null : response;
   }
 
-  async metricFindQuery(query: LokiVariableQuery | string) {
+  async metricFindQuery(query: LokiVariableQuery | string, options?: LegacyMetricFindQueryOptions) {
     if (!query) {
       return Promise.resolve([]);
     }
 
     if (typeof query === 'string') {
-      const interpolated = this.interpolateString(query);
+      const interpolated = this.interpolateString(query, options?.scopedVars);
       return await this.legacyProcessMetricFindQuery(interpolated);
     }
 
     const interpolatedQuery = {
       ...query,
-      label: this.interpolateString(query.label || ''),
-      stream: this.interpolateString(query.stream || ''),
+      label: this.interpolateString(query.label || '', options?.scopedVars),
+      stream: this.interpolateString(query.stream || '', options?.scopedVars),
     };
 
     return await this.processMetricFindQuery(interpolatedQuery);

@@ -181,7 +181,7 @@ The feature previously referred to as DataSource Start Pages or Cheat Sheets has
 
 [Queries]({{< relref "../panels-visualizations/query-transform-data#manage-queries" >}}) was updated as a result of this feature.
 
-For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/create-a-grafana-plugin/extend-a-plugin/add-query-editor-help" >}}).
+For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-query-editor-help).
 
 ### Variable inspector
 

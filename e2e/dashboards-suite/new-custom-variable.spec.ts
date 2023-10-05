@@ -21,7 +21,7 @@ function assertPreviewValues(expectedValues: string[]) {
 
 describe('Variables - Custom', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('can add a custom template variable', () => {

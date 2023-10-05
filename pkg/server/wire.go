@@ -43,6 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -61,6 +63,8 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -87,8 +91,6 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -242,6 +244,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	metrics.ProvideService,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -361,6 +364,8 @@ var wireBasicSet = wire.NewSet(
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	idimpl.ProvideService,
+	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )
