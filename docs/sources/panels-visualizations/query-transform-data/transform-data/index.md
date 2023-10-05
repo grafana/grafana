@@ -110,11 +110,11 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
   - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
-    - **Absolute value (abs)** - Returns the absolute value of the given expression. It represents it's distance from zero as a positive number.
-    - **Natural exponential (exp)** - Returns _e_ raised to the power of the given expression.
+    - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+    - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
     - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
-    - **Floor (floor)** - Returns the largest integer less than or equal to the given expression.
-    - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to the given expression.
+    - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+    - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
   - **Row index -** Insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
