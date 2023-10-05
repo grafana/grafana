@@ -5,7 +5,6 @@ import { getBackendSrv, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import store from 'app/core/store';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
@@ -15,10 +14,6 @@ import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
 
 class LegacyAPI implements PlaylistAPI {
-  isK8s() {
-    return false;
-  }
-
   async getAllPlaylist(): Promise<Playlist[]> {
     return getBackendSrv().get<Playlist[]>('/api/playlists/');
   }
@@ -52,10 +47,6 @@ interface KubernetesPlaylist {
 
 class K8sAPI implements PlaylistAPI {
   readonly url = `/apis/playlists.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`;
-
-  isK8s() {
-    return true;
-  }
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
@@ -99,13 +90,14 @@ class K8sAPI implements PlaylistAPI {
   }
 }
 
+/** @deprecated -- this migrates playlists saved with internal ids to uid  */
 async function migrateInternalIDs(playlist: Playlist) {
-  if (playlist.items) {
+  if (playlist?.items) {
     for (const item of playlist.items) {
       if (item.type === 'dashboard_by_id') {
         item.type = 'dashboard_by_uid';
         const uids = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
-        if (uids.length) {
+        if (uids?.length) {
           item.value = uids[0];
         }
       }
@@ -194,17 +186,6 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
   return playlists.filter((v) => v.name.toLowerCase().includes(query!));
 }
 
-/** Temporary! just while under active development, nice to easy switch */
-export function setUseK8sAPI(v: boolean) {
-  const current = store.getBool('playlists-test-k8s', Boolean(config.featureToggles.kubernetesPlaylists));
-  if (current !== v) {
-    store.set('playlists-test-k8s', v);
-    location.reload();
-  }
-}
-
 export function getPlaylistAPI() {
-  return store.getBool('playlists-test-k8s', Boolean(config.featureToggles.kubernetesPlaylists))
-    ? new K8sAPI()
-    : new LegacyAPI();
+  return config.featureToggles.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
 }

@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { config } from '@grafana/runtime';
-import { ConfirmModal, InlineFieldRow, InlineField, InlineSwitch } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -12,7 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { getPlaylistAPI, searchPlaylists, setUseK8sAPI } from './api';
+import { getPlaylistAPI, searchPlaylists } from './api';
 import { Playlist } from './types';
 
 export const PlaylistPage = () => {
@@ -66,18 +65,6 @@ export const PlaylistPage = () => {
             }
             setSearchQuery={setSearchQuery}
           />
-        )}
-        {config.buildInfo.env === 'development' && (
-          <div>
-            <InlineFieldRow>
-              <InlineField label="Use k8s">
-                <InlineSwitch
-                  value={api.isK8s()}
-                  onChange={(v: React.ChangeEvent<HTMLInputElement>) => setUseK8sAPI(v.target.checked)}
-                />
-              </InlineField>
-            </InlineFieldRow>
-          </div>
         )}
 
         {!hasPlaylists && searchQuery ? (

@@ -17,9 +17,6 @@ export interface PlaylistAPI {
   createPlaylist(playlist: Playlist): Promise<void>;
   updatePlaylist(playlist: Playlist): Promise<void>;
   deletePlaylist(uid: string): Promise<void>;
-
-  // Helper while in development
-  isK8s(): boolean;
 }
 
 export interface Playlist {
