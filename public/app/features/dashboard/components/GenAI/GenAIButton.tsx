@@ -160,6 +160,7 @@ export const GenAIButton = ({
           placement="bottom-start"
           fitContent={true}
           show={showHistory ? undefined : false}
+          theme={'custom'}
         >
           {button}
         </Toggletip>

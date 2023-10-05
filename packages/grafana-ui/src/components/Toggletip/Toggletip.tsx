@@ -13,7 +13,7 @@ import { ToggletipContent } from './types';
 
 export interface ToggletipProps {
   /** The theme used to display the toggletip */
-  theme?: 'info' | 'error';
+  theme?: 'info' | 'error' | 'custom';
   /** The title to be displayed on the header */
   title?: JSX.Element | string;
   /** determine whether to show or not the close button **/
@@ -162,9 +162,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
     { topBottom: 2, rightLeft: 2 }
   );
 
+  const custom = buildTooltipTheme(
+    theme,
+    theme.colors.background.primary,
+    theme.colors.background.primary,
+    theme.components.tooltip.text,
+    { topBottom: 2, rightLeft: 2 }
+  );
+
   return {
     info,
     error,
+    custom,
     fitContent: css({
       maxWidth: 'fit-content',
     }),
