@@ -57,6 +57,9 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
     if (identifier) {
       await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
     }
+    if (copyFromIdentifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: copyFromIdentifier.ruleSourceName }));
+    }
   }, [dispatch]);
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
