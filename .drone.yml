@@ -827,6 +827,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -1199,6 +1204,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2119,6 +2129,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3811,6 +3826,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -4688,6 +4708,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3881baef077ade92b588eb0b16db708791b1facebfc0c1a9dbd8bccafd4d14cf
+hmac: 68990baf3e960697f5871f72b2a80f0d4da2583492ab989b0d64e1d9db7cdc31
 
 ...
