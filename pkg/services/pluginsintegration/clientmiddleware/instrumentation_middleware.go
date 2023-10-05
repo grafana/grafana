@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
+// pluginMetrics contains the prometheus metrics used by the InstrumentationMiddleware.
 type pluginMetrics struct {
 	pluginRequestCounter         *prometheus.CounterVec
 	pluginRequestDuration        *prometheus.HistogramVec
@@ -22,12 +23,17 @@ type pluginMetrics struct {
 	pluginRequestDurationSeconds *prometheus.HistogramVec
 }
 
+// InstrumentationMiddleware is a middleware that instruments plugin requests.
+// It tracks requests count, duration and size as prometheus metrics.
+// It also enriches the [context.Context] with a contextual logger containing plugin and request details.
+// For those reasons, this middleware should live at the top of the middleware stack.
 type InstrumentationMiddleware struct {
 	pluginMetrics
 	pluginRegistry registry.Service
 	next           plugins.Client
 }
 
+// NewInstrumentationMiddleware returns a new InstrumentationMiddleware.
 func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (plugins.ClientMiddleware, error) {
 	metrics := pluginMetrics{
 		pluginRequestCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -75,6 +81,7 @@ func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 	}), nil
 }
 
+// pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
 func (m *InstrumentationMiddleware) pluginTarget(ctx context.Context, pluginID string) (string, error) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists || p.IsDecommissioned() {
@@ -83,6 +90,7 @@ func (m *InstrumentationMiddleware) pluginTarget(ctx context.Context, pluginID s
 	return string(p.Target()), nil
 }
 
+// instrumentContext adds a contextual logger with plugin and request details to the given context.
 func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
 	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
 	if pCtx.DataSourceInstanceSettings != nil {
@@ -95,6 +103,7 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 	return log.WithContextualAttributes(ctx, p)
 }
 
+// instrumentPluginRequestSize tracks the size of the given request in the m.pluginRequestSizeHistogram metric.
 func (m *InstrumentationMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, requestSize float64) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
 	if err != nil {
@@ -104,6 +113,7 @@ func (m *InstrumentationMiddleware) instrumentPluginRequestSize(ctx context.Cont
 	return nil
 }
 
+// instrumentPluginRequest increments the m.pluginRequestCounter metric and tracks the duration of the given request.
 func (m *InstrumentationMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) error) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
 	if err != nil {
