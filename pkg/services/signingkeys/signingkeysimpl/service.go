@@ -51,8 +51,10 @@ type Service struct {
 	remoteCache remotecache.CacheStorage
 }
 
-const jwksCacheKey = "signingkeys-jwks"
-const defaultExpiry = 12 * time.Hour
+const (
+	jwksCacheKey  = "signingkeys-jwks"
+	defaultExpiry = 12 * time.Hour
+)
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
 func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
