@@ -830,7 +830,7 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir
+  image: grafana/mimir:latest
   name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1208,7 +1208,7 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir
+  image: grafana/mimir:latest
   name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2133,7 +2133,7 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir
+  image: grafana/mimir:latest
   name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
@@ -3831,7 +3831,7 @@ services:
 - commands:
   - /bin/mimir -target=backend
   environment: {}
-  image: grafana/mimir
+  image: grafana/mimir:latest
   name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4396,7 +4396,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4430,7 +4430,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4711,6 +4711,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: afb6ec657ea8d088b612bb9cb9f56791b9c0e4bf946b22b564512207051c0fc1
+hmac: 3f71fd4dab5e14bb69e9d7ba3881afc91fbac7db3207d48d11c1c66a05bae0dd
 
 ...
