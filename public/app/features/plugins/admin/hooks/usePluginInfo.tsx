@@ -20,6 +20,9 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
+  // %VERSION% is a valid value for plugin.version, according to the plugin schema
+  // but it's meant to be replaced by the build system with the actual version.
+  // If not, it's the same than not having a version.
   if (Boolean(version) && version !== '%VERSION%') {
     info.push({
       label: 'Version',
