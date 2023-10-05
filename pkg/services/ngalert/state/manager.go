@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/url"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -51,9 +50,7 @@ type Manager struct {
 	maxStateSaveConcurrency        int
 	applyNoDataAndErrorToAllStates bool
 
-	saveStateAsync      bool
-	stateRunnerShutdown chan interface{}
-	stateRunnerWG       sync.WaitGroup
+	saveStateAsync bool
 }
 
 type ManagerCfg struct {
@@ -98,41 +95,36 @@ func NewManager(cfg ManagerCfg) *Manager {
 		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		tracer:                         cfg.Tracer,
-		stateRunnerShutdown:            make(chan interface{}, 1),
 		saveStateAsync:                 cfg.SaveStateAsync,
-	}
-
-	if m.saveStateAsync {
-		m.startSync(context.TODO())
 	}
 	return m
 }
 
-func (st *Manager) startSync(ctx context.Context) {
-	st.stateRunnerWG.Add(1)
-	go func(ctx context.Context) {
-		ticker := st.clock.Ticker(time.Second * 30)
-	infLoop:
-		for {
-			select {
-			case <-ticker.C:
-				if err := st.fullSync(ctx); err != nil {
-					st.log.Error("Failed to do a full state sync to database", "err", err)
-				}
-			case <-st.stateRunnerShutdown:
-				st.log.Info("Stopping state sync...")
-				shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-				if err := st.fullSync(shutdownCtx); err != nil {
-					st.log.Error("Failed to do a full state sync to database", "err", err)
-				}
-				cancel()
-				ticker.Stop()
-				break infLoop
+func (st *Manager) Run(ctx context.Context) error {
+	if !st.saveStateAsync {
+		return nil
+	}
+	ticker := st.clock.Ticker(time.Second * 30)
+infLoop:
+	for {
+		select {
+		case <-ticker.C:
+			if err := st.fullSync(ctx); err != nil {
+				st.log.Error("Failed to do a full state sync to database", "err", err)
 			}
+		case <-ctx.Done():
+			st.log.Info("Stopping state sync...")
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+			if err := st.fullSync(shutdownCtx); err != nil {
+				st.log.Error("Failed to do a full state sync to database", "err", err)
+			}
+			cancel()
+			ticker.Stop()
+			break infLoop
 		}
-		st.log.Info("State sync shut down")
-		st.stateRunnerWG.Done()
-	}(ctx)
+	}
+	st.log.Info("State sync shut down")
+	return nil
 }
 
 func (st *Manager) fullSync(ctx context.Context) error {
