@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, level);
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
@@ -29,19 +29,19 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const showExpandButton = linkHasChildren(link) || link.emptyMessage;
 
   return (
-    <li>
+    <li className={styles.menuItem}>
+      {showExpandButton && (
+        <Button
+          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+          variant="secondary"
+          fill="text"
+          className={styles.collapseButton}
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+        >
+          <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
+        </Button>
+      )}
       <div className={styles.collapsibleSectionWrapper}>
-        {showExpandButton && (
-          <Button
-            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-            variant="secondary"
-            fill="text"
-            className={styles.collapseButton}
-            onClick={() => setSectionExpanded(!sectionExpanded)}
-          >
-            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
-          </Button>
-        )}
         <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
@@ -50,6 +50,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
           }}
           target={link.target}
           url={link.url}
+          level={level}
         >
           <div
             className={cx(styles.labelWrapper, {
@@ -88,20 +89,30 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, level: Props['level']) => ({
+  menuItem: css({
+    display: 'grid',
+    gridTemplateColumns: `${theme.spacing(5)} auto`,
+  }),
   children: css({
+    // TODO: Check when third level of nav items is introduced
+    gridColumnStart: 1,
+    gridColumnEnd: 3,
     display: 'flex',
     listStyleType: 'none',
     flexDirection: 'column',
   }),
   collapsibleSectionWrapper: css({
+    gridColumnStart: 2,
+    gridColumnEnd: 3,
     alignItems: 'center',
     display: 'flex',
   }),
   collapseButton: css({
+    gridColumnStart: 1,
+    gridColumnEnd: 2,
     color: theme.colors.text.disabled,
     padding: theme.spacing(0, 0.5),
-    marginRight: theme.spacing(1),
   }),
   emptyMessage: css({
     color: theme.colors.text.secondary,
@@ -129,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       content: '" "',
       height: theme.spacing(3),
       position: 'absolute',
-      left: theme.spacing(1),
+      left: level !== 0 ? theme.spacing(6) : theme.spacing(1),
       top: '50%',
       transform: 'translateY(-50%)',
       width: theme.spacing(0.5),

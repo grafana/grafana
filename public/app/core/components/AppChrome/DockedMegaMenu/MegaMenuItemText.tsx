@@ -13,11 +13,12 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url?: string;
+  level: number;
 }
 
-export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url, level }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, isChild);
+  const styles = getStyles(theme, isActive, isChild, level);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -71,7 +72,12 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  isActive: Props['isActive'],
+  isChild: Props['isActive'],
+  level: Props['level']
+) => ({
   button: css({
     backgroundColor: 'unset',
     borderStyle: 'unset',
@@ -114,7 +120,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
       content: '" "',
       height: theme.spacing(3),
       position: 'absolute',
-      left: theme.spacing(1),
+      left: level !== 0 ? theme.spacing(6) : theme.spacing(1),
       top: '50%',
       transform: 'translateY(-50%)',
       width: theme.spacing(0.5),
