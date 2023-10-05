@@ -393,7 +393,7 @@ func isContactPointInUse(name string, routes []*apimodels.Route) bool {
 }
 
 // decryptValueOrRedacted returns a function that decodes a string from Base64 and then decrypts using secrets.Service.
-// If argument 'decrypt' is true, then returns definitions.RedactedValue regardless of the decrypted value.
+// If argument 'decrypt' is false, then returns definitions.RedactedValue regardless of the decrypted value.
 // Otherwise, it returns the decoded and decrypted value. The function returns empty string in the case of errors, which are logged
 func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integrationUID string) func(v string) string {
 	return func(value string) string {
