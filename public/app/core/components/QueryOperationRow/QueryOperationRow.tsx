@@ -46,7 +46,7 @@ export function QueryOperationRow({
   collapsable,
   index,
   id,
-  expanderMessages
+  expanderMessages,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const styles = useStyles2(getQueryOperationRowStyles);

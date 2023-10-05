@@ -38,15 +38,14 @@ export const QueryOperationRowHeader = ({
   reportDragMousePosition,
   title,
   id,
-  expanderMessages
+  expanderMessages,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   let tooltipMessage = isContentVisible ? 'Collapse query row' : 'Expand query row';
   if (expanderMessages !== undefined && isContentVisible) {
     tooltipMessage = expanderMessages.close;
-  }
-  else if (expanderMessages !== undefined) {
+  } else if (expanderMessages !== undefined) {
     tooltipMessage = expanderMessages?.open;
   }
 

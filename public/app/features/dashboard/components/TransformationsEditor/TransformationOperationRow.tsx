@@ -169,7 +169,7 @@ export const TransformationOperationRow = ({
       onClose={() => toggleShowHelp(false)}
       expanderMessages={{
         close: 'Collapse transformation row',
-        open: 'Expand transformation row'
+        open: 'Expand transformation row',
       }}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
