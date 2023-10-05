@@ -71,13 +71,13 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
+		httpCliOpts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}

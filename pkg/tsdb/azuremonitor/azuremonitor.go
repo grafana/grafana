@@ -63,9 +63,9 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 }
 
-func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, settings, cfg, clientProvider)
+	client, err := newHTTPClient(ctx, route, dsInfo, settings, cfg, clientProvider)
 	if err != nil {
 		return types.DatasourceService{}, err
 	}
@@ -76,7 +76,7 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 }
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonDataObj := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
@@ -116,7 +116,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(&settings, cfg, clientProvider, model, routeName)
+			service, err := getDatasourceService(ctx, &settings, cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}

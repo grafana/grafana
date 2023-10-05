@@ -25,6 +25,8 @@ replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
+replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
