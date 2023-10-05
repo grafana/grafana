@@ -1,0 +1,31 @@
+{
+  "name": "Group2",
+  "interval": "1m",
+  "rules": [
+    {
+      "for" : "5m",
+      "labels" : {
+        "label1" : "test-label"
+      },
+      "annotations" : {
+        "annotation" : "test-annotation"
+      },
+      "grafana_alert": {
+        "title": "Rule3",
+        "condition": "A",
+        "data": [
+          {
+            "refId": "A",
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "0/0",
+              "type": "math"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Error"
+      }
+    }
+  ]
+}
