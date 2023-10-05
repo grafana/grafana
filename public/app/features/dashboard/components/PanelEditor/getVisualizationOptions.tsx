@@ -106,6 +106,9 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         continue;
       }
     }
+    if (fieldOption.hideFromDefaults) {
+      continue;
+    }
 
     const category = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
