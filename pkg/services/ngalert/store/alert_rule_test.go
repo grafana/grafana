@@ -616,3 +616,69 @@ func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.
 
 	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus)
 }
+
+func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        &logtest.Fake{},
+	}
+	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+
+	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
+		rule := createRule(t, store, generator)
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 10)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), rowsAffected)
+	})
+
+	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
+		rule := createRule(t, store, generator)
+		oldRule := models.CopyRule(rule)
+		oldRule.Title = "old-record"
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *oldRule,
+		}}) // first entry in `rule_version_history` table happens here
+		require.NoError(t, err)
+
+		rule.Version = rule.Version + 1
+		newerRule := models.CopyRule(rule)
+		newerRule.Title = "newer-record"
+		err = store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newerRule,
+		}}) //second entry in `rule_version_history` table happens here
+		require.NoError(t, err)
+
+		// only the `old-record` should be deleted since limit is set to 1 and there are total 2 records
+		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 1)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rowsAffected)
+	})
+
+	t.Run("limit set to 0 should fail", func(t *testing.T) {
+		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
+		require.Error(t, err)
+	})
+	t.Run("limit set to negative should fail", func(t *testing.T) {
+		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
+		require.Error(t, err)
+	})
+}

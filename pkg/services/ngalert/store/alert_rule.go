@@ -21,11 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// AlertRuleMaxTitleLength is the maximum length of the alert rule title
-const AlertRuleMaxTitleLength = 190
+const (
+	// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+	AlertRuleMaxTitleLength = 190
 
-// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
-const AlertRuleMaxRuleGroupNameLength = 190
+	// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+	AlertRuleMaxRuleGroupNameLength = 190
+
+	// RuleVersionRecordLimits defines the limit of how many alert rule versions
+	// should be stored in the database for each alert_rule in an organization including the current one.
+	// Has to be > 0
+	RuleVersionRecordLimits = 100
+)
 
 var (
 	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
@@ -233,6 +240,12 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				Annotations:      r.New.Annotations,
 				Labels:           r.New.Labels,
 			})
+
+			// delete old versions for alert rule
+			_, err = st.deleteOldAlertRuleVersions(ctx, r.New.UID, r.New.OrgID, RuleVersionRecordLimits)
+			if err != nil {
+				st.Logger.Warn("Failed to delete old alert rule versions", "org", r.New.OrgID, "rule", r.New.UID, "error", err)
+			}
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
@@ -481,7 +494,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
@@ -648,12 +661,12 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return err
 	}
 
-	// enfore max name length in SQLite
+	// enforce max name length in SQLite
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
 	}
 
-	// enfore max rule group name length in SQLite
+	// enforce max rule group name length in SQLite
 	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
 		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
 	}
@@ -678,4 +691,40 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
 	}
 	return nil
+}
+
+// deleteOldAlertRuleVersions deletes old alert_rule_version DB records for a particular rule in an org
+func (st *DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID, limit int64) (int64, error) {
+	if limit < 1 {
+		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec(`
+			DELETE FROM
+				alert_rule_version
+			WHERE
+				(rule_org_id = ? AND rule_uid = ?)
+			AND
+				id NOT IN (
+					SELECT id
+					FROM alert_rule_version
+					WHERE (rule_org_id = ? AND rule_uid = ?) ORDER BY version DESC LIMIT ?
+				)
+		`, orgID, ruleUID, orgID, ruleUID, limit)
+		if err != nil {
+			return err
+		}
+		affectedRows, err = res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if affectedRows > 0 {
+			st.Logger.Info("deleted old alert_rule_version(s)", "org", orgID, "rule", ruleUID, "limit", limit, "delete_count", affectedRows)
+		}
+		return nil
+	})
+
+	return affectedRows, err
 }
