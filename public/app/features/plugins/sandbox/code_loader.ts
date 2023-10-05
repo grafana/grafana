@@ -41,6 +41,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     throw new Error('Only same domain scripts are allowed in sandboxed plugins');
   }
 
+  scriptCode = patchPluginAPIs(scriptCode);
   sandboxEnv.evaluate(scriptCode);
 }
 
