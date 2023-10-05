@@ -58,12 +58,15 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		return nil, err
 	}
 
-	dto := &auth.ExternalService{ClientID: extSvc.ID, ClientSecret: extSvc.Secret}
+	privateKey := ""
 	if extSvc.OAuthExtra != nil {
-		dto.PrivateKey = extSvc.OAuthExtra.KeyResult.PrivatePem
+		privateKey = extSvc.OAuthExtra.KeyResult.PrivatePem
 	}
 
-	return dto, nil
+	return &auth.ExternalService{
+		ClientID:     extSvc.ID,
+		ClientSecret: extSvc.Secret,
+		PrivateKey:   privateKey}, nil
 }
 
 func toAccessControlPermissions(ps []plugindef.Permission) []accesscontrol.Permission {
