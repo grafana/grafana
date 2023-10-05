@@ -29,7 +29,17 @@ import {
   IndexOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import {
+  FilterPill,
+  HorizontalGroup,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
+  InlineSwitch,
+  Input,
+  Select,
+  StatsPicker,
+} from '@grafana/ui';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -47,6 +57,8 @@ const calculationModes = [
 ];
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
+
+const labelWidth = 16;
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
@@ -139,20 +151,20 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       );
   }
 
-  onToggleReplaceFields = () => {
+  onToggleReplaceFields = (e: React.FormEvent<HTMLInputElement>) => {
     const { options } = this.props;
     this.props.onChange({
       ...options,
-      replaceFields: !options.replaceFields,
+      replaceFields: e.currentTarget.checked,
     });
   };
 
-  onToggleRowIndexAsPercentile = () => {
+  onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
     const { options } = this.props;
     this.props.onChange({
       ...options,
       index: {
-        asPercentile: !options.index?.asPercentile ?? false,
+        asPercentile: e.currentTarget.checked,
       },
     });
   };
@@ -215,15 +227,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   renderRowIndex(options?: IndexOptions) {
     return (
       <>
-        <div className="gf-form-inline">
-          <LegacyForms.Switch
-            label="As percentile"
-            tooltip="Transform the row index as a percentile."
-            labelClass="width-8"
-            checked={!!options?.asPercentile}
-            onChange={this.onToggleRowIndexAsPercentile}
-          />
-        </div>
+        <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
+          <InlineSwitch value={!!options?.asPercentile} onChange={this.onToggleRowIndexAsPercentile} />
+        </InlineField>
       </>
     );
   }
@@ -234,37 +240,31 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label width-8">Field name</div>
-            <HorizontalGroup spacing="xs" align="flex-start" wrap>
-              {names.map((o, i) => {
-                return (
-                  <FilterPill
-                    key={`${o}/${i}`}
-                    onClick={() => {
-                      this.onFieldToggle(o);
-                    }}
-                    label={o}
-                    selected={selected.indexOf(o) > -1}
-                  />
-                );
-              })}
-            </HorizontalGroup>
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label width-8">Calculation</div>
-            <StatsPicker
-              allowMultiple={false}
-              className="width-18"
-              stats={[options.reducer]}
-              onChange={this.onStatsChange}
-              defaultStat={ReducerID.sum}
-            />
-          </div>
-        </div>
+        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            {names.map((o, i) => {
+              return (
+                <FilterPill
+                  key={`${o}/${i}`}
+                  onClick={() => {
+                    this.onFieldToggle(o);
+                  }}
+                  label={o}
+                  selected={selected.indexOf(o) > -1}
+                />
+              );
+            })}
+          </HorizontalGroup>
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onStatsChange}
+            defaultStat={ReducerID.sum}
+          />
+        </InlineField>
       </>
     );
   }
@@ -298,11 +298,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onBinaryOperationChanged = (v: SelectableValue<string>) => {
+  onBinaryOperationChanged = (v: SelectableValue<BinaryOperationID>) => {
     const { binary } = this.props.options;
     this.updateBinaryOptions({
       ...binary!,
-      operator: v.value! as BinaryOperationID,
+      operator: v.value!,
     });
   };
 
@@ -324,39 +324,42 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const rightNames = foundRight ? names : [...names, { label: options?.right, value: options?.right }];
 
     const ops = binaryOperators.list().map((v) => {
-      return { label: v.id, value: v.id };
+      return { label: v.binaryOperationID, value: v.binaryOperationID };
     });
 
     return (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <div className="gf-form-label width-8">Operation</div>
-        </div>
-        <div className="gf-form">
-          <Select
-            allowCustomValue={true}
-            placeholder="Field or number"
-            options={leftNames}
-            className="min-width-18 gf-form-spacing"
-            value={options?.left}
-            onChange={this.onBinaryLeftChanged}
-          />
-          <Select
-            className="width-8 gf-form-spacing"
-            options={ops}
-            value={options.operator ?? ops[0].value}
-            onChange={this.onBinaryOperationChanged}
-          />
-          <Select
-            allowCustomValue={true}
-            placeholder="Field or number"
-            className="min-width-10"
-            options={rightNames}
-            value={options?.right}
-            onChange={this.onBinaryRightChanged}
-          />
-        </div>
-      </div>
+      <>
+        <InlineFieldRow>
+          <InlineField label="Operation" labelWidth={labelWidth}>
+            <Select
+              allowCustomValue={true}
+              placeholder="Field or number"
+              options={leftNames}
+              className="min-width-18"
+              value={options?.left}
+              onChange={this.onBinaryLeftChanged}
+            />
+          </InlineField>
+          <InlineField>
+            <Select
+              className="width-4"
+              options={ops}
+              value={options.operator ?? ops[0].value}
+              onChange={this.onBinaryOperationChanged}
+            />
+          </InlineField>
+          <InlineField>
+            <Select
+              allowCustomValue={true}
+              placeholder="Field or number"
+              className="min-width-10"
+              options={rightNames}
+              value={options?.right}
+              onChange={this.onBinaryRightChanged}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </>
     );
   }
 
@@ -373,11 +376,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onUnaryOperationChanged = (v: SelectableValue<string>) => {
+  onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
     const { unary } = this.props.options;
     this.updateUnaryOptions({
       ...unary!,
-      operator: v.value! as UnaryOperationID,
+      operator: v.value!,
     });
   };
 
@@ -401,34 +404,29 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
 
     const ops = unaryOperators.list().map((v) => {
-      return { label: v.id, value: v.id };
+      return { label: v.unaryOperationID, value: v.unaryOperationID };
     });
 
     const fieldName = found ? names : [...names, { label: options?.fieldName, value: options?.fieldName }];
 
     return (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <div className="gf-form-label width-8">Operation</div>
-        </div>
-        <div className="gf-form">
-          <Select
-            className="width-8 gf-form-spacing"
-            options={ops}
-            value={options.operator ?? ops[0].value}
-            onChange={this.onUnaryOperationChanged}
-          />
-          <div className="gf-form-label width-1">(</div>
-          <Select
-            placeholder="Field"
-            className="min-width-7 gf-form-spacing"
-            options={fieldName}
-            value={options?.fieldName}
-            onChange={this.onUnaryValueChanged}
-          />
-          <div className="gf-form-label width-1">)</div>
-        </div>
-      </div>
+      <>
+        <InlineFieldRow>
+          <InlineField label="Operation" labelWidth={labelWidth}>
+            <Select options={ops} value={options.operator ?? ops[0].value} onChange={this.onUnaryOperationChanged} />
+          </InlineField>
+          <InlineField label="(" labelWidth={2}>
+            <Select
+              placeholder="Field"
+              className="min-width-11"
+              options={fieldName}
+              value={options?.fieldName}
+              onChange={this.onUnaryValueChanged}
+            />
+          </InlineField>
+          <InlineLabel width={2}>)</InlineLabel>
+        </InlineFieldRow>
+      </>
     );
   }
 
@@ -442,44 +440,31 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
 
     return (
-      <div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label width-8">Mode</div>
-            <Select
-              className="width-18"
-              options={calculationModes}
-              value={calculationModes.find((v) => v.value === mode)}
-              onChange={this.onModeChanged}
-            />
-          </div>
-        </div>
+      <>
+        <InlineField labelWidth={labelWidth} label="Mode">
+          <Select
+            className="width-18"
+            options={calculationModes}
+            value={calculationModes.find((v) => v.value === mode)}
+            onChange={this.onModeChanged}
+          />
+        </InlineField>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label width-8">Alias</div>
-            <Input
-              className="width-18"
-              value={options.alias ?? ''}
-              placeholder={getNameFromOptions(options)}
-              onChange={this.onAliasChanged}
-            />
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <LegacyForms.Switch
-              label="Replace all fields"
-              labelClass="width-8"
-              checked={!!options.replaceFields}
-              onChange={this.onToggleReplaceFields}
-            />
-          </div>
-        </div>
-      </div>
+        <InlineField labelWidth={labelWidth} label="Alias">
+          <Input
+            className="width-18"
+            value={options.alias ?? ''}
+            placeholder={getNameFromOptions(options)}
+            onChange={this.onAliasChanged}
+          />
+        </InlineField>
+        <InlineField labelWidth={labelWidth} label="Replace all fields">
+          <InlineSwitch value={!!options.replaceFields} onChange={this.onToggleReplaceFields} />
+        </InlineField>
+      </>
     );
   }
 }
