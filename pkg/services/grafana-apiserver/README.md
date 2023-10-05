@@ -7,6 +7,7 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServer = true
+kubernetesPlaylists = true
 ```
 
 Start Grafana:
