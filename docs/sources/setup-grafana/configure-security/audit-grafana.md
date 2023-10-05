@@ -445,7 +445,7 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 - **grafana_instance** - Application URL.
 - **kind** - `auditing`
 
-When basic authentication is needed to ingest logs in your loki instance, you can specify credentials in the URL field. Here is an example:
+When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
 
 ```ini
 # Set the communication protocol to use with Loki (can be grpc or http)
