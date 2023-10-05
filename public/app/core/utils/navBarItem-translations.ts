@@ -60,6 +60,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-home.title', 'Home');
     case 'alert-list':
       return t('nav.alerting-list.title', 'Alert rules');
+    case 'alert-list-legacy':
+      return t('nav.alert-list-legacy.title', 'Alert rules');
     case 'receivers':
       return t('nav.alerting-receivers.title', 'Contact points');
     case 'am-routes':

@@ -382,12 +382,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	var alertChildNavs []*navtree.NavLink
 	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+		Text: "Alert rules", Id: "alert-list-legacy", Url: s.cfg.AppSubURL + "/alerting-legacy/list", Icon: "list-ul",
 	})
 
 	if c.HasRole(org.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting-legacy/notifications",
 			Icon: "comment-alt-share",
 		})
 	}
@@ -399,7 +399,7 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 		Icon:       "bell",
 		Children:   alertChildNavs,
 		SortWeight: navtree.WeightAlerting,
-		Url:        s.cfg.AppSubURL + "/alerting",
+		Url:        s.cfg.AppSubURL + "/alerting-legacy",
 	}
 
 	return &alertNav

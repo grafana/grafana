@@ -26,7 +26,7 @@ export function createNotificationChannel(data: any): ThunkResult<Promise<void>>
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       dispatch(notifyApp(createSuccessNotification('Notification created')));
-      locationService.push('/alerting/notifications');
+      locationService.push('/alerting-legacy/notifications');
     } catch (error) {
       if (isFetchError(error)) {
         dispatch(notifyApp(createErrorNotification(error.data.error)));
