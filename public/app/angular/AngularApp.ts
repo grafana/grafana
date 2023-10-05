@@ -14,12 +14,14 @@ import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { setAngularPanelReactWrapper } from 'app/features/plugins/importPanelPlugin';
 import { buildImportMap } from 'app/features/plugins/loader/utils';
 import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
 import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
+import { getAngularPanelReactWrapper } from './panel/AngularPanelReactWrapper';
 import { promiseToDigest } from './promiseToDigest';
 import { registerComponents } from './registerComponents';
 
@@ -55,6 +57,8 @@ export class AngularApp {
 
   init() {
     const app = angular.module('grafana', []);
+
+    setAngularPanelReactWrapper(getAngularPanelReactWrapper);
 
     app.config([
       '$controllerProvider',
