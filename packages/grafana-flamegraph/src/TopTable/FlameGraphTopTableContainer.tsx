@@ -18,6 +18,8 @@ import {
   TableCustomCellOptions,
   TableFieldOptions,
   TableSortByFieldState,
+  useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -33,7 +35,6 @@ type Props = {
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
-  getTheme: () => GrafanaTheme2;
   vertical?: boolean;
 };
 
@@ -47,7 +48,6 @@ const FlameGraphTopTableContainer = React.memo(
     sandwichItem,
     onSandwich,
     onTableSort,
-    getTheme,
     vertical,
   }: Props) => {
     const table = useMemo(() => {
@@ -73,7 +73,9 @@ const FlameGraphTopTableContainer = React.memo(
     // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
     // so with some max height it handles it fine)
     const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
-    const styles = getStyles(tableHeight, getTheme());
+
+    const styles = useStyles2(getStyles, tableHeight);
+    const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
@@ -92,7 +94,7 @@ const FlameGraphTopTableContainer = React.memo(
               onSymbolClick,
               onSearch,
               onSandwich,
-              getTheme,
+              theme,
               search,
               sandwichItem
             );
@@ -126,7 +128,7 @@ function buildTableDataFrame(
   onSymbolClick: (str: string) => void,
   onSearch: (str: string) => void,
   onSandwich: (str?: string) => void,
-  getTheme: () => GrafanaTheme2,
+  theme: GrafanaTheme2,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
@@ -218,7 +220,7 @@ function buildTableDataFrame(
       overrides: [],
     },
     replaceVariables: (value: string) => value,
-    theme: getTheme(),
+    theme,
   });
 
   return dataFrames[0];
@@ -327,7 +329,7 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = (height: number, theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, height: number) => {
   return {
     topTableContainer: css`
       label: topTableContainer;

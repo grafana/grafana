@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, Portal, VizTooltipContainer } from '@grafana/ui';
+import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -11,11 +11,10 @@ type Props = {
   totalTicks: number;
   position?: { x: number; y: number };
   item?: LevelItem;
-  getTheme: () => GrafanaTheme2;
 };
 
-const FlameGraphTooltip = ({ data, item, totalTicks, position, getTheme }: Props) => {
-  const styles = getStyles(getTheme());
+const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
+  const styles = useStyles2(getStyles);
 
   if (!(item && position)) {
     return null;

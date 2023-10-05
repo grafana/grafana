@@ -16,6 +16,7 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { useTheme2 } from '@grafana/ui';
 
 const ufuzzy = new uFuzzy();
 
@@ -41,7 +42,6 @@ type RenderOptions = {
   totalTicksRight: number | undefined;
   colorScheme: ColorScheme | ColorSchemeDiff;
   focusedItemData?: ClickedItemData;
-  getTheme: () => GrafanaTheme2;
 };
 
 export function useFlameRender(options: RenderOptions) {
@@ -59,7 +59,6 @@ export function useFlameRender(options: RenderOptions) {
     totalTicksRight,
     colorScheme,
     focusedItemData,
-    getTheme,
   } = options;
   const foundLabels = useMemo(() => {
     if (search) {
@@ -79,7 +78,7 @@ export function useFlameRender(options: RenderOptions) {
   }, [search, data]);
 
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
-  const theme = getTheme();
+  const theme = useTheme2();
 
   useEffect(() => {
     if (!ctx) {
