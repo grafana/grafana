@@ -7,15 +7,15 @@ import (
 )
 
 const (
-	ServiceAccounts AuthProvider = "ServiceAccounts"
-	OAuth2Server    AuthProvider = "OAuth2Server"
+	OAuth2Server AuthProvider = "OAuth2Server"
 )
 
 type AuthProvider string
 
 type ExternalServiceRegistry interface {
-	// SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
-	// it ensures that the associated service account has the correct permissions.
+	// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
+	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
+	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalServiceDTO, error)
 }
 
