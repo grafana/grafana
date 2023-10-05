@@ -562,7 +562,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /pkg/services/ldap/ @grafana/grafana-authnz-team
 /pkg/services/login/ @grafana/grafana-authnz-team
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
-/pkg/services/oauthserver/ @grafana/grafana-authnz-team
+/pkg/services/extsvcauth/ @grafana/grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
 
@@ -646,6 +646,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
 
 
 # Generated files not requiring owner approval

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { DataFrame, getFieldDisplayName, TransformerCategory } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -46,4 +47,17 @@ export const categoriesLabels: { [K in TransformerCategory]: string } = {
   performSpatialOperations: 'Perform spatial operations',
   reformat: 'Reformat',
   reorderAndRename: 'Reorder and rename',
+};
+
+export const numberOrVariableValidator = (value: string | number) => {
+  if (typeof value === 'number') {
+    return true;
+  }
+  if (!Number.isNaN(Number(value))) {
+    return true;
+  }
+  if (/^\$[A-Za-z0-9_]+$/.test(value) && config.featureToggles.transformationsVariableSupport) {
+    return true;
+  }
+  return false;
 };

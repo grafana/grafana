@@ -20,7 +20,7 @@ title: Public Dashboard HTTP API
 
 {{% admonition type="note" %}}
 
-If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions][] for more information.
 
 {{% /admonition %}}
 
@@ -32,7 +32,7 @@ Creates a new public dashboard.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#public-dashboard-api" >}}) for an explanation.
+See note in the [introduction](#public-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -115,7 +115,7 @@ Content-Length: 107
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#public-dashboard-api" >}}) for an explanation.
+See note in the [introduction](#public-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -196,7 +196,7 @@ Will return the public dashboard given the dashboard unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#public-dashboard-api" >}}) for an explanation.
+See note in the [introduction](#public-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
@@ -247,7 +247,7 @@ Will delete the public dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#public-dashboard-api" >}}) for an explanation.
+See note in the [introduction](#public-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -274,7 +274,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#public-dashboard-api" >}}) for an explanation.
+See note in the [introduction](#public-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
@@ -317,3 +317,8 @@ Content-Type: application/json
     "perPage": 2
 }
 ```
+
+{{% docs/reference %}}
+[Role-based access control permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+[Role-based access control permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+{{% /docs/reference %}}

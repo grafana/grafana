@@ -8,8 +8,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
-import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -153,7 +153,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
       <span style={virtualStyles} className={styles.row}>
-        <Indent level={level} />
+        <Indent level={level} spacing={2} />
         <Skeleton width={SKELETON_WIDTHS[index % SKELETON_WIDTHS.length]} />
       </span>
     );
@@ -190,7 +190,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       id={getDOMId(idPrefix, item.uid)}
     >
       <div className={styles.rowBody}>
-        <Indent level={level} />
+        <Indent level={level} spacing={2} />
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}

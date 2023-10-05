@@ -9,6 +9,7 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,7 +38,7 @@ func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
 }
 
-func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, tracing.Span, error) {
+func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, trace.Span, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
@@ -50,7 +51,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	}
 
 	tctx, span := tracer.Start(ctx, "open session")
-	span.SetAttributes("transaction", beginTran, attribute.Key("transaction").Bool(beginTran))
+	span.SetAttributes(attribute.Bool("transaction", beginTran))
 
 	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 

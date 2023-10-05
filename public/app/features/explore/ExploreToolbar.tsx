@@ -18,6 +18,7 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../core/core';
@@ -29,9 +30,16 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
+import { changeCorrelationHelperData } from './state/explorePane';
+import {
+  splitClose,
+  splitOpen,
+  maximizePaneAction,
+  evenPaneResizeAction,
+  changeCorrelationEditorDetails,
+} from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isSplit, selectPanesEntries } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -40,12 +48,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '> div > svg': {
       transform: 'rotate(180deg)',
     },
-  }),
-  stickyToolbar: css({
-    position: 'sticky',
-    top: 0,
-    // reducing zIndex to prevent overlapping the top nav
-    zIndex: theme.zIndex.navbarFixed - 1,
   }),
 });
 
@@ -77,10 +79,13 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   );
 
   const panes = useSelector(selectPanesEntries);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
-    [isLargerPane, exploreId, panes]
+    () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
+    [isLeftPane, isLargerPane]
   );
 
   const refreshPickerLabel = loading
@@ -93,7 +98,37 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+    if (!isCorrelationsEditorMode) {
+      dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+    } else {
+      if (correlationDetails?.dirty) {
+        // prompt will handle datasource change if needed
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
+              changeDatasourceUid: dsSettings.uid,
+            },
+          })
+        );
+      } else {
+        // if the left pane is changing, clear helper data for right pane
+        if (isLeftPane) {
+          panes.forEach((pane) => {
+            dispatch(
+              changeCorrelationHelperData({
+                exploreId: pane[0],
+                correlationEditorHelperData: undefined,
+              })
+            );
+          });
+        }
+
+        dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+      }
+    }
   };
 
   const onRunQuery = (loading = false) => {
@@ -112,8 +147,35 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onCloseSplitView = () => {
-    dispatch(splitClose(exploreId));
-    reportInteraction('grafana_explore_split_view_closed');
+    if (isCorrelationsEditorMode) {
+      if (correlationDetails?.dirty) {
+        // if dirty, prompt
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+            },
+          })
+        );
+      } else {
+        // otherwise, clear helper data and close
+        panes.forEach((pane) => {
+          dispatch(
+            changeCorrelationHelperData({
+              exploreId: pane[0],
+              correlationEditorHelperData: undefined,
+            })
+          );
+        });
+        dispatch(splitClose(exploreId));
+        reportInteraction('grafana_explore_split_view_closed');
+      }
+    } else {
+      dispatch(splitClose(exploreId));
+      reportInteraction('grafana_explore_split_view_closed');
+    }
   };
 
   const onClickResize = () => {
@@ -135,29 +197,29 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
+  const navBarActions = [
+    <DashNavButton
+      key="share"
+      tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+      icon="share-alt"
+      onClick={onCopyShortLink}
+      aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+    />,
+    <div style={{ flex: 1 }} key="spacer0" />,
+  ];
+
   return (
-    <div ref={topOfViewRef} className={styles.stickyToolbar}>
+    <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <div ref={topOfViewRef}>
-        <AppChromeUpdate
-          actions={[
-            <DashNavButton
-              key="share"
-              tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
-              icon="share-alt"
-              onClick={onCopyShortLink}
-              aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
-            />,
-            <div style={{ flex: 1 }} key="spacer" />,
-          ]}
-        />
+        <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed
+            mixed={!isCorrelationsEditorMode}
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}

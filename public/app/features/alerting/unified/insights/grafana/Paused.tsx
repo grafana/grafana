@@ -21,6 +21,7 @@ export function getPausedGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
@@ -35,6 +36,7 @@ export function getPausedGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
           },
         ],
       })
+      .setNoValue('0')
       .build(),
   });
 }
