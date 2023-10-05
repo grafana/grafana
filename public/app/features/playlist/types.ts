@@ -11,6 +11,14 @@ export interface PlayListItemDTO {
   type: 'dashboard' | 'tag';
 }
 
+export interface K8sPlaylistList {
+  playlists: K8sPlaylist[];
+}
+
+export interface K8sPlaylist {
+  spec: Playlist;
+}
+
 export interface Playlist {
   uid: string;
   name: string;

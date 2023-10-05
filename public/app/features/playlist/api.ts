@@ -4,13 +4,14 @@ import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
-import { Playlist, PlaylistItem } from './types';
+import { Playlist, PlaylistItem, K8sPlaylist, K8sPlaylistList } from './types';
 
 export async function createPlaylist(playlist: Playlist) {
   await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
@@ -24,9 +25,21 @@ export async function deletePlaylist(uid: string) {
   await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${uid}`), 'Playlist deleted');
 }
 
+export function k8sEnabled() {
+  return config.featureToggles.grafanaAPIServer;
+}
+
 /** This returns a playlist where all ids are replaced with UIDs */
 export async function getPlaylist(uid: string): Promise<Playlist> {
-  const playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
+  let playlist: Playlist;
+  if (k8sEnabled()) {
+    const k8splaylist = await getBackendSrv().get<K8sPlaylist>(
+      `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists/${uid}`
+    );
+    playlist = k8splaylist.spec;
+  } else {
+    playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
+  }
   if (playlist.items) {
     for (const item of playlist.items) {
       if (item.type === 'dashboard_by_id') {
@@ -42,6 +55,12 @@ export async function getPlaylist(uid: string): Promise<Playlist> {
 }
 
 export async function getAllPlaylist(): Promise<Playlist[]> {
+  if (k8sEnabled()) {
+    const k8splaylists = await getBackendSrv().get<K8sPlaylistList>(
+      `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`
+    );
+    return k8splaylists.playlists.map((p) => p.spec);
+  }
   return getBackendSrv().get<Playlist[]>('/api/playlists/');
 }
 
