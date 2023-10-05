@@ -10,7 +10,7 @@ import (
 )
 
 type FakeService struct {
-	ExpectedClient *oauthserver.ExternalService
+	ExpectedClient *oauthserver.OAuthExternalService
 	ExpectedKey    *jose.JSONWebKey
 	ExpectedErr    error
 }
@@ -18,10 +18,10 @@ type FakeService struct {
 var _ oauthserver.OAuth2Server = &FakeService{}
 
 func (s *FakeService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
-	return s.ExpectedClient.ToExtSvc(nil), s.ExpectedErr
+	return s.ExpectedClient.ToExternalService(nil), s.ExpectedErr
 }
 
-func (s *FakeService) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {
+func (s *FakeService) GetExternalService(ctx context.Context, id string) (*oauthserver.OAuthExternalService, error) {
 	return s.ExpectedClient, s.ExpectedErr
 }
 
