@@ -1,4 +1,6 @@
-import { orderProperties, JSONArray, JSONValue, isObject } from './jsonDiffText';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+
+import { orderProperties, JSONArray, JSONValue, isObject, getDashboardStringDiff } from './jsonDiffText';
 
 describe('orderProperties', () => {
   it('should sort simple objects', () => {
@@ -231,5 +233,199 @@ describe('isObject', () => {
     expect(isObject('')).toBe(false);
     expect(isObject(123)).toBe(false);
     expect(isObject(true)).toBe(false);
+  });
+});
+
+describe('getDashboardStringDiff', () => {
+  const dashboard = {
+    title: 'Original Title',
+    schemaVersion: 38,
+    panels: [
+      createPanelJSONFixture({
+        id: 1,
+        title: 'Original Panel Title',
+        gridPos: { x: 0, y: 0, w: 2, h: 2 },
+      }),
+      createPanelJSONFixture({
+        id: 2,
+        title: 'Panel to be moved',
+        gridPos: { x: 2, y: 0, w: 2, h: 2 },
+      }),
+    ],
+  };
+
+  it('should only return migration changes', () => {
+    const dashboardModel = createDashboardModelFixture(dashboard);
+
+    const result = getDashboardStringDiff(dashboardModel);
+
+    expect(result).toEqual({
+      migrationDiff:
+        'Index: Original Title\n' +
+        '===================================================================\n' +
+        '--- Original Title\t\n' +
+        '+++ Original Title\t\n' +
+        '@@ -4,44 +4,32 @@\n' +
+        '   "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '   "title": "Original Title",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '-      "fieldConfig": {\n' +
+        '-        "defaults": {},\n' +
+        '-        "overrides": []\n' +
+        '+      "gridPos": {\n' +
+        '+        "h": 2,\n' +
+        '+        "w": 2,\n' +
+        '+        "x": 0,\n' +
+        '+        "y": 0\n' +
+        '       },\n' +
+        '-      "options": {},\n' +
+        '+      "id": 1,\n' +
+        '       "repeatDirection": "h",\n' +
+        '+      "title": "Original Panel Title",\n' +
+        '       "transformations": [],\n' +
+        '-      "transparent": false,\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "id": 1,\n' +
+        '-      "title": "Original Panel Title",\n' +
+        '+      "type": "timeseries"\n' +
+        '+    },\n' +
+        '+    {\n' +
+        '       "gridPos": {\n' +
+        '-        "x": 0,\n' +
+        '-        "y": 0,\n' +
+        '+        "h": 2,\n' +
+        '         "w": 2,\n' +
+        '-        "h": 2\n' +
+        '-      }\n' +
+        '-    },\n' +
+        '-    {\n' +
+        '-      "fieldConfig": {\n' +
+        '-        "defaults": {},\n' +
+        '-        "overrides": []\n' +
+        '+        "x": 2,\n' +
+        '+        "y": 0\n' +
+        '       },\n' +
+        '-      "options": {},\n' +
+        '+      "id": 2,\n' +
+        '       "repeatDirection": "h",\n' +
+        '+      "title": "Panel to be moved",\n' +
+        '       "transformations": [],\n' +
+        '-      "transparent": false,\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "id": 2,\n' +
+        '-      "title": "Panel to be moved",\n' +
+        '-      "gridPos": {\n' +
+        '-        "x": 2,\n' +
+        '-        "y": 0,\n' +
+        '-        "w": 2,\n' +
+        '-        "h": 2\n' +
+        '-      }\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n' +
+        '\\ No newline at end of file\n',
+      userDiff:
+        'Index: Original Title\n' +
+        '===================================================================\n' +
+        '--- Original Title\t\n' +
+        '+++ Original Title\t\n',
+    });
+  });
+
+  it('should return a diff of the dashboard title as user change', () => {
+    const dashboardModel = createDashboardModelFixture(dashboard);
+    dashboardModel.title = 'New Title';
+
+    const result = getDashboardStringDiff(dashboardModel);
+
+    expect(result).toEqual({
+      migrationDiff:
+        'Index: Original Title\n' +
+        '===================================================================\n' +
+        '--- Original Title\t\n' +
+        '+++ Original Title\t\n' +
+        '@@ -4,44 +4,32 @@\n' +
+        '   "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '   "title": "Original Title",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '-      "fieldConfig": {\n' +
+        '-        "defaults": {},\n' +
+        '-        "overrides": []\n' +
+        '+      "gridPos": {\n' +
+        '+        "h": 2,\n' +
+        '+        "w": 2,\n' +
+        '+        "x": 0,\n' +
+        '+        "y": 0\n' +
+        '       },\n' +
+        '-      "options": {},\n' +
+        '+      "id": 1,\n' +
+        '       "repeatDirection": "h",\n' +
+        '+      "title": "Original Panel Title",\n' +
+        '       "transformations": [],\n' +
+        '-      "transparent": false,\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "id": 1,\n' +
+        '-      "title": "Original Panel Title",\n' +
+        '+      "type": "timeseries"\n' +
+        '+    },\n' +
+        '+    {\n' +
+        '       "gridPos": {\n' +
+        '-        "x": 0,\n' +
+        '-        "y": 0,\n' +
+        '+        "h": 2,\n' +
+        '         "w": 2,\n' +
+        '-        "h": 2\n' +
+        '-      }\n' +
+        '-    },\n' +
+        '-    {\n' +
+        '-      "fieldConfig": {\n' +
+        '-        "defaults": {},\n' +
+        '-        "overrides": []\n' +
+        '+        "x": 2,\n' +
+        '+        "y": 0\n' +
+        '       },\n' +
+        '-      "options": {},\n' +
+        '+      "id": 2,\n' +
+        '       "repeatDirection": "h",\n' +
+        '+      "title": "Panel to be moved",\n' +
+        '       "transformations": [],\n' +
+        '-      "transparent": false,\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "id": 2,\n' +
+        '-      "title": "Panel to be moved",\n' +
+        '-      "gridPos": {\n' +
+        '-        "x": 2,\n' +
+        '-        "y": 0,\n' +
+        '-        "w": 2,\n' +
+        '-        "h": 2\n' +
+        '-      }\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n' +
+        '\\ No newline at end of file\n',
+      userDiff:
+        '===================================================================\n' +
+        '--- Original Title\t\n' +
+        '+++ New Title\t\n' +
+        '@@ -1,11 +1,11 @@\n' +
+        ' {\n' +
+        '   "editable": true,\n' +
+        '   "graphTooltip": 0,\n' +
+        '   "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '-  "title": "Original Title",\n' +
+        '+  "title": "New Title",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '       "gridPos": {\n' +
+        '         "h": 2,\n' +
+        '         "w": 2,\n',
+    });
   });
 });
