@@ -961,6 +961,13 @@ def redis_integration_tests_steps():
 
     return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
 
+def remote_alertmanager_integration_tests_steps():
+    cmds = [
+        "-target=backend",
+    ]
+
+    return integration_tests_steps("mimir_backend", cmds, "mimir_backend", "8080", None)
+
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",

@@ -991,6 +991,18 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-mimir_backend
+- commands:
+  - apk add --update build-base
+  - -target=backend
+  depends_on:
+  - wire-install
+  - wait-for-mimir_backend
+  image: golang:1.20.8-alpine
+  name: mimir_backend-integration-tests
 trigger:
   event:
   - pull_request
@@ -2250,6 +2262,18 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-mimir_backend
+- commands:
+  - apk add --update build-base
+  - -target=backend
+  depends_on:
+  - wire-install
+  - wait-for-mimir_backend
+  image: golang:1.20.8-alpine
+  name: mimir_backend-integration-tests
 trigger:
   branch: main
   event:
@@ -3513,6 +3537,18 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-mimir_backend
+- commands:
+  - apk add --update build-base
+  - -target=backend
+  depends_on:
+  - wire-install
+  - wait-for-mimir_backend
+  image: golang:1.20.8-alpine
+  name: mimir_backend-integration-tests
 trigger:
   event:
   - promote
@@ -3927,6 +3963,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -3960,6 +3997,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4216,6 +4254,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 852af171d897f0a2cc0b03375fa8dfeacc65c2df7113c5efd0e21b03195dd7af
+hmac: 2108d3af9d13b26822107ba2cdac05289911c2de97b66277725441c50f7ac115
 
 ...
