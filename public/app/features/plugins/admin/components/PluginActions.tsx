@@ -53,6 +53,7 @@ export const PluginActions = ({ plugin }: Props) => {
                 pluginStatus={pluginStatus}
                 setNeedReload={setNeedReload}
                 isExternallyManaged={isExternallyManaged}
+                onManagedInstallCallback={setShowInstallationInfoModal}
               />
             )}
           </>

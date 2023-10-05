@@ -63,8 +63,6 @@ export function InstallControlsButton({
     path: location.pathname,
   };
 
-  // const [showInstallationInfoModal, setShowInstallationInfoModal] = useState(false);
-
   useEffect(() => {
     return () => {
       // Remove possible installation errors
@@ -94,9 +92,9 @@ export function InstallControlsButton({
       if (plugin.type === 'app') {
         setNeedReload?.(true);
       }
-    }
-    if (onManagedInstallCallback) {
-      onManagedInstallCallback(true);
+      if (onManagedInstallCallback) {
+        onManagedInstallCallback(true);
+      }
     }
   };
 
@@ -154,7 +152,7 @@ export function InstallControlsButton({
           body="Are you sure you want to uninstall this plugin?"
           confirmText="Confirm"
           icon="exclamation-triangle"
-          onConfirm={onUninstall}
+          onConfirm={(isExternallyManaged && configCore.featureToggles.managedPluginsInstall) ? onManagedUninstall : onUninstall}
           onDismiss={hideConfirmModal}
         />
         <HorizontalGroup align="flex-start" width="auto" height="auto">
@@ -180,7 +178,7 @@ export function InstallControlsButton({
         <Button
           variant="destructive"
           disabled={isUninstalling}
-          onClick={isExternallyManaged ? onManagedUninstall : onUninstall}
+          onClick={(isExternallyManaged && configCore.featureToggles.managedPluginsInstall) ? onManagedUninstall : onUninstall}
         >
           {uninstallBtnText}
         </Button>

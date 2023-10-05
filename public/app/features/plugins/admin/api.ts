@@ -128,8 +128,11 @@ export async function installPlugin(id: string) {
 }
 
 export async function installManagedPlugin(instanceId: string, plugin: string, version?: string) {
-  // This will install the latest compatible version based on the logic
-  // on the backend.
+  const testMode = false;
+  if (testMode) {
+    return Promise.resolve();
+  }
+
   return await getBackendSrv().post(`${GCOM_API_ROOT}/instances/${instanceId}/plugins`, {
     plugin,
     version,
@@ -147,9 +150,10 @@ export async function uninstallPlugin(id: string) {
 }
 
 export async function uninstallManagedPlugin(instanceId: string, plugin: string) {
-  return await getBackendSrv().delete(`${GCOM_API_ROOT}/instances/${instanceId}/plugins/${plugin}`, {
-    // Error is displayed in the page
-    showErrorAlert: false,
+  return await getBackendSrv().delete(`${GCOM_API_ROOT}/instances/${instanceId}/plugins/${plugin}`, undefined, {
+    headers: {
+      "Authorization": "Bearer " + config.pluginInstallToken,
+    },
   });
 }
 
