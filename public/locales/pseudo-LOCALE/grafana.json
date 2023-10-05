@@ -55,7 +55,11 @@
       "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
+      "expand-folder-button": "Ēχpäŉđ ƒőľđęř {{title}}",
       "name-column": "Ńämę",
+      "select-all-header-checkbox": "Ŝęľęčŧ äľľ",
+      "select-checkbox": "Ŝęľęčŧ",
       "tags-column": "Ŧäģş"
     },
     "folder-actions-button": {
@@ -569,7 +573,7 @@
       "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
-      "title": "Ĩŉƒřäşŧřūčŧūřę"
+      "title": "Ĩŉŧęģřäŧįőŉş"
     },
     "kubernetes": {
       "title": "Ķūþęřŉęŧęş"

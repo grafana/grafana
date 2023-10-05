@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaInstancesByStateScene(
   timeRange: SceneTimeRange,
@@ -43,6 +46,7 @@ export function getGrafanaInstancesByStateScene(
           .matchFieldsWithName('nodata')
           .overrideColor(overrideToFixedColor('nodata'))
       )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

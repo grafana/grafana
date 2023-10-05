@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -27,6 +30,7 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOption('legend', { showLegend: false })
       .setOverrides((b) => b.matchFieldsWithName('missed').overrideColor(overrideToFixedColor('missed')))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
