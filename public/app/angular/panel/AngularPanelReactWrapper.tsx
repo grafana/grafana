@@ -55,7 +55,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Re-render react when dimensions change
+    // Re-render angular panel when dimensions change
     useEffect(() => {
       if (!angularComponent.current) {
         return;
@@ -66,6 +66,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
       angularState.current!.panel.events.publish(new RenderEvent());
     }, [props.width, props.height]);
 
+    // Pass new data to angular panel
     useEffect(() => {
       if (!angularState.current?.panel) {
         return;
