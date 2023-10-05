@@ -538,6 +538,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt `,
       flags: false,
       trailingSpace: true,
+      trailingComma: false,
       otherLabels: [],
     };
 
@@ -615,6 +616,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt`,
       flags: true,
       trailingSpace: true,
+      trailingComma: false,
       otherLabels: [],
     };
 
@@ -680,6 +682,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt`,
       flags: false,
       trailingComma: true,
+      trailingSpace: false,
       otherLabels: [],
     };
 
@@ -707,6 +710,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt label1, label2`,
       flags: true,
       trailingSpace: true,
+      trailingComma: false,
       otherLabels: ['label1', 'label2'],
     };
     const completions = await getCompletions(situation, completionProvider);
@@ -721,6 +725,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt label1,`,
       flags: true,
       trailingComma: true,
+      trailingSpace: false,
       otherLabels: ['label1'],
     };
 
@@ -737,6 +742,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: false,
       trailingComma: true,
+      trailingSpace: false,
       otherLabels: ['label1'],
     };
 
@@ -758,6 +764,7 @@ describe('IN_LOGFMT completions', () => {
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: true,
       trailingComma: true,
+      trailingSpace: false,
       otherLabels: ['label1'],
     };
 
