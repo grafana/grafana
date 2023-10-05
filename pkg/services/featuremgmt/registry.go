@@ -735,9 +735,10 @@ var (
 		{
 			Name:         "newBrowseDashboards",
 			Description:  "New browse/manage dashboards UI",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:        "sseGroupByDatasource",
@@ -821,6 +822,27 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "enableNativeHTTPHistogram",
+			Description:  "Enables native HTTP Histograms",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "transformationsVariableSupport",
+			Description:  "Allows using variables in transformations",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "kubernetesPlaylists",
+			Description:  "Use the kubernetes API in the frontend for playlists",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
 		},
 	}
 )

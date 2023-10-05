@@ -478,4 +478,16 @@ const (
 	// FlagAlertingModifiedExport
 	// Enables using UI for provisioned rules modification and export
 	FlagAlertingModifiedExport = "alertingModifiedExport"
+
+	// FlagEnableNativeHTTPHistogram
+	// Enables native HTTP Histograms
+	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagTransformationsVariableSupport
+	// Allows using variables in transformations
+	FlagTransformationsVariableSupport = "transformationsVariableSupport"
+
+	// FlagKubernetesPlaylists
+	// Use the kubernetes API in the frontend for playlists
+	FlagKubernetesPlaylists = "kubernetesPlaylists"
 )

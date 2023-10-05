@@ -9,9 +9,14 @@ import { useMedia } from 'react-use';
 
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 
-import { Button, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
+import { Button } from '../../Button/Button';
+import { InlineField } from '../../Forms/InlineField';
+import { Icon } from '../../Icon/Icon';
+import { Input } from '../../Input/Input';
+import { HorizontalGroup } from '../../Layout/Layout';
 import { getModalStyles } from '../../Modal/getModalStyles';
+import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
