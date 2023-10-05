@@ -11,7 +11,7 @@ import { dispatch } from 'app/store/store';
 
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
-import { Playlist, PlaylistItem, K8sPlaylist, K8sPlaylistList } from './types';
+import { Playlist, PlaylistItem, KubernetesPlaylist, KubernetesPlaylistList, PlaylistAPI } from './types';
 
 export async function createPlaylist(playlist: Playlist) {
   await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
@@ -25,21 +25,17 @@ export async function deletePlaylist(uid: string) {
   await withErrorHandling(() => getBackendSrv().delete(`/api/playlists/${uid}`), 'Playlist deleted');
 }
 
-export function k8sEnabled() {
-  return config.featureToggles.grafanaAPIServer;
-}
+export const playlistAPI: PlaylistAPI = {
+  getPlaylist: config.featureToggles.kubernetesPlaylists ? k8sGetPlaylist : legacyGetPlaylist,
+  getAllPlaylist: config.featureToggles.kubernetesPlaylists ? k8sGetAllPlaylist : legacyGetAllPlaylist,
+};
 
 /** This returns a playlist where all ids are replaced with UIDs */
-export async function getPlaylist(uid: string): Promise<Playlist> {
-  let playlist: Playlist;
-  if (k8sEnabled()) {
-    const k8splaylist = await getBackendSrv().get<K8sPlaylist>(
-      `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists/${uid}`
-    );
-    playlist = k8splaylist.spec;
-  } else {
-    playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
-  }
+export async function k8sGetPlaylist(uid: string): Promise<Playlist> {
+  const k8splaylist = await getBackendSrv().get<KubernetesPlaylist>(
+    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists/${uid}`
+  );
+  const playlist = k8splaylist.spec;
   if (playlist.items) {
     for (const item of playlist.items) {
       if (item.type === 'dashboard_by_id') {
@@ -54,13 +50,31 @@ export async function getPlaylist(uid: string): Promise<Playlist> {
   return playlist;
 }
 
-export async function getAllPlaylist(): Promise<Playlist[]> {
-  if (k8sEnabled()) {
-    const k8splaylists = await getBackendSrv().get<K8sPlaylistList>(
-      `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`
-    );
-    return k8splaylists.playlists.map((p) => p.spec);
+export async function k8sGetAllPlaylist(): Promise<Playlist[]> {
+  const k8splaylists = await getBackendSrv().get<KubernetesPlaylistList>(
+    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`
+  );
+  return k8splaylists.playlists.map((p) => p.spec);
+}
+
+/** This returns a playlist where all ids are replaced with UIDs */
+export async function legacyGetPlaylist(uid: string): Promise<Playlist> {
+  const playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${uid}`);
+  if (playlist.items) {
+    for (const item of playlist.items) {
+      if (item.type === 'dashboard_by_id') {
+        item.type = 'dashboard_by_uid';
+        const uids = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
+        if (uids.length) {
+          item.value = uids[0];
+        }
+      }
+    }
   }
+  return playlist;
+}
+
+export async function legacyGetAllPlaylist(): Promise<Playlist[]> {
   return getBackendSrv().get<Playlist[]>('/api/playlists/');
 }
 
