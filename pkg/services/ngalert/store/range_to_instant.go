@@ -17,14 +17,6 @@ type dsType struct {
 	Range bool `json:"range"`
 }
 
-func (t dsType) isLoki() bool {
-	return t.DS.Type == datasources.DS_LOKI
-}
-
-func (t dsType) isPrometheus() bool {
-	return t.DS.Type == datasources.DS_PROMETHEUS
-}
-
 type optimization struct {
 	// Index of the query that can be optimized
 	i int
@@ -48,11 +40,16 @@ func canBeInstant(r *models.AlertRule) ([]optimization, bool) {
 		// We can ignore the error here, the query just won't be optimized.
 		_ = json.Unmarshal(r.Data[i].Model, &t)
 
-		if !t.isLoki() && !t.isPrometheus() {
-			continue
-		}
-
-		if (t.isLoki() && r.Data[i].QueryType != "range") || (t.isPrometheus() && !t.Range) {
+		switch t.DS.Type {
+		case datasources.DS_PROMETHEUS:
+			if !t.Range {
+				continue
+			}
+		case datasources.DS_LOKI:
+			if r.Data[i].QueryType != "range" {
+				continue
+			}
+		default:
 			continue
 		}
 
