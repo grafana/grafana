@@ -106,6 +106,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         continue;
       }
     }
+
     if (fieldOption.hideFromDefaults) {
       continue;
     }
