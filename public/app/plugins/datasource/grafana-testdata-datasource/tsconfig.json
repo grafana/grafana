@@ -1,4 +1,4 @@
 {
-  "extends": "../../../../../tools/plugins/shared/tsconfig.json",
-  "include": [".", "../../../../../tools/plugins/shared/types"]
+  "extends": "../../../../../scripts/webpack/plugins/tsconfig.json",
+  "include": [".", "../../../../../scripts/webpack/plugins/types"]
 }

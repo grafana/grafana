@@ -7,7 +7,7 @@ import { Configuration } from 'webpack';
 import LiveReloadPlugin from 'webpack-livereload-plugin';
 
 import { DIST_DIR } from './constants';
-import { getPackageJson, getPluginJson, getEntries, isWSL } from './utils';
+import { getPackageJson, getPluginJson, getEntries, isWSL, hasLicense } from './utils';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -149,7 +149,7 @@ const config = async (env: any): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: path.resolve(process.cwd(), 'LICENSE'), to: '.' }, // Point to Grafana License
+          { from: hasLicense(pluginDir) ? 'LICENSE' : path.resolve(process.cwd(), 'LICENSE'), to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional

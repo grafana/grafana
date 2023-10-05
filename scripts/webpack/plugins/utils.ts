@@ -47,3 +47,7 @@ export async function getEntries(pdir: string): Promise<Record<string, string>> 
     }, result);
   }, {});
 }
+
+export function hasLicense(pdir: string) {
+  return fs.existsSync(path.resolve(process.cwd(), pdir, 'LICENSE'));
+}
