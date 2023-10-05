@@ -94,6 +94,12 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           // Similar to `window.monaco`, `window.Prism` may be undefined when invoked.
           return Reflect.get(window, 'Prism');
         },
+        get jQuery() {
+          return Reflect.get(window, 'jQuery');
+        },
+        get $() {
+          return Reflect.get(window, 'jQuery');
+        },
         get grafanaBootData(): BootData {
           if (!pluginLogCache[meta.id + '-grafanaBootData']) {
             pluginLogCache[meta.id + '-grafanaBootData'] = true;

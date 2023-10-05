@@ -34,6 +34,7 @@ const QueryEditor = ({
   onChange,
   onRunQuery: baseOnRunQuery,
   data,
+  range,
 }: AzureMonitorQueryEditorProps) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
@@ -66,6 +67,7 @@ const QueryEditor = ({
         onChange={onQueryChange}
         variableOptionGroup={variableOptionGroup}
         setError={setError}
+        range={range}
       />
 
       {errorMessage && (
@@ -94,6 +96,7 @@ const EditorForQueryType = ({
   variableOptionGroup,
   onChange,
   setError,
+  range,
 }: EditorForQueryTypeProps) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
@@ -141,6 +144,7 @@ const EditorForQueryType = ({
           onChange={onChange}
           variableOptionGroup={variableOptionGroup}
           setError={setError}
+          range={range}
         />
       );
 
