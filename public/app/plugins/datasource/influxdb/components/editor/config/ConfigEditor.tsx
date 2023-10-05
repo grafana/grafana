@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data/src';
-import { Alert, DataSourceHttpSettings, InlineField, LegacyForms, Select } from '@grafana/ui/src';
+import { Alert, DataSourceHttpSettings, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui/src';
 import { config } from 'app/core/config';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
@@ -17,8 +17,6 @@ import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
 import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';
 import { InfluxSqlConfig } from './InfluxSQLConfig';
-
-const { Input } = LegacyForms;
 
 const versions: Array<SelectableValue<InfluxVersion>> = [
   {
@@ -132,6 +130,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <>
         <h3 className="page-heading">Query Language</h3>
+
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -177,7 +176,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <h3 className="page-heading">InfluxDB Details</h3>
           </div>
           {this.renderJsonDataOptions()}
-          <div className="gf-form-inline">
+          <InlineFieldRow>
             <InlineField
               labelWidth={20}
               label="Max series"
@@ -186,7 +185,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Input
                 placeholder="1000"
                 type="number"
-                className="width-20"
+                width={40}
                 value={this.state.maxSeries}
                 onChange={(event) => {
                   // We duplicate this state so that we allow to write freely inside the input. We don't have
@@ -197,7 +196,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 }}
               />
             </InlineField>
-          </div>
+          </InlineFieldRow>
         </div>
       </>
     );
