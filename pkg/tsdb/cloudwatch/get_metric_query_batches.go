@@ -21,6 +21,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 			metricInsightIndices = append(metricInsightIndices, i)
 		case models.GMDApiModeMathExpression:
 			mathIndices = append(mathIndices, i)
+		default:
 		}
 	}
 	// We only need multiple batches if there are multiple metrics insight queries
