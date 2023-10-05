@@ -94,7 +94,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 			var frame *data.Frame
 			if prof != nil {
-				frame := responseToDataFrames(prof)
+				frame = responseToDataFrames(prof)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
