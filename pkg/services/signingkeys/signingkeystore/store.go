@@ -152,9 +152,7 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 			if err := s.cleanupExpiredKeys(ctxGo); err != nil {
 				s.log.Error("Failed to cleanup expired signing keys", "err", err)
 			}
-
 		}()
-
 		s.localCache.Set(cleanupRateLimitKey, true, 1*time.Hour)
 	}
 
