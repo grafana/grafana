@@ -13,18 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	// TODO: those are also used by instrumentation_middleware.go, move them somewhere else
-	statusOK        = "ok"
-	statusError     = "error"
-	statusCancelled = "cancelled"
-
-	endpointCallResource   = "callResource"
-	endpointCheckHealth    = "checkHealth"
-	endpointCollectMetrics = "collectMetrics"
-	endpointQueryData      = "queryData"
-)
-
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
 func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
