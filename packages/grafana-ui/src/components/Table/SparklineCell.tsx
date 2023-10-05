@@ -30,7 +30,8 @@ import { Sparkline } from '../Sparkline/Sparkline';
 import { TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
-export const defaultSparklineCellConfig: GraphFieldConfig = {
+export const defaultSparklineCellConfig: TableSparklineCellOptions = {
+  type: TableCellDisplayMode.Sparkline,
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Smooth,
   lineWidth: 1,
@@ -39,6 +40,7 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
   pointSize: 2,
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
+  hideValue: false,
 };
 
 export const SparklineCell = (props: TableCellProps) => {
@@ -84,30 +86,38 @@ export const SparklineCell = (props: TableCellProps) => {
     },
   };
 
-  const value = (cell.value as DataFrameWithValue).value;
+  const hideValue = field.config.custom?.cellOptions?.hideValue;
+  let valueWidth = 0;
+  let valueElement: React.ReactNode = null;
+  if (!hideValue) {
+    const value = (cell.value as DataFrameWithValue).value;
+    const displayValue = field.display!(value);
+    const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
 
-  const displayValue = field.display!(value);
+    valueWidth =
+      measureText(`${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`, 16).width +
+      theme.spacing.gridSize;
 
-  const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
-
-  const valueWidth = measureText(
-    `${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`,
-    16
-  ).width;
-
-  return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
+    valueElement = (
       <FormattedValueDisplay
         style={{
-          width: `${valueWidth}px`,
+          width: `${valueWidth - theme.spacing.gridSize}px`,
           textAlign: 'right',
           marginRight: theme.spacing(1),
         }}
         value={displayValue}
       />
+    );
+  }
+
+  console.log('field.config', field.config);
+
+  return (
+    <div {...cellProps} className={tableStyles.cellContainer}>
+      {valueElement}
       <div>
         <Sparkline
-          width={innerWidth - valueWidth - theme.spacing.gridSize}
+          width={innerWidth - valueWidth}
           height={tableStyles.cellHeightInner}
           sparkline={sparkline}
           config={config}
