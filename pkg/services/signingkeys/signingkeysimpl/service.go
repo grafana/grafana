@@ -129,8 +129,11 @@ func (s *Service) registerAPIEndpoints(router routing.RouteRegister) {
 }
 
 // swagger:response jwksResponse
-type jwksResponse struct {
-	Keys []jose.JSONWebKey `json:"keys"`
+type RetrieveJWKSResponse struct {
+	// in: body
+	Body struct {
+		Keys []jose.JSONWebKey `json:"keys"`
+	}
 }
 
 // swagger:route GET /signing-keys/keys signing_keys retrieveJWKS
@@ -153,5 +156,5 @@ func (s *Service) exposeJWKS(ctx *contextmodel.ReqContext) response.Response {
 	// set cache headers to 1 hour
 	ctx.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 
-	return response.JSON(http.StatusOK, jwksResponse{Keys: jwks.Keys})
+	return response.JSON(http.StatusOK, jwks)
 }
