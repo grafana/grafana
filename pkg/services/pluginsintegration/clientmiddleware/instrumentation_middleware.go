@@ -112,12 +112,12 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 }
 
 // instrumentPluginRequestSize tracks the size of the given request in the m.pluginRequestSizeHistogram metric.
-func (m *InstrumentationMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, requestSize float64) error {
+func (m *InstrumentationMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, requestSize float64) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
 	if err != nil {
 		return err
 	}
-	m.pluginRequestSizeHistogram.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpointQueryData, target).Observe(requestSize)
+	m.pluginRequestSizeHistogram.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, target).Observe(requestSize)
 	return nil
 }
 
@@ -168,7 +168,7 @@ func (m *InstrumentationMiddleware) QueryData(ctx context.Context, req *backend.
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
 	}
-	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointQueryData, requestSize); err != nil {
 		return nil, err
 	}
 	var resp *backend.QueryDataResponse
@@ -180,7 +180,7 @@ func (m *InstrumentationMiddleware) QueryData(ctx context.Context, req *backend.
 }
 
 func (m *InstrumentationMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointCallResource, float64(len(req.Body))); err != nil {
 		return err
 	}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) error {
