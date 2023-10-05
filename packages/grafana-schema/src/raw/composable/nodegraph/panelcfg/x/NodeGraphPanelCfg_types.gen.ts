@@ -22,6 +22,21 @@ export interface ArcOption {
   field?: string;
 }
 
+export interface FieldNameOverrides {
+  arc?: string;
+  color?: string;
+  details?: string;
+  icon?: string;
+  id?: string;
+  mainStat?: string;
+  nodeRadius?: string;
+  secondaryStat?: string;
+  source?: string;
+  subTitle?: string;
+  target?: string;
+  title?: string;
+}
+
 export interface Options {
   edges?: {
     /**
@@ -33,6 +48,7 @@ export interface Options {
      */
     secondaryStatUnit?: string;
   };
+  fieldNameOverrides?: FieldNameOverrides;
   nodes?: {
     /**
      * Unit for the main stat to override what ever is set in the data frame.

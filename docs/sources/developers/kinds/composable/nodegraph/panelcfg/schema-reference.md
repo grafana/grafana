@@ -18,12 +18,13 @@ title: NodeGraphPanelCfg kind
 
 
 
-| Property      | Type                   | Required | Default | Description |
-|---------------|------------------------|----------|---------|-------------|
-| `ArcOption`   | [object](#arcoption)   | **Yes**  |         |             |
-| `EdgeOptions` | [object](#edgeoptions) | **Yes**  |         |             |
-| `NodeOptions` | [object](#nodeoptions) | **Yes**  |         |             |
-| `Options`     | [object](#options)     | **Yes**  |         |             |
+| Property             | Type                          | Required | Default | Description |
+|----------------------|-------------------------------|----------|---------|-------------|
+| `ArcOption`          | [object](#arcoption)          | **Yes**  |         |             |
+| `EdgeOptions`        | [object](#edgeoptions)        | **Yes**  |         |             |
+| `FieldNameOverrides` | [object](#fieldnameoverrides) | **Yes**  |         |             |
+| `NodeOptions`        | [object](#nodeoptions)        | **Yes**  |         |             |
+| `Options`            | [object](#options)            | **Yes**  |         |             |
 
 ### ArcOption
 
@@ -39,6 +40,23 @@ title: NodeGraphPanelCfg kind
 | `mainStatUnit`      | string | No       |         | Unit for the main stat to override what ever is set in the data frame.      |
 | `secondaryStatUnit` | string | No       |         | Unit for the secondary stat to override what ever is set in the data frame. |
 
+### FieldNameOverrides
+
+| Property        | Type   | Required | Default | Description |
+|-----------------|--------|----------|---------|-------------|
+| `arc`           | string | No       |         |             |
+| `color`         | string | No       |         |             |
+| `details`       | string | No       |         |             |
+| `icon`          | string | No       |         |             |
+| `id`            | string | No       |         |             |
+| `mainStat`      | string | No       |         |             |
+| `nodeRadius`    | string | No       |         |             |
+| `secondaryStat` | string | No       |         |             |
+| `source`        | string | No       |         |             |
+| `subTitle`      | string | No       |         |             |
+| `target`        | string | No       |         |             |
+| `title`         | string | No       |         |             |
+
 ### NodeOptions
 
 | Property            | Type                      | Required | Default | Description                                                                             |
@@ -49,9 +67,10 @@ title: NodeGraphPanelCfg kind
 
 ### Options
 
-| Property | Type                        | Required | Default | Description |
-|----------|-----------------------------|----------|---------|-------------|
-| `edges`  | [EdgeOptions](#edgeoptions) | No       |         |             |
-| `nodes`  | [NodeOptions](#nodeoptions) | No       |         |             |
+| Property             | Type                                      | Required | Default | Description |
+|----------------------|-------------------------------------------|----------|---------|-------------|
+| `edges`              | [EdgeOptions](#edgeoptions)               | No       |         |             |
+| `fieldNameOverrides` | [FieldNameOverrides](#fieldnameoverrides) | No       |         |             |
+| `nodes`              | [NodeOptions](#nodeoptions)               | No       |         |             |
 
 

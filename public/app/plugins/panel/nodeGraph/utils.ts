@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 
 import { nodeR } from './Node';
+import { FieldNameOverrides } from './panelcfg.gen';
 import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
@@ -44,23 +45,31 @@ export type NodeFields = {
   nodeRadius?: Field;
 };
 
-export function getNodeFields(nodes: DataFrame): NodeFields {
+export function getNodeFields(nodes: DataFrame, fieldNameOverrides?: FieldNameOverrides): NodeFields {
   const normalizedFrames = {
     ...nodes,
     fields: nodes.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
   };
   const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
-    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
-    arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
-    details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
-    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
-    icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
-    nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
+    id: fieldsCache.getFieldByName(fieldNameOverrides?.id || NodeGraphDataFrameFieldNames.id.toLowerCase()),
+    title: fieldsCache.getFieldByName(fieldNameOverrides?.title || NodeGraphDataFrameFieldNames.title.toLowerCase()),
+    subTitle: fieldsCache.getFieldByName(
+      fieldNameOverrides?.subTitle || NodeGraphDataFrameFieldNames.subTitle.toLowerCase()
+    ),
+    mainStat: fieldsCache.getFieldByName(
+      fieldNameOverrides?.mainStat || NodeGraphDataFrameFieldNames.mainStat.toLowerCase()
+    ),
+    secondaryStat: fieldsCache.getFieldByName(
+      fieldNameOverrides?.secondaryStat || NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()
+    ),
+    arc: findFieldsByPrefix(nodes, fieldNameOverrides?.arc || NodeGraphDataFrameFieldNames.arc),
+    details: findFieldsByPrefix(nodes, fieldNameOverrides?.details || NodeGraphDataFrameFieldNames.detail),
+    color: fieldsCache.getFieldByName(fieldNameOverrides?.color || NodeGraphDataFrameFieldNames.color),
+    icon: fieldsCache.getFieldByName(fieldNameOverrides?.icon || NodeGraphDataFrameFieldNames.icon),
+    nodeRadius: fieldsCache.getFieldByName(
+      fieldNameOverrides?.nodeRadius || NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()
+    ),
   };
 }
 
@@ -73,19 +82,26 @@ export type EdgeFields = {
   details: Field[];
 };
 
-export function getEdgeFields(edges: DataFrame): EdgeFields {
+export function getEdgeFields(edges: DataFrame, fieldNameOverrides?: FieldNameOverrides): EdgeFields {
   const normalizedFrames = {
     ...edges,
     fields: edges.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
   };
   const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
-    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
-    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    id: fieldsCache.getFieldByName(fieldNameOverrides?.id || NodeGraphDataFrameFieldNames.id.toLowerCase()),
+    source: fieldsCache.getFieldByName(fieldNameOverrides?.source || NodeGraphDataFrameFieldNames.source.toLowerCase()),
+    target: fieldsCache.getFieldByName(fieldNameOverrides?.target || NodeGraphDataFrameFieldNames.target.toLowerCase()),
+    mainStat: fieldsCache.getFieldByName(
+      fieldNameOverrides?.mainStat || NodeGraphDataFrameFieldNames.mainStat.toLowerCase()
+    ),
+    secondaryStat: fieldsCache.getFieldByName(
+      fieldNameOverrides?.secondaryStat || NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()
+    ),
+    details: findFieldsByPrefix(
+      edges,
+      fieldNameOverrides?.details || NodeGraphDataFrameFieldNames.detail.toLowerCase()
+    ),
   };
 }
 
@@ -98,7 +114,8 @@ function findFieldsByPrefix(frame: DataFrame, prefix: string): Field[] {
  */
 export function processNodes(
   nodes: DataFrame | undefined,
-  edges: DataFrame | undefined
+  edges: DataFrame | undefined,
+  fieldNameOverrides: FieldNameOverrides | undefined
 ): {
   nodes: NodeDatum[];
   edges: EdgeDatum[];
@@ -112,7 +129,7 @@ export function processNodes(
   }
 
   if (nodes) {
-    const nodeFields = getNodeFields(nodes);
+    const nodeFields = getNodeFields(nodes, fieldNameOverrides);
     if (!nodeFields.id) {
       throw new Error('id field is required for nodes data frame.');
     }
@@ -125,7 +142,7 @@ export function processNodes(
     }
 
     // We may not have edges in case of single node
-    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges), nodesMap) : [];
+    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges, fieldNameOverrides), nodesMap) : [];
 
     for (const e of edgeDatums) {
       // We are adding incoming edges count, so we can later on find out which nodes are the roots

@@ -14,7 +14,7 @@ import {
 
 describe('processNodes', () => {
   it('handles empty args', async () => {
-    expect(processNodes(undefined, undefined)).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, undefined)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -24,7 +24,8 @@ describe('processNodes', () => {
         { source: '0', target: '1' },
         { source: '0', target: '2' },
         { source: '1', target: '2' },
-      ])
+      ]),
+      undefined
     );
 
     expect(nodes).toEqual([
@@ -54,7 +55,8 @@ describe('processNodes', () => {
         { source: '0', target: '1', mainstat: 1, secondarystat: 1 },
         { source: '0', target: '2', mainstat: 1, secondarystat: 1 },
         { source: '1', target: '2', mainstat: 1, secondarystat: 1 },
-      ])
+      ]),
+      undefined
     );
 
     expect(nodes).toEqual([
@@ -234,7 +236,8 @@ describe('finds connections', () => {
         { source: '0', target: '1' },
         { source: '0', target: '2' },
         { source: '1', target: '2' },
-      ])
+      ]),
+      undefined
     );
 
     const linked = findConnectedNodesForEdge(nodes, edges, edges[0].id);
@@ -248,7 +251,8 @@ describe('finds connections', () => {
         { source: '0', target: '1' },
         { source: '0', target: '2' },
         { source: '1', target: '2' },
-      ])
+      ]),
+      undefined
     );
 
     const linked = findConnectedNodesForNode(nodes, edges, nodes[0].id);
