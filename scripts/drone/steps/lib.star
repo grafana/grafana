@@ -963,10 +963,11 @@ def redis_integration_tests_steps():
 
 def remote_alertmanager_integration_tests_steps():
     cmds = [
-        "-target=backend",
+        "go clean -testcache",
+        "go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...",
     ]
 
-    return integration_tests_steps("mimir", cmds, "mimir", "8080", None)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir", "8080", None)
 
 def memcached_integration_tests_steps():
     cmds = [

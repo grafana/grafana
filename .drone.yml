@@ -999,15 +999,16 @@ steps:
 - commands:
   - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir
+  name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
-  - -target=backend
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
-  - wait-for-mimir
+  - wait-for-remote-alertmanager
   image: golang:1.20.8-alpine
-  name: mimir-integration-tests
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - pull_request
@@ -2280,15 +2281,16 @@ steps:
 - commands:
   - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir
+  name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
-  - -target=backend
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
-  - wait-for-mimir
+  - wait-for-remote-alertmanager
   image: golang:1.20.8-alpine
-  name: mimir-integration-tests
+  name: remote-alertmanager-integration-tests
 trigger:
   branch: main
   event:
@@ -3970,15 +3972,16 @@ steps:
 - commands:
   - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir
+  name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
-  - -target=backend
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
   depends_on:
   - wire-install
-  - wait-for-mimir
+  - wait-for-remote-alertmanager
   image: golang:1.20.8-alpine
-  name: mimir-integration-tests
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - promote
@@ -4708,6 +4711,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 32c6a81d88011e0a5efd17b14b95bd4d3b4d13de80bb9bcbe263ce840fa71e09
+hmac: afb6ec657ea8d088b612bb9cb9f56791b9c0e4bf946b22b564512207051c0fc1
 
 ...
