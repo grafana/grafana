@@ -611,6 +611,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/user-essentials
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
+/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
 
 # Conf
 /conf/defaults.ini @torkelo
