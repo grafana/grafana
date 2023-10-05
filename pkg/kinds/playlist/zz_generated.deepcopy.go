@@ -37,11 +37,7 @@ func (in *Playlist) DeepCopyInto(out *Playlist) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = new(Spec)
-		(*in).DeepCopyInto(*out)
-	}
+	out.Spec = in.Spec
 	return
 }
 

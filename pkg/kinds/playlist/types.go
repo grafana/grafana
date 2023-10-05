@@ -17,7 +17,7 @@ type Playlist struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec *Spec `json:"spec,omitempty"`
+	Spec Spec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

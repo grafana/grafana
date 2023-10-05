@@ -110,7 +110,7 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 			// 	"grafana.com/updatedTime": time.UnixMilli(v.UpdatedAt).Format(time.RFC3339),
 			// },
 		},
-		Spec: &playlist.Spec{
+		Spec: playlist.Spec{
 			Uid:      v.UID,
 			Name:     v.Name,
 			Interval: v.Interval,

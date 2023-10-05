@@ -23,7 +23,7 @@ func TestPlaylistClone(t *testing.T) {
 				"grafana.com/updatedTime": time.Now().Format(time.RFC3339),
 			},
 		},
-		Spec: &Spec{
+		Spec: Spec{
 			Uid:      "TheUID",
 			Name:     "A title",
 			Interval: "20s",

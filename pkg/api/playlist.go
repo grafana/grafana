@@ -75,7 +75,7 @@ func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response 
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
 	res, err := hs.playlistService.Get(c.Req.Context(), &cmd)
-	if err != nil || res.Spec == nil {
+	if err != nil || res.Spec.Name == "" {
 		return response.Error(500, "Playlist not found", err)
 	}
 
@@ -97,7 +97,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
-	if err != nil || dto.Spec == nil {
+	if err != nil || dto.Spec.Name == "" {
 		return response.Error(500, "Playlist not found", err)
 	}
 
