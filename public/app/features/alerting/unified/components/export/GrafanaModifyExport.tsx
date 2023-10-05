@@ -99,7 +99,9 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}
     >
-      {alertRule && <ModifyExportRuleForm ruleForm={formValuesFromExistingRule(alertRule)} />}
+      {alertRule && (
+        <ModifyExportRuleForm ruleForm={formValuesFromExistingRule(alertRule)} alertUid={match.params.id ?? ''} />
+      )}
     </AlertingPageWrapper>
   );
 }
