@@ -75,7 +75,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   standardEditorConfig: {
     background: false,
-    border: false,
   },
 
   display: ButtonDisplay,
