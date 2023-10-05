@@ -20,7 +20,7 @@ export type TransformationDTO = {
 
 interface SupportedTransformationTypeDetails {
   label: string;
-  value: string;
+  value: SupportedTransformationType;
   description?: string;
   showExpression: boolean;
   showMapValue: boolean;

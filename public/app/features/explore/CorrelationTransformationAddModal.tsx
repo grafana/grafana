@@ -3,7 +3,7 @@ import React, { useId, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
-import { DataLinkTransformationConfig, ScopedVars, SupportedTransformationType } from '@grafana/data';
+import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
 import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
@@ -118,9 +118,7 @@ export const CorrelationTransformationAddModal = ({
                   {...field}
                   onChange={(value) => {
                     onChange(value.value);
-                    const transformationTypeDetails = getSupportedTransTypeDetails(
-                      value.value as SupportedTransformationType
-                    );
+                    const transformationTypeDetails = getSupportedTransTypeDetails(value.value!);
                     setFormFieldsVis({
                       showMapValue: transformationTypeDetails.showMapValue,
                       showExpression: transformationTypeDetails.showExpression,

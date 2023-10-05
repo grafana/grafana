@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DataLinkTransformationConfig, ExploreCorrelationHelperData } from '@grafana/data';
-import { Collapse, Alert, Field, Input, Button } from '@grafana/ui';
+import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
+import { Collapse, Alert, Field, Input, Button, Card, IconButton, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
@@ -22,6 +23,7 @@ interface FormValues {
 
 export const CorrelationHelper = ({ correlations }: Props) => {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
   const { register, watch } = useForm<FormValues>();
   const [correlationVars, setCorrelationVars] = useState(correlations.vars);
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
@@ -127,6 +129,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
             onClick={() => {
               setShowTransformationAddModal(true);
             }}
+            className={styles.transformationAction}
           >
             Add transformation
           </Button>
@@ -135,17 +138,30 @@ export const CorrelationHelper = ({ correlations }: Props) => {
             const detailsString = [
               mapValue !== undefined ? `Variable name: ${mapValue}` : undefined,
               expression !== undefined ? `Expression: ${expression}` : undefined,
-            ]
-              .filter((val) => val)
-              .join(', ');
+            ].filter((val) => val);
             return (
-              <p key={`trans-${i}`}>
-                {field}: {type} {detailsString.length > 0 ? `(${detailsString})` : ''}
-              </p>
+              <Card key={`trans-${i}`}>
+                <Card.Heading>
+                  {field}: {type}
+                </Card.Heading>
+                {detailsString.length > 0 && <Card.Meta>{detailsString}</Card.Meta>}
+                <Card.SecondaryActions>
+                  <IconButton key="edit" name="edit" aria-label="edit transformation" />
+                  <IconButton key="delete" name="trash-alt" aria-label="delete transformation" />
+                </Card.SecondaryActions>
+              </Card>
             );
           })}
         </Collapse>
       </Alert>
     </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    transformationAction: css({
+      marginBottom: theme.spacing(2),
+    }),
+  };
 };
