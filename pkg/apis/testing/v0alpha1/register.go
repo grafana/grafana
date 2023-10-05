@@ -17,6 +17,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 // GroupName is the group name for this API.
@@ -82,11 +83,33 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 									Name: "a",
 								}},
 							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "OK",
+												Content: map[string]*spec3.MediaType{
+													"text/plain": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"string"},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					w.Write([]byte("Root level handler (aaa)"))
+					_, _ = w.Write([]byte("Root level handler (aaa)"))
 				},
 			},
 			{
@@ -105,7 +128,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					w.Write([]byte("Root level handler (bbb)"))
+					_, _ = w.Write([]byte("Root level handler (bbb)"))
 				},
 			},
 		},
@@ -135,7 +158,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						return
 					}
 
-					w.Write([]byte("Custom namespace route ccc: " + info.Namespace))
+					_, _ = w.Write([]byte("Custom namespace route ccc: " + info.Namespace))
 				},
 			},
 		},
