@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { InputHTMLAttributes, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
+  Divider,
   HorizontalGroup,
   Icon,
   IconButton,
@@ -48,10 +49,10 @@ export const GenAIHistory = ({
 
   const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
+  const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
+
   const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
     reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);
-
-  const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
   useEffect(() => {
     if (!isStreamGenerating && reply !== '') {
@@ -102,6 +103,15 @@ export const GenAIHistory = ({
     }
   };
 
+  const onKeyDownCustomFeedbackInput = (e: React.KeyboardEvent<HTMLInputElement>) =>
+    e.key === 'Enter' && onSubmitCustomFeedback(customFeedback);
+
+  const onChangeCustomFeedback = (e: React.FormEvent<HTMLInputElement>) => setCustomPrompt(e.currentTarget.value);
+
+  const onClickSubmitCustomFeedback = () => onSubmitCustomFeedback(customFeedback);
+
+  const onClickDocs = () => reportInteraction(AutoGenerateItem.linkToDocs);
+
   return (
     <div className={styles.container}>
       {showError && (
@@ -120,14 +130,14 @@ export const GenAIHistory = ({
           <IconButton
             name="corner-down-right-alt"
             variant="secondary"
-            aria-label="Send custom suggestion"
-            onClick={() => onSubmitCustomFeedback(customFeedback)}
+            aria-label="Send custom feedback"
+            onClick={onClickSubmitCustomFeedback}
             disabled={customFeedback === ''}
           />
         }
         value={customFeedback}
-        onChange={(e) => setCustomPrompt(e.currentTarget.value)}
-        onKeyDown={(e) => e.key === 'Enter' && onSubmitCustomFeedback(customFeedback)}
+        onChange={onChangeCustomFeedback}
+        onKeyDown={onKeyDownCustomFeedbackInput}
       />
       <div className={styles.actions}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
@@ -149,14 +159,9 @@ export const GenAIHistory = ({
       </div>
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
-        <Text variant="bodySmall" element="p" color="secondary">
-          Be aware that this content was AI-generated.{' '}
-          <TextLink
-            variant="bodySmall"
-            href="https://grafana.com/grafana/dashboards/"
-            external
-            onClick={() => reportInteraction(AutoGenerateItem.linkToDocs)}
-          >
+        <Text variant="bodySmall" color="secondary">
+          This content is AI-generated.{' '}
+          <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external onClick={onClickDocs}>
             Learn more
           </TextLink>
         </Text>

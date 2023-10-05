@@ -35,6 +35,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
       loadingText={'Generating changes summary'}
       temperature={0}
       eventTrackingSrc={EventTrackingSrc.dashboardChanges}
+      toggleTipTitle={'Improve your dashboard changes summary'}
     />
   );
 };
