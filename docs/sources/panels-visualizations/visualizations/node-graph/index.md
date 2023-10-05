@@ -87,7 +87,7 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 ## Data API
 
-This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
+This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it. Field names can however be overridden in the visualization settings.
 
 Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
 
