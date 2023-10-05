@@ -247,7 +247,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:id/modify-export',
     pageClass: 'page-alerting',
-    roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate]),
+    roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
     component: config.featureToggles.alertingModifiedExport
       ? SafeDynamicImport(
           () =>

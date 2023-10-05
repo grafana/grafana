@@ -21,10 +21,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
-import { contextSrv } from '../../../../../core/services/context_srv';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { deleteRuleAction } from '../../state/actions';
-import { provisioningPermissions } from '../../utils/access-control';
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -55,7 +53,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const rulesSourceName = getRulesSourceName(rulesSource);
 
-  const canReadProvisioning = contextSrv.hasPermission(provisioningPermissions.read);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const buttons: JSX.Element[] = [];
@@ -140,7 +137,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
       );
     }
 
-    if (isGrafanaRulerRule(rulerRule) && canReadProvisioning) {
+    if (isGrafanaRulerRule(rulerRule)) {
       if (config.featureToggles.alertingModifiedExport) {
         moreActions.push(
           <Menu.Item
