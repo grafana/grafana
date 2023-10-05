@@ -966,7 +966,7 @@ def remote_alertmanager_integration_tests_steps():
         "-target=backend",
     ]
 
-    return integration_tests_steps("mimir_backend", cmds, "mimir_backend", "8080", None)
+    return integration_tests_steps("mimir", cmds, "mimir", "8080", None)
 
 def memcached_integration_tests_steps():
     cmds = [

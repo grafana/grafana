@@ -997,17 +997,17 @@ steps:
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir_backend
+  name: wait-for-mimir
 - commands:
   - apk add --update build-base
   - -target=backend
   depends_on:
   - wire-install
-  - wait-for-mimir_backend
+  - wait-for-mimir
   image: golang:1.20.8-alpine
-  name: mimir_backend-integration-tests
+  name: mimir-integration-tests
 trigger:
   event:
   - pull_request
@@ -2278,17 +2278,17 @@ steps:
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir_backend
+  name: wait-for-mimir
 - commands:
   - apk add --update build-base
   - -target=backend
   depends_on:
   - wire-install
-  - wait-for-mimir_backend
+  - wait-for-mimir
   image: golang:1.20.8-alpine
-  name: mimir_backend-integration-tests
+  name: mimir-integration-tests
 trigger:
   branch: main
   event:
@@ -3968,17 +3968,17 @@ steps:
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
-  name: wait-for-mimir_backend
+  name: wait-for-mimir
 - commands:
   - apk add --update build-base
   - -target=backend
   depends_on:
   - wire-install
-  - wait-for-mimir_backend
+  - wait-for-mimir
   image: golang:1.20.8-alpine
-  name: mimir_backend-integration-tests
+  name: mimir-integration-tests
 trigger:
   event:
   - promote
@@ -4708,6 +4708,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 68990baf3e960697f5871f72b2a80f0d4da2583492ab989b0d64e1d9db7cdc31
+hmac: 32c6a81d88011e0a5efd17b14b95bd4d3b4d13de80bb9bcbe263ce840fa71e09
 
 ...
