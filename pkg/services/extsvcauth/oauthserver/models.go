@@ -29,10 +29,10 @@ const (
 type OAuth2Server interface {
 	// SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 	// it ensures that the associated service account has the correct permissions.
-	SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalServiceDTO, error)
+	SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error)
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.
-	GetExternalService(ctx context.Context, id string) (*ExternalService, error)
+	GetExternalService(ctx context.Context, id string) (*Client, error)
 
 	// HandleTokenRequest handles the client's OAuth2 query to obtain an access_token by presenting its authorization
 	// grant (ex: client_credentials, jwtbearer).
@@ -45,34 +45,9 @@ type OAuth2Server interface {
 //go:generate mockery --name Store --structname MockStore --outpkg oauthtest --filename store_mock.go --output ./oauthtest/
 
 type Store interface {
-	RegisterExternalService(ctx context.Context, client *ExternalService) error
-	SaveExternalService(ctx context.Context, client *ExternalService) error
-	GetExternalService(ctx context.Context, id string) (*ExternalService, error)
-	GetExternalServiceByName(ctx context.Context, name string) (*ExternalService, error)
+	RegisterExternalService(ctx context.Context, client *Client) error
+	SaveExternalService(ctx context.Context, client *Client) error
+	GetExternalService(ctx context.Context, id string) (*Client, error)
+	GetExternalServiceByName(ctx context.Context, name string) (*Client, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
-}
-
-type KeyOption struct {
-	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL (to a .jwks file) to fetch the key from
-	// PublicPEM contains the Base64 encoded public key in PEM format
-	PublicPEM string `json:"public_pem,omitempty"`
-	Generate  bool   `json:"generate,omitempty"`
-}
-
-// ProviderCfg represents the registration form specificities needed to register OAuth2 clients.
-type ProviderCfg struct {
-	// RedirectURI is the URI that is used in the code flow.
-	// Note that this is not used yet.
-	RedirectURI *string `json:"redirectUri,omitempty"`
-
-	// Key is the option to specify a public key or ask the server to generate a crypto key pair.
-	Key *KeyOption `json:"key,omitempty"`
-}
-
-// ExternalServiceDTOExtra represents the specificities of an OAuth2 client.
-type ExternalServiceDTOExtra struct {
-	Audiences   string     `json:"audiences"`  // CSV value
-	GrantTypes  string     `json:"grantTypes"` // CSV value
-	KeyResult   *KeyResult `json:"key,omitempty"`
-	RedirectURI string     `json:"redirectUri,omitempty"` // Not used yet (code flow)
 }

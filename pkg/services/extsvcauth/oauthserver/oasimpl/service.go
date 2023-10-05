@@ -121,10 +121,10 @@ func newProvider(config *fosite.Config, storage any, signingKeyService signingke
 // GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 // SignedInUser from the associated service account.
 // For performance reason, the service uses caching.
-func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
 	entry, ok := s.cache.Get(id)
 	if ok {
-		client, ok := entry.(oauthserver.ExternalService)
+		client, ok := entry.(oauthserver.Client)
 		if ok {
 			s.logger.Debug("GetExternalService: cache hit", "id", id)
 			return &client, nil
@@ -179,7 +179,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalServiceDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -200,7 +200,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Otherwise, create a new client
 	if client == nil {
 		s.logger.Debug("External service does not yet exist", "external service name", registration.Name)
-		client = &oauthserver.ExternalService{
+		client = &oauthserver.Client{
 			Name:             registration.Name,
 			ServiceAccountID: oauthserver.NoServiceAccountID,
 			Audiences:        s.cfg.AppURL,
@@ -210,12 +210,12 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Parse registration form to compute required permissions for the client
 	client.SelfPermissions, client.ImpersonatePermissions = s.handleRegistrationPermissions(registration)
 
-	additionalCfg, ok := registration.AuthProviderCfg.(oauthserver.ProviderCfg)
-	if !ok {
-		s.logger.Error("Error parsing authProvider config", "external service", registration.Name)
+	if registration.OAuthProviderCfg == nil {
+		return nil, errors.New("missing oauth provider configuration")
 	}
-	if additionalCfg.RedirectURI != nil {
-		client.RedirectURI = *additionalCfg.RedirectURI
+
+	if registration.OAuthProviderCfg.RedirectURI != nil {
+		client.RedirectURI = *registration.OAuthProviderCfg.RedirectURI
 	}
 
 	var errGenCred error
@@ -237,7 +237,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	// Handle key options
 	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, additionalCfg.Key)
+	keys, err := s.handleKeyOptions(ctx, registration.OAuthProviderCfg.Key)
 	if err != nil {
 		s.logger.Error("Error handling key options", "client", client.LogID(), "error", err)
 		return nil, err
@@ -299,7 +299,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEn
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *extsvcauth.KeyOption) (*extsvcauth.KeyResult, error) {
 	if keyOption == nil {
 		return nil, fmt.Errorf("keyOption is nil")
 	}
@@ -348,7 +348,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Debug("ECDSA key has been generated")
 		}
 
-		return &oauthserver.KeyResult{
+		return &extsvcauth.KeyResult{
 			PrivatePem: privatePem,
 			PublicPem:  publicPem,
 			Generated:  true,
@@ -372,7 +372,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Error("Cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
-		return &oauthserver.KeyResult{
+		return &extsvcauth.KeyResult{
 			PublicPem: string(pemEncoded),
 		}, nil
 	}

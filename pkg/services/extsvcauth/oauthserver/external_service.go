@@ -12,13 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type KeyResult struct {
-	URL        string `json:"url,omitempty"`
-	PrivatePem string `json:"private,omitempty"`
-	PublicPem  string `json:"public,omitempty"`
-	Generated  bool   `json:"generated,omitempty"`
-}
-
 type ExternalService struct {
 	ID               int64  `xorm:"id pk autoincr"`
 	Name             string `xorm:"name"`
@@ -42,25 +35,25 @@ type ExternalService struct {
 
 // ToDTO converts the ExternalService in an ExternalServiceDTO
 // If the DTO must contain Key pairs, pass them as parameters, otherwise only the client PublicPem will be added to the DTO.
-func (c *ExternalService) ToDTO(keys *KeyResult) *extsvcauth.ExternalServiceDTO {
-	extra := ExternalServiceDTOExtra{
-		GrantTypes:  c.GrantTypes,
-		Audiences:   c.Audiences,
-		RedirectURI: c.RedirectURI,
-		KeyResult:   keys,
+func (c *ExternalService) ToDTO(keys *extsvcauth.KeyResult) *extsvcauth.ExternalService {
+	c2 := &extsvcauth.ExternalService{
+		ID:     c.ClientID,
+		Name:   c.Name,
+		Secret: c.Secret,
+		OAuthExtra: &extsvcauth.OAuthExtra{
+			GrantTypes:  c.GrantTypes,
+			Audiences:   c.Audiences,
+			RedirectURI: c.RedirectURI,
+			KeyResult:   keys,
+		},
 	}
 
 	// Fallback to only display the public pem
 	if keys == nil && len(c.PublicPem) > 0 {
-		extra.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+		c2.OAuthExtra.KeyResult = &extsvcauth.KeyResult{PublicPem: string(c.PublicPem)}
 	}
 
-	return &extsvcauth.ExternalServiceDTO{
-		Extra:  extra,
-		ID:     c.ClientID,
-		Name:   c.Name,
-		Secret: c.Secret,
-	}
+	return c2
 }
 
 func (c *ExternalService) LogID() string {

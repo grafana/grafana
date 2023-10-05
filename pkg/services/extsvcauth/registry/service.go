@@ -28,7 +28,7 @@ func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, features featur
 // SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
 // it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 // associated service account has the correct permissions.
-func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalServiceDTO, error) {
+func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	switch cmd.AuthProvider {
 	case extsvcauth.OAuth2Server:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
