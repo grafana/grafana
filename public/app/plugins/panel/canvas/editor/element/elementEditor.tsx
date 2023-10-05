@@ -96,17 +96,27 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         layer.registerOptionsUI(builder, ctx);
       }
 
-      builder.addCustomEditor({
-        category: ['Layout'],
-        id: 'content',
-        path: '__', // not used
-        name: 'Quick placement',
-        editor: PlacementEditor,
-        settings: opts,
-      });
+      const shouldAddLayoutEditor = opts.element.item.standardEditorConfig?.layout ?? true;
+      if (shouldAddLayoutEditor) {
+        builder.addCustomEditor({
+          category: ['Layout'],
+          id: 'content',
+          path: '__', // not used
+          name: 'Quick placement',
+          editor: PlacementEditor,
+          settings: opts,
+        });
+      }
 
-      optionBuilder.addBackground(builder, ctx);
-      optionBuilder.addBorder(builder, ctx);
+      const shouldAddBackgroundEditor = opts.element.item.standardEditorConfig?.background ?? true;
+      if (shouldAddBackgroundEditor) {
+        optionBuilder.addBackground(builder, ctx);
+      }
+
+      const shouldAddBorderEditor = opts.element.item.standardEditorConfig?.border ?? true;
+      if (shouldAddBorderEditor) {
+        optionBuilder.addBorder(builder, ctx);
+      }
     },
   };
 }
