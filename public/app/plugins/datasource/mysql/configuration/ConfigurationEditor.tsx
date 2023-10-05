@@ -7,7 +7,8 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Divider,
@@ -21,7 +22,6 @@ import {
   Switch,
   Tooltip,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
@@ -50,7 +50,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
     };
   };
 
-  const WIDTH_SHORT = 15;
   const WIDTH_LONG = 40;
 
   return (
@@ -157,69 +156,69 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       <Divider />
 
       <ConfigSection title="Additional settings">
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Session timezone</span>
-                <Tooltip
-                  content={
-                    <span>
-                      Specify the time zone used in the database session, e.g. <code>Europe/Berlin</code> or
-                      <code>+02:00</code>. This is necessary, if the timezone of the database (or the host of the
-                      database) is set to something other than UTC. The value is set in the session with
-                      <code>SET time_zone=&apos;...&apos;</code>. If you leave this field empty, the timezone is not
-                      updated. You can find more information in the MySQL documentation.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-        >
-          <Input
-            width={WIDTH_LONG}
-            value={jsonData.timezone || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
-            placeholder="Europe/Berlin or +02:00"
-          />
-        </Field>
+        <ConfigSubSection title="MySQL Options">
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Session timezone</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        Specify the time zone used in the database session, e.g. <code>Europe/Berlin</code> or
+                        <code>+02:00</code>. This is necessary, if the timezone of the database (or the host of the
+                        database) is set to something other than UTC. The value is set in the session with
+                        <code>SET time_zone=&apos;...&apos;</code>. If you leave this field empty, the timezone is not
+                        updated. You can find more information in the MySQL documentation.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Input
+              width={WIDTH_LONG}
+              value={jsonData.timezone || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
+              placeholder="Europe/Berlin or +02:00"
+            />
+          </Field>
 
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Min time interval</span>
-                <Tooltip
-                  content={
-                    <span>
-                      A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
-                      example
-                      <code>1m</code> if your data is written every minute.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-          description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
-        >
-          <Input
-            width={WIDTH_LONG}
-            placeholder="1m"
-            value={jsonData.timeInterval || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
-          />
-        </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Min time interval</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
+                        example
+                        <code>1m</code> if your data is written every minute.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+            description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
+          >
+            <Input
+              width={WIDTH_LONG}
+              placeholder="1m"
+              value={jsonData.timeInterval || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+            />
+          </Field>
+        </ConfigSubSection>
+
+        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
-
-      <Divider />
-
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
 
       {config.secureSocksDSProxyEnabled && (
         <>

@@ -282,7 +282,7 @@ abstract class DataSourceApi<
   /**
    * Variable query action.
    */
-  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
+  metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag keys for adhoc filters

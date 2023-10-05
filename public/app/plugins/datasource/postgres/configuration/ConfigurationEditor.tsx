@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
   Alert,
@@ -89,7 +89,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     };
   };
 
-  const WIDTH_SHORT = 15;
   const WIDTH_LONG = 40;
 
   return (
@@ -314,84 +313,84 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       <Divider />
 
       <ConfigSection title="Additional settings">
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Version</span>
-                <Tooltip
-                  content={
-                    <span>This option controls what functions are available in the PostgreSQL query builder</span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-        >
-          <Select
-            value={jsonData.postgresVersion || 903}
-            onChange={onJSONDataOptionSelected('postgresVersion')}
-            options={versionOptions}
-            width={WIDTH_LONG}
-          />
-        </Field>
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Min time interval</span>
-                <Tooltip
-                  content={
-                    <span>
-                      A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
-                      example
-                      <code>1m</code> if your data is written every minute.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-        >
-          <Input
-            placeholder="1m"
-            value={jsonData.timeInterval || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
-            width={WIDTH_LONG}
-          />
-        </Field>
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>TimescaleDB</span>
-                <Tooltip
-                  content={
-                    <span>
-                      TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will
-                      use
-                      <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific
-                      aggregate functions in the query builder.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-        >
-          <Switch value={jsonData.timescaledb || false} onChange={onTimeScaleDBChanged} width={WIDTH_LONG} />
-        </Field>
+        <ConfigSubSection title="PostgreSQL Options">
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Version</span>
+                  <Tooltip
+                    content={
+                      <span>This option controls what functions are available in the PostgreSQL query builder</span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Select
+              value={jsonData.postgresVersion || 903}
+              onChange={onJSONDataOptionSelected('postgresVersion')}
+              options={versionOptions}
+              width={WIDTH_LONG}
+            />
+          </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Min time interval</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
+                        example
+                        <code>1m</code> if your data is written every minute.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Input
+              placeholder="1m"
+              value={jsonData.timeInterval || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+              width={WIDTH_LONG}
+            />
+          </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>TimescaleDB</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will
+                        use
+                        <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific
+                        aggregate functions in the query builder.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Switch value={jsonData.timescaledb || false} onChange={onTimeScaleDBChanged} width={WIDTH_LONG} />
+          </Field>
+        </ConfigSubSection>
+
+        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
-
-      <Divider />
-
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
 
       {config.secureSocksDSProxyEnabled && (
         <>

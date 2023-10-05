@@ -141,6 +141,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     request.targets.forEach((target) => {
+      if (request.app === CoreApp.Dashboard || request.app === CoreApp.PanelViewer) {
+        return;
+      }
+
       reportInteraction('grafana_sql_query_executed', {
         datasource: target.datasource?.type,
         editorMode: target.editorMode,

@@ -560,7 +560,7 @@ var (
 		},
 		{
 			Name:         "vizAndWidgetSplit",
-			Description:  "Split panels between vizualizations and widgets",
+			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -729,9 +729,10 @@ var (
 		{
 			Name:         "newBrowseDashboards",
 			Description:  "New browse/manage dashboards UI",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:        "sseGroupByDatasource",
@@ -815,6 +816,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "enableNativeHTTPHistogram",
+			Description:  "Enables native HTTP Histograms",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "transformationsVariableSupport",
+			Description:  "Allows using variables in transformations",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

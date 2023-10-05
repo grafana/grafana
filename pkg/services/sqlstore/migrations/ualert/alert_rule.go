@@ -108,8 +108,9 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	annotations["message"] = da.Message
-	var err error
+
+	message := MigrateTmpl(l.New("field", "message"), da.Message)
+	annotations["message"] = message
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
