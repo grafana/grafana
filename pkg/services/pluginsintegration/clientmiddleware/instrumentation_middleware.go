@@ -182,7 +182,7 @@ func (m *InstrumentationMiddleware) CallResource(ctx context.Context, req *backe
 
 func (m *InstrumentationMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	var result *backend.CheckHealthResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (innerErr error) {
 		result, innerErr = m.next.CheckHealth(ctx, req)
 		return
 	})
