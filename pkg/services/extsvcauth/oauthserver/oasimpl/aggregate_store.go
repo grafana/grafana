@@ -9,7 +9,7 @@ import (
 	"github.com/ory/fosite/handler/rfc7523"
 	"gopkg.in/square/go-jose.v2"
 
-	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 )
 
 var _ fosite.ClientManager = &OAuth2ServiceImpl{}

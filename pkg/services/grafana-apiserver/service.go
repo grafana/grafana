@@ -6,7 +6,6 @@ import (
 	"net"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -126,7 +125,7 @@ func ProvideService(
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
@@ -141,7 +140,10 @@ func ProvideService(
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
+	}
+
+	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
 }
@@ -277,7 +279,6 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: this is a hack. see note in ProvideService
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
 			req.URL.Path = "/"
 		}

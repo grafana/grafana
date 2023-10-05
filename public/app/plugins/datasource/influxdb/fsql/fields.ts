@@ -29,6 +29,7 @@ export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
         type = 'date';
         break;
       }
+      case 'TIMESTAMP(NANOSECOND, NONE)':
       case 'DATETIME': {
         type = 'datetime';
         break;

@@ -729,9 +729,10 @@ var (
 		{
 			Name:         "newBrowseDashboards",
 			Description:  "New browse/manage dashboards UI",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:        "sseGroupByDatasource",

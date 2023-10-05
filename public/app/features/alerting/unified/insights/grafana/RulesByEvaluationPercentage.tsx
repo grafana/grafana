@@ -1,10 +1,12 @@
-import { ThresholdsMode } from '@grafana/data';
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
-export function getGrafanaInstancesPercentageByStateScene(
+export function getGrafanaRulesByEvaluationPercentageScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -16,7 +18,7 @@ export function getGrafanaInstancesPercentageByStateScene(
         refId: 'A',
         expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules) / ignoring(state) group_left sum(grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
-        legendFormat: '{{alertstate}}',
+        legendFormat: '{{state}} evaluation',
       },
     ],
     $timeRange: timeRange,
@@ -26,24 +28,17 @@ export function getGrafanaInstancesPercentageByStateScene(
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setCustomFieldConfig('fillOpacity', 45)
       .setUnit('percentunit')
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setMax(1)
-      .setThresholds({
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          {
-            color: 'green',
-            value: 0,
-          },
-          {
-            color: 'red',
-            value: 80,
-          },
-        ],
-      })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
+      )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
