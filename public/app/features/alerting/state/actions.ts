@@ -57,7 +57,7 @@ export function testNotificationChannel(data: any): ThunkResult<void> {
 
 export function loadNotificationTypes(): ThunkResult<void> {
   return async (dispatch) => {
-    const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
+    const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers-legacy`);
 
     const notificationTypes = alertNotifiers.sort((o1, o2) => {
       if (o1.name > o2.name) {
