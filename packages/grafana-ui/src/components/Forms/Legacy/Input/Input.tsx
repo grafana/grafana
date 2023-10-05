@@ -4,6 +4,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { ValidationEvents, ValidationRule } from '../../../../types';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
 
+/** @deprecated */
 export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
@@ -24,6 +25,7 @@ interface State {
   error: string | null;
 }
 
+/** @deprecated */
 export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',

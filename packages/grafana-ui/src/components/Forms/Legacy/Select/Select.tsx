@@ -51,6 +51,8 @@ export const MenuList = (props: MenuListProps) => {
     </components.MenuList>
   );
 };
+
+/** @deprecated */
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
@@ -168,6 +170,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   }
 }
 
+/** @deprecated */
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
   static contextType = ThemeContext;
 

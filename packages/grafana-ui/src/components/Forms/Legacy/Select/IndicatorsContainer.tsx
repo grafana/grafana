@@ -3,6 +3,7 @@ import { components, IndicatorsContainerProps } from 'react-select';
 
 import { Icon } from '../../../Icon/Icon';
 
+/** @deprecated */
 export const IndicatorsContainer = (props: IndicatorsContainerProps) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (

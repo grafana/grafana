@@ -22,6 +22,7 @@ export interface State {
   id: string;
 }
 
+/** @deprecated */
 export class Switch extends PureComponent<Props, State> {
   state = {
     id: uniqueId(),

@@ -38,6 +38,8 @@ const getSecretFormFieldStyles = () => {
  * a reset button that will clear the input and makes it accessible. In non configured state it behaves like normal
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
+ *
+ * @deprecated
  */
 export const SecretFormField = ({
   label = 'Password',
