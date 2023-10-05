@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
 
-import { FieldConfigSource } from '@grafana/data';
+import { DataLink, FieldConfigSource, ThresholdsConfig, ValueMapping } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { FIELD_CONFIG_CUSTOM_KEY, PanelLogEvents } from 'app/core/log_events';
+import {
+  FIELD_CONFIG_CUSTOM_KEY,
+  FIELD_CONFIG_DATA_LINKS_KEY,
+  FIELD_CONFIG_MAPPINGS_KEY,
+  FIELD_CONFIG_THRESHOLD_KEY,
+  PanelLogEvents,
+} from 'app/core/log_events';
 import { DashboardSavedEvent } from 'app/types/events';
 
 interface PanelOptionsLoggerProps {
@@ -51,6 +57,8 @@ export const usePanelOptionsLogger = (props: PanelOptionsLoggerProps) => {
       panelType: props.panelType,
     };
 
+    console.log(eventName, logObj);
+    return;
     faro.api.pushEvent(eventName, logObj);
   };
 
@@ -78,28 +86,10 @@ export const usePanelOptionsLogger = (props: PanelOptionsLoggerProps) => {
     }
   };
 
-  const logFieldConfigChanges = (
+  const logCustomFieldConfigChanges = (
     fieldConfig: FieldConfigSource<unknown>,
-    oldFieldConfig: FieldConfigSource<unknown>
+    oldDefaults: { [key: string]: unknown }
   ) => {
-    const oldDefaults: { [key: string]: unknown } = { ...oldFieldConfig.defaults };
-
-    // go through field config keys except custom, we treat that below
-    for (const [key, value] of Object.entries(fieldConfig.defaults)) {
-      if (key === FIELD_CONFIG_CUSTOM_KEY) {
-        continue;
-      }
-
-      const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
-      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : String(oldDefaults[key]);
-
-      if (oldDefaults[key] === undefined) {
-        logPanelEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
-      } else if (oldValue !== newValue) {
-        logPanelEvent(PanelLogEvents.DEFAULT_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
-      }
-    }
-
     if (!fieldConfig.defaults.custom || oldDefaults.custom === undefined) {
       return;
     }
@@ -121,6 +111,95 @@ export const usePanelOptionsLogger = (props: PanelOptionsLoggerProps) => {
         logPanelEvent(PanelLogEvents.CUSTOM_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
+  };
+
+  const logThresholdsChanges = (fieldConfig: FieldConfigSource<unknown>, oldThresholds?: ThresholdsConfig) => {
+    if (!fieldConfig.defaults.thresholds || !oldThresholds) {
+      return;
+    }
+
+    if (fieldConfig.defaults.thresholds.mode !== oldThresholds.mode) {
+      logPanelEvent(
+        PanelLogEvents.THRESHOLDS_MODE_CHANGED_EVENT,
+        FIELD_CONFIG_THRESHOLD_KEY,
+        fieldConfig.defaults.thresholds.mode,
+        oldThresholds.mode
+      );
+    }
+
+    if (fieldConfig.defaults.thresholds.steps.length !== oldThresholds.steps.length) {
+      logPanelEvent(
+        PanelLogEvents.THRESHOLDS_COUNT_CHANGED_EVENT,
+        FIELD_CONFIG_THRESHOLD_KEY,
+        String(fieldConfig.defaults.thresholds.steps.length),
+        String(oldThresholds.steps.length)
+      );
+    }
+  };
+
+  const logMappingsChanges = (fieldConfig: FieldConfigSource<unknown>, oldMappings?: ValueMapping[]) => {
+    if (!fieldConfig.defaults.mappings || !oldMappings) {
+      return;
+    }
+
+    if (fieldConfig.defaults.mappings.length !== oldMappings.length) {
+      logPanelEvent(
+        PanelLogEvents.MAPPINGS_COUNT_CHANGED_EVENT,
+        FIELD_CONFIG_MAPPINGS_KEY,
+        String(fieldConfig.defaults.mappings.length),
+        String(oldMappings.length)
+      );
+    }
+  };
+
+  const logDataLinksChanges = (fieldConfig: FieldConfigSource<unknown>, oldLinks?: DataLink[]) => {
+    if (!fieldConfig.defaults.links || !oldLinks) {
+      return;
+    }
+
+    if (fieldConfig.defaults.links.length !== oldLinks.length) {
+      logPanelEvent(
+        PanelLogEvents.LINKS_COUNT_CHANGED_EVENT,
+        FIELD_CONFIG_DATA_LINKS_KEY,
+        String(fieldConfig.defaults.links.length),
+        String(oldLinks.length)
+      );
+    }
+  };
+
+  const logFieldConfigChanges = (
+    fieldConfig: FieldConfigSource<unknown>,
+    oldFieldConfig: FieldConfigSource<unknown>
+  ) => {
+    const oldDefaults: { [key: string]: unknown } = { ...oldFieldConfig.defaults };
+
+    // go through field config keys except certain keys, we treat them below
+    for (const [key, value] of Object.entries(fieldConfig.defaults)) {
+      if (
+        [
+          FIELD_CONFIG_CUSTOM_KEY,
+          FIELD_CONFIG_THRESHOLD_KEY,
+          FIELD_CONFIG_MAPPINGS_KEY,
+          FIELD_CONFIG_DATA_LINKS_KEY,
+        ].includes(key)
+      ) {
+        continue;
+      }
+
+      const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
+      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : String(oldDefaults[key]);
+
+      if (oldDefaults[key] === undefined) {
+        logPanelEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
+      } else if (oldValue !== newValue) {
+        logPanelEvent(PanelLogEvents.DEFAULT_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
+      }
+    }
+
+    logCustomFieldConfigChanges(fieldConfig, oldDefaults);
+    logThresholdsChanges(fieldConfig, oldFieldConfig.defaults.thresholds);
+    logMappingsChanges(fieldConfig, oldFieldConfig.defaults.mappings);
+    logDataLinksChanges(fieldConfig, oldFieldConfig.defaults.links);
   };
 
   useEffect(() => {

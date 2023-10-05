@@ -7,7 +7,14 @@ export enum PanelLogEvents {
   NEW_CUSTOM_FIELD_CONFIG_EVENT = 'new custom field config',
   CUSTOM_FIELD_CONFIG_CHANGED_EVENT = 'custom field config changed',
   MEASURE_PANEL_LOAD_TIME_EVENT = 'measure panel load time',
+  THRESHOLDS_COUNT_CHANGED_EVENT = 'thresholds count changed',
+  THRESHOLDS_MODE_CHANGED_EVENT = 'thresholds mode changed',
+  MAPPINGS_COUNT_CHANGED_EVENT = 'mappings count changed',
+  LINKS_COUNT_CHANGED_EVENT = 'links count changed',
   PANEL_ERROR = 'panel error',
 }
 
 export const FIELD_CONFIG_CUSTOM_KEY = 'custom';
+export const FIELD_CONFIG_THRESHOLD_KEY = 'thresholds';
+export const FIELD_CONFIG_MAPPINGS_KEY = 'mappings';
+export const FIELD_CONFIG_DATA_LINKS_KEY = 'links';
