@@ -61,7 +61,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		if resp != nil && innerErr != nil {
-			innerErr = &instrumentation.PluginError{Err: innerErr, ErrorSource: errorSource(resp)}
+			innerErr = &instrumentation.PluginError{Err: innerErr, Source: errorSource(resp)}
 		}
 		return
 	})

@@ -58,17 +58,13 @@ const (
 )
 
 type PluginError struct {
-	ErrorSource backend.ErrorSource
+	Source backend.ErrorSource
 
 	Err error
 }
 
 func (r PluginError) Error() string {
 	return r.Err.Error()
-}
-
-func (r PluginError) Source() backend.ErrorSource {
-	return r.ErrorSource
 }
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
@@ -86,7 +82,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		}
 		pluginErr, ok := err.(PluginError)
 		if ok {
-			errorSource = pluginErr.ErrorSource
+			errorSource = pluginErr.Source
 		}
 	}
 
