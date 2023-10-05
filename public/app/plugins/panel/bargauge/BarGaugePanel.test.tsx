@@ -99,6 +99,7 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       },
       orientation: VizOrientation.Horizontal,
       showUnfilled: true,
+      maxVizHeight: 100,
       minVizHeight: 10,
       minVizWidth: 0,
       valueMode: BarGaugeValueMode.Color,

@@ -104,6 +104,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         renderCounter={renderCounter}
         width={width}
         height={height}
+        maxVizHeight={options.maxVizHeight}
         minVizWidth={options.minVizWidth}
         minVizHeight={options.minVizHeight}
         itemSpacing={this.getItemSpacing()}

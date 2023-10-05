@@ -32,6 +32,7 @@ composableKinds: PanelCfg: {
 					showUnfilled: bool | *true
 					minVizWidth:  uint32 | *0
 					minVizHeight: uint32 | *10
+					maxVizHeight: uint32 | *1000
 				} @cuetsy(kind="interface")
 			}
 		}]

@@ -15,6 +15,7 @@ export const pluginVersion = "10.2.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
   displayMode: common.BarGaugeDisplayMode;
+  maxVizHeight: number;
   minVizHeight: number;
   minVizWidth: number;
   showUnfilled: boolean;
@@ -23,6 +24,7 @@ export interface Options extends common.SingleStatBaseOptions {
 
 export const defaultOptions: Partial<Options> = {
   displayMode: common.BarGaugeDisplayMode.Gradient,
+  maxVizHeight: 1000,
   minVizHeight: 10,
   minVizWidth: 0,
   showUnfilled: true,

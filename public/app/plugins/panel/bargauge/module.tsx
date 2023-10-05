@@ -61,6 +61,13 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         description: 'Minimum row height',
         defaultValue: defaultOptions.minVizHeight,
         showIf: (options) => options.orientation === VizOrientation.Horizontal,
+      })
+      .addNumberInput({
+        path: 'maxVizHeight',
+        name: 'Max height',
+        description: 'Maximum row height',
+        defaultValue: defaultOptions.maxVizHeight,
+        showIf: (options) => options.orientation === VizOrientation.Horizontal,
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)

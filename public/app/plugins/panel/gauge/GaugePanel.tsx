@@ -91,6 +91,7 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
+        maxVizHeight={options.maxVizHeight}
         minVizHeight={options.minVizHeight}
         minVizWidth={options.minVizWidth}
       />
