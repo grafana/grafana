@@ -106,8 +106,8 @@ func setupTestEnv(t *testing.T) *TestEnv {
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
 
-	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
-	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
+	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
+	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
 	prevSaID := int64(3)
 	// Using a function to prevent modifying the same object in the tests
 	client1 := func() *oauthserver.ExternalService {
@@ -179,7 +179,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.AssertCalled(t, "CreateServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == serviceName && *cmd.Role == roletype.RoleViewer
+						return cmd.Name == serviceName && *cmd.Role == roletype.RoleNone
 					}),
 				)
 			},
