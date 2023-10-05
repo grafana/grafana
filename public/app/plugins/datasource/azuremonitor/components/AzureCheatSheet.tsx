@@ -173,7 +173,7 @@ const AzureCheatSheet = (props: Props) => {
       >
         {!isLoading && visibleQueries ? (
           <div>
-            <div className={css({ display: 'flex' })}>
+            <div className={styles.filterAlignment}>
               <Input
                 value={searchInputValue}
                 onChange={(e) => {
@@ -184,7 +184,7 @@ const AzureCheatSheet = (props: Props) => {
                 placeholder="Search Logs queries"
                 width={50}
               />
-              <InlineField label="Categories" grow={true} labelWidth="auto">
+              <InlineField label="Categories" grow={true} labelWidth="auto" className={styles.categoryDropdown}>
                 <Select
                   options={dropdownMenu}
                   value={''}
@@ -201,7 +201,7 @@ const AzureCheatSheet = (props: Props) => {
                 />
               </InlineField>
             </div>
-            <div>
+            <div className={styles.spacing}>
               Query results:{' '}
               {Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
                 totalQueries = visibleQueries[category]!.length + totalQueries;
@@ -286,6 +286,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     spacing: css({
       marginBottom: `${theme.spacing(1)}`,
+    }),
+    filterAlignment: css({
+      display: 'flex',
+    }),
+    categoryDropdown: css({
+      marginLeft: '10px',
     }),
   };
 };
