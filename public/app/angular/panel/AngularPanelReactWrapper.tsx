@@ -23,7 +23,6 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
     const divRef = useRef<HTMLDivElement>(null);
     const angularState = useRef<AngularScopeProps | undefined>();
     const angularComponent = useRef<AngularComponent | undefined>();
-    //const [state, setState] = useState<AngularPanelState>({});
 
     useEffect(() => {
       if (!divRef.current) {
