@@ -19,6 +19,10 @@ weight: 800
 
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
+{{% admonition type="note" %}}
+To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, please [file a support ticket](/profile/org/tickets/new). Note that standard ingest and retention rates apply for ingesting these audit logs.
+{{% /admonition %}}
+
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
