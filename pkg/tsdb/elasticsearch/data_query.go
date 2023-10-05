@@ -46,8 +46,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		queryRes := createPluginErrorResponse(e.dataQueries[0].RefID, err)
-		return queryRes, err
+		return createPluginErrorResponse(e.dataQueries[0].RefID, err), err
 	}
 
 	ms := e.client.MultiSearch()
@@ -58,8 +57,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			queryRes := createPluginErrorResponse(e.dataQueries[0].RefID, err)
-			return queryRes, err
+			return createPluginErrorResponse(e.dataQueries[0].RefID, err), err
 		}
 	}
 
@@ -67,14 +65,13 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		queryRes := createPluginErrorResponse(e.dataQueries[0].RefID, err)
-		return queryRes, err
+		return createPluginErrorResponse(e.dataQueries[0].RefID, err), err
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
-	queryRes := &backend.QueryDataResponse{}
 	if err != nil {
+		queryRes := &backend.QueryDataResponse{}
 		if res.Status < 500 {
 			// We don't want to show request errors in the UI and therefore we change it to a generic error
 			// We are keeping the original error in the logs

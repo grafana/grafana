@@ -117,8 +117,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations), "stage", es.StageParseResponse)
 				instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 				resSpan.End()
-				queryDataRes := createPluginErrorResponse(target.RefID, err)
-				return queryDataRes, err
+				return createPluginErrorResponse(target.RefID, err), err
 			}
 			nameFields(queryRes, target)
 			trimDatapoints(queryRes, target)

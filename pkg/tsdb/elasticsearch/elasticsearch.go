@@ -64,8 +64,7 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 
 	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
 	if err != nil {
-		queryDataRes := createPluginErrorResponse(queries[0].RefID, err)
-		return queryDataRes, err
+		return createPluginErrorResponse(queries[0].RefID, err), err
 	}
 	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
 	return query.execute()
