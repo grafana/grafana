@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 
@@ -25,9 +25,18 @@ export function getRuleGroupEvaluationDurationScene(
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false })
+      .setOverrides((b) =>
+        b.matchFieldsByQuery('A').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        })
+      )
       .build(),
   });
 }

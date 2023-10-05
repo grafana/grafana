@@ -812,9 +812,9 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The role new users will be assigned for the main organization (if the
-`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin`, `Editor` and `None`. e.g.:
+The `auto_assign_org_role` setting determines the default role assigned to new users
+in the main organization (if `auto_assign_org` setting is set to true).
+The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
 
 `auto_assign_org_role = Viewer`
 
