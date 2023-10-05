@@ -137,4 +137,5 @@ export interface FeatureToggles {
   alertingModifiedExport?: boolean;
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
 }
