@@ -2,13 +2,11 @@ package serviceregistration
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 )
 
 type Service struct {
@@ -50,23 +48,20 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	extSvc, err := s.os.SaveExternalService(ctx, &extsvcauth.ExternalServiceRegistration{
-		Name:            svcName,
-		Impersonation:   impersonation,
-		Self:            self,
-		AuthProvider:    extsvcauth.OAuth2Server,
-		AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
+		Name:             svcName,
+		Impersonation:    impersonation,
+		Self:             self,
+		AuthProvider:     extsvcauth.OAuth2Server,
+		OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	dto := &auth.ExternalService{ClientID: extSvc.ID, ClientSecret: extSvc.Secret}
-
-	extSvcExtra, ok := extSvc.Extra.(oauthserver.ExternalServiceDTOExtra)
-	if !ok {
-		return nil, errors.New("could not parse dto extra config")
+	if extSvc.OAuthExtra != nil {
+		dto.PrivateKey = extSvc.OAuthExtra.KeyResult.PrivatePem
 	}
-	dto.PrivateKey = extSvcExtra.KeyResult.PrivatePem
 
 	return dto, nil
 }
