@@ -51,7 +51,7 @@ type ConfiguredFields struct {
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
-	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
+	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, backend.ErrorSource, error)
 	MultiSearch() *MultiSearchRequestBuilder
 }
 
@@ -168,8 +168,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	return resp, nil
 }
 
-func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, backend.ErrorSource, error) {
 	var err error
+	errorSource := backend.ErrorSourcePlugin
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch", trace.WithAttributes(
@@ -188,15 +189,21 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		status := "error"
+		errorSource = backend.ErrorSourceDownstream
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
 		if clientRes != nil {
 			lp = append(lp, "statusCode", clientRes.StatusCode)
+			// For status code < 500, we assume that the error is due to a bad request and therefore plugin issue
+			if clientRes.ContentLength < 500 {
+				errorSource = backend.ErrorSourcePlugin
+			}
 		}
 		c.logger.Error("Error received from Elasticsearch", lp...)
-		return nil, err
+
+		return nil, errorSource, err
 	}
 	res := clientRes
 	defer func() {
@@ -221,14 +228,14 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	err = dec.Decode(&msr)
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
-		return nil, err
+		return nil, errorSource, err
 	}
 
 	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
 
 	msr.Status = res.StatusCode
 
-	return &msr, nil
+	return &msr, errorSource, nil
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
