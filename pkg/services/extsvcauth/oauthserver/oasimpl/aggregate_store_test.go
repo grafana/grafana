@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var cachedExternalService = func() *oauthserver.OAuthClient {
-	return &oauthserver.OAuthClient{
+var cachedExternalService = func() *oauthserver.ExternalService {
+	return &oauthserver.ExternalService{
 		Name:             "my-ext-service",
 		ClientID:         "RANDOMID",
 		Secret:           "RANDOMSECRET",
