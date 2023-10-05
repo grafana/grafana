@@ -7,14 +7,26 @@ import {
   VizPanel,
   dataLayers,
   SceneDataLayerProvider,
+  SceneQueryRunner,
+  SceneDataTransformer,
 } from '@grafana/scenes';
-import { AnnotationQuery, Dashboard, defaultDashboard, FieldConfigSource, Panel, RowPanel } from '@grafana/schema';
+import {
+  AnnotationQuery,
+  Dashboard,
+  DataTransformerConfig,
+  defaultDashboard,
+  FieldConfigSource,
+  Panel,
+  RowPanel,
+} from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
@@ -116,6 +128,58 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
     panel.timeFrom = panelTime.state.timeFrom;
     panel.timeShift = panelTime.state.timeShift;
     panel.hideTimeOverride = panelTime.state.hideTimeOverride;
+  }
+
+  const dataProvider = vizPanel.state.$data;
+
+  // Dashboard datasource handling
+  if (dataProvider instanceof ShareQueryDataProvider) {
+    panel.datasource = {
+      type: 'datasource',
+      uid: SHARED_DASHBOARD_QUERY,
+    };
+    panel.targets = [
+      {
+        datasource: { ...panel.datasource },
+        refId: 'A',
+        panelId: dataProvider.state.query.panelId,
+        topic: dataProvider.state.query.topic,
+      },
+    ];
+  }
+
+  // Regular queries handling
+  if (dataProvider instanceof SceneQueryRunner) {
+    panel.targets = dataProvider.state.queries;
+    panel.maxDataPoints = dataProvider.state.maxDataPoints;
+    panel.datasource = dataProvider.state.datasource;
+  }
+
+  // Transformations handling
+  if (dataProvider instanceof SceneDataTransformer) {
+    const panelData = dataProvider.state.$data;
+    if (panelData instanceof ShareQueryDataProvider) {
+      panel.datasource = {
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      };
+      panel.targets = [
+        {
+          datasource: { ...panel.datasource },
+          refId: 'A',
+          panelId: panelData.state.query.panelId,
+          topic: panelData.state.query.topic,
+        },
+      ];
+    }
+
+    if (panelData instanceof SceneQueryRunner) {
+      panel.targets = panelData.state.queries;
+      panel.maxDataPoints = panelData.state.maxDataPoints;
+      panel.datasource = panelData.state.datasource;
+    }
+
+    panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
 
   if (vizPanel.state.displayMode === 'transparent') {

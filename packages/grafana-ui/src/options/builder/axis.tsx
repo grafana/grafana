@@ -9,7 +9,11 @@ import {
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
-import { graphFieldOptions, Select, RadioButtonGroup, Input, Field } from '../../index';
+import { Field } from '../../components/Forms/Field';
+import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { Input } from '../../components/Input/Input';
+import { Select } from '../../components/Select/Select';
+import { graphFieldOptions } from '../../components/uPlot/config';
 
 /**
  * @alpha
