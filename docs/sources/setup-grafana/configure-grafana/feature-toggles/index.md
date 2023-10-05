@@ -144,6 +144,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
+| `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
 
 ## Development feature toggles
 
