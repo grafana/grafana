@@ -351,10 +351,11 @@ export async function getAfterSelectorCompletions(
 export async function getLogfmtCompletions(
   logQuery: string,
   flags: boolean,
+  trailingComma: boolean | undefined,
+  trailingSpace: boolean | undefined,
   otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const trailingComma = logQuery.trimEnd().endsWith(',');
   if (trailingComma) {
     // The user is typing a new label, so we remove the last comma
     logQuery = trimEnd(logQuery, ', ');
@@ -362,20 +363,38 @@ export async function getLogfmtCompletions(
   
   let completions: Completion[] = [];
 
-  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flags && !trailingComma) {
-    completions = [...LOGFMT_ARGUMENT_COMPLETIONS, ...pipeOperations];
-  } else if (!trailingComma) {
-    completions = [...pipeOperations];
+  // {label="value"} | logfmt ^
+  if (!trailingComma && !flags) {
+    completions = [...LOGFMT_ARGUMENT_COMPLETIONS];
   }
-
+  // {label="value"} | logfmt --flag ^
+  // {label="value"} | logfmt label, label2 ^
+  if (!trailingComma && trailingSpace) {
+    /**
+     * Don't offer parsers: {label="value"} | logfmt ^
+     * Offer parsers: {label="value"} | logfmt label ^
+     */
+    const parserCompletions = otherLabels.length > 0 ? await getParserCompletions(
+      '| ',
+      hasJSON,
+      hasLogfmt,
+      hasPack,
+      extractedLabelKeys,
+      true
+    ) : [];
+    completions = [...completions, ...parserCompletions, ...pipeOperations];
+  }
   /**
    * We want to offer labels if there are no other labels or if there is a trailing comma.
    * Otherwise, there are situations where the label suggestion will be inserted with an extra comma.
+   * {label="value"} | logfmt ^
+   * {label="value"} | logfmt label,^
+   * {label="value"} | logfmt label, ^
    */ 
-  if (trailingComma || otherLabels.length === 0) {
+  if (otherLabels.length === 0 || trailingSpace || trailingComma) {
     const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
 
     // No other labels or trailing comma, so we don't need to add a prefix
@@ -473,7 +492,7 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
+      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.trailingComma, situation.trailingSpace, situation.otherLabels, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

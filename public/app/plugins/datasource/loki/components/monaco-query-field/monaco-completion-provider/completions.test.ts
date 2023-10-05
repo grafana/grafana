@@ -532,11 +532,12 @@ describe('IN_LOGFMT completions', () => {
       hasPack: false,
     });
   });
-  it('autocompleting logfmt should return flags, parsers, pipe operations, and labels', async () => {
+  it('autocompleting logfmt should return flags, pipe operations, and labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
-      logQuery: `{job="grafana"} | logfmt`,
+      logQuery: `{job="grafana"} | logfmt `,
       flags: false,
+      trailingSpace: true,
       otherLabels: [],
     };
 
@@ -608,11 +609,12 @@ describe('IN_LOGFMT completions', () => {
     `);
   });
 
-  it('autocompleting logfmt with flags should return parser, pipe operations, and labels', async () => {
+  it('autocompleting logfmt with flags and trailing space should return pipe operations, and labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt`,
       flags: true,
+      trailingSpace: true,
       otherLabels: [],
     };
 
@@ -672,56 +674,45 @@ describe('IN_LOGFMT completions', () => {
     `);
   });
 
-  it('autocompleting logfmt should exclude already used labels from the suggestions', async () => {
+  it('autocompleting logfmt with labels and trailing comma should only return labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt`,
-      flags: true,
-      otherLabels: ['label1', 'label2'],
+      flags: false,
+      trailingComma: true,
+      otherLabels: [],
     };
 
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
-          "documentation": "Operator docs",
-          "insertText": "| line_format "{{.$0}}"",
-          "isSnippet": true,
-          "label": "line_format",
-          "type": "PIPE_OPERATION",
+          "insertText": "label1",
+          "label": "label1",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
         },
         {
-          "documentation": "Operator docs",
-          "insertText": "| label_format",
-          "isSnippet": true,
-          "label": "label_format",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| unwrap",
-          "label": "unwrap",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| decolorize",
-          "label": "decolorize",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| drop",
-          "label": "drop",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| keep",
-          "label": "keep",
-          "type": "PIPE_OPERATION",
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
         },
       ]
     `);
+  });
+
+  it('autocompleting logfmt should exclude already used labels from the suggestions', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt label1, label2`,
+      flags: true,
+      trailingSpace: true,
+      otherLabels: ['label1', 'label2'],
+    };
+    const completions = await getCompletions(situation, completionProvider);
+    const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
+
+    expect(labelCompletions).toHaveLength(0);
   });
 
   it('autocompleting logfmt labels should correctly add trailing commas', async () => {
@@ -729,6 +720,7 @@ describe('IN_LOGFMT completions', () => {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt label1,`,
       flags: true,
+      trailingComma: true,
       otherLabels: ['label1'],
     };
 
@@ -744,6 +736,7 @@ describe('IN_LOGFMT completions', () => {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: false,
+      trailingComma: true,
       otherLabels: ['label1'],
     };
 
@@ -764,6 +757,7 @@ describe('IN_LOGFMT completions', () => {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: true,
+      trailingComma: true,
       otherLabels: ['label1'],
     };
 

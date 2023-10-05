@@ -28,6 +28,7 @@ import {
   ParserFlag,
   LabelExtractionExpression,
   LabelExtractionExpressionList,
+  LogfmtExpressionParser,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
@@ -108,6 +109,8 @@ export type Situation =
       type: 'IN_LOGFMT';
       otherLabels: string[];
       flags: boolean;
+      trailingSpace: boolean;
+      trailingComma: boolean;
       logQuery: string;
     }
   | {
@@ -173,6 +176,7 @@ const RESOLVERS: Resolver[] = [
       [LogRangeExpr],
       [ERROR_NODE_ID, LabelExtractionExpressionList],
       [LabelExtractionExpressionList],
+      [LogfmtExpressionParser]
     ],
     fun: resolveLogfmtParser,
   },
@@ -469,11 +473,17 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
     .map((label: SyntaxNode) => getNodeText(label, text));
 
+  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, position).trim();
+  const trailingSpace = text.charAt(cursorPosition - 1) === ' ';
+  const trailingComma = text.trimEnd().charAt(position - 1) === ',';
+
   return {
     type: 'IN_LOGFMT',
     otherLabels,
     flags,
-    logQuery: getLogQueryFromMetricsQueryAtPosition(text, position).trim(),
+    trailingSpace,
+    trailingComma,
+    logQuery,
   };
 }
 
