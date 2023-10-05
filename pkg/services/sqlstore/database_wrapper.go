@@ -13,6 +13,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/core"
 
@@ -100,10 +101,11 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))
 	defer span.End()
 
-	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})
+	span.AddEvent("query", trace.WithAttributes(attribute.String("query", query)))
+	span.AddEvent("status", trace.WithAttributes(attribute.String("status", status)))
 
 	if err != nil {
-		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
+		span.RecordError(err)
 	}
 
 	ctxLogger := h.log.FromContext(ctx)
