@@ -88,7 +88,6 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return plugins.ErrPluginNotRegistered
 	}
 
-	// TODO: implement as middleware?
 	removeConnectionHeaders(req.Headers)
 	removeHopByHopHeaders(req.Headers)
 	removeNonAllowedHeaders(req.Headers)
