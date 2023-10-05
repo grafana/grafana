@@ -27,7 +27,7 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 
 // Includes https://github.com/kubernetes/kube-openapi/pull/420
 // This will not be required in the next k8s release
-replace k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f => github.com/ryantxu/kube-openapi v0.0.0-20230824154605-fe0f3703fd8d
+replace k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f => github.com/ryantxu/kube-openapi v0.0.0-20230824154605-fe0f3703fd8d // @grafana/grafana-app-platform-squad
 
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
