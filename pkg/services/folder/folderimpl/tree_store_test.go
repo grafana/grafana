@@ -417,10 +417,11 @@ func TestIntegrationTreeStoreUpdate(t *testing.T) {
 	storeFolders(t, folderStore.db, true)
 
 	testCases := []struct {
-		desc  string
-		UID   *string
-		ID    *int64
-		Title *string
+		desc      string
+		UID       *string
+		ID        *int64
+		Title     *string
+		ParentUID *string
 	}{
 		{
 			desc: "get by uid",
@@ -431,18 +432,20 @@ func TestIntegrationTreeStoreUpdate(t *testing.T) {
 			ID:   util.Pointer(int64(6)),
 		},
 		{
-			desc:  "get by title",
-			Title: util.Pointer("FLASH"),
+			desc:      "get by title",
+			Title:     util.Pointer("FLASH"),
+			ParentUID: util.Pointer("7"),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			f, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-				OrgID: 1,
-				UID:   tc.UID,
-				ID:    tc.ID,
-				Title: tc.Title,
+				OrgID:     1,
+				UID:       tc.UID,
+				ID:        tc.ID,
+				Title:     tc.Title,
+				ParentUID: tc.ParentUID,
 			})
 			require.NoError(t, err)
 
