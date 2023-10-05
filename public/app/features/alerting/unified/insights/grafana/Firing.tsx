@@ -1,8 +1,11 @@
+import React from 'react';
+
 import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -21,6 +24,7 @@ export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
@@ -35,6 +39,8 @@ export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
           },
         ],
       })
+      .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

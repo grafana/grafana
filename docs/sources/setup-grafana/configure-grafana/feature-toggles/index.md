@@ -49,6 +49,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
+| `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                     | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
 ## Preview feature toggles
@@ -78,7 +79,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
-| `newBrowseDashboards`            | New browse/manage dashboards UI                                                                                                                                                              |
 
 ## Experimental feature toggles
 
