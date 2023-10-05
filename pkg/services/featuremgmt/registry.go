@@ -833,7 +833,7 @@ var (
 		},
 		{
 			Name:         "kubernetesPlaylists",
-			Description:  "Enables use of kubernetes API for playlists",
+			Description:  "Use the kubernetes API in the frontend for playlists",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,

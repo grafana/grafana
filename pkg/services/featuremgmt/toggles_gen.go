@@ -484,6 +484,6 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Enables use of kubernetes API for playlists
+	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 )
