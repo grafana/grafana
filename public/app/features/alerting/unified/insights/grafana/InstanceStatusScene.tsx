@@ -1,8 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { overrideToFixedColor } from '../../home/Insights';
-
+import { InsightsRatingModal } from '../RatingModal';
 export function getInstanceStatByStatusScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
@@ -30,6 +32,7 @@ export function getInstanceStatByStatusScene(
       .setData(query)
       .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

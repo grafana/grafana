@@ -13,6 +13,12 @@ export enum Role {
 
 export type Message = openai.Message;
 
+export enum QuickFeedbackType {
+  Shorter = 'Even shorter',
+  MoreDescriptive = 'More descriptive',
+  Regenerate = 'Regenerate',
+}
+
 /**
  * The OpenAI model to be used.
  */
