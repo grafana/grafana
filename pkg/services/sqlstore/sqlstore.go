@@ -38,6 +38,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	CODE_MIGRATION_SQL  = "code_migration"
+	MIGRATION_LOG_TABLE = "migration_log"
+)
+
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
@@ -559,8 +564,65 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	ss.recursiveQueriesAreSupported = &areSupported
 	return *ss.recursiveQueriesAreSupported, nil
+}
+
+func (ss *SQLStore) migrationHasRun(migrationID string) (bool, migrator.MigrationLog, error) {
+	var record migrator.MigrationLog
+	var exists bool
+	if err := ss.withDbSession(context.Background(), ss.engine, func(sess *DBSession) error {
+		recordFound, err := sess.SQL(fmt.Sprintf("SELECT success, error FROM %s WHERE migration_id = ?", MIGRATION_LOG_TABLE), migrationID).Get(&record)
+		if err != nil {
+			return err
+		}
+
+		exists = recordFound
+		return nil
+	}); err != nil {
+		return false, record, err
+	}
+
+	return exists, record, nil
+}
+
+func (ss *SQLStore) registerMigrationExecution(sess *DBSession, record migrator.MigrationLog) error {
+	if _, err := sess.Table(MIGRATION_LOG_TABLE).Insert(&record); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID string, migrationFunc func(sess *DBSession) error) error {
+	hasRun, existingRecord, err := ss.migrationHasRun(migrationID)
+	if err != nil {
+		return err
+	}
+
+	if hasRun && existingRecord.Success {
+		return nil
+	}
+
+	record := migrator.MigrationLog{
+		MigrationID: migrationID,
+		SQL:         CODE_MIGRATION_SQL,
+		Timestamp:   time.Now(),
+	}
+
+	if err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		migrationErr := migrationFunc(sess)
+
+		if migrationErr != nil {
+			record.Error = migrationErr.Error()
+		}
+		record.Success = true
+		registrationErr := ss.registerMigrationExecution(sess, record)
+		return errors.Join(migrationErr, registrationErr)
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // ITestDB is an interface of arguments for testing db

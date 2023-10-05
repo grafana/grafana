@@ -59,3 +59,7 @@ func (f *FakeDB) RecursiveQueriesAreSupported() (bool, error) {
 func (f *FakeDB) UpdateTempUserWithEmailSent(ctx context.Context, cmd *tempuser.UpdateTempUserWithEmailSentCommand) error {
 	return f.ExpectedError
 }
+
+func (f *FakeDB) RunAndRegisterCodeMigration(ctx context.Context, migrationID string, migrationFunc func(sess *sqlstore.DBSession) error) error {
+	return nil
+}

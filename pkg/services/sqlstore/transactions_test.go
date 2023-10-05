@@ -45,6 +45,31 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 		require.True(t, outerSession.IsClosed())
 	})
 
+	t.Run("successful nested transaction", func(t *testing.T) {
+		var outerSession *DBSession
+		err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+			value := ctx.Value(ContextSessionKey{})
+			var ok bool
+			outerSession, ok = value.(*DBSession)
+
+			require.True(t, ok, "Session should be available in the context but it does not exist")
+			require.True(t, outerSession.transactionOpen, "Transaction should be open")
+
+			require.NoError(t, ss.InTransaction(ctx, func(ctx context.Context) error {
+				require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+					require.Equal(t, outerSession, sess)
+					require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
+					return nil
+				}))
+				require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
+			return nil
+		})
+		require.NoError(t, err)
+		require.True(t, outerSession.IsClosed())
+	})
+
 	t.Run("fails if reuses session without transaction", func(t *testing.T) {
 		require.NoError(t, ss.WithDbSession(context.Background(), func(outerSession *DBSession) error {
 			require.NotNil(t, outerSession)
