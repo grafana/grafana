@@ -14,7 +14,7 @@ type dsType struct {
 	DS struct {
 		Type string `json:"type"`
 	} `json:"datasource"`
-	Instant bool `json:"instant"`
+	Range bool `json:"range"`
 }
 
 func (t dsType) isLoki() bool {
@@ -52,7 +52,7 @@ func canBeInstant(r *models.AlertRule) ([]optimization, bool) {
 			continue
 		}
 
-		if (t.isLoki() && r.Data[i].QueryType != "range") || (t.isPrometheus() && t.Instant) {
+		if (t.isLoki() && r.Data[i].QueryType != "range") || (t.isPrometheus() && !t.Range) {
 			continue
 		}
 
@@ -100,6 +100,7 @@ func migrateToInstant(r *models.AlertRule, optimizations []optimization) error {
 		switch opti.t {
 		case datasources.DS_PROMETHEUS:
 			modelRaw["instant"] = true
+			modelRaw["range"] = false
 			model, err := json.Marshal(modelRaw)
 			if err != nil {
 				return err

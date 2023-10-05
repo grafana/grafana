@@ -323,12 +323,13 @@ func promethesQuery(t *testing.T, refID, datasourceUID string, isInstant bool) m
 						"uid": "%s"
 					},
 					"instant": %t,
+					"range": %t,
 					"editorMode": "code",
 					"expr": "1",
 					"intervalMs": 1000,
 					"maxDataPoints": 43200,
 					"refId": "%s"
-				}`, datasourceUID, isInstant, refID)),
+				}`, datasourceUID, isInstant, !isInstant, refID)),
 	}
 }
 
