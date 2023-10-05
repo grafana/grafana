@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Card,
@@ -50,32 +50,11 @@ type CheatsheetQuery = {
 };
 
 type CheatsheetQueries = {
-  Security?: CheatsheetQuery[] | [];
-  Management?: CheatsheetQuery[] | [];
-  Virtualmachines?: CheatsheetQuery[] | [];
-  Container?: CheatsheetQuery[] | [];
-  Audit?: CheatsheetQuery[] | [];
-  Workloads?: CheatsheetQuery[] | [];
-  Resources?: CheatsheetQuery[] | [];
-  Applications?: CheatsheetQuery[] | [];
-  Monitor?: CheatsheetQuery[] | [];
-  Databases?: CheatsheetQuery[] | [];
-  Windowsvirtualdesktop?: CheatsheetQuery[] | [];
+  [key: string]: CheatsheetQuery[];
 };
 
 type DropdownCategories = {
-  Logs: boolean;
-  Security: boolean;
-  Management: boolean;
-  Virtualmachines: boolean;
-  Container: boolean;
-  Audit: boolean;
-  Workloads: boolean;
-  Resources: boolean;
-  Applications: boolean;
-  Monitor: boolean;
-  Databases: boolean;
-  Windowsvirtualdesktop: boolean;
+  [key: string]: boolean;
 };
 
 type Props = {
@@ -85,20 +64,7 @@ type Props = {
 
 const AzureCheatSheet = (props: Props) => {
   const [cheatsheetQueries, setCheatsheetQueries] = useState<CheatsheetQueries | null>(null);
-  const [areDropdownsOpen, setAreDropdownsOpen] = useState<DropdownCategories>({
-    Logs: false,
-    Security: false,
-    Management: false,
-    Virtualmachines: false,
-    Container: false,
-    Audit: false,
-    Workloads: false,
-    Resources: false,
-    Applications: false,
-    Monitor: false,
-    Databases: false,
-    Windowsvirtualdesktop: false,
-  });
+  const [areDropdownsOpen, setAreDropdownsOpen] = useState<DropdownCategories>({});
   const [visibleQueries, setVisibleQueries] = useState<CheatsheetQueries | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchInputValue, setSearchInputValue] = useState('');
@@ -106,7 +72,7 @@ const AzureCheatSheet = (props: Props) => {
   const lang = { grammar: tokenizer, name: 'kql' };
   const dropdownMenu = useMemo(() => {
     if (cheatsheetQueries) {
-      return Object.keys(cheatsheetQueries).map((category) => {
+      return Object.keys(cheatsheetQueries).map((category): SelectableValue<string> => {
         return {
           label: category,
           value: category,
@@ -127,21 +93,21 @@ const AzureCheatSheet = (props: Props) => {
             ? -1
             : 1;
         });
-        const categorizedQueries = result.categories.reduce(
+        const alphabetizedQueries = result.categories.reduce(
           (queriesByCategory: CheatsheetQueries, category: Category) => {
             const categoryQueries = category.related.queries.map((queryId: string) => {
               return result.queries.find((query: CheatsheetQuery) => query.id === queryId);
             });
-            queriesByCategory[category.displayName as keyof CheatsheetQueries] = categoryQueries;
+            queriesByCategory[category.displayName] = categoryQueries;
             setAreDropdownsOpen({ ...areDropdownsOpen, [category.id]: false });
             return queriesByCategory;
           },
           {}
         );
-        setCheatsheetQueries(categorizedQueries);
-        setVisibleQueries(categorizedQueries);
+        setCheatsheetQueries(alphabetizedQueries);
+        setVisibleQueries(alphabetizedQueries);
         setIsLoading(false);
-        return categorizedQueries;
+        return alphabetizedQueries;
       });
   };
 
@@ -151,54 +117,54 @@ const AzureCheatSheet = (props: Props) => {
     }
   });
 
-  // TODO: feature tracking on kick start your query and use this query button
   const filterQueriesBySearch = (searchValue: string) => {
+    const visibleQueriesCategories = Object.keys(visibleQueries!);
     if (searchValue.length > 0 && cheatsheetQueries) {
       const filteredQueries: CheatsheetQueries = Object.keys(cheatsheetQueries).reduce(
         (filteredQueriesBySearch: CheatsheetQueries, category) => {
-          const filters = cheatsheetQueries[category as keyof CheatsheetQueries]!.filter((query) => {
+          const filters = cheatsheetQueries![category]!.filter((query) => {
             return query.displayName.toLowerCase().includes(searchValue.toLowerCase());
           });
-          filteredQueriesBySearch[category as keyof CheatsheetQueries] = filters;
+          if (visibleQueriesCategories.includes(category)) {
+            filteredQueriesBySearch[category] = filters;
+          }
           return filteredQueriesBySearch;
         },
-        {
-          Security: [],
-          Management: [],
-          Virtualmachines: [],
-          Container: [],
-          Audit: [],
-          Workloads: [],
-          Resources: [],
-          Applications: [],
-          Monitor: [],
-          Databases: [],
-          Windowsvirtualdesktop: [],
-        }
+        {}
       );
+
       setVisibleQueries(filteredQueries);
       return filteredQueries;
     } else {
-      return cheatsheetQueries;
+      if (Object.keys(visibleQueries!).length !== Object.keys(cheatsheetQueries!).length) {
+        setVisibleQueries(visibleQueries);
+        return visibleQueries;
+      } else {
+        setVisibleQueries(cheatsheetQueries);
+        return cheatsheetQueries;
+      }
     }
   };
 
   const filterQueriesByCategory = (categories: SelectableValue<string>) => {
-    const selectedCategories = categories.map((selectedCategory: SelectableValue) => selectedCategory.label);
-    const updatedVisibleQueries = selectedCategories.reduce(
-      (updatedVisibleQueries: CheatsheetQueries, queryCategory: string) => {
-        updatedVisibleQueries[queryCategory as keyof CheatsheetQueries] =
-          cheatsheetQueries![queryCategory as keyof CheatsheetQueries]!;
-        return updatedVisibleQueries;
-      },
-      {}
-    );
-    setVisibleQueries(updatedVisibleQueries);
+    if (categories.length > 0) {
+      const selectedCategories = categories.map((selectedCategory: SelectableValue) => selectedCategory.label);
+      const updatedVisibleQueries = selectedCategories.reduce(
+        (updatedVisibleQueries: CheatsheetQueries, queryCategory: string) => {
+          updatedVisibleQueries[queryCategory] = cheatsheetQueries![queryCategory]!;
+          return updatedVisibleQueries;
+        },
+        {}
+      );
+      setVisibleQueries(updatedVisibleQueries);
+    } else {
+      setVisibleQueries(cheatsheetQueries);
+    }
   };
 
   return (
     <div>
-      <h3>Azure Monitor cheat sheet</h3>
+      <h3>Azure Monitor Cheat Sheet</h3>
       <Collapse
         label="Logs"
         collapsible={true}
@@ -207,7 +173,7 @@ const AzureCheatSheet = (props: Props) => {
       >
         {!isLoading && visibleQueries ? (
           <div>
-            <div style={{ display: 'flex' }}>
+            <div className={css({ display: 'flex' })}>
               <Input
                 value={searchInputValue}
                 onChange={(e) => {
@@ -235,25 +201,25 @@ const AzureCheatSheet = (props: Props) => {
                 />
               </InlineField>
             </div>
-            <div style={{ padding: '10px 0 15px 0' }}>
+            <div>
               Query results:{' '}
               {Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
-                totalQueries = visibleQueries[category as keyof CheatsheetQueries]!.length + totalQueries;
+                totalQueries = visibleQueries[category]!.length + totalQueries;
                 return totalQueries;
               }, 0)}
             </div>
             <CustomScrollbar showScrollIndicators={true} autoHeightMax="350px">
               {Object.keys(visibleQueries).map((category: string) => {
-                if (visibleQueries[category as keyof CheatsheetQueries]!.length) {
+                if (visibleQueries[category]!.length) {
                   return (
                     <Collapse
-                      label={category + ' ' + `(${visibleQueries[category as keyof CheatsheetQueries]!.length})`}
+                      label={category + ' ' + `(${visibleQueries[category]!.length})`}
                       collapsible={true}
-                      isOpen={areDropdownsOpen[category as keyof DropdownCategories]}
+                      isOpen={areDropdownsOpen[category]}
                       onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
                       key={category}
                     >
-                      {visibleQueries[category as keyof CheatsheetQueries]!.map((query) => {
+                      {visibleQueries[category]!.map((query) => {
                         return (
                           <Card className={styles.card} key={query.id}>
                             <Card.Heading>{query.displayName}</Card.Heading>
@@ -274,6 +240,12 @@ const AzureCheatSheet = (props: Props) => {
                                     refId: 'A',
                                     queryType: AzureQueryType.LogAnalytics,
                                     azureLogAnalytics: { query: query.body },
+                                  });
+                                  reportInteraction('grafana_azure_cheatsheet_logs_query_selected', {
+                                    id: query.id,
+                                    queryName: query.displayName,
+                                    query: query.body,
+                                    queryCategories: query.related.categories,
                                   });
                                 }}
                               >
@@ -302,21 +274,18 @@ export default AzureCheatSheet;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    card: css`
-      width: 49.5%;
-      display: flex;
-      flex-direction: column;
-    `,
-    rawQueryContainer: css`
-      flex-grow: 1;
-    `,
-    rawQuery: css`
-      background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(1)};
-    `,
-    spacing: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    card: css({
+      width: '49.5%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    rawQuery: css({
+      backgroundColor: `${theme.colors.background.primary}`,
+      padding: `${theme.spacing(1)}`,
+      marginTop: `${theme.spacing(1)}`,
+    }),
+    spacing: css({
+      marginBottom: `${theme.spacing(1)}`,
+    }),
   };
 };
