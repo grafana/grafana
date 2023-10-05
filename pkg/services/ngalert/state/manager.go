@@ -114,11 +114,9 @@ infLoop:
 			}
 		case <-ctx.Done():
 			st.log.Info("Stopping state sync...")
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-			if err := st.fullSync(shutdownCtx); err != nil {
+			if err := st.fullSync(context.Background()); err != nil {
 				st.log.Error("Failed to do a full state sync to database", "err", err)
 			}
-			cancel()
 			ticker.Stop()
 			break infLoop
 		}
