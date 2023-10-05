@@ -1,6 +1,7 @@
 package azuremonitor
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
@@ -39,7 +40,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		require.NotNil(t, provider.opts)
@@ -52,7 +53,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
@@ -73,7 +74,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			"GrafanaHeader": "GrafanaValue",
 			"AzureHeader":   "AzureValue",
 		}
-		_, err := newHTTPClient(route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
