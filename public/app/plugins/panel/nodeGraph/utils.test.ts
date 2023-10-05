@@ -163,6 +163,57 @@ describe('processNodes', () => {
     expect(edgeFields.secondaryStat).toBeDefined();
   });
 
+  it('gets nodes when field names are overridden', () => {
+    const nodeFrame = createDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'qwe', type: FieldType.string, values: ['id'] },
+        { name: 'asd', type: FieldType.string, values: ['title'] },
+        { name: 'zxc', type: FieldType.string, values: ['subTitle'] },
+        { name: 'ert', type: FieldType.string, values: ['mainStat'] },
+        { name: 'sdf', type: FieldType.string, values: ['secondaryStat'] },
+        { name: 'xcv', type: FieldType.number, values: [20] },
+      ],
+    });
+
+    const nodeFields = getNodeFields(nodeFrame, {
+      id: 'qwe',
+      title: 'asd',
+      subTitle: 'zxc',
+      mainStat: 'ert',
+      secondaryStat: 'sdf',
+      nodeRadius: 'xcv',
+    });
+    expect(nodeFields.id).toBeDefined();
+    expect(nodeFields.title).toBeDefined();
+    expect(nodeFields.subTitle).toBeDefined();
+    expect(nodeFields.mainStat).toBeDefined();
+    expect(nodeFields.secondaryStat).toBeDefined();
+
+    const edgeFrame = createDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'qwe', type: FieldType.string, values: ['id'] },
+        { name: 'asd', type: FieldType.string, values: ['source'] },
+        { name: 'zxc', type: FieldType.string, values: ['target'] },
+        { name: 'rty', type: FieldType.string, values: ['mainStat'] },
+        { name: 'fgh', type: FieldType.string, values: ['secondaryStat'] },
+      ],
+    });
+    const edgeFields = getEdgeFields(edgeFrame, {
+      id: 'qwe',
+      source: 'asd',
+      target: 'zxc',
+      mainStat: 'rty',
+      secondaryStat: 'fgh',
+    });
+    expect(edgeFields.id).toBeDefined();
+    expect(edgeFields.source).toBeDefined();
+    expect(edgeFields.target).toBeDefined();
+    expect(edgeFields.mainStat).toBeDefined();
+    expect(edgeFields.secondaryStat).toBeDefined();
+  });
+
   it('interpolates panel options correctly', () => {
     const frames = [
       createDataFrame({

@@ -10,7 +10,7 @@ import { ArcOption, NodeGraphOptions } from '../types';
 type Settings = { filter: (field: Field) => boolean };
 type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;
 
-export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorProps) => {
+export const ArcOptionsEditor = ({ value, onChange, context, item }: ArcOptionsEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const addArc = () => {
@@ -43,7 +43,7 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
               }}
               item={{
                 settings: {
-                  filter: (field: Field) => field.name.includes('arc__'),
+                  filter: item.settings?.filter ? item.settings.filter : (field: Field) => field.name.includes('arc__'),
                 },
                 id: `arc-field-${i}`,
                 name: `arc-field-${i}`,

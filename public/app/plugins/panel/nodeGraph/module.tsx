@@ -1,4 +1,4 @@
-import { NodeGraphDataFrameFieldNames, PanelPlugin } from '@grafana/data';
+import { Field, NodeGraphDataFrameFieldNames, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
@@ -22,6 +22,12 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
         path: 'arcs',
         id: 'arcs',
         editor: ArcOptionsEditor,
+        settings: {
+          filter:
+            context.options?.fieldNameOverrides?.arc !== undefined
+              ? (field: Field) => field.name.includes(context.options?.fieldNameOverrides?.arc || '')
+              : undefined,
+        },
       });
     },
   });
