@@ -72,11 +72,11 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	res, errorSource, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		if errorSource == backend.ErrorSourceDownstream {
-			// We don't want to show downstream errors in the UI and therefore we change it to a generic error
+			// We don't want to show errors in the UI and therefore we change it to a generic error
 			// We are keeping the original error in the logs
-			createDownstreamErrorResponse(e.dataQueries[0].RefID, errors.New("internal server error"))
+			return createDownstreamErrorResponse(e.dataQueries[0].RefID, errors.New("internal server error")), err
 		} else {
-			createPluginErrorResponse(e.dataQueries[0].RefID, err)
+			return createPluginErrorResponse(e.dataQueries[0].RefID, errors.New("internal server error")), err
 		}
 	}
 

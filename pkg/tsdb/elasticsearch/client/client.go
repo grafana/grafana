@@ -170,7 +170,6 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, backend.ErrorSource, error) {
 	var err error
-	errorSource := backend.ErrorSourcePlugin
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch", trace.WithAttributes(
@@ -188,17 +187,19 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
+		errorSource := backend.ErrorSourcePlugin
 		status := "error"
-		errorSource = backend.ErrorSourceDownstream
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
+			// If the context was cancelled, we assume that the source of error is downstream
+			errorSource = backend.ErrorSourceDownstream
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
 		if clientRes != nil {
 			lp = append(lp, "statusCode", clientRes.StatusCode)
-			// For status code < 500, we assume that the error is due to a bad request and therefore plugin issue
-			if clientRes.ContentLength < 500 {
-				errorSource = backend.ErrorSourcePlugin
+			// For status code >= 500, we assume that the source of error is downstream
+			if clientRes.ContentLength >= 500 {
+				errorSource = backend.ErrorSourceDownstream
 			}
 		}
 		c.logger.Error("Error received from Elasticsearch", lp...)
@@ -228,14 +229,14 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	err = dec.Decode(&msr)
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
-		return nil, errorSource, err
+		return nil, backend.ErrorSourcePlugin, err
 	}
 
 	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
 
 	msr.Status = res.StatusCode
 
-	return &msr, errorSource, nil
+	return &msr, backend.ErrorSourcePlugin, nil
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
