@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { InputHTMLAttributes, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
-  Divider,
   HorizontalGroup,
   Icon,
   IconButton,
