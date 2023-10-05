@@ -12,6 +12,7 @@ const (
 )
 
 type AuthProvider string
+
 type ExternalServiceRegistry interface {
 	// SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 	// it ensures that the associated service account has the correct permissions.
