@@ -383,28 +383,32 @@ export async function getLogfmtCompletions(
         : [];
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
+
+  const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+
   /**
-   * We want to offer labels if there are no other labels or if there is a trailing comma.
-   * Otherwise, there are situations where the label suggestion will be inserted with an extra comma.
    * {label="value"} | logfmt ^
+   * - trailingSpace: true, trailingComma: false, otherLabels: []
+   * {label="value"} | logfmt lab^
+   * trailingSpace: false, trailignComma: false, otherLabels: [lab]
    * {label="value"} | logfmt label,^
+   * trailingSpace: false, trailingComma: true, otherLabels: [label]
    * {label="value"} | logfmt label, ^
+   * trailingSpace: true, trailingComma: true, otherLabels: [label]
    */
-  if (otherLabels.length === 0 || trailingSpace || trailingComma) {
-    const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
-
-    // No other labels or trailing comma, so we don't need to add a prefix
-    let labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
-
-    const labelCompletions: Completion[] = labels.map((label) => ({
-      type: 'LABEL_NAME',
-      label,
-      insertText: labelPrefix + label,
-      triggerOnInsert: false,
-    }));
-
-    completions = [...completions, ...labelCompletions];
+  let labelPrefix = '';
+  if (otherLabels.length > 0 && trailingSpace) {
+    labelPrefix = trailingComma ? '' : ', ';
   }
+
+  const labelCompletions: Completion[] = labels.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: labelPrefix + label,
+    triggerOnInsert: false,
+  }));
+
+  completions = [...completions, ...labelCompletions];
 
   return completions;
 }
