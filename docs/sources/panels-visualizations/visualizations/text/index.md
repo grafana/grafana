@@ -9,6 +9,7 @@ keywords:
   - text
   - documentation
   - panel
+  - widget
 labels:
   products:
     - cloud
@@ -20,7 +21,9 @@ weight: 100
 
 # Text
 
-Text visualizations enable you to directly include text or HTML in your dashboards. This can be used to add contextual information and descriptions or embed complex HTML.
+Text widgets enable you to directly include text or HTML in your dashboards. This can be used to add contextual information and descriptions or embed complex HTML.
+
+Because this is a widget, it doesn't require a data source.
 
 ## Mode
 

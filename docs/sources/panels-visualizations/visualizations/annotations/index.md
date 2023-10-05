@@ -9,6 +9,7 @@ keywords:
   - Annotations
   - panel
   - documentation
+  - widget
 labels:
   products:
     - cloud
@@ -21,6 +22,8 @@ weight: 100
 # Annotations list
 
 The annotations list shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
+
+The annotations list is a widget and doesn't require a data source.
 
 ## Annotation query
 
@@ -66,7 +69,7 @@ Use this option to show or hide the time the annotation creation time.
 
 ### Show Tags
 
-Use this option to show or hide the tags associated with an annotation. _NB_: You can use the tags to live-filter the annotations list on the visualization itself.
+Use this option to show or hide the tags associated with an annotation. _NB_: You can use the tags to live-filter the annotations list on the widget itself.
 
 ## Link behavior
 

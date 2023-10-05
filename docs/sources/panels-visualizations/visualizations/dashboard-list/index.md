@@ -10,6 +10,7 @@ keywords:
   - documentation
   - panel
   - dashlist
+  - widget
 labels:
   products:
     - cloud
@@ -27,9 +28,11 @@ Dashboard lists allow you to display dynamic links to other dashboards. The list
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 
+The dashboard list is a widget and doesn't require a data source.
+
 ## Options
 
-Use these options to refine your visualization.
+Use these options to refine your widget.
 
 - **Include current time range -** Select this option to propagate the time range of the current dashboard to the dashboard links. When the user clicks a link, the linked dashboard opens with the indicated time range already set.
 - **Include current template variable values -** Select this option to include template variables currently used as query parameters in a link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. Learn more about [Dashboard URL variables][].

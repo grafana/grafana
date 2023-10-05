@@ -10,6 +10,7 @@ keywords:
   - documentation
   - panel
   - alertlist
+  - widget
 labels:
   products:
     - cloud
@@ -25,7 +26,9 @@ Use alert lists to display your alerts. You can configure the list to show the c
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
-Customize your visualization using the following settings.
+The alert list is a widget and doesn't require a data source.
+
+Customize your widget using the following settings.
 
 ## Options
 
@@ -57,7 +60,7 @@ These options allow you to limit alerts shown to only those that match the query
 
 ## State filter
 
-Choose which alert states to display in this visualization.
+Choose which alert states to display in this widget.
 
 - Alerting / Firing
 - Pending
