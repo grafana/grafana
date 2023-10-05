@@ -1,3 +1,4 @@
+import { ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep, isFunction } from 'lodash';
 
 import { PluginMeta } from '@grafana/data';
@@ -527,6 +528,23 @@ async function distortPostMessage(distortions: DistortionMap) {
  * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
  *
  */
-export async function distortLiveApis() {
+export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
+
+  // this distorts react-router-dom `history.replace` function.
+  // We can't use static distortions because this function is constructed on the fly per each browser history and it is
+  // only available inside react context.
+  // NOTE: this distortion won't match `String.prototype.replace` because `String.prototype.replace` calls don't pass
+  // through distortions
+  if (
+    originalValue instanceof Function &&
+    originalValue.name === 'replace' &&
+    originalValue.prototype.constructor.length === 2
+  ) {
+    return function replace(this: unknown, ...args: unknown[]) {
+      const newArgs = cloneDeep(args);
+      return Reflect.apply(originalValue, this, newArgs);
+    };
+  }
+  return;
 }
