@@ -103,7 +103,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		FolderID:  folderID,
-		FolderUID: folderUID,
+		FolderUID: &folderUID,
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
@@ -124,7 +124,7 @@ func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title strin
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		FolderID:  folderID,
-		FolderUID: folderUID,
+		FolderUID: &folderUID,
 		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,

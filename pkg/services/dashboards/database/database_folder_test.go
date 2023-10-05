@@ -339,7 +339,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 				"title": dashInParentTitle,
 			}),
 			FolderID:  nestedFolders[0].ID,
-			FolderUID: nestedFolders[0].UID,
+			FolderUID: &nestedFolders[0].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
@@ -352,7 +352,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 				"title": dashInSubfolderTitle,
 			}),
 			FolderID:  nestedFolders[1].ID,
-			FolderUID: nestedFolders[1].UID,
+			FolderUID: &nestedFolders[1].UID,
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)

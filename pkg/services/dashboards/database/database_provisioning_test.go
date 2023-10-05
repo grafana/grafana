@@ -40,7 +40,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		OrgID:     1,
 		IsFolder:  false,
 		FolderID:  dash.ID,
-		FolderUID: dash.UID,
+		FolderUID: &dash.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",

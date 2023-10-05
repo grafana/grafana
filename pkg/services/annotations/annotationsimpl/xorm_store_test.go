@@ -743,7 +743,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 					"title": fmt.Sprintf("Dashboard under %s", f.UID),
 				}),
 				FolderID:  f.ID,
-				FolderUID: f.UID,
+				FolderUID: &f.UID,
 			}
 			dashboard, err := dashStore.SaveDashboard(context.Background(), dashInFolder)
 			require.NoError(t, err)

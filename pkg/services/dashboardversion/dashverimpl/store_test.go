@@ -140,7 +140,7 @@ func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		FolderID:  folderId,
-		FolderUID: folderUID,
+		FolderUID: &folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,

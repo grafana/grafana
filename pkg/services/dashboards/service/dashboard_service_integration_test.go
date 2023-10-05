@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const testOrgID int64 = 1
@@ -129,6 +130,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"title": "Dash",
 						}),
 						FolderID:  sc.otherSavedFolder.ID,
+						FolderUID: &sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -351,6 +353,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInFolder.Title,
 							}),
 							FolderID:  0,
+							FolderUID: util.Pointer(""),
 							Overwrite: shouldOverwrite,
 						}
 
@@ -374,6 +377,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							FolderID:  sc.savedFolder.ID,
+							FolderUID: &sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -498,6 +502,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"version": sc.savedDashInGeneralFolder.Version,
 							}),
 							FolderID:  sc.savedFolder.ID,
+							FolderUID: &sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -538,6 +543,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"version": sc.savedDashInFolder.Version,
 							}),
 							FolderID:  0,
+							FolderUID: util.Pointer(""),
 							Overwrite: shouldOverwrite,
 						}
 
@@ -612,6 +618,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": "Updated title",
 							}),
 							FolderID:  sc.savedFolder.ID,
+							FolderUID: &sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -634,6 +641,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": "Updated title",
 							}),
 							FolderID:  0,
+							FolderUID: util.Pointer(""),
 							Overwrite: shouldOverwrite,
 						}
 
@@ -696,6 +704,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInFolder.Title,
 							}),
 							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -720,6 +729,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -876,9 +886,9 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
-		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
-		saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
-		savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, 0, sqlStore)
+		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder, sqlStore)
+		saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder, sqlStore)
+		savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, nil, sqlStore)
 		otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgID, sqlStore)
 
 		require.Equal(t, "Saved folder", savedFolder.Title)
@@ -966,17 +976,20 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID int64, folder *dashboards.Dashboard, sqlStore db.DB) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgID,
-		FolderID: folderID,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 		}),
+	}
+	if folder != nil {
+		cmd.FolderID = folder.ID
+		cmd.FolderUID = &folder.UID
 	}
 
 	dto := dashboards.SaveDashboardDTO{

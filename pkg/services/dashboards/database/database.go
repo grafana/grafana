@@ -389,16 +389,8 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
-	q := "org_id=? AND title=?"
-	args := []any{dash.OrgID, dash.Title}
-	if dash.FolderUID != nil {
-		q += " AND (is_folder=? OR folder_uid=?)"
-		args = append(args, dialect.BooleanStr(true), dash.FolderUID)
-	} else if dash.FolderID > 0 {
-		q += " AND (is_folder=? OR folder_id=?)"
-		args = append(args, dialect.BooleanStr(true), dash.FolderID)
-	}
-	exists, err := sess.Where(q, args...).Get(&existing)
+	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
+		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
 	if err != nil {
 		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}

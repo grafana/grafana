@@ -195,11 +195,9 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID,
+		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
-	}
-	if dash.FolderUID != nil {
-		cmd.FolderUID = *dash.FolderUID
 	}
 
 	if !dto.UpdatedAt.IsZero() {

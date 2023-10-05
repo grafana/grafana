@@ -895,7 +895,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	}
 	if folder != nil {
 		cmd.FolderID = folder.ID
-		cmd.FolderUID = folder.UID
+		cmd.FolderUID = &folder.UID
 	}
 
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)

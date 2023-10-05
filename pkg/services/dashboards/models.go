@@ -190,9 +190,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderID = cmd.FolderID
-	if cmd.FolderUID != "" {
-		dash.FolderUID = &cmd.FolderUID
-	}
+	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
 	return dash
 }
@@ -254,8 +252,9 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
 	FolderID     int64            `json:"folderId" xorm:"folder_id"`
-	FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
-	IsFolder     bool             `json:"isFolder"`
+	// TODO: Enable it in the API in a follow up PR
+	FolderUID *string `json:"-" xorm:"folder_uid"`
+	IsFolder  bool    `json:"isFolder"`
 
 	UpdatedAt time.Time
 }

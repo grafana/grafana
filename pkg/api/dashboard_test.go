@@ -60,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -438,7 +439,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderUID: folderUid,
+				FolderUID: util.Pointer(folderUid),
 				IsFolder:  false,
 				Message:   "msg",
 			}
@@ -471,7 +472,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderUID: "folderUID",
+				FolderUID: util.Pointer("folderUID"),
 				IsFolder:  false,
 				Message:   "msg",
 			}
