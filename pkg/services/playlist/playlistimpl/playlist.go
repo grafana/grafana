@@ -7,6 +7,7 @@ import (
 	kind "github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type Service struct {
@@ -15,9 +16,18 @@ type Service struct {
 
 var _ playlist.Service = &Service{}
 
-func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles) playlist.Service {
-	var sqlstore = &sqlxStore{
-		sess: db.GetSqlxSession(),
+func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
+	var sqlstore store
+
+	// 🐢🐢🐢 pick the store
+	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
+		sqlstore = &sqlxStore{
+			sess: db.GetSqlxSession(),
+		}
+	} else {
+		sqlstore = &sqlStore{
+			db: db,
+		}
 	}
 	return &Service{store: sqlstore}
 }

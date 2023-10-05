@@ -47,6 +47,7 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 		})
 
 		t.Run("Can update playlist", func(t *testing.T) {
+			time.Sleep(time.Millisecond * 2)
 			items := []playlist.PlaylistItem{
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
 				{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
@@ -54,6 +55,14 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			query := playlist.UpdatePlaylistCommand{Name: "NYC office ", OrgId: 1, UID: uid, Interval: "10s", Items: items}
 			_, err = playlistStore.Update(context.Background(), &query)
 			require.NoError(t, err)
+
+			// Now check that UpdatedAt has increased
+			pl, err := playlistStore.Get(context.Background(), &playlist.GetPlaylistByUidQuery{UID: uid, OrgId: 1})
+			require.NoError(t, err)
+			require.Equal(t, p.Id, pl.Id)
+			require.Equal(t, p.CreatedAt, pl.CreatedAt)
+			require.Greater(t, pl.UpdatedAt, p.UpdatedAt)
+			require.Greater(t, pl.UpdatedAt, pl.CreatedAt)
 		})
 
 		t.Run("Can remove playlist", func(t *testing.T) {

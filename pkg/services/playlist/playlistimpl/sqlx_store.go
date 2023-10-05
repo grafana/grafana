@@ -16,6 +16,8 @@ type sqlxStore struct {
 	sess *session.SessionDB
 }
 
+var _ store = &sqlxStore{}
+
 func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
 	var err error
