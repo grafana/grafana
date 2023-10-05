@@ -3345,7 +3345,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3420,7 +3420,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3528,7 +3528,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3676,7 +3676,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -4650,6 +4650,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 07868df8d2431c82e8c46fad453e7fbb0edbe0a4b0796158a80387b4595418d0
+hmac: e5cfb38f6cdd490756b1528e27153a95daa675e8ace2c58c0c58bb8064f1e22c
 
 ...
