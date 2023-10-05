@@ -1,4 +1,4 @@
-import { countBy, last, split, trim, upperFirst } from 'lodash';
+import { countBy, split, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
@@ -44,9 +44,7 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return url;
     }
     case ReceiverTypes.OnCall: {
-      const url = receiver[RECEIVER_PLUGIN_META_KEY]?.externalUrl;
-      const integrationID = last(url?.split('/'));
-      return integrationID;
+      return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
     }
     default:
       return receiver[RECEIVER_META_KEY]?.description;

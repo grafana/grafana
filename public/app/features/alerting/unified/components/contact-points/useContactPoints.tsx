@@ -17,12 +17,15 @@ import { enhanceContactPointsWithMetadata } from './utils';
 export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
 export const RECEIVER_META_KEY = Symbol('receiver_metadata');
 export const RECEIVER_PLUGIN_META_KEY = Symbol('receiver_plugin_metadata');
+
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 /**
- * This hook will combine data from two endpoints;
+ * This hook will combine data from several endpoints;
  * 1. the alertmanager config endpoint where the definition of the receivers are
  * 2. (if available) the alertmanager receiver status endpoint, currently Grafana Managed only
+ * 3. (if available) additional metadata about Grafana Managed contact points
+ * 4. (if available) the OnCall plugin metadata
  */
 export function useContactPointsWithStatus(selectedAlertmanager: string) {
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;

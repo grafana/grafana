@@ -12,6 +12,7 @@ import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from './types';
 export interface ReceiverPluginMetadata {
   icon: string;
   title: string;
+  description?: string;
   externalUrl?: string;
   warning?: string;
 }
@@ -38,24 +39,11 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
 
       if (onCallReceiver) {
         if (!isOnCallEnabled) {
-          result.set(receiver, {
-            ...onCallReceiverMeta,
-            warning: 'Grafana OnCall is not enabled',
-          });
+          result.set(receiver, getOnCallMetadata(null, onCallReceiver));
           return;
         }
 
-        const matchingOnCallIntegration = onCallIntegrations.find(
-          (i) => i.integration_url === onCallReceiver.settings.url
-        );
-
-        result.set(receiver, {
-          ...onCallReceiverMeta,
-          externalUrl: matchingOnCallIntegration
-            ? createBridgeURL(SupportedPlugin.OnCall, `/integrations/${matchingOnCallIntegration.value}`)
-            : undefined,
-          warning: matchingOnCallIntegration ? undefined : 'OnCall Integration no longer exists',
-        });
+        result.set(receiver, getOnCallMetadata(onCallIntegrations, onCallReceiver));
       }
     });
 
@@ -81,6 +69,7 @@ export function getOnCallMetadata(
 
   return {
     ...onCallReceiverMeta,
+    description: matchingOnCallIntegration?.display_name,
     externalUrl: matchingOnCallIntegration
       ? createBridgeURL(SupportedPlugin.OnCall, `/integrations/${matchingOnCallIntegration.value}`)
       : undefined,

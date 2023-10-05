@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -21,24 +22,28 @@ import {
   TabContent,
   Tab,
   Pagination,
+  Button,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
+import { Authorize } from '../Authorize';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
+import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
 import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
@@ -71,8 +76,12 @@ const ContactPoints = () => {
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
+  const [exportContactPointsSupported, exportContacPointsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.ExportContactPoint
+  );
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
+  const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showingMessageTemplates = activeTab === ActiveTab.MessageTemplates;
@@ -102,15 +111,30 @@ const ContactPoints = () => {
             onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
           />
           <Spacer />
-          {showingContactPoints && addContactPointSupported && (
-            <LinkButton
-              icon="plus"
-              variant="primary"
-              href="/alerting/notifications/receivers/new"
-              disabled={!addContactPointAllowed}
-            >
-              Add contact point
-            </LinkButton>
+          {showingContactPoints && (
+            <Stack direction="row" gap={0.5}>
+              {addContactPointSupported && (
+                <LinkButton
+                  icon="plus"
+                  variant="primary"
+                  href="/alerting/notifications/receivers/new"
+                  disabled={!addContactPointAllowed}
+                >
+                  Add contact point
+                </LinkButton>
+              )}
+              {exportContactPointsSupported && (
+                <Button
+                  icon="download-alt"
+                  variant="secondary"
+                  fill="outline"
+                  disabled={!exportContacPointsAllowed}
+                  onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
+                >
+                  Export all
+                </Button>
+              )}
+            </Stack>
           )}
           {showingMessageTemplates && (
             <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
@@ -159,6 +183,7 @@ const ContactPoints = () => {
         </TabContent>
       </Stack>
       {DeleteModal}
+      {ExportDrawer}
     </>
   );
 };
@@ -277,10 +302,8 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
 
-  // we make a distinction here becase for "canExport" we show the menu item, if not we hide it
-  const [[exportSupported, exportAllowed], [decryptSecretsSupported, decryptSecretsAllowed]] = useAlertmanagerAbilities(
-    [AlertmanagerAction.ExportContactPoint, AlertmanagerAction.DecryptSecrets]
-  );
+  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
+  const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const isReferencedByPolicies = policies > 0;
 
@@ -321,19 +344,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             <Menu>
               {exportSupported && (
                 <>
-                  <Menu.Item
-                    icon="download-alt"
-                    label={decryptSecretsSupported ? 'Export' : 'Export redacted'}
-                    disabled={!exportAllowed}
-                    url={createUrl(`/api/v1/provisioning/contact-points/export/`, {
-                      download: 'true',
-                      format: 'yaml',
-                      decrypt: String(decryptSecretsSupported && decryptSecretsAllowed),
-                      name: name,
-                    })}
-                    target="_blank"
-                    data-testid="export"
-                  />
+                  <Authorize actions={[AlertmanagerAction.ExportContactPoint]}>
+                    <Menu.Item
+                      icon="download-alt"
+                      label="Export"
+                      disabled={!exportAllowed}
+                      data-testid="export"
+                      onClick={() => openExportDrawer(name)}
+                    />
+                  </Authorize>
                   <Menu.Divider />
                 </>
               )}
@@ -362,6 +381,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           <MoreButton />
         </Dropdown>
       </Stack>
+      {ExportDrawer}
     </div>
   );
 };
@@ -504,6 +524,44 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
       </Stack>
     </div>
   );
+};
+
+const ALL_CONTACT_POINTS = Symbol('all contact points');
+
+type ExportProps = [JSX.Element | null, (receiver: string | typeof ALL_CONTACT_POINTS) => void];
+
+const useExportContactPoint = (): ExportProps => {
+  const [receiverName, setReceiverName] = useState<string | typeof ALL_CONTACT_POINTS | null>(null);
+  const [isExportDrawerOpen, toggleShowExportDrawer] = useToggle(false);
+  const [decryptSecretsSupported, decryptSecretsAllowed] = useAlertmanagerAbility(AlertmanagerAction.DecryptSecrets);
+
+  const canReadSecrets = decryptSecretsSupported && decryptSecretsAllowed;
+
+  const handleClose = useCallback(() => {
+    setReceiverName(null);
+    toggleShowExportDrawer(false);
+  }, [toggleShowExportDrawer]);
+
+  const handleOpen = (receiverName: string | typeof ALL_CONTACT_POINTS) => {
+    setReceiverName(receiverName);
+    toggleShowExportDrawer(true);
+  };
+
+  const drawer = useMemo(() => {
+    if (!receiverName || !isExportDrawerOpen) {
+      return null;
+    }
+
+    if (receiverName === ALL_CONTACT_POINTS) {
+      // use this drawer when we want to export all contact points
+      return <GrafanaReceiversExporter decrypt={canReadSecrets} onClose={handleClose} />;
+    } else {
+      // use this one for exporting a single contact point
+      return <GrafanaReceiverExporter receiverName={receiverName} decrypt={canReadSecrets} onClose={handleClose} />;
+    }
+  }, [canReadSecrets, isExportDrawerOpen, handleClose, receiverName]);
+
+  return [drawer, handleOpen];
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
