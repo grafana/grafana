@@ -6,22 +6,7 @@ describe('Dashboard browse', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Basic folder view test', () => {
-    e2e.flows.importDashboard(testDashboard, 1000, true);
-
-    e2e.pages.Dashboards.visit();
-
-    // folder view is collapsed - verify its content does not exist
-    e2e.components.Search.folderContent('General').should('not.exist');
-    e2e.components.Search.dashboardItem('E2E Test - Dashboard Search').should('not.exist');
-
-    e2e.components.Search.folderHeader('General').click({ force: true });
-
-    e2e.components.Search.folderContent('General').should('be.visible');
-    e2e.components.Search.dashboardItem('E2E Test - Import Dashboard').should('be.visible');
-  });
-
-  it.skip('Manage Dashboards tests', () => {
+  it('Manage Dashboards tests', () => {
     e2e.flows.importDashboard(testDashboard, 1000, true);
 
     e2e.pages.Dashboards.visit();
