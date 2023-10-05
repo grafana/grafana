@@ -831,5 +831,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "kubernetesPlaylists",
+			Description:  "Use the kubernetes API in the frontend for playlists",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+		},
 	}
 )
