@@ -22,7 +22,6 @@ export const PlaylistEditPage = ({ match }: Props) => {
   const playlist = useAsync(() => api.getPlaylist(match.params.uid), [match.params]);
 
   const onSubmit = async (playlist: Playlist) => {
-    console.log('EDIT:', playlist);
     await api.updatePlaylist(playlist);
     locationService.push('/playlists');
   };
