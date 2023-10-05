@@ -7,35 +7,67 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+)
+
+const (
+	promIsInstant    = true
+	promIsNotInstant = false
 )
 
 func TestCanBeInstant(t *testing.T) {
 	tcs := []struct {
-		name            string
-		expected        bool
-		expectedIndices []int
-		rule            *models.AlertRule
+		name                  string
+		expected              bool
+		expectedOptimizations []optimization
+		rule                  *models.AlertRule
 	}{
 		{
-			name:            "valid rule that can be migrated from range to instant",
-			expected:        true,
-			expectedIndices: []int{0},
-			rule:            createMigrateableLokiRule(t),
+			name:                  "valid loki rule that can be migrated from range to instant",
+			expected:              true,
+			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_LOKI}},
+			rule:                  createMigrateableLokiRule(t),
 		},
 		{
-			name:            "valid rule with external loki datasource",
-			expected:        true,
-			expectedIndices: []int{0},
+			name:                  "valid prom rule that can be migrated from range to instant",
+			expected:              true,
+			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			rule:                  createMigrateablePromRule(t),
+		},
+		{
+			name:                  "valid loki rule with external loki datasource",
+			expected:              true,
+			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_LOKI}},
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-external"
 			}),
 		},
 		{
-			name:            "valid multi query rule with loki datasources",
-			expected:        true,
-			expectedIndices: []int{0, 1},
-			rule:            createMultiQueryMigratableLokiRule(t),
+			name:                  "valid prom rule with external loki prometheus",
+			expected:              true,
+			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			rule: createMigrateablePromRule(t, func(r *models.AlertRule) {
+				r.Data[0].DatasourceUID = "something-external"
+			}),
+		},
+		{
+			name:     "valid loki multi query rule with loki datasources",
+			expected: true,
+			expectedOptimizations: []optimization{
+				{i: 0, t: datasources.DS_LOKI},
+				{i: 1, t: datasources.DS_LOKI},
+			},
+			rule: createMultiQueryMigratableLokiRule(t),
+		},
+		{
+			name:     "valid prom multi query rule with prom datasources",
+			expected: true,
+			expectedOptimizations: []optimization{
+				{i: 0, t: datasources.DS_PROMETHEUS},
+				{i: 1, t: datasources.DS_PROMETHEUS},
+			},
+			rule: createMultiQueryMigratablePromRule(t),
 		},
 		{
 			name:     "invalid rule where the data array is too short to be migrateable",
@@ -87,9 +119,10 @@ func TestCanBeInstant(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			indicies, canBe := canBeInstant(tc.rule)
+			optimizations, canBe := canBeInstant(tc.rule)
 			require.Equal(t, tc.expected, canBe)
-			require.Equal(t, tc.expectedIndices, indicies)
+			require.Equal(t, tc.expectedOptimizations, optimizations)
+
 		})
 	}
 }
@@ -149,6 +182,56 @@ func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
+func TestMigratePromQueryToInstant(t *testing.T) {
+	original := createMigrateablePromRule(t)
+	mirgrated := createMigrateablePromRule(t, func(r *models.AlertRule) {
+		r.Data[0] = promethesQuery(t, "A", "grafanacloud-prom", promIsInstant)
+	})
+
+	optimizableIndices, canBeOptimized := canBeInstant(original)
+	require.True(t, canBeOptimized)
+	require.NoError(t, migrateToInstant(original, optimizableIndices))
+
+	originalModel := make(map[string]any)
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
+	migratedModel := make(map[string]any)
+	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+
+	require.Equal(t, migratedModel, originalModel)
+
+	_, canBeOptimized = canBeInstant(original)
+	require.False(t, canBeOptimized)
+}
+
+func TestMigrateMultiPromQueryToInstant(t *testing.T) {
+	original := createMultiQueryMigratablePromRule(t)
+	mirgrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
+		r.Data[0] = promethesQuery(t, "TotalRequests", "grafanacloud-prom", promIsInstant)
+		r.Data[1] = promethesQuery(t, "TotalErrors", "grafanacloud-prom", promIsInstant)
+	})
+
+	optimizableIndices, canBeOptimized := canBeInstant(original)
+	require.True(t, canBeOptimized)
+	require.NoError(t, migrateToInstant(original, optimizableIndices))
+
+	originalModel := make(map[string]any)
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
+	migratedModel := make(map[string]any)
+	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+
+	require.Equal(t, migratedModel, originalModel)
+
+	originalModel = make(map[string]any)
+	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
+	migratedModel = make(map[string]any)
+	require.NoError(t, json.Unmarshal(mirgrated.Data[1].Model, &migratedModel))
+
+	require.Equal(t, migratedModel, originalModel)
+
+	_, canBeOptimized = canBeInstant(original)
+	require.False(t, canBeOptimized)
+}
+
 func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
 	t.Helper()
 	r := &models.AlertRule{
@@ -178,6 +261,37 @@ func createMultiQueryMigratableLokiRule(t *testing.T, muts ...func(*models.Alert
 	}
 	return r
 }
+
+func createMigrateablePromRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
+	t.Helper()
+	r := &models.AlertRule{
+		Data: []models.AlertQuery{
+			promethesQuery(t, "A", "grafanacloud-prom", promIsNotInstant),
+			reducer(t, "B", "A", "last"),
+		},
+	}
+	for _, m := range muts {
+		m(r)
+	}
+	return r
+}
+
+func createMultiQueryMigratablePromRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
+	t.Helper()
+	r := &models.AlertRule{
+		Data: []models.AlertQuery{
+			promethesQuery(t, "TotalRequests", "grafanacloud-prom", promIsNotInstant),
+			promethesQuery(t, "TotalErrors", "grafanacloud-prom", promIsNotInstant),
+			reducer(t, "TotalRequests_Last", "TotalRequests", "last"),
+			reducer(t, "TotalErrors_Last", "TotalErrors", "last"),
+		},
+	}
+	for _, m := range muts {
+		m(r)
+	}
+	return r
+}
+
 func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.AlertQuery {
 	t.Helper()
 	return models.AlertQuery{
@@ -196,6 +310,26 @@ func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.Aler
 					"queryType": "%s",
 					"refId": "%s"
 				}`, datasourceUID, queryType, refID)),
+	}
+}
+
+func promethesQuery(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
+	t.Helper()
+	return models.AlertQuery{
+		RefID:         refID,
+		DatasourceUID: datasourceUID,
+		Model: []byte(fmt.Sprintf(`{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "%s"
+					},
+					"instant": %t,
+					"editorMode": "code",
+					"expr": "1",
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"refId": "%s"
+				}`, datasourceUID, isInstant, refID)),
 	}
 }
 
