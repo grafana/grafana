@@ -22,8 +22,6 @@ import (
 
 var (
 	ResendDelay = 30 * time.Second
-	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
-	JPsFF       = true
 )
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
