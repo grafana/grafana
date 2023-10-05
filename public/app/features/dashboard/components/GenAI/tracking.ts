@@ -26,6 +26,5 @@ export enum AutoGenerateItem {
 }
 
 export function reportAutoGenerateInteraction(src: EventTrackingSrc, item: AutoGenerateItem, otherMeta?: object) {
-  console.log('reportAutoGenerateInteraction', src, item, otherMeta);
   reportInteraction(GENERATE_AI_INTERACTION_EVENT_NAME, { src, item, ...otherMeta });
 }

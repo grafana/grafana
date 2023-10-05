@@ -118,7 +118,7 @@ describe('GenAIButton', () => {
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
         streamStatus: StreamStatus.GENERATING,
-        reply: 'Some incompleted generated text',
+        reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
         value: {
           enabled: true,
