@@ -25,7 +25,7 @@ export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
     },
     {
       id: UnaryOperationID.Exp,
-      name: 'Exponential',
+      name: 'Natural exponent',
       operation: (value: number) => Math.exp(value),
       unaryOperationID: UnaryOperationID.Exp,
     },
