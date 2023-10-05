@@ -174,7 +174,7 @@ function getGrafanaManagedScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Grafana-managed rules</div>, datasources: [ashDs, cloudUsageDs] },
+            props: { children: <div>Grafana-managed rules</div>, datasources: [] },
           }),
         }),
         new SceneFlexLayout({
@@ -241,7 +241,7 @@ function getGrafanaAlertmanagerScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Grafana Alertmanager</div>, datasources: [cloudUsageDs] },
+            props: { children: <div>Grafana Alertmanager</div>, datasources: [] },
           }),
         }),
         new SceneFlexLayout({
