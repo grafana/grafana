@@ -34,6 +34,7 @@ go.sum @grafana/backend-platform
 /Makefile @grafana/grafana-delivery
 /scripts/build/ @grafana/grafana-delivery
 /scripts/list-release-artifacts.sh @grafana/grafana-delivery
+/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/cloud-datasources
@@ -170,3 +171,4 @@ lerna.json @grafana/frontend-ops
 
 # Cloud middleware
 /grafana-mixin/ @grafana/hosted-grafana-team
+
