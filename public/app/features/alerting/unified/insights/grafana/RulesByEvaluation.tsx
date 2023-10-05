@@ -1,9 +1,9 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
-export function getGrafanaInstancesByStateScene(
+export function getGrafanaRulesByEvaluationScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -15,7 +15,7 @@ export function getGrafanaInstancesByStateScene(
         refId: 'A',
         expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
-        legendFormat: '{{state}}',
+        legendFormat: '{{state}} evaluation',
       },
     ],
     $timeRange: timeRange,
@@ -25,8 +25,13 @@ export function getGrafanaInstancesByStateScene(
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
+      )
       .build(),
   });
 }
