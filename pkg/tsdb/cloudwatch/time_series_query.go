@@ -59,8 +59,10 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	for r, regionQueries := range requestQueriesByRegion {
 		region := r
 
-		// batch queries and call the goroutine for each one
-		batches := getMetricQueryBatches(regionQueries, logger)
+		batches := [][]*models.CloudWatchQuery{regionQueries}
+		if e.features.IsEnabled(featuremgmt.FlagCloudWatchBatchQueries) {
+			batches = getMetricQueryBatches(regionQueries, logger)
+		}
 
 		for _, batch := range batches {
 			requestQueries := batch

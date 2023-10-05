@@ -48,10 +48,13 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		Id:               "m4",
 	}
 
-	t.Run("zero insight query should not batch", func(t *testing.T) {
+	t.Run("zero insight queries should not batch", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
-			&insight1,
 			&metricStat,
+			&math1,
+			&math2,
+			&math3,
+			&math4,
 		}
 
 		result := getMetricQueryBatches(batch, logger)

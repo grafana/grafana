@@ -7,8 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
+// nonWordRegex is for spliting the expressions to just functions and ids
 var nonWordRegex = regexp.MustCompile(`\W+`)
 
+// getMetricQueryBatches separates queries into batches if necessary. Metric Insight queries cannot run together, and math expressions must be run
+// with all the queries they reference.
 func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger) [][]*models.CloudWatchQuery {
 	metricInsightIndices := []int{}
 	mathIndices := []int{}
@@ -25,7 +28,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 		return [][]*models.CloudWatchQuery{queries}
 	}
 
-	batches := [][]*models.CloudWatchQuery{}
+	// Map ids to their queries
 	idToIndex := map[string]int{}
 	for i, query := range queries {
 		if query.Id != "" {
@@ -33,9 +36,9 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 		}
 	}
 
-	// Find which queries are referenced by a math query
+	// Find and track which queries are referenced by math queries
 	queryReferences := make([][]int, len(queries))
-	idReferenced := make([]bool, len(queries))
+	isReferenced := make([]bool, len(queries))
 	for _, idx := range mathIndices {
 		tokens := nonWordRegex.Split(queries[idx].Expression, -1)
 		references := []int{}
@@ -43,14 +46,15 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 			ref, found := idToIndex[token]
 			if found {
 				references = append(references, ref)
-				idReferenced[ref] = true
+				isReferenced[ref] = true
 			}
 		}
 		queryReferences[idx] = references
 	}
 
 	// Create a new batch for every query not used in another query
-	for i, used := range idReferenced {
+	batches := [][]*models.CloudWatchQuery{}
+	for i, used := range isReferenced {
 		if !used {
 			batches = append(batches, getReferencedQueries(queries, idToIndex, queryReferences, i))
 		}
@@ -58,17 +62,19 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 	return batches
 }
 
+// getReferencedQueries gets all the queries referenced by startQuery and its referenced queries
 func getReferencedQueries(queries []*models.CloudWatchQuery, idToIndex map[string]int, queryReferences [][]int, startQuery int) []*models.CloudWatchQuery {
 	usedQueries := make([]bool, len(queries))
 	batch := []*models.CloudWatchQuery{}
+
 	queriesToAdd := []int{startQuery}
 	usedQueries[startQuery] = true
 	for i := 0; i < len(queriesToAdd); i++ {
 		batch = append(batch, queries[queriesToAdd[i]])
-		for _, query := range queryReferences[queriesToAdd[i]] {
-			if !usedQueries[query] {
-				usedQueries[query] = true
-				queriesToAdd = append(queriesToAdd, query)
+		for _, queryIdx := range queryReferences[queriesToAdd[i]] {
+			if !usedQueries[queryIdx] {
+				usedQueries[queryIdx] = true
+				queriesToAdd = append(queriesToAdd, queryIdx)
 			}
 		}
 	}

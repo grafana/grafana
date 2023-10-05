@@ -138,4 +138,5 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  cloudWatchBatchQueries?: boolean;
 }

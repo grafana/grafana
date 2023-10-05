@@ -119,3 +119,4 @@ alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,fa
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
+cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
