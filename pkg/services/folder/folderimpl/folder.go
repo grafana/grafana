@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -188,9 +190,25 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		childrenUIDs = append(childrenUIDs, f.UID)
 	}
 
+	availableNonRootFolders := make([]*folder.Folder, 0)
+	if cmd.UID == "" {
+		availableNonRootFolders, err = s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+		}
+
+		for _, f := range availableNonRootFolders {
+			childrenUIDs = append(childrenUIDs, f.UID)
+		}
+	}
+
 	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+	}
+
+	if cmd.UID == "" {
+		children = append(children, availableNonRootFolders...)
 	}
 
 	filtered := make([]*folder.Folder, 0, len(children))
@@ -225,7 +243,81 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 	}
 
+	if cmd.UID == "" {
+		filtered = s.deduplicateAvailableFolders(ctx, filtered)
+	}
+
 	return filtered, nil
+}
+
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	permissions := user.GetPermissions()
+	folderPermissions := permissions["folders:read"]
+	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	nonRootFolders := make([]*folder.Folder, 0)
+	folderUids := make([]string, 0)
+	for _, p := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+			if !slices.Contains(folderUids, folderUid) {
+				folderUids = append(folderUids, folderUid)
+			}
+		}
+	}
+
+	if len(folderUids) == 0 {
+		return nonRootFolders, nil
+	}
+
+	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	for _, f := range dashFolders {
+		if f.ParentUID != "" {
+			nonRootFolders = append(nonRootFolders, f)
+		}
+	}
+
+	return nonRootFolders, nil
+}
+
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
+	foldersDedup := make([]*folder.Folder, 0)
+
+	for _, f := range folders {
+		if f.ParentUID == "" {
+			foldersDedup = append(foldersDedup, f)
+			continue
+		}
+
+		isSubfolder := slices.ContainsFunc(folders, func(folder *folder.Folder) bool {
+			return f.ParentUID == folder.UID
+		})
+
+		if !isSubfolder {
+			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+			if err != nil {
+				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
+				continue
+			}
+
+			for _, parent := range parents {
+				contains := slices.ContainsFunc(folders, func(f *folder.Folder) bool {
+					return f.UID == parent.UID
+				})
+				if contains {
+					isSubfolder = true
+					break
+				}
+			}
+		}
+		if !isSubfolder {
+			foldersDedup = append(foldersDedup, f)
+		}
+	}
+
+	return foldersDedup
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
