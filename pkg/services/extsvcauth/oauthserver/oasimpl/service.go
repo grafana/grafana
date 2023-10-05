@@ -121,10 +121,10 @@ func newProvider(config *fosite.Config, storage any, signingKeyService signingke
 // GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 // SignedInUser from the associated service account.
 // For performance reason, the service uses caching.
-func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.OAuthClient, error) {
 	entry, ok := s.cache.Get(id)
 	if ok {
-		client, ok := entry.(oauthserver.Client)
+		client, ok := entry.(oauthserver.OAuthClient)
 		if ok {
 			s.logger.Debug("GetExternalService: cache hit", "id", id)
 			return &client, nil
@@ -200,7 +200,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Otherwise, create a new client
 	if client == nil {
 		s.logger.Debug("External service does not yet exist", "external service name", registration.Name)
-		client = &oauthserver.Client{
+		client = &oauthserver.OAuthClient{
 			Name:             registration.Name,
 			ServiceAccountID: oauthserver.NoServiceAccountID,
 			Audiences:        s.cfg.AppURL,
@@ -245,7 +245,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	if keys != nil {
 		client.PublicPem = []byte(keys.PublicPem)
 	}
-	dto := client.ToDTO(keys)
+	dto := client.ToExtSvc(keys)
 
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client.Secret), bcrypt.DefaultCost)
 	if err != nil {

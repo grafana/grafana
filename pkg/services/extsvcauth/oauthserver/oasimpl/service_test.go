@@ -110,8 +110,8 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
 	prevSaID := int64(3)
 	// Using a function to prevent modifying the same object in the tests
-	client1 := func() *oauthserver.Client {
-		return &oauthserver.Client{
+	client1 := func() *oauthserver.OAuthClient {
+		return &oauthserver.OAuthClient{
 			Name:             serviceName,
 			ClientID:         "RANDOMID",
 			Secret:           "RANDOMSECRET",
@@ -144,7 +144,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
 					return name == serviceName
 				}))
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthClient) bool {
 					return client.Name == serviceName && client.ClientID != "" && client.Secret != "" &&
 						len(client.GrantTypes) == 0 && len(client.PublicPem) > 0 && client.ServiceAccountID == 0 &&
 						len(client.ImpersonatePermissions) == 0
@@ -171,7 +171,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthClient) bool {
 					return client.Name == serviceName &&
 						client.GrantTypes == "client_credentials" && client.ServiceAccountID == sa1.Id
 				}))
@@ -204,7 +204,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthClient) bool {
 					return client.Name == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
 				}))
 				// Check that the service account is retrieved with the correct ID
@@ -269,7 +269,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the external service impersonate permissions contains the default permissions required to populate the access token
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthClient) bool {
 					impPerm := client.ImpersonatePermissions
 					return slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf}) &&
@@ -341,8 +341,8 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
 
-	dummyClient := func() *oauthserver.Client {
-		return &oauthserver.Client{
+	dummyClient := func() *oauthserver.OAuthClient {
+		return &oauthserver.OAuthClient{
 			Name:             serviceName,
 			ClientID:         "RANDOMID",
 			Secret:           "RANDOMSECRET",
@@ -351,7 +351,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			ServiceAccountID: 1,
 		}
 	}
-	cachedClient := &oauthserver.Client{
+	cachedClient := &oauthserver.OAuthClient{
 		Name:             serviceName,
 		ClientID:         "RANDOMID",
 		Secret:           "RANDOMSECRET",
@@ -433,7 +433,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should return correctly when the client has no service account",
 			init: func(env *TestEnv) {
-				client := &oauthserver.Client{
+				client := &oauthserver.OAuthClient{
 					Name:             serviceName,
 					ClientID:         "RANDOMID",
 					Secret:           "RANDOMSECRET",

@@ -22,7 +22,7 @@ func NewStore(db db.DB) oauthserver.Store {
 	return &store{db: db}
 }
 
-func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) error {
+func createImpersonatePermissions(sess *db.Session, client *oauthserver.OAuthClient) error {
 	if len(client.ImpersonatePermissions) == 0 {
 		return nil
 	}
@@ -38,7 +38,7 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) 
 	return err
 }
 
-func registerExternalService(sess *db.Session, client *oauthserver.Client) error {
+func registerExternalService(sess *db.Session, client *oauthserver.OAuthClient) error {
 	insertQuery := []any{
 		`INSERT INTO oauth_client (name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		client.Name,
@@ -57,13 +57,13 @@ func registerExternalService(sess *db.Session, client *oauthserver.Client) error
 	return createImpersonatePermissions(sess, client)
 }
 
-func (s *store) RegisterExternalService(ctx context.Context, client *oauthserver.Client) error {
+func (s *store) RegisterExternalService(ctx context.Context, client *oauthserver.OAuthClient) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		return registerExternalService(sess, client)
 	})
 }
 
-func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
+func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.OAuthClient, prevClientID string) error {
 	deletePermQuery := `DELETE FROM oauth_impersonate_permission WHERE client_id = ?`
 	if _, errDelPerm := sess.Exec(deletePermQuery, prevClientID); errDelPerm != nil {
 		return errDelPerm
@@ -76,7 +76,7 @@ func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client
 	return createImpersonatePermissions(sess, client)
 }
 
-func updateExternalService(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
+func updateExternalService(sess *db.Session, client *oauthserver.OAuthClient, prevClientID string) error {
 	updateQuery := []any{
 		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, audiences = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE name = ?`,
 		client.ClientID,
@@ -95,7 +95,7 @@ func updateExternalService(sess *db.Session, client *oauthserver.Client, prevCli
 	return recreateImpersonatePermissions(sess, client, prevClientID)
 }
 
-func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.Client) error {
+func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.OAuthClient) error {
 	if client.Name == "" {
 		return oauthserver.ErrClientRequiredName
 	}
@@ -116,8 +116,8 @@ func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.Cli
 	})
 }
 
-func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
-	res := &oauthserver.Client{}
+func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver.OAuthClient, error) {
+	res := &oauthserver.OAuthClient{}
 	if id == "" {
 		return nil, oauthserver.ErrClientRequiredID
 	}
@@ -145,7 +145,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 // GetPublicKey returns public key, issued by 'issuer', and assigned for subject. Public key is used to check
 // signature of jwt assertion in authorization grants.
 func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error) {
-	res := &oauthserver.Client{}
+	res := &oauthserver.OAuthClient{}
 	if clientID == "" {
 		return nil, oauthserver.ErrClientRequiredID
 	}
@@ -183,8 +183,8 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string
 	}, nil
 }
 
-func (s *store) GetExternalServiceByName(ctx context.Context, name string) (*oauthserver.Client, error) {
-	res := &oauthserver.Client{}
+func (s *store) GetExternalServiceByName(ctx context.Context, name string) (*oauthserver.OAuthClient, error) {
+	res := &oauthserver.OAuthClient{}
 	if name == "" {
 		return nil, oauthserver.ErrClientRequiredName
 	}
@@ -198,8 +198,8 @@ func (s *store) GetExternalServiceByName(ctx context.Context, name string) (*oau
 	return res, err
 }
 
-func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.Client, error) {
-	res := &oauthserver.Client{}
+func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.OAuthClient, error) {
+	res := &oauthserver.OAuthClient{}
 	getClientQuery := `SELECT
 		id, name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client

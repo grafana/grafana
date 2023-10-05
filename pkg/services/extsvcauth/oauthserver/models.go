@@ -32,7 +32,7 @@ type OAuth2Server interface {
 	SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error)
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.
-	GetExternalService(ctx context.Context, id string) (*Client, error)
+	GetExternalService(ctx context.Context, id string) (*OAuthClient, error)
 
 	// HandleTokenRequest handles the client's OAuth2 query to obtain an access_token by presenting its authorization
 	// grant (ex: client_credentials, jwtbearer).
@@ -45,9 +45,9 @@ type OAuth2Server interface {
 //go:generate mockery --name Store --structname MockStore --outpkg oauthtest --filename store_mock.go --output ./oauthtest/
 
 type Store interface {
-	RegisterExternalService(ctx context.Context, client *Client) error
-	SaveExternalService(ctx context.Context, client *Client) error
-	GetExternalService(ctx context.Context, id string) (*Client, error)
-	GetExternalServiceByName(ctx context.Context, name string) (*Client, error)
+	RegisterExternalService(ctx context.Context, client *OAuthClient) error
+	SaveExternalService(ctx context.Context, client *OAuthClient) error
+	GetExternalService(ctx context.Context, id string) (*OAuthClient, error)
+	GetExternalServiceByName(ctx context.Context, name string) (*OAuthClient, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
 }
