@@ -1,7 +1,10 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getNotificationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -11,13 +14,13 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
-        legendFormat: '{{cluster}} - success',
+        legendFormat: 'success',
       },
       {
         refId: 'B',
         expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
-        legendFormat: '{{cluster}} - failed',
+        legendFormat: 'failed',
       },
     ],
     $timeRange: timeRange,
@@ -27,8 +30,18 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor(overrideToFixedColor('success'))
+          .matchFieldsWithName('failed')
+          .overrideColor(overrideToFixedColor('failed'))
+      )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

@@ -61,6 +61,11 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.stat().setTitle(panelTitle).setData(transformation).setUnit('percent').build(),
+    body: PanelBuilders.stat()
+      .setTitle(panelTitle)
+      .setDescription(panelTitle)
+      .setData(transformation)
+      .setUnit('percent')
+      .build(),
   });
 }

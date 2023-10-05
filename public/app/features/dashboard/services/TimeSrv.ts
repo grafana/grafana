@@ -12,6 +12,7 @@ import {
   IntervalValues,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
@@ -340,8 +341,8 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // Scenes can set this global object to the current time range.
     // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
-    if (window.__timeRangeSceneObject && window.__timeRangeSceneObject.isActive) {
-      return window.__timeRangeSceneObject.state.value;
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
     }
 
     return getTimeRange(this.time, this.timeModel);

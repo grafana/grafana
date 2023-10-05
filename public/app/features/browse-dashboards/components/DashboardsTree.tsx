@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -17,6 +17,7 @@ import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
+import { makeRowID } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -47,6 +48,8 @@ export function DashboardsTree({
   requestLoadMore,
   canSelect = false,
 }: DashboardsTreeProps) {
+  const treeID = useId();
+
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
 
@@ -98,10 +101,11 @@ export function DashboardsTree({
       isSelected,
       onAllSelectionChange,
       onItemSelectionChange,
+      treeID,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -175,12 +179,13 @@ interface VirtualListRowProps {
     isSelected: DashboardsTreeCellProps['isSelected'];
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
+    treeID: string;
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange } = data;
+  const { table, isSelected, onItemSelectionChange, treeID } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -190,14 +195,17 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     <div
       {...row.getRowProps({ style })}
       className={cx(styles.row, styles.bodyRow)}
-      data-testid={selectors.pages.BrowseDashboards.table.row(row.original.item.uid)}
+      aria-labelledby={makeRowID(treeID, row.original.item)}
+      data-testid={selectors.pages.BrowseDashboards.table.row(
+        'title' in row.original.item ? row.original.item.title : row.original.item.uid
+      )}
     >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { isSelected, onItemSelectionChange })}
+            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID })}
           </div>
         );
       })}

@@ -22,11 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -226,7 +226,12 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("Failed to authenticate request", "client", c.Name(), "error", err)
+		log := s.log.FromContext(ctx).Warn
+		if errors.Is(err, authn.ErrTokenNeedsRotation) {
+			log = s.log.FromContext(ctx).Debug
+		}
+
+		log("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
