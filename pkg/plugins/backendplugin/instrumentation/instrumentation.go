@@ -67,15 +67,15 @@ func (r PluginError) Error() string {
 	return r.Err.Error()
 }
 
-func (r PluginError) Source() string {
-	return string(r.ErrorSource)
+func (r PluginError) Source() backend.ErrorSource {
+	return r.ErrorSource
 }
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
-	var errorSource string
+	var errorSource backend.ErrorSource
 
 	ctx = instrumentContext(ctx, endpoint, *pluginCtx)
 	err := fn(ctx)
@@ -86,14 +86,14 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		}
 		pluginErr, ok := err.(PluginError)
 		if ok {
-			errorSource = string(pluginErr.ErrorSource)
+			errorSource = pluginErr.ErrorSource
 		}
 	}
 
 	elapsed := time.Since(start)
 
 	pluginRequestDurationWithLabels := pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target))
-	pluginRequestCounterWithLabels := pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target), errorSource)
+	pluginRequestCounterWithLabels := pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target), string(errorSource))
 	pluginRequestDurationSecondsWithLabels := PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, string(cfg.Target))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
