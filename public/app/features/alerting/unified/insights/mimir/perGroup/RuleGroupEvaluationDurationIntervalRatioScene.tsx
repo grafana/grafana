@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, ThresholdsMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRuleGroupEvaluationDurationIntervalRatioScene(
   timeRange: SceneTimeRange,
@@ -48,6 +51,7 @@ export function getRuleGroupEvaluationDurationIntervalRatioScene(
           },
         ],
       })
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
