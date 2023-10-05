@@ -53,7 +53,7 @@
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
-    "plugin:build": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -c ./tools/plugins/shared/webpack/webpack.config.ts --env production --env dir=${0}",
+    "plugin:build": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -c ./scripts/webpack/plugins/webpack.config.ts --env production --env dir=${0}",
     "plugin:build:commit": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -c ./scripts/webpack/plugins/webpack.config.ts --env production --env dir=${0} --env commit=$(git rev-parse --short HEAD)",
     "plugin:build:dev": "TS_NODE_PROJECT=\"${0}/tsconfig.json\" webpack -w -c ./scripts/webpack/plugins/webpack.config.ts --env development --env dir=${0}"
   },
