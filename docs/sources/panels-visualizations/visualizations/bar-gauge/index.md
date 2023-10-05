@@ -75,17 +75,17 @@ Choose a value display mode.
 - **Text color -** Value color is default text color.
 - **Hidden -** Values are hidden.
 
-### Field label placement
+### Name placement
 
-Choose a field label placement mode.
+Choose a name placement mode.
 
 {{% admonition type="note" %}}
-This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, field labels are always placed at the bottom of each bar gauge.
+This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, names are always placed at the bottom of each bar gauge.
 {{% /admonition %}}
 
 - **Auto -** Grafana determines the best placement.
-- **Top -** Field labels are placed on top of each bar gauge.
-- **Left -** Field labels are placed to the left of each bar gauge.
+- **Top -** Names are placed on top of each bar gauge.
+- **Left -** Names are placed to the left of each bar gauge.
 
 ### Show unfilled area
 

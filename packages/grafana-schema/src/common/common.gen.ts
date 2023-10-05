@@ -636,9 +636,9 @@ export enum BarGaugeValueMode {
 }
 
 /**
- * Allows for the bar gauge field value to be placed explicitly
+ * Allows for the bar gauge name to be placed explicitly
  */
-export enum BarGaugeFieldLabelPlacement {
+export enum BarGaugeNamePlacement {
   Auto = 'auto',
   Left = 'left',
   Top = 'top',
