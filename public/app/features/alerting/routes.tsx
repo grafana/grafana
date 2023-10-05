@@ -14,73 +14,73 @@ const commonRoutes: RouteDescriptor[] = [];
 const legacyRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
-    path: '/alerting',
+    path: '/alerting-legacy',
     component: () => <NavLandingPage navId="alerting-legacy" />,
   },
   {
-    path: '/alerting/list',
+    path: '/alerting-legacy/list',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/AlertRuleList')
+      () => import(/* webpackChunkName: "AlertRuleListLegacyIndex" */ 'app/features/alerting/AlertRuleList')
     ),
   },
   {
-    path: '/alerting/ng/list',
+    path: '/alerting-legacy/ng/list',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+      () => import(/* webpackChunkName: "AlertRuleListLegacy" */ 'app/features/alerting/AlertRuleList')
     ),
   },
   {
-    path: '/alerting/notifications',
+    path: '/alerting-legacy/notifications',
     roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/templates/new',
+    path: '/alerting-legacy/notifications/templates/new',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/templates/:id/edit',
+    path: '/alerting-legacy/notifications/templates/:id/edit',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/receivers/new',
+    path: '/alerting-legacy/notifications/receivers/new',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/receivers/:id/edit',
+    path: '/alerting-legacy/notifications/receivers/:id/edit',
     roles: () => ['Editor', 'Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notifications/global-config',
+    path: '/alerting-legacy/notifications/global-config',
     roles: () => ['Admin', 'Editor'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+      () => import(/* webpackChunkName: "NotificationsListLegacyPage" */ 'app/features/alerting/NotificationsListPage')
     ),
   },
   {
-    path: '/alerting/notification/new',
+    path: '/alerting-legacy/notification/new',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewNotificationChannelPage')
+      () => import(/* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage')
     ),
   },
   {
-    path: '/alerting/notification/:id/edit',
+    path: '/alerting-legacy/notification/:id/edit',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
+      () => import(/* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage')
     ),
   },
 ];
