@@ -6,7 +6,15 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+import {
+  Alert,
+  DataSourceHttpSettings,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Select,
+} from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
 
@@ -16,7 +24,6 @@ import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 import { MappingsConfiguration } from './MappingsConfiguration';
 import { fromString, toString } from './parseLokiLabelMappings';
 
-const { Switch } = LegacyForms;
 export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
@@ -77,48 +84,52 @@ export class ConfigEditor extends PureComponent<Props, State> {
           onChange={onOptionsChange}
           secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
         />
-        <h3 className="page-heading">Graphite details</h3>
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel tooltip="This option controls what functions are available in the Graphite query editor.">
-                Version
-              </InlineFormLabel>
+        <FieldSet>
+          <legend className="page-heading">Graphite details</legend>
+          <InlineFieldRow>
+            <InlineField
+              label="Version"
+              tooltip="This option controls what functions are available in the Graphite query editor."
+              labelWidth={20}
+            >
               <Select
+                id="graphite-version"
                 aria-label="Graphite version"
                 value={currentVersion}
                 options={graphiteVersions}
-                className="width-8"
+                width={16}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
               />
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField label="Type" tooltip={this.renderTypeHelp} labelWidth={20}>
               <Select
+                id="backend-type"
                 aria-label="Graphite backend type"
                 options={graphiteTypes}
                 value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
-                className="width-8"
+                width={16}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />
-            </div>
-          </div>
+            </InlineField>
+          </InlineFieldRow>
           {options.jsonData.graphiteType === GraphiteType.Metrictank && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <Switch
-                  label="Rollup indicator"
-                  labelClass={'width-10'}
-                  tooltip="Shows up as an info icon in panel headers when data is aggregated"
-                  checked={!!options.jsonData.rollupIndicatorEnabled}
+            <InlineFieldRow>
+              <InlineField
+                label="Rollup indicator"
+                tooltip="Shows up as an info icon in panel headers when data is aggregated"
+                labelWidth={20}
+              >
+                <InlineSwitch
+                  id="rollup-indicator"
+                  value={!!options.jsonData.rollupIndicatorEnabled}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'rollupIndicatorEnabled')}
                 />
-              </div>
-            </div>
+              </InlineField>
+            </InlineFieldRow>
           )}
-        </div>
+        </FieldSet>
         <MappingsConfiguration
           mappings={(options.jsonData.importConfiguration?.loki?.mappings || []).map(toString)}
           showHelp={this.state.showMappingsHelp}
