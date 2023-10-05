@@ -57,14 +57,8 @@ class K8sAPI implements PlaylistAPI {
     return true;
   }
 
-  constructor() {
-    console.log('ROOT', this.url);
-  }
-
   async getAllPlaylist(): Promise<Playlist[]> {
-    console.log('getAllPlaylist', this.url);
     const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
-    console.log('got', result);
     return result.playlists.map((p) => p.spec);
   }
 
@@ -200,6 +194,7 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
   return playlists.filter((v) => v.name.toLowerCase().includes(query!));
 }
 
+/** Temporary! just while under active development, nice to easy switch */
 export function setUseK8sAPI(v: boolean) {
   const current = store.getBool('playlists-test-k8s', Boolean(config.featureToggles.kubernetesPlaylists));
   if (current !== v) {
