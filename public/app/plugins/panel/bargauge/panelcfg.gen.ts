@@ -12,18 +12,18 @@ import * as common from '@grafana/schema';
 
 export interface Options extends common.SingleStatBaseOptions {
   displayMode: common.BarGaugeDisplayMode;
+  fieldLabelPlacement: common.BarGaugeFieldLabelPlacement;
   minVizHeight: number;
   minVizWidth: number;
   showUnfilled: boolean;
   valueMode: common.BarGaugeValueMode;
-  valuePlacement: common.BarGaugeFieldLabelPlacement;
 }
 
 export const defaultOptions: Partial<Options> = {
   displayMode: common.BarGaugeDisplayMode.Gradient,
+  fieldLabelPlacement: common.BarGaugeFieldLabelPlacement.Auto,
   minVizHeight: 10,
   minVizWidth: 0,
   showUnfilled: true,
   valueMode: common.BarGaugeValueMode.Color,
-  valuePlacement: common.BarGaugeFieldLabelPlacement.Auto,
 };

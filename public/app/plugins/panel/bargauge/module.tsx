@@ -51,8 +51,8 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
             { value: BarGaugeFieldLabelPlacement.Left, label: 'Left' },
           ],
         },
-        defaultValue: defaultOptions.valuePlacement,
-        showIf: (options) => options.valueMode !== BarGaugeValueMode.Hidden,
+        defaultValue: defaultOptions.fieldLabelPlacement,
+        showIf: (options) => options.orientation !== VizOrientation.Vertical,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',
