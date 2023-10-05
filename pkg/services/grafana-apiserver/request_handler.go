@@ -26,7 +26,7 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		}
 
 		gv := builder.GetGroupVersion()
-		prefix := "/apis/" + gv.String() // ???? k8s prefix!!!
+		prefix := "/apis/" + gv.String()
 
 		// Root handlers
 		var sub *mux.Router
@@ -102,6 +102,7 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 	}, nil
 }
 
+// The registered path must start with a slash, and (for now) not have any more
 func validPath(p string) error {
 	if !strings.HasPrefix(p, "/") {
 		return fmt.Errorf("path must start with slash")
@@ -149,11 +150,16 @@ type methodNotAllowedHandler struct{}
 
 func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(405) // method not allowed
-	// w.Write([]byte(fmt.Sprintf("bad method: %s", req.Method)))
 }
 
+// Modify the the OpenAPI spec to include the additional routes.
+// Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
+// In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
 func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+		if s.Paths == nil {
+			return s, nil
+		}
 		for _, builder := range builders {
 			routes := builder.GetAPIRoutes()
 			if routes == nil {
@@ -161,8 +167,8 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 			}
 
 			gv := builder.GetGroupVersion()
-			prefix := "/apis/" + gv.String() // ???? k8s prefix!!!
-			if s.Paths != nil && s.Paths.Paths[prefix] != nil {
+			prefix := "/apis/" + gv.String()
+			if s.Paths.Paths[prefix] != nil {
 				copy := *s // will copy the rest of the properties
 				copy.Info.Title = "Grafana API server: " + gv.Group
 
