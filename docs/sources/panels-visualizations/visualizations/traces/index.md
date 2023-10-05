@@ -46,13 +46,13 @@ To use this procedure, you need:
 ### Add the traces visualization query {#add-the-traces-panel-query}
 
 To view and analyze traces data in a dashboard, you need to add the traces visualization to your dashboard and define a query using the panel editor.
-The query determines the data that is displayed in the visualization.
+The query determines the data that's displayed in the visualization.
 For more information on the panel editor, refer to the [Panel editor documentation][].
 
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
 1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add traces visualizations.
-1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
+1. Click **+ Add visualization** from a new dashboard or click the **Add** drop-down on an existing dashboard and select **Visualization**.
 1. Search for and select the appropriate tracing data source.
 1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
 1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation][].

@@ -33,9 +33,13 @@ In the panel editor, you can update all the elements of a visualization includin
 
 ![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
 
+<!-- replace this image-->
+
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown:
 
-![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+
+<!-- replace this image-->
 
 ## Panel editor
 
@@ -45,18 +49,20 @@ This section describes the areas of the Grafana panel editor.
 
    - **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
    - **Save:** Saves changes you made to the panel.
-   - **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
+   - **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You must save the dashboard to persist the applied changes.
 
-1. Visualization preview: The visualization preview section contains the following options:
+1. Visualization preview: The preview section contains the following options:
 
    - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It does not include transformations you might have applied to the data or the formatting options available in the [Table][] visualization.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
-   - **Actual:** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
+   - **Actual:** The visualization preview has the exact size as the size on the dashboard. If not enough space is available, the visualization scales down, preserving the aspect ratio.
    - **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
+
+The preview also displays widgets as you edit them, but not all of the preview options apply.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query][]. When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the dropdown in the **Query** tab.
+   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query][]. When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
    - **Transform tab:** Apply data transformations. For more information, refer to [Transform data][].
    - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting][].
 
@@ -69,14 +75,14 @@ The inspect drawer helps you understand and troubleshoot your panels. You can vi
 To access the panel inspect drawer from the edit view, hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect**.
 
 {{% admonition type="note" %}}
-Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
+Not all panel types include all tabs. For example, dashboard list panels don't have raw data to inspect, so they don't display the Stats, Data, or Query tabs.
 {{% /admonition %}}
 
 The panel inspector consists of the following options:
 
 1. The panel inspect drawer displays opens a drawer on the right side. Click the arrow in the upper right corner to expand or reduce the drawer pane.
 
-1. **Data tab -** Shows the raw data returned by the query with transformations applied. Field options such as overrides and value mappings are not applied by default.
+1. **Data tab -** Shows the raw data returned by the query with transformations applied. Field options such as overrides and value mappings aren't applied by default.
 
 1. **Stats tab -** Shows how long your query takes and how much it returns.
 

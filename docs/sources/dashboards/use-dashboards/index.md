@@ -36,26 +36,26 @@ The following image and descriptions highlight all dashboard features.
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
 - (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder.
-- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
-- (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share dialog box.
+- (4) **Add**: Use this option to add a visualization, widget, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
 - (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics][].
 - (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings][].
-- (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
+- (8) **Time picker drop-down**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
 - (9) **Zoom out time range**: Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
 - (10) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
 - (11) **Refresh dashboard time interval**: Click to select a dashboard auto refresh time interval.
 - (12) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. Learn more about view mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
-- (13) **Dashboard panel**: The primary building block of a dashboard is the panel. To add a new panel, dashboard row, or library panel, click **Add panel**.
+- (13) **Dashboard panel**: The primary building block of a dashboard is the panel. To add a visualization, widget, dashboard row, or library panel, click the **Add** drop-down or one of the buttons in an empty dashboard.
   - Library panels can be shared among many dashboards.
   - To move a panel, drag the panel header to another location.
   - To resize a panel, click and drag the lower right corner of the panel.
 - (14) **Graph legend**: Change series colors, y-axis and series visibility directly from the legend.
 - (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
-  - Panels inside a collapsed row do not issue queries.
+  - Panels inside a collapsed row don't issue queries.
   - Use [repeating rows][] to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
@@ -68,14 +68,14 @@ Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your k
 - `d+e`: Expand all rows.
 - `d+s`: Dashboard settings.
 - `Ctrl+K`: Opens the command palette.
-- `Esc`: Exits panel when in fullscreen view or edit mode. Also returns you to the dashboard from dashboard settings.
+- `Esc`: Exits panel when in full screen view or edit mode. Also returns you to the dashboard from dashboard settings.
 
 **Focused panel**
 
-By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
+By hovering over a panel with the mouse you can use some shortcuts that target that panel.
 
 - `e`: Toggle panel edit view
-- `v`: Toggle panel fullscreen view
+- `v`: Toggle panel full screen view
 - `ps`: Open Panel Share Modal
 - `pd`: Duplicate Panel
 - `pr`: Remove Panel
@@ -83,7 +83,7 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 ## Set dashboard time range
 
-Grafana provides several ways to manage the time ranges of the data being visualized, for dashboard, panels and also for alerting.
+Grafana provides several ways to manage the time ranges of the data being visualized for dashboards, panels, as well as alerting.
 
 This section describes supported time units and relative ranges, the common time controls, dashboard-wide time settings, and panel-specific time settings.
 
@@ -112,7 +112,7 @@ The following table provides example relative ranges:
 
 {{% admonition type="note" %}}
 
-Grafana Alerting does not support the following syntaxes at this time:
+Grafana Alerting doesn't support the following syntaxes at this time:
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" because this is an absolute timestamp.
@@ -167,13 +167,13 @@ This section also displays recently used absolute ranges.
 
 {{% admonition type="note" %}}
 
-Grafana Alerting does not support semi-relative time ranges.
+Grafana Alerting doesn't support semi-relative time ranges.
 
 {{% /admonition %}}
 
 You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from a starting point.
 
-Set a semi-relative time range by setting the start time to an absolute timestamp and the end time to a “now” that is relative to the current time. For example:
+Set a semi-relative time range by setting the start time to an absolute timestamp and the end time to a “now” that's relative to the current time. For example:
 
 **Start time:** `2023-05-01 00:00:00`
 
@@ -201,7 +201,7 @@ Click and drag to select the time range in the visualization that you want to vi
 
 Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations. Grafana cancels any pending requests when you trigger a refresh.
 
-By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, click the down arrow next to the **Refresh dashboard** icon, and then select a refresh interval.
+By default, Grafana doesn't automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, click the down arrow next to the **Refresh dashboard** icon, and then select a refresh interval.
 
 Selecting the **Auto** interval schedules a refresh based on the query time range and browser window width. Short time ranges update frequently, while longer ones update infrequently. There is no need to refresh more often then the pixels available to draw any updates.
 

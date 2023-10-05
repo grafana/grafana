@@ -34,13 +34,15 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
+   <!--update this image-->
+
 1. In the modal that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources][].
    - Click **Configure a new data source** to set up a new one (Admins only).
 
-   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
+   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source dialog box" >}}
 
    The **Edit panel** view opens with your data source selected.
    You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
@@ -77,11 +79,20 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
    ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
+
+## Add a widget
+
+Grafana also offers widgets&mdash;elements you can place in a panel that doesn't require a data source. To learn more, refer to the [Visualizations and widgets documentation][]. To add one, follow these steps:
+
+1. Click **Dashboards** in the left-side menu.
+1. Click **New** and select **New Dashboard**.
+1. On the empty dashboard, click **+ Add widget**....
+<!--finish this when dev work is complete -->
 
 ## Configure repeating rows
 
@@ -97,7 +108,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 1. Click **Dashboards** in the left-side menu.
 1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
+1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
    If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
 
@@ -170,4 +181,7 @@ You can size a dashboard panel to suits your needs.
 
 [Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
 [Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
+
+[Visualizations and widgets documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+[Visualizations and widgets documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
 {{% /docs/reference %}}
