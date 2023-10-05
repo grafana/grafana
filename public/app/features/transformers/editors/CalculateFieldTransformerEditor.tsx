@@ -1,6 +1,6 @@
 import { defaults } from 'lodash';
 import React, { ChangeEvent } from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { identity, of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
@@ -29,6 +29,7 @@ import {
   IndexOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import {
   FilterPill,
   HorizontalGroup,
@@ -92,11 +93,26 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       .pipe(
         standardTransformers.ensureColumnsTransformer.operator(null, ctx),
         this.extractAllNames(),
+        this.getVariableNames(),
         this.extractNamesAndSelected(configuredOptions)
       )
       .subscribe(({ selected, names }) => {
         this.setState({ names, selected }, () => subscription.unsubscribe());
       });
+  }
+
+  private getVariableNames(): OperatorFunction<string[], string[]> {
+    if (!cfg.featureToggles.transformationsVariableSupport) {
+      return identity;
+    }
+    const templateSrv = getTemplateSrv();
+    return (source) =>
+      source.pipe(
+        map((input) => {
+          input.push(...templateSrv.getVariables().map((v) => '$' + v.name));
+          return input;
+        })
+      );
   }
 
   private extractAllNames(): OperatorFunction<DataFrame[], string[]> {

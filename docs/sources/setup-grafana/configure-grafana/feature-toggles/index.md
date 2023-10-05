@@ -143,6 +143,7 @@ Experimental features might be changed or removed without prior notice.
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
+| `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
 
 ## Development feature toggles
 

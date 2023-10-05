@@ -21,6 +21,7 @@
   "includePaths": ["package.json", "packages/**"],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
+  "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],

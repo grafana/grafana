@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"gopkg.in/square/go-jose.v2"
 )
 
