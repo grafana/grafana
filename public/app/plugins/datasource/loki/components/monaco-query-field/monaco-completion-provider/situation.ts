@@ -161,10 +161,7 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [
-      [Selector],
-      [ERROR_NODE_ID, Matchers, Selector]
-    ],
+    paths: [[Selector], [ERROR_NODE_ID, Matchers, Selector]],
     fun: resolveSelector,
   },
   {
@@ -176,15 +173,12 @@ const RESOLVERS: Resolver[] = [
       [LogRangeExpr],
       [ERROR_NODE_ID, LabelExtractionExpressionList],
       [LabelExtractionExpressionList],
-      [LogfmtExpressionParser]
+      [LogfmtExpressionParser],
     ],
     fun: resolveLogfmtParser,
   },
   {
-    paths: [
-      [LogQL],
-      [ERROR_NODE_ID, Selector],
-    ],
+    paths: [[LogQL], [ERROR_NODE_ID, Selector]],
     fun: resolveTopLevel,
   },
   {
@@ -436,10 +430,10 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   // We want to know if the cursor if after a log query with logfmt parser.
   // E.g. `{x="y"} | logfmt ^`
   /**
-   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise 
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
    * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
    * and it can be inserted with extra pipes or commas.
-   */ 
+   */
   const tree = parser.parse(text);
 
   // Adjust the cursor position if there are spaces at the end of the text.
@@ -492,7 +486,7 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
    * Top level examples:
    * - Empty query
    * - {label="value"}
-   * - {label="value"} | parser 
+   * - {label="value"} | parser
    */
   const logExprNode = walk(node, [
     ['lastChild', Expr],
@@ -500,10 +494,10 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
   ]);
 
   /**
-   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise 
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
    * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
    * and it can be inserted with extra pipes.
-   */ 
+   */
   if (logExprNode != null && text.endsWith(' ')) {
     return resolveLogOrLogRange(logExprNode, text, pos, false);
   }
@@ -631,7 +625,7 @@ function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): S
 
 // If there is an error in the current cursor position, it's likely that the user is
 // in the middle of writing a query. If we can't find an error node, we use the node
-// at the cursor position to identify the situation. 
+// at the cursor position to identify the situation.
 function resolveCursor(text: string, cursorPos: number): TreeCursor {
   // Sometimes the cursor is a couple spaces after the end of the expression.
   // To account for this situation, we "move" the cursor position back to the real end

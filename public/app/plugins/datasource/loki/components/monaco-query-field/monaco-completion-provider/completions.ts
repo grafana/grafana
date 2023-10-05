@@ -360,7 +360,7 @@ export async function getLogfmtCompletions(
     // The user is typing a new label, so we remove the last comma
     logQuery = trimEnd(logQuery, ', ');
   }
-  
+
   let completions: Completion[] = [];
 
   const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
@@ -377,14 +377,10 @@ export async function getLogfmtCompletions(
      * Don't offer parsers: {label="value"} | logfmt ^
      * Offer parsers: {label="value"} | logfmt label ^
      */
-    const parserCompletions = otherLabels.length > 0 ? await getParserCompletions(
-      '| ',
-      hasJSON,
-      hasLogfmt,
-      hasPack,
-      extractedLabelKeys,
-      true
-    ) : [];
+    const parserCompletions =
+      otherLabels.length > 0
+        ? await getParserCompletions('| ', hasJSON, hasLogfmt, hasPack, extractedLabelKeys, true)
+        : [];
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
   /**
@@ -393,13 +389,13 @@ export async function getLogfmtCompletions(
    * {label="value"} | logfmt ^
    * {label="value"} | logfmt label,^
    * {label="value"} | logfmt label, ^
-   */ 
+   */
   if (otherLabels.length === 0 || trailingSpace || trailingComma) {
     const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
 
     // No other labels or trailing comma, so we don't need to add a prefix
     let labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
-    
+
     const labelCompletions: Completion[] = labels.map((label) => ({
       type: 'LABEL_NAME',
       label,
@@ -492,7 +488,14 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.trailingComma, situation.trailingSpace, situation.otherLabels, dataProvider);
+      return getLogfmtCompletions(
+        situation.logQuery,
+        situation.flags,
+        situation.trailingComma,
+        situation.trailingSpace,
+        situation.otherLabels,
+        dataProvider
+      );
     default:
       throw new NeverCaseError(situation);
   }
