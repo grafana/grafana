@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -19,12 +20,12 @@ type AnonDBStore struct {
 }
 
 type Device struct {
-	ID        int64     `json:"-" db:"id"`
-	DeviceID  string    `json:"device_id" db:"device_id"`
-	ClientIP  string    `json:"client_ip" db:"client_ip"`
-	UserAgent string    `json:"user_agent" db:"user_agent"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	ID        int64     `json:"-" xorm:"id" db:"id"`
+	DeviceID  string    `json:"device_id" xorm:"device_id" db:"device_id"`
+	ClientIP  string    `json:"client_ip" xorm:"client_ip" db:"client_ip"`
+	UserAgent string    `json:"user_agent" xorm:"user_agent" db:"user_agent"`
+	CreatedAt time.Time `json:"created_at" xorm:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" xorm:"updated_at" db:"updated_at"`
 }
 
 func (a *Device) CacheKey() string {
@@ -56,11 +57,12 @@ func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time
 		query += " WHERE updated_at BETWEEN ? AND ?"
 		args = append(args, from.UTC(), to.UTC())
 	}
-	err := s.sqlStore.GetSqlxSession().Select(ctx, &devices, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return devices, nil
+
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		return dbSession.SQL(query, args...).Find(&devices)
+	})
+
+	return devices, err
 }
 
 func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) error {
@@ -95,32 +97,40 @@ updated_at = excluded.updated_at`
 		return fmt.Errorf("unsupported database driver: %s", s.sqlStore.GetDBType())
 	}
 
-	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, query, args...)
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		args = append([]any{query}, args...)
+		_, err := dbSession.Exec(args...)
+		return err
+	})
+
 	return err
 }
 
 func (s *AnonDBStore) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
 	var count int64
-	err := s.sqlStore.GetSqlxSession().Get(ctx, &count, "SELECT COUNT(*) FROM anon_device WHERE updated_at BETWEEN ? AND ?", from.UTC(), to.UTC())
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.SQL("SELECT COUNT(*) FROM anon_device WHERE updated_at BETWEEN ? AND ?", from.UTC(), to.UTC()).Get(&count)
+		return err
+	})
+
+	return count, err
 }
 
 func (s *AnonDBStore) DeleteDevice(ctx context.Context, deviceID string) error {
-	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE device_id = ?", deviceID)
-	if err != nil {
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.Exec("DELETE FROM anon_device WHERE device_id = ?", deviceID)
 		return err
-	}
-	return nil
+	})
+
+	return err
 }
 
 // deleteOldDevices deletes all devices that have no been updated since the given time.
 func (s *AnonDBStore) DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error {
-	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE updated_at <= ?", olderThan.UTC())
-	if err != nil {
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.Exec("DELETE FROM anon_device WHERE updated_at <= ?", olderThan.UTC())
 		return err
-	}
-	return nil
+	})
+
+	return err
 }

@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 )
 
 type api struct {

@@ -20,7 +20,7 @@ import {
 import { getBackendSrv, getGrafanaLiveSrv, logDebug } from '@grafana/runtime';
 
 import { LLM_PLUGIN_ID, LLM_PLUGIN_ROUTE, setLLMPluginVersion } from './constants';
-import { LLMAppHealthCheck } from './types';
+import { LLMAppSettings } from './types';
 
 const OPENAI_CHAT_COMPLETIONS_PATH = 'openai/v1/chat/completions';
 
@@ -366,13 +366,13 @@ let loggedWarning = false;
 
 /** Check if the OpenAI API is enabled via the LLM plugin. */
 export const enabled = async () => {
-  // Run a health check to see if the plugin is installed.
-  let response: LLMAppHealthCheck;
   try {
-    response = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/health`, undefined, undefined, {
+    const settings: LLMAppSettings = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/settings`, undefined, undefined, {
       showSuccessAlert: false,
       showErrorAlert: false,
     });
+    setLLMPluginVersion(settings.info.version);
+    return settings.enabled ?? false;
   } catch (e) {
     if (!loggedWarning) {
       logDebug(String(e));
@@ -383,12 +383,4 @@ export const enabled = async () => {
     }
     return false;
   }
-
-  const { details } = response;
-  // Update the version if it's present on the response.
-  if (details.version !== undefined) {
-    setLLMPluginVersion(details.version);
-  }
-  // If the plugin is installed then check if it is configured.
-  return details?.openAI ?? false;
 };
