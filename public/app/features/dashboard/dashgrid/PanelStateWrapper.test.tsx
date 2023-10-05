@@ -137,6 +137,70 @@ describe('PanelStateWrapper', () => {
       });
     });
   });
+
+  describe('Panel row', () => {
+    it('should call query runner when it is not a row panel', async () => {
+      const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
+
+      const panelQueryRunner = {
+        getData: () => subject,
+        run: jest.fn(),
+      } as unknown as PanelQueryRunner;
+
+      const options = {
+        panel: new PanelModel({
+          id: 123,
+          events: new EventBusSrv(),
+          getQueryRunner: () => panelQueryRunner,
+          getOptions: jest.fn(),
+          getDisplayTitle: jest.fn(),
+        }),
+        dashboard: {
+          panelInitialized: (panel: PanelModel) => panel.refresh(),
+          getTimezone: () => 'browser',
+          events: new EventBusSrv(),
+          canAddAnnotations: jest.fn(),
+          canEditAnnotations: jest.fn(),
+          canDeleteAnnotations: jest.fn(),
+        } as unknown as DashboardModel,
+        isInView: true,
+      };
+      const { props } = setupTestContext(options);
+
+      expect(props.panel.getQueryRunner().run).toHaveBeenCalled();
+    });
+    it('should not call query runner when it is a row panel', async () => {
+      const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
+
+      const panelQueryRunner = {
+        getData: () => subject,
+        run: jest.fn(),
+      } as unknown as PanelQueryRunner;
+
+      const options = {
+        panel: new PanelModel({
+          id: 123,
+          events: new EventBusSrv(),
+          getQueryRunner: () => panelQueryRunner,
+          getOptions: jest.fn(),
+          getDisplayTitle: jest.fn(),
+          type: 'row',
+        }),
+        dashboard: {
+          panelInitialized: (panel: PanelModel) => panel.refresh(),
+          getTimezone: () => 'browser',
+          events: new EventBusSrv(),
+          canAddAnnotations: jest.fn(),
+          canEditAnnotations: jest.fn(),
+          canDeleteAnnotations: jest.fn(),
+        } as unknown as DashboardModel,
+        isInView: true,
+      };
+      const { props } = setupTestContext(options);
+
+      expect(props.panel.getQueryRunner().run).not.toHaveBeenCalled();
+    });
+  });
 });
 
 const TestPanelComponent = () => <div>Plugin Panel to Render</div>;

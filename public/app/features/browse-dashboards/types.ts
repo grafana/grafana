@@ -42,8 +42,6 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   parentUID?: string;
 }
 
-export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';
-
 interface RendererUserProps {
   // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
   // aren't typed, so we must be careful when accessing this

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip } from '@grafana/ui';
 
 import { useOpenAIStream } from './hooks';
 import { OPEN_AI_MODEL, Message } from './utils';
@@ -33,13 +33,7 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
-
-  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClickProp?.(e);
-    setMessages(messages);
-  };
 
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
@@ -47,6 +41,16 @@ export const GenAIButton = ({
       onGenerate(reply.replace(/^"|"$/g, ''));
     }
   }, [isGenerating, reply, onGenerate]);
+
+  // The button is disabled if the plugin is not installed or enabled
+  if (!value?.enabled) {
+    return null;
+  }
+
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
+    setMessages(messages);
+  };
 
   const getIcon = () => {
     if (error || !value?.enabled) {
@@ -56,21 +60,6 @@ export const GenAIButton = ({
       return undefined;
     }
     return 'ai';
-  };
-
-  const getTooltipContent = () => {
-    if (error) {
-      return `Unexpected error: ${error.message}`;
-    }
-    if (!value?.enabled) {
-      return (
-        <span>
-          The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-          and enable your plugin.
-        </span>
-      );
-    }
-    return '';
   };
 
   const getText = () => {
@@ -84,7 +73,7 @@ export const GenAIButton = ({
   return (
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size={14} />}
-      <Tooltip show={value?.enabled && !error ? false : undefined} interactive content={getTooltipContent()}>
+      <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
         <Button
           icon={getIcon()}
           onClick={onClick}

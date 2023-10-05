@@ -145,7 +145,7 @@ describe('RuleEditor grafana managed rules', () => {
     //8 segons
 
     // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.saveAndExit.get());
     // 9seg
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     // 9seg
