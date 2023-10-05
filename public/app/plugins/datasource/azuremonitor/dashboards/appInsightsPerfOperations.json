@@ -884,7 +884,7 @@
       "links": [
         {
           "title": "Reset Operation names to 'All'",
-          "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}﻿&﻿${sub:queryparam}﻿&﻿${rg:queryparam}﻿&﻿${ns:queryparam}﻿&﻿${res:queryparam}﻿&﻿${min_duration:queryparam}﻿&﻿${max_duration:queryparam}﻿&var-operation-name=All"
+          "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${min_duration:queryparam}&${max_duration:queryparam}&var-operation-name=All"
         }
       ],
       "maxDataPoints": 150,
@@ -1047,7 +1047,7 @@
             {
               "targetBlank": true,
               "title": "Show list of sample transactions",
-              "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/Microsoft.Insights/components/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.operation_Name}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Insights/components/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields.operation_Name}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
             }
           ],
           "mappings": [],
@@ -1143,7 +1143,7 @@
                   {
                     "targetBlank": true,
                     "title": "Show list of transactions matching operation name ",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.operation_Name}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields.operation_Name}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               },
@@ -1383,7 +1383,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open explorer with this name",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿${sub}﻿﻿/resourceGroups/﻿﻿${rg}﻿﻿/providers/${ns}/﻿﻿${res}﻿﻿\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"﻿﻿${__data.fields.Name}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"operation_Name\",\"filters\":[\"${__data.fields.Name}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"requests\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1678,8 +1678,8 @@
     ]
   },
   "time": {
-    "from": "now-45m",
-    "to": "now-15m"
+    "from": "now-30m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",

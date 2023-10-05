@@ -6,7 +6,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "10.0.3"
+      "version": "9.5.2"
     },
     {
       "type": "datasource",
@@ -102,7 +102,7 @@
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h3 style=\"color: #a16feb\"> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights  </h5>\n  </div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -175,7 +175,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
           "azureMonitor": {
@@ -233,7 +233,7 @@
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#blade/AppInsightsExtension/ProactiveDetectionFeedBlade/ComponentId/%7B%22Name%22%3A%22${res}%22%2C%22SubscriptionId%22%3A%22${sub}%22%2C%22ResourceGroup%22%3A%22${rg}%22%7D/TimeContext/%7B%22durationMs%22%3A604800000%2C%22endTime%22%3Anull%2C%22createdTime%22%3A%222021-10-18T19%3A26%3A58.876Z%22%2C%22isInitialTime%22%3Atrue%2C%22grain%22%3A1%2C%22useDashboardTimeRange%22%3Afalse%7D\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #4d99b8; font-size:18px;\">Smart detection</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -254,7 +254,7 @@
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #2272b9; font-size:18px;\">Live Metrics</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           \n           ",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -274,7 +274,7 @@
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div style=\"padding-top: 20px;\">\n  <center><p style=\"position:center; color: #ff8c00; font-size:18px\">App map</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           ",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -311,7 +311,7 @@
         "content": "<h1 style=\"font-size: 20px; color:#73bf69;\"> Usage </h1>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -387,7 +387,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
           "azureLogAnalytics": {
@@ -425,7 +425,7 @@
         "content": "<h1 style=\"font-size:20px; color:#ec008c;\">Reliability</h1>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -446,7 +446,7 @@
         "content": "<a href=\"/d/Azure-AppInsights-Failures-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -466,7 +466,7 @@
         "content": "<h1 style=\"font-size:20px; color:#7e58ff;\">Responsiveness</h1>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -487,7 +487,7 @@
         "content": "<a href=\"/d/Azure-AppInsights-Perf-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -507,7 +507,7 @@
         "content": "<h1 style=\"font-size:20px; color:#3274d9;\">Browser</h1>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
@@ -527,7 +527,7 @@
         "content": "<a style=\"color: #ffffff;\" href=\"https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/id/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/detailBlade/MetricsExplorerBlade/sourceExtension/AppInsightsExtension/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Browsers%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22dependencies%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22dependencies%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22dependency%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Have%20AJAX%20calls%20been%20slow%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fcount%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Has%20page%20view%20traffic%20changed%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22When%20are%20script%20errors%20occurring%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g0%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-d0%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20most%20common%20script%20errors%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%5D%7D/openInEditMode/\" target=\"_blank\">\n<div style=\"padding-top: 35px; background-color: #3274d9; width: 100%; height: 100%\">\n  <center><p style=\"font-size:16px; margin-bottom:0px;\"> Browsers </p></center>\n</div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "10.0.3",
+      "pluginVersion": "9.5.2",
       "transparent": true,
       "type": "text"
     },

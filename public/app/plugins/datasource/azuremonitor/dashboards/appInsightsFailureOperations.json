@@ -1782,8 +1782,8 @@
     ]
   },
   "time": {
-    "from": "now-45m",
-    "to": "now-15m"
+    "from": "now-30m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",
