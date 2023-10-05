@@ -22,6 +22,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -105,12 +106,12 @@ func setupTestEnv(t *testing.T) *TestEnv {
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
 
-	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
-	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
+	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
+	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
 	prevSaID := int64(3)
 	// Using a function to prevent modifying the same object in the tests
-	client1 := func() *oauthserver.ExternalService {
-		return &oauthserver.ExternalService{
+	client1 := func() *oauthserver.OAuthExternalService {
+		return &oauthserver.OAuthExternalService{
 			Name:             serviceName,
 			ClientID:         "RANDOMID",
 			Secret:           "RANDOMSECRET",
@@ -124,7 +125,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	tests := []struct {
 		name       string
 		init       func(*TestEnv)
-		cmd        *oauthserver.ExternalServiceRegistration
+		cmd        *extsvcauth.ExternalServiceRegistration
 		mockChecks func(*testing.T, *TestEnv)
 		wantErr    bool
 	}{
@@ -135,15 +136,15 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name:             serviceName,
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
 					return name == serviceName
 				}))
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
 					return client.Name == serviceName && client.ClientID != "" && client.Secret != "" &&
 						len(client.GrantTypes) == 0 && len(client.PublicPem) > 0 && client.ServiceAccountID == 0 &&
 						len(client.ImpersonatePermissions) == 0
@@ -160,17 +161,17 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name:             serviceName,
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+				Self: extsvcauth.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
 				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
 					return client.Name == serviceName &&
 						client.GrantTypes == "client_credentials" && client.ServiceAccountID == sa1.Id
 				}))
@@ -178,7 +179,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.AssertCalled(t, "CreateServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == serviceName && *cmd.Role == roletype.RoleViewer
+						return cmd.Name == serviceName && *cmd.Role == roletype.RoleNone
 					}),
 				)
 			},
@@ -194,16 +195,16 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name:             serviceName,
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+				Self: extsvcauth.SelfCfg{
 					Enabled: false,
 				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
 					return client.Name == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
 				}))
 				// Check that the service account is retrieved with the correct ID
@@ -229,10 +230,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				// Update the service account permissions
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name:             serviceName,
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+				Self: extsvcauth.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
 				},
@@ -257,10 +258,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Impersonation: oauthserver.ImpersonationCfg{
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name:             serviceName,
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+				Impersonation: extsvcauth.ImpersonationCfg{
 					Enabled:     true,
 					Groups:      true,
 					Permissions: []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
@@ -268,7 +269,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the external service impersonate permissions contains the default permissions required to populate the access token
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
 					impPerm := client.ImpersonatePermissions
 					return slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf}) &&
@@ -302,26 +303,26 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			require.NotEmpty(t, dto.Secret)
 
 			// Check that we have generated keys and that we correctly return them
-			if tt.cmd.Key != nil && tt.cmd.Key.Generate {
-				require.NotNil(t, dto.KeyResult)
-				require.True(t, dto.KeyResult.Generated)
-				require.NotEmpty(t, dto.KeyResult.PublicPem)
-				require.NotEmpty(t, dto.KeyResult.PrivatePem)
+			if tt.cmd.OAuthProviderCfg.Key != nil && tt.cmd.OAuthProviderCfg.Key.Generate {
+				require.NotNil(t, dto.OAuthExtra.KeyResult)
+				require.True(t, dto.OAuthExtra.KeyResult.Generated)
+				require.NotEmpty(t, dto.OAuthExtra.KeyResult.PublicPem)
+				require.NotEmpty(t, dto.OAuthExtra.KeyResult.PrivatePem)
 			}
 
 			// Check that we computed grant types and created or updated the service account
 			if tt.cmd.Self.Enabled {
-				require.NotNil(t, dto.GrantTypes)
-				require.Contains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should contain client_credentials")
+				require.NotNil(t, dto.OAuthExtra.GrantTypes)
+				require.Contains(t, dto.OAuthExtra.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should contain client_credentials")
 			} else {
-				require.NotContains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should not contain client_credentials")
+				require.NotContains(t, dto.OAuthExtra.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should not contain client_credentials")
 			}
 			// Check that we updated grant types
 			if tt.cmd.Impersonation.Enabled {
-				require.NotNil(t, dto.GrantTypes)
-				require.Contains(t, dto.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should contain JWT Bearer grant")
+				require.NotNil(t, dto.OAuthExtra.GrantTypes)
+				require.Contains(t, dto.OAuthExtra.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should contain JWT Bearer grant")
 			} else {
-				require.NotContains(t, dto.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should not contain JWT Bearer grant")
+				require.NotContains(t, dto.OAuthExtra.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should not contain JWT Bearer grant")
 			}
 
 			// Check that mocks were called as expected
@@ -340,8 +341,8 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
 
-	dummyClient := func() *oauthserver.ExternalService {
-		return &oauthserver.ExternalService{
+	dummyClient := func() *oauthserver.OAuthExternalService {
+		return &oauthserver.OAuthExternalService{
 			Name:             serviceName,
 			ClientID:         "RANDOMID",
 			Secret:           "RANDOMSECRET",
@@ -350,7 +351,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			ServiceAccountID: 1,
 		}
 	}
-	cachedClient := &oauthserver.ExternalService{
+	cachedClient := &oauthserver.OAuthExternalService{
 		Name:             serviceName,
 		ClientID:         "RANDOMID",
 		Secret:           "RANDOMSECRET",
@@ -432,7 +433,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should return correctly when the client has no service account",
 			init: func(env *TestEnv) {
-				client := &oauthserver.ExternalService{
+				client := &oauthserver.OAuthExternalService{
 					Name:             serviceName,
 					ClientID:         "RANDOMID",
 					Secret:           "RANDOMSECRET",
@@ -486,8 +487,8 @@ func assertArrayInMap[K comparable, V string](t *testing.T, m1 map[K][]V, m2 map
 func TestTestOAuth2ServiceImpl_handleKeyOptions(t *testing.T) {
 	testCases := []struct {
 		name           string
-		keyOption      *oauthserver.KeyOption
-		expectedResult *oauthserver.KeyResult
+		keyOption      *extsvcauth.KeyOption
+		expectedResult *extsvcauth.KeyResult
 		wantErr        bool
 	}{
 		{
@@ -496,19 +497,19 @@ func TestTestOAuth2ServiceImpl_handleKeyOptions(t *testing.T) {
 		},
 		{
 			name:      "should return error when the key option is empty",
-			keyOption: &oauthserver.KeyOption{},
+			keyOption: &extsvcauth.KeyOption{},
 			wantErr:   true,
 		},
 		{
 			name: "should return successfully when PublicPEM is specified",
-			keyOption: &oauthserver.KeyOption{
+			keyOption: &extsvcauth.KeyOption{
 				PublicPEM: base64.StdEncoding.EncodeToString([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 -----END PUBLIC KEY-----`)),
 			},
 			wantErr: false,
-			expectedResult: &oauthserver.KeyResult{
+			expectedResult: &extsvcauth.KeyResult{
 				PublicPem: `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
@@ -533,7 +534,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 	}
 
 	t.Run("should generate an ECDSA key pair (default) when generate key option is specified", func(t *testing.T) {
-		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+		result, err := env.S.handleKeyOptions(context.Background(), &extsvcauth.KeyOption{Generate: true})
 
 		require.NoError(t, err)
 		require.NotNil(t, result.PrivatePem)
@@ -543,7 +544,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 
 	t.Run("should generate an RSA key pair when generate key option is specified", func(t *testing.T) {
 		env.S.cfg.OAuth2ServerGeneratedKeyTypeForClient = "RSA"
-		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+		result, err := env.S.handleKeyOptions(context.Background(), &extsvcauth.KeyOption{Generate: true})
 
 		require.NoError(t, err)
 		require.NotNil(t, result.PrivatePem)
