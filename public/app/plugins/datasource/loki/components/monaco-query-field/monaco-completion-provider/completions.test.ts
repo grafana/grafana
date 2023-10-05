@@ -679,7 +679,7 @@ describe('IN_LOGFMT completions', () => {
   it('autocompleting logfmt with labels and trailing comma should only return labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
-      logQuery: `{job="grafana"} | logfmt`,
+      logQuery: `{job="grafana"} | logfmt,`,
       flags: false,
       trailingComma: true,
       trailingSpace: false,
