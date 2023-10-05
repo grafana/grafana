@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { ConfirmModal, InlineFieldRow, InlineField, InlineSwitch } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -11,15 +12,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { deletePlaylist, searchPlaylists, playlistAPI } from './api';
+import { getPlaylistAPI, searchPlaylists, setUseK8sAPI } from './api';
 import { Playlist } from './types';
 
-const { getAllPlaylist } = playlistAPI;
-
 export const PlaylistPage = () => {
+  const api = getPlaylistAPI();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const allPlaylists = useAsync(() => getAllPlaylist(), [forcePlaylistsFetch]);
+  const allPlaylists = useAsync(() => api.getAllPlaylist(), [forcePlaylistsFetch]);
   const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
 
   const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
@@ -31,7 +31,7 @@ export const PlaylistPage = () => {
     if (!playlistToDelete) {
       return;
     }
-    deletePlaylist(playlistToDelete.uid).finally(() => {
+    api.deletePlaylist(playlistToDelete.uid).finally(() => {
       setForcePlaylistsFetch(forcePlaylistsFetch + 1);
       setPlaylistToDelete(undefined);
     });
@@ -66,6 +66,18 @@ export const PlaylistPage = () => {
             }
             setSearchQuery={setSearchQuery}
           />
+        )}
+        {config.buildInfo.env === 'development' && (
+          <div>
+            <InlineFieldRow>
+              <InlineField label="Use k8s">
+                <InlineSwitch
+                  value={api.isK8s()}
+                  onChange={(v: React.ChangeEvent<HTMLInputElement>) => setUseK8sAPI(v.target.checked)}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          </div>
         )}
 
         {!hasPlaylists && searchQuery ? (
