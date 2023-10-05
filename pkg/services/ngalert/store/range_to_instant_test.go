@@ -122,7 +122,6 @@ func TestCanBeInstant(t *testing.T) {
 			optimizations, canBe := canBeInstant(tc.rule)
 			require.Equal(t, tc.expected, canBe)
 			require.Equal(t, tc.expectedOptimizations, optimizations)
-
 		})
 	}
 }
