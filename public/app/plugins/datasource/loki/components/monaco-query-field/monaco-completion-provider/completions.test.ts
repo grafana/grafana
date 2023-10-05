@@ -720,11 +720,20 @@ describe('IN_LOGFMT completions', () => {
   });
 
   it.each([
+    // {label="value"} | logfmt ^
     [true, false, [], false],
-    [true, false, ['otherLabel'], false],
+    // {label="value"} | logfmt otherLabel ^
+    [true, false, ['otherLabel'], true],
+    // {label="value"} | logfmt otherLabel^
+    [false, false, ['otherLabel'], false],
+    // {label="value"} | logfmt lab^
     [false, false, ['lab'], false],
-    [false, true, ['lab'], false],
-    [true, true, ['lab'], false],
+    // {label="value"} | logfmt otherLabel,^
+    [false, true, ['otherLabel'], false],
+    // {label="value"} | logfmt lab, ^
+    [true, true, ['otherLabel'], false],
+    // {label="value"} | logfmt otherLabel ^
+    [true, false, ['otherLabel'], true],
   ])(
     'when space is %p, comma %p, and other labels %o => inserting a comma should be %p',
     async (trailingSpace: boolean, trailingComma: boolean, otherLabels: string[], shouldHaveComma: boolean) => {
@@ -740,8 +749,8 @@ describe('IN_LOGFMT completions', () => {
       const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
 
       expect(labelCompletions).toHaveLength(2);
-      expect(labelCompletions[0].insertText.startsWith(' ,')).toBe(shouldHaveComma);
-      expect(labelCompletions[1].insertText.startsWith(' ,')).toBe(shouldHaveComma);
+      expect(labelCompletions[0].insertText.startsWith(',')).toBe(shouldHaveComma);
+      expect(labelCompletions[1].insertText.startsWith(',')).toBe(shouldHaveComma);
     }
   );
 
