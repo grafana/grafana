@@ -61,13 +61,20 @@ const LANG_ID = 'logql';
 // we must only run the lang-setup code once
 let LANGUAGE_SETUP_STARTED = false;
 
+export const defaultWordPattern = /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g;
+
 function ensureLogQL(monaco: Monaco) {
   if (LANGUAGE_SETUP_STARTED === false) {
     LANGUAGE_SETUP_STARTED = true;
     monaco.languages.register({ id: LANG_ID });
 
     monaco.languages.setMonarchTokensProvider(LANG_ID, monarchlanguage);
-    monaco.languages.setLanguageConfiguration(LANG_ID, languageConfiguration);
+    monaco.languages.setLanguageConfiguration(LANG_ID, {
+      ...languageConfiguration,
+      wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()+\[{\]}\\|;:',.<>\/?\s]+)/g,
+      // BEFORE  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
+      // I have removed `"` and "=" from the exclusion list, so now it matches and replaces and entire label
+    });
   }
 }
 

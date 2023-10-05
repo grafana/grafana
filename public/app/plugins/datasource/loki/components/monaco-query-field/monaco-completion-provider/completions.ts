@@ -216,6 +216,7 @@ async function getLabelNamesForSelectorCompletions(
   return labelNames.map((label) => ({
     type: 'LABEL_NAME',
     label,
+    isSnippet: true,
     insertText: `${label}=`,
     triggerOnInsert: true,
   }));
@@ -400,6 +401,7 @@ async function getLabelValuesForMetricCompletions(
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const values = await dataProvider.getLabelValues(labelName, otherLabels);
+
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
