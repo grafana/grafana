@@ -33,8 +33,7 @@ type InstrumentationMiddleware struct {
 	next           plugins.Client
 }
 
-// NewInstrumentationMiddleware returns a new InstrumentationMiddleware.
-func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (plugins.ClientMiddleware, error) {
+func newInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (*InstrumentationMiddleware, error) {
 	metrics := pluginMetrics{
 		pluginRequestCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
@@ -72,12 +71,21 @@ func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 			return nil, fmt.Errorf("prometheus register: %w", err)
 		}
 	}
+	return &InstrumentationMiddleware{
+		pluginMetrics:  metrics,
+		pluginRegistry: pluginRegistry,
+	}, nil
+}
+
+// NewInstrumentationMiddleware returns a new InstrumentationMiddleware.
+func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (plugins.ClientMiddleware, error) {
+	imw, err := newInstrumentationMiddleware(promRegisterer, pluginRegistry)
+	if err != nil {
+		return nil, err
+	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		return &InstrumentationMiddleware{
-			pluginMetrics:  metrics,
-			next:           next,
-			pluginRegistry: pluginRegistry,
-		}
+		imw.next = next
+		return imw
 	}), nil
 }
 
