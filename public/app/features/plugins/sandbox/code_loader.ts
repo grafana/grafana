@@ -19,8 +19,13 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
   if (isSameDomainAsHost(url)) {
     const response = await fetch(url);
     scriptCode = await response.text();
-    scriptCode = patchPluginSourceMap(meta, scriptCode);
-
+    //even though this is not loaded via a CDN we need to transform the sourceMapUrl
+    scriptCode = transformPluginSourceForCDN({
+      url,
+      source: scriptCode,
+      transformSourceMapURL: true,
+      transformAssets: false,
+    });
     // cdn loaded
   } else if (isHostedOnCDN(url)) {
     const response = await fetch(url);
