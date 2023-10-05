@@ -226,7 +226,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("Failed to authenticate request", "client", c.Name(), "error", err)
+		s.log.FromContext(ctx).Debug("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
