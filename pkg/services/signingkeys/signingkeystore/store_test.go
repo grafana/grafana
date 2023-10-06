@@ -162,6 +162,9 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 		},
 	}
 
+	_, exists := store.localCache.Get(cleanupRateLimitKey)
+	require.False(t, exists)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := store.AddPrivateKey(ctx, tc.keyID, tc.alg, tc.privateKey, tc.expiresAt, tc.force)
@@ -184,6 +187,9 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			}
 		})
 	}
+
+	_, exists = store.localCache.Get(cleanupRateLimitKey)
+	require.True(t, exists)
 }
 
 func generateRSAKey(t *testing.T) *rsa.PrivateKey {
