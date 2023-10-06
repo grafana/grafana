@@ -83,6 +83,17 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 {{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-tempo-query-type-template-variables.mp4" >}}
 
+## Improved TraceQL query editor
+
+<!-- Fabrizio Casati -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
+
+{{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-traceql-query-editor-improvements.mp4" >}}
+
 ## Grafana OnCall integration for Alerting
 
 <!-- Brenda Muir -->
