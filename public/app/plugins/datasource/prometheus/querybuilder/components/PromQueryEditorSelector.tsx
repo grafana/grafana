@@ -96,8 +96,8 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     <>
       <ConfirmModal
         isOpen={parseModalOpen}
-        title="Query parsing"
-        body="There were errors while trying to parse the query. Continuing to visual builder may lose some parts of the query."
+        title="Parsing error: Switch to the builder mode?"
+        body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
         confirmText="Continue"
         onConfirm={() => {
           changeEditorMode(query, QueryEditorMode.Builder, onChange);

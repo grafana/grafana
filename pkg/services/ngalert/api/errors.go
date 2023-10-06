@@ -11,6 +11,9 @@ import (
 
 var (
 	errUnexpectedDatasourceType = errors.New("unexpected datasource type")
+
+	// errFolderAccess is used as a wrapper to propagate folder related errors and correctly map to the response status
+	errFolderAccess = errors.New("cannot get folder")
 )
 
 func unexpectedDatasourceTypeError(actual string, expected string) error {
@@ -33,6 +36,9 @@ func errorToResponse(err error) response.Response {
 	}
 	if errors.Is(err, ErrAuthorization) {
 		return ErrResp(401, err, "")
+	}
+	if errors.Is(err, errFolderAccess) {
+		return toNamespaceErrorResponse(err)
 	}
 	return ErrResp(500, err, "")
 }

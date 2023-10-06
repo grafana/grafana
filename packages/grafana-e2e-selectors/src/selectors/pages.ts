@@ -208,7 +208,7 @@ export const Pages = {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard or panel',
+    shareButton: 'Share dashboard',
     PublicDashboard: {
       Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
@@ -280,8 +280,13 @@ export const Pages = {
   BrowseDashboards: {
     table: {
       body: 'data-testid browse-dashboards-table',
-      row: (uid: string) => `data-testid ${uid} row`,
+      row: (name: string) => `data-testid browse dashboards row ${name}`,
       checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+    NewFolderForm: {
+      form: 'data-testid new folder form',
+      nameInput: 'data-testid new-folder-name-input',
+      createButton: 'data-testid new-folder-create-button',
     },
   },
   Search: {

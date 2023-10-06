@@ -1,7 +1,10 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-const QUERY_A = `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`;
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
+
+import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +12,7 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`,
         range: true,
         legendFormat: 'interval',
       },
@@ -18,13 +21,14 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
-    body: PanelBuilders.timeseries()
+    ...PANEL_STYLES,
+    body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
+      .setOption('graphMode', BigValueGraphMode.Area)
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

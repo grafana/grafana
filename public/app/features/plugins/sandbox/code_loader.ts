@@ -1,6 +1,7 @@
-import { PluginMeta } from '@grafana/data';
+import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
+import { resolveWithCache } from '../loader/cache';
 import { isHostedOnCDN } from '../loader/utils';
 
 import { SandboxEnvironment } from './types';
@@ -40,7 +41,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
 
 export async function getPluginCode(meta: PluginMeta): Promise<string> {
   if (isHostedOnCDN(meta.module)) {
-    // should load plugin from a CDN
+    // Load plugin from CDN, no need for "resolveWithCache" as CDN URLs already include the version
     const url = meta.module;
     const response = await fetch(url);
     let pluginCode = await response.text();
@@ -51,8 +52,10 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     });
     return pluginCode;
   } else {
-    //local plugin loading
-    const response = await fetch(meta.module);
+    // local plugin. resolveWithCache will append a query parameter with its version
+    // to ensure correct cached version is served
+    const pluginCodeUrl = resolveWithCache(meta.module);
+    const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = patchPluginSourceMap(meta, pluginCode);
     pluginCode = patchPluginAPIs(pluginCode);
@@ -87,4 +90,12 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
   }
   return pluginCode;
+}
+
+export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvironment) {
+  // same as https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/vector.ts#L16
+  // Array is a "reflective" type in Near-membrane and doesn't get an identify continuity
+  sandboxEnvironment.evaluate(
+    `${patchArrayVectorProrotypeMethods.toString()};${patchArrayVectorProrotypeMethods.name}()`
+  );
 }

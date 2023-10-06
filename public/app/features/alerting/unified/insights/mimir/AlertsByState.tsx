@@ -1,7 +1,10 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-const QUERY = 'sum by (state) (grafanacloud_instance_alertmanager_alerts)';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +12,7 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
     queries: [
       {
         refId: 'A',
-        expr: QUERY,
+        expr: 'sum by (state) (grafanacloud_instance_alertmanager_alerts)',
         range: true,
         legendFormat: '{{state}}',
       },
@@ -18,12 +21,15 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) => b.matchFieldsWithName('active').overrideColor(overrideToFixedColor('active')))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

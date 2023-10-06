@@ -1,6 +1,14 @@
-import { MultiValueVariable, SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneVariable } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  SceneDataLayers,
+  SceneGridItemLike,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneVariable,
+} from '@grafana/scenes';
 import { Panel, RowPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
@@ -92,6 +100,219 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.y).toBe(2);
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
+    });
+  });
+
+  describe('Annotations', () => {
+    it('should transform annotations to save model', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.annotations?.list?.length).toBe(4);
+      expect(saveModel.annotations?.list).toMatchSnapshot();
+    });
+    it('should transform annotations to save model after state changes', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+
+      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const enabledLayer = layers[1];
+      const hiddenLayer = layers[3];
+
+      enabledLayer.setState({
+        isEnabled: false,
+      });
+      hiddenLayer.setState({
+        isHidden: false,
+      });
+
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.annotations?.list?.length).toBe(4);
+      expect(saveModel.annotations?.list?.[1].enable).toEqual(false);
+      expect(saveModel.annotations?.list?.[3].hide).toEqual(false);
+    });
+  });
+
+  describe('Queries', () => {
+    it('Given panel with queries', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.maxDataPoints).toBe(100);
+      expect(result.targets?.length).toBe(2);
+      expect(result.targets?.[0]).toEqual({
+        refId: 'A',
+        expr: 'A',
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+      });
+
+      expect(result.datasource).toEqual({
+        type: 'grafana-testdata',
+        uid: 'abc',
+      });
+    });
+
+    it('Given panel with transformations', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        maxDataPoints: 100,
+
+        transformations: [
+          {
+            id: 'reduce',
+            options: {
+              reducers: ['max'],
+              mode: 'reduceFields',
+              includeTimeField: false,
+            },
+          },
+        ],
+
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.transformations.length).toBe(1);
+
+      expect(result.maxDataPoints).toBe(100);
+      expect(result.targets?.length).toBe(2);
+      expect(result.targets?.[0]).toEqual({
+        refId: 'A',
+        expr: 'A',
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+      });
+
+      expect(result.datasource).toEqual({
+        type: 'grafana-testdata',
+        uid: 'abc',
+      });
+    });
+    it('Given panel with shared query', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+        },
+        targets: [
+          {
+            refId: 'A',
+            panelId: 1,
+            datasource: {
+              type: 'datasource',
+              uid: SHARED_DASHBOARD_QUERY,
+            },
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.targets?.length).toBe(1);
+      expect(result.targets?.[0]).toEqual({
+        refId: 'A',
+        panelId: 1,
+        datasource: {
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+        },
+      });
+
+      expect(result.datasource).toEqual({
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      });
+    });
+
+    it('Given panel with shared query and transformations', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+        },
+        targets: [
+          {
+            refId: 'A',
+            panelId: 1,
+            datasource: {
+              type: 'datasource',
+              uid: SHARED_DASHBOARD_QUERY,
+            },
+          },
+        ],
+        transformations: [
+          {
+            id: 'reduce',
+            options: {
+              reducers: ['max'],
+              mode: 'reduceFields',
+              includeTimeField: false,
+            },
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.transformations.length).toBe(1);
+
+      expect(result.targets?.length).toBe(1);
+      expect(result.targets?.[0]).toEqual({
+        refId: 'A',
+        panelId: 1,
+        datasource: {
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+        },
+      });
+
+      expect(result.datasource).toEqual({
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      });
     });
   });
 });

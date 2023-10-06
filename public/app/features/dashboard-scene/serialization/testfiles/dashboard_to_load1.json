@@ -8,15 +8,58 @@
           "uid": "grafana"
         },
         "enable": true,
-        "hide": true,
+        "hide": false,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata"
+        },
+        "enable": true,
+        "iconColor": "red",
+        "name": "Enabled",
+        "target": {
+          "lines": 4,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata"
+        },
+        "enable": false,
+        "iconColor": "yellow",
+        "name": "Disabled",
+        "target": {
+          "lines": 5,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "dark-purple",
+        "name": "Hidden",
+        "target": {
+          "lines": 6,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
       }
     ]
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,
+  "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
   "id": 1351,
   "links": [],
@@ -161,5 +204,5 @@
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
   "version": 2,
-  "weekStart": ""
+  "weekStart": "saturday"
 }

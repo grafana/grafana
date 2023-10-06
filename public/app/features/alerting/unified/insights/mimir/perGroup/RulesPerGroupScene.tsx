@@ -1,7 +1,10 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-const QUERY_A = `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`;
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
+
+import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +12,7 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`,
         range: true,
         legendFormat: 'number of rules',
       },
@@ -18,13 +21,21 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
-    body: PanelBuilders.timeseries()
+    ...PANEL_STYLES,
+    body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('none')
+      .setOption('graphMode', BigValueGraphMode.Area)
+      .setOverrides((b) =>
+        b.matchFieldsByQuery('A').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        })
+      )
+      .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

@@ -222,6 +222,33 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('reduces all field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.ReduceRow,
+        reduce: { include: ['B', 'C'], reducer: ReducerID.allValues },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'All values': [2, 3],
+          TheTime: 1000,
+        },
+        {
+          'All values': [200, 300],
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
   it('can add index field', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -235,6 +262,34 @@ describe('calculateField transformer w/ timeseries', () => {
       const data = received[0][0];
       expect(data.fields.length).toEqual(1);
       expect(data.fields[0].values).toEqual([0, 1]);
+    });
+  });
+
+  it('can add percentage index field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Index,
+        replaceFields: true,
+        index: {
+          asPercentile: true,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [
+        { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000] },
+        { name: 'Field', type: FieldType.number, values: [2, 200, 3, 6, 3, 7, 9, 9] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+      expect(data.fields.length).toEqual(1);
+      expect(data.fields[0].values[2]).toEqual(0.25);
+      expect(data.fields[0].values[4]).toEqual(0.5);
+      expect(data.fields[0].values[6]).toEqual(0.75);
     });
   });
 

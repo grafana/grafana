@@ -16,15 +16,14 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
+    const ts = getTemplateSrv();
     const item = target.azureResourceGraph;
     if (!item) {
       return target;
     }
-
-    const templateSrv = getTemplateSrv();
-    const variableNames = templateSrv.getVariables().map((v) => `$${v.name}`);
+    const variableNames = ts.getVariables().map((v) => `$${v.name}`);
     const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
-    const interpolatedSubscriptions = templateSrv
+    const interpolatedSubscriptions = ts
       .replace(subscriptionVar, scopedVars, (v: string[] | string) => v)
       .split(',')
       .filter((v) => v.length > 0);
@@ -32,7 +31,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       ...interpolatedSubscriptions,
       ..._.filter(target.subscriptions, (sub) => !_.includes(variableNames, sub)),
     ];
-    const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
+    const query = ts.replace(item.query, scopedVars, interpolateVariable);
 
     return {
       ...target,

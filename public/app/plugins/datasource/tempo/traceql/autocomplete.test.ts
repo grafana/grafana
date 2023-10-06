@@ -200,13 +200,18 @@ describe('CompletionProvider', () => {
   ])(
     'suggests operators that go after `|` (aggregators, selectorts, ...) - %s, %i',
     async (input: string, offset: number) => {
-      const { provider, model } = setup(input, offset);
+      const { provider, model } = setup(input, offset, undefined, v2Tags);
       const result = await provider.provideCompletionItems(model, emptyPosition);
-      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-        CompletionProvider.functions.map((s) =>
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+        ...CompletionProvider.functions.map((s) =>
           expect.objectContaining({ label: s.label, insertText: s.insertText, documentation: s.documentation })
-        )
-      );
+        ),
+        ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        expect.objectContaining({ label: 'cluster', insertText: '.cluster' }),
+        expect.objectContaining({ label: 'container', insertText: '.container' }),
+        expect.objectContaining({ label: 'db', insertText: '.db' }),
+      ]);
     }
   );
 
@@ -246,19 +251,14 @@ describe('CompletionProvider', () => {
   });
 
   it.each([
-    ['{ .foo }', 6],
     ['{ .foo }', 7],
-    ['{.foo   300}', 5],
     ['{.foo   300}', 6],
     ['{.foo   300}', 7],
     ['{.foo   300}', 8],
-    ['{.foo  300 && .bar = 200}', 5],
     ['{.foo  300 && .bar = 200}', 6],
     ['{.foo  300 && .bar = 200}', 7],
-    ['{.foo  300 && .bar  200}', 18],
     ['{.foo  300 && .bar  200}', 19],
     ['{.foo  300 && .bar  200}', 20],
-    ['{ .foo = 1 && .bar }', 18],
     ['{ .foo = 1 && .bar }', 19],
     ['{ .foo = 1 && .bar  }', 19],
   ])('suggests with incomplete spanset - %s, %i', async (input: string, offset: number) => {
@@ -269,6 +269,28 @@ describe('CompletionProvider', () => {
         (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
+  });
+
+  it.each([
+    ['{ .foo }', 6],
+    ['{.foo   300}', 5],
+    ['{.foo  300 && .bar = 200}', 5],
+    ['{ .foo = 1 && .bar }', 18],
+  ])('suggests with incomplete spanset with no space before cursor - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
+  });
+
+  it.each([
+    ['{ span.d }', 8],
+    ['{ span.db }', 9],
+  ])('suggests to complete attribute - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'db', insertText: 'db' }),
+    ]);
   });
 
   it.each([

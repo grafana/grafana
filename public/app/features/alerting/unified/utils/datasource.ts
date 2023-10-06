@@ -47,6 +47,10 @@ export function getAlertManagerDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+export function getExternalDsAlertManagers() {
+  return getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
+}
+
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
   imgUrl: 'public/img/grafana_icon.svg',

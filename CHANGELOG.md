@@ -1,3 +1,22 @@
+<!-- 10.1.4 START -->
+
+# 10.1.4 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75733](https://github.com/grafana/grafana/issues/75733), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.1.4 END -->
+<!-- 10.1.2 START -->
+
+# 10.1.2 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74993](https://github.com/grafana/grafana/issues/74993), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74980](https://github.com/grafana/grafana/issues/74980), [@zerok](https://github.com/zerok)
+
+<!-- 10.1.2 END -->
 <!-- 10.1.1 START -->
 
 # 10.1.1 (2023-08-29)
@@ -427,6 +446,25 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.8 START -->
+
+# 10.0.8 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75732](https://github.com/grafana/grafana/issues/75732), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.0.8 END -->
+<!-- 10.0.6 START -->
+
+# 10.0.6 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74994](https://github.com/grafana/grafana/issues/74994), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74983](https://github.com/grafana/grafana/issues/74983), [@zerok](https://github.com/zerok)
+
+<!-- 10.0.6 END -->
 <!-- 10.0.5 START -->
 
 # 10.0.5 (2023-09-05)
@@ -909,6 +947,25 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.12 START -->
+
+# 9.5.12 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75730](https://github.com/grafana/grafana/issues/75730), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 9.5.12 END -->
+<!-- 9.5.10 START -->
+
+# 9.5.10 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74995](https://github.com/grafana/grafana/issues/74995), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74982](https://github.com/grafana/grafana/issues/74982), [@zerok](https://github.com/zerok)
+
+<!-- 9.5.10 END -->
 <!-- 9.5.9 START -->
 
 # 9.5.9 (2023-09-05)
@@ -1300,6 +1357,16 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 9.4.15 START -->
+
+# 9.4.15 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74996](https://github.com/grafana/grafana/issues/74996), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74981](https://github.com/grafana/grafana/issues/74981), [@zerok](https://github.com/zerok)
+
+<!-- 9.4.15 END -->
 <!-- 9.4.14 START -->
 
 # 9.4.14 (2023-09-05)

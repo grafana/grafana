@@ -2,6 +2,7 @@ import { Observable, of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
+  getDefaultTimeRange,
   dataFrameToJSON,
   DataQueryRequest,
   DataQueryResponse,
@@ -14,9 +15,7 @@ import {
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
-import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
+import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
 
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions } from './types';
@@ -37,8 +36,9 @@ jest.mock('@grafana/runtime/src/services', () => ({
 }));
 
 describe('PostgreSQLDatasource', () => {
+  const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  const setupTestContext = (data: unknown, mock?: Observable<FetchResponse<unknown>>) => {
+  const setupTestContext = (data: unknown, mock?: Observable<FetchResponse<unknown>>, templateSrv?: unknown) => {
     jest.clearAllMocks();
     const defaultMock = () => mock ?? of(createFetchResponse(data));
     fetchMock.mockImplementation(defaultMock);
@@ -47,11 +47,12 @@ describe('PostgreSQLDatasource', () => {
         defaultProject: 'testproject',
       },
     } as unknown as DataSourceInstanceSettings<PostgresOptions>;
-    const templateSrv: TemplateSrv = new TemplateSrv();
-    const variable = { ...initialCustomVariableModelState };
+    const variable = makeVariable('id1', 'name1');
     const ds = new PostgresDatasource(instanceSettings);
-    Reflect.set(ds, 'templateSrv', templateSrv);
-    return { ds, templateSrv, variable };
+    if (templateSrv !== undefined) {
+      Reflect.set(ds, 'templateSrv', templateSrv);
+    }
+    return { ds, variable };
   };
 
   // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
@@ -77,6 +78,10 @@ describe('PostgreSQLDatasource', () => {
       const result = ds.query(options);
       expectObservable(result).toBe(expectedMarble, expectedValues);
     });
+  };
+
+  const simpleTemplateSrv = {
+    replace: (text: string) => text,
   };
 
   describe('When performing a time series query', () => {
@@ -295,7 +300,6 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When runSql returns an empty dataframe', () => {
-    let ds: PostgresDatasource;
     const response = {
       results: {
         tempvar: {
@@ -305,32 +309,33 @@ describe('PostgreSQLDatasource', () => {
       },
     };
 
-    beforeEach(async () => {
-      ds = setupTestContext(response).ds;
-    });
-
     it('should return an empty array when metricFindQuery is called', async () => {
+      const ds = setupTestContext(response, undefined, simpleTemplateSrv).ds;
       const query = 'select * from atable';
-      const results = await ds.metricFindQuery(query);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
       expect(results.length).toBe(0);
     });
 
     it('should return an empty array when fetchTables is called', async () => {
+      const ds = setupTestContext(response).ds;
       const results = await ds.fetchTables();
       expect(results.length).toBe(0);
     });
 
     it('should return empty string when getVersion is called', async () => {
+      const ds = setupTestContext(response).ds;
       const results = await ds.getVersion();
       expect(results).toBe('');
     });
 
     it('should return undefined when getTimescaleDBVersion is called', async () => {
+      const ds = setupTestContext(response).ds;
       const results = await ds.getTimescaleDBVersion();
       expect(results).toBe(undefined);
     });
 
     it('should return an empty array when fetchFields is called', async () => {
+      const ds = setupTestContext(response).ds;
       const query: SQLQuery = {
         refId: 'refId',
         table: 'schema.table',
@@ -473,8 +478,8 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const { ds } = setupTestContext(response, undefined, simpleTemplateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
@@ -506,8 +511,21 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
+      const templateSrv = {
+        replace: (text: string, scopedVars: unknown) => {
+          expect(text).toBe("select title from atable where title LIKE '$__searchFilter'");
+          expect(scopedVars).toStrictEqual({
+            __searchFilter: {
+              value: 'aTit%',
+              text: '',
+            },
+          });
+          return "select title from atable where title LIKE 'aTit%'";
+        },
+      };
+
+      const { ds } = setupTestContext(response, undefined, templateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange, searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
@@ -548,8 +566,21 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const templateSrv = {
+        replace: (text: string, scopedVars: unknown) => {
+          expect(text).toBe("select title from atable where title LIKE '$__searchFilter'");
+          expect(scopedVars).toStrictEqual({
+            __searchFilter: {
+              value: '%',
+              text: '',
+            },
+          });
+          return "select title from atable where title LIKE '%'";
+        },
+      };
+
+      const { ds } = setupTestContext(response, undefined, templateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
@@ -587,8 +618,8 @@ describe('PostgreSQLDatasource', () => {
           },
         },
       };
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const { ds } = setupTestContext(response, undefined, simpleTemplateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
         { text: 'aTitle', value: 'value1' },
@@ -621,8 +652,8 @@ describe('PostgreSQLDatasource', () => {
           },
         },
       };
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const { ds } = setupTestContext(response, undefined, simpleTemplateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
         { text: 1 },
@@ -658,8 +689,8 @@ describe('PostgreSQLDatasource', () => {
           },
         },
       };
-      const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const { ds } = setupTestContext(response, undefined, simpleTemplateSrv);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([{ text: 'aTitle', value: 'same' }]);
     });
@@ -732,12 +763,20 @@ describe('PostgreSQLDatasource', () => {
         refId: 'A',
         rawQuery: true,
       };
-      const { templateSrv, ds } = setupTestContext({});
 
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      // a fake template server:
+      // it assumes there are two template variables defined:
+      // - summarize
+      // - host
+      const templateSrv = {
+        containsTemplate: (text: string) => {
+          // when the text arrives here, it has been already pre-processed
+          // by the sql datasource, sql-specific variables have been removed
+          expect(text).toBe(rawSql.replace(/\$__time(Filter)?/g, ''));
+          return true;
+        },
+      };
+      const { ds } = setupTestContext({}, undefined, templateSrv);
 
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
@@ -759,12 +798,19 @@ describe('PostgreSQLDatasource', () => {
         refId: 'A',
         rawQuery: true,
       };
-      const { templateSrv, ds } = setupTestContext({});
-
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      // a fake template server:
+      // it assumes there are two template variables defined:
+      // - summarize
+      // - host
+      const templateSrv = {
+        containsTemplate: (text: string) => {
+          // when the text arrives here, it has been already pre-processed
+          // by the sql datasource, sql-specific variables has been removed
+          expect(text).toBe(rawSql.replace(/\$__time(Filter)?/g, ''));
+          return false;
+        },
+      };
+      const { ds } = setupTestContext({}, undefined, templateSrv);
 
       expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });

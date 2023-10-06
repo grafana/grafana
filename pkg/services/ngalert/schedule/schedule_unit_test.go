@@ -22,6 +22,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -73,6 +74,7 @@ func TestProcessTicks(t *testing.T) {
 		Metrics:      testMetrics.GetSchedulerMetrics(),
 		AlertSender:  notifier,
 		Tracer:       testTracer,
+		Log:          log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 testMetrics.GetStateMetrics(),
@@ -83,6 +85,7 @@ func TestProcessTicks(t *testing.T) {
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  testTracer,
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(managerCfg)
 
@@ -888,6 +891,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
+		Log:              log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
@@ -898,6 +902,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  testTracer,
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(managerCfg)
 

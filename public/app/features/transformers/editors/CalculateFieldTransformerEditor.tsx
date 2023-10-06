@@ -1,6 +1,6 @@
 import { defaults } from 'lodash';
 import React, { ChangeEvent } from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { identity, of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
@@ -23,8 +23,10 @@ import {
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
+  IndexOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
@@ -75,11 +77,26 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       .pipe(
         standardTransformers.ensureColumnsTransformer.operator(null, ctx),
         this.extractAllNames(),
+        this.getVariableNames(),
         this.extractNamesAndSelected(configuredOptions)
       )
       .subscribe(({ selected, names }) => {
         this.setState({ names, selected }, () => subscription.unsubscribe());
       });
+  }
+
+  private getVariableNames(): OperatorFunction<string[], string[]> {
+    if (!cfg.featureToggles.transformationsVariableSupport) {
+      return identity;
+    }
+    const templateSrv = getTemplateSrv();
+    return (source) =>
+      source.pipe(
+        map((input) => {
+          input.push(...templateSrv.getVariables().map((v) => '$' + v.name));
+          return input;
+        })
+      );
   }
 
   private extractAllNames(): OperatorFunction<DataFrame[], string[]> {
@@ -142,6 +159,16 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
+  onToggleRowIndexAsPercentile = () => {
+    const { options } = this.props;
+    this.props.onChange({
+      ...options,
+      index: {
+        asPercentile: !options.index?.asPercentile ?? false,
+      },
+    });
+  };
+
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
@@ -196,6 +223,22 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { reduce } = this.props.options;
     this.updateReduceOptions({ ...reduce, reducer });
   };
+
+  renderRowIndex(options?: IndexOptions) {
+    return (
+      <>
+        <div className="gf-form-inline">
+          <LegacyForms.Switch
+            label="As percentile"
+            tooltip="Transform the row index as a percentile."
+            labelClass="width-8"
+            checked={!!options?.asPercentile}
+            onChange={this.onToggleRowIndexAsPercentile}
+          />
+        </div>
+      </>
+    );
+  }
 
   renderReduceRow(options?: ReduceOptions) {
     const { names, selected } = this.state;
@@ -353,6 +396,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>

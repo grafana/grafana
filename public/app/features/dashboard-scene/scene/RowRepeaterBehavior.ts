@@ -85,7 +85,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    const rowToRepeat = this.parent as SceneGridRow;
+    const rowToRepeat = this.parent;
     const { values, texts } = getMultiVariableValues(variable);
     const rows: SceneGridRow[] = [];
     const rowContentHeight = getRowContentHeight(this.state.sources);

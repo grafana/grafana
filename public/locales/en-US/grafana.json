@@ -55,7 +55,11 @@
       "total__other": "{{count}} items"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Collapse folder {{title}}",
+      "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
+      "select-all-header-checkbox": "Select all",
+      "select-checkbox": "Select",
       "tags-column": "Tags"
     },
     "folder-actions-button": {
@@ -125,6 +129,24 @@
     "search": {
       "placeholder": "Search all"
     }
+  },
+  "correlations": {
+    "add-new": "Add new",
+    "alert": {
+      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
+      "title": "Error fetching correlation data"
+    },
+    "list": {
+      "delete": "delete correlation",
+      "label": "Label",
+      "loading": "loading...",
+      "read-only": "Read only",
+      "source": "Source",
+      "target": "Target"
+    },
+    "page-content": "To enable Correlations, add it in the Grafana config:",
+    "page-heading": "Correlations are disabled",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
   },
   "correlations": {
     "basic-info-form": {
@@ -222,7 +244,7 @@
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
-      "meta-tab": "Meta Data",
+      "meta-tab": "Meta data",
       "query-tab": "Query",
       "stats-tab": "Stats",
       "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
@@ -281,13 +303,112 @@
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "settings": "Dashboard settings",
-      "share": "Share dashboard or panel",
+      "share": "Share dashboard",
       "unmark-favorite": "Unmark as favorite"
+    },
+    "validation": {
+      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
+      "invalid-json": "Not valid JSON",
+      "tags-expected-array": "tags expected array",
+      "tags-expected-strings": "tags expected array of strings"
     }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Upload dashboard JSON file",
+      "secondary-text": "Drag and drop here or click to browse"
+    },
+    "form-actions": {
+      "cancel": "Cancel",
+      "load": "Load"
+    },
+    "gcom-field": {
+      "label": "Find and import dashboards for common applications at <1></1>",
+      "load-button": "Load",
+      "placeholder": "Grafana.com dashboard URL or ID",
+      "validation-required": "A Grafana dashboard URL or ID is required"
+    },
+    "json-field": {
+      "label": "Import via dashboard JSON model",
+      "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Annotations"
+    },
+    "dashboard-delete-button": "Delete Dashboard",
+    "general": {
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-label": "Auto refresh",
+      "description-label": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
+      "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+      "panel-options-graph-tooltip-label": "Graph tooltip",
+      "panel-options-label": "Panel options",
+      "tags-label": "Tags",
+      "title": "General",
+      "title-label": "Title"
+    },
+    "json-editor": {
+      "save-button": "Save changes",
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
+      "title": "JSON Model"
+    },
+    "links": {
+      "title": "Links"
+    },
+    "permissions": {
+      "title": "Permissions"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "time-picker": {
+      "hide-time-picker": "Hide time picker",
+      "now-delay-description": "Exclude recent data that may be incomplete.",
+      "now-delay-label": "Now delay",
+      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "time-options-label": "Time options",
+      "time-zone-label": "Time zone",
+      "week-start-label": "Week start"
+    },
+    "variables": {
+      "title": "Variables"
+    },
+    "versions": {
+      "title": "Versions"
+    }
+  },
+  "data-source-picker": {
+    "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Add to dashboard",
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
+    "toolbar": {
+      "aria-label": "Explore toolbar",
+      "copy-shortened-link": "Copy shortened link",
+      "refresh-picker-cancel": "Cancel",
+      "refresh-picker-run": "Run query",
+      "split-close": "Close",
+      "split-close-tooltip": "Close split pane",
+      "split-narrow": "Narrow pane",
+      "split-title": "Split",
+      "split-tooltip": "Split the pane",
+      "split-widen": "Widen pane"
     }
   },
   "folder-picker": {
@@ -361,6 +482,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body__other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "select-no-options-message": "No dashboards found",
+      "select-placeholder": "Start typing to search for dashboard",
+      "title": "View panel in dashboard"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
@@ -511,7 +643,7 @@
       "title": "Incidents"
     },
     "infrastructure": {
-      "title": "Infrastructure"
+      "title": "Integrations"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -722,6 +854,22 @@
       "title": "There are no playlists created yet"
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancel",
+      "cannot-change-password-message": "Password cannot be changed here.",
+      "change-password-button": "Change Password",
+      "confirm-password-label": "Confirm password",
+      "confirm-password-required": "New password confirmation is required",
+      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
+      "new-password-label": "New password",
+      "new-password-required": "New password is required",
+      "new-password-same-as-old": "New password can't be the same as the old one.",
+      "old-password-label": "Old password",
+      "old-password-required": "Old password is required",
+      "passwords-must-match": "Passwords must match"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -739,8 +887,9 @@
       "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
-    "select-button": {
-      "auto-refresh": "Set auto refresh interval"
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
     }
   },
   "search": {
@@ -800,6 +949,7 @@
       "time-range-description": "Transforms the current relative time range to an absolute time range"
     },
     "export": {
+      "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
@@ -901,6 +1051,12 @@
     },
     "title": "Preferences"
   },
+  "snapshot": {
+    "external-badge": "External",
+    "name-column-header": "Name",
+    "url-column-header": "Snapshot url",
+    "view-button": "View"
+  },
   "tag-filter": {
     "loading": "Loading...",
     "no-tags": "No tags found",
@@ -917,7 +1073,8 @@
       "select-time": "Select a time range"
     },
     "content": {
-      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
+      "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
     "footer": {
