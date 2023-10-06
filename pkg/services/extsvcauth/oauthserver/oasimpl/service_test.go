@@ -138,6 +138,42 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 		},
 		{
+			name: "should allow client credentials grant with correct permissions",
+			init: func(env *TestEnv) {
+				// No client at the beginning
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
+				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
+
+				// Return a service account ID
+				env.SAService.On("ManageExtSvcAccount", mock.Anything, mock.Anything).Return(int64(10), nil)
+			},
+			cmd: &extsvcauth.ExternalServiceRegistration{
+				Name: serviceName,
+				Self: extsvcauth.SelfCfg{
+					Enabled:     true,
+					Permissions: []ac.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}},
+				},
+				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
+					return name == serviceName
+				}))
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
+					return client.Name == serviceName && len(client.ClientID) > 0 && len(client.Secret) > 0 &&
+						client.GrantTypes == string(fosite.GrantTypeClientCredentials) &&
+						len(client.PublicPem) > 0 && client.ServiceAccountID == 10 &&
+						len(client.ImpersonatePermissions) == 0 &&
+						len(client.SelfPermissions) > 0
+				}))
+				// Check that despite no credential_grants the service account still has a permission to impersonate users
+				env.SAService.AssertCalled(t, "ManageExtSvcAccount", mock.Anything,
+					mock.MatchedBy(func(cmd *extsvcauth.ManageExtSvcAccountCmd) bool {
+						return len(cmd.Permissions) == 1 && cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}
+					}))
+			},
+		},
+		{
 			name: "should allow jwt bearer grant and set default permissions",
 			init: func(env *TestEnv) {
 				// No client at the beginning
