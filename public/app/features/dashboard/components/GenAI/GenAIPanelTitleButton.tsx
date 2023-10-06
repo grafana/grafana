@@ -16,8 +16,9 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Panels.\n' +
   'You will be given the title and description of the dashboard the panel is in as well as the JSON for the panel.\n' +
   'Your goal is to write a concise panel title.\n' +
-  'There should be no numbers in the title.\n' +
-  'The title should be shorter than 50 characters, and you should ';
+  'There should be no numbers in the panel title.\n' +
+  'The title should be shorter than 50 characters.\n' +
+  'Respond with only the title of the panel.';
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
