@@ -28,10 +28,10 @@ import { LivePanelOptions, MessageDisplayMode } from './types';
 interface Props extends PanelProps<LivePanelOptions> {}
 
 interface State {
-  error?: any;
+  error?: unknown;
   addr?: LiveChannelAddress;
   status?: LiveChannelStatusEvent;
-  message?: any;
+  message?: unknown;
   changed: number;
 }
 
