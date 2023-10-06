@@ -64,7 +64,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.OrgID,
+			OrgID:   c.SignedInUser.GetOrgID(),
 			UserID:  userID,
 			OrgRole: c.SignedInUser.GetOrgRole(),
 		},

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -19,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/exp/slices"
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
@@ -34,7 +35,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -279,8 +280,8 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-	if c.OrgID != 0 {
-		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+	if c.SignedInUser.GetOrgID() != 0 {
+		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err

@@ -128,7 +128,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) respon
 
 	var snapshotUrl string
 	cmd.ExternalURL = ""
-	cmd.OrgID = c.OrgID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
@@ -371,7 +371,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	dashboardID := queryResult.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		g, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		g, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
 			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return response.Err(err)
@@ -424,7 +424,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	searchQuery := dashboardsnapshots.GetDashboardSnapshotsQuery{
 		Name:         query,
 		Limit:        limit,
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		SignedInUser: c.SignedInUser,
 	}
 
