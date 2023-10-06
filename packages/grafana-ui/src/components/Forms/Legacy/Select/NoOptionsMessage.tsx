@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 
 export type Props<T> = NoticeProps<SelectableValue<T>, boolean, GroupBase<SelectableValue<T>>>;
 
-/** @deprecated */
+/** @deprecated Please use the non-legacy `Select` component */
 export const NoOptionsMessage = <T extends unknown>(props: Props<T>) => {
   const { children } = props;
   return (
