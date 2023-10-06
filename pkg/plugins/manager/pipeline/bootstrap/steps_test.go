@@ -67,7 +67,7 @@ func TestSetDefaultNavURL(t *testing.T) {
 	})
 }
 
-func TestVersionDecorateFunc(t *testing.T) {
+func TestTemplateDecorateFunc(t *testing.T) {
 	t.Run("Removes %VERSION%", func(t *testing.T) {
 		pluginWithoutVersion := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -76,13 +76,24 @@ func TestVersionDecorateFunc(t *testing.T) {
 				},
 			},
 		}
-
-		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
-			p, err := VersionDecorateFunc(context.TODO(), pluginWithoutVersion)
-			require.NoError(t, err)
-			require.Equal(t, "", p.Info.Version)
-		})
+		p, err := TemplateDecorateFunc(context.TODO(), pluginWithoutVersion)
+		require.NoError(t, err)
+		require.Equal(t, "", p.Info.Version)
 	})
+
+	t.Run("Removes %TODAY%", func(t *testing.T) {
+		pluginWithoutVersion := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Info: plugins.Info{
+					Version: "%TODAY%",
+				},
+			},
+		}
+		p, err := TemplateDecorateFunc(context.TODO(), pluginWithoutVersion)
+		require.NoError(t, err)
+		require.Equal(t, "", p.Info.Updated)
+	})
+
 }
 
 func Test_configureAppChildPlugin(t *testing.T) {
