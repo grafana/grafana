@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, toIconName } from '@grafana/data';

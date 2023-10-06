@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps, useCallback } from 'react';
+import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

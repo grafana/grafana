@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent, useCallback } from 'react';
+import React, { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
