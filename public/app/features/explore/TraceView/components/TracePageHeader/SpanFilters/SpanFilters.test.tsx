@@ -39,11 +39,17 @@ const trace: Trace = {
       logs: [{ fields: [{ key: 'LogKey1', type: 'string', value: 'LogValue1' }] }],
     },
   ],
+  processes: {
+    '1ed38015486087ca': {
+      serviceName: 'Service0',
+      tags: [],
+    },
+  },
 } as unknown as Trace;
 
 describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
-  const SpanFiltersWithProps = ({ showFilters = true }) => {
+  const SpanFiltersWithProps = ({ showFilters = true, matches }: { showFilters?: boolean; matches?: Set<string> }) => {
     const [search, setSearch] = useState(defaultFilters);
     const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
     const props = {
@@ -54,7 +60,7 @@ describe('SpanFilters', () => {
       setShowSpanFilterMatchesOnly,
       search,
       setSearch,
-      spanFilterMatches: undefined,
+      spanFilterMatches: matches,
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: 'tempo',
     };
@@ -197,7 +203,7 @@ describe('SpanFilters', () => {
   });
 
   it('should allow resetting filters', async () => {
-    render(<SpanFiltersWithProps />);
+    render(<SpanFiltersWithProps matches={new Set('1ed38015486087ca')} />);
     const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
     expect(clearFiltersButton).toBeInTheDocument();
     expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
