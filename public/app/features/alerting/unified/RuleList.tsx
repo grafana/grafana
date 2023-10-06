@@ -24,7 +24,6 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
 
