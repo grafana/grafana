@@ -18,13 +18,13 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Better path to troubleshooting in Kubernetes Monitoring
+## Quicker path to troubleshooting in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
 
 _Generally available in Grafana Cloud_
 
-To provide quicker identification and troubleshooting of issues, we have upgraded the Kubernetes Monitoring's interface, including:
+To provide faster identification and troubleshooting of issues, we have upgraded the Kubernetes Monitoring's interface, including:
 
 - The home page has been changed to show a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
   
@@ -45,6 +45,7 @@ To provide quicker identification and troubleshooting of issues, we have upgrade
 ## Configuration additions in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
+<!-- Cloud --> 
 
 _Generally available in Grafana Cloud_
 
@@ -59,6 +60,7 @@ Now you have these options when configuring Kubernetes Monitoring:
 ## Cost monitoring in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
+<!-- Cloud --> 
 
 _Generally available in Grafana Cloud_
 
