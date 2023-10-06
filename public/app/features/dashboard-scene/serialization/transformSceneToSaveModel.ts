@@ -9,6 +9,11 @@ import {
   SceneDataLayerProvider,
   SceneQueryRunner,
   SceneDataTransformer,
+  SceneVariableSet,
+  QueryVariable,
+  CustomVariable,
+  DataSourceVariable,
+  ConstantVariable,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -18,6 +23,9 @@ import {
   FieldConfigSource,
   Panel,
   RowPanel,
+  VariableHide,
+  VariableModel,
+  VariableRefresh,
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -33,8 +41,11 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   const state = scene.state;
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
+  const variablesSet = state.$variables;
   const body = state.body;
   const panels: Panel[] = [];
+
+  let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
@@ -56,7 +67,9 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   if (data instanceof SceneDataLayers) {
     const layers = data.state.layers;
 
-    annotations = dataLayersToAnnotations(layers);
+
+  if (variablesSet instanceof SceneVariableSet) {
+    variables = sceneVariablesSetToVariables(variablesSet);
   }
 
   const dashboard: Dashboard = {
@@ -70,6 +83,9 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
     panels,
     annotations: {
       list: annotations,
+    },
+    templating: {
+      list: variables,
     },
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
@@ -262,4 +278,101 @@ export function dataLayersToAnnotations(layers: SceneDataLayerProvider[]) {
   }
 
   return annotations;
+}
+
+export function sceneVariablesSetToVariables(set: SceneVariableSet) {
+  const variables: VariableModel[] = [];
+  for (const variable of set.state.variables) {
+    const commonProperties = {
+      name: variable.state.name,
+      label: variable.state.label,
+      description: variable.state.description,
+      skipUrlSync: Boolean(variable.state.skipUrlSync),
+      hide: variable.state.hide || VariableHide.dontHide,
+    };
+    if (variable instanceof QueryVariable) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          // TODO
+          // selected: false
+          // @ts-expect-error
+          value: variable.state.value,
+          // @ts-expect-error
+          text: variable.state.text,
+        },
+        options: [],
+        query: variable.state.query,
+        datasource: variable.state.datasource,
+        sort: variable.state.sort,
+        refresh: variable.state.refresh,
+        regex: variable.state.regex,
+        allValue: variable.state.allValue,
+        includeAll: variable.state.includeAll,
+        multi: variable.state.isMulti,
+        skipUrlSync: Boolean(variable.state.skipUrlSync),
+        hide: variable.state.hide || VariableHide.dontHide,
+      });
+    } else if (variable instanceof CustomVariable) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          // TODO
+          // selected: false
+          // @ts-expect-error
+          text: variable.state.value,
+          // @ts-expect-error
+          value: variable.state.value,
+        },
+        options: variable.state.options.map((option) => ({
+          text: option.label,
+          value: option.value.toString(),
+          selected: Array.isArray(variable.state.value)
+            ? Boolean(variable.state.value.find((v) => v === option.value))
+            : variable.state.value === option.value,
+        })),
+        query: variable.state.query,
+        multi: variable.state.isMulti,
+        allValue: variable.state.allValue,
+        includeAll: variable.state.includeAll,
+      });
+    } else if (variable instanceof DataSourceVariable) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          // TODO
+          // selected: false
+          // @ts-expect-error
+          value: variable.state.value,
+          // @ts-expect-error
+          text: variable.state.text,
+        },
+        options: [],
+        regex: variable.state.regex,
+        query: variable.state.pluginId,
+        multi: variable.state.isMulti,
+        allValue: variable.state.allValue,
+        includeAll: variable.state.includeAll,
+      });
+    } else if (variable instanceof ConstantVariable) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          // TODO
+          // selected: false
+          // @ts-expect-error
+          value: variable.state.value,
+          // @ts-expect-error
+          text: variable.state.value,
+        },
+        // @ts-expect-error
+        query: variable.state.value,
+        hide: VariableHide.hideVariable,
+      });
+    } else {
+      throw new Error('Unsupported variable type');
+    }
+  }
+
+  return variables;
 }

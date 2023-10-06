@@ -191,6 +191,48 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "schemaVersion": 36,
   "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "A",
+            "B",
+          ],
+          "value": [
+            "A",
+            "B",
+          ],
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "server",
+        "options": [],
+        "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
+        "skipUrlSync": false,
+      },
+      {
+        "current": {
+          "text": [
+            "1",
+            "2",
+          ],
+          "value": [
+            "1",
+            "2",
+          ],
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "pod",
+        "options": [],
+        "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
+        "skipUrlSync": false,
+      },
+    ],
+  },
   "time": {
     "from": "now-6h",
     "to": "now",
@@ -405,6 +447,9 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   ],
   "schemaVersion": 36,
   "tags": [],
+  "templating": {
+    "list": [],
+  },
   "time": {
     "from": "now-5m",
     "to": "now",
