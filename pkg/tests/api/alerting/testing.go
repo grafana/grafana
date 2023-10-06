@@ -327,7 +327,7 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (int, string) {
+func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (apimodels.UpdateRuleGroupResponse, int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
@@ -343,7 +343,11 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	}()
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	return resp.StatusCode, string(b)
+	var m apimodels.UpdateRuleGroupResponse
+	if resp.StatusCode == http.StatusAccepted {
+		require.NoError(t, json.Unmarshal(b, &m))
+	}
+	return m, resp.StatusCode, string(b)
 }
 
 func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (int, string) {
