@@ -29,6 +29,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     buttonStyles: css({
       textAlign: 'left',
       width: '100%',
+      padding: theme.spacing(0, 1.5),
     }),
   };
 };

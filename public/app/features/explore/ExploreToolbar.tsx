@@ -49,6 +49,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transform: 'rotate(180deg)',
     },
   }),
+  toolbarButton: css({
+    display: 'flex',
+    justifyContent: 'center',
+    width: '48px',
+  }),
 });
 
 interface Props {
@@ -235,6 +240,7 @@ export function ExploreToolbar({
               onClick={onContentOutlineToogle}
               aria-expanded={isContentOutlineOpen}
               aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+              className={splitted ? styles.toolbarButton : undefined}
             >
               Outline
             </ToolbarButton>
