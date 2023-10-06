@@ -9,11 +9,13 @@ import {
 import {
   Alert,
   DataSourceHttpSettings,
+  Field,
   FieldSet,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
   Select,
+  Switch,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
@@ -47,20 +49,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  renderTypeHelp = () => {
-    return (
-      <p>
-        There are different types of Graphite compatible backends. Here you can specify the type you are using. If you
-        are using{' '}
-        <a href="https://github.com/grafana/metrictank" className="pointer" target="_blank" rel="noreferrer">
-          Metrictank
-        </a>{' '}
-        then select that here. This will enable Metrictank specific features like query processing meta data. Metrictank
-        is a multi-tenant timeseries engine for Graphite and friends.
-      </p>
-    );
-  };
-
   componentDidMount() {
     updateDatasourcePluginJsonDataOption(this.props, 'graphiteVersion', this.currentGraphiteVersion);
   }
@@ -86,48 +74,44 @@ export class ConfigEditor extends PureComponent<Props, State> {
         />
         <FieldSet>
           <legend className="page-heading">Graphite details</legend>
-          <InlineFieldRow>
-            <InlineField
-              label="Version"
-              tooltip="This option controls what functions are available in the Graphite query editor."
-              labelWidth={20}
-            >
-              <Select
-                id="graphite-version"
-                aria-label="Graphite version"
-                value={currentVersion}
-                options={graphiteVersions}
-                width={16}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
-              />
-            </InlineField>
-          </InlineFieldRow>
-          <InlineFieldRow>
-            <InlineField label="Type" tooltip={this.renderTypeHelp} labelWidth={20}>
-              <Select
-                id="backend-type"
-                aria-label="Graphite backend type"
-                options={graphiteTypes}
-                value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
-                width={16}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
-              />
-            </InlineField>
-          </InlineFieldRow>
+          <Field
+            label="Version"
+            description="This option controls what functions are available in the Graphite query editor."
+          >
+            <Select
+              id="graphite-version"
+              aria-label="Graphite version"
+              value={currentVersion}
+              options={graphiteVersions}
+              width={16}
+              onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
+            />
+          </Field>
+
+          <Field
+            label="Graphite backend type"
+            description="There are different types of Graphite compatible backends. Here you can specify the type you are using. For Metrictank, this will enable specific features, like query processing meta data. Metrictank
+        is a multi-tenant timeseries engine for Graphite and friends."
+          >
+            <Select
+              id="backend-type"
+              options={graphiteTypes}
+              value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
+              width={16}
+              onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
+            />
+          </Field>
           {options.jsonData.graphiteType === GraphiteType.Metrictank && (
-            <InlineFieldRow>
-              <InlineField
-                label="Rollup indicator"
-                tooltip="Shows up as an info icon in panel headers when data is aggregated"
-                labelWidth={20}
-              >
-                <InlineSwitch
-                  id="rollup-indicator"
-                  value={!!options.jsonData.rollupIndicatorEnabled}
-                  onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'rollupIndicatorEnabled')}
-                />
-              </InlineField>
-            </InlineFieldRow>
+            <Field
+              label="Rollup indicator"
+              description="Shows up as an info icon in panel headers when data is aggregated."
+            >
+              <Switch
+                id="rollup-indicator"
+                value={!!options.jsonData.rollupIndicatorEnabled}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'rollupIndicatorEnabled')}
+              />
+            </Field>
           )}
         </FieldSet>
         <MappingsConfiguration
