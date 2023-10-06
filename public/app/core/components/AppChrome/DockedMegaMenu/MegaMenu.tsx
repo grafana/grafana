@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
 import { cloneDeep } from 'lodash';
 import React, { forwardRef } from 'react';
@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
@@ -22,6 +23,8 @@ export const MegaMenu = React.memo(
     const navBarTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
+    const { chrome } = useGrafana();
+    const state = chrome.useState();
 
     const navTree = cloneDeep(navBarTree);
 
@@ -31,6 +34,13 @@ export const MegaMenu = React.memo(
       .map((item) => enrichWithInteractionTracking(item, true));
 
     const activeItem = getActiveItem(navItems, location.pathname);
+
+    const handleDockedMenu = () => {
+      chrome.onToggleDockedMegaMenu();
+      if (state.megaMenuDocked === 'closed') {
+        onClose();
+      }
+    };
 
     return (
       <div data-testid="navbarmenu" ref={ref} {...restProps}>
@@ -45,8 +55,16 @@ export const MegaMenu = React.memo(
             variant="secondary"
           />
         </div>
-        <nav className={styles.content}>
+        <nav className={cx(styles.content, state.megaMenuDocked === 'docked' && styles.docked)}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
+            <IconButton
+              aria-label="Docked menu"
+              tooltip="Docked menu"
+              name="bookmark"
+              onClick={handleDockedMenu}
+              variant="secondary"
+              className={styles.dockedMenuButton}
+            />
             <ul className={styles.itemList}>
               {navItems.map((link) => (
                 <MegaMenuItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
@@ -67,6 +85,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flexGrow: 1,
     minHeight: 0,
+    position: 'relative',
   }),
   mobileHeader: css({
     display: 'flex',
@@ -85,4 +104,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyleType: 'none',
     minWidth: MENU_WIDTH,
   }),
+  dockedMenuButton: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+    zIndex: 1,
+  }),
+  docked: css({}),
 });
