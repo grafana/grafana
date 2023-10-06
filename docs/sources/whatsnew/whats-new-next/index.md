@@ -24,9 +24,9 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-To provide faster identification and troubleshooting of issues, we have upgraded the Kubernetes Monitoring's interface, including:
+You can use Kubernetes Monitoring to more quickly identify and troubleshoot issues with these views:
 
-- The home page has been changed to show a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
+- The home page shows a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
   
   (ADD SCREENSHOT AFTER CROW's NEST LANGUAGE REMOVED)
 
@@ -49,7 +49,7 @@ To provide faster identification and troubleshooting of issues, we have upgraded
 
 _Generally available in Grafana Cloud_
 
-Now you have these options when configuring Kubernetes Monitoring:
+You have these options when configuring Kubernetes Monitoring:
 
 - Grafana Kubernetes Monitoring Helm chart: To send infrastructure data to Grafana Cloud, you can configure easily using the Helm chart. With this method, you can select toggle buttons to gather metrics, logs, events, traces, and cost metrics.
 
