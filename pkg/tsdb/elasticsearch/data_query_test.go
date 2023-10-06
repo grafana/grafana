@@ -1781,7 +1781,7 @@ func TestSettingsCasting(t *testing.T) {
 			assert.Equal(t, dateHistogramAgg.FixedInterval, "1d")
 		})
 
-		t.Run("Should use fixed_interval", func(t *testing.T) {
+		t.Run("Should use calendar_interval", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeElasticsearchDataQuery(c, `{
 				"metrics": [{ "type": "count", "id": "1" }],

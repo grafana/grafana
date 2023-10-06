@@ -116,7 +116,7 @@ export class ElasticQueryBuilder {
 
     const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
 
-    if (calendarIntervals.includes(interval)) {
+    if (interval !== undefined && calendarIntervals.includes(interval)) {
       esAgg.calendar_interval = interval;
     } else {
       esAgg.fixed_interval = interval;

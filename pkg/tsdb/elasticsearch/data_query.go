@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-    "golang.org/x/exp/slices"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -162,7 +162,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 		field = timeField
 	}
 	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
-		var interval string = bucketAgg.Settings.Get("interval").MustString("auto")
+		var interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		if slices.Contains(es.GetCalendarIntervals(), interval) {
 			a.CalendarInterval = interval
 		} else {
