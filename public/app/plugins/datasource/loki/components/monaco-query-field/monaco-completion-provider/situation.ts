@@ -1,4 +1,4 @@
-import type { Tree, SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, TreeCursor } from '@lezer/common';
 
 import {
   parser,
@@ -28,6 +28,7 @@ import {
   ParserFlag,
   LabelExtractionExpression,
   LabelExtractionExpressionList,
+  LogfmtExpressionParser,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
@@ -132,6 +133,8 @@ export type Situation =
       type: 'IN_LOGFMT';
       otherLabels: string[];
       flags: boolean;
+      trailingSpace: boolean;
+      trailingComma: boolean;
       logQuery: string;
     }
   | {
@@ -194,11 +197,12 @@ const RESOLVERS: Resolver[] = [
       [LogRangeExpr],
       [ERROR_NODE_ID, LabelExtractionExpressionList],
       [LabelExtractionExpressionList],
+      [LogfmtExpressionParser],
     ],
     fun: resolveLogfmtParser,
   },
   {
-    paths: [[LogQL]],
+    paths: [[LogQL], [ERROR_NODE_ID, Selector]],
     fun: resolveTopLevel,
   },
   {
@@ -233,7 +237,10 @@ const RESOLVERS: Resolver[] = [
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
-    paths: [[ERROR_NODE_ID, PipelineStage, PipelineExpr]],
+    paths: [
+      [ERROR_NODE_ID, PipelineStage, PipelineExpr],
+      [PipelineStage, PipelineExpr],
+    ],
     fun: resolvePipeError,
   },
   {
@@ -345,24 +352,23 @@ function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situat
 }
 
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // for example `{level="info"} |`
-  const exprNode = walk(node, [
-    ['parent', PipelineStage],
-    ['parent', PipelineExpr],
-  ]);
-
-  if (exprNode === null) {
-    return null;
+  /**
+   * Examples:
+   * - {level="info"} |^
+   * - count_over_time({level="info"} |^ [4m])
+   */
+  let exprNode: SyntaxNode | null = null;
+  if (node.type.id === ERROR_NODE_ID) {
+    exprNode = walk(node, [
+      ['parent', PipelineStage],
+      ['parent', PipelineExpr],
+    ]);
+  } else if (node.type.id === PipelineStage) {
+    exprNode = walk(node, [['parent', PipelineExpr]]);
   }
 
-  const { parent } = exprNode;
-
-  if (parent === null) {
-    return null;
-  }
-
-  if (parent.type.id === LogExpr || parent.type.id === LogRangeExpr) {
-    return resolveLogOrLogRange(parent, text, pos, true);
+  if (exprNode?.parent?.type.id === LogExpr || exprNode?.parent?.type.id === LogRangeExpr) {
+    return resolveLogOrLogRange(exprNode.parent, text, pos, true);
   }
 
   return null;
@@ -464,7 +470,11 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
 function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
   // We want to know if the cursor if after a log query with logfmt parser.
   // E.g. `{x="y"} | logfmt ^`
-
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes or commas.
+   */
   const tree = parser.parse(text);
 
   // Adjust the cursor position if there are spaces at the end of the text.
@@ -498,24 +508,38 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
     .map((label: SyntaxNode) => getNodeText(label, text));
 
+  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, position).trim();
+  const trailingSpace = text.charAt(cursorPosition - 1) === ' ';
+  const trailingComma = text.trimEnd().charAt(position - 1) === ',';
+
   return {
     type: 'IN_LOGFMT',
     otherLabels,
     flags,
-    logQuery: getLogQueryFromMetricsQueryAtPosition(text, position).trim(),
+    trailingSpace,
+    trailingComma,
+    logQuery,
   };
 }
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we try a couply specific paths here.
-  // `{x="y"}` situation, with the cursor at the end
-
+  /**
+   * Top level examples:
+   * - Empty query
+   * - {label="value"}
+   * - {label="value"} | parser
+   */
   const logExprNode = walk(node, [
     ['lastChild', Expr],
     ['lastChild', LogExpr],
   ]);
 
-  if (logExprNode != null) {
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes.
+   */
+  if (logExprNode != null && text.endsWith(' ')) {
     return resolveLogOrLogRange(logExprNode, text, pos, false);
   }
 
@@ -640,28 +664,26 @@ function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): S
   };
 }
 
-// we find the first error-node in the tree that is at the cursor-position.
-// NOTE: this might be too slow, might need to optimize it
-// (ideas: we do not need to go into every subtree, based on from/to)
-// also, only go to places that are in the sub-tree of the node found
-// by default by lezer. problem is, `next()` will go upward too,
-// and we do not want to go higher than our node
-function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode | null {
-  // sometimes the cursor is a couple spaces after the end of the expression.
-  // to account for this situation, we "move" the cursor position back,
-  // so that there are no spaces between the end-of-expression and the cursor
+// If there is an error in the current cursor position, it's likely that the user is
+// in the middle of writing a query. If we can't find an error node, we use the node
+// at the cursor position to identify the situation.
+function resolveCursor(text: string, cursorPos: number): TreeCursor {
+  // Sometimes the cursor is a couple spaces after the end of the expression.
+  // To account for this situation, we "move" the cursor position back to the real end
+  // of the expression.
   const trimRightTextLen = text.trimEnd().length;
   const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
-  const cur = tree.cursorAt(pos);
+
+  const tree = parser.parse(text);
+  const cursor = tree.cursorAt(pos);
+
   do {
-    if (cur.from === pos && cur.to === pos) {
-      const { node } = cur;
-      if (node.type.isError) {
-        return node;
-      }
+    if (cursor.from === pos && cursor.to === pos && cursor.node.type.isError) {
+      return cursor;
     }
-  } while (cur.next());
-  return null;
+  } while (cursor.next());
+
+  return tree.cursorAt(pos);
 }
 
 export function getSituation(text: string, pos: number): Situation | null {
@@ -674,22 +696,12 @@ export function getSituation(text: string, pos: number): Situation | null {
     };
   }
 
-  const tree = parser.parse(text);
+  const cursor = resolveCursor(text, pos);
+  const currentNode = cursor.node;
 
-  // if the tree contains error, it is very probable that
-  // our node is one of those error nodes.
-  // also, if there are errors, the node lezer finds us,
-  // might not be the best node.
-  // so first we check if there is an error node at the cursor position
-  const maybeErrorNode = getErrorNode(tree, text, pos);
-
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
-
-  const currentNode = cur.node;
-
-  const ids = [cur.type.id];
-  while (cur.parent()) {
-    ids.push(cur.type.id);
+  const ids = [cursor.type.id];
+  while (cursor.parent()) {
+    ids.push(cursor.type.id);
   }
 
   for (let resolver of RESOLVERS) {
