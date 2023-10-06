@@ -910,7 +910,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Top Dependencies by Avg Duration",
+      "title": "Top Exceptions by Count",
       "transformations": [],
       "type": "table"
     },

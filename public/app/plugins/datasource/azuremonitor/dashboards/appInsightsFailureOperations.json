@@ -288,7 +288,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where $result_code == \"All\" or resultCode in ($result_code)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -681,7 +681,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where $result_code == \"All\" or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where success == false\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where success == false\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -955,7 +955,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where $result_code == \"All\" or resultCode in ($result_code)\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -1039,7 +1039,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where $result_code == \"All\" or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1120,7 +1120,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where $result_code == \"All\" or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
+            "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1320,7 +1320,7 @@
             "uid": "${ds}"
           },
           "azureLogAnalytics": {
-            "query": "let dataset =\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\";\ndataset\n| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and resultCode in ($result_code)),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and resultCode in ($result_code)),\n    [\"Total count\"]=sum(itemCount)\n| project [\"Operation name\"]=\"All\", [\"Failed count\"], [\"Impacted users\"], [\"Total count\"]\n| union (dataset| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and resultCode in ($result_code)),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and resultCode in ($result_code)),\n    [\"Total count\"]=sum(itemCount)\n    by [\"Operation name\"]=operation_Name\n| where [\"Failed count\"] > 0\n| top 10 by [\"Failed count\"] desc)\n\n\n",
+            "query": "let dataset =\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\";\ndataset\n| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and (\"All\" in ($result_code) or resultCode in ($result_code))),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and (\"All\" in ($result_code) or resultCode in ($result_code))),\n    [\"Total count\"]=sum(itemCount)\n| project [\"Operation name\"]=\"All\", [\"Failed count\"], [\"Impacted users\"], [\"Total count\"]\n| union (dataset| summarize\n    [\"Failed count\"]=sumif(itemCount, success == 'False' and (\"All\" in ($result_code) or resultCode in ($result_code))),\n    [\"Impacted users\"]=dcountif(user_Id, success == 'False' and (\"All\" in ($result_code) or resultCode in ($result_code))),\n    [\"Total count\"]=sum(itemCount)\n    by [\"Operation name\"]=operation_Name\n| where [\"Failed count\"] > 0\n| top 10 by [\"Failed count\"] desc)\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table",
             "dashboardTime": false
@@ -1528,7 +1528,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where $result_code == \"All\" or resultCode in ($result_code)\n| where success == 'False'\n| project Name = operation_Name, [\"Response Code\"] = resultCode, [\"Response Time\"] = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where \"All\" in ($operation_name) or operation_Name in ($operation_name)\n| where \"All\" in ($result_code) or resultCode in ($result_code)\n| where success == 'False'\n| project Name = operation_Name, [\"Response Code\"] = resultCode, [\"Response Time\"] = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1725,7 +1725,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where $result_code == \"All\" or resultCode in ($result_code)\r\n| summarize count=sumif(itemCount, success == false) by operation_Name",
+            "query": "requests\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where \"All\" in ($result_code) or resultCode in ($result_code)\r\n| summarize count=sumif(itemCount, success == false) by operation_Name",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
