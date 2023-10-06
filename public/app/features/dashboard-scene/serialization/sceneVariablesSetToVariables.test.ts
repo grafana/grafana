@@ -15,7 +15,7 @@ import { setRunRequest } from '@grafana/runtime';
 import { ConstantVariable, CustomVariable, DataSourceVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { sceneVariablesSetToVariables } from './transformSceneToSaveModel';
+import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
@@ -218,23 +218,7 @@ describe('sceneVariablesSetToVariables', () => {
       "label": "test-label",
       "multi": true,
       "name": "test",
-      "options": [
-        {
-          "selected": true,
-          "text": "test",
-          "value": "test",
-        },
-        {
-          "selected": false,
-          "text": "test1",
-          "value": "test1",
-        },
-        {
-          "selected": true,
-          "text": "test2",
-          "value": "test2",
-        },
-      ],
+      "options": [],
       "query": "test,test1,test2",
       "skipUrlSync": false,
     }
