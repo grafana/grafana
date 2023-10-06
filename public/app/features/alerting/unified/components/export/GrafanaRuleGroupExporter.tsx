@@ -19,6 +19,7 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
 
   return (
     <GrafanaExportDrawer
+      title={`Export ${groupName} rules`}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}

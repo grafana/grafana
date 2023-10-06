@@ -116,11 +116,9 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules || canReadProvisioning) && (
-                <Stack direction="row" gap={0.5}>
-                  <MoreActionsRuleButtons />
-                </Stack>
-              )}
+              <Stack direction="row" gap={0.5}>
+                <MoreActionsRuleButtons />
+              </Stack>
             </div>
           </>
         )}

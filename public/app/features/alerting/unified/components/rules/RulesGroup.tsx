@@ -115,18 +115,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             />
           );
         }
-        if (isGroupView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="export rule group"
-              data-testid="export-group"
-              key="export-group"
-              icon="download-alt"
-              tooltip="Export rule group"
-              onClick={() => setIsExporting('group')}
-            />
-          );
-        }
         if (isListView) {
           actionIcons.push(
             <ActionIcon
@@ -151,19 +139,31 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               />
             );
           }
-
-          if (folder) {
-            actionIcons.push(
-              <ActionIcon
-                aria-label="export rule folder"
-                data-testid="export-folder"
-                key="export-folder"
-                icon="download-alt"
-                tooltip="Export rules folder"
-                onClick={() => setIsExporting('folder')}
-              />
-            );
-          }
+        }
+      }
+      if (folder) {
+        if (isListView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule folder"
+              data-testid="export-folder"
+              key="export-folder"
+              icon="download-alt"
+              tooltip="Export rules folder"
+              onClick={() => setIsExporting('folder')}
+            />
+          );
+        } else if (isGroupView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule group"
+              data-testid="export-group"
+              key="export-group"
+              icon="download-alt"
+              tooltip="Export rule group"
+              onClick={() => setIsExporting('group')}
+            />
+          );
         }
       }
     }

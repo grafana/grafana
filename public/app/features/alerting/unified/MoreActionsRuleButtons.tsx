@@ -12,7 +12,7 @@ import { useRulesAccess } from './utils/accessControlHooks';
 interface Props {}
 
 export function MoreActionsRuleButtons({}: Props) {
-  const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
+  const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
   const location = useLocation();
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const newMenu = (
@@ -25,7 +25,7 @@ export function MoreActionsRuleButtons({}: Props) {
           label="New recording rule"
         />
       )}
-      {canReadProvisioning && <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />}
+      <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />
     </Menu>
   );
 

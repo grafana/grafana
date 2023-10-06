@@ -97,72 +97,72 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
     );
   }
 
-  if (isEditable && rulerRule && !isFederated) {
+  if (rulerRule && !isFederated) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    if (!isProvisioned) {
-      const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
-        returnTo,
-      });
+    if (isEditable) {
+      if (!isProvisioned) {
+        const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
+          returnTo,
+        });
 
-      if (isViewMode) {
+        if (isViewMode) {
+          buttons.push(
+            <ClipboardButton
+              key="copy"
+              icon="copy"
+              onClipboardError={(copiedText) => {
+                notifyApp.error('Error while copying URL', copiedText);
+              }}
+              className={style.button}
+              size="sm"
+              getText={buildShareUrl}
+            >
+              Copy link to rule
+            </ClipboardButton>
+          );
+        }
+
         buttons.push(
-          <ClipboardButton
-            key="copy"
-            icon="copy"
-            onClipboardError={(copiedText) => {
-              notifyApp.error('Error while copying URL', copiedText);
-            }}
-            className={style.button}
-            size="sm"
-            getText={buildShareUrl}
-          >
-            Copy link to rule
-          </ClipboardButton>
+          <Tooltip placement="top" content={'Edit'}>
+            <LinkButton
+              title="Edit"
+              className={style.button}
+              size="sm"
+              key="edit"
+              variant="secondary"
+              icon="pen"
+              href={editURL}
+            />
+          </Tooltip>
         );
       }
 
-      buttons.push(
-        <Tooltip placement="top" content={'Edit'}>
-          <LinkButton
-            title="Edit"
-            className={style.button}
-            size="sm"
-            key="edit"
-            variant="secondary"
-            icon="pen"
-            href={editURL}
-          />
-        </Tooltip>
+      moreActions.push(
+        <Menu.Item label="Duplicate" icon="copy" onClick={() => setRedirectToClone({ identifier, isProvisioned })} />
       );
     }
 
-    if (isGrafanaRulerRule(rulerRule)) {
-      if (config.featureToggles.alertingModifiedExport) {
-        moreActions.push(
-          <Menu.Item
-            label="Modify export"
-            icon="edit"
-            onClick={() =>
-              locationService.push(
-                `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
-              )
-            }
-          />
-        );
-      }
+    if (isGrafanaRulerRule(rulerRule) && config.featureToggles.alertingModifiedExport) {
+      moreActions.push(
+        <Menu.Item
+          label="Modify export"
+          icon="edit"
+          onClick={() =>
+            locationService.push(
+              `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
+            )
+          }
+        />
+      );
     }
-
-    moreActions.push(
-      <Menu.Item label="Duplicate" icon="copy" onClick={() => setRedirectToClone({ identifier, isProvisioned })} />
-    );
   }
 
   if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
     moreActions.push(<Menu.Item label="Delete" icon="trash-alt" onClick={() => setRuleToDelete(rule)} />);
   }
 
-  if (buttons.length) {
+  if (buttons.length || moreActions.length) {
     return (
       <>
         <Stack gap={1}>
