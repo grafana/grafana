@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -194,6 +195,39 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
+	ctxHdlr := getContextHandler(t, cfg)
+	sc := &scenarioContext{
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
+	}
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	exists, err := fs.Exists(viewsPath)
+	require.NoError(t, err)
+	require.Truef(t, exists, "Views should be in %q", viewsPath)
+
+	sc.m = web.New()
+	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+	sc.m.Use(ctxHdlr.Middleware)
+
+	return sc
+}
+
+func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
+	cfg := setting.NewCfg()
+	//seed sections and keys
+	cfg.Raw.DeleteSection("DEFAULT")
+	saml, err := cfg.Raw.NewSection("auth.saml")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("enabled", "true")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("allow_idp_initiated", "false")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("single_logout", "true")
+	assert.NoError(t, err)
+
 	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
 		url:     url,

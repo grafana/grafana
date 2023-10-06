@@ -29,6 +29,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -639,6 +642,37 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	return sc
+}
+
+func TestLogoutSaml(t *testing.T) {
+	fakeSetIndexViewData(t)
+	fakeViewIndex(t)
+	sc := setupScenarioContextSamlLogout(t, "/logout")
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "saml").Return(true)
+
+	hs := &HTTPServer{
+		Cfg:              sc.cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
+		License:          license,
+		SocialService:    &mockSocialService{},
+		Features:         featuremgmt.WithFeatures(),
+		authInfoService: &logintest.AuthInfoServiceFake{
+			ExpectedUserAuth: &login.UserAuth{AuthModule: login.SAMLAuthModule},
+		},
+	}
+	//assert.Equal(t, true, hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false))
+	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 1,
+		}
+		hs.Logout(c)
+		return response.Empty(http.StatusOK)
+	})
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertions("GET", sc.url).exec()
+	require.Equal(t, 302, sc.resp.Code)
 }
 
 type mockSocialService struct {
