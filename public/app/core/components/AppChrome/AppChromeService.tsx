@@ -18,6 +18,7 @@ export interface AppChromeState {
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
   megaMenuOpen?: boolean;
+  megaMenuDocked: 'open' | 'closed' | 'docked';
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
 }
@@ -31,6 +32,7 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+    megaMenuDocked: 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
@@ -97,10 +99,29 @@ export class AppChromeService {
     const isOpen = !this.state.getValue().megaMenuOpen;
     reportInteraction('grafana_toggle_menu_clicked', { action: isOpen ? 'open' : 'close' });
     this.update({ megaMenuOpen: isOpen });
+    if (isOpen) {
+      this.update({ megaMenuDocked: 'open' });
+    }
+    if (!isOpen) {
+      this.update({ megaMenuDocked: 'closed' });
+    }
   };
 
   public setMegaMenu = (megaMenuOpen: boolean) => {
     this.update({ megaMenuOpen });
+  };
+
+  public onToggleDockedMegaMenu = () => {
+    const dockedStatus = this.state.getValue().megaMenuDocked;
+    const getDockedCurrentStatus = () => {
+      if (dockedStatus === 'open') {
+        return 'docked';
+      } else {
+        return 'closed';
+      }
+    };
+    reportInteraction('grafana_toggle_docked_menu_clicked', { action: getDockedCurrentStatus() });
+    this.update({ megaMenuDocked: getDockedCurrentStatus() });
   };
 
   public onToggleSearchBar = () => {
