@@ -8,7 +8,11 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
-import { RulerRuleDTO } from '../../../../../../types/unified-alerting-dto';
+import {
+  PostableRuleGrafanaRuleDTO,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+} from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi, ModifyExportPayload } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
@@ -126,28 +130,49 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportValues: RuleFormValues;
   uid: string;
 }
+export const getPayloadFromDto = (
+  grouDto: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined,
+  grafanaRuleDto: PostableRuleGrafanaRuleDTO,
+  uid: string
+): ModifyExportPayload => {
+  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
+  if (grouDto?.rules) {
+    // we have to update the rule in the group
+    // return the same group with the updated rule in the same position
+    let alreadyExistsInGroup = false;
+    const rules = grouDto.rules.map((rule: RulerRuleDTO) => {
+      if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
+        alreadyExistsInGroup = true;
+        return updatedRule;
+      } else {
+        return rule;
+      }
+    });
+    if (!alreadyExistsInGroup) {
+      // we have to add the updated rule at the end of the group
+      rules.push(updatedRule);
+    }
+    return {
+      ...grouDto,
+      rules: rules,
+    };
+  } else {
+    // we have to create a new group with the updated rule
+    return {
+      name: grouDto?.name ?? '',
+      rules: [updatedRule],
+    };
+  }
+};
 
 const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
   const grafanaRuleDto = useMemo(() => formValuesToRulerGrafanaRuleDTO(values), [values]);
+  const grouDto = rulerGroupDto.value;
 
   const payload: ModifyExportPayload = useMemo(() => {
-    const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
-    if (rulerGroupDto?.value?.rules) {
-      const rulesWithoutCurrent = rulerGroupDto.value.rules.filter(
-        (rule: RulerRuleDTO) => isGrafanaRulerRule(rule) && rule.grafana_alert.uid !== uid
-      );
-      return {
-        ...rulerGroupDto?.value,
-        rules: [...rulesWithoutCurrent, updatedRule],
-      };
-    } else {
-      return {
-        name: values.group,
-        rules: [updatedRule],
-      };
-    }
-  }, [rulerGroupDto.value, grafanaRuleDto, values.group, uid]);
+    return getPayloadFromDto(grouDto, grafanaRuleDto, uid);
+  }, [grouDto, grafanaRuleDto, uid]);
   return { payload, loadingGroup: rulerGroupDto.loading };
 };
 
