@@ -32,6 +32,7 @@ interface Props {
   alertManagerSourceName: string;
   config: AlertManagerCortexConfig;
   existing?: GrafanaManagedContactPoint;
+  readOnly?: boolean;
 }
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
@@ -43,7 +44,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   type: 'email',
 });
 
-export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
+export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, readOnly = false }: Props) => {
   const dispatch = useDispatch();
 
   const {
@@ -129,8 +130,8 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   // or a Mimir-based AlertManager
   const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
-  const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
-  const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
+  const isEditable = !readOnly && isManageableAlertManagerDataSource && !hasProvisionedItems;
+  const isTestable = !readOnly && (isManageableAlertManagerDataSource || hasProvisionedItems);
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return <LoadingPlaceholder text="Loading notifiers..." />;

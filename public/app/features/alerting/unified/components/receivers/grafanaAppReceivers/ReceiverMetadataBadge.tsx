@@ -34,7 +34,7 @@ export const ReceiverMetadataBadge = ({ metadata: { icon, title, externalUrl, wa
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  warnIcon: css`
-    fill: ${theme.colors.warning.text};
-  `,
+  warnIcon: css({
+    fill: theme.colors.warning.text,
+  }),
 });

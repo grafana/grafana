@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
@@ -35,7 +35,6 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
-import { Authorize } from '../Authorize';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
@@ -71,7 +70,7 @@ const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
   // TODO hook up to query params
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
-  let { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
+  let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
@@ -110,37 +109,6 @@ const ContactPoints = () => {
             active={showingMessageTemplates}
             onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
           />
-          <Spacer />
-          {showingContactPoints && (
-            <Stack direction="row" gap={0.5}>
-              {addContactPointSupported && (
-                <LinkButton
-                  icon="plus"
-                  variant="primary"
-                  href="/alerting/notifications/receivers/new"
-                  disabled={!addContactPointAllowed}
-                >
-                  Add contact point
-                </LinkButton>
-              )}
-              {exportContactPointsSupported && (
-                <Button
-                  icon="download-alt"
-                  variant="secondary"
-                  fill="outline"
-                  disabled={!exportContacPointsAllowed}
-                  onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
-                >
-                  Export all
-                </Button>
-              )}
-            </Stack>
-          )}
-          {showingMessageTemplates && (
-            <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-              Add message template
-            </LinkButton>
-          )}
         </TabsBar>
         <TabContent>
           <Stack direction="column">
@@ -154,9 +122,34 @@ const ContactPoints = () => {
                   ) : (
                     <>
                       {/* TODO we can add some additional info here with a ToggleTip */}
-                      <Text variant="body" color="secondary">
-                        Define where notifications are sent, a contact point can contain multiple integrations.
-                      </Text>
+                      <Stack direction="row" alignItems="center">
+                        <Text variant="body" color="secondary">
+                          Define where notifications are sent, a contact point can contain multiple integrations.
+                        </Text>
+                        <Spacer />
+                        <Stack direction="row" gap={1}>
+                          {addContactPointSupported && (
+                            <LinkButton
+                              icon="plus"
+                              variant="primary"
+                              href="/alerting/notifications/receivers/new"
+                              disabled={!addContactPointAllowed}
+                            >
+                              Add contact point
+                            </LinkButton>
+                          )}
+                          {exportContactPointsSupported && (
+                            <Button
+                              icon="download-alt"
+                              variant="secondary"
+                              disabled={!exportContacPointsAllowed}
+                              onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
+                            >
+                              Export all
+                            </Button>
+                          )}
+                        </Stack>
+                      </Stack>
                       <ContactPointsList
                         contactPoints={contactPoints}
                         pageSize={DEFAULT_PAGE_SIZE}
@@ -172,9 +165,15 @@ const ContactPoints = () => {
               {/* Message Templates tab */}
               {showingMessageTemplates && (
                 <>
-                  <Text variant="body" color="secondary">
-                    Create message templates to customize your notifications.
-                  </Text>
+                  <Stack direction="row" alignItems="center">
+                    <Text variant="body" color="secondary">
+                      Create message templates to customize your notifications.
+                    </Text>
+                    <Spacer />
+                    <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
+                      Add message template
+                    </LinkButton>
+                  </Stack>
                   <MessageTemplates />
                 </>
               )}
@@ -303,9 +302,53 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
+  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+  const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const isReferencedByPolicies = policies > 0;
+  const canEdit = editSupported && editAllowed && !provisioned;
+  const canDelete = deleteSupported && deleteAllowed && !provisioned && policies === 0;
+
+  const menuActions: JSX.Element[] = [];
+
+  if (exportSupported) {
+    menuActions.push(
+      <Fragment key="export-contact-point">
+        <Menu.Item
+          icon="download-alt"
+          label="Export"
+          disabled={!exportAllowed}
+          data-testid="export"
+          onClick={() => openExportDrawer(name)}
+        />
+        <Menu.Divider />
+      </Fragment>
+    );
+  }
+
+  if (deleteSupported) {
+    menuActions.push(
+      <ConditionalWrap
+        key="delete-contact-point"
+        shouldWrap={isReferencedByPolicies}
+        wrap={(children) => (
+          <Tooltip content="Contact point is currently in use by one or more notification policies" placement="top">
+            <span>{children}</span>
+          </Tooltip>
+        )}
+      >
+        <Menu.Item
+          label="Delete"
+          icon="trash-alt"
+          destructive
+          disabled={disabled || !canDelete}
+          onClick={() => onDelete(name)}
+        />
+      </ConditionalWrap>
+    );
+  }
 
   return (
     <div className={styles.headerWrapper}>
@@ -323,63 +366,27 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           </MetaText>
         )}
         {provisioned && <ProvisioningBadge />}
-        <Spacer />
         {!isReferencedByPolicies && <UnusedContactPointBadge />}
+        <Spacer />
         <LinkButton
           tooltipPlacement="top"
           tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
           variant="secondary"
           size="sm"
-          icon={provisioned ? 'document-info' : 'pen'}
+          icon={canEdit ? 'pen' : 'eye'}
           type="button"
           disabled={disabled}
-          aria-label={`${provisioned ? 'view' : 'edit'}-action`}
-          data-testid={`${provisioned ? 'view' : 'edit'}-action`}
+          aria-label={`${canEdit ? 'edit' : 'view'}-action`}
+          data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
         >
-          {provisioned ? 'View' : 'Edit'}
+          {canEdit ? 'Edit' : 'View'}
         </LinkButton>
-        <Dropdown
-          overlay={
-            <Menu>
-              {exportSupported && (
-                <>
-                  <Authorize actions={[AlertmanagerAction.ExportContactPoint]}>
-                    <Menu.Item
-                      icon="download-alt"
-                      label="Export"
-                      disabled={!exportAllowed}
-                      data-testid="export"
-                      onClick={() => openExportDrawer(name)}
-                    />
-                  </Authorize>
-                  <Menu.Divider />
-                </>
-              )}
-              <ConditionalWrap
-                shouldWrap={policies > 0}
-                wrap={(children) => (
-                  <Tooltip
-                    content={'Contact point is currently in use by one or more notification policies'}
-                    placement="top"
-                  >
-                    <span>{children}</span>
-                  </Tooltip>
-                )}
-              >
-                <Menu.Item
-                  label="Delete"
-                  icon="trash-alt"
-                  destructive
-                  disabled={disabled || provisioned || policies > 0}
-                  onClick={() => onDelete(name)}
-                />
-              </ConditionalWrap>
-            </Menu>
-          }
-        >
-          <MoreButton />
-        </Dropdown>
+        {Boolean(menuActions.length) && (
+          <Dropdown overlay={<Menu>{menuActions}</Menu>}>
+            <MoreButton />
+          </Dropdown>
+        )}
       </Stack>
       {ExportDrawer}
     </div>

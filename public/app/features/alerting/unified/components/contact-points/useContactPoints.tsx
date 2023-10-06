@@ -9,8 +9,8 @@ import { remove } from 'lodash';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -27,8 +27,8 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  * 3. (if available) additional metadata about Grafana Managed contact points
  * 4. (if available) the OnCall plugin metadata
  */
-export function useContactPointsWithStatus(selectedAlertmanager: string) {
-  const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+export function useContactPointsWithStatus() {
+  const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const { installed: onCallPluginInstalled = false, loading: onCallPluginStatusLoading } = usePluginBridge(
     SupportedPlugin.OnCall
   );
@@ -40,24 +40,24 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
     // re-fetch status every so often for up-to-date information
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
     // skip fetching receiver statuses if not Grafana AM
-    skip: !isGrafanaManagedAlertmanager,
+    skip: !isGrafanaAlertmanager,
   });
 
   // fetch notifier metadata from the Grafana API if we're using a Grafana AM – this will be used to add additional
   // metadata and canonical names to the receiver
   const fetchReceiverMetadata = alertmanagerApi.endpoints.grafanaNotifiers.useQuery(undefined, {
-    skip: !isGrafanaManagedAlertmanager,
+    skip: !isGrafanaAlertmanager,
   });
 
   // if the OnCall plugin is installed, fetch its list of integrations so we can match those to the Grafana Managed contact points
   const { data: onCallIntegrations, isLoading: onCallPluginIntegrationsLoading } =
     onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-      skip: !onCallPluginInstalled || !isGrafanaManagedAlertmanager,
+      skip: !onCallPluginInstalled || !isGrafanaAlertmanager,
     });
 
   // fetch the latest config from the Alertmanager
   const fetchAlertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    selectedAlertmanager,
+    selectedAlertmanager!,
     {
       refetchOnFocus: true,
       refetchOnReconnect: true,

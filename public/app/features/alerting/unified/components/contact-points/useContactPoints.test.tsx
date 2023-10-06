@@ -8,7 +8,7 @@ describe('useContactPoints', () => {
   setupGrafanaManagedServer();
 
   it('should return contact points with status', async () => {
-    const { result } = renderHook(() => useContactPointsWithStatus('grafana'), {
+    const { result } = renderHook(() => useContactPointsWithStatus(), {
       wrapper: TestProvider,
     });
 
