@@ -3,6 +3,7 @@ package apiregistry
 import (
 	"context"
 
+	datasourcesv0alpha1 "github.com/grafana/grafana/pkg/apis/datasources/v0alpha1"
 	examplev0alpha1 "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
@@ -19,6 +20,7 @@ type Service struct{}
 func ProvideService(
 	_ *playlistsv0alpha1.PlaylistAPIBuilder,
 	_ *examplev0alpha1.TestingAPIBuilder,
+	_ *datasourcesv0alpha1.DSAPIBuilder,
 ) *Service {
 	return &Service{}
 }

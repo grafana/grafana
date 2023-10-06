@@ -53,5 +53,5 @@ type APIRoutes struct {
 	// Resource routes behave the same as pod/logs
 	// it looks like a sub-resource, however the response is backed directly by an http handler
 	// The current resource can be fetched through context
-	Resource map[string]APIRouteHandler
+	Resource map[string][]APIRouteHandler
 }
