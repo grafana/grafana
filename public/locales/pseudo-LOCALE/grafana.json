@@ -358,6 +358,16 @@
       "placeholder": "Cĥőőşę"
     }
   },
+  "graph": {
+    "container": {
+      "content": "Ŗęŉđęřįŉģ ŧőő mäŉy şęřįęş įŉ ä şįŉģľę päŉęľ mäy įmpäčŧ pęřƒőřmäŉčę äŉđ mäĸę đäŧä ĥäřđęř ŧő řęäđ. Cőŉşįđęř řęƒįŉįŉģ yőūř qūęřįęş.",
+      "show-all-series__one": "Ŝĥőŵ äľľ {{count}}",
+      "show-all-series__other": "Ŝĥőŵ äľľ {{count}}",
+      "show-only-series__one": "Ŝĥőŵįŉģ őŉľy {{count}} şęřįęş",
+      "show-only-series__other": "Ŝĥőŵįŉģ őŉľy {{count}} şęřįęş",
+      "title": "Ğřäpĥ"
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Đäşĥþőäřđ",

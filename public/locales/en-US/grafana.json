@@ -358,6 +358,16 @@
       "placeholder": "Choose"
     }
   },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series__one": "Show all {{count}}",
+      "show-all-series__other": "Show all {{count}}",
+      "show-only-series__one": "Showing only {{count}} series",
+      "show-only-series__other": "Showing only {{count}} series",
+      "title": "Graph"
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Dashboard",

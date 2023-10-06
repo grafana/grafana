@@ -358,6 +358,16 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series__one": "",
+      "show-all-series__other": "",
+      "show-only-series__one": "",
+      "show-only-series__other": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",

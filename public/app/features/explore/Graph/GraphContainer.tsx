@@ -21,6 +21,7 @@ import {
   useStyles2,
   Tooltip,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -76,19 +77,26 @@ export const GraphContainer = ({
 
   return (
     <PanelChrome
-      title="Graph"
+      title={t('graph.container.title', 'Graph')}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
             <span className={styles.warningMessage}>
               <Icon name="exclamation-triangle" aria-hidden="true" />
-              Showing only {MAX_NUMBER_OF_TIME_SERIES} series
+              <Trans i18nKey={'graph.container.show-only-series'} count={MAX_NUMBER_OF_TIME_SERIES}>
+                Showing only {{ count: MAX_NUMBER_OF_TIME_SERIES }} series
+              </Trans>
             </span>
             <Tooltip
-              content={`Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.`}
+              content={t(
+                'graph.container.content',
+                'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
+              )}
             >
               <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
-                Show all {data.length}
+                <Trans i18nKey={'graph.container.show-all-series'} count={data.length}>
+                  Show all {{ count: data.length }}
+                </Trans>
               </Button>
             </Tooltip>
           </div>
