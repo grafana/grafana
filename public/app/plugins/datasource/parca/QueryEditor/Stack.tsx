@@ -14,7 +14,7 @@ interface StackProps {
 }
 
 export function Stack(props: StackProps) {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
+  const styles = useStyles2(getStyles, props);
   return <div className={styles.root}>{props.children}</div>;
 }
 
