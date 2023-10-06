@@ -35,41 +35,39 @@ export const CorrelationTransformationAddModal = ({
   const [validToSave, setValidToSave] = useState(false);
   const { getValues, control, register } = useForm<DataLinkTransformationConfig>({
     defaultValues: useMemo(() => {
-      const exampleVal = fieldList[transformationToEdit?.field!];
-      setExampleValue(exampleVal);
-      if (transformationToEdit?.expression) {
-        setIsExpValid(true);
-      }
-      const transformationTypeDetails = getSupportedTransTypeDetails(transformationToEdit?.type!);
-      setFormFieldsVis({
-        showMapValue: transformationTypeDetails.showMapValue,
-        showExpression: transformationTypeDetails.showExpression,
-      });
+      if (transformationToEdit) {
+        const exampleVal = fieldList[transformationToEdit?.field!];
+        setExampleValue(exampleVal);
+        if (transformationToEdit?.expression) {
+          setIsExpValid(true);
+        }
+        const transformationTypeDetails = getSupportedTransTypeDetails(transformationToEdit?.type!);
+        setFormFieldsVis({
+          showMapValue: transformationTypeDetails.showMapValue,
+          showExpression: transformationTypeDetails.showExpression,
+        });
 
-      const transformationVars = getTransformationVars(
-        {
-          type: transformationToEdit?.type!,
-          expression: transformationToEdit?.expression,
+        const transformationVars = getTransformationVars(
+          {
+            type: transformationToEdit?.type!,
+            expression: transformationToEdit?.expression,
+            mapValue: transformationToEdit?.mapValue,
+          },
+          exampleVal || '',
+          transformationToEdit?.field!
+        );
+        setTransformationVars({ ...transformationVars });
+        setValidToSave(true);
+        return {
+          type: transformationToEdit?.type,
+          field: transformationToEdit?.field,
           mapValue: transformationToEdit?.mapValue,
-        },
-        exampleVal || '',
-        transformationToEdit?.field!
-      );
-      setTransformationVars({ ...transformationVars });
-      setValidToSave(true);
-      return {
-        type: transformationToEdit?.type,
-        field: transformationToEdit?.field,
-        mapValue: transformationToEdit?.mapValue,
-        expression: transformationToEdit?.expression,
-      };
-    }, [
-      fieldList,
-      transformationToEdit?.expression,
-      transformationToEdit?.field,
-      transformationToEdit?.mapValue,
-      transformationToEdit?.type,
-    ]),
+          expression: transformationToEdit?.expression,
+        };
+      } else {
+        return undefined;
+      }
+    }, [fieldList, transformationToEdit]),
   });
   const id = useId();
 

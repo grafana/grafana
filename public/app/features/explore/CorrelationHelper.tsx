@@ -151,9 +151,9 @@ export const CorrelationHelper = ({ correlations }: Props) => {
             const detailsString = [
               (mapValue ?? '').length > 0 ? `Variable name: ${mapValue}` : undefined,
               (expression ?? '').length > 0 ? (
-                <div className={styles.expressionContainer}>
-                  Expression: <pre className={styles.expressionPre}>{expression}</pre>
-                </div>
+                <>
+                  Expression: <code>{expression}</code>
+                </>
               ) : undefined,
             ].filter((val) => val);
             return (
@@ -197,18 +197,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     transformationAction: css({
       marginBottom: theme.spacing(2),
     }),
-    expressionPre: css({
-      lineHeight: 0,
-      marginBottom: 0,
-      display: 'inline-block',
-    }),
     transformationMeta: css({
-      alignItems: 'baseline',
-    }),
-    expressionContainer: css({
-      display: 'flex',
       alignItems: 'baseline',
     }),
   };
 };
-//Expression: <span className={styles.expressionText}>{expression}</span>
