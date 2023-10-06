@@ -125,7 +125,8 @@ describe('Language completion provider', () => {
     it('should call series endpoint', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
+        getAdjustedInterval: (timeRange: TimeRange) =>
+          getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -172,7 +173,8 @@ describe('Language completion provider', () => {
     it('should call series endpoint', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
+        getAdjustedInterval: (timeRange: TimeRange) =>
+          getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -199,7 +201,8 @@ describe('Language completion provider', () => {
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => true,
         cacheLevel: PrometheusCacheLevel.Low,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.Low, getMockQuantizedTimeRangeParams()),
+        getAdjustedInterval: (timeRange: TimeRange) =>
+          getRangeSnapInterval(PrometheusCacheLevel.Low, getMockQuantizedTimeRangeParams()),
         getCacheDurationInMinutes: () => timeSnapMinutes,
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;

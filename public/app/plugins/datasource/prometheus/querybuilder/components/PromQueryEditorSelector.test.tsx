@@ -84,7 +84,6 @@ const getDefaultDatasource = (jsonDataOverrides = {}) =>
       readOnly: false,
     },
     undefined,
-    undefined,
     new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider
   );
 

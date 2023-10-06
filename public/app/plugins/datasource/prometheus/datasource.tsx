@@ -28,6 +28,8 @@ import {
   DataSourceGetTagValuesOptions,
   MetricFindValue,
   AdHocVariableFilter,
+  getDefaultTimeRange,
+  LegacyMetricFindQueryOptions,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -42,7 +44,6 @@ import {
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -118,7 +119,6 @@ export class PrometheusDatasource
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv(),
     languageProvider?: PrometheusLanguageProvider
   ) {
     super(instanceSettings);
@@ -147,7 +147,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
-    this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
+    this.variables = new PrometheusVariableSupport(this, this.templateSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
 
@@ -459,7 +459,7 @@ export class PrometheusDatasource
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
-      utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      utcOffsetSec: request.range.to.utcOffset() * 60,
     };
     if (target.instant && target.range) {
       // We have query type "Both" selected
@@ -688,7 +688,7 @@ export class PrometheusDatasource
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
-    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
+    const adjusted = alignRange(start, end, query.step, options.range.to.utcOffset() * 60);
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
@@ -804,7 +804,7 @@ export class PrometheusDatasource
     return error;
   };
 
-  metricFindQuery(query: string) {
+  metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions) {
     if (!query) {
       return Promise.resolve([]);
     }
@@ -812,14 +812,14 @@ export class PrometheusDatasource
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
-      ...this.getRangeScopedVars(this.timeSrv.timeRange()),
+      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
     return metricFindQuery.process();
   }
 
-  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
+  getRangeScopedVars(range: TimeRange) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
@@ -1020,7 +1020,7 @@ export class PrometheusDatasource
       }));
     }
 
-    const params = this.getTimeRangeParams();
+    const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
@@ -1226,12 +1226,11 @@ export class PrometheusDatasource
   /**
    * Returns the adjusted "snapped" interval parameters
    */
-  getAdjustedInterval(): { start: string; end: string } {
+  getAdjustedInterval(timeRange: TimeRange): { start: string; end: string } {
     if (!config.featureToggles.prometheusResourceBrowserCache) {
-      return this.getTimeRangeParams();
+      return this.getTimeRangeParams(timeRange);
     }
-    const range = this.timeSrv.timeRange();
-    return getRangeSnapInterval(this.cacheLevel, range);
+    return getRangeSnapInterval(this.cacheLevel, timeRange);
   }
 
   /**
@@ -1239,16 +1238,15 @@ export class PrometheusDatasource
    * and then a little extra padding to round up/down to the nearest nth minute,
    * defined by the result of the getCacheDurationInMinutes.
    *
-   * For longer cache durations, and shorter query durations, the window we're calculating might be much bigger then the user's current window,
-   * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
-   *
+   * For longer cache durations, and shorter query durations,
+   * the window we're calculating might be much bigger then the user's current window,
+   * resulting in us returning labels/values that might not be applicable for the given window,
+   * this is a necessary trade-off if we want to cache larger durations
    */
-
-  getTimeRangeParams(): { start: string; end: string } {
-    const range = this.timeSrv.timeRange();
+  getTimeRangeParams(timeRange: TimeRange): { start: string; end: string } {
     return {
-      start: getPrometheusTime(range.from, false).toString(),
-      end: getPrometheusTime(range.to, true).toString(),
+      start: getPrometheusTime(timeRange.from, false).toString(),
+      end: getPrometheusTime(timeRange.to, true).toString(),
     };
   }
 
