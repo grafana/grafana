@@ -27,11 +27,11 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, env []string, logger log.Logger,
+func newClientConfig(executablePath string, args []string, env []string, logger log.Logger,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
-	cmd := exec.Command(executablePath)
+	cmd := exec.Command(executablePath, args...)
 	cmd.Env = env
 
 	return &goplugin.ClientConfig{
@@ -63,6 +63,7 @@ type StartSecretsManagerFunc func(pluginID string, secretsmanager secretsmanager
 type PluginDescriptor struct {
 	pluginID              string
 	executablePath        string
+	executableArgs        []string
 	managed               bool
 	versionedPlugins      map[int]goplugin.PluginSet
 	startRendererFn       StartRendererFunc
@@ -82,20 +83,21 @@ func getV2PluginSet() goplugin.PluginSet {
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func NewBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, true)
+func NewBackendPlugin(pluginID, executablePath string, executableArgs ...string) backendplugin.PluginFactoryFunc {
+	return newBackendPlugin(pluginID, executablePath, true, executableArgs...)
 }
 
 // NewUnmanagedBackendPlugin creates a new backend plugin factory used for registering an unmanaged backend plugin.
-func NewUnmanagedBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, false)
+func NewUnmanagedBackendPlugin(pluginID, executablePath string, executableArgs ...string) backendplugin.PluginFactoryFunc {
+	return newBackendPlugin(pluginID, executablePath, false, executableArgs...)
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func newBackendPlugin(pluginID, executablePath string, managed bool) backendplugin.PluginFactoryFunc {
+func newBackendPlugin(pluginID, executablePath string, managed bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
+		executableArgs: executableArgs,
 		managed:        managed,
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
@@ -116,7 +118,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFun
 	})
 }
 
-// NewSecetsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
+// NewSecretsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
 func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecretsManagerFunc) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,

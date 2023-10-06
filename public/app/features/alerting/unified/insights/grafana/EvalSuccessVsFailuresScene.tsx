@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaEvalSuccessVsFailuresScene(
   timeRange: SceneTimeRange,
@@ -42,6 +45,7 @@ export function getGrafanaEvalSuccessVsFailuresScene(
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

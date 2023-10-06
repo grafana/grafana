@@ -142,7 +142,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (variableUid === ds.uid) {
         filters = filters.concat(variable.filters);
       } else if (variableUid?.indexOf('$') === 0) {
-        if (this.replace(variableUid) === datasourceName) {
+        if (this.replace(variableUid) === ds.uid) {
           filters = filters.concat(variable.filters);
         }
       }
