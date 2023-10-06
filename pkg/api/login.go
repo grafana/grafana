@@ -284,7 +284,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 		c.Redirect(rdUrl)
 	} else {
-		hs.log.Info("Successful Logout", "User", c.Email)
+		hs.log.Info("Successful Logout", "User", c.SignedInUser.GetEmail())
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 }
