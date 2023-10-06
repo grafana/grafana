@@ -93,7 +93,6 @@ func TestTemplateDecorateFunc(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "", p.Info.Updated)
 	})
-
 }
 
 func Test_configureAppChildPlugin(t *testing.T) {
