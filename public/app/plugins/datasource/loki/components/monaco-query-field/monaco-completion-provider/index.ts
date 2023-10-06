@@ -7,10 +7,8 @@ import { NeverCaseError } from './NeverCaseError';
 import { CompletionType, getCompletions } from './completions';
 import { getSituation, Situation } from './situation';
 
-import CompletionItemInsertTextRule = languages.CompletionItemInsertTextRule;
-
 // from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
-const INSERT_AS_SNIPPET_ENUM_VALUE = CompletionItemInsertTextRule.InsertAsSnippet;
+const INSERT_AS_SNIPPET_ENUM_VALUE = 4;
 
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
