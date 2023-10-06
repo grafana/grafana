@@ -437,6 +437,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	libraryPanelsGeneralReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:general.reader",
+			DisplayName: "Library panel general reader",
+			Description: "Read all library panels in general folder.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{"Viewer"},
+	}
+
 	libraryPanelsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:library.panels:writer",
@@ -450,6 +463,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			}),
 		},
 		Grants: []string{"Admin"},
+	}
+
+	libraryPanelsGeneralWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:general.writer",
+			DisplayName: "Library panel general writer",
+			Group:       "Library panels",
+			Description: "Create, read, write or delete all library panels and their permissions in the general folder.",
+			Permissions: ac.ConcatPermissions(libraryPanelsGeneralReaderRole.Role.Permissions, []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			}),
+		},
+		Grants: []string{"Editor"},
 	}
 
 	publicDashboardsWriterRole := ac.RoleRegistration{
@@ -499,7 +527,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole}
 	if hs.Features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
-		roles = append(roles, libraryPanelsCreatorRole, libraryPanelsReaderRole, libraryPanelsWriterRole)
+		roles = append(roles, libraryPanelsCreatorRole, libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole)
 	}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
