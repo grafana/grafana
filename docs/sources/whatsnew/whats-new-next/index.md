@@ -18,11 +18,53 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Test
+## User experience updates in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
 
-Test
+_Generally available in Grafana Cloud_
+
+To provide quicker identification and troubleshooting of issues, we have upgraded the Kubernetes Monitoring's interface, including:
+
+- The home page now shows a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
+  
+  (ADD SCREENSHOT AFTER CROW's NEST LANGUAGE REMOVED)
+
+  This view shows:
+
+  - Pods that have been in a non-running state for more than 15 minutes
+  - Nodes with CPU usage above 90% for more than five minutes
+  - Nodes using more than 90% of memory for more than five minutes
+  - Persistent Volumes with capacity above 90%
+  - Node disks with capacity above 90%
+
+- The [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) now provides tabs that allow you to quickly switch between the Cluster, namespace, workload, and Node views.
+
+  (ADD SCREENSHOT)
+
+## Configuration additions in Kubernetes Monitoring
+
+<!-- Beverly Buchanan --> 
+
+_Generally available in Grafana Cloud_
+
+Now you have these options when configuring Kubernetes Monitoring:
+
+- Grafana Kubernetes Monitoring Helm chart: To send infrastructure data to Grafana Cloud, you can configure easily using the Helm chart. With this method, you can select toggle buttons to gather metrics, logs, events, traces, and cost metrics.
+
+(NEED TO ADD SCREENSHOT HERE)
+
+- Traces: You can collect traces when you configure Kubernetes Monitoring, and then use Tempo to create search queries. Refer to [Navigate to traces](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#navigate-to-traces) for more information.
+
+## Cost monitoring in Kubernetes Monitoring
+
+<!-- Beverly Buchanan --> 
+
+_Generally available in Grafana Cloud_
+
+You can use the Cost view to discover insights about spending, and make data-driven decisions about resource allocation, scaling, and tech investments. This feature is based on an [OpenCost](https://www.opencost.io/) integration and Grafana’s experience in managing Kubernetes-related costs. For more information, refer to [Manage costs](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/manage-costs/).
+
+(NEED TO ADD SCREENSHOT HERE)
 
 ## Distributed tracing in Grafana Cloud k6
 
