@@ -53,7 +53,7 @@ function BoolInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Checkbox
       id={getOperationParamId(props.operationId, props.index)}
-      value={props.value as boolean}
+      value={Boolean(props.value)}
       onChange={(evt) => props.onChange(props.index, evt.currentTarget.checked)}
     />
   );
@@ -67,12 +67,12 @@ function SelectInputParamEditor({
   onChange,
 }: QueryBuilderOperationParamEditorProps) {
   const styles = useStyles2(getStyles);
-  let selectOptions = paramDef.options as Array<SelectableValue<any>>;
+  let selectOptions = paramDef.options as SelectableValue[];
 
   if (!selectOptions[0]?.label) {
     selectOptions = paramDef.options!.map((option) => ({
       label: option.toString(),
-      value: option as string,
+      value: option,
     }));
   }
 

@@ -1,5 +1,3 @@
-import { identity } from 'lodash';
-
 import { DataFrame, FieldType, MutableDataFrame, TraceKeyValuePair, TraceLog, TraceSpanRow } from '@grafana/data';
 
 import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
@@ -116,7 +114,7 @@ function serviceTags(span: ZipkinSpan): TraceKeyValuePair[] {
     valueToTag('ipv6', endpoint.ipv6),
     valueToTag('port', endpoint.port),
     valueToTag('endpointType', span.localEndpoint ? 'local' : 'remote'),
-  ].filter(identity) as TraceKeyValuePair[];
+  ].filter((item): item is TraceKeyValuePair => Boolean(item));
 }
 
 function valueToTag<T>(key: string, value: T): TraceKeyValuePair<T> | undefined {
