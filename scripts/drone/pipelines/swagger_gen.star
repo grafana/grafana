@@ -55,7 +55,7 @@ def swagger_gen_step(ver_mode):
         },
         "commands": [
             "cd grafana",
-            "make clean-api-spec && make openapi3-gen",
+            "make swagger-clean && make openapi3-gen",
             "for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done",
             'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" && git push {} {}; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
         ],

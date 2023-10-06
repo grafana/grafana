@@ -1193,7 +1193,7 @@ steps:
   name: clone-enterprise
 - commands:
   - cd grafana
-  - make clean-api-spec && make openapi3-gen
+  - make swagger-clean && make openapi3-gen
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
     git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
@@ -4777,6 +4777,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3a89445747d37d2a0a4ffda228bcfdcc0eed42d806d8b35cb094577e7e687c0c
+hmac: 3ac6414de0a5c669304357c0b0347e4a77fd3e50ef74bda6759fd7a78f8a009c
 
 ...
