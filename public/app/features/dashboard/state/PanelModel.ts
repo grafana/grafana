@@ -394,7 +394,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
-  private getOptionsToRemember() {
+  public getOptionsToRemember(): any {
     return Object.keys(this).reduce((acc, property) => {
       if (notPersistedProperties[property] || mustKeepProps[property]) {
         return acc;
