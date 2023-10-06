@@ -125,6 +125,7 @@ describe('sceneVariablesSetToVariables', () => {
       "regex": "",
       "skipUrlSync": false,
       "sort": 1,
+      "type": "query",
     }
     `);
   });
@@ -169,8 +170,10 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "options": [],
       "query": "fake-std",
+      "refresh": 1,
       "regex": "",
       "skipUrlSync": false,
+      "type": "datasource",
     }
     `);
   });
@@ -221,6 +224,7 @@ describe('sceneVariablesSetToVariables', () => {
       "options": [],
       "query": "test,test1,test2",
       "skipUrlSync": false,
+      "type": "custom",
     }
     `);
   });
@@ -252,6 +256,7 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "query": "constant value",
       "skipUrlSync": true,
+      "type": "constant",
     }
     `);
   });
