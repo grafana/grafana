@@ -25,12 +25,12 @@ import {
   RowPanel,
   VariableHide,
   VariableModel,
-  VariableRefresh,
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -66,7 +66,8 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   let annotations: AnnotationQuery[] = [];
   if (data instanceof SceneDataLayers) {
     const layers = data.state.layers;
-
+    annotations = dataLayersToAnnotations(layers);
+  }
 
   if (variablesSet instanceof SceneVariableSet) {
     variables = sceneVariablesSetToVariables(variablesSet);
