@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -169,10 +170,22 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	return &data, nil
 }
 
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser *user.SignedInUser) dtos.AnalyticsSettings {
-	identifier := signedInUser.Email + "@" + setting.AppUrl
+func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser identity.Requester) dtos.AnalyticsSettings {
+	namespace, id := signedInUser.GetNamespacedID()
+	// Anonymous users do not have an email or auth info
+	if namespace != identity.NamespaceUser {
+		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: signedInUser.UserID})
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		hs.log.Error("Failed to parse user ID", "error", err)
+		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
+
+	identifier := signedInUser.GetEmail() + "@" + setting.AppUrl
+
+	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		hs.log.Error("Failed to get auth info for analytics", "error", err)
 	}
