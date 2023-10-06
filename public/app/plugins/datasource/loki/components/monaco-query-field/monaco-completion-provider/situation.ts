@@ -687,6 +687,7 @@ function resolveCursor(text: string, cursorPos: number): TreeCursor {
 }
 
 export function getSituation(text: string, pos: number): Situation | null {
+  console.log('getSituation', text, pos);
   // there is a special case when we are at the start of writing text,
   // so we handle that case first
 
