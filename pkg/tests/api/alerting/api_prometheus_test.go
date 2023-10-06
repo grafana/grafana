@@ -441,7 +441,6 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		var respModel apimodels.UpdateRuleGroupResponse
 		require.NoError(t, json.Unmarshal(b, &respModel))
 		require.Len(t, respModel.Created, len(rules.Rules))
-
 	}
 
 	expectedAllJSON := fmt.Sprintf(`
