@@ -16,6 +16,8 @@ interface SaveDashboardErrorProxyProps {
   /** dashboard save model with applied modifications, i.e. title */
   dashboardSaveModel: DashboardModel;
   error: FetchError;
+  /** used if error object is not extensible */
+  setIsHandled?: React.Dispatch<React.SetStateAction<boolean>>
   onDismiss: () => void;
 }
 
@@ -24,14 +26,19 @@ export const SaveDashboardErrorProxy = ({
   dashboardSaveModel,
   error,
   onDismiss,
+  setIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
     if (error.data && proxyHandlesError(error.data.status)) {
-      error.isHandled = true;
+      if (Object.isExtensible(error)) {
+        error.isHandled = true;
+      } else {
+        setIsHandled && setIsHandled(true);
+      }
     }
-  }, [error]);
+  }, [error, setIsHandled]);
 
   return (
     <>

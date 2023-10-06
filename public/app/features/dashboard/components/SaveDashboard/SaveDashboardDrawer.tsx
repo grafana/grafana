@@ -48,12 +48,15 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   }, [dashboard, previous, options, isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
+  const [isErrorHandled, setIsErrorHandled] = useState(false);
+
   const { state, onDashboardSave } = useDashboardSave(dashboard, isCopy);
+
   const onSuccess = onSaveSuccess
     ? () => {
-        onDismiss();
-        onSaveSuccess();
-      }
+      onDismiss();
+      onSaveSuccess();
+    }
     : onDismiss;
 
   const renderSaveBody = () => {
@@ -95,7 +98,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   if (
     state.error &&
     isFetchError(state.error) &&
-    !state.error.isHandled &&
+    (state.error.isHandled ? !isErrorHandled : isErrorHandled) &&
     proxyHandlesError(state.error.data.status)
   ) {
     return (
@@ -104,6 +107,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         dashboard={dashboard}
         dashboardSaveModel={data.clone}
         onDismiss={onDismiss}
+        setIsHandled={setIsErrorHandled}
       />
     );
   }
