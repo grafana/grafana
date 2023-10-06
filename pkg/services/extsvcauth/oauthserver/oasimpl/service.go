@@ -225,13 +225,6 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, errGenCred
 	}
 
-	s.logger.Debug("Save service account")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, client.SelfPermissions)
-	if errSaveServiceAccount != nil {
-		return nil, errSaveServiceAccount
-	}
-	client.ServiceAccountID = saID
-
 	grantTypes := s.computeGrantTypes(registration.Self.Enabled, registration.Impersonation.Enabled)
 	client.GrantTypes = strings.Join(grantTypes, ",")
 
@@ -253,6 +246,13 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, err
 	}
 	client.Secret = string(hashedSecret)
+
+	s.logger.Debug("Save service account")
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, client.SelfPermissions)
+	if errSaveServiceAccount != nil {
+		return nil, errSaveServiceAccount
+	}
+	client.ServiceAccountID = saID
 
 	err = s.sqlstore.SaveExternalService(ctx, client)
 	if err != nil {
