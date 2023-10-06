@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,10 @@ type TestingAPIBuilder struct {
 	codecs serializer.CodecFactory
 }
 
-func RegisterAPIService(apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
+	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil // skip registration unless opting into experimental apis
+	}
 	builder := &TestingAPIBuilder{}
 	apiregistration.RegisterAPI(builder)
 	return builder
