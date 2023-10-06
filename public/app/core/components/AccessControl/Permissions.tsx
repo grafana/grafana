@@ -133,7 +133,7 @@ export const Permissions = ({
   const serviceAccounts = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.isServiceAccount),
+        items.filter((i) => i.userId && i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
     [items]
