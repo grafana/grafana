@@ -4,7 +4,9 @@ import { pickBy } from 'lodash';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { getPlaylist, loadDashboards } from './api';
+import { playlistAPI, loadDashboards } from './api';
+
+const { getPlaylist } = playlistAPI;
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
