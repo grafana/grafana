@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -410,9 +409,17 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
-	user := cmd.SignedInUser
 
-	prepareForUpdate(dashFolder, cmd.OrgID, cmd.SignedInUser.UserID, cmd)
+	var userID int64
+	namespace, id := cmd.SignedInUser.GetNamespacedID()
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		userID, err = identity.IntIdentifier(namespace, id)
+		if err != nil {
+			logger.Error("failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
+		}
+	}
+
+	prepareForUpdate(dashFolder, cmd.OrgID, userID, cmd)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
@@ -445,7 +452,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 			UID:       dash.UID,
 			OrgID:     cmd.OrgID,
 		}); err != nil {
-			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
+			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
 		}
 	}
 	return foldr, nil
@@ -537,7 +544,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	for _, v := range s.registry {
 		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
 			return err
