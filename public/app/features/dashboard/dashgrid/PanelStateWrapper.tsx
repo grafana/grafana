@@ -387,13 +387,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
-  logPanelChangesOnError(error: Error) {
+  logPanelChangesOnError() {
     this.panelOptionsLogger!.logChanges(this.props.panel.getOptions(), this.props.panel.fieldConfig);
   }
 
   onPanelError = (error: Error) => {
     if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
-      this.logPanelChangesOnError(error);
+      this.logPanelChangesOnError();
     }
 
     const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
