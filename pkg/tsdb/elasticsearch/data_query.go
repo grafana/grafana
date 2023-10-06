@@ -69,9 +69,9 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-	res, errorSource, err := e.client.ExecuteMultisearch(req)
-	if err != nil {
-		if errorSource == backend.ErrorSourceDownstream {
+	res, pluginErr := e.client.ExecuteMultisearch(req)
+	if pluginErr.Err != nil {
+		if pluginErr.Source == backend.ErrorSourceDownstream {
 			// We don't want to show errors in the UI and therefore we change it to a generic error
 			// We are keeping the original error in the logs
 			return createDownstreamErrorResponse(e.dataQueries[0].RefID, errors.New("internal server error")), err

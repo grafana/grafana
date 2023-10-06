@@ -51,7 +51,7 @@ type ConfiguredFields struct {
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
-	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, backend.ErrorSource, error)
+	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, PluginError)
 	MultiSearch() *MultiSearchRequestBuilder
 }
 
@@ -168,7 +168,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	return resp, nil
 }
 
-func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, backend.ErrorSource, error) {
+func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, PluginError) {
 	var err error
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
@@ -197,14 +197,15 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
 		if clientRes != nil {
 			lp = append(lp, "statusCode", clientRes.StatusCode)
-			// For status code >= 500, we assume that the source of error is downstream
-			if clientRes.ContentLength >= 500 {
-				errorSource = backend.ErrorSourceDownstream
-			}
+			errorSource = errorSourceFromHTTPStatus(clientRes.StatusCode)
 		}
 		c.logger.Error("Error received from Elasticsearch", lp...)
 
-		return nil, errorSource, err
+		pluginErr := PluginError{
+			Source: errorSource,
+			Err:    err,
+		}
+		return nil, pluginErr
 	}
 	res := clientRes
 	defer func() {
@@ -229,14 +230,18 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	err = dec.Decode(&msr)
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
-		return nil, backend.ErrorSourcePlugin, err
+		pluginErr := PluginError{
+			Source: backend.ErrorSourcePlugin,
+			Err:    err,
+		}
+		return nil, pluginErr
 	}
 
 	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
 
 	msr.Status = res.StatusCode
-
-	return &msr, backend.ErrorSourcePlugin, nil
+	var pluginErr PluginError
+	return &msr, pluginErr
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
@@ -277,4 +282,31 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder()
+}
+
+// TODO: To me removed or changed
+// to be removed when PluginError is merged in sdk
+type PluginError struct {
+	Source backend.ErrorSource
+	Err    error
+}
+
+// to be removed when ErrorSourceFromHTTPStatus is merged to sdk
+func errorSourceFromHTTPStatus(statusCode int) backend.ErrorSource {
+	switch statusCode {
+	case http.StatusBadRequest,
+		http.StatusMethodNotAllowed,
+		http.StatusNotAcceptable,
+		http.StatusPreconditionFailed,
+		http.StatusRequestEntityTooLarge,
+		http.StatusRequestHeaderFieldsTooLarge,
+		http.StatusRequestURITooLong,
+		http.StatusExpectationFailed,
+		http.StatusUpgradeRequired,
+		http.StatusRequestedRangeNotSatisfiable,
+		http.StatusNotImplemented:
+		return backend.ErrorSourcePlugin
+	}
+
+	return backend.ErrorSourceDownstream
 }
