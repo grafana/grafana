@@ -21,7 +21,7 @@ export enum VariableHide {
 }
 
 export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
-  datasource: DataSourceRef | null;
+  datasource?: DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
