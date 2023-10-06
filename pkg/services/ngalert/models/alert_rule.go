@@ -358,7 +358,7 @@ type AlertRuleKeyWithVersionAndPauseStatus struct {
 
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
-	ID int64 `xorm:"id"`
+	ID int64
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
