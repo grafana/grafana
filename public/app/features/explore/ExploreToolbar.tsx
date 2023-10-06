@@ -43,7 +43,7 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
@@ -52,7 +52,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolbarButton: css({
     display: 'flex',
     justifyContent: 'center',
-    width: '48px',
+    marginRight: theme.spacing(0.5),
+    width: splitted && theme.spacing(6),
   }),
 });
 
@@ -72,9 +73,9 @@ export function ExploreToolbar({
   isContentOutlineOpen,
 }: Props) {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
-
   const splitted = useSelector(isSplit);
+  const styles = useStyles2(getStyles, splitted);
+
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
   const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
@@ -240,7 +241,7 @@ export function ExploreToolbar({
               onClick={onContentOutlineToogle}
               aria-expanded={isContentOutlineOpen}
               aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
-              className={splitted ? styles.toolbarButton : undefined}
+              className={styles.toolbarButton}
             >
               Outline
             </ToolbarButton>
