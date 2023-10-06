@@ -367,7 +367,7 @@ export async function getLogfmtCompletions(
 
   /**
    * The user is not in the process of writing another label, and has not specified 2 flags.
-   * The current grammar doesn't allow us to know which flags are used (by node name), so we consider flags = true
+   * The current grammar doesn't allow us to know which flags were used (by node name), so we consider flags = true
    * when 2 have been used.
    * For example:
    * - {label="value"} | logfmt ^
