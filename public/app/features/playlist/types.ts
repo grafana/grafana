@@ -12,16 +12,11 @@ export interface PlayListItemDTO {
 }
 
 export interface PlaylistAPI {
-  getPlaylist(uid: string): Promise<Playlist>;
   getAllPlaylist(): Promise<Playlist[]>;
-}
-
-export interface KubernetesPlaylistList {
-  playlists: KubernetesPlaylist[];
-}
-
-export interface KubernetesPlaylist {
-  spec: Playlist;
+  getPlaylist(uid: string): Promise<Playlist>;
+  createPlaylist(playlist: Playlist): Promise<void>;
+  updatePlaylist(playlist: Playlist): Promise<void>;
+  deletePlaylist(uid: string): Promise<void>;
 }
 
 export interface Playlist {
