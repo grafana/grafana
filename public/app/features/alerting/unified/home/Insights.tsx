@@ -6,6 +6,7 @@ import {
   EmbeddedScene,
   NestedScene,
   QueryVariable,
+  SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
   SceneReactObject,
@@ -155,7 +156,15 @@ export function getInsightsScenes() {
 
   return new EmbeddedScene({
     $timeRange: THIS_WEEK_TIME_RANGE,
-    controls: [new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [
+      new SceneReactObject({
+        component: SectionSubheader,
+        props: { children: <div>Monitor the status of your system.</div>, datasources: [] },
+      }),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
     body: new SceneFlexLayout({
       direction: 'column',
       children: categories,
