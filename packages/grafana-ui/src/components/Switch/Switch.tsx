@@ -84,7 +84,9 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
 
       input: {
         opacity: 0,
-        left: '-100vw',
+        height: '100%',
+        width: '100% !important',
+        borderRadius: theme.shape.radius.pill,
         zIndex: -1000,
         position: 'absolute',
 
