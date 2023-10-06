@@ -26,17 +26,17 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service) *ExtSvcAcc
 }
 
 func (esa *ExtSvcAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, saID int64) (*extsvcauth.ExtSvcAccount, error) {
-	sa, err := esa.RetrieveServiceAccount(ctx, orgID, saID)
+	sa, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
 	if err != nil {
 		return nil, err
 	}
 	return &extsvcauth.ExtSvcAccount{
-		ID:         sa.ID,
+		ID:         sa.Id,
 		Login:      sa.Login,
 		Name:       sa.Name,
-		OrgID:      sa.OrgID,
+		OrgID:      sa.OrgId,
 		IsDisabled: sa.IsDisabled,
-		Role:       sa.Role,
+		Role:       roletype.RoleType(sa.Role),
 	}, nil
 }
 

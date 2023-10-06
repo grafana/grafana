@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -158,7 +157,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	client.SignedInUser = &user.SignedInUser{
 		UserID:      sa.ID,
 		OrgID:       oauthserver.TmpOrgID,
-		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
+		OrgRole:     sa.Role, // Need this to compute the permissions in OSS
 		Login:       sa.Login,
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
