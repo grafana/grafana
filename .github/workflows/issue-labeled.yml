@@ -68,7 +68,6 @@ jobs:
         with:
           application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
           application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
-          organization: grafana
 
       - name: "Check that issue author is not part of the team"
         if: ${{ env.TEAM != 'null' }}
