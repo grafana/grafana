@@ -352,43 +352,63 @@ export async function getAfterSelectorCompletions(
 export async function getLogfmtCompletions(
   logQuery: string,
   flags: boolean,
+  trailingComma: boolean | undefined,
+  trailingSpace: boolean | undefined,
   otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const trailingComma = logQuery.trimEnd().endsWith(',');
   if (trailingComma) {
     // The user is typing a new label, so we remove the last comma
     logQuery = trimEnd(logQuery, ', ');
   }
-  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
-  const hasQueryParser = isQueryWithParser(logQuery).queryWithParser;
 
   let completions: Completion[] = [];
 
-  const parserCompletions = await getParserCompletions(
-    '| ',
-    hasJSON,
-    hasLogfmt,
-    hasPack,
-    extractedLabelKeys,
-    hasQueryParser
-  );
+  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flags && !trailingComma) {
-    completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations];
-  } else if (!trailingComma) {
+  // {label="value"} | logfmt ^
+  if (!trailingComma && !flags) {
+    completions = [...LOGFMT_ARGUMENT_COMPLETIONS];
+  }
+  // {label="value"} | logfmt --flag ^
+  // {label="value"} | logfmt label, label2 ^
+  if (!trailingComma && trailingSpace) {
+    /**
+     * Don't offer parsers: {label="value"} | logfmt ^
+     * Offer parsers: {label="value"} | logfmt label ^
+     */
+    const parserCompletions =
+      otherLabels.length > 0
+        ? await getParserCompletions('| ', hasJSON, hasLogfmt, hasPack, extractedLabelKeys, true)
+        : [];
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
 
-  const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
   const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+
+  /**
+   * {label="value"} | logfmt ^
+   * - trailingSpace: true, trailingComma: false, otherLabels: []
+   * {label="value"} | logfmt lab^
+   * trailingSpace: false, trailignComma: false, otherLabels: [lab]
+   * {label="value"} | logfmt label,^
+   * trailingSpace: false, trailingComma: true, otherLabels: [label]
+   * {label="value"} | logfmt label, ^
+   * trailingSpace: true, trailingComma: true, otherLabels: [label]
+   */
+  let labelPrefix = '';
+  if (otherLabels.length > 0 && trailingSpace) {
+    labelPrefix = trailingComma ? '' : ', ';
+  }
+
   const labelCompletions: Completion[] = labels.map((label) => ({
     type: 'LABEL_NAME',
     label,
     insertText: labelPrefix + label,
     triggerOnInsert: false,
   }));
+
   completions = [...completions, ...labelCompletions];
 
   return completions;
@@ -474,7 +494,14 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
+      return getLogfmtCompletions(
+        situation.logQuery,
+        situation.flags,
+        situation.trailingComma,
+        situation.trailingSpace,
+        situation.otherLabels,
+        dataProvider
+      );
     default:
       throw new NeverCaseError(situation);
   }
