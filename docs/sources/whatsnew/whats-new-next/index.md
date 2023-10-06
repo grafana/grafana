@@ -18,6 +18,12 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Test
+
+<!-- Beverly Buchanan --> 
+
+Test
+
 ## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->
