@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
@@ -96,7 +95,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewInstanceSettings(cfg, &httpclient.Provider{}, map[string]azDatasourceExecutor{})
-			instance, err := factory(tt.settings)
+			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
@@ -135,7 +134,7 @@ func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request
 	return nil, nil
 }
 
-func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {

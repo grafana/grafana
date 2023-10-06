@@ -26,10 +26,15 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
+  SceneDataLayers,
+  SceneDataLayerProvider,
+  SceneDataLayerControls,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -50,6 +55,9 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: true,
   });
+
+  // Setting for built-in annotations query to run
+  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -84,17 +92,10 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         }
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      const gridItem = new SceneGridItem({
-        body: new LibraryVizPanel({
-          title: panel.title,
-          uid: panel.libraryPanel.uid,
-        }),
-        y: panel.gridPos.y,
-        x: panel.gridPos.x,
-        width: panel.gridPos.w,
-        height: panel.gridPos.h,
-      });
-      panels.push(gridItem);
+      const gridItem = buildGridItemForLibPanel(panel);
+      if (gridItem) {
+        panels.push(gridItem);
+      }
     } else {
       const panelObject = buildGridItemForPanel(panel);
 
@@ -148,6 +149,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
+  let layers: SceneDataLayerProvider[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
@@ -168,7 +170,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
+  if (oldModel.annotations?.list?.length) {
+    layers = oldModel.annotations?.list.map((a) => {
+      // Each annotation query is an individual data layer
+      return new DashboardAnnotationsDataLayer({
+        query: a,
+        name: a.name,
+        isEnabled: Boolean(a.enable),
+        isHidden: Boolean(a.hide),
+      });
+    });
+  }
+
   const controls: SceneObject[] = [
+    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
@@ -186,13 +201,25 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
-    $timeRange: new SceneTimeRange(oldModel.time),
+    $timeRange: new SceneTimeRange({
+      from: oldModel.time.from,
+      to: oldModel.time.to,
+      fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
+      timeZone: oldModel.timezone,
+      weekStart: oldModel.weekStart,
+    }),
     $variables: variables,
     $behaviors: [
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
     ],
+    $data:
+      layers.length > 0
+        ? new SceneDataLayers({
+            layers,
+          })
+        : undefined,
     controls: controls,
   });
 }
@@ -262,6 +289,24 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
+export function buildGridItemForLibPanel(panel: PanelModel) {
+  if (!panel.libraryPanel) {
+    return null;
+  }
+
+  return new SceneGridItem({
+    body: new LibraryVizPanel({
+      title: panel.title,
+      uid: panel.libraryPanel.uid,
+      name: panel.libraryPanel.name,
+      key: getVizPanelKeyForPanelId(panel.id),
+    }),
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),

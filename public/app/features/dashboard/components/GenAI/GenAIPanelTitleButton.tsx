@@ -4,10 +4,11 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { Message, Role } from './utils';
+import { EventTrackingSrc } from './tracking';
+import { Message, QuickFeedbackType, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
-  onGenerate: (title: string, isDone: boolean) => void;
+  onGenerate: (title: string) => void;
   panel: PanelModel;
 }
 
@@ -17,28 +18,47 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'The title should be shorter than 50 characters.';
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  function getMessages(): Message[] {
-    const dashboard = getDashboardSrv().getCurrent()!;
+  const messages = React.useMemo(() => getMessages(panel), [panel]);
 
-    return [
-      {
-        content: TITLE_GENERATION_STANDARD_PROMPT,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
-        role: Role.system,
-      },
-      {
-        content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
-        role: Role.user,
-      },
-    ];
-  }
+  return (
+    <GenAIButton
+      messages={messages}
+      onGenerate={onGenerate}
+      loadingText={'Generating title'}
+      eventTrackingSrc={EventTrackingSrc.panelTitle}
+      toggleTipTitle={'Improve your panel title'}
+    />
+  );
+};
 
-  return <GenAIButton messages={getMessages()} onReply={onGenerate} loadingText={'Generating title'} />;
+function getMessages(panel: PanelModel): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
+
+  return [
+    {
+      content: TITLE_GENERATION_STANDARD_PROMPT,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
+      role: Role.system,
+    },
+    {
+      content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      role: Role.user,
+    },
+  ];
+}
+
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
 };

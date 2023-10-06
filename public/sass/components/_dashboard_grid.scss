@@ -13,6 +13,7 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
+      z-index: $zindex-active-panel;
     }
   }
 }
@@ -82,6 +83,15 @@
   .react-grid-item > .react-resizable-handle::after {
     border-right: 2px solid $gray-3;
     border-bottom: 2px solid $gray-3;
+  }
+}
+
+// Hack to prevent panel overlap during drag/hover (due to descending z-index assignment)
+.react-grid-item {
+  &:hover,
+  &:active,
+  &:focus {
+    z-index: $zindex-active-panel !important;
   }
 }
 

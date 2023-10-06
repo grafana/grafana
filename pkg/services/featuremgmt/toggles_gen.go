@@ -123,6 +123,10 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
+	// FlagCloudwatchNewRegionsHandler
+	// Refactor of /regions endpoint, no user-facing changes
+	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
+
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -328,7 +332,7 @@ const (
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
-	// Split panels between vizualizations and widgets
+	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
 	// FlagPrometheusIncrementalQueryInstrumentation
@@ -443,7 +447,43 @@ const (
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
 
-	// FlagCachingOptimizeSerializationMemoryUsage
-	// If enabled, the caching backend will gradually serialize query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes, which can help prevent Grafana from running out of memory while attempting to cache very large query responses
-	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
+	// FlagExternalCorePlugins
+	// Allow core plugins to be loaded as external
+	FlagExternalCorePlugins = "externalCorePlugins"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
+
+	// FlagHttpSLOLevels
+	// Adds SLO level to http request metrics
+	FlagHttpSLOLevels = "httpSLOLevels"
+
+	// FlagIdForwarding
+	// Generate signed id token for identity that can be forwarded to plugins and external services
+	FlagIdForwarding = "idForwarding"
+
+	// FlagCloudWatchWildCardDimensionValues
+	// Fetches dimension values from CloudWatch to correctly label wildcard dimensions
+	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
+
+	// FlagExternalServiceAccounts
+	// Automatic service account and token setup for plugins
+	FlagExternalServiceAccounts = "externalServiceAccounts"
+
+	// FlagAlertingModifiedExport
+	// Enables using UI for provisioned rules modification and export
+	FlagAlertingModifiedExport = "alertingModifiedExport"
+
+	// FlagEnableNativeHTTPHistogram
+	// Enables native HTTP Histograms
+	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagTransformationsVariableSupport
+	// Allows using variables in transformations
+	FlagTransformationsVariableSupport = "transformationsVariableSupport"
+
+	// FlagKubernetesPlaylists
+	// Use the kubernetes API in the frontend for playlists
+	FlagKubernetesPlaylists = "kubernetesPlaylists"
 )

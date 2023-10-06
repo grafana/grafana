@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 describe('Create a public dashboard with template variables shows a template variable warning', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Create a public dashboard with template variables shows a template variable warning', () => {

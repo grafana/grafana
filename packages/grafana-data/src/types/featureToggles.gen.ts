@@ -47,6 +47,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -127,5 +128,14 @@ export interface FeatureToggles {
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
-  cachingOptimizeSerializationMemoryUsage?: boolean;
+  externalCorePlugins?: boolean;
+  pluginsAPIMetrics?: boolean;
+  httpSLOLevels?: boolean;
+  idForwarding?: boolean;
+  cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  alertingModifiedExport?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
 }

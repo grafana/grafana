@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -311,7 +312,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -476,7 +477,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid, SignedInUser: user})
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +585,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},

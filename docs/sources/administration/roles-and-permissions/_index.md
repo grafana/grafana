@@ -78,7 +78,7 @@ Grafana uses the following roles to control user access:
 
 - **Organization administrator**: Has access to all organization resources, including dashboards, users, and teams.
 - **Editor**: Can view and edit dashboards, folders, and playlists.
-- **Viewer**: Can view dashboards and playlists.
+- **Viewer**: Can view dashboards, playlists, and query data sources.
 - **No Basic Role**: Has no permissions. Permissions will be added with RBAC as needed.
 
 The following table lists permissions for each role.
@@ -94,6 +94,7 @@ The following table lists permissions for each role.
 | View annotations               |            yes             |  yes   |  yes   |               |
 | Add, edit, delete annotations  |            yes             |  yes   |        |               |
 | Access Explore                 |            yes             |  yes   |        |               |
+| Query data sources directly    |            yes             |  yes   |  yes   |               |
 | Add, edit, delete data sources |            yes             |        |        |               |
 | Add and edit users             |            yes             |        |        |               |
 | Add and edit teams             |            yes             |        |        |               |
@@ -113,7 +114,7 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
-> Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.
+> Important: When a user creates a dashboard or a folder they are automatically granted **Admin** permissions for it.
 
 For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}).
 
