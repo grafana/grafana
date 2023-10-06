@@ -6,17 +6,7 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import {
-  Alert,
-  DataSourceHttpSettings,
-  Field,
-  FieldSet,
-  InlineField,
-  InlineFieldRow,
-  InlineSwitch,
-  Select,
-  Switch,
-} from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
 
