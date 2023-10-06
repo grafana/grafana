@@ -215,12 +215,7 @@ const FlameGraph = ({
           />
         </div>
       </div>
-      <FlameGraphTooltip
-        position={mousePosition}
-        item={tooltipItem}
-        data={data}
-        totalTicks={totalViewTicks}
-      />
+      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}

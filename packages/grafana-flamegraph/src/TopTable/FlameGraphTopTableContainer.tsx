@@ -39,17 +39,7 @@ type Props = {
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({
-    data,
-    onSymbolClick,
-    height,
-    search,
-    onSearch,
-    sandwichItem,
-    onSandwich,
-    onTableSort,
-    vertical,
-  }: Props) => {
+  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, vertical }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?

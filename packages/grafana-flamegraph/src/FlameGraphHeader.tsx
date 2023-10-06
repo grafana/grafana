@@ -93,11 +93,7 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton
-          value={colorScheme}
-          onChange={onColorSchemeChange}
-          isDiffMode={isDiffMode}
-        />
+        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
