@@ -1,6 +1,7 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { PluginSignatureType } from '@grafana/data';
+import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -20,10 +21,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
-  // %VERSION% is a valid value for plugin.version, according to the plugin schema
-  // but it's meant to be replaced by the build system with the actual version.
-  // If not, it's the same than not having a version.
-  if (Boolean(version) && version !== '%VERSION%') {
+  if (Boolean(version)) {
     info.push({
       label: 'Version',
       value: version,
@@ -74,4 +72,14 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   });
 
   return info;
+};
+
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    subtitle: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
+    `,
+  };
 };

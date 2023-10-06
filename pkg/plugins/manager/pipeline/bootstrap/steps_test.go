@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -62,6 +63,24 @@ func TestSetDefaultNavURL(t *testing.T) {
 
 			setDefaultNavURL(pluginWithPage)
 			require.Equal(t, "/plugins/page/my-test-page", pluginWithPage.DefaultNavURL)
+		})
+	})
+}
+
+func TestVersionDecorateFunc(t *testing.T) {
+	t.Run("Removes %VERSION%", func(t *testing.T) {
+		pluginWithoutVersion := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Info: plugins.Info{
+					Version: "%VERSION%",
+				},
+			},
+		}
+
+		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
+			p, err := VersionDecorateFunc(context.TODO(), pluginWithoutVersion)
+			require.NoError(t, err)
+			require.Equal(t, "", p.Info.Version)
 		})
 	})
 }

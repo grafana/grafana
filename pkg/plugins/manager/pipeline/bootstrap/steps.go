@@ -30,6 +30,7 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
+		VersionDecorateFunc,
 		AppChildDecorateFunc(cfg),
 	}
 }
@@ -82,6 +83,17 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 func AppDefaultNavURLDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsApp() {
 		setDefaultNavURL(p)
+	}
+	return p, nil
+}
+
+// VersionDecorateFunc is a DecorateFunc that removes the placeholder for the version.
+func VersionDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	// %VERSION% is a valid value for plugin.version, according to the plugin schema
+	// but it's meant to be replaced by the build system with the actual version.
+	// If not, it's the same than not having a version.
+	if p.Info.Version == "%VERSION%" {
+		p.Info.Version = ""
 	}
 	return p, nil
 }
