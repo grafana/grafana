@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -131,8 +132,8 @@ func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 							fmt.Printf("ERROR!!!!")
 							return
 						}
-
-						_, _ = w.Write([]byte("TODO.... actually query " + info.Namespace))
+						out, _ := json.MarshalIndent(info, "", "  ")
+						_, _ = w.Write(out)
 					},
 				}},
 		},
