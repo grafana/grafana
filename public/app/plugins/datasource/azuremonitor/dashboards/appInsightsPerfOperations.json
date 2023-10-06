@@ -1565,7 +1565,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by operation_Name\r\n",
+            "query": "requests\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by operation_Name\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
@@ -1594,7 +1594,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n",
+            "query": "requests\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
@@ -1623,7 +1623,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration\r\n| project tostring(duration)\r\n",
+            "query": "requests\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration\r\n| project tostring(duration)\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },

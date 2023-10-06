@@ -1221,7 +1221,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "exceptions\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by type\r\n",
+            "query": "exceptions\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by type\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1249,7 +1249,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "exceptions\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where type in ($exception_type)\r\n| summarize count() by problemId\r\n",
+            "query": "exceptions\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where type in ($exception_type)\r\n| summarize count() by problemId\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",

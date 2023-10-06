@@ -1538,7 +1538,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\" and success == false\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), success\r\n| summarize count() by [\"Dependency Name\"]\r\n",
+            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\" and success == false\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), success\r\n| summarize count() by [\"Dependency Name\"]\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1566,7 +1566,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where success == false\r\n| summarize _count=sum(itemCount) by resultCode\r\n| sort by _count desc",
+            "query": "dependencies\r\n| search \"*\"\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where success == false\r\n| summarize _count=sum(itemCount) by resultCode\r\n| sort by _count desc",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",

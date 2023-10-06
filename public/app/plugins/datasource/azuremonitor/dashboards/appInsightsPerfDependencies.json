@@ -1743,7 +1743,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\r\n| summarize count() by [\"Dependency Name\"]\r\n",
+            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\r\n| summarize count() by [\"Dependency Name\"]\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1771,7 +1771,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1799,7 +1799,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration desc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration desc\r\n| project tostring(duration)\r\n\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",

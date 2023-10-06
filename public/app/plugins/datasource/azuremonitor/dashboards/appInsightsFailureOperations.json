@@ -1695,7 +1695,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where success == false\r\n| summarize Count=sum(itemCount) by resultCode\r\n| sort by Count desc",
+            "query": "requests\r\n| search \"*\"\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where success == false\r\n| summarize Count=sum(itemCount) by resultCode\r\n| sort by Count desc",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1723,7 +1723,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "requests\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where resultCode in ($result_code)\r\n| summarize count=sumif(itemCount, success == false) by operation_Name",
+            "query": "requests\r\n| search \"*\"\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where resultCode in ($result_code)\r\n| summarize count=sumif(itemCount, success == false) by operation_Name",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
