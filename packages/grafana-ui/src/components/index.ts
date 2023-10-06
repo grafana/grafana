@@ -265,7 +265,7 @@ export { type UserView } from './UsersIndicator/types';
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 
-/** @deprecated */
+/** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
   FormField,
