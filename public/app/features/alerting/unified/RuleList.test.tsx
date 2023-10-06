@@ -685,50 +685,35 @@ describe('RuleList', () => {
 
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
-      it('Export button should be visible when the user has alert provisioning read permissions', async () => {
+      it('Export button should be visible when the user has alert read permissions', async () => {
         enableRBAC();
 
-        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRules.mockResolvedValue([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
         renderRuleList();
 
         await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.get()).toBeInTheDocument();
-      });
-      it('Export button should be visible when the user has alert provisioning read secrets permissions', async () => {
-        enableRBAC();
-
-        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
-
-        mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
-        mocks.api.fetchRulerRules.mockResolvedValue({});
-
-        renderRuleList();
-
-        await userEvent.click(ui.moreButton.get());
-        expect(ui.exportButton.get()).toBeInTheDocument();
-      });
-      it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
-        enableRBAC();
-
-        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
-
-        mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
-        mocks.api.fetchRulerRules.mockResolvedValue({});
-
-        renderRuleList();
-
-        await userEvent.click(ui.moreButton.get());
-        expect(ui.exportButton.query()).not.toBeInTheDocument();
       });
     });
     describe('Grafana Managed Alerts', () => {
