@@ -1,8 +1,6 @@
 package pluginsintegration
 
 import (
-	"fmt"
-
 	"github.com/google/wire"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -150,22 +148,14 @@ func NewClientDecorator(
 	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares, err := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
-	if err != nil {
-		return nil, fmt.Errorf("create middlewares: %w", err)
-	}
-
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) ([]plugins.ClientMiddleware, error) {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
-	instrumentationMiddleware, err := clientmiddleware.NewInstrumentationMiddleware(promRegisterer, registry)
-	if err != nil {
-		return nil, fmt.Errorf("new instrumentation middleware: %w", err)
-	}
 	middlewares := []plugins.ClientMiddleware{
-		instrumentationMiddleware,
+		clientmiddleware.NewInstrumentationMiddleware(promRegisterer, registry),
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
 		clientmiddleware.NewTracingHeaderMiddleware(),
@@ -190,5 +180,5 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
-	return middlewares, nil
+	return middlewares
 }

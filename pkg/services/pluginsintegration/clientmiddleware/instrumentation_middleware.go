@@ -3,7 +3,6 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -33,7 +32,7 @@ type InstrumentationMiddleware struct {
 	next           plugins.Client
 }
 
-func newInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (*InstrumentationMiddleware, error) {
+func newInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *InstrumentationMiddleware {
 	metrics := pluginMetrics{
 		pluginRequestCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
@@ -61,32 +60,25 @@ func newInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
 		}, []string{"source", "plugin_id", "endpoint", "status", "target"}),
 	}
-	for _, c := range []prometheus.Collector{
+	promRegisterer.MustRegister(
 		metrics.pluginRequestCounter,
 		metrics.pluginRequestDuration,
 		metrics.pluginRequestSizeHistogram,
 		metrics.pluginRequestDurationSeconds,
-	} {
-		if err := promRegisterer.Register(c); err != nil {
-			return nil, fmt.Errorf("prometheus register: %w", err)
-		}
-	}
+	)
 	return &InstrumentationMiddleware{
 		pluginMetrics:  metrics,
 		pluginRegistry: pluginRegistry,
-	}, nil
+	}
 }
 
 // NewInstrumentationMiddleware returns a new InstrumentationMiddleware.
-func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (plugins.ClientMiddleware, error) {
-	imw, err := newInstrumentationMiddleware(promRegisterer, pluginRegistry)
-	if err != nil {
-		return nil, err
-	}
+func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
+	imw := newInstrumentationMiddleware(promRegisterer, pluginRegistry)
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		imw.next = next
 		return imw
-	}), nil
+	})
 }
 
 // pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
