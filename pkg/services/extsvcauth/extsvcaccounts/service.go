@@ -1,4 +1,4 @@
-package satoken
+package extsvcaccounts
 
 import (
 	"context"
@@ -7,28 +7,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-type ExtSvcAccountService struct {
-	acSvc    ac.Service
-	features featuremgmt.FeatureToggles
-	logger   log.Logger
-	saSvc    serviceaccounts.Service
+type ExtSvcAccountsService struct {
+	acSvc  ac.Service
+	logger log.Logger
+	saSvc  serviceaccounts.Service
 }
 
-func ProvideExtSvcAccountService(acSvc ac.Service, saSvc serviceaccounts.Service, features featuremgmt.FeatureToggles) *ExtSvcAccountService {
-	return &ExtSvcAccountService{
-		acSvc:    acSvc,
-		features: features,
-		logger:   log.New("serviceauth.extsvcaccount"),
-		saSvc:    saSvc,
+func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc serviceaccounts.Service) *ExtSvcAccountsService {
+	return &ExtSvcAccountsService{
+		acSvc:  acSvc,
+		logger: log.New("serviceauth.extsvcaccounts"),
+		saSvc:  saSvc,
 	}
 }
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-func (sap *ExtSvcAccountService) ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error) {
+func (sap *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error) {
 	if cmd == nil {
 		sap.logger.Warn("Received no input")
 		return 0, nil
@@ -66,7 +63,7 @@ func (sap *ExtSvcAccountService) ManageExtSvcAccount(ctx context.Context, cmd *M
 }
 
 // saveExtSvcAccount creates or updates the service account associated with an external service
-func (sap *ExtSvcAccountService) saveExtSvcAccount(ctx context.Context, cmd *saveExtSvcAccountCmd) (int64, error) {
+func (sap *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveExtSvcAccountCmd) (int64, error) {
 	if cmd.SaID <= 0 {
 		// Create a service account
 		sap.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
@@ -97,7 +94,7 @@ func (sap *ExtSvcAccountService) saveExtSvcAccount(ctx context.Context, cmd *sav
 }
 
 // deleteExtSvcAccount deletes a service account by ID and removes its associated role
-func (sap *ExtSvcAccountService) deleteExtSvcAccount(ctx context.Context, orgID int64, slug string, saID int64) error {
+func (sap *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID int64, slug string, saID int64) error {
 	sap.logger.Info("Delete service account", "service", slug, "saID", saID)
 	if err := sap.saSvc.DeleteServiceAccount(ctx, orgID, saID); err != nil {
 		return err

@@ -1,4 +1,4 @@
-package satoken
+package extsvcaccounts
 
 import (
 	"github.com/grafana/grafana/pkg/models/roletype"
