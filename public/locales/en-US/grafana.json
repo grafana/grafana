@@ -175,7 +175,7 @@
     },
     "source-form": {
       "control-required": "This field is required.",
-      "description": "   You have used following variables in the target query: {variables.map((name, i) => (\n                <span className={styles.variable} key={i}>\n                  {name}\n                  {i < variables.length - 1 ? ', ' : ''}\n                </span>\n              ))}<3></3>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<5></5>Note: Not every variable needs to be explicitly defined below. A transformation such as <8>logfmt</8> will create variables for every key/value pair.",
+      "description": "You have used following variables in the target query: {variableList({variables})}<2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
       "heading": "  Variables used in the target query",
       "results-description": "The link will be shown next to the value of this field",
       "results-label": "Results field",
