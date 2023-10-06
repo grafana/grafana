@@ -3,6 +3,7 @@ package extsvcauth
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -17,6 +18,28 @@ type ExternalServiceRegistry interface {
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalService, error)
+}
+
+//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output extsvcmocks --outpkg extsvcmocks --filename extsvcaccmock.go
+type ExtSvcAccountsService interface {
+	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
+	RetrieveServiceAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
+}
+
+type ExtSvcAccount struct {
+	ID         int64
+	Login      string
+	Name       string
+	OrgID      int64
+	IsDisabled bool
+	Role       roletype.RoleType
+}
+
+type ManageExtSvcAccountCmd struct {
+	ExtSvcSlug  string
+	Enabled     bool
+	OrgID       int64
+	Permissions []accesscontrol.Permission
 }
 
 type SelfCfg struct {

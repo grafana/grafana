@@ -5,13 +5,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type ManageExtSvcAccountCmd struct {
-	ExtSvcSlug  string
-	Enabled     bool
-	OrgID       int64
-	Permissions []ac.Permission
-}
-
 type saveExtSvcAccountCmd struct {
 	ExtSvcSlug  string
 	OrgID       int64

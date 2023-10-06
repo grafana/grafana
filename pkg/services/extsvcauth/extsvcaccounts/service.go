@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -24,8 +25,23 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc serviceaccounts.Servic
 	}
 }
 
+func (sap *ExtSvcAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, saID int64) (*extsvcauth.ExtSvcAccount, error) {
+	sa, err := sap.RetrieveServiceAccount(ctx, orgID, saID)
+	if err != nil {
+		return nil, err
+	}
+	return &extsvcauth.ExtSvcAccount{
+		ID:         sa.ID,
+		Login:      sa.Login,
+		Name:       sa.Name,
+		OrgID:      sa.OrgID,
+		IsDisabled: sa.IsDisabled,
+		Role:       sa.Role,
+	}, nil
+}
+
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-func (sap *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error) {
+func (sap *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *extsvcauth.ManageExtSvcAccountCmd) (int64, error) {
 	if cmd == nil {
 		sap.logger.Warn("Received no input")
 		return 0, nil
