@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
-export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getRuleGroupIntervalScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -17,7 +17,6 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
         legendFormat: 'interval',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({

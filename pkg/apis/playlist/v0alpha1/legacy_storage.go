@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -88,8 +89,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			ObjectMeta: metav1.ObjectMeta{
 				Name: v.UID,
 			},
+			Spec: playlistkind.Spec{
+				Name:     v.Name,
+				Uid:      v.UID,
+				Interval: v.Interval,
+			},
 		}
-		p.Name = v.Name + " // " + v.Interval
 		list.Items = append(list.Items, p)
 	}
 	if len(list.Items) == limit {
@@ -123,6 +128,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		ObjectMeta: metav1.ObjectMeta{
 			Name: p.Uid,
 		},
-		Name: p.Name + "//" + p.Interval,
+		Spec: playlistkind.Spec{
+			Name:     p.Name,
+			Uid:      p.Uid,
+			Interval: p.Interval,
+			Items:    p.Items,
+		},
 	}, nil
 }
