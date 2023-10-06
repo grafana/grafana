@@ -158,7 +158,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 		{
 			name: "should update service account",
 			init: func(env *TestEnv) {
-				// No previous service account was attached to this slug
+				// A previous service account was attached to this slug
 				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
