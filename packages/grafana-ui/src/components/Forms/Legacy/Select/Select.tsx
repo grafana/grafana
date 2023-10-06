@@ -52,7 +52,7 @@ export const MenuList = (props: MenuListProps) => {
   );
 };
 
-/** @deprecated */
+/** @deprecated Please use the non-legacy `Select` component */
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
