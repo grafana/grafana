@@ -2,12 +2,13 @@ import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
-import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
+import { DataFrameType, DataTransformContext, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
+import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -39,6 +40,12 @@ export const histogramBucketSizes = [
 
 const histFilter = [null];
 const histSort = (a: number, b: number) => a - b;
+
+export interface HistogramTransformerInputs {
+  bucketSize?: string | number;
+  bucketOffset?: string | number;
+  combine?: boolean;
+}
 
 /**
  * @alpha
@@ -74,7 +81,7 @@ export const histogramFieldInfo = {
 /**
  * @alpha
  */
-export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerOptions> = {
+export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerInputs> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
   description: 'Calculate a histogram from input data.',
@@ -85,11 +92,51 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => histogramTransformer.transformer(options, ctx)(data))),
 
-  transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
+  transformer: (options: HistogramTransformerInputs, ctx: DataTransformContext) => (data: DataFrame[]) => {
     if (!Array.isArray(data) || data.length === 0) {
       return data;
     }
-    const hist = buildHistogram(data, options);
+
+    let bucketSize,
+      bucketOffset: number | undefined = undefined;
+
+    if (options.bucketSize) {
+      if (transformationsVariableSupport()) {
+        options.bucketSize = ctx.interpolate(options.bucketSize.toString());
+      }
+      if (typeof options.bucketSize === 'string') {
+        bucketSize = parseFloat(options.bucketSize);
+      } else {
+        bucketSize = options.bucketSize;
+      }
+
+      if (isNaN(bucketSize)) {
+        bucketSize = undefined;
+      }
+    }
+
+    if (options.bucketOffset) {
+      if (transformationsVariableSupport()) {
+        options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
+      }
+      if (typeof options.bucketOffset === 'string') {
+        bucketOffset = parseFloat(options.bucketOffset);
+      } else {
+        bucketOffset = options.bucketOffset;
+      }
+
+      if (isNaN(bucketOffset)) {
+        bucketOffset = undefined;
+      }
+    }
+
+    const interpolatedOptions: HistogramTransformerOptions = {
+      bucketSize: bucketSize,
+      bucketOffset: bucketOffset,
+      combine: options.combine,
+    };
+
+    const hist = buildHistogram(data, interpolatedOptions);
     if (hist == null) {
       return [];
     }
