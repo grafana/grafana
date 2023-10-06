@@ -72,9 +72,7 @@
       "icon": "external link",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Azure-AppInsights-Failures"
-      ],
+      "tags": ["Azure-AppInsights-Failures"],
       "targetBlank": true,
       "title": "Application Insights Failures Dashboards",
       "tooltip": "",
@@ -292,9 +290,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nexceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where type in ($exception_type)\n| summarize FailedCount=sum(itemCount) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -405,9 +401,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -418,9 +412,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nexceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| summarize Count=sum(itemCount) by type\n| top 10 by Count desc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -577,9 +569,7 @@
         {
           "azureLogAnalytics": {
             "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -648,9 +638,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -661,9 +649,7 @@
         {
           "azureLogAnalytics": {
             "query": "exceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| summarize failedCount=sum(itemCount)\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -722,9 +708,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -735,9 +719,7 @@
         {
           "azureLogAnalytics": {
             "query": "exceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where problemId in ($exception)\n| where type in ($exception_type)\n| summarize failedCount=sum(itemCount)\n\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -899,9 +881,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -917,9 +897,7 @@
         {
           "azureLogAnalytics": {
             "query": "let m = exceptions\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where type in ($exception_type)\n| project itemCount, user_Id, problemId;\nm\n| summarize Count=sum(itemCount), impactedUsers=dcount(user_Id)\n| project Exception=\"All\", Count, impactedUsers\n| union(\nm\n| summarize Count=sum(itemCount), impactedUsers=dcount(user_Id) by problemId\n| sort by Count desc\n| project Exception=problemId, Count, impactedUsers)\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -1066,9 +1044,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -1079,9 +1055,7 @@
         {
           "azureLogAnalytics": {
             "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nexceptions\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where type in ($exception_type)\n| where problemId in ($exception)\n| where isnotempty(operation_Id)\n| project Exception=problemId, OperationID=operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -1103,9 +1077,7 @@
   "revision": 1,
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "Azure-AppInsights-Failures"
-  ],
+  "tags": ["Azure-AppInsights-Failures"],
   "templating": {
     "list": [
       {
@@ -1250,9 +1222,7 @@
         "query": {
           "azureLogAnalytics": {
             "query": "exceptions\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by type\r\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -1280,9 +1250,7 @@
         "query": {
           "azureLogAnalytics": {
             "query": "exceptions\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where type in ($exception_type)\r\n| summarize count() by problemId\r\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",

@@ -42,9 +42,7 @@
       "icon": "dashboard",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Azure-AppInsights-Perf"
-      ],
+      "tags": ["Azure-AppInsights-Perf"],
       "targetBlank": true,
       "title": "Performance",
       "tooltip": "",
@@ -56,9 +54,7 @@
       "icon": "dashboard",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Azure-AppInsights-Failures"
-      ],
+      "tags": ["Azure-AppInsights-Failures"],
       "targetBlank": true,
       "title": "Failures",
       "tooltip": "",
@@ -166,9 +162,7 @@
         "justifyMode": "center",
         "orientation": "vertical",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "/^Availability$/",
           "values": false
         },
@@ -181,16 +175,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -378,9 +363,7 @@
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "fields": "",
           "values": false
         },
@@ -642,9 +625,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -765,9 +746,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -782,16 +761,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -896,9 +866,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -913,16 +881,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -1028,9 +987,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1045,16 +1002,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -1174,9 +1122,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1191,16 +1137,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -1328,9 +1265,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1346,16 +1281,7 @@
             "aggOptions": [],
             "aggregation": "Count",
             "alias": "",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -1381,16 +1307,7 @@
             "aggOptions": [],
             "aggregation": "Count",
             "alias": "Dependency failures",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -1495,9 +1412,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1512,16 +1427,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1546,16 +1452,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1717,9 +1614,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1734,16 +1629,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1768,16 +1654,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1802,16 +1679,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1836,16 +1704,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -1945,9 +1804,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1962,16 +1819,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -2071,9 +1919,7 @@
       "maxDataPoints": 100,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -2088,16 +1934,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",
@@ -2199,9 +2036,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -2216,16 +2051,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "microsoft.insights/components",
@@ -2327,9 +2153,7 @@
       "maxDataPoints": 150,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
+          "calcs": ["sum"],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -2344,16 +2168,7 @@
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
-            "allowedTimeGrainsMs": [
-              60000,
-              300000,
-              900000,
-              1800000,
-              3600000,
-              21600000,
-              43200000,
-              86400000
-            ],
+            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "metricDefinition": "Microsoft.Insights/components",

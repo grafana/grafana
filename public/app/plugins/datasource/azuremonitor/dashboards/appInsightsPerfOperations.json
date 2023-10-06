@@ -1,7 +1,7 @@
 {
   "__inputs": [],
   "__elements": {},
-"__requires": [
+  "__requires": [
     {
       "type": "panel",
       "id": "barchart",
@@ -68,9 +68,7 @@
       "icon": "external link",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Azure-AppInsights-Perf"
-      ],
+      "tags": ["Azure-AppInsights-Perf"],
       "targetBlank": true,
       "title": "Azure Application Insights Performance Dashboards",
       "tooltip": "",
@@ -287,9 +285,7 @@
         {
           "azureLogAnalytics": {
             "query": "requests// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n// calculate average request duration for all requests\n| summarize AVG = avg(duration), P95 = percentiles(duration, 95), MAX = max(duration) by bin(timestamp, $__interval)\n| project timestamp, AVG = AVG/1000, P95 = P95/1000, MAX = MAX/1000\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -360,9 +356,7 @@
               "id": "byNames",
               "options": {
                 "mode": "exclude",
-                "names": [
-                  "Request Count"
-                ],
+                "names": ["Request Count"],
                 "prefix": "All except:",
                 "readOnly": true
               }
@@ -403,9 +397,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -561,9 +553,7 @@
         {
           "azureLogAnalytics": {
             "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -653,9 +643,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -825,9 +813,7 @@
         {
           "azureLogAnalytics": {
             "query": "// distribution of requests by logarithmic duration buckets\nlet timeGrain=5m;\nlet numberOfBuckets = 100;\n// filter to a subset of requests\n\nlet dataset = requests\n    | where $__timeFilter(timestamp)\n    | where client_Type != \"Browser\"\n    // additional filters can be applied here\n    | where operation_Name in ($operation_name)\n    | where duration >= $min_duration and duration <= $max_duration\n    | extend value=duration\n    | project itemCount, value;\n// calculate the maximum duration for all requests\nlet maxValue=toscalar(dataset\n    | summarize max(value));\n// calculate the logarithmic base that determines the start of each bucket\n// use the max duration to ensure the scale spans all possible durations in the data set\nlet bucketBase = pow(maxValue, 1 / todouble(numberOfBuckets));\n// define a table with an index for each bucket to allow for buckets with 0 requests\nlet bucketSlots=range bucketSlot from 0 to numberOfBuckets - 1 step 1;\n// map request counts to the correct bucket and apply to the scale by joining with the complete set of buckets\nbucketSlots\n| join kind=leftouter (dataset\n    // any durations under 1ms are rounded up to 1 ms\n    // calls with durations under 1ms can be viewed in more detail using the linear scale\n    | extend adjustedValue = iff(value < 1, 1.0, value)\n    // calculate the bucket slot for each request by applying logarithmic scale\n    | extend bucketSlotRaw = tolong(bin(log(adjustedValue) / log(bucketBase), 1))\n    // calculate the request count by duration bucket (rounded to whole number)\n    | summarize count_=sum(itemCount) by bucketSlot=iff(bucketSlotRaw > numberOfBuckets - 1, numberOfBuckets - 1, bucketSlotRaw))\n    on bucketSlot\n| order by bucketSlot asc\n// calculate the real duration value for each bucket based on both the index and the bucket base (rounded to whole number)\n| project\n    [\"Duration (ms)\"]=floor(pow(bucketBase, bucketSlot), 1),\n    counts=iff(isnull(count_), 0, count_)\n| where ['Duration (ms)'] >= $min_duration\n| summarize Count=sum(counts) by [\"Duration (ms)\"]\n| order by [\"Duration (ms)\"] asc\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
           "datasource": {
@@ -894,9 +880,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -907,9 +891,7 @@
         {
           "azureLogAnalytics": {
             "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| count\n\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -992,9 +974,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1005,9 +985,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n| where success == false\n| count\n\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -1174,9 +1152,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -1192,9 +1168,7 @@
         {
           "azureLogAnalytics": {
             "query": "\nlet dataset = requests\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n;\ndataset\n| summarize  Avg = avg(duration)/1000, Max = max(duration)/1000, Count = count()\n| project operation_Name=\"All\", Avg, Max, Count\n| union(dataset\n| summarize  Avg = avg(duration)/1000, Max = max(duration)/1000, Count = count() by operation_Name\n| top 20 by Avg desc\n)\n\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -1418,9 +1392,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -1431,9 +1403,7 @@
         {
           "azureLogAnalytics": {
             "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\nrequests\n| where operation_Name in ($operation_name)\n| where $__timeFilter(timestamp)\n| where duration >= $min_duration and duration <= $max_duration\n| project Name = operation_Name, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ],
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
           "datasource": {
@@ -1455,9 +1425,7 @@
   "revision": 1,
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "Azure-AppInsights-Perf"
-  ],
+  "tags": ["Azure-AppInsights-Perf"],
   "templating": {
     "list": [
       {
@@ -1599,9 +1567,7 @@
           "azureLogAnalytics": {
             "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by operation_Name\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -1630,9 +1596,7 @@
           "azureLogAnalytics": {
             "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -1661,9 +1625,7 @@
           "azureLogAnalytics": {
             "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| where operation_Name in ($operation_name)\r\n| top 1 by duration\r\n| project tostring(duration)\r\n",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
+            "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
