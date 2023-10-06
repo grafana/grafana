@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { Toggletip, ToggletipProps } from './Toggletip';
+import { Toggletip } from '@grafana/ui';
+import { ToggletipProps } from '@grafana/ui/src/components/Toggletip';
 
 interface PopoverModalProps extends Omit<ToggletipProps, 'theme'> {}
 
