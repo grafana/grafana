@@ -84,7 +84,7 @@ func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 // pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
 func (m *InstrumentationMiddleware) pluginTarget(ctx context.Context, pluginID string) (string, error) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists || p.IsDecommissioned() {
+	if !exists {
 		return "", plugins.ErrPluginNotRegistered
 	}
 	return string(p.Target()), nil
