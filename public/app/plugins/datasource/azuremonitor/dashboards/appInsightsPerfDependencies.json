@@ -411,7 +411,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average dependency duration for all dependencies\n| summarize AVG = avg(duration), P95 = percentiles(duration, 95), MAX = max(duration) by bin(timestamp, $__interval)\n| project timestamp, AVG = AVG/1000, P95 = P95/1000, MAX = MAX/1000\n| order by timestamp asc\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average dependency duration for all dependencies\n| summarize AVG = avg(duration), P95 = percentiles(duration, 95), MAX = max(duration) by bin(timestamp, $__interval)\n| project timestamp, AVG = AVG/1000, P95 = P95/1000, MAX = MAX/1000\n| order by timestamp asc\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -524,7 +524,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -674,7 +674,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -764,7 +764,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
+            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n// calculate average request duration for all requests\n| extend ResponseTime = duration/1000\n| project timestamp, ResponseTime\n| order by timestamp asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -924,7 +924,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "// distribution of dependencies by logarithmic duration buckets\nlet numberOfBuckets = 100;\n// filter to a subset of dependencies\n\nlet dataset = dependencies\n| where client_Type != \"Browser\"\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n| extend value=duration\n| project itemCount, value;\n// calculate the maximum duration for all dependencies\nlet maxValue=toscalar(dataset | summarize max(value));\n// calculate the logarithmic base that determines the start of each bucket\n// use the max duration to ensure the scale spans all possible durations in the data set\nlet bucketBase = pow(maxValue, 1/todouble(numberOfBuckets));\n// define a table with an index for each bucket to allow for buckets with 0 dependencies\nlet bucketSlots=range bucketSlot from 0 to numberOfBuckets - 1 step 1;\n// map dependency counts to the correct bucket and apply to the scale by joining with the complete set of buckets\nbucketSlots | join kind=leftouter (dataset\n// any durations under 1ms are rounded up to 1 ms\n// calls with durations under 1ms can be viewed in more detail using the linear scale\n| extend adjustedValue = iff(value<1, 1.0, value)\n// calculate the bucket slot for each dependency by applying logarithmic scale\n| extend bucketSlotRaw = tolong(bin(log(adjustedValue)/log(bucketBase), 1))\n// calculate the dependency count by duration bucket (rounded to whole number)\n| summarize count_=sum(itemCount) by bucketSlot=iff(bucketSlotRaw > numberOfBuckets - 1, numberOfBuckets - 1, bucketSlotRaw)) on bucketSlot\n| order by bucketSlot asc\n// calculate the real duration value for each bucket based on both the index and the bucket base (rounded to whole number)\n| project\n    [\"Duration (ms)\"]=floor(pow(bucketBase, bucketSlot), 1),\n    counts=iff(isnull(count_), 0, count_)\n| summarize Count=sum(counts) by [\"Duration (ms)\"]\n| where ['Duration (ms)'] >= $MinDuration\n| order by [\"Duration (ms)\"] asc\n\n",
+            "query": "// distribution of dependencies by logarithmic duration buckets\nlet numberOfBuckets = 100;\n// filter to a subset of dependencies\n\nlet dataset = dependencies\n| where client_Type != \"Browser\"\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n| extend value=duration\n| project itemCount, value;\n// calculate the maximum duration for all dependencies\nlet maxValue=toscalar(dataset | summarize max(value));\n// calculate the logarithmic base that determines the start of each bucket\n// use the max duration to ensure the scale spans all possible durations in the data set\nlet bucketBase = pow(maxValue, 1/todouble(numberOfBuckets));\n// define a table with an index for each bucket to allow for buckets with 0 dependencies\nlet bucketSlots=range bucketSlot from 0 to numberOfBuckets - 1 step 1;\n// map dependency counts to the correct bucket and apply to the scale by joining with the complete set of buckets\nbucketSlots | join kind=leftouter (dataset\n// any durations under 1ms are rounded up to 1 ms\n// calls with durations under 1ms can be viewed in more detail using the linear scale\n| extend adjustedValue = iff(value<1, 1.0, value)\n// calculate the bucket slot for each dependency by applying logarithmic scale\n| extend bucketSlotRaw = tolong(bin(log(adjustedValue)/log(bucketBase), 1))\n// calculate the dependency count by duration bucket (rounded to whole number)\n| summarize count_=sum(itemCount) by bucketSlot=iff(bucketSlotRaw > numberOfBuckets - 1, numberOfBuckets - 1, bucketSlotRaw)) on bucketSlot\n| order by bucketSlot asc\n// calculate the real duration value for each bucket based on both the index and the bucket base (rounded to whole number)\n| project\n    [\"Duration (ms)\"]=floor(pow(bucketBase, bucketSlot), 1),\n    counts=iff(isnull(count_), 0, count_)\n| summarize Count=sum(counts) by [\"Duration (ms)\"]\n| where ['Duration (ms)'] >= $MinDuration\n| order by [\"Duration (ms)\"] asc\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "time_series"
           },
@@ -1007,7 +1007,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\ndependencies\n| where $__timeFilter(timestamp)\n// additional filters can be applied here\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| count\n\n\n",
+            "query": "\ndependencies\n| where $__timeFilter(timestamp)\n// additional filters can be applied here\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| count\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1100,7 +1100,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where success == false\n| count\n\n\n",
+            "query": "\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where success == false\n| count\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1580,7 +1580,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(typeTransform, \": \", name, \" \", targetTransform)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n//| where returncode in ($return_code)\n| project [\"Dependency Name\"], target, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, Score=ai_hash(operation_Id), type, name\n| top 20 by Score asc\n\n\n",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| extend typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(typeTransform, \": \", name, \" \", targetTransform)\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\n| where duration >= $MinDuration and duration <= $MaxDuration\n//| where returncode in ($return_code)\n| project [\"Dependency Name\"], target, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, Score=ai_hash(operation_Id), type, name\n| top 20 by Score asc\n\n\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"],
             "resultFormat": "table"
           },
@@ -1729,6 +1729,7 @@
         "type": "query"
       },
       {
+        "allValue": "\"All\"",
         "current": {},
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
@@ -1743,7 +1744,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\r\n| summarize count() by [\"Dependency Name\"]\r\n",
+            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\r\n| summarize count() by [\"Dependency Name\"]\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1771,7 +1772,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1799,7 +1800,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| search \"*\"\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration desc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration desc\r\n| project tostring(duration)\r\n\r\n",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
