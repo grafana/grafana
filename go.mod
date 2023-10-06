@@ -30,6 +30,11 @@ replace k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 => github.com/rya
 
 // The v0.120.0 is needed for now to be compatible with grafana/thema.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
+// Avoid using v2.0.0+incompatible Redigo used by dependencies as the latest maintained branch of Redigo is v1.
+replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
+
+// Bump it up to avoid https://github.com/prometheus/exporter-toolkit/security/advisories/GHSA-7rg2-cxvp-9p7p
+replace github.com/prometheus/exporter-toolkit@v0.7.1 => github.com/prometheus/exporter-toolkit v0.7.2
 
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
@@ -202,6 +207,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.10.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
