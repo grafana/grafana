@@ -1,6 +1,6 @@
 import { toDataFrame, FieldType, Labels, DataFrame, Field } from '@grafana/data';
 
-import { timeSeriesToTableTransform } from './timeSeriesTableTransformer';
+import { timeSeriesToTableTransform, ValueType } from './timeSeriesTableTransformer';
 
 describe('timeSeriesTableTransformer', () => {
   it('Will transform a single query', () => {
@@ -61,6 +61,71 @@ describe('timeSeriesTableTransformer', () => {
     expect(results[1].fields[2].values).toEqual(['A', 'B']);
     assertDataFrameField(results[1].fields[3], series.slice(3, 5));
   });
+
+  it('Will include last value by deault', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+      getTimeSeries('A', { instance: 'A', pod: 'C' }, [3, 4, 5]),
+    ];
+
+    const results = timeSeriesToTableTransform({}, series);
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[0].fields[2].values[1].value).toEqual(5);
+  });
+
+  it('Will calculate average value if configured', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+      getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
+    ];
+
+    const results = timeSeriesToTableTransform(
+      {
+        refIdToValueType: {
+          B: ValueType.Average,
+        },
+      },
+      series
+    );
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[1].fields[2].values[0].value).toEqual((3 + 4 + 5) / 3);
+  });
+
+  it('Will calculate median value if configured (odd number of values)', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+      getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
+    ];
+
+    const results = timeSeriesToTableTransform(
+      {
+        refIdToValueType: {
+          B: ValueType.Median,
+        },
+      },
+      series
+    );
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[1].fields[2].values[0].value).toEqual(4);
+  });
+
+  it('Will calculate median value if configured (even number of values)', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+      getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5, 6]),
+    ];
+
+    const results = timeSeriesToTableTransform(
+      {
+        refIdToValueType: {
+          B: ValueType.Median,
+        },
+      },
+      series
+    );
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[1].fields[2].values[0].value).toEqual((4 + 5) / 2);
+  });
 });
 
 function assertFieldsEqual(field1: Field, field2: Field) {
@@ -80,7 +145,7 @@ function assertDataFrameField(field: Field, matchesFrames: DataFrame[]) {
   });
 }
 
-function getTimeSeries(refId: string, labels: Labels) {
+function getTimeSeries(refId: string, labels: Labels, values: number[] = [10]) {
   return toDataFrame({
     refId,
     fields: [
@@ -88,7 +153,7 @@ function getTimeSeries(refId: string, labels: Labels) {
       {
         name: 'Value',
         type: FieldType.number,
-        values: [10],
+        values,
         labels,
       },
     ],
