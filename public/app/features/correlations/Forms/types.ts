@@ -18,13 +18,18 @@ export type TransformationDTO = {
   mapValue?: string;
 };
 
+export interface TransformationFieldDetails {
+  show: boolean;
+  required?: boolean;
+  helpText?: string;
+}
+
 interface SupportedTransformationTypeDetails {
   label: string;
   value: SupportedTransformationType;
   description?: string;
-  showExpression: boolean;
-  showMapValue: boolean;
-  requireExpression?: boolean;
+  expressionDetails: TransformationFieldDetails;
+  mapValueDetails: TransformationFieldDetails;
 }
 
 export function getSupportedTransTypeDetails(
@@ -36,8 +41,8 @@ export function getSupportedTransTypeDetails(
         label: 'Logfmt',
         value: SupportedTransformationType.Logfmt,
         description: 'Parse provided field with logfmt to get variables',
-        showExpression: false,
-        showMapValue: false,
+        expressionDetails: { show: false },
+        mapValueDetails: { show: false },
       };
     case SupportedTransformationType.Regex:
       return {
@@ -45,12 +50,24 @@ export function getSupportedTransTypeDetails(
         value: SupportedTransformationType.Regex,
         description:
           'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
-        showExpression: true,
-        showMapValue: true,
-        requireExpression: true,
+        expressionDetails: {
+          show: true,
+          required: true,
+          helpText: 'Use capture groups to extract a portion of the field.',
+        },
+        mapValueDetails: {
+          show: true,
+          required: false,
+          helpText: 'Defines the name of the variable if the capture group is not named.',
+        },
       };
     default:
-      return { label: transType, value: transType, showExpression: false, showMapValue: false };
+      return {
+        label: transType,
+        value: transType,
+        expressionDetails: { show: false },
+        mapValueDetails: { show: false },
+      };
   }
 }
 

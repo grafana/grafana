@@ -97,7 +97,7 @@ export const TransformationsEditor = (props: Props) => {
 
                                       const newValueDetails = getSupportedTransTypeDetails(value.value);
 
-                                      if (newValueDetails.showExpression) {
+                                      if (newValueDetails.expressionDetails.show) {
                                         setValue(
                                           `config.transformations.${index}.expression`,
                                           keptVals[index]?.expression || ''
@@ -106,7 +106,7 @@ export const TransformationsEditor = (props: Props) => {
                                         setValue(`config.transformations.${index}.expression`, '');
                                       }
 
-                                      if (newValueDetails.showMapValue) {
+                                      if (newValueDetails.mapValueDetails.show) {
                                         setValue(
                                           `config.transformations.${index}.mapValue`,
                                           keptVals[index]?.mapValue || ''
@@ -162,7 +162,7 @@ export const TransformationsEditor = (props: Props) => {
                               <Label htmlFor={`config.transformations.${fieldVal.id}.expression`}>
                                 Expression
                                 {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                  .requireExpression
+                                  .expressionDetails.required
                                   ? ' *'
                                   : ''}
                               </Label>
@@ -186,7 +186,7 @@ export const TransformationsEditor = (props: Props) => {
                           <Input
                             {...register(`config.transformations.${index}.expression`, {
                               required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                .requireExpression
+                                .expressionDetails.required
                                 ? 'Please define an expression'
                                 : undefined,
                             })}
@@ -194,7 +194,7 @@ export const TransformationsEditor = (props: Props) => {
                             readOnly={readOnly}
                             disabled={
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                .showExpression
+                                .expressionDetails.show
                             }
                             id={`config.transformations.${fieldVal.id}.expression`}
                           />
@@ -223,7 +223,8 @@ export const TransformationsEditor = (props: Props) => {
                             defaultValue={fieldVal.mapValue}
                             readOnly={readOnly}
                             disabled={
-                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
+                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                .mapValueDetails.show
                             }
                             id={`config.transformations.${fieldVal.id}.mapValue`}
                           />

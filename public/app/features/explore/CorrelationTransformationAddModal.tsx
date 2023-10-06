@@ -7,7 +7,11 @@ import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
 import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
-import { getSupportedTransTypeDetails, getTransformOptions } from '../correlations/Forms/types';
+import {
+  getSupportedTransTypeDetails,
+  getTransformOptions,
+  TransformationFieldDetails,
+} from '../correlations/Forms/types';
 import { getTransformationVars } from '../correlations/transformations';
 
 interface CorrelationTransformationAddModalProps {
@@ -18,9 +22,18 @@ interface CorrelationTransformationAddModalProps {
 }
 
 interface ShowFormFields {
-  showMapValue: boolean;
-  showExpression: boolean;
+  expressionDetails: TransformationFieldDetails;
+  mapValueDetails: TransformationFieldDetails;
 }
+
+const LabelWithTooltip = ({ label, tooltipText }: { label: string; tooltipText: string }) => (
+  <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+    <Label>{label}</Label>
+    <Tooltip content={tooltipText}>
+      <Icon name="info-circle" size="sm" />
+    </Tooltip>
+  </Flex>
+);
 
 export const CorrelationTransformationAddModal = ({
   onSave,
@@ -30,7 +43,10 @@ export const CorrelationTransformationAddModal = ({
 }: CorrelationTransformationAddModalProps) => {
   const [exampleValue, setExampleValue] = useState<string | undefined>(undefined);
   const [transformationVars, setTransformationVars] = useState<ScopedVars>({});
-  const [formFieldsVis, setFormFieldsVis] = useState<ShowFormFields>({ showMapValue: false, showExpression: false });
+  const [formFieldsVis, setFormFieldsVis] = useState<ShowFormFields>({
+    mapValueDetails: { show: false },
+    expressionDetails: { show: false },
+  });
   const [isExpValid, setIsExpValid] = useState(false); // keep the highlighter from erroring on bad expressions
   const [validToSave, setValidToSave] = useState(false);
   const { getValues, control, register } = useForm<DataLinkTransformationConfig>({
@@ -43,8 +59,8 @@ export const CorrelationTransformationAddModal = ({
         }
         const transformationTypeDetails = getSupportedTransTypeDetails(transformationToEdit?.type!);
         setFormFieldsVis({
-          showMapValue: transformationTypeDetails.showMapValue,
-          showExpression: transformationTypeDetails.showExpression,
+          mapValueDetails: transformationTypeDetails.mapValueDetails,
+          expressionDetails: transformationTypeDetails.expressionDetails,
         });
 
         const transformationVars = getTransformationVars(
@@ -82,7 +98,7 @@ export const CorrelationTransformationAddModal = ({
         isExpressionValid = false;
       }
     } else {
-      isExpressionValid = !formFieldsVis.showExpression;
+      isExpressionValid = !formFieldsVis.expressionDetails.show;
     }
     setIsExpValid(isExpressionValid);
 
@@ -158,8 +174,8 @@ export const CorrelationTransformationAddModal = ({
                     onChange(value.value);
                     const transformationTypeDetails = getSupportedTransTypeDetails(value.value!);
                     setFormFieldsVis({
-                      showMapValue: transformationTypeDetails.showMapValue,
-                      showExpression: transformationTypeDetails.showExpression,
+                      mapValueDetails: transformationTypeDetails.mapValueDetails,
+                      expressionDetails: transformationTypeDetails.expressionDetails,
                     });
                     calcTransformationVars(); // not all transformation types require more input
                   }}
@@ -170,20 +186,29 @@ export const CorrelationTransformationAddModal = ({
               name={`type` as const}
             />
           </Field>
-          {formFieldsVis.showExpression && (
-            <Field label="Expression" htmlFor={`${id}-expression`} required>
+          {formFieldsVis.expressionDetails.show && (
+            <Field
+              label={
+                formFieldsVis.expressionDetails.helpText ? (
+                  <LabelWithTooltip label="Expression" tooltipText={formFieldsVis.expressionDetails.helpText} />
+                ) : (
+                  'Expression'
+                )
+              }
+              htmlFor={`${id}-expression`}
+              required={formFieldsVis.expressionDetails.required}
+            >
               <Input {...register('expression')} id={`${id}-expression`} onKeyUp={calcTransformationVars} />
             </Field>
           )}
-          {formFieldsVis.showMapValue && (
+          {formFieldsVis.mapValueDetails.show && (
             <Field
               label={
-                <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
-                  <Label>Variable Name</Label>
-                  <Tooltip content="The name of the variable that will be used, if a name is not defined in the expression. It will overwrite the field variable if one is ultimately not defined.">
-                    <Icon name="info-circle" size="sm" />
-                  </Tooltip>
-                </Flex>
+                formFieldsVis.mapValueDetails.helpText ? (
+                  <LabelWithTooltip label="Variable Name" tooltipText={formFieldsVis.mapValueDetails.helpText} />
+                ) : (
+                  'Variable Name'
+                )
               }
               htmlFor={`${id}-mapValue`}
             >
