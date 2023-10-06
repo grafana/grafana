@@ -2,6 +2,7 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { stringToJsRegex } from '../../text/string';
 import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
 import { FieldMatcher, FieldMatcherInfo, FrameMatcherInfo } from '../../types/transformations';
+import { getGrafanaFeatureToggles } from '../../utils';
 
 import { FieldMatcherID, FrameMatcherID } from './ids';
 
@@ -107,10 +108,7 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
 export function fieldNameFallback(fields: Set<string>) {
   let fallback: FieldMatcher | undefined = undefined;
 
-  // grafana-data does not have access to runtime so we are accessing the window object
-  // to get access to the feature toggle
-  // eslint-disable-next-line
-  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+  const useMatcherFallback = getGrafanaFeatureToggles()?.dataplaneFrontendFallback;
   if (useMatcherFallback) {
     if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
       fallback = (field: Field, frame: DataFrame) => {

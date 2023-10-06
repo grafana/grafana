@@ -3,12 +3,12 @@ import { map } from 'rxjs/operators';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
+import { getGrafanaFeatureToggles } from '../../utils';
 import { getValueMatcher } from '../matchers';
 import { ValueMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
-import { transformationsVariableSupport } from './utils';
 
 export enum FilterByValueType {
   exclude = 'exclude',
@@ -52,7 +52,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
     const interpolatedFilters: FilterByValueFilter[] = [];
 
-    if (transformationsVariableSupport()) {
+    if (getGrafanaFeatureToggles()?.transformationsVariableSupport) {
       interpolatedFilters.push(
         ...filters.map((filter) => {
           if (filter.config.id === ValueMatcherID.between) {
@@ -102,7 +102,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
           const fieldIndexByName = groupFieldIndexByName(frame, data);
 
           let matchers;
-          if (transformationsVariableSupport()) {
+          if (getGrafanaFeatureToggles()?.transformationsVariableSupport) {
             matchers = createFilterValueMatchers(interpolatedFilters, fieldIndexByName);
           } else {
             matchers = createFilterValueMatchers(filters, fieldIndexByName);

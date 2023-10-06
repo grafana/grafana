@@ -5,15 +5,15 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
 
-// mock the default window.grafanaBootData settings
-// eslint-disable-next-line
-(window as any).grafanaBootData = {
-  settings: {
-    featureToggles: {
+jest.mock('../../utils', () => {
+  const actual = jest.requireActual('../../utils');
+  return {
+    ...actual,
+    getGrafanaFeatureToggles: () => ({
       dataplaneFrontendFallback: true,
-    },
-  },
-};
+    }),
+  };
+});
 
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {

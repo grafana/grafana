@@ -14,17 +14,15 @@ import {
 import { DataTransformerID } from './ids';
 
 let transformationSupport = false;
-
-jest.mock('./utils', () => {
-  const actual = jest.requireActual('./utils');
+jest.mock('../../utils', () => {
+  const actual = jest.requireActual('../../utils');
   return {
     ...actual,
-    transformationsVariableSupport: () => {
-      return transformationSupport;
-    },
+    getGrafanaFeatureToggles: () => ({
+      transformationsVariableSupport: transformationSupport,
+    }),
   };
 });
-
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,

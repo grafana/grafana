@@ -12,6 +12,7 @@ export * from './series';
 export * from './binaryOperators';
 export * from './nodeGraph';
 export * from './selectUtils';
+export * from './featureToggle';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
 export { arrayUtils };
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
