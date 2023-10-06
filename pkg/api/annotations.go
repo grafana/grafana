@@ -33,7 +33,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	query := &annotations.ItemQuery{
 		From:         c.QueryInt64("from"),
 		To:           c.QueryInt64("to"),
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
 		AlertID:      c.QueryInt64("alertId"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -48,7 +48,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUID != "" {
-		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.OrgID}
+		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.SignedInUser.GetOrgID()}
 		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
