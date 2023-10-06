@@ -522,7 +522,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param key
    */
   fetchLabelValues = async (key: string): Promise<string[]> => {
-    console.log('language_provider fetchLabelValues');
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
@@ -538,7 +537,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    console.log('language_provider fetchLabels');
     const url = '/api/v1/labels';
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     this.labelFetchTs = Date.now().valueOf();
@@ -559,7 +557,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param selector
    */
   getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
-    console.log('language_provider getSeriesValues');
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       const data = await this.getSeries(selector);
       return data[labelName] ?? [];
@@ -573,7 +570,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
-    console.log('language_provider fetchSeriesValuesWithMatch');
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
     const range = this.datasource.getAdjustedInterval(this.timeRange);

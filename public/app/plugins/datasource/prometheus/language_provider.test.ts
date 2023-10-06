@@ -18,7 +18,21 @@ const fromPrometheusTime = getPrometheusTime(dateTime(now - timeRangeDurationSec
 const toPrometheusTimeString = toPrometheusTime.toString(10);
 const fromPrometheusTimeString = fromPrometheusTime.toString(10);
 
-const getTimeRangeParams = (override?: Partial<{ start: string; end: string }>): { start: string; end: string } => ({
+const getMockTimeRange = (): TimeRange => {
+  return {
+    to: dateTime(now).utc(),
+    from: dateTime(now).subtract(timeRangeDurationSeconds, 'second').utc(),
+    raw: {
+      from: fromPrometheusTimeString,
+      to: toPrometheusTimeString,
+    },
+  };
+};
+
+const getTimeRangeParams = (
+  timRange: TimeRange,
+  override?: Partial<{ start: string; end: string }>
+): { start: string; end: string } => ({
   start: fromPrometheusTimeString,
   end: toPrometheusTimeString,
   ...override,
@@ -301,16 +315,21 @@ describe('Language completion provider', () => {
   });
 
   describe('fetchSeries', () => {
-    it('should use match[] parameter', () => {
+    it('should use match[] parameter', async () => {
       const languageProvider = new LanguageProvider(defaultDatasource);
-      const fetchSeries = languageProvider.fetchSeries;
+      const timeRange = getMockTimeRange();
+      await languageProvider.start(timeRange);
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeries('{job="grafana"}');
+      await languageProvider.fetchSeries('{job="grafana"}');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
         {},
-        { end: toPrometheusTimeString, 'match[]': '{job="grafana"}', start: fromPrometheusTimeString },
+        {
+          end: toPrometheusTimeString,
+          'match[]': '{job="grafana"}',
+          start: fromPrometheusTimeString,
+        },
         undefined
       );
     });
