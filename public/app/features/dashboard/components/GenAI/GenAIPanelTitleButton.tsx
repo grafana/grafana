@@ -4,8 +4,8 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { EventSource, reportGenerateAIButtonClicked } from './tracking';
-import { Message, Role } from './utils';
+import { EventTrackingSrc } from './tracking';
+import { Message, QuickFeedbackType, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
@@ -19,9 +19,16 @@ const TITLE_GENERATION_STANDARD_PROMPT =
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
-  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelTitle), []);
 
-  return <GenAIButton messages={messages} onClick={onClick} onGenerate={onGenerate} loadingText={'Generating title'} />;
+  return (
+    <GenAIButton
+      messages={messages}
+      onGenerate={onGenerate}
+      loadingText={'Generating title'}
+      eventTrackingSrc={EventTrackingSrc.panelTitle}
+      toggleTipTitle={'Improve your panel title'}
+    />
+  );
 };
 
 function getMessages(panel: PanelModel): Message[] {
@@ -46,3 +53,12 @@ function getMessages(panel: PanelModel): Message[] {
     },
   ];
 }
+
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
+};

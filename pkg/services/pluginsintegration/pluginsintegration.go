@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -114,7 +114,7 @@ var WireSet = wire.NewSet(
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
-	wire.Bind(new(oauth.ExternalServiceRegistry), new(*serviceregistration.Service)),
+	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -165,6 +165,10 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	// Placing the new service implementation behind a feature flag until it is known to be stable
 	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
 		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
+	}
+
+	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
 	}
 
 	if cfg.SendUserHeader {

@@ -4,11 +4,16 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType, AzureAuthType } from '../types';
 
 export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
-  azure: { managedIdentityEnabled: true, userIdentityEnabled: false },
+  azure: { managedIdentityEnabled: true, workloadIdentityEnabled: false, userIdentityEnabled: false },
 };
 
 export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
-  azure: { managedIdentityEnabled: false, userIdentityEnabled: false, cloud: 'AzureCloud' },
+  azure: {
+    managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
+    userIdentityEnabled: false,
+    cloud: 'AzureCloud',
+  },
 };
 
 export const dataSourceSettingsWithMsiCredentials: Partial<

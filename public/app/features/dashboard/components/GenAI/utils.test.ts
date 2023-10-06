@@ -1,17 +1,14 @@
-import { llms } from '@grafana/experimental';
-
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import { getDashboardChanges, isLLMPluginEnabled } from './utils';
+import { openai } from './llms';
+import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
 
 // Mock the llms.openai module
-jest.mock('@grafana/experimental', () => ({
-  llms: {
-    openai: {
-      streamChatCompletions: jest.fn(),
-      accumulateContent: jest.fn(),
-      enabled: jest.fn(),
-    },
+jest.mock('./llms', () => ({
+  openai: {
+    streamChatCompletions: jest.fn(),
+    accumulateContent: jest.fn(),
+    enabled: jest.fn(),
   },
 }));
 
@@ -69,7 +66,7 @@ describe('getDashboardChanges', () => {
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
     // Mock llms.openai.enabled to return true
-    jest.mocked(llms.openai.enabled).mockResolvedValue(true);
+    jest.mocked(openai.enabled).mockResolvedValue(true);
 
     const enabled = await isLLMPluginEnabled();
 
@@ -78,10 +75,28 @@ describe('isLLMPluginEnabled', () => {
 
   it('should return false if LLM plugin is not enabled', async () => {
     // Mock llms.openai.enabled to return false
-    jest.mocked(llms.openai.enabled).mockResolvedValue(false);
+    jest.mocked(openai.enabled).mockResolvedValue(false);
 
     const enabled = await isLLMPluginEnabled();
 
     expect(enabled).toBe(false);
+  });
+});
+
+describe('sanitizeReply', () => {
+  it('should remove quotes from the beginning and end of a string', () => {
+    expect(sanitizeReply('"Hello, world!"')).toBe('Hello, world!');
+  });
+
+  it('should not remove quotes from the middle of a string', () => {
+    expect(sanitizeReply('Hello, "world"!')).toBe('Hello, "world"!');
+  });
+
+  it('should only remove quotes if they are at the beginning or end of a string, and not in the middle', () => {
+    expect(sanitizeReply('"Hello", world!')).toBe('Hello", world!');
+  });
+
+  it('should return an empty string if given an empty string', () => {
+    expect(sanitizeReply('')).toBe('');
   });
 });

@@ -93,8 +93,13 @@ async function fetchDashboard(
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
         if (newBrowseDashboardsEnabled() && dashDTO.meta.folderUid) {
-          await dispatch(getFolderByUid(dashDTO.meta.folderUid));
+          try {
+            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
+          } catch (err) {
+            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
+          }
         }
+
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);

@@ -18,7 +18,7 @@ import {
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-import { LokiQuery, LokiQueryType } from './types';
+import { ExtractedLabelKeys, LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -459,13 +459,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getParserAndLabelKeys(selector: string): Promise<{
-    extractedLabelKeys: string[];
-    hasJSON: boolean;
-    hasLogfmt: boolean;
-    hasPack: boolean;
-    unwrapLabelKeys: string[];
-  }> {
+  async getParserAndLabelKeys(selector: string): Promise<ExtractedLabelKeys> {
     const series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
 
     if (!series.length) {

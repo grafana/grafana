@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Stack } from '@grafana/experimental';
 import { Button, Form, Select } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { Trans, t } from 'app/core/internationalization';
@@ -36,6 +37,12 @@ export const AddPermission = ({
     if (assignments.users) {
       options.push({ value: PermissionTarget.User, label: t('access-control.add-permission.user-label', 'User') });
     }
+    if (assignments.serviceAccounts) {
+      options.push({
+        value: PermissionTarget.ServiceAccount,
+        label: t('access-control.add-permission.serviceaccount-label', 'Service Account'),
+      });
+    }
     if (assignments.teams) {
       options.push({ value: PermissionTarget.Team, label: t('access-control.add-permission.team-label', 'Team') });
     }
@@ -57,6 +64,7 @@ export const AddPermission = ({
   const isValid = () =>
     (target === PermissionTarget.Team && teamId > 0) ||
     (target === PermissionTarget.User && userId > 0) ||
+    (target === PermissionTarget.ServiceAccount && userId > 0) ||
     (PermissionTarget.BuiltInRole && OrgRole.hasOwnProperty(builtInRole));
 
   return (
@@ -81,6 +89,10 @@ export const AddPermission = ({
             />
 
             {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserId(u?.value || 0)} />}
+
+            {target === PermissionTarget.ServiceAccount && (
+              <ServiceAccountPicker onSelected={(u) => setUserId(u?.value || 0)} />
+            )}
 
             {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} />}
 

@@ -25,6 +25,7 @@ const setup = (propOverrides?: object) => {
     deleteTeam: jest.fn(),
     changePage: jest.fn(),
     changeQuery: jest.fn(),
+    changeSort: jest.fn(),
     query: '',
     totalPages: 0,
     page: 0,

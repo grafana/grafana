@@ -109,7 +109,7 @@ To provide context to dashboard users, add the variable to the row title.
 
 ### Repeating rows and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard]({{< relref "../../../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard][] data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
 For example, in a dashboard:
 
@@ -135,6 +135,9 @@ You can size a dashboard panel to suits your needs.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
 
 {{% docs/reference %}}
+[Dashboard]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
+[Dashboard]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
+
 [Override field values]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 [Override field values]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 
