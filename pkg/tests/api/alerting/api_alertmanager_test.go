@@ -1522,7 +1522,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		respModel, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
 		require.Equal(t, respModel.Updated, []string{ruleUID})
 		require.Len(t, respModel.Deleted, 1)
