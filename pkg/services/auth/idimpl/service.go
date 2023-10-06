@@ -3,7 +3,6 @@ package idimpl
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -67,10 +66,9 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	now := time.Now()
 	token, err := s.signer.SignIDToken(ctx, &auth.IDClaims{
 		Claims: jwt.Claims{
-			ID:       identifier,
 			Issuer:   s.cfg.AppURL,
-			Audience: jwt.Audience{strconv.FormatInt(id.GetOrgID(), 10)},
-			Subject:  fmt.Sprintf("%s:%s", namespace, identifier),
+			Audience: getAudience(id.GetOrgID()),
+			Subject:  getSubject(namespace, identifier),
 			Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 			IssuedAt: jwt.NewNumericDate(now),
 		},
@@ -100,6 +98,15 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 
 	identity.IDToken = token
 	return nil
+}
+
+func getAudience(orgID int64) jwt.Audience {
+	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
+
+}
+
+func getSubject(namespace, identifier string) string {
+	return fmt.Sprintf("%s:%s", namespace, identifier)
 }
 
 func prefixCacheKey(key string) string {
