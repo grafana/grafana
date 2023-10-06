@@ -205,20 +205,14 @@ const FlameGraphContainer = ({
   );
 };
 
-// Weird naming but ColorSchemeDiff.Default just mean non colorblind colors
-const defaultDiffColorScheme = ColorSchemeDiff.Default;
-const defaultColorScheme = ColorScheme.PackageBased;
-
 function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
-  const isDiff = dataContainer?.isDiffFlamegraph();
-  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(
-    isDiff ? defaultDiffColorScheme : defaultColorScheme
-  );
+  const defaultColorScheme = dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
+  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(defaultColorScheme);
 
   // This makes sure that if we change the data to/from diff profile we reset the color scheme.
   useEffect(() => {
-    setColorScheme(isDiff ? defaultDiffColorScheme : defaultColorScheme);
-  }, [isDiff]);
+    setColorScheme(defaultColorScheme);
+  }, [defaultColorScheme]);
 
   return [colorScheme, setColorScheme] as const;
 }
