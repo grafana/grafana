@@ -25,6 +25,13 @@ export enum QuickFeedbackType {
 export const OPEN_AI_MODEL = 'gpt-4';
 
 /**
+ * Sanitize the reply from OpenAI by removing the leading and trailing quotes.
+ */
+export const sanitizeReply = (reply: string) => {
+  return reply.replace(/^"|"$/g, '');
+};
+
+/**
  * Diff the current dashboard with the original dashboard and the dashboard after migration
  * to split the changes into user changes and migration changes.
  * * User changes: changes made by the user
