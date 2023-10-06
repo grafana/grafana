@@ -89,6 +89,7 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
 
     return (
       <SplitPane
+        className={styles.splitPane}
         split={splitOrientation}
         minSize={minSize}
         maxSize={maxSize}
@@ -144,6 +145,9 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   `;
 
   return {
+    splitPane: css({
+      overflow: 'visible !important',
+    }),
     resizerV: cx(
       resizer,
       css`
