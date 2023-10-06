@@ -4,7 +4,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { ValidationEvents, ValidationRule } from '../../../../types';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
 
-/** @deprecated */
+/** @deprecated Please use the non legacy `Input` component, which does not require this enum. */
 export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
@@ -25,7 +25,7 @@ interface State {
   error: string | null;
 }
 
-/** @deprecated */
+/** @deprecated Please use the non legacy `Input` component */
 export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
