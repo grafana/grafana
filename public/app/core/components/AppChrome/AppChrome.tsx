@@ -64,6 +64,9 @@ export function AppChrome({ children }: Props) {
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
+          {config.featureToggles.dockedMegaMenu && state.megaMenuDocked === 'docked' && (
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
           </div>
