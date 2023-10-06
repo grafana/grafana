@@ -10,7 +10,7 @@ export function DataSourcesInfo({ datasources }: { datasources: DataSourceInform
   const styles = useStyles2(getStyles);
 
   const displayDs = datasources.map((ds) => (
-    <div key={ds.uid} className={styles.dsItem}>
+    <div key={ds.uid}>
       {ds.settings?.meta.info.logos.small && (
         <img className={styles.dsImage} src={ds.settings?.meta.info.logos.small} alt={ds.settings?.name || ds.uid} />
       )}
@@ -35,5 +35,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: '10px',
     justifyContent: 'flex-end',
   }),
-  dsItem: css({}),
 });
