@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 
 	"golang.org/x/exp/slices"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -219,13 +221,14 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		children = append(children, availableNonRootFolders...)
 	}
 
-	filtered := make([]*folder.Folder, 0, len(children))
-	for _, f := range children {
+	filtered := newConcurrentArray[*folder.Folder](len(children))
+	if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
+		f := children[i]
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
 		if !ok {
 			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
-			continue
+			return nil
 		}
 
 		// always expose the dashboard store sequential ID
@@ -234,28 +237,38 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		if cmd.UID != "" {
 			// parent access has been checked already
 			// the subfolder must be accessible as well (due to inheritance)
-			filtered = append(filtered, f)
-			continue
+			filtered.Append(f)
+			return nil
 		}
 
 		g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		canView, err := g.CanView()
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if canView {
-			filtered = append(filtered, f)
+		if !canView {
+			return nil
 		}
+
+		filtered.Append(f)
+		return nil
+	}); err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to filter subfolders from dashboard store: %w", err)
 	}
 
-	if cmd.UID == "" {
-		filtered = s.deduplicateAvailableFolders(ctx, filtered)
+	if cmd.UID != "" {
+		return filtered.array, nil
 	}
 
-	return filtered, nil
+	l, err := s.deduplicateAvailableFolders(ctx, filtered.array)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to deduplicate available folders: %w", err)
+	}
+
+	return l, nil
 }
 
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
@@ -290,13 +303,14 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
-	foldersDedup := make([]*folder.Folder, 0)
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) ([]*folder.Folder, error) {
+	foldersDedup := newConcurrentArray[*folder.Folder](len(folders))
+	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, i int) error {
+		f := folders[i]
 
-	for _, f := range folders {
 		if f.ParentUID == "" {
-			foldersDedup = append(foldersDedup, f)
-			continue
+			foldersDedup.Append(f)
+			return nil
 		}
 
 		isSubfolder := slices.ContainsFunc(folders, func(folder *folder.Folder) bool {
@@ -307,7 +321,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
 			if err != nil {
 				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
-				continue
+				return nil
 			}
 
 			for _, parent := range parents {
@@ -320,12 +334,17 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 				}
 			}
 		}
-		if !isSubfolder {
-			foldersDedup = append(foldersDedup, f)
+		if isSubfolder {
+			return nil
 		}
+		foldersDedup.Append(f)
+		return nil
+	}); err != nil {
+		s.log.Error("failed to deduplicate available folders", "error", err)
+		return nil, err
 	}
 
-	return foldersDedup
+	return foldersDedup.array, nil
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -981,4 +1000,24 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.registry[r.Kind()] = r
 
 	return nil
+}
+
+type concurrentArray[T any] struct {
+	sync.Mutex
+	array    []T
+	capacity int
+}
+
+func newConcurrentArray[T any](capacity int) *concurrentArray[T] {
+	return &concurrentArray[T]{
+		array:    make([]T, 0, capacity),
+		capacity: capacity,
+	}
+}
+
+func (a *concurrentArray[T]) Append(v T) {
+	a.Lock()
+	defer a.Unlock()
+
+	a.array = append(a.array, v)
 }
