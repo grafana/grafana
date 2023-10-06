@@ -23,7 +23,7 @@ type ExternalServiceRegistry interface {
 //go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output extsvcmocks --outpkg extsvcmocks --filename extsvcaccmock.go
 type ExtSvcAccountsService interface {
 	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
-	RetrieveServiceAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
+	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
 }
 
 type ExtSvcAccount struct {

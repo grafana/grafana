@@ -25,7 +25,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service) *ExtSvcAcc
 	}
 }
 
-func (esa *ExtSvcAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, saID int64) (*extsvcauth.ExtSvcAccount, error) {
+func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*extsvcauth.ExtSvcAccount, error) {
 	sa, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
 	if err != nil {
 		return nil, err

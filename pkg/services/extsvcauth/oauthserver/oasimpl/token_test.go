@@ -733,7 +733,7 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 	// To retrieve the Client, its publicKey and its permissions
 	env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 	env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: Client1Key.Public(), Algorithm: "RS256"}, nil)
-	env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+	env.SAService.On("RetrieveExtSvcAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
 	env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 	// To retrieve the user to impersonate, its permissions and its teams
 	env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{

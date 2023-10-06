@@ -320,11 +320,11 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account was not found",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, sa.ErrServiceAccountNotFound)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, sa.ErrServiceAccountNotFound)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, 1, 1)
 			},
 			wantErr: true,
 		},
@@ -332,12 +332,12 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account has no permissions",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, nil)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, nil)
 				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, 1, 1)
 			},
 			wantErr: true,
 		},
@@ -345,12 +345,12 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return correctly",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{ID: 1}, nil)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{ID: 1}, nil)
 				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return([]ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}, nil)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, int64(1), int64(1))
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1))
 			},
 			wantPerm: []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		},

@@ -149,7 +149,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 
 	// Retrieve self permissions and generate a signed in user
 	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
+	sa, err := s.saService.RetrieveExtSvcAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
 	if err != nil {
 		s.logger.Error("GetExternalService: error fetching service account", "id", id, "error", err)
 		return nil, err

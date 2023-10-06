@@ -38,8 +38,8 @@ func (_m *MockExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cm
 	return r0, r1
 }
 
-// RetrieveServiceAccount provides a mock function with given fields: ctx, orgID, saID
-func (_m *MockExtSvcAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, saID int64) (*extsvcauth.ExtSvcAccount, error) {
+// RetrieveExtSvcAccount provides a mock function with given fields: ctx, orgID, saID
+func (_m *MockExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID int64, saID int64) (*extsvcauth.ExtSvcAccount, error) {
 	ret := _m.Called(ctx, orgID, saID)
 
 	var r0 *extsvcauth.ExtSvcAccount
