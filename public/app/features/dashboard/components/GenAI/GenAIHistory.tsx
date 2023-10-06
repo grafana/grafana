@@ -21,7 +21,7 @@ import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { Message, OPEN_AI_MODEL, QuickFeedbackType } from './utils';
+import { Message, OPEN_AI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
@@ -61,8 +61,7 @@ export const GenAIHistory = ({
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
-      // TODO: Break out sanitize regex into shared util function
-      updateHistory(reply.replace(/^"|"$/g, ''));
+      updateHistory(sanitizeReply(reply));
     }
   }, [streamStatus, reply, updateHistory]);
 
@@ -144,7 +143,7 @@ export const GenAIHistory = ({
           history={history}
           index={currentIndex}
           onNavigate={onNavigate}
-          reply={reply.replace(/^"|"$/g, '')}
+          reply={sanitizeReply(reply)}
           streamStatus={streamStatus}
         />
       </div>

@@ -561,17 +561,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
-          topOfViewRef={this.topOfViewRef}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
         />
         <CustomScrollbar
           testId={selectors.pages.Explore.General.scrollView}
-          autoHeightMin={'100%'}
           scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
         >
           {datasourceInstance ? (
-            <div className={styles.exploreContainer}>
+            <div className={styles.exploreContainer} ref={this.topOfViewRef}>
               {contentOutlineVisible && <ContentOutline />}
               <div className={styles.columnWrapper}>
                 <PanelContainer className={styles.queryContainer}>

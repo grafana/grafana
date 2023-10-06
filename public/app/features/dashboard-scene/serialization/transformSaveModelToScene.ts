@@ -92,17 +92,10 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         }
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      const gridItem = new SceneGridItem({
-        body: new LibraryVizPanel({
-          title: panel.title,
-          uid: panel.libraryPanel.uid,
-        }),
-        y: panel.gridPos.y,
-        x: panel.gridPos.x,
-        width: panel.gridPos.w,
-        height: panel.gridPos.h,
-      });
-      panels.push(gridItem);
+      const gridItem = buildGridItemForLibPanel(panel);
+      if (gridItem) {
+        panels.push(gridItem);
+      }
     } else {
       const panelObject = buildGridItemForPanel(panel);
 
@@ -296,6 +289,24 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
+export function buildGridItemForLibPanel(panel: PanelModel) {
+  if (!panel.libraryPanel) {
+    return null;
+  }
+
+  return new SceneGridItem({
+    body: new LibraryVizPanel({
+      title: panel.title,
+      uid: panel.libraryPanel.uid,
+      name: panel.libraryPanel.name,
+      key: getVizPanelKeyForPanelId(panel.id),
+    }),
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),

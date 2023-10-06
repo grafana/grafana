@@ -56,7 +56,7 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
-  topOfViewRef: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
 export function ExploreToolbar({
