@@ -101,7 +101,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Name:                       c.Name,
 			OrgId:                      c.OrgID,
 			OrgName:                    c.OrgName,
-			OrgRole:                    c.OrgRole,
+			OrgRole:                    c.SignedInUser.GetOrgRole(),
 			OrgCount:                   userOrgCount,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,

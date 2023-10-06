@@ -60,7 +60,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   c.OrgID,
 			UserID:  c.UserID,
-			OrgRole: c.OrgRole,
+			OrgRole: c.SignedInUser.GetOrgRole(),
 		},
 		Width:             width,
 		Height:            height,
