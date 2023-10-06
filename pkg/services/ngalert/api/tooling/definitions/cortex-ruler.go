@@ -489,7 +489,7 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 
 // swagger:model
 type UpdateRuleGroupResponse struct {
-	Message string   `json:"message,omitempty"`
+	Message string   `json:"message"`
 	Created []string `json:"created,omitempty"`
 	Updated []string `json:"updated,omitempty"`
 	Deleted []string `json:"deleted,omitempty"`
