@@ -96,7 +96,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       <DataSourceDescription
         dataSourceName="Postgres"
         docsLink="https://grafana.com/docs/grafana/latest/datasources/postgres/"
-        hasRequiredFields={false}
+        hasRequiredFields={true}
       />
 
       <Divider />
@@ -113,7 +113,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           />
         </Field>
 
-        <Field label="Database name">
+        <Field label="Database name" required>
           <Input
             width={WIDTH_LONG}
             name="database"
@@ -127,7 +127,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       <Divider />
 
       <ConfigSection title="Authentication">
-        <Field label="Username">
+        <Field label="Username" required>
           <Input
             width={WIDTH_LONG}
             value={options.user || ''}
@@ -136,7 +136,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           />
         </Field>
 
-        <Field label="Password">
+        <Field label="Password" required>
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"

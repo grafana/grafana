@@ -57,7 +57,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       <DataSourceDescription
         dataSourceName="MySQL"
         docsLink="https://grafana.com/docs/grafana/latest/datasources/mysql/"
-        hasRequiredFields={false}
+        hasRequiredFields={true}
       />
 
       <Divider />
@@ -74,7 +74,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           />
         </Field>
 
-        <Field label="Database name">
+        <Field label="Database name" required>
           <Input
             width={WIDTH_LONG}
             name="database"
@@ -88,7 +88,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       <Divider />
 
       <ConfigSection title="Authentication">
-        <Field label="Username">
+        <Field label="Username" required>
           <Input
             width={WIDTH_LONG}
             value={options.user || ''}
@@ -97,7 +97,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           />
         </Field>
 
-        <Field label="Password">
+        <Field label="Password" required>
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"
