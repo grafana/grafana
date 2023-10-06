@@ -155,7 +155,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
 
       <Divider />
 
-      <ConfigSection title="Additional settings">
+      <ConfigSection title="Additional settings" isCollapsible>
         <ConfigSubSection title="MySQL Options">
           <Field
             label={

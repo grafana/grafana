@@ -312,7 +312,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
 
       <Divider />
 
-      <ConfigSection title="Additional settings">
+      <ConfigSection title="Additional settings" isCollapsible>
         <ConfigSubSection title="PostgreSQL Options">
           <Field
             label={
