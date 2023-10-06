@@ -6,15 +6,15 @@ import (
 )
 
 // NOTE: this must match the golang fully qualified name!
-const kindKey = "github.com/grafana/grafana/pkg/apis/testing/v0alpha1.RuntimeInfo"
+const kindKey = "github.com/grafana/grafana/pkg/apis/example/v0alpha1.RuntimeInfo"
 
 func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		kindKey: schema_pkg_apis_testing_v0alpha1_RuntimeInfo(ref),
+		kindKey: schema_pkg_apis_example_v0alpha1_RuntimeInfo(ref),
 	}
 }
 
-func schema_pkg_apis_testing_v0alpha1_RuntimeInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_example_v0alpha1_RuntimeInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
