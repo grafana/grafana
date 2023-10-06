@@ -30,6 +30,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
   const [transformations, setTransformations] = useState<DataLinkTransformationConfig[]>([]);
+  const [transformationIdxToEdit, setTransformationIdxToEdit] = useState<number | undefined>(undefined);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const id = useId();
 
@@ -59,6 +60,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
   useEffect(() => {
     const dirty = !correlationDetails?.dirty && transformations.length > 0 ? true : correlationDetails?.dirty;
     dispatch(changeCorrelationEditorDetails({ transformations: transformations, dirty: dirty }));
+    let transVarRecords: Record<string, string> = {};
     transformations.forEach((transformation) => {
       const transformationVars = getTransformationVars(
         {
@@ -70,13 +72,11 @@ export const CorrelationHelper = ({ correlations }: Props) => {
         transformation.field!
       );
 
-      const transVarRecords: Record<string, string> = {};
       Object.keys(transformationVars).forEach((key) => {
         transVarRecords[key] = transformationVars[key]?.value;
       });
-
-      setCorrelationVars({ ...correlationVars, ...transVarRecords });
     });
+    setCorrelationVars({ ...correlations.vars, ...transVarRecords });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, transformations]);
 
@@ -84,12 +84,25 @@ export const CorrelationHelper = ({ correlations }: Props) => {
     <>
       {showTransformationAddModal && (
         <CorrelationTransformationAddModal
-          onCancel={() => setShowTransformationAddModal(false)}
+          onCancel={() => {
+            setTransformationIdxToEdit(undefined);
+            setShowTransformationAddModal(false);
+          }}
           onSave={(transformation: DataLinkTransformationConfig) => {
-            setTransformations([...transformations, transformation]);
+            if (transformationIdxToEdit !== undefined) {
+              const editTransformations = [...transformations];
+              editTransformations[transformationIdxToEdit] = transformation;
+              setTransformations(editTransformations);
+              setTransformationIdxToEdit(undefined);
+            } else {
+              setTransformations([...transformations, transformation]);
+            }
             setShowTransformationAddModal(false);
           }}
           fieldList={correlations.vars}
+          transformationToEdit={
+            transformationIdxToEdit !== undefined ? transformations[transformationIdxToEdit] : undefined
+          }
         />
       )}
       <Alert title="Correlation details" severity="info">
@@ -136,11 +149,11 @@ export const CorrelationHelper = ({ correlations }: Props) => {
           {transformations.map((transformation, i) => {
             const { type, field, expression, mapValue } = transformation;
             const detailsString = [
-              mapValue !== undefined ? `Variable name: ${mapValue}` : undefined,
-              expression !== undefined ? (
-                <>
+              (mapValue ?? '').length > 0 ? `Variable name: ${mapValue}` : undefined,
+              (expression ?? '').length > 0 ? (
+                <div className={styles.expressionContainer}>
                   Expression: <pre className={styles.expressionPre}>{expression}</pre>
-                </>
+                </div>
               ) : undefined,
             ].filter((val) => val);
             return (
@@ -152,7 +165,15 @@ export const CorrelationHelper = ({ correlations }: Props) => {
                   <Card.Meta className={styles.transformationMeta}>{detailsString}</Card.Meta>
                 )}
                 <Card.SecondaryActions>
-                  <IconButton key="edit" name="edit" aria-label="edit transformation" />
+                  <IconButton
+                    key="edit"
+                    name="edit"
+                    aria-label="edit transformation"
+                    onClick={() => {
+                      setTransformationIdxToEdit(i);
+                      setShowTransformationAddModal(true);
+                    }}
+                  />
                   <IconButton
                     key="delete"
                     name="trash-alt"
@@ -179,8 +200,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     expressionPre: css({
       lineHeight: 0,
       marginBottom: 0,
+      display: 'inline-block',
     }),
     transformationMeta: css({
+      alignItems: 'baseline',
+    }),
+    expressionContainer: css({
+      display: 'flex',
       alignItems: 'baseline',
     }),
   };

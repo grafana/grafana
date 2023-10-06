@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useState } from 'react';
+import React, { useId, useState, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
@@ -14,6 +14,7 @@ interface CorrelationTransformationAddModalProps {
   onCancel: () => void;
   onSave: (transformation: DataLinkTransformationConfig) => void;
   fieldList: Record<string, string>;
+  transformationToEdit?: DataLinkTransformationConfig;
 }
 
 interface ShowFormFields {
@@ -25,18 +26,54 @@ export const CorrelationTransformationAddModal = ({
   onSave,
   onCancel,
   fieldList,
+  transformationToEdit,
 }: CorrelationTransformationAddModalProps) => {
-  const { getValues, control, register } = useForm<DataLinkTransformationConfig>();
   const [exampleValue, setExampleValue] = useState<string | undefined>(undefined);
-  const [transformationVars, setTransformationVars] = useState<ScopedVars>();
+  const [transformationVars, setTransformationVars] = useState<ScopedVars>({});
   const [formFieldsVis, setFormFieldsVis] = useState<ShowFormFields>({ showMapValue: false, showExpression: false });
   const [isExpValid, setIsExpValid] = useState(false); // keep the highlighter from erroring on bad expressions
   const [validToSave, setValidToSave] = useState(false);
+  const { getValues, control, register } = useForm<DataLinkTransformationConfig>({
+    defaultValues: useMemo(() => {
+      const exampleVal = fieldList[transformationToEdit?.field!];
+      setExampleValue(exampleVal);
+      if (transformationToEdit?.expression) {
+        setIsExpValid(true);
+      }
+      const transformationTypeDetails = getSupportedTransTypeDetails(transformationToEdit?.type!);
+      setFormFieldsVis({
+        showMapValue: transformationTypeDetails.showMapValue,
+        showExpression: transformationTypeDetails.showExpression,
+      });
+
+      const transformationVars = getTransformationVars(
+        {
+          type: transformationToEdit?.type!,
+          expression: transformationToEdit?.expression,
+          mapValue: transformationToEdit?.mapValue,
+        },
+        exampleVal || '',
+        transformationToEdit?.field!
+      );
+      setTransformationVars({ ...transformationVars });
+      setValidToSave(true);
+      return {
+        type: transformationToEdit?.type,
+        field: transformationToEdit?.field,
+        mapValue: transformationToEdit?.mapValue,
+        expression: transformationToEdit?.expression,
+      };
+    }, [
+      fieldList,
+      transformationToEdit?.expression,
+      transformationToEdit?.field,
+      transformationToEdit?.mapValue,
+      transformationToEdit?.type,
+    ]),
+  });
   const id = useId();
 
   const calcTransformationVars = () => {
-    setTransformationVars(undefined);
-
     const expression = getValues('expression');
     let isExpressionValid = false;
     if (expression !== undefined) {
@@ -62,9 +99,7 @@ export const CorrelationTransformationAddModal = ({
     );
 
     const transKeys = Object.keys(transformationVars);
-    if (transKeys.length > 0) {
-      setTransformationVars({ ...transformationVars });
-    }
+    setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
 
     if (transKeys.length === 0 || !isExpressionValid) {
       setValidToSave(false);
@@ -74,7 +109,12 @@ export const CorrelationTransformationAddModal = ({
   };
 
   return (
-    <Modal isOpen={true} title="Add transformation" onDismiss={onCancel} className={css({ width: '700px' })}>
+    <Modal
+      isOpen={true}
+      title={`${transformationToEdit ? 'Edit' : 'Add'} transformation`}
+      onDismiss={onCancel}
+      className={css({ width: '700px' })}
+    >
       <p>
         A transformation extracts variables out of a single field. These variables will be available along with your
         field variables.
@@ -152,7 +192,7 @@ export const CorrelationTransformationAddModal = ({
               <Input {...register('mapValue')} id={`${id}-mapValue`} onKeyUp={calcTransformationVars} />
             </Field>
           )}
-          {transformationVars !== undefined && (
+          {Object.entries(transformationVars).length > 0 && (
             <>
               This transformation will add the following variables:
               <pre>
@@ -169,7 +209,7 @@ export const CorrelationTransformationAddModal = ({
           Cancel
         </Button>
         <Button variant="primary" onClick={() => onSave(getValues())} disabled={!validToSave}>
-          Add transformation to correlation
+          {transformationToEdit ? 'Edit transformation' : 'Add transformation to correlation'}
         </Button>
       </Modal.ButtonRow>
     </Modal>
