@@ -27,11 +27,12 @@ composableKinds: PanelCfg: {
 			schema: {
 				Options: {
 					common.SingleStatBaseOptions
-					displayMode:  common.BarGaugeDisplayMode & (*"gradient" | _)
-					valueMode:    common.BarGaugeValueMode & (*"color" | _)
-					showUnfilled: bool | *true
-					minVizWidth:  uint32 | *0
-					minVizHeight: uint32 | *10
+					displayMode:   common.BarGaugeDisplayMode & (*"gradient" | _)
+					valueMode:     common.BarGaugeValueMode & (*"color" | _)
+					namePlacement: common.BarGaugeNamePlacement & (*"auto" | _)
+					showUnfilled:  bool | *true
+					minVizWidth:   uint32 | *0
+					minVizHeight:  uint32 | *10
 				} @cuetsy(kind="interface")
 			}
 		}]
