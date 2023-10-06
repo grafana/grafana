@@ -14,9 +14,10 @@ import {
   LogsSortOrder,
   dateTime,
   TimeRange,
+  LoadingState,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
