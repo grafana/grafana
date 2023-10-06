@@ -328,9 +328,17 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
-			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
+			added, err := srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
 				return fmt.Errorf("failed to add rules: %w", err)
+			}
+			if len(added) != len(finalChanges.New) {
+				logger.Error("Cannot match inserted rules with final changes", "insertedCount", len(added), "changes", len(finalChanges.New))
+			} else {
+				for i, newRule := range finalChanges.New {
+					newRule.ID = added[i].ID
+					newRule.UID = added[i].UID
+				}
 			}
 		}
 
@@ -363,12 +371,30 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
+	return changesToResponse(finalChanges)
+}
 
-	if finalChanges.IsEmpty() {
-		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
+func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+	body := apimodels.UpdateRuleGroupResponse{
+		Message: "rule group updated successfully",
+		Created: make([]string, 0, len(finalChanges.New)),
+		Updated: make([]string, 0, len(finalChanges.Update)),
+		Deleted: make([]string, 0, len(finalChanges.Delete)),
 	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
+	if finalChanges.IsEmpty() {
+		body.Message = "no changes detected in the rule group"
+	} else {
+		for _, r := range finalChanges.New {
+			body.Created = append(body.Created, r.UID)
+		}
+		for _, r := range finalChanges.Update {
+			body.Updated = append(body.Updated, r.Existing.UID)
+		}
+		for _, r := range finalChanges.Delete {
+			body.Deleted = append(body.Deleted, r.UID)
+		}
+	}
+	return response.JSON(http.StatusAccepted, body)
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {

@@ -2,7 +2,7 @@ import { DataFrameView } from '../../dataframe';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformContext, ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';
-import { BinaryOperationID } from '../../utils';
+import { BinaryOperationID, UnaryOperationID } from '../../utils';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
@@ -184,6 +184,51 @@ describe('calculateField transformer w/ timeseries', () => {
         {
           'B + 2': 202,
           TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
+  it('unary math', async () => {
+    const unarySeries = toDataFrame({
+      fields: [
+        { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+        { name: 'A', type: FieldType.number, values: [1, -10, -200, 300] },
+      ],
+    });
+
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.UnaryOperation,
+        unary: {
+          fieldName: 'A',
+          operator: UnaryOperationID.Abs,
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'abs(A)': 1,
+          TheTime: 1000,
+        },
+        {
+          'abs(A)': 10,
+          TheTime: 2000,
+        },
+        {
+          'abs(A)': 200,
+          TheTime: 3000,
+        },
+        {
+          'abs(A)': 300,
+          TheTime: 4000,
         },
       ]);
     });

@@ -91,6 +91,7 @@ mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
+grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false

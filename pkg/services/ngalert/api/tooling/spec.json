@@ -1345,9 +1345,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "UpdateRuleGroupResponse",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
             }
           }
         }
@@ -6899,6 +6899,32 @@
         },
         "User": {
           "$ref": "#/definitions/Userinfo"
+        }
+      }
+    },
+    "UpdateRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
