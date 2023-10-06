@@ -86,10 +86,12 @@ var (
 			Owner:       grafanaExploreSquad,
 		},
 		{
-			Name:        "exploreContentOutline",
-			Description: "Content outline sidebar",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaExploreSquad,
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",

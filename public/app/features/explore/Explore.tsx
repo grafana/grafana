@@ -341,7 +341,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
-        <ContentOutlineItem title="Custom" icon="plug" key={index}>
+        <ContentOutlineItem title={pluginId} icon="plug" key={index}>
           <CustomContainer
             key={index}
             timeZone={timeZone}
@@ -416,7 +416,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    // Need to make ContenOutlineItem a flex container so the gap works
+    // Need to make ContentOutlineItem a flex container so the gap works
     const logsContentOutlineWrapper = css({
       display: 'flex',
       flexDirection: 'column',
