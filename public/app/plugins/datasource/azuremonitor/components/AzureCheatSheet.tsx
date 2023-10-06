@@ -8,59 +8,30 @@ import {
   Card,
   Collapse,
   CustomScrollbar,
-  InlineField,
+  Field,
   Input,
   LoadingPlaceholder,
   Select,
   useStyles2,
 } from '@grafana/ui';
 
-import tokenizer from '../../cloudwatch/language/cloudwatch-logs/syntax';
-import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import {
+  AzureMonitorQuery,
+  AzureQueryType,
+  Category,
+  CheatsheetQueries,
+  CheatsheetQuery,
+  DropdownCategories,
+} from '../types';
 
-type Category = {
-  displayName: string;
-  id: string;
-  related: {
-    queries: string[];
-    tables: string[];
-  };
-};
+import { RawQuery } from './RawQuery';
+import tokenizer from './syntax';
 
-type CheatsheetQuery = {
-  body: string;
-  description: string;
-  displayName: string;
-  id: string;
-  properties: {
-    ExampleQuery: boolean;
-    QueryAttributes: {
-      isMultiResource: boolean;
-    };
-  };
-  related: {
-    categories: string[];
-    resourceTypes: string[];
-    tables: string[];
-  };
-  tags: {
-    Topic: string[];
-  };
-};
-
-type CheatsheetQueries = {
-  [key: string]: CheatsheetQuery[];
-};
-
-type DropdownCategories = {
-  [key: string]: boolean;
-};
-
-type Props = {
+export interface Props {
   onClickExample: (query: AzureMonitorQuery) => void;
   query: AzureMonitorQuery;
-};
+  getCheatsheetQueries?: () => Promise<CheatsheetQueries>;
+}
 
 const AzureCheatSheet = (props: Props) => {
   const [cheatsheetQueries, setCheatsheetQueries] = useState<CheatsheetQueries | null>(null);
@@ -184,7 +155,7 @@ const AzureCheatSheet = (props: Props) => {
                 placeholder="Search Logs queries"
                 width={50}
               />
-              <InlineField label="Categories" grow={true} labelWidth="auto" className={styles.categoryDropdown}>
+              <Field label="Categories" className={styles.categoryDropdown}>
                 <Select
                   options={dropdownMenu}
                   value={''}
@@ -199,7 +170,7 @@ const AzureCheatSheet = (props: Props) => {
                   isMulti={true}
                   width={50}
                 />
-              </InlineField>
+              </Field>
             </div>
             <div className={styles.spacing}>
               Query results:{' '}
