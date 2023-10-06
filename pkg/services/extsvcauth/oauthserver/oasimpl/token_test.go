@@ -22,8 +22,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -703,15 +703,13 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 		opt(client1)
 	}
 
-	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:         client1.ServiceAccountID,
+	sa1 := &extsvcauth.ExtSvcAccount{
+		ID:         client1.ServiceAccountID,
 		Name:       client1.Name,
 		Login:      client1.Name,
-		OrgId:      oauthserver.TmpOrgID,
+		OrgID:      oauthserver.TmpOrgID,
 		IsDisabled: false,
-		Created:    now,
-		Updated:    now,
-		Role:       "Viewer",
+		Role:       roletype.RoleNone,
 	}
 
 	user56 := &user.User{
