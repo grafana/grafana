@@ -1,12 +1,11 @@
 import React from 'react';
 
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 export function getInstanceStatByStatusScene(
-  timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string,
   status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
@@ -21,7 +20,6 @@ export function getInstanceStatByStatusScene(
         legendFormat: '{{state}}',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({

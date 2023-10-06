@@ -60,6 +60,12 @@ export interface EllipseData extends TextData {
   width?: number;
 }
 
+export interface StandardEditorConfig {
+  layout?: boolean;
+  background?: boolean;
+  border?: boolean;
+}
+
 export {
   Placement,
   Constraint,
