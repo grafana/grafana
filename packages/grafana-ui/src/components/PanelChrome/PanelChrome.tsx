@@ -364,7 +364,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       // matches .react-grid-item styles in _dashboard_grid.scss to ensure any contained tooltips occlude adjacent panels
       '&:hover, &:active, &:focus': {
-        zIndex: 999,
+        zIndex: theme.zIndex.activePanel,
       },
 
       '.show-on-hover': {
