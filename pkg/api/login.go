@@ -329,7 +329,7 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
 	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 		if err != nil {
 			c.Redirect(hs.Cfg.AppSubURL + "/login")
