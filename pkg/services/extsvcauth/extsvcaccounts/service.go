@@ -56,7 +56,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 	if !cmd.Enabled || len(cmd.Permissions) == 0 {
 		if saID > 0 {
 			if err := esa.deleteExtSvcAccount(ctx, cmd.OrgID, cmd.ExtSvcSlug, saID); err != nil {
-				esa.logger.Error("Error occured while deleting service account",
+				esa.logger.Error("Error occurred while deleting service account",
 					"service", cmd.ExtSvcSlug,
 					"saID", saID,
 					"error", err.Error())
