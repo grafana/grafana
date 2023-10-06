@@ -67,16 +67,6 @@ export function getCompletionProvider(
     const word = model.getWordAtPosition(position);
     const wordUntil = model.getWordUntilPosition(position);
 
-    // const range =
-    //   word != null
-    //     ? monaco.Range.lift({
-    //       startLineNumber: position.lineNumber,
-    //       endLineNumber: position.lineNumber,
-    //       startColumn: wordUntil.endColumn ?? word.endColumn,
-    //       endColumn: wordUntil.endColumn ?? word.endColumn,
-    //     })
-    //     : monaco.Range.fromPositions(position);
-
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
     const positionClone = {
@@ -92,7 +82,6 @@ export function getCompletionProvider(
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
-
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
@@ -140,8 +129,15 @@ const calculateRange = (
     const indexOfEquals = word?.word.indexOf('=');
     const indexOfLastEquals = word?.word.lastIndexOf('=');
 
-    // Just one equals and we're between quotes, so cursor is within the value
-    if (indexOfLastEquals === indexOfEquals) {
+    // Just one equals "=" the cursor is somewhere within a label value
+    // e.g. value="labe^l-value" or value="^label-value" etc
+    // We want the word to include everything within the quotes, so the result from autocomplete overwrites the existing label value
+    if (
+      indexOfLastEquals === indexOfEquals &&
+      indexOfFirstQuote !== -1 &&
+      indexOfLastQuote !== -1 &&
+      indexOfLastEquals !== -1
+    ) {
       return word != null
         ? monaco.Range.lift({
             startLineNumber: position.lineNumber,
@@ -153,12 +149,14 @@ const calculateRange = (
     }
   }
 
+  // Otherwise we want the range to be calculated as the cursor position, as we want to insert the autocomplete, instead of overwriting existing text
+  // The cursor position is the length of the wordUntil
   return word != null
     ? monaco.Range.lift({
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
-        startColumn: wordUntil?.endColumn ?? word.endColumn,
-        endColumn: wordUntil?.endColumn ?? word.endColumn,
+        startColumn: wordUntil.endColumn,
+        endColumn: wordUntil.endColumn,
       })
     : monaco.Range.fromPositions(position);
 };
