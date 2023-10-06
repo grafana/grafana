@@ -155,8 +155,8 @@ func NewClientDecorator(
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
-		clientmiddleware.NewInstrumentationMiddleware(promRegisterer, registry),
 		clientmiddleware.NewTracingMiddleware(tracer),
+		clientmiddleware.NewInstrumentationMiddleware(promRegisterer, registry),
 		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
