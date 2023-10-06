@@ -1025,95 +1025,84 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = new DashboardModel({
+        editable: true,
+        graphTooltip: 0,
+        schemaVersion: 20,
         templating: {
           list: [
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 0,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_without_options',
               options: [],
               refresh: 0,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 1,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_without_options',
               options: [],
               refresh: 1,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 2,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_without_options',
               options: [],
               refresh: 2,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_without_options',
               options: [],
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 2001,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
               options: [],
               refresh: 2001,
             },
-            // @ts-expect-error
             {
               type: 'custom',
               name: 'custom',
               options: [{ text: 'custom', value: 'custom' }],
             },
-            // @ts-expect-error
             {
               type: 'textbox',
               name: 'textbox',
               options: [{ text: 'Hello', value: 'World' }],
             },
-            // @ts-expect-error
             {
               type: 'datasource',
               name: 'datasource',
               options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
             },
-            // @ts-expect-error
             {
               type: 'interval',
               name: 'interval',
