@@ -59,12 +59,15 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	s.logger.Debug("Received query request")
+
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
 		if res, err := s.query(ctx, req.PluginContext, q); err != nil {
+			s.logger.Debug("Error in processing query", "error", err)
 			return response, err
 		} else {
 			if res != nil {
@@ -73,6 +76,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}
 
+	s.logger.Debug("Successully processed query request")
 	return response, nil
 }
 
@@ -85,15 +89,21 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {
+	s.logger.Debug("Getting datasource information")
+
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
+		s.logger.Debug("Failure in getting datasource information", "error", err)
 		return nil, err
 	}
 
 	instance, ok := i.(*Datasource)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast datsource info")
+		err := fmt.Errorf("failed to cast datsource info")
+		s.logger.Debug("Failure in getting datasource information", "error", err)
+		return nil, err
 	}
 
+	s.logger.Debug("Successfully got datasource information")
 	return instance, nil
 }
