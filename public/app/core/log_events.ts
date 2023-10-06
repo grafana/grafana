@@ -14,7 +14,5 @@ export enum PanelLogEvents {
   PANEL_ERROR = 'panel error',
 }
 
+export const FIELD_CONFIG_OVERRIDES_KEY = 'overrides';
 export const FIELD_CONFIG_CUSTOM_KEY = 'custom';
-export const FIELD_CONFIG_THRESHOLD_KEY = 'thresholds';
-export const FIELD_CONFIG_MAPPINGS_KEY = 'mappings';
-export const FIELD_CONFIG_DATA_LINKS_KEY = 'links';

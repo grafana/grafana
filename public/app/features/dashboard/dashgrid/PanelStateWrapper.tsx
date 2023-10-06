@@ -20,7 +20,6 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { faro } from '@grafana/faro-web-sdk';
 import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
@@ -32,7 +31,6 @@ import {
   AdHocFilterItem,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { PanelLogEvents } from 'app/core/log_events';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -53,6 +51,7 @@ import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
+import { PanelOptionsLogger } from './panelOptionsLogger';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -85,6 +84,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
+  private panelOptionsLogger: PanelOptionsLogger | undefined = undefined;
 
   constructor(props: Props) {
     super(props);
@@ -116,6 +116,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       },
       data: this.getInitialPanelDataState(),
     };
+
+    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+      const panelInfo = {
+        panelId: String(props.panel.id),
+        panelType: props.panel.type,
+        panelTitle: props.panel.title,
+      };
+
+      this.panelOptionsLogger = new PanelOptionsLogger(props.panel.getOptions(), props.panel.fieldConfig, panelInfo);
+    }
   }
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
@@ -377,26 +387,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
-  logPanelInfoOnError(error: Error) {
-    const logObj = {
-      error: error.message,
-      options: JSON.stringify(this.props.panel.getOptions()),
-      fieldConfig: JSON.stringify(this.props.panel.fieldConfig.defaults),
-      overrides: JSON.stringify(this.props.panel.fieldConfig.overrides),
-      panelId: String(this.props.panel.id),
-      panelType: this.props.panel.type,
-      panelTitle: this.props.panel.title,
-    };
-
-    faro.api.pushEvent(PanelLogEvents.PANEL_ERROR, logObj);
+  logPanelChangesOnError(error: Error) {
+    this.panelOptionsLogger!.logChanges(this.props.panel.getOptions(), this.props.panel.fieldConfig);
   }
 
   onPanelError = (error: Error) => {
-    const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
-
-    if (config.featureToggles.panelMonitoring) {
-      this.logPanelInfoOnError(error);
+    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+      this.logPanelChangesOnError(error);
     }
+
+    const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
 
     if (this.state.errorMessage !== errorMessage) {
       this.setState({ errorMessage });
@@ -535,7 +535,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             onChangeTimeRange={this.onChangeTimeRange}
             eventBus={dashboard.events}
           />
-          {config.featureToggles.panelMonitoring && (
+          {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
             <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
           )}
         </PanelContextProvider>

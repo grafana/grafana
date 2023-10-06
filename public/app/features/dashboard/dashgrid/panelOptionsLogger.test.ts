@@ -1,28 +1,21 @@
-import { renderHook } from '@testing-library/react';
-
 import { GraphDrawStyle, GraphGradientMode } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
-import { DashboardSavedEvent } from 'app/types/events';
 
 const mockPushEvent = jest.fn();
 
-import { usePanelOptionsLogger } from './usePanelOptionsLogger';
-
-jest.mock('app/core/config', () => ({
-  config: {
-    grafanaJavascriptAgent: {
-      enabled: true,
-    },
-    featureToggles: {
-      panelMonitoring: true,
-    },
-  },
-}));
+import { PanelOptionsLogger } from './panelOptionsLogger';
 
 jest.mock('@grafana/faro-web-sdk', () => ({
   faro: {
     api: {
       pushEvent: mockPushEvent,
+    },
+  },
+}));
+
+jest.mock('app/core/config', () => ({
+  config: {
+    grafanaJavascriptAgent: {
+      enabled: true,
     },
   },
 }));
@@ -47,15 +40,10 @@ describe('OptionsPane', () => {
       showTypeIcons: true,
     };
 
-    const props = {
+    const panelInfo = {
       panelType: 'table',
-      panelId: 1,
+      panelId: '1',
       panelTitle: 'Panel Title',
-      panelOptions: oldPanelOptions,
-      panelFieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
     };
 
     const expectedLogResults = [
@@ -85,13 +73,9 @@ describe('OptionsPane', () => {
       },
     ];
 
-    const hook = renderHook(() => usePanelOptionsLogger(props));
+    const panelOptionsLogger = new PanelOptionsLogger(oldPanelOptions, { defaults: {}, overrides: [] }, panelInfo);
 
-    props.panelOptions = newPanelOptions;
-
-    hook.rerender(props);
-
-    appEvents.publish(new DashboardSavedEvent());
+    panelOptionsLogger.logChanges(newPanelOptions, { defaults: {}, overrides: [] });
 
     expect(mockPushEvent).toHaveBeenCalledTimes(3);
     expect(mockPushEvent.mock.calls).toEqual([
@@ -131,16 +115,21 @@ describe('OptionsPane', () => {
       overrides: [],
     };
 
-    const props = {
-      isInPanelEdit: true,
+    const panelInfo = {
       panelType: 'timeseries',
-      panelId: 1,
+      panelId: '1',
       panelTitle: 'Panel Title',
-      panelOptions: {},
-      panelFieldConfig: oldFieldConfig,
     };
 
     const expectedLogResults = [
+      {
+        key: 'overrides',
+        newValue: '[]',
+        oldValue: '[{"matcher":{"id":"byName","options":""},"properties":[]}]',
+        panelTitle: 'Panel Title',
+        panelId: '1',
+        panelType: 'timeseries',
+      },
       {
         key: 'unit',
         newValue: 'metres',
@@ -175,20 +164,17 @@ describe('OptionsPane', () => {
       },
     ];
 
-    const hook = renderHook(() => usePanelOptionsLogger(props));
+    const panelOptionsLogger = new PanelOptionsLogger({}, oldFieldConfig, panelInfo);
 
-    props.panelFieldConfig = newFieldConfig;
+    panelOptionsLogger.logChanges({}, newFieldConfig);
 
-    hook.rerender(props);
-
-    appEvents.publish(new DashboardSavedEvent());
-
-    expect(mockPushEvent).toHaveBeenCalledTimes(4);
+    expect(mockPushEvent).toHaveBeenCalledTimes(5);
     expect(mockPushEvent.mock.calls).toEqual([
-      ['default field config changed', expectedLogResults[0]],
-      ['new default field config', expectedLogResults[1]],
-      ['custom field config changed', expectedLogResults[2]],
-      ['new custom field config', expectedLogResults[3]],
+      ['field config overrides changed', expectedLogResults[0]],
+      ['default field config changed', expectedLogResults[1]],
+      ['new default field config', expectedLogResults[2]],
+      ['custom field config changed', expectedLogResults[3]],
+      ['new custom field config', expectedLogResults[4]],
     ]);
   });
 });

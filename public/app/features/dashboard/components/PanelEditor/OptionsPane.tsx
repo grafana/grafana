@@ -11,7 +11,6 @@ import { VisualizationButton } from './VisualizationButton';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
 import { OptionPaneRenderProps } from './types';
 import { usePanelLatestData } from './usePanelLatestData';
-import { usePanelOptionsLogger } from './usePanelOptionsLogger';
 
 export const OptionsPane = ({
   plugin,
@@ -25,14 +24,6 @@ export const OptionsPane = ({
   const styles = useStyles2(getStyles);
   const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
-
-  usePanelOptionsLogger({
-    panelType: plugin.meta.id,
-    panelId: panel.id,
-    panelTitle: panel.title,
-    panelOptions: panel.getOptions(),
-    panelFieldConfig: panel.fieldConfig,
-  });
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
