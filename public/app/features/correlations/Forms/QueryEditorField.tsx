@@ -76,15 +76,20 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           }
           if (!datasource) {
             return (
-              <Alert title={t('correlations.query-editor.ds-title', 'No data source selected')} severity="info">
-                <Trans i18nKey="correlations.query-editor.ds-text">Please select a target data source first.</Trans>
+              <Alert
+                title={t('correlations.query-editor.data-source-title', 'No data source selected')}
+                severity="info"
+              >
+                <Trans i18nKey="correlations.query-editor.data-source-text">
+                  Please select a target data source first.
+                </Trans>
               </Alert>
             );
           }
           if (!QueryEditor) {
             return (
               <Alert
-                title={t('correlations.query-editor.qe-title', 'Data source does not export a query editor.')}
+                title={t('correlations.query-editor.query-editor-title', 'Data source does not export a query editor.')}
               ></Alert>
             );
           }

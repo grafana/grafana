@@ -14,14 +14,14 @@ export const CorrelationFormNavigation = () => {
   const LastPageNext = !readOnly && (
     <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
       {correlation === undefined
-        ? t('correlations.nav-form.add-btn', 'Add')
-        : t('correlations.nav-form.save-btn', 'Save')}
+        ? t('correlations.navigation-form.add-button', 'Add')
+        : t('correlations.navigation-form.save-button', 'Save')}
     </Button>
   );
 
   const NextPage = (
     <Button variant="primary" type="submit">
-      <Trans i18nKey="correlations.nav-form.next-btn">Next</Trans>
+      <Trans i18nKey="correlations.navigation-form.next-button">Next</Trans>
     </Button>
   );
 
@@ -29,7 +29,7 @@ export const CorrelationFormNavigation = () => {
     <HorizontalGroup justify="flex-start">
       {currentPage > 0 ? (
         <Button variant="secondary" onClick={prevPage}>
-          <Trans i18nKey="correlations.nav-form.back-btn">Back</Trans>
+          <Trans i18nKey="correlations.navigation-form.back-button">Back</Trans>
         </Button>
       ) : undefined}
 

@@ -141,6 +141,16 @@
       "error-message": "",
       "title": ""
     },
+    "basic-info-form": {
+      "description-description": "",
+      "description-label": "",
+      "label-description": "",
+      "label-label": "",
+      "label-placeholder": "",
+      "label-required": "",
+      "sub-text": "",
+      "title": ""
+    },
     "list": {
       "delete": "",
       "label": "",
@@ -149,36 +159,23 @@
       "source": "",
       "target": ""
     },
+    "navigation-form": {
+      "add-button": "",
+      "back-button": "",
+      "next-button": "",
+      "save-button": ""
+    },
     "page-content": "",
     "page-heading": "",
-    "sub-title": ""
-  },
-  "correlations": {
-    "basic-info-form": {
-      "description-description": "",
-      "Description-label": "",
-      "label-description": "",
-      "label-label": "",
-      "label-placeholder": "",
-      "label-required": "",
-      "sub-text": "",
-      "title": ""
-    },
-    "nav-form": {
-      "add-btn": "",
-      "back-btn": "",
-      "next-btn": "",
-      "save-btn": ""
-    },
     "query-editor": {
       "control-rules": "",
-      "ds-text": "",
-      "ds-title": "",
+      "data-source-text": "",
+      "data-source-title": "",
       "error-text": "",
       "error-title": "",
       "loading": "",
-      "qe-title": "",
       "query-description": "",
+      "query-editor-title": "",
       "query-label": ""
     },
     "source-form": {
@@ -193,6 +190,7 @@
       "sub-text": "",
       "title": ""
     },
+    "sub-title": "",
     "target-form": {
       "control-rules": "",
       "sub-text": "",

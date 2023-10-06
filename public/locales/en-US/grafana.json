@@ -136,6 +136,16 @@
       "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
       "title": "Error fetching correlation data"
     },
+    "basic-info-form": {
+      "description-description": "Optional description with more information about the link",
+      "description-label": "Description",
+      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
+      "label-label": "Label",
+      "label-placeholder": "e.g. Tempo traces",
+      "label-required": "This field is required.",
+      "sub-text": "<0>Define text that will describe the correlation.</0>",
+      "title": "Define correlation label (Step 1 of 3)"
+    },
     "list": {
       "delete": "delete correlation",
       "label": "Label",
@@ -144,36 +154,23 @@
       "source": "Source",
       "target": "Target"
     },
+    "navigation-form": {
+      "add-button": "Add",
+      "back-button": "Back",
+      "next-button": "Next",
+      "save-button": "Save"
+    },
     "page-content": "To enable Correlations, add it in the Grafana config:",
     "page-heading": "Correlations are disabled",
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
-  },
-  "correlations": {
-    "basic-info-form": {
-      "description-description": "Optional description with more information about the link",
-      "Description-label": "Description",
-      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
-      "label-label": "Label",
-      "label-placeholder": "e.g. Tempo traces",
-      "label-required": "This field is required.",
-      "sub-text": "<0>Define text that will describe the correlation.</0>",
-      "title": "Define correlation label (Step 1 of 3)"
-    },
-    "nav-form": {
-      "add-btn": "Add",
-      "back-btn": "Back",
-      "next-btn": "Next",
-      "save-btn": "Save"
-    },
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
-      "ds-text": "Please select a target data source first.",
-      "ds-title": "No data source selected",
+      "data-source-text": "Please select a target data source first.",
+      "data-source-title": "No data source selected",
       "error-text": "The selected data source could not be loaded.",
       "error-title": "Error loading data source",
       "loading": "Loading query editor...",
-      "qe-title": "Data source does not export a query editor.",
       "query-description": "Define the query that is run when the link is clicked. You can use <2>variables</2> to access specific field values.",
+      "query-editor-title": "Data source does not export a query editor.",
       "query-label": "Query"
     },
     "source-form": {
@@ -188,6 +185,7 @@
       "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
       "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
     },
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",

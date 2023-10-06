@@ -35,6 +35,14 @@ export const ConfigureCorrelationSourceForm = () => {
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
+
+  const variableList = variables.map((name, i) => (
+    <span className={styles.variable} key={i}>
+      {name}
+      {i < variables.length - 1 ? ', ' : ''}
+    </span>
+  ));
+
   const dataSourceName = getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name;
   return (
     <>
@@ -108,13 +116,7 @@ export const ConfigureCorrelationSourceForm = () => {
             </Card.Heading>
             <Card.Description>
               <Trans i18nKey="correlations.source-form.description">
-                You have used following variables in the target query:{' '}
-                {variables.map((name, i) => (
-                  <span className={styles.variable} key={i}>
-                    {name}
-                    {i < variables.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
+                You have used following variables in the target query: {variableList}
                 <br />A data point needs to provide values to all variables as fields or as transformations output to
                 make the correlation button appear in the visualization.
                 <br />

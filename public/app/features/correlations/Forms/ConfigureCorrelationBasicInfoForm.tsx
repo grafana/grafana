@@ -55,7 +55,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
         </Field>
 
         <Field
-          label={t('correlations.basic-info-form.Description-label', 'Description')}
+          label={t('correlations.basic-info-form.description-label', 'Description')}
           description={t(
             'correlations.basic-info-form.description-description',
             'Optional description with more information about the link'
