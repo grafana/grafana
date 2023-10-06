@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -203,39 +202,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		},
 	}
 
-	if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
-		if err := l.updatePermissions(c, &dto, signedInUser); err != nil {
-			l.log.Error(err.Error())
-		}
-	}
-
 	return dto, err
-}
-
-func (l *LibraryElementService) updatePermissions(c context.Context, model *model.LibraryElementDTO, signedInUser identity.Requester) error {
-	inFolder := model.FolderID > 0
-	var permissions []accesscontrol.SetResourcePermissionCommand
-	namespaceID, userIDstr := signedInUser.GetNamespacedID()
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		return err
-	}
-
-	if namespaceID == identity.NamespaceUser {
-		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
-		})
-	}
-
-	if !inFolder {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-		}...)
-	}
-
-	_, err = l.libraryElementPermissions.SetPermissions(c, model.OrgID, model.UID, permissions...)
-	return err
 }
 
 // deleteLibraryElement deletes a library element.
