@@ -300,14 +300,21 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
-  let listNode: SyntaxNode | null =
-    // Node in-between labels
-    traverse(selectorNode, [['parent', Matchers]]) ??
-    // Node after all other labels
-    walk(selectorNode, [['firstChild', Matchers]]) ??
-    // Node before all other labels
-    walk(selectorNode, [['lastChild', Matchers]]);
+  let listNode: SyntaxNode | null = null;
+
+  // If parent node is selector, we want to start with the current Matcher node
+  if (selectorNode?.parent?.type.id === Selector) {
+    listNode = selectorNode;
+  } else {
+    // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
+    listNode =
+      // Node in-between labels
+      traverse(selectorNode, [['parent', Matchers]]) ??
+      // Node after all other labels
+      walk(selectorNode, [['firstChild', Matchers]]) ??
+      // Node before all other labels
+      walk(selectorNode, [['lastChild', Matchers]]);
+  }
 
   const labels: Label[] = [];
 

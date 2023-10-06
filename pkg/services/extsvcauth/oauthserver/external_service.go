@@ -8,27 +8,11 @@ import (
 	"github.com/ory/fosite"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type KeyResult struct {
-	URL        string `json:"url,omitempty"`
-	PrivatePem string `json:"private,omitempty"`
-	PublicPem  string `json:"public,omitempty"`
-	Generated  bool   `json:"generated,omitempty"`
-}
-
-type ExternalServiceDTO struct {
-	Name        string     `json:"name"`
-	ID          string     `json:"clientId"`
-	Secret      string     `json:"clientSecret"`
-	RedirectURI string     `json:"redirectUri,omitempty"` // Not used yet (code flow)
-	GrantTypes  string     `json:"grantTypes"`            // CSV value
-	Audiences   string     `json:"audiences"`             // CSV value
-	KeyResult   *KeyResult `json:"key,omitempty"`
-}
-
-type ExternalService struct {
+type OAuthExternalService struct {
 	ID               int64  `xorm:"id pk autoincr"`
 	Name             string `xorm:"name"`
 	ClientID         string `xorm:"client_id"`
@@ -49,53 +33,61 @@ type ExternalService struct {
 	ImpersonateScopes []string
 }
 
-func (c *ExternalService) ToDTO() *ExternalServiceDTO {
-	c2 := ExternalServiceDTO{
-		Name:        c.Name,
-		ID:          c.ClientID,
-		Secret:      c.Secret,
-		GrantTypes:  c.GrantTypes,
-		Audiences:   c.Audiences,
-		RedirectURI: c.RedirectURI,
+// ToExternalService converts the ExternalService (used internally by the oauthserver) to extsvcauth.ExternalService (used outside the package)
+// If object must contain Key pairs, pass them as parameters, otherwise only the client PublicPem will be added.
+func (c *OAuthExternalService) ToExternalService(keys *extsvcauth.KeyResult) *extsvcauth.ExternalService {
+	c2 := &extsvcauth.ExternalService{
+		ID:     c.ClientID,
+		Name:   c.Name,
+		Secret: c.Secret,
+		OAuthExtra: &extsvcauth.OAuthExtra{
+			GrantTypes:  c.GrantTypes,
+			Audiences:   c.Audiences,
+			RedirectURI: c.RedirectURI,
+			KeyResult:   keys,
+		},
 	}
-	if len(c.PublicPem) > 0 {
-		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+
+	// Fallback to only display the public pem
+	if keys == nil && len(c.PublicPem) > 0 {
+		c2.OAuthExtra.KeyResult = &extsvcauth.KeyResult{PublicPem: string(c.PublicPem)}
 	}
-	return &c2
+
+	return c2
 }
 
-func (c *ExternalService) LogID() string {
+func (c *OAuthExternalService) LogID() string {
 	return "{name: " + c.Name + ", clientID: " + c.ClientID + "}"
 }
 
 // GetID returns the client ID.
-func (c *ExternalService) GetID() string { return c.ClientID }
+func (c *OAuthExternalService) GetID() string { return c.ClientID }
 
 // GetHashedSecret returns the hashed secret as it is stored in the store.
-func (c *ExternalService) GetHashedSecret() []byte {
+func (c *OAuthExternalService) GetHashedSecret() []byte {
 	// Hashed version is stored in the secret field
 	return []byte(c.Secret)
 }
 
 // GetRedirectURIs returns the client's allowed redirect URIs.
-func (c *ExternalService) GetRedirectURIs() []string {
+func (c *OAuthExternalService) GetRedirectURIs() []string {
 	return []string{c.RedirectURI}
 }
 
 // GetGrantTypes returns the client's allowed grant types.
-func (c *ExternalService) GetGrantTypes() fosite.Arguments {
+func (c *OAuthExternalService) GetGrantTypes() fosite.Arguments {
 	return strings.Split(c.GrantTypes, ",")
 }
 
 // GetResponseTypes returns the client's allowed response types.
 // All allowed combinations of response types have to be listed, each combination having
 // response types of the combination separated by a space.
-func (c *ExternalService) GetResponseTypes() fosite.Arguments {
+func (c *OAuthExternalService) GetResponseTypes() fosite.Arguments {
 	return fosite.Arguments{"code"}
 }
 
 // GetScopes returns the scopes this client is allowed to request on its own behalf.
-func (c *ExternalService) GetScopes() fosite.Arguments {
+func (c *OAuthExternalService) GetScopes() fosite.Arguments {
 	if c.Scopes != nil {
 		return c.Scopes
 	}
@@ -114,7 +106,7 @@ func (c *ExternalService) GetScopes() fosite.Arguments {
 }
 
 // GetScopes returns the scopes this client is allowed to request on a specific user.
-func (c *ExternalService) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) []string {
+func (c *OAuthExternalService) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) []string {
 	ev := ac.EvalPermission(ac.ActionUsersImpersonate, ac.Scope("users", "id", strconv.FormatInt(userID, 10)))
 	hasAccess, errAccess := accessControl.Evaluate(ctx, c.SignedInUser, ev)
 	if errAccess != nil || !hasAccess {
@@ -151,11 +143,11 @@ func (c *ExternalService) GetScopesOnUser(ctx context.Context, accessControl ac.
 }
 
 // IsPublic returns true, if this client is marked as public.
-func (c *ExternalService) IsPublic() bool {
+func (c *OAuthExternalService) IsPublic() bool {
 	return false
 }
 
 // GetAudience returns the allowed audience(s) for this client.
-func (c *ExternalService) GetAudience() fosite.Arguments {
+func (c *OAuthExternalService) GetAudience() fosite.Arguments {
 	return strings.Split(c.Audiences, ",")
 }

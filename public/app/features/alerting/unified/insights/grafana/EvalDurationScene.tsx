@@ -1,9 +1,9 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
-export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getGrafanaEvalDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -20,15 +20,23 @@ export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasourc
         legendFormat: 'failed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor(overrideToFixedColor('success'))
+          .matchFieldsWithName('failed')
+          .overrideColor(overrideToFixedColor('failed'))
+      )
       .build(),
   });
 }
