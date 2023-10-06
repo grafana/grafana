@@ -135,4 +135,7 @@ export interface FeatureToggles {
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
   alertingModifiedExport?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
 }

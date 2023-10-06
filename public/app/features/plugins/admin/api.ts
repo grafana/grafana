@@ -25,6 +25,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     links: local?.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
+    statusContext: remote?.statusContext ?? '',
   };
 }
 

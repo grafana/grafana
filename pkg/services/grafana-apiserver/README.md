@@ -7,6 +7,7 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServer = true
+kubernetesPlaylists = true
 ```
 
 Start Grafana:
@@ -40,4 +41,4 @@ kubectl api-resources
 
 ### Grafana API Access
 
-The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/k8s/apis/](http://localhost:3000/k8s/apis/).
+The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/apis](http://localhost:3000/apis).

@@ -322,14 +322,12 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
   render() {
     if (this.state.loading) {
       return (
-        <div className="gf-form max-width-21">
-          <span className="gf-form-label width-10 query-keyword">Query Type</span>
-          <div className="gf-form-select-wrapper max-width-12">
-            <select className="gf-form-input">
-              <option>Loading...</option>
-            </select>
-          </div>
-        </div>
+        <VariableQueryField
+          value={'loading'}
+          options={[{ value: 'loading', label: 'Loading...' }]}
+          onChange={(value) => null}
+          label="Query Type"
+        />
       );
     }
 

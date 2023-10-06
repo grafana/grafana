@@ -123,6 +123,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
+      "targets": [
+        {
+          "refId": "A",
+        },
+      ],
       "title": "",
       "transformations": [],
       "transparent": false,
@@ -266,6 +271,10 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "links": [],
   "panels": [
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -298,6 +307,18 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
           "sort": "none",
         },
       },
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
       "title": "Simple time series graph ",
       "transformations": [],
       "transparent": false,
@@ -317,6 +338,10 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
       "type": "row",
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
       "fieldConfig": {
         "defaults": {},
         "overrides": [],
@@ -329,6 +354,18 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
       },
       "id": 29,
       "options": {},
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
       "title": "panel inside row",
       "transformations": [],
       "transparent": false,
@@ -355,6 +392,11 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
         "content": "content",
         "mode": "markdown",
       },
+      "targets": [
+        {
+          "refId": "A",
+        },
+      ],
       "title": "Transparent text panel",
       "transformations": [],
       "transparent": true,

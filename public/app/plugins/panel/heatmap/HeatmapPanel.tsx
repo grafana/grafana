@@ -68,11 +68,19 @@ export const HeatmapPanel = ({
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(
+        data.series,
+        data.annotations,
+        options,
+        palette,
+        theme,
+        getFieldLinksSupplier,
+        replaceVariables
+      );
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier, replaceVariables]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field

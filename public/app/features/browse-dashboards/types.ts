@@ -48,6 +48,7 @@ interface RendererUserProps {
   isSelected?: (kind: DashboardViewItem | '$all') => SelectionState;
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
+  treeID?: string;
 }
 
 export type DashboardsTreeColumn = Column<DashboardsTreeItem>;
