@@ -1,3 +1,4 @@
+import { isEmptyObject, PanelModel, TimeRange, toDataFrameDTO } from '@grafana/data';
 import {
   SceneDataLayers,
   SceneGridItem,
@@ -5,8 +6,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   VizPanel,
-  dataLayers,
-  SceneDataLayerProvider,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
@@ -20,6 +19,7 @@ import {
   Panel,
   RowPanel,
   VariableModel,
+  VariableRefresh,
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -32,9 +32,10 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
+import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
-export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
+export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = false): Dashboard {
   const state = scene.state;
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
@@ -47,7 +48,7 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
       if (child instanceof SceneGridItem) {
-        panels.push(gridItemToPanel(child));
+        panels.push(gridItemToPanel(child, isSnapshot));
       }
 
       if (child instanceof SceneGridRow) {
@@ -63,7 +64,8 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   let annotations: AnnotationQuery[] = [];
   if (data instanceof SceneDataLayers) {
     const layers = data.state.layers;
-    annotations = dataLayersToAnnotations(layers);
+
+    annotations = dataLayersToAnnotations(layers, isSnapshot);
   }
 
   if (variablesSet instanceof SceneVariableSet) {
@@ -93,7 +95,7 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
-export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
+export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false): Panel {
   let vizPanel: VizPanel | undefined;
   let x = 0,
     y = 0,
@@ -151,7 +153,7 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
-    transparent: false,
+    transparent: vizPanel.state.displayMode === 'transparent',
   };
 
   const panelTime = vizPanel.state.$timeRange;
@@ -213,9 +215,8 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
 
     panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
-
-  if (vizPanel.state.displayMode === 'transparent') {
-    panel.transparent = true;
+  if (dataProvider && isSnapshot) {
+    panel.snapshotData = dataProvider.state.data?.series.map((frame) => toDataFrameDTO(frame));
   }
 
   if (gridItem instanceof PanelRepeaterGridItem) {
@@ -252,7 +253,7 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
 
   panelsArray.push(rowPanel);
 
-  const panelsInsideRow = gridRow.state.children.map(gridItemToPanel);
+  const panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c));
 
   if (gridRow.state.isCollapsed) {
     rowPanel.panels = panelsInsideRow;
@@ -261,19 +262,76 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   }
 }
 
-export function dataLayersToAnnotations(layers: SceneDataLayerProvider[]) {
-  const annotations: AnnotationQuery[] = [];
-  for (const layer of layers) {
-    if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
-      continue;
+export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: Dashboard, panel?: PanelModel) {
+  // change title
+  dash.title = title;
+
+  // make relative times absolute
+  dash.time = {
+    from: time.from.toISOString(),
+    to: time.to.toISOString(),
+  };
+
+  // Remove links
+  dash.links = [];
+
+  // remove panel queries & links
+  dash.panels?.forEach((panel) => {
+    if ('targets' in panel) {
+      panel.targets = [];
     }
 
-    annotations.push({
-      ...layer.state.query,
-      enable: Boolean(layer.state.isEnabled),
-      hide: Boolean(layer.state.isHidden),
+    // Some very very very old dashboards had links in panels?
+    if ('links' in panel) {
+      panel.links = [];
+    }
+
+    if ('datasource' in panel) {
+      panel.datasource = undefined;
+    }
+  });
+
+  // remove annotation queries
+  if (dash.annotations) {
+    const annotations = dash.annotations.list?.filter((annotation) => annotation.enable) || [];
+    dash.annotations.list = annotations.map((annotation) => {
+      return {
+        name: annotation.name,
+        enable: annotation.enable,
+        iconColor: annotation.iconColor,
+        // @ts-expect-error
+        snapshotData: annotation.snapshotData,
+        type: annotation.type,
+        // @ts-expect-error
+        builtIn: annotation.builtIn,
+        hide: annotation.hide,
+      };
     });
   }
 
-  return annotations;
+  if (dash.templating) {
+    dash.templating.list?.forEach((variable) => {
+      if ('query' in variable) {
+        variable.query = '';
+      }
+      if ('options' in variable) {
+        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      }
+
+      if ('refresh' in variable) {
+        variable.refresh = VariableRefresh.never;
+      }
+    });
+  }
+  return dash;
+
+  // TODO snapshot single panel
+  // if (panel) {
+  //   const singlePanel = panel.getSaveModel();
+  //   singlePanel.gridPos.w = 24;
+  //   singlePanel.gridPos.x = 0;
+  //   singlePanel.gridPos.y = 0;
+  //   singlePanel.gridPos.h = 20;
+  //   dash.panels = [singlePanel];
+  // }
 }
