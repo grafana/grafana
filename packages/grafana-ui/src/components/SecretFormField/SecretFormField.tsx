@@ -39,7 +39,7 @@ const getSecretFormFieldStyles = () => {
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
  *
- * @deprecated
+ * @deprecated Please use the non-legacy `SecretInput` component with a `Field`
  */
 export const SecretFormField = ({
   label = 'Password',
