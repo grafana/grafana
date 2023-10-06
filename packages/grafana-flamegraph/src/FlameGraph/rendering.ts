@@ -3,6 +3,7 @@ import { RefObject, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -16,7 +17,6 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
-import { useTheme2 } from '@grafana/ui';
 
 const ufuzzy = new uFuzzy();
 
