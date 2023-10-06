@@ -249,7 +249,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	saID, errSaveServiceAccount := s.saService.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slugify.Slugify(client.Name),
 		Enabled:     registration.Self.Enabled,
-		OrgID:       oauthserver.NoServiceAccountID,
+		OrgID:       oauthserver.TmpOrgID,
 		Permissions: client.SelfPermissions,
 	})
 	if errSaveServiceAccount != nil {
