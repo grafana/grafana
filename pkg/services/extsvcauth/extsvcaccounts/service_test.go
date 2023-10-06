@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/mock"
@@ -140,6 +142,19 @@ func setupTestEnv(t *testing.T) *TestEnv {
 }
 
 func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
+	extSvcSlug := "grafana-test-app"
+	extSvcOrgID := int64(20)
+	extSvcAccID := int64(10)
+	extSvcPerms := []ac.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}}
+	prevSa := &sa.ServiceAccountDTO{
+		Id:         11,
+		Name:       extSvcSlug,
+		Login:      extSvcSlug,
+		OrgId:      extSvcOrgID,
+		IsDisabled: false,
+		Role:       string(roletype.RoleNone),
+	}
+
 	tests := []struct {
 		name    string
 		init    func(env *TestEnv)
@@ -152,25 +167,25 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should remove service account when disabled",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).Return(int64(10), nil)
+				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: extsvcauth.ManageExtSvcAccountCmd{
-				ExtSvcSlug:  "grafana-test-app",
+				ExtSvcSlug:  extSvcSlug,
 				Enabled:     false,
-				OrgID:       20,
-				Permissions: []ac.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}},
+				OrgID:       extSvcOrgID,
+				Permissions: extSvcPerms,
 			},
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == int64(20) }),
-					mock.MatchedBy(func(slug string) bool { return slug == "grafana-test-app" }))
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == int64(20) }),
-					mock.MatchedBy(func(saID int64) bool { return saID == int64(10) }))
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
 				env.AcStore.AssertCalled(t, "DeleteExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(slug string) bool { return slug == "grafana-test-app" }))
+					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
 			},
 			want:    0,
 			wantErr: false,
@@ -179,27 +194,63 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should remove service account when no permission",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).Return(int64(10), nil)
+				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: extsvcauth.ManageExtSvcAccountCmd{
-				ExtSvcSlug:  "grafana-test-app",
+				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
-				OrgID:       20,
+				OrgID:       extSvcOrgID,
 				Permissions: []ac.Permission{},
 			},
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == int64(20) }),
-					mock.MatchedBy(func(slug string) bool { return slug == "grafana-test-app" }))
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == int64(20) }),
-					mock.MatchedBy(func(saID int64) bool { return saID == int64(10) }))
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
 				env.AcStore.AssertCalled(t, "DeleteExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(slug string) bool { return slug == "grafana-test-app" }))
+					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
 			},
 			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "should create new service account",
+			init: func(env *TestEnv) {
+				// No previous service account was attached to this slug
+				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).
+					Return(int64(0), sa.ErrServiceAccountNotFound.Errorf("mock"))
+				env.SaSvc.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).
+					Return(prevSa, nil)
+				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
+			},
+			cmd: extsvcauth.ManageExtSvcAccountCmd{
+				ExtSvcSlug:  extSvcSlug,
+				Enabled:     true,
+				OrgID:       extSvcOrgID,
+				Permissions: extSvcPerms,
+			},
+			checks: func(t *testing.T, env *TestEnv) {
+				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
+				env.SaSvc.AssertCalled(t, "CreateServiceAccount", mock.Anything,
+					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
+					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
+						return cmd.Name == extSvcSlug && *cmd.Role == roletype.RoleNone
+					}),
+				)
+				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
+					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
+						return cmd.ServiceAccountID == prevSa.Id && cmd.ExternalServiceID == extSvcSlug &&
+							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.Permissions[0] == extSvcPerms[0]
+					}))
+			},
+			want:    11,
 			wantErr: false,
 		},
 	}

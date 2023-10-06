@@ -8,16 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 type ExtSvcAccountsService struct {
 	acSvc  ac.Service
 	logger log.Logger
-	saSvc  serviceaccounts.Service
+	saSvc  sa.Service
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc serviceaccounts.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service) *ExtSvcAccountsService {
 	return &ExtSvcAccountsService{
 		acSvc:  acSvc,
 		logger: log.New("serviceauth.extsvcaccounts"),
@@ -48,7 +48,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 	}
 
 	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, cmd.ExtSvcSlug)
-	if errRetrieve != nil && !errors.Is(errRetrieve, serviceaccounts.ErrServiceAccountNotFound) {
+	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return 0, errRetrieve
 	}
 
@@ -83,7 +83,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	if cmd.SaID <= 0 {
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
-		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &serviceaccounts.CreateServiceAccountForm{
+		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       cmd.ExtSvcSlug,
 			Role:       newRole(roletype.RoleNone),
 			IsDisabled: newBool(false),
