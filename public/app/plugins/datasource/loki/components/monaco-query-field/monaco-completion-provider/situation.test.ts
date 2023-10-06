@@ -277,6 +277,9 @@ describe('situation', () => {
     it('fails to identify situation when missing comma at end of label list', () => {
       assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4" ^ }', null);
     });
+    it('fails to identify situation when attempting to insert before first label', () => {
+      assertSituation('{^one="val1",two!="val2",three=~"val3",four!~"val4"}', null);
+    });
   });
 
   it('identifies all labels correctly when error node is from missing comma within label list', () => {
@@ -287,6 +290,27 @@ describe('situation', () => {
         { name: 'two', value: 'val2', op: '!=' },
         { name: 'three', value: 'val3', op: '=~' },
         { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
+
+  it('identifies labels when inserting before last, no space, size 2', () => {
+    assertSituation('{one="val1",^two!="val2"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+      ],
+    });
+  });
+
+  it('identifies labels when inserting before last, no space, size 3', () => {
+    assertSituation('{one="val1",two!="val2",^three="val3"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=' },
       ],
     });
   });
