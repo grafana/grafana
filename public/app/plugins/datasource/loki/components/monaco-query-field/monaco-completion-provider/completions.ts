@@ -404,7 +404,7 @@ export async function getLogfmtCompletions(
   const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
 
   /**
-   * We want to decide wether to use a trailing comma or not based on the data we have of the current
+   * We want to decide whether to use a trailing comma or not based on the data we have of the current
    * situation. In particular, the following scenarios will not lead to a trailing comma:
    * {label="value"} | logfmt ^
    * - trailingSpace: true, trailingComma: false, otherLabels: []
