@@ -170,7 +170,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   }
 }
 
-/** @deprecated */
+/** @deprecated Please use the non legacy `Select` with async functionality */
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
   static contextType = ThemeContext;
 
