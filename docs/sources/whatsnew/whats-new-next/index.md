@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## User experience updates in Kubernetes Monitoring
+## Better path to troubleshooting in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
 
@@ -26,7 +26,7 @@ _Generally available in Grafana Cloud_
 
 To provide quicker identification and troubleshooting of issues, we have upgraded the Kubernetes Monitoring's interface, including:
 
-- The home page now shows a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
+- The home page has been changed to show a [snapshot of issues](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#see-the-issues-at-a-glance) that reach a specific threshold. 
   
   (ADD SCREENSHOT AFTER CROW's NEST LANGUAGE REMOVED)
 
@@ -38,7 +38,7 @@ To provide quicker identification and troubleshooting of issues, we have upgrade
   - Persistent Volumes with capacity above 90%
   - Node disks with capacity above 90%
 
-- The [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) now provides tabs that allow you to quickly switch between the Cluster, namespace, workload, and Node views.
+- The [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) provides tabs that allow you to quickly switch between the Cluster, namespace, workload, and Node views.
 
   (ADD SCREENSHOT)
 
