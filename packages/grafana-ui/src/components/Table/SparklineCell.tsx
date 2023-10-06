@@ -8,8 +8,6 @@ import {
   isDataFrame,
   Field,
   DataFrameWithValue,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -28,7 +26,7 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { TableCellProps } from './types';
-import { getCellOptions } from './utils';
+import { getAlignmentFactor, getCellOptions } from './utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
@@ -110,8 +108,6 @@ export const SparklineCell = (props: TableCellProps) => {
     );
   }
 
-  console.log('field.config', field.config);
-
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {valueElement}
@@ -161,35 +157,4 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
     return options;
   }
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
-}
-
-function getAlignmentFactor(field: Field, displayValue: DisplayValue, rowIndex: number): DisplayValueAlignmentFactors {
-  let alignmentFactor = field.state?.alignmentFactors;
-
-  if (alignmentFactor) {
-    // check if current alignmentFactor is still the longest
-    if (alignmentFactor.text.length < displayValue.text.length) {
-      alignmentFactor.text = displayValue.text;
-    }
-    return alignmentFactor;
-  } else {
-    // look at the next 1000 rows
-    alignmentFactor = { ...displayValue };
-    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
-
-    for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display!(field.values[i]);
-      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
-        alignmentFactor.text = displayValue.text;
-      }
-    }
-
-    if (field.state) {
-      field.state.alignmentFactors = alignmentFactor;
-    } else {
-      field.state = { alignmentFactors: alignmentFactor };
-    }
-
-    return alignmentFactor;
-  }
 }

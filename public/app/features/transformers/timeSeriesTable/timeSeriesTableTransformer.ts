@@ -50,8 +50,6 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
  * @alpha
  */
 export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOptions, data: DataFrame[]): DataFrame[] {
-  console.log('options', options);
-
   // initialize fields from labels for each refId
   const refId2LabelFields = getLabelFields(data);
 
