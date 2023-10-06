@@ -53,7 +53,10 @@ export const VizLegendTable = <T extends unknown>({
 
           if (item.getDisplayValues) {
             const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
-            return stat && stat.numeric;
+
+            if (stat) {
+              return isNaN(stat.numeric) ? -Infinity : stat.numeric;
+            }
           }
           return undefined;
         },

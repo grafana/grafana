@@ -6,6 +6,7 @@ import {
   DataSourceSettings,
   PanelData,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 
 import Datasource from '../datasource';
@@ -142,6 +143,7 @@ export interface AzureQueryEditorFieldProps {
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
   schema?: EngineSchema;
+  range?: TimeRange;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;

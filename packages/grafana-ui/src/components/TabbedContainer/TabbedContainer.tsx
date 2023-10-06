@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 
-import { IconName, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
+import { IconButton } from '../../components/IconButton/IconButton';
+import { TabsBar, Tab, TabContent } from '../../components/Tabs';
 import { stylesFactory, useTheme2 } from '../../themes';
+import { IconName } from '../../types/icon';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface TabConfig {
   label: string;

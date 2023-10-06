@@ -1,6 +1,6 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
-import { TestVariable } from '@grafana/scenes';
+import { ConstantVariable, EmbeddedScene, SceneCanvasText, SceneVariableSet, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
@@ -198,7 +198,7 @@ describe('templateSrv', () => {
         {
           type: 'datasource',
           name: 'ds',
-          current: { value: 'logstash', text: 'logstash' },
+          current: { value: 'logstash-id', text: 'logstash' },
         },
         { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
         { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
@@ -208,6 +208,10 @@ describe('templateSrv', () => {
           oogle: mockDataSource({
             name: 'oogle',
             uid: 'oogle',
+          }),
+          logstash: mockDataSource({
+            name: 'logstash',
+            uid: 'logstash-id',
           }),
         })
       );
@@ -813,7 +817,9 @@ describe('templateSrv', () => {
   describe('scenes compatibility', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv(key, []);
+      interpolateMock.mockClear();
     });
+
     it('should use scene interpolator when scoped var provided', () => {
       const variable = new TestVariable({});
 
@@ -822,6 +828,22 @@ describe('templateSrv', () => {
       expect(interpolateMock).toHaveBeenCalledTimes(1);
       expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
+    });
+
+    it('should use scene interpolator global __grafanaSceneContext is active', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $variables: new SceneVariableSet({
+          variables: [new ConstantVariable({ name: 'sceneVar', value: 'hello' })],
+        }),
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+
+      window.__grafanaSceneContext.activate();
+
+      _templateSrv.replace('test ${sceneVar}');
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(window.__grafanaSceneContext);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${sceneVar}');
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Divider,
@@ -21,7 +22,6 @@ import {
   Switch,
   Tooltip,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
@@ -50,7 +50,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
     };
   };
 
-  const WIDTH_SHORT = 15;
   const WIDTH_LONG = 40;
 
   return (
@@ -140,9 +139,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       {config.secureSocksDSProxyEnabled && (
         <>
           <Divider />
-          {config.secureSocksDSProxyEnabled && (
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-          )}
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         </>
       )}
 
@@ -228,7 +225,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
 
       <Divider />
 
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
 
