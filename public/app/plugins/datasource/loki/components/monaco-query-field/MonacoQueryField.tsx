@@ -72,8 +72,8 @@ function ensureLogQL(monaco: Monaco) {
     monaco.languages.setLanguageConfiguration(LANG_ID, {
       ...languageConfiguration,
       wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()+\[{\]}\\|;:',.<>\/?\s]+)/g,
-      // BEFORE  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
-      // I have removed `"` and "=" from the exclusion list, so now it matches and replaces and entire label
+      // Default:  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
+      // Removed `"`, `=`, and `-`, from the exclusion list, so now the completion provider can decide to overwrite any matching words, or just insert text at the cursor
     });
   }
 }
