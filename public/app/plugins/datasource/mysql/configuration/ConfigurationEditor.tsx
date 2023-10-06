@@ -218,14 +218,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </ConfigSubSection>
 
         <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
-      </ConfigSection>
 
-      {config.secureSocksDSProxyEnabled && (
-        <>
-          <Divider />
+        {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-        </>
-      )}
+        )}
+      </ConfigSection>
 
       <Divider />
 
