@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -482,6 +484,36 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	require.Equal(t, int64(0), c)
 }
 
+func TestIntegration_GetNamespaceByUID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        log.New("test-dbstore"),
+	}
+
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	uid := uuid.NewString()
+	title := "folder-title"
+	createFolder(t, store, uid, title, 1)
+
+	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
+	require.NoError(t, err)
+	require.Equal(t, title, actual.Title)
+	require.Equal(t, uid, actual.UID)
+}
+
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
@@ -512,7 +544,7 @@ func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule)
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID int64) {
+func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64) {
 	t.Helper()
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -522,7 +554,7 @@ func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID i
 	}
 
 	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          namespace,
+		UID:          uid,
 		OrgID:        orgID,
 		Title:        title,
 		Description:  "",

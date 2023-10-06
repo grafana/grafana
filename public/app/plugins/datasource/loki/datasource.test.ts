@@ -528,22 +528,26 @@ describe('LokiDatasource', () => {
 
     it('should interpolate strings in the query', async () => {
       const { ds } = getTestContext();
+      const scopedVars = { scopedVar1: { value: 'A' } };
 
-      await ds.metricFindQuery('label_names()');
-      await ds.metricFindQuery({
-        refId: 'test',
-        type: LokiVariableQueryType.LabelValues,
-        stream: '{label1="value1", label2="value2"}',
-        label: 'label5',
-      });
+      await ds.metricFindQuery('label_names()', { scopedVars });
+      await ds.metricFindQuery(
+        {
+          refId: 'test',
+          type: LokiVariableQueryType.LabelValues,
+          stream: '{label1="value1", label2="value2"}',
+          label: 'label5',
+        },
+        { scopedVars }
+      );
 
-      expect(templateSrvStub.replace).toHaveBeenCalledWith('label_names()', undefined, expect.any(Function));
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label_names()', scopedVars, expect.any(Function));
       expect(templateSrvStub.replace).toHaveBeenCalledWith(
         '{label1="value1", label2="value2"}',
-        undefined,
+        scopedVars,
         expect.any(Function)
       );
-      expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', undefined, expect.any(Function));
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', scopedVars, expect.any(Function));
     });
   });
 

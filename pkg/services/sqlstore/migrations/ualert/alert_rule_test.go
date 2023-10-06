@@ -195,6 +195,20 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, string(models.ErrorErrState), ar.ExecErrState)
 	})
+
+	t.Run("migrate message template", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.Message = "Instance ${instance} is down"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.Nil(t, err)
+		expected :=
+			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
+				"Instance {{$mergedLabels.instance}} is down"
+		require.Equal(t, expected, ar.Annotations["message"])
+	})
 }
 
 func createTestDashAlert() dashAlert {

@@ -55,7 +55,7 @@ func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	_, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
-	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
+	span.SetAttributes(attribute.String("msg", msgName))
 
 	return nil
 }

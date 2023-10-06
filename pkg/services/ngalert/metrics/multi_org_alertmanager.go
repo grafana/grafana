@@ -94,6 +94,9 @@ type AlertmanagerAggregatedMetrics struct {
 	nflogQueryDuration           *prometheus.Desc
 	nflogPropagatedMessagesTotal *prometheus.Desc
 
+	// exporter metrics, gathered from the Alertmanager Alert Marker.
+	markerAlerts *prometheus.Desc
+
 	// exported metrics, gathered from Alertmanager Silences
 	silencesGCDuration              *prometheus.Desc
 	silencesSnapshotDuration        *prometheus.Desc
@@ -187,6 +190,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			"Number of received gossip messages that have been further gossiped.",
 			nil, nil),
 
+		markerAlerts: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_alerts", Namespace, Subsystem),
+			"How many alerts by state are in Grafana's Alertmanager.",
+			[]string{"org", "state"}, nil),
+
 		silencesGCDuration: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_silences_gc_duration_seconds", Namespace, Subsystem),
 			"Duration of the last silence garbage collection cycle.",
@@ -270,6 +278,8 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.nflogQueryDuration
 	out <- a.nflogPropagatedMessagesTotal
 
+	out <- a.markerAlerts
+
 	out <- a.silencesGCDuration
 	out <- a.silencesSnapshotDuration
 	out <- a.silencesSnapshotSize
@@ -309,6 +319,8 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.nflogQueryErrorsTotal, "alertmanager_nflog_query_errors_total")
 	data.SendSumOfHistograms(out, a.nflogQueryDuration, "alertmanager_nflog_query_duration_seconds")
 	data.SendSumOfCounters(out, a.nflogPropagatedMessagesTotal, "alertmanager_nflog_gossip_messages_propagated_total")
+
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.markerAlerts, "alertmanager_alerts", "state")
 
 	data.SendSumOfSummaries(out, a.silencesGCDuration, "alertmanager_silences_gc_duration_seconds")
 	data.SendSumOfSummaries(out, a.silencesSnapshotDuration, "alertmanager_silences_snapshot_duration_seconds")
