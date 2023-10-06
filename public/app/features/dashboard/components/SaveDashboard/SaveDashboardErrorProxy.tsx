@@ -17,7 +17,7 @@ interface SaveDashboardErrorProxyProps {
   dashboardSaveModel: DashboardModel;
   error: FetchError;
   /** used if error object is not extensible */
-  setIsHandled?: React.Dispatch<React.SetStateAction<boolean>>
+  setIsHandled?: React.Dispatch<React.SetStateAction<boolean>>;
   onDismiss: () => void;
 }
 

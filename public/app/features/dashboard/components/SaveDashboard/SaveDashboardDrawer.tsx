@@ -54,9 +54,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   const onSuccess = onSaveSuccess
     ? () => {
-      onDismiss();
-      onSaveSuccess();
-    }
+        onDismiss();
+        onSaveSuccess();
+      }
     : onDismiss;
 
   const renderSaveBody = () => {
