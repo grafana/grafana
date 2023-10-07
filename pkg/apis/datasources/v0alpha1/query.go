@@ -33,7 +33,10 @@ type rawDataQuery = map[string]interface{}
 
 func readQueries(in []byte) ([]backend.DataQuery, error) {
 	reqDTO := &rawMetricRequest{}
-	json.Unmarshal(in, &reqDTO)
+	err := json.Unmarshal(in, &reqDTO)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(reqDTO.Queries) == 0 {
 		return nil, fmt.Errorf("expected queries")
@@ -47,7 +50,6 @@ func readQueries(in []byte) ([]backend.DataQuery, error) {
 	queries := make([]backend.DataQuery, 0)
 
 	for _, query := range reqDTO.Queries {
-		var err error
 		dataQuery := backend.DataQuery{
 			TimeRange: backendTr,
 		}

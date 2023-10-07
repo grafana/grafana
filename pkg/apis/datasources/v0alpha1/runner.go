@@ -40,7 +40,7 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	if ds == nil {
 		klog.Errorf("missing datasource: %s", err)
 		w.WriteHeader(400)
-		w.Write([]byte("missing datasource"))
+		_ = w.Write([]byte("missing datasource"))
 		return
 	}
 
@@ -75,7 +75,7 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	case "query":
 		if r.Method != "POST" {
 			w.WriteHeader(400)
-			w.Write([]byte("use POST for query!"))
+			_ = w.Write([]byte("use POST for query!"))
 			return
 		}
 		b.executeQueryHandler(ctx, w, r, pluginCtx)
@@ -100,7 +100,7 @@ func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.Re
 	if err != nil {
 		klog.Errorf("CallResourceRequest body was malformed: %s", err)
 		w.WriteHeader(400)
-		w.Write([]byte("CallResourceRequest body was malformed"))
+		_ = w.Write([]byte("CallResourceRequest body was malformed"))
 		return
 	}
 
