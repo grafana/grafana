@@ -58,10 +58,10 @@ func (m *migration) addErrorSilence(da dashAlert, rule *models.AlertRule) error 
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year
 	}
-	if _, ok := m.silences[da.OrgId]; !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	if _, ok := m.silences[da.OrgID]; !ok {
+		m.silences[da.OrgID] = make([]*pb.MeshSilence, 0)
 	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	m.silences[da.OrgID] = append(m.silences[da.OrgID], s)
 	return nil
 }
 
@@ -97,11 +97,11 @@ func (m *migration) addNoDataSilence(da dashAlert, rule *models.AlertRule) error
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}
-	_, ok := m.silences[da.OrgId]
+	_, ok := m.silences[da.OrgID]
 	if !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+		m.silences[da.OrgID] = make([]*pb.MeshSilence, 0)
 	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	m.silences[da.OrgID] = append(m.silences[da.OrgID], s)
 	return nil
 }
 

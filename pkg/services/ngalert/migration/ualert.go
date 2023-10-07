@@ -124,7 +124,7 @@ func (m *migration) Exec(ctx context.Context) error {
 			if err != nil {
 				return nil, MigrationError{
 					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgID, err),
-					AlertId: da.Id,
+					AlertId: da.ID,
 				}
 			}
 			generalFolderCache[dash.OrgID] = f
@@ -139,24 +139,24 @@ func (m *migration) Exec(ctx context.Context) error {
 	rulesPerOrg := make(map[int64]map[*models.AlertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
-		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardID", da.DashboardId, "orgID", da.OrgId)
+		l := m.log.New("ruleID", da.ID, "ruleName", da.Name, "dashboardID", da.DashboardID, "orgID", da.OrgID)
 		l.Debug("migrating alert rule to Unified Alerting")
-		newCond, err := transConditions(ctx, *da.ParsedSettings, da.OrgId, m.dsCacheService)
+		newCond, err := transConditions(ctx, *da.ParsedSettings, da.OrgID, m.dsCacheService)
 		if err != nil {
 			return err
 		}
 
-		dash, err := m.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: da.DashboardId, OrgID: da.OrgId})
+		dash, err := m.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: da.DashboardID, OrgID: da.OrgID})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return MigrationError{
-					Err:     fmt.Errorf("dashboard with ID %v under organisation %d not found: %w", da.DashboardId, da.OrgId, err),
-					AlertId: da.Id,
+					Err:     fmt.Errorf("dashboard with ID %v under organisation %d not found: %w", da.DashboardID, da.OrgID, err),
+					AlertId: da.ID,
 				}
 			}
 			return MigrationError{
-				Err:     fmt.Errorf("failed to get dashboard with ID %v under organisation %d: %w", da.DashboardId, da.OrgId, err),
-				AlertId: da.Id,
+				Err:     fmt.Errorf("failed to get dashboard with ID %v under organisation %d: %w", da.DashboardID, da.OrgID, err),
+				AlertId: da.ID,
 			}
 		}
 
@@ -172,21 +172,21 @@ func (m *migration) Exec(ctx context.Context) error {
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to create folder: %w", err),
-						AlertId: da.Id,
+						AlertId: da.ID,
 					}
 				}
 				permissions, err := folderHelper.getACL(ctx, dash.OrgID, dash.ID)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.ID, dash.OrgID, err),
-						AlertId: da.Id,
+						AlertId: da.ID,
 					}
 				}
 				err = folderHelper.setACL(ctx, f.OrgID, f.ID, permissions)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.ID, f.OrgID, err),
-						AlertId: da.Id,
+						AlertId: da.ID,
 					}
 				}
 				folderCache[folderName] = f
@@ -215,12 +215,12 @@ func (m *migration) Exec(ctx context.Context) error {
 		if migratedFolder.UID == "" {
 			return MigrationError{
 				Err:     fmt.Errorf("empty folder identifier"),
-				AlertId: da.Id,
+				AlertId: da.ID,
 			}
 		}
 		rule, err := m.makeAlertRule(l, *newCond, da, dash.UID, migratedFolder.UID)
 		if err != nil {
-			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, dash.UID, da.OrgId, err)
+			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.ID, dash.UID, da.OrgID, err)
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
@@ -231,7 +231,7 @@ func (m *migration) Exec(ctx context.Context) error {
 		} else {
 			return MigrationError{
 				Err:     fmt.Errorf("duplicate generated rule UID"),
-				AlertId: da.Id,
+				AlertId: da.ID,
 			}
 		}
 	}

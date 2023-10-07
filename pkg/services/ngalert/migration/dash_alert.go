@@ -4,38 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
 type dashAlert struct {
-	Id          int64
-	OrgId       int64
-	DashboardId int64
-	PanelId     int64
-	Name        string
-	Message     string
-	Frequency   int64
-	For         time.Duration
-	State       string
-
-	Settings       json.RawMessage
+	*legacymodels.Alert
 	ParsedSettings *dashAlertSettings
 }
 
 var slurpDashSQL = `
-SELECT id,
-	org_id,
-	dashboard_id,
-	panel_id,
-	org_id,
-	name,
-	message,
-	frequency,
-	%s,
-	state,
-	settings
+SELECT *
 FROM
 	alert
 WHERE org_id IN (SELECT id from org)
@@ -49,17 +29,30 @@ WHERE org_id IN (SELECT id from org)
 func (m *migration) slurpDashAlerts(ctx context.Context) ([]dashAlert, error) {
 	var dashAlerts []dashAlert
 	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.SQL(fmt.Sprintf(slurpDashSQL, m.dialect.Quote("for"))).Find(&dashAlerts)
+		var alerts []legacymodels.Alert
+		err := sess.SQL(slurpDashSQL).Find(&alerts)
 		if err != nil {
 			return err
 		}
 
-		for i := range dashAlerts {
-			err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
+		dashAlerts = make([]dashAlert, 0, len(alerts))
+		for i := range alerts {
+			alert := alerts[i]
+
+			rawSettings, err := json.Marshal(alert.Settings)
 			if err != nil {
-				da := dashAlerts[i]
-				return fmt.Errorf("failed to parse alert rule ID:%d, name:'%s', orgID:%d: %w", da.Id, da.Name, da.OrgId, err)
+				return fmt.Errorf("get settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
 			}
+			var parsedSettings dashAlertSettings
+			err = json.Unmarshal(rawSettings, &parsedSettings)
+			if err != nil {
+				return fmt.Errorf("parse settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
+			}
+
+			dashAlerts = append(dashAlerts, dashAlert{
+				Alert:          &alerts[i],
+				ParsedSettings: &parsedSettings,
+			})
 		}
 		return nil
 	})
