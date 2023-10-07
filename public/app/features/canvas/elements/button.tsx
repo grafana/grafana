@@ -14,7 +14,7 @@ import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/e
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultLightTextColor } from '../element';
 import { Align, TextConfig, TextData } from '../types';
 
 // TODO: Figure out how to support vertical align for button content
@@ -89,8 +89,8 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   display: ButtonDisplay,
 
   defaultSize: {
-    width: 78,
-    height: 32,
+    width: 150,
+    height: 45,
   },
 
   getNewOptions: (options) => ({
@@ -102,9 +102,9 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       },
       align: Align.Center,
       color: {
-        // TODO: Figure out how to get this from theme and not hard code
-        fixed: '#f0f4fd',
+        fixed: defaultLightTextColor,
       },
+      size: 14,
       api: defaultApiConfig,
       style: defaultStyleConfig,
     },
