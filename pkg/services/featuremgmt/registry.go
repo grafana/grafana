@@ -630,6 +630,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:         "grafanaAPIServerWithExperimentalAPIs",
+			Description:  "Register experimental APIs with the k8s API server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "featureToggleAdminPage",
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
 			Stage:           FeatureStageExperimental,
