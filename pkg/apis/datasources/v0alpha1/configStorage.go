@@ -23,6 +23,7 @@ var (
 type configStorage struct {
 	apiVersion    string
 	groupResource schema.GroupResource
+	builder       *DSAPIBuilder
 }
 
 func (s *configStorage) New() runtime.Object {

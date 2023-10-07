@@ -76,10 +76,10 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		for resource, routes := range routes.Resource {
 			sub = router.PathPrefix(prefix + "/" + resource + "/{name}").Subrouter()
 			for _, route := range routes {
-				err = validPath(route.Path)
-				if err != nil {
-					return nil, err
-				}
+				// err = validPath(route.Path)
+				// if err != nil {
+				// 	return nil, err
+				// }
 
 				useful = true
 				methods, err := methodsFromSpec(route.Path, route.Spec)

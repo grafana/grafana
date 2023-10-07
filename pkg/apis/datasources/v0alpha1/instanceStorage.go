@@ -2,13 +2,15 @@ package v0alpha1
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -23,6 +25,7 @@ var (
 type instanceStorage struct {
 	apiVersion    string
 	groupResource schema.GroupResource
+	builder       *DSAPIBuilder
 }
 
 func (s *instanceStorage) New() runtime.Object {
@@ -48,10 +51,17 @@ func (s *instanceStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (s *instanceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	ds, err := s.builder.getDataSource(ctx, name)
+	if err != nil {
+		return nil, err
 	}
+	return s.asInstance(ds), nil
+}
+
+func (s *instanceStorage) asInstance(ds *datasources.DataSource) *InstanceInfo {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%d/%s", ds.Created.UnixMilli(), ds.UID)))
+	uid := fmt.Sprintf("%x", h.Sum(nil))
 
 	return &InstanceInfo{
 		TypeMeta: metav1.TypeMeta{
@@ -59,39 +69,29 @@ func (s *instanceStorage) Get(ctx context.Context, name string, options *metav1.
 			APIVersion: s.apiVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: fmt.Sprintf("org-%d", orgId),
-			Labels: map[string]string{
-				"key": "value",
-			},
+			Name:              ds.UID,
+			Namespace:         fmt.Sprintf("org-%d", ds.OrgID),
+			CreationTimestamp: metav1.NewTime(ds.Created),
+			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+			UID:               types.UID(uid), // make it different so we don't confuse it with "name"
 		},
-		Title:       "the title",
-		Description: "a description of this data source",
-	}, nil
+		Title: ds.Name,
+	}
 }
 
 func (s *instanceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return &InstanceInfoList{
+	result := &InstanceInfoList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DataSourceConfigList",
 			APIVersion: s.apiVersion,
 		},
-		Items: []InstanceInfo{
-			{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "InstanceInfo",
-					APIVersion: s.apiVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aaa",
-					Namespace: fmt.Sprintf("org-%d", 1),
-					Labels: map[string]string{
-						"key": "value",
-					},
-				},
-				Title:       "the title",
-				Description: "a description of this data source",
-			},
-		},
-	}, nil
+		Items: []InstanceInfo{},
+	}
+	vals, err := s.builder.getDataSources(ctx)
+	if err == nil {
+		for _, ds := range vals {
+			result.Items = append(result.Items, *s.asInstance(ds))
+		}
+	}
+	return result, err
 }
