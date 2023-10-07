@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 
 import { FieldType, DataFrame, DataLink, Field } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, config } from '@grafana/runtime';
 
 import { DerivedFieldConfig } from './types';
 
@@ -13,6 +13,8 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
 
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
+  const fieldsByName = new Map(newFields.map((field) => [field.name, field]));
+
   // line-field is the first string-field
   // NOTE: we should create some common log-frame-extra-string-field code somewhere
   const lineField = dataFrame.fields.find((f) => f.type === FieldType.string);
@@ -22,12 +24,37 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
     throw new Error('invalid logs-dataframe, string-field missing');
   }
 
-  lineField.values.forEach((line) => {
+  const labelFields = dataFrame.fields.find((f) => f.type === FieldType.other && f.name === 'labels');
+
+  for (let i = 0; i < lineField.values.length; i++) {
     for (const field of newFields) {
+      if (
+        config.featureToggles.lokiEnableNameMatcherOption &&
+        derivedFieldsGrouped[field.name][0].enableNameMatcher &&
+        labelFields
+      ) {
+        const label = labelFields.values[i];
+        if (label) {
+          const intersectingKey = Object.keys(label).find((key) => fieldsByName.has(key));
+
+          if (intersectingKey) {
+            field.values.push(label[intersectingKey]);
+            continue;
+          }
+        }
+      }
+
+      const line = lineField.values[i];
       const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
-      field.values.push(logMatch && logMatch[1]);
+
+      if (logMatch && logMatch[1]) {
+        field.values.push(logMatch[1]);
+        continue;
+      }
+
+      field.values.push(null);
     }
-  });
+  }
 
   return newFields;
 }

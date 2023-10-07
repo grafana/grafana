@@ -145,6 +145,7 @@ Experimental features might be changed or removed without prior notice.
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
+| `lokiEnableNameMatcherOption`               | Provide an option to match Loki's derived fields using the field names from parsed logs                      |
 
 ## Development feature toggles
 

@@ -91,7 +91,10 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
             icon="plus"
             onClick={(event) => {
               event.preventDefault();
-              const newDerivedFields = [...fields, { name: '', matcherRegex: '', urlDisplayLabel: '', url: '' }];
+              const newDerivedFields = [
+                ...fields,
+                { name: '', matcherRegex: '', urlDisplayLabel: '', url: '', enableNameMatcher: false },
+              ];
               onChange(newDerivedFields);
             }}
           >

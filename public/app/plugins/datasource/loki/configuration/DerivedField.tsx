@@ -3,6 +3,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -32,6 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
   `,
   dataSource: css``,
+  nameMatcherField: css({}),
 });
 
 type Props = {
@@ -75,6 +77,7 @@ export const DerivedField = (props: Props) => {
         </Field>
         <Field
           className={styles.regexField}
+          hidden={config.featureToggles.lokiEnableNameMatcherOption && value.enableNameMatcher}
           label={
             <TooltipLabel
               label="Regex"
@@ -157,6 +160,31 @@ export const DerivedField = (props: Props) => {
           </Field>
         )}
       </div>
+
+      {config.featureToggles.lokiEnableNameMatcherOption && (
+        <div className="gf-form">
+          <Field
+            className={styles.nameMatcherField}
+            label={
+              <TooltipLabel
+                label="Name matcher"
+                content="When enabled, any fields in the logs recognized using format operations like json, logfmt, unpack, etc., will be associated with this derived field if their names match."
+              />
+            }
+          >
+            <Switch
+              value={value.enableNameMatcher}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const { checked } = e.currentTarget;
+                onChange({
+                  ...value,
+                  enableNameMatcher: checked,
+                });
+              }}
+            />
+          </Field>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { createDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { getDerivedFields } from './getDerivedFields';
 
@@ -21,6 +22,14 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('getDerivedFields', () => {
+  beforeAll(() => {
+    config.featureToggles.lokiEnableNameMatcherOption = true;
+  });
+
+  afterAll(() => {
+    config.featureToggles.lokiEnableNameMatcherOption = false;
+  });
+
   it('adds links to fields', () => {
     const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     const newFields = getDerivedFields(df, [
@@ -104,5 +113,48 @@ describe('getDerivedFields', () => {
       },
       url: '',
     });
+  });
+  it('adds links to fields with labels', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'labels', values: [{ trace3: 'bar', trace4: 'blank' }, { trace3: 'tar' }, {}, null] },
+        { name: 'line', values: ['nothing', 'trace1=1234', 'trace2=aa', ''] },
+      ],
+    });
+    const newFields = getDerivedFields(df, [
+      {
+        matcherRegex: 'trace1=(\\w+)',
+        name: 'trace1',
+        url: 'http://localhost/${__value.raw}',
+      },
+      {
+        matcherRegex: '',
+        name: 'trace3',
+        url: 'http://localhost:8080/${__value.raw}',
+        enableNameMatcher: true,
+      },
+      {
+        matcherRegex: '',
+        name: 'trace4',
+        enableNameMatcher: false,
+      },
+    ]);
+    expect(newFields.length).toBe(3);
+    const trace1 = newFields.find((f) => f.name === 'trace1');
+    expect(trace1!.values).toEqual([null, '1234', null, null]);
+    expect(trace1!.config.links![0]).toEqual({
+      url: 'http://localhost/${__value.raw}',
+      title: '',
+    });
+
+    const trace3 = newFields.find((f) => f.name === 'trace3');
+    expect(trace3!.values).toEqual(['bar', 'tar', null, null]);
+    expect(trace3!.config.links![0]).toEqual({
+      url: 'http://localhost:8080/${__value.raw}',
+      title: '',
+    });
+
+    const trace4 = newFields.find((f) => f.name === 'trace4');
+    expect(trace4!.values).toEqual([null, null, null, null]);
   });
 });

@@ -486,4 +486,8 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagLokiEnableNameMatcherOption
+	// Provide an option to match Loki&#39;s derived fields using the field names from parsed logs
+	FlagLokiEnableNameMatcherOption = "lokiEnableNameMatcherOption"
 )
