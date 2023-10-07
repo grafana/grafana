@@ -9,8 +9,7 @@ resource "grafana_rule_group" "rule_group_0000" {
     condition = "condition"
 
     data {
-      ref_id     = "query"
-      query_type = ""
+      ref_id = "query"
 
       relative_time_range {
         from = 18000
@@ -21,8 +20,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       model          = "{\n              \"expr\": \"http_request_duration_microseconds_count\",\n              \"hide\": false,\n              \"interval\": \"\",\n              \"intervalMs\": 1000,\n              \"legendFormat\": \"\",\n              \"maxDataPoints\": 100,\n              \"refId\": \"query\"\n            }"
     }
     data {
-      ref_id     = "reduced"
-      query_type = ""
+      ref_id = "reduced"
 
       relative_time_range {
         from = 18000
@@ -33,8 +31,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       model          = "{\n              \"expression\": \"query\",\n              \"hide\": false,\n              \"intervalMs\": 1000,\n              \"maxDataPoints\": 100,\n              \"reducer\": \"mean\",\n              \"refId\": \"reduced\",\n              \"type\": \"reduce\"\n            }"
     }
     data {
-      ref_id     = "condition"
-      query_type = ""
+      ref_id = "condition"
 
       relative_time_range {
         from = 18000
@@ -47,9 +44,6 @@ resource "grafana_rule_group" "rule_group_0000" {
 
     no_data_state  = "NoData"
     exec_err_state = "Alerting"
-    for            = 0
-    annotations    = null
-    labels         = null
     is_paused      = false
   }
   rule {
@@ -57,8 +51,7 @@ resource "grafana_rule_group" "rule_group_0000" {
     condition = "B"
 
     data {
-      ref_id     = "A"
-      query_type = ""
+      ref_id = "A"
 
       relative_time_range {
         from = 18000
@@ -69,8 +62,7 @@ resource "grafana_rule_group" "rule_group_0000" {
       model          = "{\n              \"alias\": \"just-testing\",\n              \"intervalMs\": 1000,\n              \"maxDataPoints\": 100,\n              \"orgId\": 0,\n              \"refId\": \"A\",\n              \"scenarioId\": \"csv_metric_values\",\n              \"stringInput\": \"1,20,90,30,5,0\"\n            }"
     }
     data {
-      ref_id     = "B"
-      query_type = ""
+      ref_id = "B"
 
       relative_time_range {
         from = 18000
@@ -83,9 +75,6 @@ resource "grafana_rule_group" "rule_group_0000" {
 
     no_data_state  = "NoData"
     exec_err_state = "Alerting"
-    for            = 0
-    annotations    = null
-    labels         = null
     is_paused      = false
   }
 }

@@ -129,7 +129,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     case 'spectrum': {
       options.color.mode = HeatmapColorMode.Scheme;
 
-      const current = color.colorScheme as string;
+      const current: string = color.colorScheme;
       let scheme = colorSchemes.find((v) => v.name === current);
       if (!scheme) {
         scheme = colorSchemes.find((v) => current.indexOf(v.name) >= 0);
@@ -168,7 +168,7 @@ function getHeatmapCellLayout(v?: string): HeatmapCellLayout {
   return HeatmapCellLayout.auto;
 }
 
-function asNumber(v: any, defaultValue?: number): number | undefined {
+function asNumber(v: unknown, defaultValue?: number): number | undefined {
   if (v == null || v === '') {
     return defaultValue;
   }

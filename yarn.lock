@@ -6641,7 +6641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.4.1":
+"@react-awesome-query-builder/core@npm:6.4.1, @react-awesome-query-builder/core@npm:^6.4.1":
   version: 6.4.1
   resolution: "@react-awesome-query-builder/core@npm:6.4.1"
   dependencies:
@@ -17670,6 +17670,7 @@ __metadata:
     "@react-aria/menu": 3.10.0
     "@react-aria/overlays": 3.15.0
     "@react-aria/utils": 3.18.0
+    "@react-awesome-query-builder/core": 6.4.1
     "@react-awesome-query-builder/ui": 6.4.1
     "@react-stately/collections": 3.9.0
     "@react-stately/menu": 3.5.3
@@ -17861,7 +17862,7 @@ __metadata:
     ol-ext: 4.0.10
     papaparse: 5.4.1
     pluralize: ^8.0.0
-    postcss: 8.4.26
+    postcss: 8.4.31
     postcss-loader: 7.3.3
     postcss-reporter: 7.0.5
     postcss-scss: 4.0.6
@@ -24001,7 +24002,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.4.26, postcss@npm:^8.4.21, postcss@npm:^8.4.24":
+"postcss@npm:8.4.31":
+  version: 8.4.31
+  resolution: "postcss@npm:8.4.31"
+  dependencies:
+    nanoid: ^3.3.6
+    picocolors: ^1.0.0
+    source-map-js: ^1.0.2
+  checksum: 1d8611341b073143ad90486fcdfeab49edd243377b1f51834dc4f6d028e82ce5190e4f11bb2633276864503654fb7cab28e67abdc0fbf9d1f88cad4a0ff0beea
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.21, postcss@npm:^8.4.24":
   version: 8.4.26
   resolution: "postcss@npm:8.4.26"
   dependencies:
@@ -30582,8 +30594,8 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.21.4":
-  version: 3.21.4
-  resolution: "zod@npm:3.21.4"
-  checksum: f185ba87342ff16f7a06686767c2b2a7af41110c7edf7c1974095d8db7a73792696bcb4a00853de0d2edeb34a5b2ea6a55871bc864227dace682a0a28de33e1f
+  version: 3.22.3
+  resolution: "zod@npm:3.22.3"
+  checksum: 65b05139be337078a70700b05942ab7f2ef5f11abe194df14ef257fac4e5c383476a4dc290731842996bd57fc8d5bf38e5a4c907fe8cdf8b15477f8da5bfcc00
   languageName: node
   linkType: hard

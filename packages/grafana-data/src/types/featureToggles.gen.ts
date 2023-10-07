@@ -109,6 +109,7 @@ export interface FeatureToggles {
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -136,4 +137,6 @@ export interface FeatureToggles {
   externalServiceAccounts?: boolean;
   alertingModifiedExport?: boolean;
   enableNativeHTTPHistogram?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
 }

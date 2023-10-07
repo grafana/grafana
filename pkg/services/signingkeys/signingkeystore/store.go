@@ -13,9 +13,11 @@ import (
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type SigningStore interface {
@@ -32,24 +34,30 @@ type SigningStore interface {
 
 var _ SigningStore = (*Store)(nil)
 
+const cleanupRateLimitKey = "signingkeys-cleanup"
+
 type Store struct {
 	dbStore        db.DB
 	secretsService secrets.Service
+	log            log.Logger
+	localCache     *localcache.CacheService
 }
 
 type SigningKey struct {
-	ID         int64                   `json:"-" db:"id"`
-	KeyID      string                  `json:"key_id" db:"key_id"`
-	PrivateKey []byte                  `json:"private_key" db:"private_key"`
-	AddedAt    time.Time               `json:"added_at" db:"added_at"`
-	ExpiresAt  *time.Time              `json:"expires_at" db:"expires_at"`
-	Alg        jose.SignatureAlgorithm `json:"alg" db:"alg"`
+	ID         int64                   `json:"-" xorm:"id" db:"id"`
+	KeyID      string                  `json:"key_id" xorm:"key_id" db:"key_id"`
+	PrivateKey []byte                  `json:"private_key" xorm:"private_key" db:"private_key"`
+	AddedAt    time.Time               `json:"added_at" xorm:"added_at" db:"added_at"`
+	ExpiresAt  *time.Time              `json:"expires_at" xorm:"expires_at" db:"expires_at"`
+	Alg        jose.SignatureAlgorithm `json:"alg" xorm:"alg" db:"alg"`
 }
 
 func NewSigningKeyStore(dbStore db.DB, secretsService secrets.Service) *Store {
 	return &Store{
 		dbStore:        dbStore,
 		secretsService: secretsService,
+		log:            log.New("signing.key_service"),
+		localCache:     localcache.New(12*time.Hour, 4*time.Hour),
 	}
 }
 
@@ -58,8 +66,11 @@ func (s *Store) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	keySet := jose.JSONWebKeySet{}
 
 	keys := []*SigningKey{}
-	if err := s.dbStore.GetSqlxSession().Select(ctx,
-		&keys, "SELECT * FROM signing_key WHERE expires_at IS NULL OR expires_at > ?", time.Now()); err != nil {
+	err := s.dbStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		return dbSession.SQL("SELECT * FROM signing_key WHERE expires_at IS NULL OR expires_at > ?", time.Now()).Find(&keys)
+	})
+
+	if err != nil {
 		return keySet, err
 	}
 
@@ -96,26 +107,24 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 		ExpiresAt:  expiresAt,
 	}
 
-	dbSession := s.dbStore.GetSqlxSession()
 	var signer crypto.Signer
-	err = dbSession.WithTransaction(ctx, func(tx *session.SessionTx) error {
+	err = s.dbStore.WithTransactionalDbSession(ctx, func(tx *sqlstore.DBSession) error {
 		existingKey := SigningKey{}
-		err := tx.Get(ctx, &existingKey, "SELECT * FROM signing_key WHERE key_id = ?", keyID)
+		_, err := tx.SQL("SELECT * FROM signing_key WHERE key_id = ?", keyID).Get(&existingKey)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 
 		if len(existingKey.PrivateKey) == 0 {
-			_, err = tx.Exec(ctx,
-				"INSERT INTO signing_key (key_id, private_key, added_at, alg, expires_at) VALUES (?, ?, ?, ?, ?)",
-				key.KeyID, key.PrivateKey, key.AddedAt, key.Alg, key.ExpiresAt)
+			_, err = tx.Exec("INSERT INTO signing_key (key_id, private_key, added_at, alg, expires_at) VALUES (?, ?, ?, ?, ?)",
+				key.KeyID, key.PrivateKey, key.AddedAt, key.Alg, key.ExpiresAt,
+			)
 			signer = privateKey
 			return err
 		}
 
 		if force || (existingKey.ExpiresAt != nil && existingKey.ExpiresAt.Before(time.Now())) {
-			_, err = tx.Exec(ctx,
-				"UPDATE signing_key SET private_key = ?, added_at = ?, alg = ?, expires_at = ? WHERE key_id = ?",
+			_, err = tx.Exec("UPDATE signing_key SET private_key = ?, added_at = ?, alg = ?, expires_at = ? WHERE key_id = ?",
 				key.PrivateKey, key.AddedAt, key.Alg, key.ExpiresAt, key.KeyID)
 			signer = privateKey
 			return err
@@ -128,14 +137,36 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 
 		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key already exists: %s", keyID)
 	})
+
+	if _, ok := s.localCache.Get(cleanupRateLimitKey); !ok {
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					s.log.Error("panic during expired signing key cleanup", "err", err)
+				}
+			}()
+
+			ctxGo, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+
+			if err := s.cleanupExpiredKeys(ctxGo); err != nil {
+				s.log.Error("Failed to cleanup expired signing keys", "err", err)
+			}
+		}()
+		s.localCache.Set(cleanupRateLimitKey, true, 1*time.Hour)
+	}
+
 	return signer, err
 }
 
 // GetPrivateKey returns the private key with the specified key ID. Expired keys will not be returned.
 func (s *Store) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
-	key := &SigningKey{}
-	err := s.dbStore.GetSqlxSession().Get(ctx, key,
-		"SELECT * FROM signing_key WHERE key_id = ?", keyID)
+	key := SigningKey{}
+	err := s.dbStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.SQL("SELECT * FROM signing_key WHERE key_id = ?", keyID).Get(&key)
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +176,7 @@ func (s *Store) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer,
 		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
 	}
 
-	signKey, err := s.decodePrivateKey(ctx, key)
+	signKey, err := s.decodePrivateKey(ctx, &key)
 	if err != nil {
 		return nil, err
 	}
@@ -212,4 +243,15 @@ func (s *Store) decodePrivateKey(ctx context.Context, signingKey *SigningKey) (c
 		return nil, errors.New("failed to assert private key as crypto.Signer")
 	}
 	return assertedKey, nil
+}
+
+// cleanupExpiredKeys removes expired keys from the database that have expired more than 61 days ago
+func (s *Store) cleanupExpiredKeys(ctx context.Context) error {
+	err := s.dbStore.WithTransactionalDbSession(ctx, func(tx *sqlstore.DBSession) error {
+		_, err := tx.Exec("DELETE FROM signing_key WHERE expires_at IS NOT NULL AND expires_at < ?",
+			time.Now().UTC().Add(-61*24*time.Hour))
+		return err
+	})
+
+	return err
 }
