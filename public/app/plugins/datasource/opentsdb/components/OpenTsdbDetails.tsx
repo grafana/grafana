@@ -1,11 +1,10 @@
 import React, { SyntheticEvent, useId } from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Select, Input, Field, FieldSet } from '@grafana/ui';
 
 import { OpenTsdbOptions } from '../types';
 
-const { Select, Input } = LegacyForms;
 
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },
@@ -30,22 +29,16 @@ export const OpenTsdbDetails = (props: Props) => {
 
   return (
     <>
-      <h5>OpenTSDB settings</h5>
-      <div className="gf-form">
-        <InlineFormLabel width={7} htmlFor={`select-version-${idSuffix}`}>
-          Version
-        </InlineFormLabel>
+      <FieldSet label={"OpenTSDB settings"}>
+      <Field htmlFor={`select-version-${idSuffix}`} label="Version">
         <Select
           inputId={`select-version-${idSuffix}`}
           options={tsdbVersions}
           value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
           onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
         />
-      </div>
-      <div className="gf-form">
-        <InlineFormLabel width={7} htmlFor={`select-resolution-${idSuffix}`}>
-          Resolution
-        </InlineFormLabel>
+        </Field>
+      <Field htmlFor={`select-resolution-${idSuffix}`} label="Resolution">
         <Select
           inputId={`select-resolution-${idSuffix}`}
           options={tsdbResolutions}
@@ -55,18 +48,16 @@ export const OpenTsdbDetails = (props: Props) => {
           }
           onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
         />
-      </div>
-      <div className="gf-form">
-        <InlineFormLabel width={7} htmlFor={`lookup-input-${idSuffix}`}>
-          Lookup limit
-        </InlineFormLabel>
+      </Field>
+      <Field htmlFor={`lookup-input-${idSuffix}`} label="Lookup limit">
         <Input
           id={`lookup-input-${idSuffix}`}
           type="number"
           value={value.jsonData.lookupLimit ?? 1000}
           onChange={onInputChangeHandler('lookupLimit', value, onChange)}
         />
-      </div>
+      </Field>
+      </FieldSet>
     </>
   );
 };
