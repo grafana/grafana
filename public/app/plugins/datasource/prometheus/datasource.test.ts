@@ -13,6 +13,7 @@ import {
   Field,
   getFieldDisplayName,
   LoadingState,
+  rangeUtil,
   TimeRange,
   toDataFrame,
   VariableHide,
@@ -50,19 +51,12 @@ const templateSrvStub = {
 const fromSeconds = 1674500289215;
 const toSeconds = 1674500349215;
 
-// function getMockTimeRange(range = '6h'): TimeRange {
-//   return rangeUtil.convertRawToRange({
-//     from: `now-${range}`,
-//     to: 'now',
-//   });
-// }
-
 const mockTimeRangeOld: TimeRange = {
   from: dateTime(1531468681),
   to: dateTime(1531489712),
   raw: {
-    from: fromSeconds.toString(),
-    to: toSeconds.toString(),
+    from: '1531468681',
+    to: '1531489712',
   },
 };
 
@@ -313,7 +307,12 @@ describe('PrometheusDatasource', () => {
     const target: PromQuery = { expr: DEFAULT_QUERY_EXPRESSION, refId: 'A' };
 
     it('should not modify expression with no filters', () => {
-      const result = ds.createQuery(target, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 0);
+      const result = ds.createQuery(
+        target,
+        { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        0
+      );
       expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
     });
 
@@ -330,7 +329,12 @@ describe('PrometheusDatasource', () => {
           value: 'v2',
         },
       ];
-      const result = ds.createQuery(target, { interval: '15s', filters } as DataQueryRequest<PromQuery>, 0, 0);
+      const result = ds.createQuery(
+        target,
+        { interval: '15s', range: getMockTimeRange(), filters } as DataQueryRequest<PromQuery>,
+        0,
+        0
+      );
       expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
     });
 
@@ -348,7 +352,12 @@ describe('PrometheusDatasource', () => {
         },
       ];
 
-      const result = ds.createQuery(target, { interval: '15s', filters } as DataQueryRequest<PromQuery>, 0, 0);
+      const result = ds.createQuery(
+        target,
+        { interval: '15s', range: getMockTimeRange(), filters } as DataQueryRequest<PromQuery>,
+        0,
+        0
+      );
       expect(result).toMatchObject({
         expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
       });
@@ -459,7 +468,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv
       );
       const quantizedRange = dataSource.getAdjustedInterval(mockTimeRange);
-      const oldRange = dataSource.getTimeRangeParams(mockTimeRangeOld);
+      const oldRange = dataSource.getTimeRangeParams(mockTimeRange);
       // For "1 minute" the window is unchanged
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
       expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
@@ -474,7 +483,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv
       );
       const quantizedRange = dataSource.getAdjustedInterval(mockTimeRange);
-      const oldRange = dataSource.getTimeRangeParams(mockTimeRangeOld);
+      const oldRange = dataSource.getTimeRangeParams(mockTimeRange);
 
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
       expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
@@ -886,7 +895,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub
       );
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
-      prometheusDatasource.metricFindQuery(query);
+      prometheusDatasource.metricFindQuery(query, { range: mockTimeRangeOld });
     });
 
     it('should call templateSrv.replace with scopedVars', () => {
@@ -1552,7 +1561,7 @@ describe('PrometheusDatasource2', () => {
     it('should be determined by the 11000 data points limit when too small', async () => {
       const query = {
         // 1 week range
-        range: { from: time({}), to: time({ hours: 7 * 24 }) },
+        range: { from: time({ minutes: 1 }), to: time({ hours: 7 * 24, minutes: 1 }) },
         targets: [
           {
             expr: 'test',
@@ -1563,9 +1572,9 @@ describe('PrometheusDatasource2', () => {
       } as DataQueryRequest<PromQuery>;
       let end = 7 * 24 * 60 * 60;
       end -= end % 55;
-      const start = 0;
+      const start = 60;
       const step = 55;
-      const adjusted = alignRange(start, end, step, mockTimeRange.to.utcOffset() * 60);
+      const adjusted = alignRange(start, end, step, query.range.to.utcOffset() * 60);
       const urlExpected =
         'proxied/api/v1/query_range?query=test' +
         '&start=' +
@@ -1802,7 +1811,7 @@ describe('PrometheusDatasource2', () => {
     it('should be determined by the 11000 data points limit, accounting for intervalFactor', async () => {
       const query = {
         // 1 week range
-        range: { from: time({}), to: time({ hours: 7 * 24 }) },
+        range: { from: time({ minutes: 1 }), to: time({ hours: 7 * 24, minutes: 1 }) },
         targets: [
           {
             expr: 'rate(test[$__interval])',
@@ -1817,9 +1826,9 @@ describe('PrometheusDatasource2', () => {
       };
       let end = 7 * 24 * 60 * 60;
       end -= end % 55;
-      const start = 0;
+      const start = 60;
       const step = 55;
-      const adjusted = alignRange(start, end, step, mockTimeRange.to.utcOffset() * 60);
+      const adjusted = alignRange(start, end, step, query.range.to.utcOffset() * 60);
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
@@ -1914,40 +1923,70 @@ describe('PrometheusDatasource2', () => {
     });
 
     it('should be 4 times the scrape interval if interval + scrape interval is lower', () => {
-      ds.createQuery(target, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 300);
+      ds.createQuery(target, { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>, 0, 300);
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
-      ds.createQuery(target, { interval: '5m' } as DataQueryRequest<PromQuery>, 0, 10080);
+      ds.createQuery(target, { interval: '5m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>, 0, 10080);
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('315s');
     });
     it('should fall back to a scrape interval of 15s if min step is set to 0, resulting in 4*15s = 60s', () => {
-      ds.createQuery({ ...target, interval: '' }, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 300);
+      ds.createQuery(
+        { ...target, interval: '' },
+        { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        300
+      );
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should be 4 times the scrape interval if min step set to 1m and interval is 15s', () => {
       // For a 5m graph, $__interval is 15s
-      ds.createQuery({ ...target, interval: '1m' }, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 300);
+      ds.createQuery(
+        { ...target, interval: '1m' },
+        { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        300
+      );
       expect(replaceMock.mock.calls[2][1]['__rate_interval'].value).toBe('240s');
     });
     it('should be interval + scrape interval if min step set to 1m and interval is 5m', () => {
       // For a 7d graph, $__interval is 5m
-      ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as DataQueryRequest<PromQuery>, 0, 10080);
+      ds.createQuery(
+        { ...target, interval: '1m' },
+        { interval: '5m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        10080
+      );
       expect(replaceMock.mock.calls[2][1]['__rate_interval'].value).toBe('360s');
     });
     it('should be interval + scrape interval if resolution is set to 1/2 and interval is 10m', () => {
       // For a 7d graph, $__interval is 10m
-      ds.createQuery({ ...target, intervalFactor: 2 }, { interval: '10m' } as DataQueryRequest<PromQuery>, 0, 10080);
+      ds.createQuery(
+        { ...target, intervalFactor: 2 },
+        { interval: '10m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        10080
+      );
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('1215s');
     });
     it('should be 4 times the scrape interval if resolution is set to 1/2 and interval is 15s', () => {
       // For a 5m graph, $__interval is 15s
-      ds.createQuery({ ...target, intervalFactor: 2 }, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 300);
+      ds.createQuery(
+        { ...target, intervalFactor: 2 },
+        { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        300
+      );
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should interpolate min step if set', () => {
       replaceMock.mockImplementation((_: string) => '15s');
-      ds.createQuery({ ...target, interval: '$int' }, { interval: '15s' } as DataQueryRequest<PromQuery>, 0, 300);
+      ds.createQuery(
+        { ...target, interval: '$int' },
+        { interval: '15s', range: getMockTimeRange() } as DataQueryRequest<PromQuery>,
+        0,
+        300
+      );
       expect(replaceMock.mock.calls).toHaveLength(3);
       replaceMock.mockImplementation((str) => str);
     });
@@ -2117,6 +2156,7 @@ function getPrepareTargetsContext({
     interval: '1s',
     panelId,
     app,
+    range: getMockTimeRange(),
     ...queryOptions,
   } as unknown as DataQueryRequest<PromQuery>;
 
@@ -2592,4 +2632,11 @@ function createEmptyAnnotationResponse() {
   };
 
   return { ...response };
+}
+
+function getMockTimeRange(range = '6h'): TimeRange {
+  return rangeUtil.convertRawToRange({
+    from: `now-${range}`,
+    to: 'now',
+  });
 }
