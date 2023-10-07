@@ -414,6 +414,15 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Abbrechen",
@@ -815,6 +824,9 @@
       "old-password-required": "",
       "passwords-must-match": ""
     }
+  },
+  "query-inspector": {
+    "description": ""
   },
   "refresh-picker": {
     "aria-label": {

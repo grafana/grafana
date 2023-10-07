@@ -414,6 +414,15 @@
     },
     "title": "Ŝĥőřŧčūŧş"
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "Cőľľäpşę äľľ",
+      "copy-to-clipboard": "Cőpy ŧő čľįpþőäřđ",
+      "expand-all": "Ēχpäŉđ äľľ",
+      "no-data": "Ńő řęqūęşŧ äŉđ řęşpőŉşę čőľľęčŧęđ yęŧ. Ħįŧ řęƒřęşĥ þūŧŧőŉ",
+      "refresh": "Ŗęƒřęşĥ"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cäŉčęľ",
@@ -815,6 +824,9 @@
       "old-password-required": "Øľđ päşşŵőřđ įş řęqūįřęđ",
       "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
     }
+  },
+  "query-inspector": {
+    "description": "Qūęřy įŉşpęčŧőř äľľőŵş yőū ŧő vįęŵ řäŵ řęqūęşŧ äŉđ řęşpőŉşę. Ŧő čőľľęčŧ ŧĥįş đäŧä Ğřäƒäŉä ŉęęđş ŧő įşşūę ä ŉęŵ qūęřy. Cľįčĸ řęƒřęşĥ þūŧŧőŉ þęľőŵ ŧő ŧřįģģęř ä ŉęŵ qūęřy."
   },
   "refresh-picker": {
     "aria-label": {
