@@ -2,9 +2,7 @@ package v0alpha1
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -16,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -171,7 +168,7 @@ func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					},
 					Handler: b.doSubresource,
 				},
-				{Path: "/route",
+				{Path: "/resource",
 					Spec: &spec3.PathProps{
 						Summary:     "generic resource call...",
 						Description: "TODO... check that this is actually implemented",
@@ -180,7 +177,7 @@ func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					},
 					Handler: b.doSubresource,
 				},
-				{Path: "/route/*",
+				{Path: "/resource/{.*}",
 					Spec: &spec3.PathProps{
 						Summary:     "generic resource call...",
 						Description: "TODO... check that this is actually implemented",
@@ -223,43 +220,4 @@ func (b *DSAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataS
 		})
 	}
 	return vals, err
-}
-
-// Authz should already be applied!!!
-func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
-	info, ok := request.RequestInfoFrom(r.Context())
-	if !ok {
-		fmt.Printf("ERROR!!!!")
-		return
-	}
-	orgId, ok := grafanarequest.ParseOrgID(info.Namespace)
-	if !ok {
-		fmt.Printf("bad org")
-		return
-	}
-
-	ctx := r.Context()
-	ds, err := b.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-		OrgID: orgId,
-		UID:   info.Name,
-	})
-	if err != nil {
-		fmt.Printf("ERROR!!!! %v", err)
-		return
-	}
-	if ds == nil {
-		fmt.Printf("ERROR!!!! %v", ds)
-		return
-	}
-
-	switch info.Subresource {
-	case "query":
-		_, _ = w.Write([]byte("DO QUERY!"))
-	case "health":
-		_, _ = w.Write([]byte("DO Health"))
-	default:
-		out, _ := json.MarshalIndent(ds, "", "  ")
-		_, _ = w.Write(out)
-	}
-
 }
