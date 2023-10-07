@@ -3,7 +3,6 @@ import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { getDefaultTimeRange, MetricFindValue, TimeRange } from '@grafana/data';
-// import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';

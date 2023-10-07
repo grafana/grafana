@@ -12,7 +12,6 @@ import { faro } from '@grafana/faro-web-sdk';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
-import { getTimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -260,7 +259,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    const refreshIntervalMs = getTimeSrv().refreshMS;
+    const refreshIntervalMs = request.intervalMs;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
