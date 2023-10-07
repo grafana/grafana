@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -98,14 +99,14 @@ func TestAddMigrationInfo(t *testing.T) {
 	}{
 		{
 			name:                "when alert rule tags are a JSON array, they're ignored.",
-			alert:               &dashAlert{Id: 43, ParsedSettings: &dashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}, PanelId: 42},
+			alert:               &dashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &dashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}},
 			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{},
 			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
 		},
 		{
 			name:                "when alert rule tags are a JSON object",
-			alert:               &dashAlert{Id: 43, ParsedSettings: &dashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}, PanelId: 42},
+			alert:               &dashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &dashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}},
 			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{"key": "value", "key2": "value2"},
 			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
@@ -213,8 +214,10 @@ func TestMakeAlertRule(t *testing.T) {
 
 func createTestDashAlert() dashAlert {
 	return dashAlert{
-		Id:             1,
-		Name:           "test",
+		Alert: &legacymodels.Alert{
+			ID:   1,
+			Name: "test",
+		},
 		ParsedSettings: &dashAlertSettings{},
 	}
 }

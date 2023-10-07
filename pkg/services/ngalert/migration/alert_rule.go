@@ -30,8 +30,8 @@ func addMigrationInfo(da *dashAlert, dashboardUID string) (map[string]string, ma
 
 	annotations := make(map[string]string, 3)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
-	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
-	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelID)
+	annotations["__alertId__"] = fmt.Sprintf("%v", da.ID)
 
 	return lbls, annotations
 }
@@ -60,7 +60,7 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, da
 	}
 
 	ar := &ngmodels.AlertRule{
-		OrgID:           da.OrgId,
+		OrgID:           da.OrgID,
 		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
 		UID:             uid,
 		Condition:       cond.Condition,
@@ -69,7 +69,7 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, da
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
 		DashboardUID:    &dashboardUID,
-		PanelID:         &da.PanelId,
+		PanelID:         &da.PanelID,
 		RuleGroup:       name,
 		For:             da.For,
 		Updated:         time.Now().UTC(),
