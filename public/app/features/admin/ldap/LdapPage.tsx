@@ -3,8 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+import { Alert, Button, Field, Form, HorizontalGroup, Input } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -113,18 +112,23 @@ export class LdapPage extends PureComponent<Props, State> {
               <>
                 <h3 className="page-heading">Test user mapping</h3>
                 <div className="gf-form-group">
-                  <form onSubmit={this.search} className="gf-form-inline">
-                    <FormField
-                      label="Username"
-                      labelWidth={8}
-                      inputWidth={30}
-                      type="text"
-                      id="username"
-                      name="username"
-                      defaultValue={queryParams.username}
-                    />
-                    <Button type="submit">Run</Button>
-                  </form>
+                  <Form onSubmit={this.search}>
+                    {({ register }) => (
+                      <HorizontalGroup>
+                        <Field label="Username">
+                          <Input
+                            {...register('username', { required: true })}
+                            id="username"
+                            type="text"
+                            defaultValue={queryParams.username}
+                          />
+                        </Field>
+                        <Button variant="primary" type="submit">
+                          Run
+                        </Button>
+                      </HorizontalGroup>
+                    )}
+                  </Form>
                 </div>
                 {userError && userError.title && (
                   <div className="gf-form-group">
