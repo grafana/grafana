@@ -816,7 +816,7 @@ export class PrometheusDatasource
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process();
+    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
   }
 
   getRangeScopedVars(range: TimeRange) {
@@ -978,7 +978,7 @@ export class PrometheusDatasource
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels();
+      await this.languageProvider.fetchLabels(options.timeRange);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 

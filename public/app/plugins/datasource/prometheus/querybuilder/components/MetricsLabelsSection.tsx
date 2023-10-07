@@ -60,6 +60,7 @@ export function MetricsLabelsSection({
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
+      // FIXME pass timeRange to fetchLabels method
       await datasource.languageProvider.fetchLabels();
       return datasource.languageProvider.getLabelKeys().map((k) => ({ value: k }));
     }

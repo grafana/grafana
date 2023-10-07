@@ -54,7 +54,7 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
 
     const interpolated = this.templateSrv.replace(query, scopedVars, this.datasource.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this.datasource, interpolated);
-    const metricFindStream = from(metricFindQuery.process());
+    const metricFindStream = from(metricFindQuery.process(request.range));
 
     return metricFindStream.pipe(map((results) => ({ data: results })));
   }
