@@ -15,14 +15,15 @@ import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { CanvasElementItem, CanvasElementProps } from '../element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import { Align, TextConfig, TextData } from '../types';
 
-interface ButtonData extends TextData {
+// TODO: Figure out how to support vertical align for button content
+interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }
 
-interface ButtonConfig extends TextConfig {
+interface ButtonConfig extends Omit<TextConfig, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }
@@ -66,8 +67,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefi
     display: 'grid',
 
     '> span': {
+      // TODO: Refactor text styling to use flex instead of relying on textAlign / verticalAlign
       display: 'inline-grid',
-      verticalAlign: data?.valign,
       textAlign: data?.align,
       fontSize: `${data?.size}px`,
       color: data?.color,
@@ -100,7 +101,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         fixed: 'Button',
       },
       align: Align.Center,
-      valign: VAlign.Middle,
       color: {
         // TODO: Figure out how to get this from theme and not hard code
         fixed: '#f0f4fd',
@@ -139,7 +139,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
-      valign: cfg.valign ?? VAlign.Middle,
       size: cfg.size,
       api: getCfgApi(),
       style: cfg?.style ?? defaultStyleConfig,
@@ -191,19 +190,6 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
           ],
         },
         defaultValue: Align.Left,
-      })
-      .addRadio({
-        category,
-        path: 'config.valign',
-        name: 'Vertical align',
-        settings: {
-          options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
-          ],
-        },
-        defaultValue: VAlign.Middle,
       })
       .addNumberInput({
         category,
