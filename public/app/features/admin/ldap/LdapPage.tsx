@@ -97,11 +97,9 @@ export class LdapPage extends PureComponent<Props, State> {
         <Page.Contents isLoading={isLoading}>
           <>
             {ldapError && ldapError.title && (
-              <div className="gf-form-group">
-                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
-                  {ldapError.body}
-                </Alert>
-              </div>
+              <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
+                {ldapError.body}
+              </Alert>
             )}
 
             <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
@@ -110,36 +108,32 @@ export class LdapPage extends PureComponent<Props, State> {
 
             {canReadLDAPUser && (
               <>
-                <h3 className="page-heading">Test user mapping</h3>
-                <div className="gf-form-group">
-                  <Form onSubmit={this.search}>
-                    {({ register }) => (
-                      <HorizontalGroup>
-                        <Field label="Username">
-                          <Input
-                            {...register('username', { required: true })}
-                            id="username"
-                            type="text"
-                            defaultValue={queryParams.username}
-                          />
-                        </Field>
-                        <Button variant="primary" type="submit">
-                          Run
-                        </Button>
-                      </HorizontalGroup>
-                    )}
-                  </Form>
-                </div>
+                <h3>Test user mapping</h3>
+                <Form onSubmit={this.search}>
+                  {({ register }) => (
+                    <HorizontalGroup>
+                      <Field label="Username">
+                        <Input
+                          {...register('username', { required: true })}
+                          id="username"
+                          type="text"
+                          defaultValue={queryParams.username}
+                        />
+                      </Field>
+                      <Button variant="primary" type="submit">
+                        Run
+                      </Button>
+                    </HorizontalGroup>
+                  )}
+                </Form>
                 {userError && userError.title && (
-                  <div className="gf-form-group">
-                    <Alert
-                      title={userError.title}
-                      severity={AppNotificationSeverity.Error}
-                      onRemove={this.onClearUserError}
-                    >
-                      {userError.body}
-                    </Alert>
-                  </div>
+                  <Alert
+                    title={userError.title}
+                    severity={AppNotificationSeverity.Error}
+                    onRemove={this.onClearUserError}
+                  >
+                    {userError.body}
+                  </Alert>
                 )}
                 {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
               </>
