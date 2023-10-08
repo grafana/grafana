@@ -40,7 +40,6 @@ import {
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import config from '../../../core/config';
 
@@ -62,6 +61,7 @@ import { getOriginalMetricName, transform, transformV2 } from './result_transfor
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
+  PromApplication,
   PromDataErrorResponse,
   PromDataSuccessResponse,
   PrometheusCacheLevel,
