@@ -448,7 +448,19 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "schemaVersion": 36,
   "tags": [],
   "templating": {
-    "list": [],
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "hide": 0,
+        "id": "0",
+        "name": "Filters",
+        "skipUrlSync": false,
+        "type": "adhoc",
+      },
+    ],
   },
   "time": {
     "from": "now-5m",

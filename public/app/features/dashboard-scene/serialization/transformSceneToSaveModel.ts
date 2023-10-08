@@ -10,6 +10,7 @@ import {
   SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
+  AdHocFilterSet,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -68,6 +69,22 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
 
   if (variablesSet instanceof SceneVariableSet) {
     variables = sceneVariablesSetToVariables(variablesSet);
+  }
+
+  if (state.controls) {
+    for (const control of state.controls) {
+      if (control instanceof AdHocFilterSet) {
+        variables.push({
+          name: control.state.name!,
+          type: 'adhoc',
+          hide: 0,
+          skipUrlSync: false,
+          datasource: control.state.datasource,
+          // TODO remove
+          id: '0',
+        });
+      }
+    }
   }
 
   const dashboard: Dashboard = {
