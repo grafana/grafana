@@ -6,6 +6,7 @@ import { useLocation } from 'react-use';
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
+import { UAPreviewNotice } from '../../components/UAPreviewNotice';
 import FEATURES from '../features';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 
@@ -40,7 +41,12 @@ export const AlertingPageWrapper = ({ children, pageId, pageNav, actions, isLoad
   return (
     <Features features={FEATURES}>
       <Page pageNav={pageNav} navId={pageId} actions={actions}>
-        <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
+        <Page.Contents isLoading={isLoading}>
+          <div>
+            <UAPreviewNotice />
+            {children}
+          </div>
+        </Page.Contents>
       </Page>
       {showFeatureToggle ? <ToggleFeatures defaultOpen={true} /> : null}
     </Features>

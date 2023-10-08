@@ -14,7 +14,7 @@ const DeprecationNotice = () => (
     </p>
     <p>
       See{' '}
-      <a href="https://grafana.com/docs/grafana/latest/alerting/migrating-alerts/">
+      <a href="https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/">
         how to upgrade to Grafana Alerting
       </a>{' '}
       to learn more.

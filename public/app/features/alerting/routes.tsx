@@ -75,13 +75,26 @@ const legacyRoutes: RouteDescriptor[] = [
   {
     path: '/alerting-legacy/notification/new',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage'
+        )
     ),
   },
   {
     path: '/alerting-legacy/notification/:id/edit',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage'
+        )
+    ),
+  },
+  {
+    path: '/alerting-legacy/upgrade',
+    roles: () => ['Admin'],
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingUpgrade" */ 'app/features/alerting/Upgrade')
     ),
   },
 ];
@@ -286,9 +299,14 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   if (cfg.unifiedAlertingEnabled) {
     return unifiedRoutes;
   } else if (cfg.alertingEnabled) {
+    if (config.featureToggles.alertingPreviewUpgrade) {
+      // If preview is enabled, return both legacy and unified routes.
+      return [...legacyRoutes, ...unifiedRoutes];
+    }
     return legacyRoutes;
   }
 
+  // Disable all alerting routes.
   const uniquePaths = uniq([...legacyRoutes, ...unifiedRoutes].map((route) => route.path));
   return uniquePaths.map((path) => ({
     path,
