@@ -101,6 +101,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	signingkeys.AddMigration(mg)
 
 	ualert.MigrationServiceMigration(mg)
+	ualert.CreatedFoldersMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

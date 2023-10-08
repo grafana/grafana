@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -31,6 +32,8 @@ type OrgMigration struct {
 	// cache for folders created for dashboards that have custom permissions
 	folderCache           map[string]*folder.Folder
 	generalAlertingFolder *folder.Folder
+
+	state *migmodels.OrgMigrationState
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -49,6 +52,11 @@ func (ms *MigrationService) newOrgMigration(orgID int64) *OrgMigration {
 		alertRuleTitleDedup: make(map[string]Deduplicator),
 
 		folderCache: make(map[string]*folder.Folder),
+
+		state: &migmodels.OrgMigrationState{
+			OrgID:          orgID,
+			CreatedFolders: make([]string, 0),
+		},
 	}
 }
 

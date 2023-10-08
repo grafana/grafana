@@ -127,6 +127,11 @@ func (ms *MigrationService) migrateAllOrgs(ctx context.Context) error {
 		if err := om.migrateOrg(ctx); err != nil {
 			return fmt.Errorf("migrate org %d: %w", o.ID, err)
 		}
+
+		err = om.migrationStore.SetOrgMigrationState(ctx, o.ID, om.state)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

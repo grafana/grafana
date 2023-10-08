@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	legacyalerting "github.com/grafana/grafana/pkg/services/alerting"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -19,11 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,6 +53,8 @@ type Store interface {
 
 	IsMigrated(ctx context.Context) (bool, error)
 	SetMigrated(ctx context.Context, migrated bool) error
+	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
+	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
 
 	RevertAllOrgs(ctx context.Context) error
 
@@ -103,6 +108,9 @@ const KVNamespace = "ngalert.migration"
 // migratedKey is the kvstore key used for the migration status.
 const migratedKey = "migrated"
 
+// stateKey is the kvstore key used for the OrgMigrationState.
+const stateKey = "stateKey"
+
 const anyOrg = 0
 
 // IsMigrated returns the migration status from the kvstore.
@@ -124,6 +132,38 @@ func (ms *migrationStore) IsMigrated(ctx context.Context) (bool, error) {
 func (ms *migrationStore) SetMigrated(ctx context.Context, migrated bool) error {
 	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
 	return kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
+}
+
+// GetOrgMigrationState returns a summary of a previous migration.
+func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error) {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
+	content, exists, err := kv.Get(ctx, stateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return &migmodels.OrgMigrationState{OrgID: orgID}, nil
+	}
+
+	var summary migmodels.OrgMigrationState
+	err = json.Unmarshal([]byte(content), &summary)
+	if err != nil {
+		return nil, err
+	}
+
+	return &summary, nil
+}
+
+// SetOrgMigrationState sets the summary of a previous migration.
+func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
+	raw, err := json.Marshal(summary)
+	if err != nil {
+		return err
+	}
+
+	return kv.Set(ctx, stateKey, string(raw))
 }
 
 func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error {
@@ -166,59 +206,52 @@ func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, org
 	return ms.alertingStore.SaveAlertmanagerConfiguration(ctx, &cmd)
 }
 
-// FOLDER_CREATED_BY us used to track folders created by this migration
-// during alert migration cleanup.
-const FOLDER_CREATED_BY = -8
+// revertPermissions are the permissions required for the background user to revert the migration.
+var revertPermissions = []accesscontrol.Permission{
+	{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
+	{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+}
 
 // RevertAllOrgs reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
 // In addition, it will delete all folders and permissions originally created by this migration, these are stored in the kvstore.
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("delete from alert_rule")
-		if err != nil {
+		if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("delete from alert_rule_version")
-		if err != nil {
+		if _, err := sess.Exec("DELETE FROM alert_rule_version"); err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("delete from dashboard_acl where dashboard_id IN (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
+		orgs, err := ms.GetAllOrgs(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("get orgs: %w", err)
 		}
-
-		_, err = sess.Exec("delete from dashboard where created_by = ?", FOLDER_CREATED_BY)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Exec("delete from alert_configuration")
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Exec("delete from ngalert_configuration")
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Exec("delete from alert_instance")
-		if err != nil {
-			return err
-		}
-
-		exists, err := sess.IsTableExist("kv_store")
-		if err != nil {
-			return err
-		}
-
-		if exists {
-			_, err = sess.Exec("delete from kv_store where namespace = ?", notifier.KVNamespace)
-			if err != nil {
+		for _, o := range orgs {
+			if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
 				return err
 			}
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_configuration"); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM ngalert_configuration"); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", notifier.KVNamespace); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", KVNamespace); err != nil {
+			return err
 		}
 
 		files, err := filepath.Glob(filepath.Join(ms.cfg.DataPath, "alerting", "*", "silences"))
@@ -227,7 +260,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 		}
 		for _, f := range files {
 			if err := os.Remove(f); err != nil {
-				ms.log.Error("alert migration error: failed to remove silence file", "file", f, "err", err)
+				ms.log.Error("Failed to remove silence file", "file", f, "err", err)
 			}
 		}
 
@@ -238,6 +271,38 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 
 		return nil
 	})
+}
+
+// DeleteMigratedFolders deletes all folders created by the previous migration run for the given org. This includes all folder permissions.
+// If the folder is not empty of all descendants the operation will fail and return an error.
+func (ms *migrationStore) DeleteMigratedFolders(ctx context.Context, orgID int64) error {
+	summary, err := ms.GetOrgMigrationState(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	return ms.DeleteFolders(ctx, orgID, summary.CreatedFolders...)
+}
+
+// DeleteFolders deletes the folders from the given orgs with the given UIDs. This includes all folder permissions.
+// If the folder is not empty of all descendants the operation will fail and return an error.
+func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids ...string) error {
+	if len(uids) == 0 {
+		return nil
+	}
+
+	usr := accesscontrol.BackgroundUser("ngalert_migration_revert", orgID, org.RoleAdmin, revertPermissions)
+	for _, folderUID := range uids {
+		cmd := folder.DeleteFolderCommand{
+			UID:          folderUID,
+			OrgID:        orgID,
+			SignedInUser: usr.(*user.SignedInUser),
+		}
+		err := ms.folderService.Delete(ctx, &cmd) // Also handles permissions and other related entities.
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ms *migrationStore) GetDashboard(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error) {
