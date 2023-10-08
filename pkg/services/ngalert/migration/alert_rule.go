@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -18,54 +16,70 @@ import (
 )
 
 const (
-	// ContactLabel is a private label created during migration and used in notification policies.
-	// It stores a string array of all contact point names an alert rule should send to.
-	// It was created as a means to simplify post-migration notification policies.
-	ContactLabel = "__contacts__"
+	// ContactLabelTemplate is a private label added to a rule's labels to route it to the correct migrated
+	// notification channel.
+	ContactLabelTemplate = "__contacts_%s__"
 )
 
-func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[string]string, map[string]string) {
-	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
-	lbls := make(map[string]string, len(tagsMap))
+func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []string) (map[string]string, map[string]string) {
+	tags := alert.GetTagsFromSettings()
+	lbls := make(map[string]string)
 
-	for k, v := range tagsMap {
-		lbls[k] = simplejson.NewFromAny(v).MustString()
+	for _, t := range tags {
+		lbls[t.Key] = t.Value
 	}
 
-	annotations := make(map[string]string, 3)
+	// Add a label for routing
+	lbls[migmodels.UseLegacyChannelsLabel] = "true"
+	for _, c := range channels {
+		lbls[fmt.Sprintf(ContactLabelTemplate, c)] = "true"
+	}
+
+	annotations := make(map[string]string, 4)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
-	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelID)
-	annotations["__alertId__"] = fmt.Sprintf("%v", da.ID)
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", alert.PanelID)
+	annotations["__alertId__"] = fmt.Sprintf("%v", alert.ID)
+
+	message := MigrateTmpl(l.New("field", "message"), alert.Message)
+	annotations["message"] = message
 
 	return lbls, annotations
 }
 
-// MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
+// migrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
-	cond, err := transConditions(ctx, da, om.migrationStore)
+	rawSettings, err := json.Marshal(alert.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("get settings: %w", err)
+	}
+	var parsedSettings dashAlertSettings
+	err = json.Unmarshal(rawSettings, &parsedSettings)
+	if err != nil {
+		return nil, fmt.Errorf("parse settings: %w", err)
+	}
+	cond, err := transConditions(ctx, parsedSettings, alert.OrgID, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	lbls, annotations := addMigrationInfo(da, info.DashboardUID)
+	channels := om.extractChannelUIDs(ctx, l, alert.OrgID, parsedSettings)
 
-	message := MigrateTmpl(l.New("field", "message"), da.Message)
-	annotations["message"] = message
+	lbls, annotations := addLabelsAndAnnotations(l, alert, info.DashboardUID, channels)
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
+		return nil, fmt.Errorf("queries: %w", err)
 	}
 
 	isPaused := false
-	if da.State == "paused" {
+	if alert.State == "paused" {
 		isPaused = true
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
 	titleDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	name := truncate(da.Name, store.AlertDefinitionMaxTitleLength)
+	name := truncate(alert.Name, store.AlertDefinitionMaxTitleLength)
 	if titleDedupSet.contains(name) {
 		dedupedName := titleDedupSet.deduplicate(name)
 		l.Debug("Duplicate alert rule name detected, renaming", "oldName", name, "newName", dedupedName)
@@ -76,7 +90,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	// Here we ensure that the alert rule group is unique within the folder.
 	// This is so that we don't have to ensure that the alerts rules have the same interval.
 	groupDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	panelSuffix := fmt.Sprintf(" - %d", da.PanelID)
+	panelSuffix := fmt.Sprintf(" - %d", alert.PanelID)
 	truncatedDashboard := truncate(info.DashboardName, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
 	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix) // Unique to this dash alert but still contains useful info.
 	if groupDedupSet.contains(groupName) {
@@ -88,38 +102,38 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 
 	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
-		OrgID:           da.OrgID,
+		OrgID:           alert.OrgID,
 		Title:           name,
 		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            data,
-		IntervalSeconds: ruleAdjustInterval(da.Frequency),
+		IntervalSeconds: ruleAdjustInterval(alert.Frequency),
 		Version:         1,
 		NamespaceUID:    info.NewFolderUID,
 		DashboardUID:    &dashUID,
-		PanelID:         &da.PanelID,
+		PanelID:         &alert.PanelID,
 		RuleGroup:       groupName,
-		For:             da.For,
+		For:             alert.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
 		RuleGroupIndex:  1, // Every rule is in its own group.
 		IsPaused:        isPaused,
-		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
-		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
+		NoDataState:     transNoData(l, parsedSettings.NoDataState),
+		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
 
 	// Label for routing and silences.
 	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
-	if da.ParsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
+	if parsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
 		if err := om.addErrorSilence(ar); err != nil {
 			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
 		}
 	}
 
-	if da.ParsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
+	if parsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
 		if err := om.addNoDataSilence(ar); err != nil {
 			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 		}
@@ -230,7 +244,7 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 		Type string `json:"type"`
 	}
 	if err := json.Unmarshal(ds, &datasource); err != nil {
-		return false, fmt.Errorf("failed to parse datasource '%s': %w", string(ds), err)
+		return false, fmt.Errorf("parse datasource '%s': %w", string(ds), err)
 	}
 	if datasource.Type == "" {
 		return false, fmt.Errorf("missing type field '%s'", string(ds))
@@ -287,17 +301,19 @@ func truncate(daName string, length int) string {
 	return daName
 }
 
-func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
+// extractChannelUIDs extracts the notification channel UIDs from the given legacy dashboard alert parsed settings.
+func (om *OrgMigration) extractChannelUIDs(ctx context.Context, l log.Logger, orgID int64, parsedSettings dashAlertSettings) (channelUids []string) {
 	// Extracting channel UID/ID.
-	for _, ui := range d.ParsedSettings.Notifications {
-		if ui.UID != "" {
-			channelUids = append(channelUids, ui.UID)
-			continue
-		}
-		// In certain circumstances, id is used instead of uid.
-		// We add this if there was no uid.
+	for _, ui := range parsedSettings.Notifications {
+		// Either id or uid can be defined in the dashboard alert notification settings. See alerting.NewRuleFromDBAlert.
 		if ui.ID > 0 {
-			channelUids = append(channelUids, ui.ID)
+			uid, err := om.migrationStore.GetAlertNotificationUidWithId(ctx, orgID, ui.ID)
+			if err != nil {
+				l.Error("Failed to get alert notification UID", "notificationId", ui.ID, "err", err)
+			}
+			channelUids = append(channelUids, uid)
+		} else if ui.UID != "" {
+			channelUids = append(channelUids, ui.UID)
 		}
 	}
 

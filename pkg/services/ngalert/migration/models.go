@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -89,11 +88,6 @@ func (om *OrgMigration) AlertGroupDeduplicator(folderUID string) Deduplicator {
 		}
 	}
 	return om.alertRuleGroupDedup[folderUID]
-}
-
-type AlertPair struct {
-	AlertRule *models.AlertRule
-	DashAlert *migrationStore.DashAlert
 }
 
 // Deduplicator is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help maintain and generate

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -67,7 +68,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 				"__dashboardUid__": dashboardUID,
 				"__panelId__":      "1",
 			},
-			Labels:   map[string]string{},
+			Labels:   map[string]string{migmodels.UseLegacyChannelsLabel: "true"},
 			IsPaused: false,
 		}
 		if len(mutators) > 0 {
