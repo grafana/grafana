@@ -141,8 +141,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				"type": "threshold",
 				"conditions": []
 			}`,
-			shouldError:   true,
-			expectedError: "expected threshold variable to be a string",
+			shouldError: true,
 		},
 		{
 			description: "unmarshal as hysteresis command if two evaluators",
@@ -196,6 +195,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			cmd, err := UnmarshalThresholdCommand(&rawNode{
 				RefID:      "",
 				Query:      qmap,
+				QueryRaw:   []byte(tc.query),
 				QueryType:  "",
 				DataSource: nil,
 			}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))

@@ -2,12 +2,12 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -55,12 +55,6 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 	}, nil
 }
 
-type ThresholdConditionJSON struct {
-	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
-}
-
 type ConditionEvalJSON struct {
 	Params []float64 `json:"params"`
 	Type   string    `json:"type"` // e.g. "gt"
@@ -68,31 +62,20 @@ type ConditionEvalJSON struct {
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles) (Command, error) {
-	rawQuery := rn.Query
-
-	rawExpression, ok := rawQuery["expression"]
-	if !ok {
+	cmdConfig := ThresholdCommandConfig{}
+	if err := jsoniter.Unmarshal(rn.QueryRaw, &cmdConfig); err != nil {
+		return nil, fmt.Errorf("failed to parse the threshold command: %w", err)
+	}
+	if cmdConfig.Expression == "" {
 		return nil, fmt.Errorf("no variable specified to reference for refId %v", rn.RefID)
 	}
-	referenceVar, ok := rawExpression.(string)
-	if !ok {
-		return nil, fmt.Errorf("expected threshold variable to be a string, got %T for refId %v", rawExpression, rn.RefID)
-	}
-
-	jsonFromM, err := json.Marshal(rawQuery["conditions"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to remarshal threshold expression body: %w", err)
-	}
-	var conditions []ThresholdConditionJSON
-	if err = json.Unmarshal(jsonFromM, &conditions); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remarshaled threshold expression body: %w", err)
-	}
+	referenceVar := cmdConfig.Expression
 
 	// we only support one condition for now, we might want to turn this in to "OR" expressions later
-	if len(conditions) != 1 {
+	if len(cmdConfig.Conditions) != 1 {
 		return nil, fmt.Errorf("threshold expression requires exactly one condition")
 	}
-	firstCondition := conditions[0]
+	firstCondition := cmdConfig.Conditions[0]
 
 	threshold, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.Evaluator.Type, firstCondition.Evaluator.Params)
 	if err != nil {
@@ -168,4 +151,15 @@ func IsSupportedThresholdFunc(name string) bool {
 	}
 
 	return isSupported
+}
+
+type ThresholdCommandConfig struct {
+	Expression string                   `json:"expression"`
+	Conditions []ThresholdConditionJSON `json:"conditions"`
+}
+
+type ThresholdConditionJSON struct {
+	Evaluator        ConditionEvalJSON  `json:"evaluator"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
 }
