@@ -2,7 +2,6 @@ package expr
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -28,30 +27,22 @@ func TestHysteresisExecute(t *testing.T) {
 	var loadThreshold = 100.0
 	var unloadThreshold = 30.0
 
-	readerErr := errors.New("test")
-
 	testCases := []struct {
-		name                string
-		loadedMetricsReader fakeLoadedMetricsReader
-		input               mathexp.Values
-		expected            mathexp.Values
-		expectedError       error
+		name             string
+		loadedDimensions Fingerprints
+		input            mathexp.Values
+		expected         mathexp.Values
+		expectedError    error
 	}{
 		{
-			name:                "return NoData when no data",
-			loadedMetricsReader: fakeLoadedMetricsReader{},
-			input:               mathexp.Values{mathexp.NewNoData()},
-			expected:            mathexp.Values{mathexp.NewNoData()},
+			name:             "return NoData when no data",
+			loadedDimensions: Fingerprints{0: struct{}{}},
+			input:            mathexp.Values{mathexp.NewNoData()},
+			expected:         mathexp.Values{mathexp.NewNoData()},
 		},
 		{
-			name:                "error if reader returns error",
-			loadedMetricsReader: fakeLoadedMetricsReader{err: readerErr},
-			input:               mathexp.Values{number("value1", 100)},
-			expectedError:       readerErr,
-		},
-		{
-			name:                "use only loaded condition if no loaded metrics",
-			loadedMetricsReader: fakeLoadedMetricsReader{},
+			name:             "use only loaded condition if no loaded metrics",
+			loadedDimensions: Fingerprints{},
 			input: mathexp.Values{
 				number("value1", loadThreshold+1),
 				number("value2", loadThreshold),
@@ -71,12 +62,10 @@ func TestHysteresisExecute(t *testing.T) {
 		},
 		{
 			name: "evaluate loaded metrics against unloaded threshold",
-			loadedMetricsReader: fakeLoadedMetricsReader{
-				loaded: map[data.Fingerprint]struct{}{
-					fingerprint("value4"): {},
-					fingerprint("value5"): {},
-					fingerprint("value6"): {},
-				},
+			loadedDimensions: Fingerprints{
+				fingerprint("value4"): {},
+				fingerprint("value5"): {},
+				fingerprint("value6"): {},
 			},
 			input: mathexp.Values{
 				number("value1", loadThreshold+1),
@@ -113,7 +102,7 @@ func TestHysteresisExecute(t *testing.T) {
 					ThresholdFunc: ThresholdIsAbove,
 					Conditions:    []float64{unloadThreshold},
 				},
-				LoadedReader: tc.loadedMetricsReader,
+				LoadedDimensions: tc.loadedDimensions,
 			}
 
 			result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
@@ -129,14 +118,57 @@ func TestHysteresisExecute(t *testing.T) {
 	}
 }
 
-type fakeLoadedMetricsReader struct {
-	loaded map[data.Fingerprint]struct{}
-	err    error
-}
-
-func (f fakeLoadedMetricsReader) Read(_ context.Context) (map[data.Fingerprint]struct{}, error) {
-	if f.err != nil {
-		return nil, f.err
+func TestLoadedDimensionsFromFrame(t *testing.T) {
+	testCases := []struct {
+		name          string
+		frame         *data.Frame
+		expected      Fingerprints
+		expectedError bool
+	}{
+		{
+			name:          "should fail if frame has no fields",
+			frame:         data.NewFrame("test"),
+			expectedError: true,
+		},
+		{
+			name: "should fail if frame has many fields",
+			frame: data.NewFrame("test",
+				data.NewField("fingerprints", nil, []uint64{}),
+				data.NewField("test", nil, []string{}),
+			),
+			expectedError: true,
+		},
+		{
+			name: "should fail if frame has field of a wrong type",
+			frame: data.NewFrame("test",
+				data.NewField("fingerprints", nil, []int64{}),
+			),
+			expectedError: true,
+		},
+		{
+			name: "should fail if frame has nullable uint64 field",
+			frame: data.NewFrame("test",
+				data.NewField("fingerprints", nil, []*uint64{}),
+			),
+			expectedError: true,
+		},
+		{
+			name: "should create LoadedMetrics",
+			frame: data.NewFrame("test",
+				data.NewField("fingerprints", nil, []uint64{1, 2, 3, 4, 5}),
+			),
+			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
+		},
 	}
-	return f.loaded, nil
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, err := FingerprintsFromFrame(testCase.frame)
+			if testCase.expectedError {
+				require.Error(t, err)
+			} else {
+				require.EqualValues(t, testCase.expected, result)
+			}
+		})
+	}
 }

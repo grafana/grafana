@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -54,8 +56,9 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 }
 
 type ThresholdConditionJSON struct {
-	Evaluator       ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator"`
+	Evaluator        ConditionEvalJSON  `json:"evaluator"`
+	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
+	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
 }
 
 type ConditionEvalJSON struct {
@@ -64,7 +67,7 @@ type ConditionEvalJSON struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader, features featuremgmt.FeatureToggles) (Command, error) {
+func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles) (Command, error) {
 	rawQuery := rn.Query
 
 	rawExpression, ok := rawQuery["expression"]
@@ -101,7 +104,14 @@ func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader, features feat
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
 		}
-		return NewHysteresisCommand(rn.RefID, referenceVar, *threshold, *unloading, r)
+		var d Fingerprints
+		if firstCondition.LoadedDimensions != nil {
+			d, err = FingerprintsFromFrame(firstCondition.LoadedDimensions)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
+			}
+		}
+		return NewHysteresisCommand(rn.RefID, referenceVar, *threshold, *unloading, d)
 	}
 	return threshold, nil
 }

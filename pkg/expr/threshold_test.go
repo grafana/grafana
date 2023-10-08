@@ -88,8 +88,6 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 		assert        func(*testing.T, Command)
 	}
 
-	reader := &fakeLoadedMetricsReader{}
-
 	cases := []testCase{
 		{
 			description: "unmarshal proper object",
@@ -147,24 +145,27 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			expectedError: "expected threshold variable to be a string",
 		},
 		{
-			description: "unmarshal as hysteresis command if two conditions",
+			description: "unmarshal as hysteresis command if two evaluators",
 			query: `{
-				"expression": "B",
-                "conditions": [{
-                    "evaluator": {
-                        "params": [
-                            100
-                        ],
-                        "type": "gt"
-                    },
-					"unloadEvaluator": {
-                        "params": [
-                            31
-                        ],
-                        "type": "lt"
-                    }
-                }]
-            }`,
+				  "expression": "B",
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      },
+				      "loadedDimensions": {"schema":{"name":"test","fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3,4,5]]}}
+				    }
+				  ]
+				}`,
 			assert: func(t *testing.T, c Command) {
 				require.IsType(t, &HysteresisCommand{}, c)
 				cmd := c.(*HysteresisCommand)
@@ -176,7 +177,12 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.Equal(t, "lt", cmd.UnloadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
 				require.True(t, cmd.UnloadingThresholdFunc.Invert)
-				require.Equal(t, reader, cmd.LoadedReader)
+				require.NotNil(t, cmd.LoadedDimensions)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				require.EqualValues(t, []uint64{1, 2, 3, 4, 5}, actual)
 			},
 		},
 	}
@@ -192,7 +198,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				Query:      qmap,
 				QueryType:  "",
 				DataSource: nil,
-			}, reader, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+			}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
 
 			if tc.shouldError {
 				require.Nil(t, cmd)
