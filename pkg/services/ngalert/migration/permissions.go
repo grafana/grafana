@@ -7,10 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,10 +33,9 @@ var (
 	generalAlertingFolderTitle = "General Alerting"
 )
 
-func getBackgroundUser(orgID int64) *user.SignedInUser {
-	backgroundUser := accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions).(*user.SignedInUser)
-	backgroundUser.UserID = migrationStore.FOLDER_CREATED_BY
-	return backgroundUser
+// getMigrationUser returns a background user for the given orgID with permissions to execute migration-related tasks.
+func getMigrationUser(orgID int64) identity.Requester {
+	return accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
 }
 
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
@@ -71,7 +70,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, log log.L
 		if !ok {
 			l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 			// create folder and assign the permissions of the dashboard (included default and inherited)
-			f, err = om.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{OrgID: om.orgID, Title: folderName, SignedInUser: getBackgroundUser(om.orgID)})
+			f, err = om.createFolder(ctx, om.orgID, folderName)
 			if err != nil {
 				return nil, nil, fmt.Errorf("create new folder: %w", err)
 			}
@@ -88,7 +87,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, log log.L
 		migratedFolder = f
 	case dash.FolderID > 0:
 		// get folder if exists
-		f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: dash.OrgID, SignedInUser: getBackgroundUser(dash.OrgID)})
+		f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: dash.OrgID, SignedInUser: getMigrationUser(dash.OrgID)})
 		if err != nil {
 			// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
 			l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "missing_folder_id", dash.FolderID, "error", err)
@@ -119,11 +118,11 @@ func (om *OrgMigration) getOrCreateGeneralFolder(ctx context.Context, orgID int6
 	if om.generalAlertingFolder != nil {
 		return om.generalAlertingFolder, nil
 	}
-	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &generalAlertingFolderTitle, SignedInUser: getBackgroundUser(orgID)})
+	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &generalAlertingFolderTitle, SignedInUser: getMigrationUser(orgID)})
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			// create folder
-			generalAlertingFolder, err := om.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: generalAlertingFolderTitle, SignedInUser: getBackgroundUser(orgID)})
+			generalAlertingFolder, err := om.createFolder(ctx, orgID, generalAlertingFolderTitle)
 			if err != nil {
 				return nil, fmt.Errorf("create general alerting folder '%s': %w", generalAlertingFolderTitle, err)
 			}
@@ -135,4 +134,20 @@ func (om *OrgMigration) getOrCreateGeneralFolder(ctx context.Context, orgID int6
 	om.generalAlertingFolder = f
 
 	return om.generalAlertingFolder, nil
+}
+
+// createFolder creates a new folder with given permissions.
+func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
+	f, err := om.migrationStore.CreateFolder(ctx, &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		Title:        title,
+		SignedInUser: getMigrationUser(orgID).(*user.SignedInUser),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	om.state.CreatedFolders = append(om.state.CreatedFolders, f.UID)
+
+	return f, nil
 }

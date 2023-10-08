@@ -24,7 +24,7 @@ const expressionDatasourceUID = "__expr__"
 //nolint:gocyclo
 func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store migrationStore.Store) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	usr := getBackgroundUser(alert.OrgID)
+	usr := getMigrationUser(alert.OrgID)
 	set := alert.ParsedSettings
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index

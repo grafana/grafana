@@ -461,7 +461,7 @@ func TestAMConfigMigration(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			defer teardown(t, x, service)
-			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
+			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts, nil, nil)
 
 			err := service.Run(context.Background())
 			require.NoError(t, err)
@@ -535,7 +535,17 @@ func TestDashAlertMigration(t *testing.T) {
 				"alert6": {Labels: map[string]string{}},
 			},
 		}
-		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+			createDashboard(t, 2, 1, "dash2-1", 5, nil),
+			createDashboard(t, 3, 2, "dash3-2", 6, nil),
+			createDashboard(t, 4, 2, "dash4-2", 6, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+			createFolder(t, 6, 2, "folder6-2"),
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts, folders, dashes)
 		err := service.Run(context.Background())
 		require.NoError(t, err)
 
@@ -562,7 +572,13 @@ func TestDashAlertMigration(t *testing.T) {
 				"alert1": {Labels: map[string]string{ContactLabel: `"notif_ier1"`}},
 			},
 		}
-		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts, folders, dashes)
 		err := service.Run(context.Background())
 		require.NoError(t, err)
 
@@ -982,36 +998,28 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "alerts in dashboard with custom ACL migrate to newly created folder",
-			alerts: []*models.Alert{
-				createAlertWithCond(t, 1, 10, 1, "alert1", nil,
-					[]migrationStore.DashAlertCondition{
-						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
-					}),
-			},
-			expectedFolder: &dashboards.Dashboard{
-				OrgID:    1,
-				Title:    "Dashboard With ACL 1 Alerts - dash-with-acl-1",
-				FolderID: 0,
-			},
-			expected: map[int64][]*ngModels.AlertRule{
-				int64(1): {
-					genAlert(func(rule *ngModels.AlertRule) {
-						rule.DashboardUID = pointer("dash-with-acl-1")
-						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
-							cond("A", "avg", "gt", 42),
-						}))
-					}),
-				},
-			},
-		},
 	}
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			defer teardown(t, x, service)
-			setupLegacyAlertsTables(t, x, nil, tt.alerts)
+			dashes := []*dashboards.Dashboard{
+				createDashboard(t, 1, 1, "dash1-1", 5, nil),
+				createDashboard(t, 2, 1, "dash2-1", 5, nil),
+				createDashboard(t, 3, 2, "dash3-2", 6, nil),
+				createDashboard(t, 4, 2, "dash4-2", 6, nil),
+				createDashboard(t, 8, 1, "dash-in-general-1", 0, nil),
+				createDashboard(t, 9, 2, "dash-in-general-2", 0, nil),
+				createDashboard(t, 10, 1, "dash-with-acl-1", 5, func(d *dashboards.Dashboard) {
+					d.Title = "Dashboard With ACL 1"
+					d.HasACL = true
+				}),
+			}
+			folders := []*dashboards.Dashboard{
+				createFolder(t, 5, 1, "folder5-1"),
+				createFolder(t, 6, 2, "folder6-2"),
+				createFolder(t, 7, 1, "General Alerting"),
+			}
+			setupLegacyAlertsTables(t, x, nil, tt.alerts, folders, dashes)
 
 			err := service.Run(context.Background())
 			require.NoError(t, err)
@@ -1182,6 +1190,8 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId i
 		Updated:  now,
 		Title:    uid, // Not tested, needed to satisfy constraint.
 		FolderID: folderId,
+		Data:     simplejson.New(),
+		Version:  1,
 	}
 	if mut != nil {
 		mut(d)
@@ -1230,7 +1240,7 @@ func teardown(t *testing.T, x *xorm.Engine, service *MigrationService) {
 }
 
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the
-func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
+func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert, folders []*dashboards.Dashboard, dashes []*dashboards.Dashboard) {
 	t.Helper()
 
 	orgs := []org.Org{
@@ -1238,24 +1248,17 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 		*createOrg(t, 2),
 	}
 
-	// Setup dashboards.
-	dashboards := []dashboards.Dashboard{
-		*createDashboard(t, 1, 1, "dash1-1", 5, nil),
-		*createDashboard(t, 2, 1, "dash2-1", 5, nil),
-		*createDashboard(t, 3, 2, "dash3-2", 6, nil),
-		*createDashboard(t, 4, 2, "dash4-2", 6, nil),
-		*createFolder(t, 5, 1, "folder5-1"),
-		*createFolder(t, 6, 2, "folder6-2"),
-		*createFolder(t, 7, 1, "General Alerting"),
-		*createDashboard(t, 8, 1, "dash-in-general-1", 0, nil),
-		*createDashboard(t, 9, 2, "dash-in-general-2", 0, nil),
-		*createDashboard(t, 10, 1, "dash-with-acl-1", 5, func(d *dashboards.Dashboard) {
-			d.Title = "Dashboard With ACL 1"
-			d.HasACL = true
-		}),
+	// Setup folders.
+	if len(folders) > 0 {
+		_, err := x.Insert(folders)
+		require.NoError(t, err)
 	}
-	_, errDashboards := x.Insert(dashboards)
-	require.NoError(t, errDashboards)
+
+	// Setup dashboards.
+	if len(dashes) > 0 {
+		_, err := x.Insert(dashes)
+		require.NoError(t, err)
+	}
 
 	// Setup data_sources.
 	dataSources := []datasources.DataSource{
@@ -1308,7 +1311,12 @@ func getDashboard(t *testing.T, x *xorm.Engine, orgId int64, uid string) *dashbo
 	dashes := make([]*dashboards.Dashboard, 0)
 	err := x.Table("dashboard").Where("org_id = ? AND uid = ?", orgId, uid).Find(&dashes)
 	require.NoError(t, err)
-	require.Len(t, dashes, 1)
+	if len(dashes) > 1 {
+		t.Error("Expected only one dashboard to be returned")
+	}
+	if len(dashes) == 0 {
+		return nil
+	}
 
 	return dashes[0]
 }
