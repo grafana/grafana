@@ -66,7 +66,6 @@ export interface FeatureToggles {
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
