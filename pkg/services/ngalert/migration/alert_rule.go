@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -40,14 +41,14 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 }
 
 // MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
 	cond, err := transConditions(ctx, da, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	lbls, annotations := addMigrationInfo(da, dashboardUID)
+	lbls, annotations := addMigrationInfo(da, info.DashboardUID)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
 	annotations["message"] = message
@@ -63,7 +64,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
-	dedupSet := om.AlertTitleDeduplicator(folderUID)
+	dedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
 	name := truncateRuleName(da.Name)
 	if dedupSet.contains(name) {
 		dedupedName := dedupSet.deduplicate(name)
@@ -72,6 +73,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	}
 	dedupSet.add(name)
 
+	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
 		OrgID:           da.OrgID,
 		Title:           name,
@@ -80,10 +82,10 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
-		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		DashboardUID:    &dashboardUID,
+		NamespaceUID:    info.NewFolderUID,
+		DashboardUID:    &dashUID,
 		PanelID:         &da.PanelID,
-		RuleGroup:       name,
+		RuleGroup:       fmt.Sprintf("%s - %d", info.DashboardName, da.PanelID), // Unique to this dash alert but still contains useful info.
 		For:             da.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,

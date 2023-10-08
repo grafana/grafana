@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -106,13 +106,13 @@ const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh
 
 func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 	t.Run("should include full title", func(t *testing.T) {
-		dash := &dashboards.Dashboard{
-			UID:   util.GenerateShortUID(),
+		hash := util.GenerateShortUID()
+		f := &folder.Folder{
 			Title: "TEST",
 		}
-		folder := getAlertFolderNameFromDashboard(dash)
-		require.Contains(t, folder, dash.Title)
-		require.Contains(t, folder, dash.UID)
+		name := generateAlertFolderName(f, permissionHash(hash))
+		require.Contains(t, name, f.Title)
+		require.Contains(t, name, hash)
 	})
 	t.Run("should cut title to the length", func(t *testing.T) {
 		title := ""
@@ -124,13 +124,13 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 			}
 		}
 
-		dash := &dashboards.Dashboard{
-			UID:   util.GenerateShortUID(),
+		hash := util.GenerateShortUID()
+		f := &folder.Folder{
 			Title: title,
 		}
-		folder := getAlertFolderNameFromDashboard(dash)
-		require.Len(t, folder, MaxFolderName)
-		require.Contains(t, folder, dash.UID)
+		name := generateAlertFolderName(f, permissionHash(hash))
+		require.Len(t, name, MaxFolderName)
+		require.Contains(t, name, hash)
 	})
 }
 

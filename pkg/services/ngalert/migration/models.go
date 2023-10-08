@@ -6,6 +6,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
@@ -29,8 +30,10 @@ type OrgMigration struct {
 	silences            []*pb.MeshSilence
 	alertRuleTitleDedup map[string]Deduplicator // Folder -> Deduplicator (Title).
 
-	// cache for folders created for dashboards that have custom permissions
-	folderCache           map[string]*folder.Folder
+	// Migrated folder for a dashboard based on permissions. Parent Folder ID -> unique dashboard permission -> custom folder.
+	permissionsMap        map[int64]map[permissionHash]*folder.Folder
+	folderCache           map[int64]*folder.Folder                      // Folder ID -> Folder.
+	folderPermissionCache map[string][]accesscontrol.ResourcePermission // Folder UID -> Folder Permissions.
 	generalAlertingFolder *folder.Folder
 
 	state *migmodels.OrgMigrationState
@@ -51,7 +54,9 @@ func (ms *MigrationService) newOrgMigration(orgID int64) *OrgMigration {
 		silences:            make([]*pb.MeshSilence, 0),
 		alertRuleTitleDedup: make(map[string]Deduplicator),
 
-		folderCache: make(map[string]*folder.Folder),
+		permissionsMap:        make(map[int64]map[permissionHash]*folder.Folder),
+		folderCache:           make(map[int64]*folder.Folder),
+		folderPermissionCache: make(map[string][]accesscontrol.ResourcePermission),
 
 		state: &migmodels.OrgMigrationState{
 			OrgID:          orgID,
