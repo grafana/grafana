@@ -24,30 +24,24 @@ const (
 )
 
 // migrateChannels creates Alertmanager configs with migrated receivers and routes.
-func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) (*migmodels.Alertmanager, error) {
-	amConfig := migmodels.NewAlertmanager()
-	empty := true
+func (om *OrgMigration) migrateChannels(amConfig *migmodels.Alertmanager, channels []*legacymodels.AlertNotification) ([]*migmodels.ContactPair, error) {
 	// Create all newly migrated receivers from legacy notification channels.
+	pairs := make([]*migmodels.ContactPair, 0, len(channels))
 	for _, c := range channels {
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			om.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
-			continue
-		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			return nil, err
+			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			pairs = append(pairs, newContactPair(c, receiver, nil, err))
+			continue
 		}
 
-		empty = false
 		route := createRoute(c, receiver.Name)
 		amConfig.AddRoute(route)
 		amConfig.AddReceiver(receiver)
-	}
-	if empty {
-		return nil, nil
+		pairs = append(pairs, newContactPair(c, receiver, route, nil))
 	}
 
-	return amConfig, nil
+	return pairs, nil
 }
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
@@ -105,6 +99,10 @@ func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apim
 
 // createReceiver creates a receiver from a legacy notification channel.
 func (om *OrgMigration) createReceiver(channel *legacymodels.AlertNotification) (*apimodels.PostableApiReceiver, error) {
+	if channel.Type == "hipchat" || channel.Type == "sensu" {
+		return nil, fmt.Errorf("%s is discontinued", channel.Type)
+	}
+
 	notifier, err := om.createNotifier(channel)
 	if err != nil {
 		return nil, err

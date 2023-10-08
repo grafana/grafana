@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,6 +36,7 @@ import (
 type Store interface {
 	InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error
 
+	GetAlertmanagerConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, error)
 	SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error
 
 	GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error)
@@ -43,7 +45,10 @@ type Store interface {
 
 	GetAlertNotificationUidWithId(ctx context.Context, orgID int64, id int64) (string, error)
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
+	GetNotificationChannel(ctx context.Context, orgID int64, id int64) (*legacymodels.AlertNotification, error)
 
+	GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error)
+	GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error)
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
@@ -56,12 +61,19 @@ type Store interface {
 	GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error)
 	CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error)
 
-	IsMigrated(ctx context.Context) (bool, error)
-	SetMigrated(ctx context.Context, migrated bool) error
+	IsProvisioned(ctx context.Context, orgID int64, dashboardUID string) (bool, error)
+
+	IsMigrated(ctx context.Context, orgID int64) (bool, error)
+	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
 	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
 	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
 
+	RevertOrg(ctx context.Context, orgID int64) error
 	RevertAllOrgs(ctx context.Context) error
+
+	DeleteAlertRules(ctx context.Context, orgID int64, alertRuleUIDs ...string) error
+	DeleteFolders(ctx context.Context, orgID int64, uids ...string) error
+	DeleteMigratedFolders(ctx context.Context, orgID int64) error
 
 	CaseInsensitive() bool
 }
@@ -72,6 +84,7 @@ type migrationStore struct {
 	log                  log.Logger
 	kv                   kvstore.KVStore
 	alertingStore        *store.DBstore
+	encryptionService    secrets.Service
 	dashboardService     dashboards.DashboardService
 	folderService        folder.Service
 	dataSourceCache      datasources.CacheService
@@ -81,6 +94,7 @@ type migrationStore struct {
 
 	legacyAlertStore               legacyalerting.AlertStore
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService
+	dashboardProvisioningService   dashboards.DashboardProvisioningService
 }
 
 // MigrationStore implements the Store interface.
@@ -91,6 +105,7 @@ func ProvideMigrationStore(
 	sqlStore db.DB,
 	kv kvstore.KVStore,
 	alertingStore *store.DBstore,
+	encryptionService secrets.Service,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
 	dataSourceCache datasources.CacheService,
@@ -99,6 +114,7 @@ func ProvideMigrationStore(
 	orgService org.Service,
 	legacyAlertStore legacyalerting.AlertStore,
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService,
 ) (Store, error) {
 	return &migrationStore{
 		log:                            log.New("ngalert.migration-store"),
@@ -106,6 +122,7 @@ func ProvideMigrationStore(
 		store:                          sqlStore,
 		kv:                             kv,
 		alertingStore:                  alertingStore,
+		encryptionService:              encryptionService,
 		dashboardService:               dashboardService,
 		folderService:                  folderService,
 		dataSourceCache:                dataSourceCache,
@@ -114,6 +131,7 @@ func ProvideMigrationStore(
 		orgService:                     orgService,
 		legacyAlertStore:               legacyAlertStore,
 		legacyAlertNotificationService: legacyAlertNotificationService,
+		dashboardProvisioningService:   dashboardProvisioningService,
 	}, nil
 }
 
@@ -126,11 +144,9 @@ const migratedKey = "migrated"
 // stateKey is the kvstore key used for the OrgMigrationState.
 const stateKey = "stateKey"
 
-const anyOrg = 0
-
 // IsMigrated returns the migration status from the kvstore.
-func (ms *migrationStore) IsMigrated(ctx context.Context) (bool, error) {
-	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+func (ms *migrationStore) IsMigrated(ctx context.Context, orgID int64) (bool, error) {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	content, exists, err := kv.Get(ctx, migratedKey)
 	if err != nil {
 		return false, err
@@ -144,8 +160,8 @@ func (ms *migrationStore) IsMigrated(ctx context.Context) (bool, error) {
 }
 
 // SetMigrated sets the migration status in the kvstore.
-func (ms *migrationStore) SetMigrated(ctx context.Context, migrated bool) error {
-	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+func (ms *migrationStore) SetMigrated(ctx context.Context, orgID int64, migrated bool) error {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	return kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
 }
 
@@ -205,6 +221,28 @@ func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.
 	return nil
 }
 
+// DeleteAlertRules deletes alert rules in a given org by their UIDs.
+func (ms *migrationStore) DeleteAlertRules(ctx context.Context, orgID int64, alertRuleUIDs ...string) error {
+	return ms.alertingStore.DeleteAlertRulesByUID(ctx, orgID, alertRuleUIDs...)
+}
+
+func (ms *migrationStore) GetAlertmanagerConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, error) {
+	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgID}
+	amConfig, err := ms.alertingStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return nil, err
+	}
+	if amConfig == nil {
+		return nil, nil
+	}
+
+	cfg, err := notifier.Load([]byte(amConfig.AlertmanagerConfiguration))
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
 func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
@@ -227,8 +265,58 @@ var revertPermissions = []accesscontrol.Permission{
 	{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 }
 
-// RevertAllOrgs reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
-// In addition, it will delete all folders and permissions originally created by this migration, these are stored in the kvstore.
+func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
+	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if err := ms.DeleteMigratedFolders(ctx, orgID); err != nil {
+			ms.log.Warn("Failed to delete migrated folders", "orgID", orgID, "err", err)
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_configuration WHERE org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM ngalert_configuration WHERE org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM provenance_type WHERE org_id = ?", orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ? AND org_id = ?", notifier.KVNamespace, orgID); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ? AND org_id = ?", KVNamespace, orgID); err != nil {
+			return err
+		}
+
+		files, err := filepath.Glob(filepath.Join(ms.cfg.DataPath, "alerting", strconv.FormatInt(orgID, 10), "silences"))
+		if err != nil {
+			return err
+		}
+		for _, f := range files {
+			if err := os.Remove(f); err != nil {
+				ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+			}
+		}
+
+		return nil
+	})
+}
+
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
@@ -282,11 +370,6 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 			if err := os.Remove(f); err != nil {
 				ms.log.Error("Failed to remove silence file", "file", f, "err", err)
 			}
-		}
-
-		err = ms.SetMigrated(ctx, false)
-		if err != nil {
-			return fmt.Errorf("setting migration status: %w", err)
 		}
 
 		return nil
@@ -393,6 +476,58 @@ func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int
 	})
 }
 
+var ErrNotFound = errors.New("not found")
+
+// GetNotificationChannel returns a single channel for this org by id.
+func (ms *migrationStore) GetNotificationChannel(ctx context.Context, orgID int64, id int64) (*legacymodels.AlertNotification, error) {
+	channel, err := ms.legacyAlertNotificationService.GetAlertNotifications(ctx, &legacymodels.GetAlertNotificationsQuery{
+		OrgID: orgID,
+		ID:    id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if channel == nil {
+		// GetAlertNotifications returns nil and no error if the channel is not found.
+		return nil, ErrNotFound
+	}
+
+	return channel, nil
+}
+
+// GetDashboardAlert loads a single legacy dashboard alerts for the given org and alert id.
+func (ms *migrationStore) GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error) {
+	var dashAlert legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ? AND panel_id = ?", orgID, dashboardID, panelID).Get(&dashAlert)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dashAlert, nil
+}
+
+// GetDashboardAlerts loads all legacy dashboard alerts for the given org and dashboard.
+func (ms *migrationStore) GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error) {
+	var dashAlerts []*legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ?", orgID, dashboardID).Find(&dashAlerts)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dashAlerts, nil
+}
+
 // GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
 func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error) {
 	var dashAlerts []*legacymodels.Alert
@@ -436,6 +571,18 @@ func (ms *migrationStore) SetFolderPermissions(ctx context.Context, orgID int64,
 
 func (ms *migrationStore) MapActions(permission accesscontrol.ResourcePermission) string {
 	return ms.dashboardPermissions.MapActions(permission)
+}
+
+func (ms *migrationStore) IsProvisioned(ctx context.Context, orgID int64, dashboardUID string) (bool, error) {
+	info, err := ms.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("get provisioned status: %w", err)
+	}
+
+	return info != nil, nil
 }
 
 func (ms *migrationStore) CaseInsensitive() bool {

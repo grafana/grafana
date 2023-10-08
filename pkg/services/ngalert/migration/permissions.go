@@ -56,32 +56,50 @@ func getMigrationUser(orgID int64) identity.Requester {
 	return accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
 }
 
-func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dashID int64) (*migmodels.DashboardUpgradeInfo, error) {
+func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dashID int64) (*migmodels.DashboardUpgrade, error) {
+	du := &migmodels.DashboardUpgrade{
+		DashboardUpgradeInfo: &migmodels.DashboardUpgradeInfo{
+			DashboardID: dashID,
+		},
+	}
 	dash, err := om.migrationStore.GetDashboard(ctx, om.orgID, dashID)
 	if err != nil {
-		return nil, err
+		return du, err
 	}
+	du.SetDashboard(dash.UID, dash.Title)
 	l := log.New("dashboardTitle", dash.Title, "dashboardUid", dash.UID)
+
+	provisioned, err := om.migrationStore.IsProvisioned(ctx, om.orgID, dash.UID)
+	if err != nil {
+		l.Warn("Failed to get provisioned status for dashboard", "error", err)
+		du.AddWarning(fmt.Errorf("provisioned status: %w", err).Error())
+	}
+	du.Provisioned = provisioned
 
 	dashFolder, err := om.getFolder(ctx, dash)
 	if err != nil {
 		l.Warn("Failed to find folder for dashboard", "missing_folder_id", dash.FolderID, "error", err)
 	}
 	if dashFolder != nil {
-		l = l.New("folderUid", dashFolder.UID, "folderName", dashFolder.Title)
+		du.SetFolder(dashFolder.UID, dashFolder.Title)
+		l = l.New("folderUid", du.FolderUID, "folderName", du.FolderName)
 	}
 
+	// If we're only migrating new alerts and there are existing alerts for this dashboard, we need to make sure that
+	// the new alerts are migrating to the same folder as the old ones. Otherwise, we'll end up with a mix of different
+	// folders for the same dashboard. This can happen if the permissions were changed on the dashboard or folder after
+	// the previous migration.
 	migratedFolder, err := om.getOrCreateMigratedFolder(ctx, l, dash, dashFolder)
 	if err != nil {
-		return nil, err
+		return du, err
 	}
-
-	return &migmodels.DashboardUpgradeInfo{
-		DashboardUID:  dash.UID,
-		DashboardName: dash.Title,
-		NewFolderUID:  migratedFolder.UID,
-		NewFolderName: migratedFolder.Title,
-	}, nil
+	if migratedFolder.Title == generalAlertingFolderTitle {
+		du.AddWarning("dashboard alerts moved to general alerting folder during upgrade: original folder not found")
+	} else if dashFolder.UID != migratedFolder.UID {
+		du.AddWarning("dashboard alerts moved to new folder during upgrade: folder permission changes were needed")
+	}
+	du.SetNewFolder(migratedFolder.UID, migratedFolder.Title)
+	return du, nil
 }
 
 // getOrCreateMigratedFolder returns the folder that alerts in a given dashboard should migrate to.
@@ -92,7 +110,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	// If parentFolder does not exist then the dashboard is an orphan. We migrate the alert to the general alerting folder.
 	// The general alerting folder is only accessible to admins.
 	if parentFolder == nil {
-		l.Warn("Migrating alert to the general alerting folder: original folder not found")
+		l.Debug("Migrating alert to the general alerting folder")
 		f, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
 		if err != nil {
 			return nil, fmt.Errorf("general alerting folder: %w", err)

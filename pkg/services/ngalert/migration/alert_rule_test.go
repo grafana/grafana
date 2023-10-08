@@ -132,8 +132,11 @@ func TestAddMigrationInfo(t *testing.T) {
 func TestMakeAlertRule(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	info := migmodels.DashboardUpgradeInfo{
+		DashboardID:   1,
 		DashboardUID:  "dashboarduid",
 		DashboardName: "dashboardname",
+		FolderUID:     "folderuid",
+		FolderName:    "foldername",
 		NewFolderUID:  "newfolderuid",
 		NewFolderName: "newfoldername",
 	}

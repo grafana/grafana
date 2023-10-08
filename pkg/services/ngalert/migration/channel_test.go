@@ -432,7 +432,8 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			am, err := m.migrateChannels(tt.channels)
+			am := migmodels.FromPostableUserConfig(nil)
+			_, err := m.migrateChannels(am, tt.channels)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -440,7 +441,7 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			amConfig := am.Config
+			amConfig := am.CleanConfig()
 			opts := []cmp.Option{
 				cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, labels.Matcher{}),
 				cmpopts.SortSlices(func(a, b *apimodels.Route) bool { return a.Receiver < b.Receiver }),

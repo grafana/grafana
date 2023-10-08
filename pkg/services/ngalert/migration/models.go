@@ -4,10 +4,13 @@ import (
 	"strings"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/folder"
+	apiModels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -62,8 +65,11 @@ func (ms *MigrationService) newOrgMigration(orgID int64) *OrgMigration {
 		folderPermissionCache: make(map[string][]accesscontrol.ResourcePermission),
 
 		state: &migmodels.OrgMigrationState{
-			OrgID:          orgID,
-			CreatedFolders: make([]string, 0),
+			OrgID:              orgID,
+			MigratedDashboards: make([]*migmodels.DashboardUpgrade, 0),
+			MigratedChannels:   make([]*migmodels.ContactPair, 0),
+			CreatedFolders:     make([]string, 0),
+			Errors:             make([]string, 0),
 		},
 	}
 }
@@ -88,6 +94,40 @@ func (om *OrgMigration) AlertGroupDeduplicator(folderUID string) Deduplicator {
 		}
 	}
 	return om.alertRuleGroupDedup[folderUID]
+}
+
+func newContactPair(channel *legacymodels.AlertNotification, contactPoint *apiModels.PostableApiReceiver, route *apiModels.Route, err error) *migmodels.ContactPair {
+	pair := &migmodels.ContactPair{
+		LegacyChannel: &migmodels.LegacyChannel{
+			Modified:              false,
+			ID:                    channel.ID,
+			UID:                   channel.UID,
+			Name:                  channel.Name,
+			Type:                  channel.Type,
+			SendReminder:          channel.SendReminder,
+			DisableResolveMessage: channel.DisableResolveMessage,
+			Frequency:             model.Duration(channel.Frequency),
+			IsDefault:             channel.IsDefault,
+		},
+		Provisioned: false, // Provisioned status for alert notifications is not stored in the database.
+	}
+	if contactPoint != nil {
+		pair.ContactPointUpgrade = &migmodels.ContactPointUpgrade{
+			Modified:              false,
+			Name:                  contactPoint.Name,
+			UID:                   contactPoint.GrafanaManagedReceivers[0].UID,
+			Type:                  contactPoint.GrafanaManagedReceivers[0].Type,
+			DisableResolveMessage: contactPoint.GrafanaManagedReceivers[0].DisableResolveMessage,
+		}
+		if route != nil {
+			pair.ContactPointUpgrade.RouteLabel = route.ObjectMatchers[0].Name
+		}
+	}
+
+	if err != nil {
+		pair.Error = err.Error()
+	}
+	return pair
 }
 
 // Deduplicator is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help maintain and generate
