@@ -28,9 +28,9 @@ export interface Props {
 export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, options, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
-  // @TODO check this
-  const rowIndex = dataIdxs[1]!;
-  const hoveredPointIndex = seriesIdx ?? 0;
+  const rowIndex = dataIdxs.find((idx) => idx !== null);
+  const seriesIndex = dataIdxs.findIndex((idx) => idx != null);
+  const hoveredPointIndex = seriesIndex - 1;
 
   if (!allSeries || rowIndex == null) {
     return null;
@@ -41,8 +41,8 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const xField = series.x(frame);
   const yField = series.y(frame);
 
+  // collect data links
   let links: LinkModel[] | undefined = undefined;
-
   if (yField.getLinks) {
     const v = yField.values[rowIndex];
     const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
@@ -55,11 +55,11 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     });
   }
 
+  // collect extra fields
   let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
   let seriesMapping = options.seriesMapping;
   const manualSeriesConfigs = options.series;
 
-  let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
     const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointColor?.field ?? '';
@@ -78,6 +78,8 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
   }
 
+  // get Y value
+  let yValue: YValue | null = null;
   yValue = {
     name: getFieldDisplayName(yField, frame),
     val: yField.values[rowIndex],
@@ -91,33 +93,30 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       {
         label: getFieldDisplayName(xField, frame),
         value: fmt(xField, xField.values[rowIndex]),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        color: series.pointColor(frame) as string,
       },
     ];
-
-    if (yValue) {
-      header.push({
-        label: yValue.name,
-        value: fmt(yValue.field, yValue.val),
-        color: yValue.color,
-      });
-    }
 
     return header;
   };
 
   const getContentLabel = (): LabelValue[] => {
-    const content: LabelValue[] = [
-      {
-        label: getFieldDisplayName(xField, frame),
-        value: fmt(xField, xField.values[rowIndex]),
-      },
-    ];
+    const content: LabelValue[] = [];
 
     if (yValue) {
       content.push({
         label: yValue.name,
         value: fmt(yValue.field, yValue.val),
-        color: yValue.color,
+      });
+    }
+
+    if (extraFields) {
+      extraFields.forEach((field) => {
+        content.push({
+          label: field.name,
+          value: fmt(field, field.values[rowIndex]),
+        });
       });
     }
 

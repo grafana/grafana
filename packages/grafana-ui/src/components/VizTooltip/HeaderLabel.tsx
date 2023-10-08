@@ -19,9 +19,13 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
     <VerticalGroup justify-content="space-between" spacing="lg">
       <div className={styles.wrapper}>
         {headerLabel.map((label, index) => {
+          const { color } = label;
           return (
             <div key={index} className={styles.header}>
-              <span className={styles.label}>{label.label}</span>
+              <span className={styles.label}>
+                {color ? <span className={styles.labelColor} style={{ backgroundColor: color }}></span> : null}
+                {label.label}
+              </span>
               <Tooltip content={label.value ? label.value.toString() : ''}>
                 <span className={styles.value}>{label.value}</span>
               </Tooltip>
@@ -35,9 +39,18 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
+    display: 'flex',
+    alignItems: 'center',
     color: theme.colors.text.secondary,
     paddingRight: theme.spacing(0.5),
     fontWeight: 400,
+  }),
+  labelColor: css({
+    width: '12px',
+    height: '12px',
+    display: 'inline-block',
+    borderRadius: '2px',
+    marginRight: '4px',
   }),
   value: css({
     fontWeight: 500,
@@ -45,7 +58,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignSelf: 'center',
   }),
   header: css({
-    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    // maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
   }),
   wrapper: css({
     display: 'flex',
