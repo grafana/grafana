@@ -2979,6 +2979,228 @@
           }
         }
       }
+    },
+    "/api/v1/upgrade/channels": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade all legacy notification channels for the current organization.",
+        "operationId": "RoutePostUpgradeAllChannels",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
+            "name": "SkipExisting",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade/channels/{ChannelID}": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade a single legacy notification channel for the current organization.",
+        "operationId": "RoutePostUpgradeChannel",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
+            "name": "SkipExisting",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Channel ID of legacy notification channel.",
+            "name": "ChannelID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade/dashboards": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade all legacy dashboard alerts for the current organization.",
+        "operationId": "RoutePostUpgradeAllDashboards",
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade/dashboards/{DashboardID}": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade all legacy dashboard alerts on a dashboard for the current organization.",
+        "operationId": "RoutePostUpgradeDashboard",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
+            "name": "SkipExisting",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Dashboard ID of dashboard alert.",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade single legacy dashboard alert for the current organization.",
+        "operationId": "RoutePostUpgradeAlert",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Dashboard ID of dashboard alert.",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Panel ID of dashboard alert.",
+            "name": "PanelID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade/org": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Get existing alerting upgrade for the current organization.",
+        "operationId": "RouteGetOrgUpgrade",
+        "responses": {
+          "200": {
+            "description": "OrgMigrationState",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationState"
+            }
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Upgrade all legacy alerts for the current organization.",
+        "operationId": "RoutePostUpgradeOrg",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
+            "name": "SkipExisting",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OrgMigrationSummary",
+            "schema": {
+              "$ref": "#/definitions/OrgMigrationSummary"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "upgrade"
+        ],
+        "summary": "Delete existing alerting upgrade for the current organization.",
+        "operationId": "RouteDeleteOrgUpgrade",
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -3071,6 +3293,20 @@
           "items": {
             "$ref": "#/definitions/AlertManager"
           }
+        }
+      }
+    },
+    "AlertPair": {
+      "type": "object",
+      "properties": {
+        "alertRule": {
+          "$ref": "#/definitions/AlertRuleUpgrade"
+        },
+        "error": {
+          "type": "string"
+        },
+        "legacyAlert": {
+          "$ref": "#/definitions/LegacyAlert"
         }
       }
     },
@@ -3255,6 +3491,61 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleUpgrade": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "isPaused": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "modified": {
+          "type": "boolean"
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -3530,6 +3821,23 @@
         }
       }
     },
+    "ContactPair": {
+      "type": "object",
+      "properties": {
+        "contactPoint": {
+          "$ref": "#/definitions/ContactPointUpgrade"
+        },
+        "error": {
+          "type": "string"
+        },
+        "legacyChannel": {
+          "$ref": "#/definitions/LegacyChannel"
+        },
+        "provisioned": {
+          "type": "boolean"
+        }
+      }
+    },
     "ContactPointExport": {
       "type": "object",
       "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
@@ -3549,6 +3857,29 @@
         }
       }
     },
+    "ContactPointUpgrade": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "modified": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "routeLabel": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "ContactPoints": {
       "type": "array",
       "items": {
@@ -3560,6 +3891,54 @@
       "type": "integer",
       "format": "uint8",
       "title": "CounterResetHint contains the known information about a counter reset,"
+    },
+    "DashboardUpgrade": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "folderName": {
+          "type": "string"
+        },
+        "folderUid": {
+          "type": "string"
+        },
+        "migratedAlerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertPair"
+          }
+        },
+        "newFolderName": {
+          "type": "string"
+        },
+        "newFolderUid": {
+          "type": "string"
+        },
+        "provisioned": {
+          "type": "boolean"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "DataLink": {
       "description": "DataLink define what",
@@ -4791,6 +5170,78 @@
         "$ref": "#/definitions/Label"
       }
     },
+    "LegacyAlert": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "executionError": {
+          "type": "string"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "modified": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paused": {
+          "type": "boolean"
+        },
+        "silenced": {
+          "type": "boolean"
+        }
+      }
+    },
+    "LegacyChannel": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "frequency": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "modified": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sendReminder": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "LinkTransformationConfig": {
       "type": "object",
       "properties": {
@@ -4832,7 +5283,7 @@
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
       "additionalProperties": {
-        "$ref": "#/definitions/Regexp"
+        "type": "string"
       }
     },
     "MatchType": {
@@ -5101,6 +5552,53 @@
         },
         "username": {
           "type": "string"
+        }
+      }
+    },
+    "OrgMigrationState": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "migratedChannels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContactPair"
+          }
+        },
+        "migratedDashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardUpgrade"
+          }
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "OrgMigrationSummary": {
+      "type": "object",
+      "properties": {
+        "hasErrors": {
+          "type": "boolean"
+        },
+        "newAlerts": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "newChannels": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "newDashboards": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -5954,11 +6452,6 @@
           "type": "string"
         }
       }
-    },
-    "Regexp": {
-      "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-      "type": "object",
-      "title": "Regexp is the representation of a compiled regular expression."
     },
     "RelativeTimeRange": {
       "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
@@ -7105,6 +7598,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7129,7 +7623,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7235,7 +7728,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7292,7 +7784,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"

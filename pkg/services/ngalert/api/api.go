@@ -64,6 +64,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UpgradeService       UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -139,6 +140,12 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		logger: logger,
 		hist:   api.Historian,
 	}), m)
+
+	api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
+		logger,
+		api.UpgradeService,
+		api.Cfg,
+	)), m)
 }
 
 func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {

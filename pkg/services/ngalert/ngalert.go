@@ -277,6 +277,7 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UpgradeService:       ng.upgradeService,
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

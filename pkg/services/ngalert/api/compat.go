@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -303,4 +304,147 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	return &export
+}
+
+func FromMigrationState(summary *migmodels.OrgMigrationState) *definitions.OrgMigrationState {
+	result := &definitions.OrgMigrationState{
+		OrgID: summary.OrgID,
+	}
+	result.MigratedChannels = FromContactPairs(summary.MigratedChannels)
+	result.MigratedDashboards = FromDashboardUpgrades(summary.MigratedDashboards)
+	result.Errors = append(result.Errors, summary.Errors...)
+
+	return result
+}
+
+func FromContactPairs(pairs []*migmodels.ContactPair) []*definitions.ContactPair {
+	result := make([]*definitions.ContactPair, 0, len(pairs))
+	for _, p := range pairs {
+		result = append(result, FromContactPair(p))
+	}
+	return result
+}
+
+func FromContactPair(pair *migmodels.ContactPair) *definitions.ContactPair {
+	return &definitions.ContactPair{
+		LegacyChannel:       FromLegacyChannel(pair.LegacyChannel),
+		ContactPointUpgrade: FromContactPointUpgrade(pair.ContactPointUpgrade),
+		Provisioned:         pair.Provisioned,
+		Error:               pair.Error,
+	}
+}
+
+func FromLegacyChannel(channel *migmodels.LegacyChannel) *definitions.LegacyChannel {
+	if channel == nil {
+		return nil
+	}
+	return &definitions.LegacyChannel{
+		ID:                    channel.ID,
+		UID:                   channel.UID,
+		Name:                  channel.Name,
+		Type:                  channel.Type,
+		SendReminder:          channel.SendReminder,
+		DisableResolveMessage: channel.DisableResolveMessage,
+		Frequency:             channel.Frequency,
+		IsDefault:             channel.IsDefault,
+		Modified:              channel.Modified,
+	}
+}
+
+func FromContactPointUpgrade(contactPoint *migmodels.ContactPointUpgrade) *definitions.ContactPointUpgrade {
+	if contactPoint == nil {
+		return nil
+	}
+	return &definitions.ContactPointUpgrade{
+		Name:                  contactPoint.Name,
+		UID:                   contactPoint.UID,
+		Type:                  contactPoint.Type,
+		DisableResolveMessage: contactPoint.DisableResolveMessage,
+		RouteLabel:            contactPoint.RouteLabel,
+		Modified:              contactPoint.Modified,
+	}
+}
+
+func FromDashboardUpgrades(dus []*migmodels.DashboardUpgrade) []*definitions.DashboardUpgrade {
+	result := make([]*definitions.DashboardUpgrade, 0, len(dus))
+	for _, du := range dus {
+		result = append(result, FromDashboardUpgrade(du))
+	}
+	return result
+}
+
+func FromDashboardUpgrade(du *migmodels.DashboardUpgrade) *definitions.DashboardUpgrade {
+	res := &definitions.DashboardUpgrade{
+		DashboardID:   du.DashboardID,
+		DashboardUID:  du.DashboardUID,
+		DashboardName: du.DashboardName,
+		FolderUID:     du.FolderUID,
+		FolderName:    du.FolderName,
+		NewFolderUID:  du.NewFolderUID,
+		NewFolderName: du.NewFolderName,
+		Provisioned:   du.Provisioned,
+		Errors:        du.Errors,
+		Warnings:      du.Warnings,
+	}
+
+	for _, a := range du.MigratedAlerts {
+		res.MigratedAlerts = append(res.MigratedAlerts, FromAlertPair(a))
+	}
+
+	return res
+}
+
+func FromAlertPair(pair *migmodels.AlertPair) *definitions.AlertPair {
+	return &definitions.AlertPair{
+		LegacyAlert: FromLegacyAlert(pair.LegacyAlert),
+		AlertRule:   FromAlertRuleUpgrade(pair.AlertRule),
+		Error:       pair.Error,
+	}
+}
+
+func FromLegacyAlert(alert *migmodels.LegacyAlert) *definitions.LegacyAlert {
+	if alert == nil {
+		return nil
+	}
+	return &definitions.LegacyAlert{
+		ID:             alert.ID,
+		DashboardID:    alert.DashboardID,
+		PanelID:        alert.PanelID,
+		Name:           alert.Name,
+		Paused:         alert.Paused,
+		Silenced:       alert.Silenced,
+		ExecutionError: alert.ExecutionError,
+		Frequency:      alert.Frequency,
+		For:            alert.For,
+		Modified:       alert.Modified,
+	}
+}
+
+func FromAlertRuleUpgrade(rule *migmodels.AlertRuleUpgrade) *definitions.AlertRuleUpgrade {
+	if rule == nil {
+		return nil
+	}
+	return &definitions.AlertRuleUpgrade{
+		UID:          rule.UID,
+		Title:        rule.Title,
+		DashboardUID: rule.DashboardUID,
+		PanelID:      rule.PanelID,
+		NoDataState:  definitions.NoDataState(rule.NoDataState),
+		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState),
+		For:          rule.For,
+		Annotations:  rule.Annotations,
+		Labels:       rule.Labels,
+		IsPaused:     rule.IsPaused,
+		Modified:     rule.Modified,
+	}
+}
+
+func FromOrgMigrationSummary(summary migmodels.OrgMigrationSummary) definitions.OrgMigrationSummary {
+	return definitions.OrgMigrationSummary{
+		NewDashboards: summary.NewDashboards,
+		NewAlerts:     summary.NewAlerts,
+		NewChannels:   summary.NewChannels,
+		Removed:       summary.Removed,
+		HasErrors:     summary.HasErrors,
+	}
 }
