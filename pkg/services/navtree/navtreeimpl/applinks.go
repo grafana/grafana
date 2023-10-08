@@ -168,11 +168,14 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
-	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
-	if alertingNode == nil {
-		// Search for legacy alerting node just in case
-		alertingNode = treeRoot.FindById(navtree.NavIDAlertingLegacy)
+	var alertingNodes []*navtree.NavLink
+	for _, id := range []string{navtree.NavIDAlerting, navtree.NavIDAlertingLegacy} {
+		alertingNode := treeRoot.FindById(id)
+		if alertingNode != nil {
+			alertingNodes = append(alertingNodes, alertingNode)
+		}
 	}
+
 	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
@@ -215,9 +218,11 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
-			if alertingNode != nil {
-				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
-				treeRoot.RemoveSection(alertingNode)
+			if len(alertingNodes) > 0 {
+				for _, alertingNode := range alertingNodes {
+					alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
+					treeRoot.RemoveSection(alertingNode)
+				}
 			}
 			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
 			treeRoot.AddSection(&navtree.NavLink{

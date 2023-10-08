@@ -867,5 +867,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 		},
+		{
+			Name:         "alertingPreviewUpgrade",
+			Description:  "Show Unified Alerting preview and upgrade page in legacy alerting",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )
