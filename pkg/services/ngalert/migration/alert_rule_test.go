@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
@@ -124,13 +126,14 @@ func TestAddMigrationInfo(t *testing.T) {
 }
 
 func TestMakeAlertRule(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
 	t.Run("when mapping rule names", func(t *testing.T) {
 		t.Run("leaves basic names untouched", func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			da := createTestDashAlert()
-			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
@@ -138,12 +141,32 @@ func TestMakeAlertRule(t *testing.T) {
 		})
 
 		t.Run("truncates very long names to max length", func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			da := createTestDashAlert()
 			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+
+			require.NoError(t, err)
+			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
+		})
+
+		t.Run("deduplicate names in same org and folder", func(t *testing.T) {
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
+			da := createTestDashAlert()
+			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
+
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+
+			require.NoError(t, err)
+			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
+
+			da = createTestDashAlert()
+			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
+
+			ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
@@ -156,55 +179,55 @@ func TestMakeAlertRule(t *testing.T) {
 	})
 
 	t.Run("alert is not paused", func(t *testing.T) {
-		m := newTestMigration(t)
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
-		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 		require.NoError(t, err)
 		require.False(t, ar.IsPaused)
 	})
 
 	t.Run("paused dash alert is paused", func(t *testing.T) {
-		m := newTestMigration(t)
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.State = "paused"
-		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
 
 	t.Run("use default if execution of NoData is not known", func(t *testing.T) {
-		m := newTestMigration(t)
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.ParsedSettings.NoDataState = uuid.NewString()
-		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 		require.Nil(t, err)
 		require.Equal(t, models.NoData, ar.NoDataState)
 	})
 
 	t.Run("use default if execution of Error is not known", func(t *testing.T) {
-		m := newTestMigration(t)
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.ParsedSettings.ExecutionErrorState = uuid.NewString()
-		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 		require.Nil(t, err)
 		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
 
 	t.Run("migrate message template", func(t *testing.T) {
-		m := newTestMigration(t)
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.Message = "Instance ${instance} is down"
-		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
 		require.Nil(t, err)
 		expected :=
 			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +

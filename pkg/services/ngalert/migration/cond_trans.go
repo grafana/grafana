@@ -18,10 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// It is defined in pkg/expr/service.go as "DatasourceType"
+const expressionDatasourceUID = "__expr__"
+
 //nolint:gocyclo
-func transConditions(ctx context.Context, set migrationStore.DashAlertSettings, orgID int64, store migrationStore.Store) (*condition, error) {
+func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store migrationStore.Store) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	usr := getBackgroundUser(orgID)
+	usr := getBackgroundUser(alert.OrgID)
+	set := alert.ParsedSettings
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
@@ -200,7 +204,7 @@ func transConditions(ctx context.Context, set migrationStore.DashAlertSettings, 
 		return nil, err
 	}
 	newCond.Condition = ccRefID // set the alert condition to point to the classic condition
-	newCond.OrgID = orgID
+	newCond.OrgID = alert.OrgID
 
 	exprModel := struct {
 		Type       string                 `json:"type"`

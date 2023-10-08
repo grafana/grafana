@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	legacyalerting "github.com/grafana/grafana/pkg/services/alerting"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -21,20 +22,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Store is the database abstraction for migration persistence.
 type Store interface {
-	InsertAlertRules(ctx context.Context, rulesPerOrg map[int64]map[*models.AlertRule][]UidOrID) error
+	InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error
 
 	SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error
 
+	GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error)
+
 	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error)
 
-	GetNotificationChannels(ctx context.Context) (ChannelsPerOrg, DefaultChannelsPerOrg, error)
+	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 
-	GetDashboardAlerts(ctx context.Context) ([]DashAlert, error)
+	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error)
 
 	GetACL(ctx context.Context, orgID int64, dashID int64) ([]*DashboardACL, error)
 	SetACL(ctx context.Context, orgID int64, dashboardID int64, items []*DashboardACL) error
@@ -52,14 +57,16 @@ type Store interface {
 }
 
 type migrationStore struct {
-	store            db.DB
-	cfg              *setting.Cfg
-	log              log.Logger
-	kv               kvstore.KVStore
-	alertingStore    *store.DBstore
-	dashboardService dashboards.DashboardService
-	folderService    folder.Service
-	dataSourceCache  datasources.CacheService
+	store                          db.DB
+	cfg                            *setting.Cfg
+	log                            log.Logger
+	kv                             kvstore.KVStore
+	alertingStore                  *store.DBstore
+	dashboardService               dashboards.DashboardService
+	folderService                  folder.Service
+	dataSourceCache                datasources.CacheService
+	orgService                     org.Service
+	legacyAlertNotificationService *legacyalerting.AlertNotificationService
 }
 
 // MigrationStore implements the Store interface.
@@ -73,16 +80,20 @@ func ProvideMigrationStore(
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
 	dataSourceCache datasources.CacheService,
+	orgService org.Service,
+	legacyAlertNotificationService *legacyalerting.AlertNotificationService,
 ) (Store, error) {
 	return &migrationStore{
-		log:              log.New("ngalert.migration-store"),
-		cfg:              cfg,
-		store:            sqlStore,
-		kv:               kv,
-		alertingStore:    alertingStore,
-		dashboardService: dashboardService,
-		folderService:    folderService,
-		dataSourceCache:  dataSourceCache,
+		log:                            log.New("ngalert.migration-store"),
+		cfg:                            cfg,
+		store:                          sqlStore,
+		kv:                             kv,
+		alertingStore:                  alertingStore,
+		dashboardService:               dashboardService,
+		folderService:                  folderService,
+		dataSourceCache:                dataSourceCache,
+		orgService:                     orgService,
+		legacyAlertNotificationService: legacyAlertNotificationService,
 	}, nil
 }
 
@@ -115,30 +126,27 @@ func (ms *migrationStore) SetMigrated(ctx context.Context, migrated bool) error 
 	return kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
 }
 
-func (ms *migrationStore) InsertAlertRules(ctx context.Context, rulesPerOrg map[int64]map[*models.AlertRule][]UidOrID) error {
-	for _, orgRules := range rulesPerOrg {
-		titleDedup := make(map[string]map[string]struct{}) // Namespace -> Title -> struct{}
-
-		rules := make([]models.AlertRule, 0, len(orgRules))
-		for rule := range orgRules {
-			existingTitles, ok := titleDedup[rule.NamespaceUID]
-			if !ok {
-				existingTitles = make(map[string]struct{})
-				titleDedup[rule.NamespaceUID] = existingTitles
+func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error {
+	if ms.store.GetDialect().DriverName() == migrator.Postgres {
+		// Postgresql which will automatically rollback the whole transaction on constraint violation.
+		// So, for postgresql, insertions will execute in a subtransaction.
+		err := ms.store.InTransaction(ctx, func(subCtx context.Context) error {
+			_, err := ms.alertingStore.InsertAlertRules(subCtx, rules)
+			if err != nil {
+				return err
 			}
-			if _, ok := existingTitles[rule.Title]; ok {
-				rule.Title += fmt.Sprintf(" %v", rule.UID)
-				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
-			}
-
-			existingTitles[rule.Title] = struct{}{}
-			rules = append(rules, *rule)
+			return nil
+		})
+		if err != nil {
+			return err
 		}
+	} else {
 		_, err := ms.alertingStore.InsertAlertRules(ctx, rules)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -236,56 +244,20 @@ func (ms *migrationStore) GetDashboard(ctx context.Context, orgID int64, id int6
 	return ms.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: id, OrgID: orgID})
 }
 
+func (ms *migrationStore) GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error) {
+	orgQuery := &org.SearchOrgsQuery{}
+	return ms.orgService.Search(ctx, orgQuery)
+}
+
 func (ms *migrationStore) GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error) {
 	return ms.dataSourceCache.GetDatasource(ctx, datasourceID, user, false)
 }
 
-// getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
-// For any given Organization, all channels in defaultChannelsPerOrg should also exist in channelsPerOrg.
-func (ms *migrationStore) GetNotificationChannels(ctx context.Context) (ChannelsPerOrg, DefaultChannelsPerOrg, error) {
-	q := `
-	SELECT id,
-		org_id,
-		uid,
-		name,
-		type,
-		disable_resolve_message,
-		is_default,
-		settings,
-		secure_settings,
-        send_reminder,
-		frequency
-	FROM
-		alert_notification
-	`
-	allChannels := []legacymodels.AlertNotification{}
-	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(q).Find(&allChannels)
+// GetNotificationChannels returns all channels for this org.
+func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error) {
+	return ms.legacyAlertNotificationService.GetAllAlertNotifications(ctx, &legacymodels.GetAllAlertNotificationsQuery{
+		OrgID: orgID,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if len(allChannels) == 0 {
-		return nil, nil, nil
-	}
-
-	allChannelsMap := make(ChannelsPerOrg)
-	defaultChannelsMap := make(DefaultChannelsPerOrg)
-	for i, c := range allChannels {
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			ms.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
-			continue
-		}
-
-		allChannelsMap[c.OrgID] = append(allChannelsMap[c.OrgID], &allChannels[i])
-
-		if c.IsDefault {
-			defaultChannelsMap[c.OrgID] = append(defaultChannelsMap[c.OrgID], &allChannels[i])
-		}
-	}
-
-	return allChannelsMap, defaultChannelsMap, nil
 }
 
 func (ms *migrationStore) GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -437,53 +409,36 @@ func (ms *migrationStore) SetACL(ctx context.Context, orgID int64, dashboardID i
 	})
 }
 
-var slurpDashSQL = `
-SELECT *
-FROM
-	alert
-WHERE org_id IN (SELECT id from org)
-	AND dashboard_id IN (SELECT id from dashboard)
-`
-
-// GetDashboardAlerts loads all alerts from the alert database table into
-// the dashAlert type. If there are alerts that belong to either organization or dashboard that does not exist, those alerts will not be returned/
-// Additionally it unmarshals the json settings for the alert into the
-// ParsedSettings property of the dash alert.
-func (ms *migrationStore) GetDashboardAlerts(ctx context.Context) ([]DashAlert, error) {
-	var dashAlerts []DashAlert
+// GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
+func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error) {
+	var alerts []legacymodels.Alert
 	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var alerts []legacymodels.Alert
-		err := sess.SQL(slurpDashSQL).Find(&alerts)
-		if err != nil {
-			return err
-		}
-
-		dashAlerts = make([]DashAlert, 0, len(alerts))
-		for i := range alerts {
-			alert := alerts[i]
-
-			rawSettings, err := json.Marshal(alert.Settings)
-			if err != nil {
-				return fmt.Errorf("get settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
-			}
-			var parsedSettings DashAlertSettings
-			err = json.Unmarshal(rawSettings, &parsedSettings)
-			if err != nil {
-				return fmt.Errorf("parse settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
-			}
-
-			dashAlerts = append(dashAlerts, DashAlert{
-				Alert:          &alerts[i],
-				ParsedSettings: &parsedSettings,
-			})
-		}
-		return nil
+		return sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id IN (SELECT id from dashboard)", orgID).Find(&alerts)
 	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return dashAlerts, nil
+	mappedAlerts := make(map[int64][]*DashAlert)
+	for i := range alerts {
+		alert := alerts[i]
+
+		rawSettings, err := json.Marshal(alert.Settings)
+		if err != nil {
+			return nil, 0, fmt.Errorf("get settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
+		}
+		var parsedSettings DashAlertSettings
+		err = json.Unmarshal(rawSettings, &parsedSettings)
+		if err != nil {
+			return nil, 0, fmt.Errorf("parse settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
+		}
+
+		mappedAlerts[alert.DashboardID] = append(mappedAlerts[alert.DashboardID], &DashAlert{
+			Alert:          &alerts[i],
+			ParsedSettings: &parsedSettings,
+		})
+	}
+	return mappedAlerts, len(alerts), nil
 }
 
 func (ms *migrationStore) CaseInsensitive() bool {

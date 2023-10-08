@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -12,6 +13,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -37,8 +39,15 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 	return lbls, annotations
 }
 
-func (m *migration) makeAlertRule(l log.Logger, cond condition, da migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
-	lbls, annotations := addMigrationInfo(&da, dashboardUID)
+// MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
+	l.Debug("Migrating alert rule to Unified Alerting")
+	cond, err := transConditions(ctx, da, om.migrationStore)
+	if err != nil {
+		return nil, fmt.Errorf("transform conditions: %w", err)
+	}
+
+	lbls, annotations := addMigrationInfo(da, dashboardUID)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
 	annotations["message"] = message
@@ -48,22 +57,25 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da migrationStor
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
 
-	uid, err := m.seenUIDs.generateUid()
-	if err != nil {
-		return nil, fmt.Errorf("failed to migrate alert rule: %w", err)
-	}
-
-	name := normalizeRuleName(da.Name, uid)
-
 	isPaused := false
 	if da.State == "paused" {
 		isPaused = true
 	}
 
+	// Here we ensure that the alert rule title is unique within the folder.
+	dedupSet := om.AlertTitleDeduplicator(folderUID)
+	name := truncateRuleName(da.Name)
+	if dedupSet.contains(name) {
+		dedupedName := dedupSet.deduplicate(name)
+		l.Debug("Duplicate alert rule name detected, renaming", "old_name", name, "new_name", dedupedName)
+		name = dedupedName
+	}
+	dedupSet.add(name)
+
 	ar := &ngmodels.AlertRule{
 		OrgID:           da.OrgID,
-		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		UID:             uid,
+		Title:           name,
+		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
@@ -86,12 +98,16 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da migrationStor
 	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
-	if err := m.addErrorSilence(da, ar); err != nil {
-		m.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+	if da.ParsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
+		if err := om.addErrorSilence(ar); err != nil {
+			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+		}
 	}
 
-	if err := m.addNoDataSilence(da, ar); err != nil {
-		m.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+	if da.ParsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
+		if err := om.addNoDataSilence(ar); err != nil {
+			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+		}
 	}
 
 	return ar, nil
@@ -248,18 +264,15 @@ func transExecErr(l log.Logger, s string) ngmodels.ExecutionErrorState {
 	}
 }
 
-func normalizeRuleName(daName string, uid string) string {
-	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
-	// Append the UID to the suffix to forcibly break any collisions.
+// truncateRuleName truncates the rule name to the maximum allowed length.
+func truncateRuleName(daName string) string {
 	if len(daName) > store.AlertDefinitionMaxTitleLength {
-		trunc := store.AlertDefinitionMaxTitleLength - 1 - len(uid)
-		daName = daName[:trunc] + "_" + uid
+		return daName[:store.AlertDefinitionMaxTitleLength]
 	}
-
 	return daName
 }
 
-func extractChannelIDs(d migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
+func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
 	// Extracting channel UID/ID.
 	for _, ui := range d.ParsedSettings.Notifications {
 		if ui.UID != "" {

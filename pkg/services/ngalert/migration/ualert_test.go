@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,9 +59,11 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 		},
 	}
 
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			mg := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			mg := service.newOrgMigration(1)
 
 			config := configFromReceivers(t, tt.receivers)
 			require.NoError(t, encryptSecureSettings(config, mg)) // make sure we encrypt the settings
@@ -87,7 +90,7 @@ func configFromReceivers(t *testing.T, receivers []*apimodels.PostableGrafanaRec
 	}
 }
 
-func encryptSecureSettings(c *apimodels.PostableUserConfig, m *migration) error {
+func encryptSecureSettings(c *apimodels.PostableUserConfig, m *OrgMigration) error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			err := m.encryptSecureSettings(gr.SecureSettings)
@@ -132,14 +135,14 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 }
 
 func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
-	s := uidSet{
+	s := Deduplicator{
 		set:             make(map[string]struct{}),
 		caseInsensitive: true,
 	}
 
 	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
 	for i := 0; i < 10000; i++ {
-		_, _ = s.generateUid()
+		s.add(util.GenerateShortUID())
 	}
 
 	// check if any are case-insensitive duplicates.
