@@ -262,6 +262,10 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 			return err
 		}
 
+		if _, err := sess.Exec("DELETE FROM provenance_type"); err != nil {
+			return err
+		}
+
 		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", notifier.KVNamespace); err != nil {
 			return err
 		}
