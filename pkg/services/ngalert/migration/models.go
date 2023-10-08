@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,9 +62,4 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 			CreatedFolders: make([]string, 0),
 		},
 	}
-}
-
-type AlertPair struct {
-	AlertRule *models.AlertRule
-	DashAlert *migrationStore.DashAlert
 }

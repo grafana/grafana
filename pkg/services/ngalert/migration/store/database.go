@@ -41,9 +41,10 @@ type Store interface {
 
 	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error)
 
+	GetAlertNotificationUidWithId(ctx context.Context, orgID int64, id int64) (string, error)
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 
-	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error)
+	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
 	GetFolderPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
@@ -80,6 +81,7 @@ type migrationStore struct {
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	orgService           org.Service
 
+	legacyAlertStore               legacyalerting.AlertStore
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService
 }
 
@@ -97,6 +99,7 @@ func ProvideMigrationStore(
 	folderPermissions accesscontrol.FolderPermissionsService,
 	dashboardPermissions accesscontrol.DashboardPermissionsService,
 	orgService org.Service,
+	legacyAlertStore legacyalerting.AlertStore,
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService,
 ) (Store, error) {
 	return &migrationStore{
@@ -111,6 +114,7 @@ func ProvideMigrationStore(
 		folderPermissions:              folderPermissions,
 		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
+		legacyAlertStore:               legacyAlertStore,
 		legacyAlertNotificationService: legacyAlertNotificationService,
 	}, nil
 }
@@ -420,6 +424,14 @@ func (ms *migrationStore) GetDatasource(ctx context.Context, datasourceID int64,
 	return ms.dataSourceCache.GetDatasource(ctx, datasourceID, user, false)
 }
 
+func (ms *migrationStore) GetAlertNotificationUidWithId(ctx context.Context, orgID int64, id int64) (string, error) {
+	cmd := legacymodels.GetAlertNotificationUidQuery{
+		ID:    id,
+		OrgID: orgID,
+	}
+	return ms.legacyAlertStore.GetAlertNotificationUidWithId(ctx, &cmd)
+}
+
 // GetNotificationChannels returns all channels for this org.
 func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error) {
 	return ms.legacyAlertNotificationService.GetAllAlertNotifications(ctx, &legacymodels.GetAllAlertNotificationsQuery{
@@ -428,35 +440,20 @@ func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int
 }
 
 // GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
-func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error) {
-	var alerts []legacymodels.Alert
+func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error) {
+	var dashAlerts []*legacymodels.Alert
 	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id IN (SELECT id from dashboard)", orgID).Find(&alerts)
+		return sess.SQL("select * from alert WHERE org_id = ?  AND dashboard_id IN (SELECT id from dashboard)", orgID).Find(&dashAlerts)
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	mappedAlerts := make(map[int64][]*DashAlert)
-	for i := range alerts {
-		alert := alerts[i]
-
-		rawSettings, err := json.Marshal(alert.Settings)
-		if err != nil {
-			return nil, 0, fmt.Errorf("get settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
-		}
-		var parsedSettings DashAlertSettings
-		err = json.Unmarshal(rawSettings, &parsedSettings)
-		if err != nil {
-			return nil, 0, fmt.Errorf("parse settings for alert rule ID:%d, name:'%s', orgID:%d: %w", alert.ID, alert.Name, alert.OrgID, err)
-		}
-
-		mappedAlerts[alert.DashboardID] = append(mappedAlerts[alert.DashboardID], &DashAlert{
-			Alert:          &alerts[i],
-			ParsedSettings: &parsedSettings,
-		})
+	mappedAlerts := make(map[int64][]*legacymodels.Alert)
+	for _, alert := range dashAlerts {
+		mappedAlerts[alert.DashboardID] = append(mappedAlerts[alert.DashboardID], alert)
 	}
-	return mappedAlerts, len(alerts), nil
+	return mappedAlerts, len(dashAlerts), nil
 }
 
 func (ms *migrationStore) GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
