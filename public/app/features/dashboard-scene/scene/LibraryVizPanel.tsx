@@ -1,17 +1,19 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+
+import { DashboardVizPanel } from './DashboardVizPanel';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
   name: string;
-  panel?: VizPanel;
+  panel?: DashboardVizPanel;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
@@ -29,7 +31,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
   private async loadLibraryPanelFromPanelModel() {
     const { title } = this.state;
-    let vizPanel = new VizPanel({ title });
+    let vizPanel = new DashboardVizPanel({ title });
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);

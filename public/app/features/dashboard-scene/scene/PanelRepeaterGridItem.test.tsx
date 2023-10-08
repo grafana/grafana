@@ -1,6 +1,7 @@
 import { EmbeddedScene, SceneTimeRange, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { DashboardVizPanel } from './DashboardVizPanel';
 import { PanelRepeaterGridItem, RepeatDirection } from './PanelRepeaterGridItem';
 
 describe('PanelRepeaterGridItem', () => {
@@ -108,7 +109,7 @@ function buildScene(options: SceneOptions) {
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
-    source: new VizPanel({
+    source: new DashboardVizPanel({
       title: 'Panel $server',
       pluginId: 'timeseries',
     }),

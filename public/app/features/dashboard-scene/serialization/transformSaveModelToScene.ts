@@ -6,7 +6,6 @@ import {
   VariableModel,
 } from '@grafana/data';
 import {
-  VizPanel,
   SceneTimePicker,
   SceneGridLayout,
   SceneGridRow,
@@ -36,6 +35,7 @@ import { DashboardDTO } from 'app/types';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardVizPanel } from '../scene/DashboardVizPanel';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -342,7 +342,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
       height: panel.gridPos.h,
       itemHeight: panel.gridPos.h,
-      source: new VizPanel(vizPanelState),
+      source: new DashboardVizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
       repeatDirection: panel.repeatDirection,
@@ -356,7 +356,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    body: new VizPanel(vizPanelState),
+    body: new DashboardVizPanel(vizPanelState),
   });
 }
 
