@@ -86,14 +86,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 			}
 
 			ms.log.Info("Starting legacy migration")
-			mg := newMigration(
-				ms.log,
-				ms.cfg,
-				ms.migrationStore,
-				ms.encryptionService,
-			)
-
-			err = mg.Exec(ctx)
+			err = ms.migrateAllOrgs(ctx)
 			if err != nil {
 				return fmt.Errorf("executing migration: %w", err)
 			}
@@ -120,4 +113,20 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 // IsDisabled returns true if the cfg is nil.
 func (ms *MigrationService) IsDisabled() bool {
 	return ms.cfg == nil
+}
+
+// migrateAllOrgs executes the migration for all orgs.
+func (ms *MigrationService) migrateAllOrgs(ctx context.Context) error {
+	orgs, err := ms.migrationStore.GetAllOrgs(ctx)
+	if err != nil {
+		return fmt.Errorf("get orgs: %w", err)
+	}
+
+	for _, o := range orgs {
+		om := ms.newOrgMigration(o.ID)
+		if err := om.migrateOrg(ctx); err != nil {
+			return fmt.Errorf("migrate org %d: %w", o.ID, err)
+		}
+	}
+	return nil
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
@@ -89,9 +90,11 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		},
 	}
 
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			res := m.filterReceiversForAlert("", tt.channelIds, tt.receivers, tt.defaultReceivers)
 
 			require.Equal(t, tt.expected, res)
@@ -261,9 +264,11 @@ func TestCreateReceivers(t *testing.T) {
 		},
 	}
 
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			recvMap, recvs, err := m.createReceivers(tt.allChannels)
 			if tt.expErr != nil {
 				require.Error(t, err)
@@ -294,7 +299,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		require.NoError(t, err)
 		return string(raw)
 	}
-	decryptFn := func(data string, m *migration) string {
+	decryptFn := func(data string, m *OrgMigration) string {
 		decoded, err := base64.StdEncoding.DecodeString(data)
 		require.NoError(t, err)
 		raw, err := m.encryptionService.Decrypt(context.Background(), decoded)
@@ -375,10 +380,11 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 			expRecv: genExpSlack(nil),
 		},
 	}
-
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			recv, err := m.createNotifier(tt.channel)
 			if tt.expErr != nil {
 				require.Error(t, err)
@@ -406,7 +412,8 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				secureSettings, err := channels_config.GetSecretKeysForContactPointType(nType)
 				require.NoError(t, err)
 				t.Run(nType, func(t *testing.T) {
-					m := newTestMigration(t)
+					service := NewTestMigrationService(t, sqlStore, nil)
+					m := service.newOrgMigration(1)
 					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
 							channel.SecureSettings[key] = []byte(legacyEncryptFn("secure " + key))
@@ -437,7 +444,8 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					continue
 				}
 				t.Run(nType, func(t *testing.T) {
-					m := newTestMigration(t)
+					service := NewTestMigrationService(t, sqlStore, nil)
+					m := service.newOrgMigration(1)
 
 					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
@@ -534,9 +542,11 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		},
 	}
 
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestMigration(t)
+			service := NewTestMigrationService(t, sqlStore, nil)
+			m := service.newOrgMigration(1)
 			recv, route, err := m.createDefaultRouteAndReceiver(tt.defaultChannels)
 			if tt.expErr != nil {
 				require.Error(t, err)

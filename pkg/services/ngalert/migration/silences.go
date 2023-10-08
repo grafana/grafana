@@ -16,7 +16,6 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -27,14 +26,10 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (m *migration) addErrorSilence(da migrationStore.DashAlert, rule *models.AlertRule) error {
-	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
-		return nil
-	}
-
+func (om *OrgMigration) addErrorSilence(rule *models.AlertRule) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		return errors.New("failed to create uuid for silence")
+		return errors.New("create uuid for silence")
 	}
 
 	s := &pb.MeshSilence{
@@ -59,21 +54,14 @@ func (m *migration) addErrorSilence(da migrationStore.DashAlert, rule *models.Al
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year
 	}
-	if _, ok := m.silences[da.OrgID]; !ok {
-		m.silences[da.OrgID] = make([]*pb.MeshSilence, 0)
-	}
-	m.silences[da.OrgID] = append(m.silences[da.OrgID], s)
+	om.silences = append(om.silences, s)
 	return nil
 }
 
-func (m *migration) addNoDataSilence(da migrationStore.DashAlert, rule *models.AlertRule) error {
-	if da.ParsedSettings.NoDataState != "keep_state" {
-		return nil
-	}
-
+func (om *OrgMigration) addNoDataSilence(rule *models.AlertRule) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		return errors.New("failed to create uuid for silence")
+		return errors.New("create uuid for silence")
 	}
 
 	s := &pb.MeshSilence{
@@ -98,28 +86,20 @@ func (m *migration) addNoDataSilence(da migrationStore.DashAlert, rule *models.A
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}
-	_, ok := m.silences[da.OrgID]
-	if !ok {
-		m.silences[da.OrgID] = make([]*pb.MeshSilence, 0)
-	}
-	m.silences[da.OrgID] = append(m.silences[da.OrgID], s)
+	om.silences = append(om.silences, s)
 	return nil
 }
 
-func (m *migration) writeSilencesFile(orgID int64) error {
+func (om *OrgMigration) writeSilencesFile() error {
 	var buf bytes.Buffer
-	orgSilences, ok := m.silences[orgID]
-	if !ok {
-		return nil
-	}
-
-	for _, e := range orgSilences {
+	om.log.Debug("Writing silences file", "silences", len(om.silences))
+	for _, e := range om.silences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
 			return err
 		}
 	}
 
-	f, err := openReplace(silencesFileNameForOrg(m.cfg.DataPath, orgID))
+	f, err := openReplace(silencesFileNameForOrg(om.cfg.DataPath, om.orgID))
 	if err != nil {
 		return err
 	}

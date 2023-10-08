@@ -39,12 +39,6 @@ type DashboardACL struct {
 
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
-// channelsPerOrg maps notification channels per organisation
-type ChannelsPerOrg map[int64][]*legacymodels.AlertNotification
-
-// channelMap maps notification channels per organisation
-type DefaultChannelsPerOrg map[int64][]*legacymodels.AlertNotification
-
 // uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
 type UidOrID any
 
