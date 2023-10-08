@@ -14,5 +14,10 @@ export { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './thresholds';
 export { applyFieldOverrides, validateFieldConfig, applyRawFieldOverrides, useFieldOverrides } from './fieldOverrides';
 export { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-export { getFieldDisplayName, getFrameDisplayName, cacheFieldDisplayNames } from './fieldState';
+export {
+  getFieldDisplayName,
+  getFrameDisplayName,
+  cacheFieldDisplayNames,
+  calculateFieldDisplayName,
+} from './fieldState';
 export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './scale';
