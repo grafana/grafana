@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -319,6 +321,20 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
     "open-advanced-button": ""
   },
   "data-sources": {

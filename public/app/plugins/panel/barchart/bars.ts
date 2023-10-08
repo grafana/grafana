@@ -526,10 +526,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     if (isStacked) {
-      //barsPctLayout = [null as any].concat(distrOne(u.data.length - 1, u.data[0].length));
-      barsPctLayout = [null as any].concat(distrOne(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
-      barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
     }
 
     if (useMappedColors) {
