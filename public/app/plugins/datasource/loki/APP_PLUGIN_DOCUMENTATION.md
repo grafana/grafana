@@ -20,7 +20,7 @@ We strongly advise using these recommended methods instead of direct API calls b
 
 ### Fetching Loki label names
 
-`datasource.languageProvider.fetchLabels()` can be used to fetch label names from connected Loki data source. Labels are essential for organizing and filtering log data. You can use this method to retrieve labels, providing a foundation for various data manipulation tasks within your app plugin.
+`datasource.languageProvider.fetchLabels()` can be used to fetch label names from the connected Loki data source. Labels are essential for selecting and filtering log data. You can use this method to retrieve labels, providing a foundation for various data manipulation tasks within your app plugin.
 
 ```ts
 /**
