@@ -1,14 +1,5 @@
 import { css } from '@emotion/css';
-import React, {
-  createElement,
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { createElement, CSSProperties, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -38,12 +29,7 @@ export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'clas
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
   ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children, ...restProps }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
-        [color, textAlignment, truncate, italic, weight, variant, element]
-      )
-    );
+    const styles = useStyles2(getTextStyles, element, variant, color, weight, truncate, italic, textAlignment);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const internalRef = useRef<HTMLElement>(null);
 

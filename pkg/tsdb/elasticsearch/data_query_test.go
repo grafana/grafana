@@ -1669,6 +1669,31 @@ func TestSettingsCasting(t *testing.T) {
 
 				assert.NotZero(t, dateHistogramAgg.FixedInterval)
 			})
+
+			t.Run("Uses calendar_interval", func(t *testing.T) {
+				c := newFakeClient()
+				_, err := executeElasticsearchDataQuery(c, `{
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1M"
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.NotZero(t, dateHistogramAgg.CalendarInterval)
+			})
 		})
 	})
 
@@ -1754,6 +1779,21 @@ func TestSettingsCasting(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			assert.Equal(t, dateHistogramAgg.FixedInterval, "1d")
+		})
+
+		t.Run("Should use calendar_interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"metrics": [{ "type": "count", "id": "1" }],
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1", "interval": "1w" } }
+				]
+			}`, from, to)
+
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.CalendarInterval, "1w")
 		})
 	})
 }
