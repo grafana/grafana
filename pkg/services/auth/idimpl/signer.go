@@ -48,7 +48,6 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 }
 
 func (s *LocalSigner) getSigner(ctx context.Context) (jose.Signer, error) {
-	// Fixme(kalleep): Make sure we cache private keys?
 	id, key, err := s.keyService.GetOrCreatePrivateKey(ctx, keyPrefix, jose.ES256)
 	if err != nil {
 		return nil, err
