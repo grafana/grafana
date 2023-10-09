@@ -113,7 +113,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
 	LoadingLogo        *string                                   `json:"loadingLogo,omitempty"`
 	HideEdition        *bool                                     `json:"hideEdition,omitempty"`
-	PublicDashboard    *FrontendSettingsPublicDashboardConfigDTO `json:"publicDashboard,omitempty"` // PR TODO: type this properly
+	PublicDashboard    *FrontendSettingsPublicDashboardConfigDTO `json:"publicDashboard,omitempty"`
 }
 
 type FrontendSettingsSqlConnectionLimitsDTO struct {
