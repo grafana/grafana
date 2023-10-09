@@ -7,6 +7,7 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
@@ -14,7 +15,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
@@ -96,6 +97,19 @@ describe('RuleEditor recording rules', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersWrite,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
   });
 
   it('can create a new cloud recording rule', async () => {

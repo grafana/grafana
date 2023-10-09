@@ -12,6 +12,7 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import {
   fetchAlertManagerConfig,
@@ -20,6 +21,7 @@ import {
   fetchStatus,
 } from '../../api/alertmanager';
 import {
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
@@ -87,6 +89,8 @@ const ui = {
 describe('Admin config', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    // FIXME: scope down
+    grantUserPermissions(Object.values(AccessControlAction));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     contextSrv.isGrafanaAdmin = true;

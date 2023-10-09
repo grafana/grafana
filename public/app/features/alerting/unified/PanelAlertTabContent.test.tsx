@@ -13,12 +13,14 @@ import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReduce
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules } from './api/ruler';
 import {
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   mockPromAlertingRule,
@@ -179,6 +181,14 @@ const ui = {
 describe('PanelAlertTabContent', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
