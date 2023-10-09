@@ -36,6 +36,7 @@ def clone_pr_branch(ver_mode):
         "name": "clone-pr-branch",
         "image": images["go"],
         "commands": [
+            "apk add --update git",
             "git clone https://github.com/grafana/grafana.git grafana",
             "cd grafana",
             "git checkout {}".format(committish),

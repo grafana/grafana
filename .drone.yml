@@ -1171,6 +1171,7 @@ platform:
 services: []
 steps:
 - commands:
+  - apk add --update git
   - git clone https://github.com/grafana/grafana.git grafana
   - cd grafana
   - git checkout ${DRONE_SOURCE_BRANCH}
@@ -4725,6 +4726,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d0ec3167af77e84d865185b15a931268480c9d2c63ddff160df181815c02c7d7
+hmac: 11802fb5591565922f453b48419635263a4229dd7ecbea7d8782db7ef1b03aa7
 
 ...
