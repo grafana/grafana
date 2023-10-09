@@ -114,7 +114,7 @@ def rgm_env_secrets(env):
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
     env["NPM_TOKEN"] = from_secret(npm_token)
-    env["GCOM_API_KEY"] = from_secret("grafana_api_key_dev")
+    env["GCOM_API_KEY"] = from_secret("grafana_api_key")
     return env
 
 def rgm_run(name, script):
