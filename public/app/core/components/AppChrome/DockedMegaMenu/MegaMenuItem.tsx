@@ -29,7 +29,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const showExpandButton = linkHasChildren(link) || link.emptyMessage;
 
   return (
-    <li>
+    <li className={styles.listItem}>
       <div className={styles.collapsibleSectionWrapper}>
         <MegaMenuItemText
           isActive={isActive}
@@ -120,6 +120,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  listItem: css({
+    flex: 1,
   }),
   isActive: css({
     color: theme.colors.text.primary,

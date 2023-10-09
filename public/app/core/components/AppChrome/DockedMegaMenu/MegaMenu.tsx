@@ -5,6 +5,7 @@ import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -54,25 +55,28 @@ export const MegaMenu = React.memo(
         </div>
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
-            <IconButton
-              tooltip={
-                state.megaMenu === 'docked'
-                  ? t('navigation.megamenu.undock', 'Undock menu')
-                  : t('navigation.megamenu.dock', 'Dock menu')
-              }
-              name="bookmark"
-              onClick={handleDockedMenu}
-              variant="secondary"
-              className={styles.dockedMenuButton}
-            />
             <ul className={styles.itemList}>
-              {navItems.map((link) => (
-                <MegaMenuItem
-                  link={link}
-                  onClick={state.megaMenu === 'open' ? onClose : undefined}
-                  activeItem={activeItem}
-                  key={link.text}
-                />
+              {navItems.map((link, index) => (
+                <Stack key={link.text} direction="row" alignItems="center">
+                  <MegaMenuItem
+                    link={link}
+                    onClick={state.megaMenu === 'open' ? onClose : undefined}
+                    activeItem={activeItem}
+                  />
+                  {index === 0 && (
+                    <IconButton
+                      className={styles.dockMenuButton}
+                      tooltip={
+                        state.megaMenu === 'docked'
+                          ? t('navigation.megamenu.undock', 'Undock menu')
+                          : t('navigation.megamenu.dock', 'Dock menu')
+                      }
+                      name="web-section-alt"
+                      onClick={handleDockedMenu}
+                      variant="secondary"
+                    />
+                  )}
+                </Stack>
               ))}
             </ul>
           </CustomScrollbar>
@@ -103,19 +107,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
-    display: 'grid',
-    gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
+    display: 'flex',
+    flexDirection: 'column',
     listStyleType: 'none',
     minWidth: MENU_WIDTH,
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
   }),
-  dockedMenuButton: css({
-    position: 'absolute',
-    top: theme.spacing(1),
-    right: theme.spacing(1),
-    zIndex: 1,
+  dockMenuButton: css({
+    marginRight: theme.spacing(2),
   }),
 });
