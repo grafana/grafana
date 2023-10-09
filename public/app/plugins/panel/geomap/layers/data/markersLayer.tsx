@@ -89,7 +89,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       vectorLayer.setStyle(style.maker(style.base));
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get('rowIndex') as number;
+        const idx: number = feature.get('rowIndex');
         const dims = style.dims;
         if (!dims || !isNumber(idx)) {
           return style.maker(style.base);

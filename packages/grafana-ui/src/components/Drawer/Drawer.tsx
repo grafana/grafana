@@ -133,9 +133,7 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          <div className={styles.contentScroll}>
-            {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
-          </div>
+          {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>}
         </div>
       </FocusScope>
     </RcDrawer>
@@ -300,10 +298,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       height: '100%',
       flexGrow: 1,
-    }),
-    contentScroll: css({
-      label: 'drawer-content',
-      flex: 1,
     }),
     tabsWrapper: css({
       label: 'drawer-tabs',

@@ -13,14 +13,13 @@ import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { SQLQuery } from 'app/features/plugins/sql/types';
 import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { MySqlDatasource } from '../MySqlDatasource';
 import { MySQLOptions } from '../types';
 
 describe('MySQLDatasource', () => {
   const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
-  const setupTestContext = (response: unknown) => {
+  const setupTestContext = (response: unknown, templateSrv?: unknown) => {
     jest.clearAllMocks();
     setBackendSrv(backendSrv);
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -29,14 +28,19 @@ describe('MySQLDatasource', () => {
         defaultProject: 'testproject',
       },
     } as unknown as DataSourceInstanceSettings<MySQLOptions>;
-    const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = makeVariable('id1', 'name1');
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MySqlDatasource(instanceSettings);
-    Reflect.set(ds, 'templateSrv', templateSrv);
+    if (templateSrv !== undefined) {
+      Reflect.set(ds, 'templateSrv', templateSrv);
+    }
 
-    return { ds, variable, templateSrv, fetchMock };
+    return { ds, variable, fetchMock };
+  };
+
+  const simpleTemplateSrv = {
+    replace: (text: string) => text,
   };
 
   describe('When performing a query with hidden target', () => {
@@ -68,7 +72,6 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When runSql returns an empty dataframe', () => {
-    let ds: MySqlDatasource;
     const response = {
       results: {
         tempvar: {
@@ -78,27 +81,27 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(async () => {
-      ds = setupTestContext(response).ds;
-    });
-
     it('should return an empty array when metricFindQuery is called', async () => {
+      const ds = setupTestContext(response, simpleTemplateSrv).ds;
       const query = 'select * from atable';
       const results = await ds.metricFindQuery(query, { range: defaultRange });
       expect(results.length).toBe(0);
     });
 
     it('should return an empty array when fetchDatasets is called', async () => {
+      const ds = setupTestContext(response).ds;
       const results = await ds.fetchDatasets();
       expect(results.length).toBe(0);
     });
 
     it('should return an empty array when fetchTables is called', async () => {
+      const ds = setupTestContext(response).ds;
       const results = await ds.fetchTables();
       expect(results.length).toBe(0);
     });
 
     it('should return an empty array when fetchFields is called', async () => {
+      const ds = setupTestContext(response).ds;
       const query: SQLQuery = {
         refId: 'refId',
         table: 'schema.table',
@@ -217,7 +220,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all string field values', async () => {
-      const { ds } = setupTestContext(response);
+      const { ds } = setupTestContext(response, simpleTemplateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(6);
@@ -250,7 +253,19 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all column values', async () => {
-      const { ds, fetchMock } = setupTestContext(response);
+      const templateSrv = {
+        replace: (text: string, scopedVars: unknown) => {
+          expect(text).toBe("select title from atable where title LIKE '$__searchFilter'");
+          expect(scopedVars).toStrictEqual({
+            __searchFilter: {
+              value: 'aTit%',
+              text: '',
+            },
+          });
+          return "select title from atable where title LIKE 'aTit%'";
+        },
+      };
+      const { ds, fetchMock } = setupTestContext(response, templateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange, searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -285,7 +300,19 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all column values', async () => {
-      const { ds, fetchMock } = setupTestContext(response);
+      const templateSrv = {
+        replace: (text: string, scopedVars: unknown) => {
+          expect(text).toBe("select title from atable where title LIKE '$__searchFilter'");
+          expect(scopedVars).toStrictEqual({
+            __searchFilter: {
+              value: '%',
+              text: '',
+            },
+          });
+          return "select title from atable where title LIKE '%'";
+        },
+      };
+      const { ds, fetchMock } = setupTestContext(response, templateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -318,7 +345,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of as text, value', async () => {
-      const { ds } = setupTestContext(response);
+      const { ds } = setupTestContext(response, simpleTemplateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(3);
@@ -353,7 +380,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all field values as text', async () => {
-      const { ds } = setupTestContext(response);
+      const { ds } = setupTestContext(response, simpleTemplateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
@@ -391,7 +418,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of unique keys', async () => {
-      const { ds } = setupTestContext(response);
+      const { ds } = setupTestContext(response, simpleTemplateSrv);
       const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(1);
@@ -449,7 +476,6 @@ describe('MySQLDatasource', () => {
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
-      const { ds, templateSrv } = setupTestContext({});
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time_sec,
       avg(value) as value,
@@ -468,15 +494,23 @@ describe('MySQLDatasource', () => {
         rawQuery: true,
         refId: '',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      // a fake template server:
+      // it assumes there are two template variables defined:
+      // - summarize
+      // - host
+      const templateSrv = {
+        containsTemplate: (text: string) => {
+          // when the text arrives here, it has been already pre-processed
+          // by the sql datasource, sql-specific variables have been removed
+          expect(text).toBe(rawSql.replace(/\$__time(Filter)?/g, ''));
+          return true;
+        },
+      };
+      const { ds } = setupTestContext({}, templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
-      const { ds, templateSrv } = setupTestContext({});
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time_sec,
       avg(value) as value,
@@ -493,10 +527,19 @@ describe('MySQLDatasource', () => {
         rawQuery: true,
         refId: '',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      // a fake template server:
+      // it assumes there are two template variables defined:
+      // - summarize
+      // - host
+      const templateSrv = {
+        containsTemplate: (text: string) => {
+          // when the text arrives here, it has been already pre-processed
+          // by the sql datasource, sql-specific variables have been removed
+          expect(text).toBe(rawSql.replace(/\$__time(Filter)?/g, ''));
+          return false;
+        },
+      };
+      const { ds } = setupTestContext({}, templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });

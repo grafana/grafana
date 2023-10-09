@@ -39,6 +39,7 @@ describe('SpanTreeOffset', () => {
       addHoverIndentGuideId: jest.fn(),
       hoverIndentGuideIds: new Set(),
       removeHoverIndentGuideId: jest.fn(),
+      visibleSpanIds: [],
       span: {
         hasChildren: false,
         spanID: ownSpanID,

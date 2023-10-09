@@ -70,6 +70,7 @@ export interface CatalogPluginDetails {
   }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
+  statusContext?: string;
 }
 
 export interface CatalogPluginInfo {
@@ -113,6 +114,7 @@ export type RemotePlugin = {
   signatureType: PluginSignatureType | '';
   slug: string;
   status: RemotePluginStatus;
+  statusContext?: string;
   typeCode: PluginType;
   typeId: number;
   typeName: string;

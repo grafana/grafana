@@ -123,6 +123,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
+      "targets": [
+        {
+          "refId": "A",
+        },
+      ],
       "title": "",
       "transformations": [],
       "transparent": false,
@@ -186,13 +191,56 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "schemaVersion": 36,
   "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "A",
+            "B",
+          ],
+          "value": [
+            "A",
+            "B",
+          ],
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "server",
+        "options": [],
+        "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
+        "skipUrlSync": false,
+      },
+      {
+        "current": {
+          "text": [
+            "1",
+            "2",
+          ],
+          "value": [
+            "1",
+            "2",
+          ],
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "pod",
+        "options": [],
+        "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
+        "skipUrlSync": false,
+      },
+    ],
+  },
   "time": {
     "from": "now-6h",
     "to": "now",
   },
-  "timezone": "browser",
+  "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
+  "weekStart": "",
 }
 `;
 
@@ -260,11 +308,15 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
     ],
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,
+  "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -297,6 +349,18 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
           "sort": "none",
         },
       },
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
       "title": "Simple time series graph ",
       "transformations": [],
       "transparent": false,
@@ -316,6 +380,10 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
       "type": "row",
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
       "fieldConfig": {
         "defaults": {},
         "overrides": [],
@@ -328,6 +396,18 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
       },
       "id": 29,
       "options": {},
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
       "title": "panel inside row",
       "transformations": [],
       "transparent": false,
@@ -354,6 +434,11 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
         "content": "content",
         "mode": "markdown",
       },
+      "targets": [
+        {
+          "refId": "A",
+        },
+      ],
       "title": "Transparent text panel",
       "transformations": [],
       "transparent": true,
@@ -362,12 +447,16 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   ],
   "schemaVersion": 36,
   "tags": [],
+  "templating": {
+    "list": [],
+  },
   "time": {
     "from": "now-5m",
     "to": "now",
   },
-  "timezone": "browser",
+  "timezone": "America/New_York",
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
+  "weekStart": "saturday",
 }
 `;

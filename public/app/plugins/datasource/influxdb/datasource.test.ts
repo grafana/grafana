@@ -206,7 +206,7 @@ describe('InfluxDataSource Frontend Mode', () => {
     const text = 'interpolationText';
     const text2 = 'interpolationText2';
     const textWithoutFormatRegex = 'interpolationText,interpolationText2';
-    const textWithFormatRegex = 'interpolationText|interpolationText2';
+    const textWithFormatRegex = 'interpolationText,interpolationText2';
     const variableMap: Record<string, string> = {
       $interpolationVar: text,
       $interpolationVar2: text2,
@@ -288,30 +288,74 @@ describe('InfluxDataSource Frontend Mode', () => {
         expect(templateSrv.replace).toBeCalledTimes(1);
         expect(query.query).toBe(text);
       });
+    });
 
-      it('should apply all template variables with InfluxQL mode', () => {
-        ds.version = ds.version = InfluxVersion.InfluxQL;
-        ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
-        const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
-          interpolationVar: { text: text, value: text },
-          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+    describe('variable interpolation with chained variables with frontend mode', () => {
+      const mockTemplateService = new TemplateSrv();
+      mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
+      let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+      const fetchMockImpl = () =>
+        of({
+          data: {
+            status: 'success',
+            results: [
+              {
+                series: [
+                  {
+                    name: 'measurement',
+                    columns: ['name'],
+                    values: [['cpu']],
+                  },
+                ],
+              },
+            ],
+          },
         });
-        influxChecks(query);
+
+      beforeEach(() => {
+        jest.clearAllMocks();
+        fetchMock.mockImplementation(fetchMockImpl);
       });
 
-      it('should apply all scopedVars to tags', () => {
-        ds.version = InfluxVersion.InfluxQL;
-        ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
-        const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
-          interpolationVar: { text: text, value: text },
-          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+      it('should render chained regex variables with floating point number', () => {
+        ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
+          scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
         });
-        expect(query.tags?.length).toBeGreaterThan(0);
-        const value = query.tags?.[0].value;
-        const scopedVars = 'interpolationText|interpolationText2';
-        expect(value).toBe(scopedVars);
+        const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
+        const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
+        expect(qData).toBe(qe);
+      });
+
+      it('should render chained regex variables with URL', () => {
+        ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
+          scopedVars: {
+            var1: {
+              text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+              value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            },
+          },
+        });
+        const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+        const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
+        expect(qData).toBe(qe);
+      });
+
+      it('should render chained regex variables with floating point number and url', () => {
+        ds.metricFindQuery(
+          'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
+          {
+            scopedVars: {
+              var1: {
+                text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+                value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+              },
+              maxSED: { text: '8.1', value: '8.1' },
+            },
+          }
+        );
+        const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+        const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
+        expect(qData).toBe(qe);
       });
     });
   });

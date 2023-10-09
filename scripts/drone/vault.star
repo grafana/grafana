@@ -14,6 +14,9 @@ azure_tenant = "azure_tenant"
 
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
+rgm_storybook_destination = "rgm_storybook_destination"
+rgm_cdn_destination = "rgm_cdn_destination"
+rgm_downloads_destination = "rgm_downloads_destination"
 rgm_github_token = "github_token"
 rgm_dagger_token = "dagger_token"
 
@@ -40,6 +43,7 @@ def secrets():
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
         vault_secret(gcp_grafanauploads_base64, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials_base64"),
         vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),
+        vault_secret("grafana_api_key_dev", "infra/data/ci/grafana-release-eng/grafanacom", "api_key_dev"),
         vault_secret(pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
@@ -121,6 +125,21 @@ def secrets():
             rgm_destination,
             "infra/data/ci/grafana-release-eng/rgm",
             "destination_prod",
+        ),
+        vault_secret(
+            rgm_storybook_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "storybook_destination",
+        ),
+        vault_secret(
+            rgm_cdn_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "cdn_destination",
+        ),
+        vault_secret(
+            rgm_downloads_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "downloads_destination",
         ),
         vault_secret(
             rgm_dagger_token,

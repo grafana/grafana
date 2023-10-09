@@ -1,7 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { defaultVariableModel } from '@grafana/schema';
+import { Dashboard, defaultVariableModel } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -49,6 +49,29 @@ describe('DashboardModel', () => {
 
     it('should have default properties', () => {
       expect(model.panels.length).toBe(0);
+    });
+  });
+
+  describe('when storing original dashboard data', () => {
+    let originalDashboard: Dashboard = {
+      editable: true,
+      graphTooltip: 0,
+      schemaVersion: 1,
+      timezone: '',
+      title: 'original.title',
+    };
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel(originalDashboard);
+    });
+
+    it('should be returned from getOriginalDashboard without modifications', () => {
+      expect(model.getOriginalDashboard()).toEqual(originalDashboard);
+    });
+
+    it('should return a copy of the provided object', () => {
+      expect(model.getOriginalDashboard()).not.toBe(originalDashboard);
     });
   });
 
