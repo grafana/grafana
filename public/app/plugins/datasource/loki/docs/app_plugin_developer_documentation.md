@@ -1,22 +1,22 @@
 # Loki data source documentation for app plugins developers
 
-Welcome to the developer documentation for the Loki data source! The purpose of this document is to assist app plugin developers in leveraging the power of the Loki data source and Grafana. The Loki data source provides a set of APIs to simplify common tasks, making it easier to create engaging app plugins.
+Welcome to the developer documentation for the Loki data source! The purpose of this document is to assist app plugin developers in leveraging the power of the Loki data source and Grafana. The Loki data source provides a set of methods to simplify common tasks, making it easier to create engaging app plugins.
 
 ## Introduction
 
-The Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key APIs that are highly recommended for app plugin development.
+The Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key methods that are highly recommended for app plugin development.
 
-It's important to note some APIs and methods were deliberately omitted, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
+It's important to note some methods and APIs were deliberately omitted, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
 
-## Recommended APIs
+## Recommended methods
 
 We strongly advise using these recommended methods instead of direct API calls because they offer several benefits:
 
-- Caching of results: These APIs intelligently cache results based on their input arguments and the currently selected time range. This caching mechanism improves performance by reducing redundant fetch requests.
+- Caching of results: These methods intelligently cache results based on their input arguments and the currently selected time range. This caching mechanism improves performance by reducing redundant fetch requests.
 
-- Proper authentication handling: The recommended APIs correctly handle custom authentication data source options, ensuring seamless authentication when making requests. This enhances both security and data access control.
+- Proper authentication handling: The recommended methods correctly handle custom authentication data source options, ensuring seamless authentication when making requests. This enhances both security and data access control.
 
-- Improved instrumentation: By opting for these recommended APIs, you gain access to advanced instrumentation features. These features provide better monitoring and analysis capabilities, offering deeper insights into your data source interactions.
+- Improved instrumentation: By opting for these recommended methods, you gain access to advanced instrumentation features. These features provide better monitoring and analysis capabilities, offering deeper insights into your data source interactions.
 
 ### Fetching Loki label names
 
@@ -145,4 +145,4 @@ try {
 }
 ```
 
-If you find that there are APIs missing or have ideas for new features, please don't hesitate to inform us. You can submit your suggestions and feature requests through the [Grafana repository](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md). Your feedback is essential to help us improve and enhance the Loki data source and Grafana as a whole. We appreciate your contributions and look forward to hearing your ideas!
+If you find that there are methods missing or have ideas for new features, please don't hesitate to inform us. You can submit your suggestions and feature requests through the [Grafana repository](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md). Your feedback is essential to help us improve and enhance the Loki data source and Grafana as a whole. We appreciate your contributions and look forward to hearing your ideas!
