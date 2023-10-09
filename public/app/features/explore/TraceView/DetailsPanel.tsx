@@ -23,6 +23,7 @@ type Props = {
   traceStartTime: number;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   setDetailsPanelOffset: (offset: number) => void;
+  defaultDetailsPanelHeight: number;
 };
 
 enum TabLabels {
@@ -43,6 +44,7 @@ export function DetailsPanel(props: Props) {
     traceStartTime,
     detailLogItemToggle,
     setDetailsPanelOffset,
+    defaultDetailsPanelHeight,
   } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
@@ -99,7 +101,7 @@ export function DetailsPanel(props: Props) {
   };
 
   return (
-    <ExploreDrawer width={width} onResize={onDrawerResize}>
+    <ExploreDrawer width={width} onResize={onDrawerResize} defaultHeight={defaultDetailsPanelHeight}>
       <div className={cx(styles.header, styles.flexSpaceBetween)}>
         <div
           className={cx(

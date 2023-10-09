@@ -104,16 +104,17 @@ export function TraceView(props: Props) {
   const [detailsPanelOffset, setDetailsPanelOffset] = useState(0);
 
   const styles = useStyles2(getStyles);
+  const defaultDetailsPanelHeight = theme.components.horizontalDrawer.defaultHeight - 80;
 
   useEffect(() => {
     if (selectedSpan) {
       if (detailsPanelOffset === 0) {
-        setDetailsPanelOffset(theme.components.horizontalDrawer.defaultHeight);
+        setDetailsPanelOffset(defaultDetailsPanelHeight);
       }
     } else {
       setDetailsPanelOffset(0);
     }
-  }, [selectedSpan, theme.components.horizontalDrawer.defaultHeight, detailsPanelOffset]);
+  }, [selectedSpan, theme.components.horizontalDrawer.defaultHeight, detailsPanelOffset, defaultDetailsPanelHeight]);
 
   /**
    * Keeps state of resizable name column width
@@ -237,6 +238,7 @@ export function TraceView(props: Props) {
               traceStartTime={traceProp.startTime}
               detailLogItemToggle={detailLogItemToggle}
               setDetailsPanelOffset={setDetailsPanelOffset}
+              defaultDetailsPanelHeight={defaultDetailsPanelHeight}
             />
           </div>
         </>

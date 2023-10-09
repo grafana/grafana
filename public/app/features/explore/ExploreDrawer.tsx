@@ -55,10 +55,11 @@ export interface Props {
   width: number;
   children: React.ReactNode;
   onResize?: ResizeCallback;
+  defaultHeight?: number;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { width, children, onResize } = props;
+  const { width, children, onResize, defaultHeight } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const drawerWidth = `${width + 31.5}px`;
@@ -66,7 +67,10 @@ export function ExploreDrawer(props: Props) {
   return (
     <Resizable
       className={cx(styles.container, styles.drawerActive)}
-      defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
+      defaultSize={{
+        width: drawerWidth,
+        height: `${defaultHeight ?? theme.components.horizontalDrawer.defaultHeight}px`,
+      }}
       handleClasses={{ top: styles.rzHandle }}
       enable={{
         top: true,
