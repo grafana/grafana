@@ -34,7 +34,7 @@ export class AppChromeService {
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     megaMenu:
-      config.featureToggles.dockedMegaMenu && getFromLocalStorage(DOCKED_LOCAL_STORAGE_KEY) ? 'docked' : 'closed',
+      config.featureToggles.dockedMegaMenu && store.getBool(DOCKED_LOCAL_STORAGE_KEY, false) ? 'docked' : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
@@ -99,7 +99,7 @@ export class AppChromeService {
 
   public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
     if (config.featureToggles.dockedMegaMenu) {
-      setInLocalStorage(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
+      store.set(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
       reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
     } else {
       reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
@@ -185,16 +185,4 @@ function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undef
     aActiveChild?.url === bActiveChild?.url &&
     navItemsAreTheSame(a?.parentItem, b?.parentItem)
   );
-}
-
-function getFromLocalStorage(key: string) {
-  const value = localStorage.getItem(key);
-  if (!value) {
-    return undefined;
-  }
-  return JSON.parse(value);
-}
-
-function setInLocalStorage(key: string, value: unknown) {
-  localStorage.setItem(key, JSON.stringify(value));
 }
