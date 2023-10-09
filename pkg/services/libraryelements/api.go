@@ -27,7 +27,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 			entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
 			entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getHandler))
 			entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-			entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))
+			entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))
 			entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 		} else {
 			entities.Post("/", routing.Wrap(l.createHandler))
