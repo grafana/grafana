@@ -13,6 +13,7 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
+      z-index: $zindex-active-panel;
     }
   }
 }
@@ -90,7 +91,7 @@
   &:hover,
   &:active,
   &:focus {
-    z-index: 100 !important;
+    z-index: $zindex-active-panel !important;
   }
 }
 

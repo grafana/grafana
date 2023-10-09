@@ -30,7 +30,6 @@
     "expect": true,
     "it": true,
     "describe": true,
-    "sinon": true,
     "define": true,
     "module": true,
     "beforeEach": true,

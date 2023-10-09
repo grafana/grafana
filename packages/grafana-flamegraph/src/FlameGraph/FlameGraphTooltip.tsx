@@ -183,6 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   tooltipName: css`
     title: tooltipName;
+    margin-top: 0;
     word-break: break-all;
   `,
   lastParagraph: css`
@@ -196,7 +197,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   tooltipTable: css`
     title: tooltipTable;
-    max-width: 300px;
+    max-width: 400px;
   `,
 });
 

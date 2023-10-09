@@ -47,6 +47,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -108,6 +109,7 @@ export interface FeatureToggles {
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -132,4 +134,11 @@ export interface FeatureToggles {
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
+  cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  alertingModifiedExport?: boolean;
+  panelMonitoring?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
 }

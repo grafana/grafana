@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 describe('Templating', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests dashboard links and variables in links', () => {

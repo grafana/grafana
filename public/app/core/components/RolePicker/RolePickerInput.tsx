@@ -35,7 +35,7 @@ export const RolePickerInput = ({
   onQueryChange,
   ...rest
 }: InputProps): JSX.Element => {
-  const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
+  const styles = useStyles2(getRolePickerInputStyles, false, !!isFocused, !!disabled, false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {

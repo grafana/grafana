@@ -53,7 +53,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, dashboardJson, onSav
           )}
         </TabsBar>
       }
-      scrollableContent
     >
       {showDiff ? (
         <SaveDashboardDiff diff={data.diff} oldValue={dashboardJson} newValue={data.clone} />

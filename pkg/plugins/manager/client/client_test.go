@@ -97,7 +97,7 @@ func TestCheckHealth(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamErrorBase,
+				expectedError: plugins.ErrPluginHealthCheck,
 			},
 		}
 

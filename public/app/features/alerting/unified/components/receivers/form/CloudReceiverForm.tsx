@@ -4,6 +4,7 @@ import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
@@ -57,7 +58,9 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
         successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
         redirectPath: '/alerting/notifications',
       })
-    );
+    ).then(() => {
+      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+    });
   };
 
   const takenReceiverNames = useMemo(

@@ -1,11 +1,13 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { PluginMeta } from '@grafana/data';
+import { BootData, PluginMeta } from '@grafana/data';
+import { config, logInfo } from '@grafana/runtime';
+import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
 
-import { getPluginCode } from './code_loader';
+import { getPluginCode, patchSandboxEnvironmentPrototype } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -25,6 +27,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pluginImportCache = new Map<string, Promise<System.Module>>();
+const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   try {
@@ -60,18 +63,27 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       } else {
         patchObjectAsLiveTarget(originalValue);
       }
-      distortLiveApis();
-      const distortion = generalDistortionMap.get(originalValue);
-      if (distortion) {
-        return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+
+      // static distortions are faster distortions with direct object descriptors checks
+      const staticDistortion = generalDistortionMap.get(originalValue);
+      if (staticDistortion) {
+        return staticDistortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+      }
+
+      // live distortions are slower and have to do runtime checks
+      const liveDistortion = distortLiveApis(originalValue);
+      if (liveDistortion) {
+        return liveDistortion;
       }
       return originalValue;
     }
+
     // each plugin has its own sandbox
     sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      defaultPolicy: defaultTrustedTypesPolicy,
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
@@ -89,6 +101,40 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           // Similar to `window.monaco`, `window.Prism` may be undefined when invoked.
           return Reflect.get(window, 'Prism');
         },
+        get jQuery() {
+          return Reflect.get(window, 'jQuery');
+        },
+        get $() {
+          return Reflect.get(window, 'jQuery');
+        },
+        get grafanaBootData(): BootData {
+          if (!pluginLogCache[meta.id + '-grafanaBootData']) {
+            pluginLogCache[meta.id + '-grafanaBootData'] = true;
+            logInfo('Plugin using window.grafanaBootData', {
+              sandbox: 'true',
+              pluginId: meta.id,
+              guessedPluginName: meta.id,
+              parent: 'window',
+              packageName: 'window',
+              key: 'grafanaBootData',
+            });
+          }
+
+          // We don't want to encourage plugins to use `window.grafanaBootData`. They should
+          // use `@grafana/runtime.config` instead.
+          // if we are in dev mode we fail this access
+          if (config.buildInfo.env === 'development') {
+            throw new Error(
+              `Error in ${meta.id}: Plugins should not use window.grafanaBootData. Use "config" from "@grafana/runtime" instead.`
+            );
+          } else {
+            console.error(
+              `${meta.id.toUpperCase()}: Plugins should not use window.grafanaBootData. Use "config" from "@grafana/runtime" instead.`
+            );
+          }
+          return config.bootData;
+        },
+
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
@@ -128,31 +174,16 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           }
         },
       }),
-      // This improves the error message output for plugins
-      // because errors thrown inside of the sandbox have a stack
-      // trace that is difficult to read due to all the sandboxing
-      // layers.
-      instrumentation: {
-        // near-membrane concept of "activity" is something that happens inside
-        // the plugin instrumentation
-        startActivity() {
-          return {
-            stop: () => {},
-            error: getActivityErrorHandler(meta.id),
-          };
-        },
-        log: () => {},
-        error: () => {},
-      },
     });
+
+    patchSandboxEnvironmentPrototype(sandboxEnvironment);
 
     // fetch plugin's code
     let pluginCode = '';
     try {
       pluginCode = await getPluginCode(meta);
     } catch (e) {
-      throw new Error(`Could not load plugin ${meta.id}: ` + e);
-      reject(new Error(`Could not load plugin ${meta.id}: ` + e));
+      reject(new Error(`Could not load plugin code ${meta.id}: ` + e));
     }
 
     try {
@@ -169,29 +200,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       reject(error);
     }
   });
-}
-
-function getActivityErrorHandler(pluginId: string) {
-  return async function error(proxyError?: Error & { sandboxError?: boolean }) {
-    if (!proxyError) {
-      return;
-    }
-    // flag this error as a sandbox error
-    proxyError.sandboxError = true;
-
-    //  create a new error to unwrap it from the proxy
-    const newError = new Error(proxyError.message.toString());
-    newError.name = proxyError.name.toString();
-    newError.stack = proxyError.stack || '';
-
-    // If you are seeing this is because
-    // the plugin is throwing an error
-    // and it is not being caught by the plugin code
-    // This is a sandbox wrapper error.
-    // and not the real error
-    console.log(`[sandbox] Error from plugin ${pluginId}`);
-    console.error(newError);
-  };
 }
 
 function resolvePluginDependencies(deps: string[]) {

@@ -69,9 +69,7 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
-Please see [`[external_image_storage]`]({{< relref "../../setup-grafana/configure-grafana#external_image_storage" >}}) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
-
-If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`]({{< relref "../../setup-grafana/configure-grafana#external_image_storage" >}}).
+For more information on image rendering, refer to [image rendering][image-rendering].
 
 Restart Grafana for the changes to take effect.
 

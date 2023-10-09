@@ -1,9 +1,11 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-export interface ShareSnapshotTabState extends SceneObjectState {
+import { SceneShareTabState } from './types';
+
+export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
 }
 

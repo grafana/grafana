@@ -38,7 +38,7 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:              "user:0",
+				ID:              "render:0",
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				AuthenticatedBy: login.RenderModule,

@@ -64,7 +64,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		if *cmd.FolderUID == "" {
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
@@ -78,7 +78,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 	}
 
 	if element.FolderID != 0 {
-		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &element.FolderID, SignedInUser: c.SignedInUser})
+		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "failed to get folder", err)
 		}
@@ -206,7 +206,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		if *cmd.FolderUID == "" {
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
@@ -220,7 +220,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 	}
 
 	if element.FolderID != 0 {
-		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &element.FolderID, SignedInUser: c.SignedInUser})
+		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
 		}

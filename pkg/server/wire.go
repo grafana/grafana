@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -42,6 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -60,9 +63,14 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
+	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -85,8 +93,6 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -240,6 +246,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	metrics.ProvideService,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -353,12 +360,18 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
+	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
+	extsvcreg.ProvideExtSvcRegistry,
+	wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*extsvcreg.Registry)),
 	anonstore.ProvideAnonDBStore,
 	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
-	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	idimpl.ProvideService,
+	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(

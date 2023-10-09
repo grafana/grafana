@@ -166,9 +166,10 @@ func ProvideDashboardPermissions(
 			return []string{}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  DashboardViewActions,
@@ -230,9 +231,10 @@ func ProvideFolderPermissions(
 			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  append(DashboardViewActions, FolderViewActions...),

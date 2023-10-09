@@ -541,6 +541,15 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
+    // A vector aggregation expression with a child of metric expression with a child of binary expression is ambiguous after being parsed into a visual query
+    if (metricExpr.firstChild?.type.id === BinOpExpr) {
+      context.errors.push({
+        text: 'Query parsing is ambiguous.',
+        from: metricExpr.firstChild.from,
+        to: metricExpr.firstChild?.to,
+      });
+    }
+
     handleExpression(expr, metricExpr, context);
   }
 

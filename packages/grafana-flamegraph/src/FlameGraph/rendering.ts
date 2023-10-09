@@ -1,8 +1,8 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { RefObject, useEffect, useMemo, useState } from 'react';
+import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { colors } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -240,7 +240,7 @@ export function renderRect(
   ctx.beginPath();
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
-  const color =
+  const barColor =
     rect.ticksRight !== undefined &&
     (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
       ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
@@ -248,17 +248,22 @@ export function renderRect(
       ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
       : getBarColorByPackage(rect.label, theme);
 
+  const barMutedColor = color(theme.colors.background.secondary);
+  const barMutedColorHex = theme.isLight
+    ? barMutedColor.darken(10).toHexString()
+    : barMutedColor.lighten(10).toHexString();
+
   if (foundNames) {
     // Means we are searching, we use color for matches and gray the rest
-    ctx.fillStyle = foundNames.has(rect.label) ? color.toHslString() : colors[55];
+    ctx.fillStyle = foundNames.has(rect.label) ? barColor.toHslString() : barMutedColorHex;
   } else {
     // No search
     if (rect.collapsed) {
       // Collapsed are always grayed
-      ctx.fillStyle = colors[55];
+      ctx.fillStyle = barMutedColorHex;
     } else {
       // Mute if we are above the focused symbol
-      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? color.toHslString() : color.lighten(15).toHslString();
+      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
     }
   }
 

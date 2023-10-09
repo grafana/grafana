@@ -132,8 +132,8 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
   const styles = getStyles(props.getTheme(), false);
   let menu = (
     <Menu>
-      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
     </Menu>
   );
 
@@ -229,9 +229,9 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
     justify-content: space-between;
     width: 100%;
     top: 0;
-    z-index: ${theme.zIndex.navbarFixed};
     ${sticky
       ? css`
+          z-index: ${theme.zIndex.navbarFixed};
           position: sticky;
           padding-bottom: ${theme.spacing(1)};
           padding-top: ${theme.spacing(1)};

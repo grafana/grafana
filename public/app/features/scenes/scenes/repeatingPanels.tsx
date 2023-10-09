@@ -58,7 +58,6 @@ export function getRepeatingPanelsDemo(): DashboardScene {
           width: 24,
           height: 8,
           itemHeight: 8,
-          //@ts-expect-error
           source: PanelBuilders.timeseries()
             .setTitle('server = $server')
             .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
@@ -167,7 +166,6 @@ export function getRepeatingRowsDemo(): DashboardScene {
                   width: 24,
                   height: 5,
                   itemHeight: 5,
-                  //@ts-expect-error
                   source: PanelBuilders.timeseries()
                     .setTitle('server = $server, pod = $pod')
                     .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server, pod = $pod' }))

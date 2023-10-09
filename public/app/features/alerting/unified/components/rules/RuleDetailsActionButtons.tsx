@@ -3,7 +3,6 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -21,7 +20,13 @@ import { getRulesPermissions } from '../../utils/access-control';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { createExploreLink, createShareLink, makeRuleBasedSilenceLink } from '../../utils/misc';
+import {
+  createExploreLink,
+  createShareLink,
+  isLocalDevEnv,
+  isOpenSourceEdition,
+  makeRuleBasedSilenceLink,
+} from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
@@ -267,11 +272,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
  * We should show it in development mode
  */
 function shouldShowDeclareIncidentButton() {
-  const buildInfo = config.buildInfo;
-  const isOpenSourceEdition = buildInfo.edition === GrafanaEdition.OpenSource;
-  const isDevelopment = buildInfo.env === 'development';
-
-  return !isOpenSourceEdition || isDevelopment;
+  return !isOpenSourceEdition() || isLocalDevEnv();
 }
 
 /**
