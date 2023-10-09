@@ -392,7 +392,7 @@ var NamespaceMetricsMap = map[string][]string{
 	"AWS/Timestream":           {"SuccessfulRequestLatency", "SystemErrors", "UserErrors", "DataScannedBytes"},
 	"AWS/ThingsGraph":          {"EventStoreQueueSize", "FlowExecutionTime", "FlowExecutionsFailed", "FlowExecutionsStarted", "FlowExecutionsSucceeded", "FlowStepExecutionTime", "FlowStepExecutionsFailed", "FlowStepExecutionsStarted", "FlowStepExecutionsSucceeded"},
 	"AWS/TransitGateway":       {"BytesIn", "BytesOut", "PacketDropCountBlackhole", "PacketDropCountNoRoute", "PacketsIn", "PacketsOut"},
-	"AWS/Transfer":             {"BytesIn", "BytesOut", "FilesIn", "FilesOut"},
+	"AWS/Transfer":             {"BytesIn", "BytesOut", "FilesIn", "FilesOut", "InboundMessage", "InboundFailedMessage", "OnPartialUploadExecutionsStarted", "OnPartialUploadExecutionsSuccess", "OnPartialUploadExecutionsFailed", "OnUploadExecutionsStarted", "OnUploadExecutionsSuccess", "OnUploadExecutionsFailed"},
 	"AWS/Translate":            {"CharacterCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 	"AWS/TrustedAdvisor":       {"GreenChecks", "RedChecks", "RedResources", "ServiceLimitUsage", "YellowChecks", "YellowResources"},
 	"AWS/Usage":                {"CallCount", "ResourceCount"},

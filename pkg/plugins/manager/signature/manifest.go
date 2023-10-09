@@ -209,7 +209,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		f = toSlash(f)
 
 		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
-		if runningWindows && plugin.JSONData.Type == plugins.TypeRenderer && f == "chrome-win/debug.log" {
+		if runningWindows && plugin.JSONData.Type == plugins.TypeRenderer && filepath.Base(f) == "debug.log" {
 			continue
 		}
 
