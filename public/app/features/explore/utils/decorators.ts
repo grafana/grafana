@@ -282,6 +282,22 @@ export const decorateWithLogsResult =
     return { ...data, logsResult };
   };
 
+export const decorateWithNewLogsResult = (data: ExplorePanelData, lastData: ExplorePanelData | undefined, absoluteRange: AbsoluteTimeRange, queries?: DataQuery[]): ExplorePanelData => {
+  if (data.logsFrames.length === 0) {
+    return { ...data, logsResult: null };
+  }
+
+  const logsFrames = lastData ? [...lastData.logsFrames, ...data.logsFrames] : data.logsFrames;
+
+  const intervalMs = data.request?.intervalMs;
+  const newResults = dataFrameToLogsModel(logsFrames, intervalMs, absoluteRange, queries);
+  const sortOrder = refreshIntervalToSortOrder();
+  const sortedNewResults = sortLogsResult(newResults, sortOrder);
+  const logsResult = { ...sortedNewResults };
+
+  return { ...(lastData || data), logsResult };
+};
+
 // decorateData applies all decorators
 export function decorateData(
   data: PanelData,
@@ -308,6 +324,30 @@ export function decorateData(
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
     mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
+  );
+}
+
+export function decorateLoadMoreData(
+  data: PanelData,
+  lastData: PanelData,
+  absoluteRange: AbsoluteTimeRange,
+  queries: DataQuery[] | undefined,
+  correlations: CorrelationData[] | undefined,
+  showCorrelationEditorLinks: boolean,
+  defaultCorrelationTargetDatasource?: DataSourceApi
+): Observable<ExplorePanelData> {
+  return of(data).pipe(
+    map((data: PanelData) => preProcessPanelData(data)),
+    map(
+      decorateWithCorrelations({
+        defaultTargetDatasource: defaultCorrelationTargetDatasource,
+        showCorrelationEditorLinks,
+        queries,
+        correlations,
+      })
+    ),
+    map(decorateWithFrameTypeMetadata),
+    map((data: ExplorePanelData) => decorateWithNewLogsResult(data, decorateWithFrameTypeMetadata(preProcessPanelData(lastData)), absoluteRange, queries)),
   );
 }
 

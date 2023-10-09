@@ -11,7 +11,7 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { syncTimesAction } from './main';
-import { runQueries } from './query';
+import { runLoadMoreQueries, runQueries } from './query';
 
 //
 // Actions and Payloads
@@ -51,6 +51,16 @@ export const updateTimeRange = (options: {
       dispatch(updateTime({ ...options }));
       dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
+  };
+};
+
+export const loadMore = (options: {
+  exploreId: string;
+  absoluteRange: AbsoluteTimeRange;
+  refIds: string[];
+}): ThunkResult<void> => {
+  return (dispatch) => {
+    dispatch(runLoadMoreQueries({ ...options }));
   };
 };
 

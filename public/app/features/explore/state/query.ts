@@ -53,7 +53,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData } from '../utils/decorators';
+import { decorateData, decorateLoadMoreData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -699,6 +699,114 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
+  }
+);
+
+interface RunLoadMoreQueriesOptions {
+  exploreId: string;
+  refIds: string[];
+  absoluteRange: AbsoluteTimeRange;
+}
+/**
+ * Supplementary action to run queries that request more results, and dispatches sub-actions based 
+ * on which result viewers are active
+ */
+export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptions>(
+  'explore/runQueries',
+  async ({ exploreId, absoluteRange, refIds }, { dispatch, getState }) => {
+    const correlations$ = getCorrelations(exploreId);
+    const {
+      datasourceInstance,
+      containerWidth,
+      range,
+      queryResponse,
+      correlationEditorHelperData,
+      queries: exploreQueries,
+    } = getState().explore.panes[exploreId]!;
+
+    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
+    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
+    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+    const interpolateCorrelationHelperVars =
+      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+    let newQuerySource: Observable<ExplorePanelData>;
+    let newQuerySubscription: SubscriptionLike;
+
+    // Filter queries by those explicitly requested by refId
+    const queries = exploreQueries.map((query) => ({
+      ...query,
+      datasource: query.datasource || datasourceInstance?.getRef(),
+    })).filter((query) => refIds.includes(query.refId));
+
+    if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
+      return;
+    }
+
+    // Some datasource's query builders allow per-query interval limits,
+    // but we're using the datasource interval limit for now
+    const minInterval = datasourceInstance?.interval;
+
+    const queryOptions: QueryOptions = {
+      minInterval,
+      // maxDataPoints is used in:
+      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+      // Influx - used to correctly display logs in graph
+      // TODO:unification
+      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      maxDataPoints: containerWidth,
+    };
+
+    let scopedVars: ScopedVars = {};
+    if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+      Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+        scopedVars[variable[0]] = { value: variable[1] };
+      });
+    }
+
+    const timeZone = getTimeZone(getState().user);
+    const transaction = buildQueryTransaction(
+      exploreId,
+      queries,
+      queryOptions,
+      range,
+      false,
+      timeZone,
+      scopedVars
+    );
+
+    newQuerySource = combineLatest([
+      runRequest(datasourceInstance, transaction.request),
+      correlations$,
+    ]).pipe(
+      mergeMap(([data, correlations]) =>
+        decorateLoadMoreData(
+          data,
+          queryResponse,
+          absoluteRange,
+          queries,
+          correlations,
+          showCorrelationEditorLinks,
+          defaultCorrelationEditorDatasource
+        )
+      )
+    );
+
+    newQuerySubscription = newQuerySource.subscribe({
+      next(data) {
+        if (data.logsResult !== null && data.state === LoadingState.Done) {
+          reportInteraction('grafana_explore_logs_result_displayed', {
+            datasourceType: datasourceInstance.type,
+          });
+        }
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      },
+      error(error) {
+        dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+        console.error(error);
+      },
+    });
   }
 );
 
