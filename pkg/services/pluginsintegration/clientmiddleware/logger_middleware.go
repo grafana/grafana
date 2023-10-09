@@ -34,9 +34,9 @@ type LoggerMiddleware struct {
 	logger plog.Logger
 }
 
-// loggerParams returns the logger params for the provided plugin context.
+// logParams returns the logger params for the provided plugin context.
 // (pluginId, dsName, dsUID, uname).
-func loggerParams(pCtx backend.PluginContext) []any {
+func logParams(pCtx backend.PluginContext) []any {
 	p := []any{"pluginId", pCtx.PluginID}
 	if pCtx.DataSourceInstanceSettings != nil {
 		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
@@ -50,7 +50,7 @@ func loggerParams(pCtx backend.PluginContext) []any {
 
 // instrumentContext adds a contextual logger with plugin and request details to the given context.
 func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, loggerParams(pCtx)...))
+	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, logParams(pCtx)...))
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
@@ -66,8 +66,8 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 			status = statusCancelled
 		}
 	}
-	logParams := loggerParams(pluginCtx)
-	logParams = append(logParams,
+	params := logParams(pluginCtx)
+	params = append(params,
 		"endpoint", endpoint,
 		"status", status,
 		"duration", time.Since(start),
@@ -75,12 +75,12 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 		"time_before_plugin_request", timeBeforePluginRequest,
 	)
 	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		logParams = append(logParams, "traceID", traceID)
+		params = append(params, "traceID", traceID)
 	}
 	if status == statusError {
-		logParams = append(logParams, "error", err)
+		params = append(params, "error", err)
 	}
-	m.logger.Info("Plugin Request Completed", logParams...)
+	m.logger.Info("Plugin Request Completed", params...)
 	return err
 }
 
