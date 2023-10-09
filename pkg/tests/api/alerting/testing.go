@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -593,4 +594,31 @@ func (a apiClient) DeleteDatasource(t *testing.T, uid string) {
 	if resp.StatusCode != 200 {
 		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
 	}
+}
+
+func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/rules/history", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("ruleUID", ruleUID)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	var frame data.Frame
+	if resp.StatusCode == http.StatusOK {
+		require.NoError(t, json.Unmarshal(b, &frame))
+	}
+	return frame, resp.StatusCode, string(b)
 }

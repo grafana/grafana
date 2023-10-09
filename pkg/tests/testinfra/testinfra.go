@@ -357,6 +357,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 		require.NoError(t, err)
+
+		if o.NGAlertSchedulerBaseInterval > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -382,6 +391,7 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
+	NGAlertSchedulerBaseInterval          time.Duration
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
