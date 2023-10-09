@@ -11,14 +11,16 @@ import { PlaylistSrv } from './PlaylistSrv';
 import { Playlist, PlaylistItem } from './types';
 
 jest.mock('./api', () => ({
-  getPlaylist: jest.fn().mockReturnValue({
-    interval: '1s',
-    uid: 'xyz',
-    items: [
-      { type: 'dashboard_by_uid', value: 'aaa' },
-      { type: 'dashboard_by_uid', value: 'bbb' },
-    ],
-  } as Playlist),
+  playlistAPI: {
+    getPlaylist: jest.fn().mockReturnValue({
+      interval: '1s',
+      uid: 'xyz',
+      items: [
+        { type: 'dashboard_by_uid', value: 'aaa' },
+        { type: 'dashboard_by_uid', value: 'bbb' },
+      ],
+    } as Playlist),
+  },
   loadDashboards: (items: PlaylistItem[]) => {
     return Promise.resolve(
       items.map((v) => ({

@@ -3,10 +3,11 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net"
+	"net/http"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -126,7 +127,7 @@ func ProvideService(
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
@@ -141,7 +142,10 @@ func ProvideService(
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
+	}
+
+	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
 }
@@ -246,7 +250,23 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
 	serverConfig.SkipOpenAPIInstallation = false
+	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		requestHandler, err := getAPIHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
+		}
+		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
@@ -277,7 +297,6 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: this is a hack. see note in ProvideService
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
 			req.URL.Path = "/"
 		}

@@ -74,6 +74,11 @@ export interface Props extends Themeable2 {
    * Used by BigValueTextMode.Auto text mode.
    */
   count?: number;
+
+  /**
+   * Disable the wide layout for the BigValue
+   */
+  disableWideLayout?: boolean;
 }
 
 export class BigValue extends PureComponent<Props> {

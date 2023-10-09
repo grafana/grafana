@@ -197,7 +197,7 @@
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
-    "postcss": "8.4.26",
+    "postcss": "8.4.31",
     "postcss-loader": "7.3.3",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.6",
@@ -211,7 +211,6 @@
     "rudder-sdk-js": "2.37.0",
     "sass": "1.63.6",
     "sass-loader": "13.3.2",
-    "sinon": "15.2.0",
     "style-loader": "3.3.3",
     "stylelint": "15.10.1",
     "stylelint-config-prettier": "9.0.5",
@@ -251,7 +250,7 @@
     "@grafana/lezer-traceql": "0.0.6",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^1.11.0",
+    "@grafana/scenes": "^1.13.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",
@@ -274,6 +273,7 @@
     "@react-aria/menu": "3.10.0",
     "@react-aria/overlays": "3.15.0",
     "@react-aria/utils": "3.18.0",
+    "@react-awesome-query-builder/core": "6.4.1",
     "@react-awesome-query-builder/ui": "6.4.1",
     "@react-stately/collections": "3.9.0",
     "@react-stately/menu": "3.5.3",
@@ -425,7 +425,7 @@
     "semver@7.3.4": "7.5.4",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
     "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
-    "@storybook/blocks@7.0.10": "patch:@storybook/blocks@npm%3A7.0.10#./.yarn/patches/@storybook-blocks-npm-7.0.10-b101e8dcba.patch"
+    "@storybook/blocks@7.4.5": "patch:@storybook/blocks@npm%3A7.4.5#./.yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch"
   },
   "workspaces": {
     "packages": [

@@ -560,7 +560,7 @@ var (
 		},
 		{
 			Name:         "vizAndWidgetSplit",
-			Description:  "Split panels between vizualizations and widgets",
+			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -625,6 +625,13 @@ var (
 		{
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:         "grafanaAPIServerWithExperimentalAPIs",
+			Description:  "Register experimental APIs with the k8s API server",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAppPlatformSquad,
@@ -729,9 +736,10 @@ var (
 		{
 			Name:         "newBrowseDashboards",
 			Description:  "New browse/manage dashboards UI",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:        "sseGroupByDatasource",
@@ -815,6 +823,34 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "panelMonitoring",
+			Description:  "Enables panel monitoring through logs and measurements",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "enableNativeHTTPHistogram",
+			Description:  "Enables native HTTP Histograms",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "transformationsVariableSupport",
+			Description:  "Allows using variables in transformations",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "kubernetesPlaylists",
+			Description:  "Use the kubernetes API in the frontend for playlists",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
 		},
 	}
 )

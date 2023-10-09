@@ -84,4 +84,12 @@ export interface ContextFilter {
   description?: string;
 }
 
+export interface ParserAndLabelKeysResult {
+  extractedLabelKeys: string[];
+  hasJSON: boolean;
+  hasLogfmt: boolean;
+  hasPack: boolean;
+  unwrapLabelKeys: string[];
+}
+
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };
