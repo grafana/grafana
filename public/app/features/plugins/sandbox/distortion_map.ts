@@ -532,6 +532,7 @@ export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undef
   // This distorts the `history.replace` function in react-router-dom.
   // constructed for each browser history and is only accessible within the react context.
   // Note that this distortion does not affect `String.prototype.replace` calls.
+  // because they don't go through distortions
   if (
     originalValue instanceof Function &&
     originalValue.name === 'replace' &&
