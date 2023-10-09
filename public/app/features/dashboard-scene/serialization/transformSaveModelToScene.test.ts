@@ -1,3 +1,4 @@
+import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
@@ -14,7 +15,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardCursorSync, defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
+import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
