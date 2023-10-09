@@ -292,3 +292,23 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	}
 	return nil
 }
+
+// GetCommandsFromPipeline traverses the pipeline and extracts all CMDNode commands that match the type
+func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
+	var results []T
+	for _, p := range pipeline {
+		if p.NodeType() != TypeCMDNode {
+			continue
+		}
+		switch cmd := p.(type) {
+		case *CMDNode:
+			switch r := cmd.Command.(type) {
+			case T:
+				results = append(results, r)
+			}
+		default:
+			continue
+		}
+	}
+	return results
+}
