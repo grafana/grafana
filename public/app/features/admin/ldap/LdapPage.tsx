@@ -41,6 +41,10 @@ interface State {
   isLoading: boolean;
 }
 
+interface FormModel {
+  username: string;
+}
+
 const pageNav: NavModelItem = {
   text: 'LDAP',
   subTitle: `Verify your LDAP and user mapping configuration.`,
@@ -75,9 +79,7 @@ export class LdapPage extends PureComponent<Props, State> {
     return await loadUserMapping(username);
   }
 
-  search = (event: any) => {
-    event.preventDefault();
-    const username = event.target.elements['username'].value;
+  search = (username: string) => {
     if (username) {
       this.fetchUserMapping(username);
     }
@@ -109,7 +111,7 @@ export class LdapPage extends PureComponent<Props, State> {
             {canReadLDAPUser && (
               <>
                 <h3>Test user mapping</h3>
-                <Form onSubmit={this.search}>
+                <Form onSubmit={(data: FormModel) => this.search(data.username)}>
                   {({ register }) => (
                     <HorizontalGroup>
                       <Field label="Username">
