@@ -34,9 +34,10 @@ type LoggerMiddleware struct {
 	logger plog.Logger
 }
 
-// instrumentContext adds a contextual logger with plugin and request details to the given context.
-func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+// loggerParams returns the logger params for the provided plugin context.
+// (pluginId, dsName, dsUID, uname).
+func loggerParams(pCtx backend.PluginContext) []any {
+	p := []any{"pluginId", pCtx.PluginID}
 	if pCtx.DataSourceInstanceSettings != nil {
 		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
 		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
@@ -44,7 +45,12 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 	if pCtx.User != nil {
 		p = append(p, "uname", pCtx.User.Login)
 	}
-	return log.WithContextualAttributes(ctx, p)
+	return p
+}
+
+// instrumentContext adds a contextual logger with plugin and request details to the given context.
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, loggerParams(pCtx)...))
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
@@ -60,34 +66,20 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 			status = statusCancelled
 		}
 	}
-
-	logParams := []any{
+	logParams := loggerParams(pluginCtx)
+	logParams = append(logParams,
+		"endpoint", endpoint,
 		"status", status,
 		"duration", time.Since(start),
-		"pluginId", pluginCtx.PluginID,
-		"endpoint", endpoint,
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
-	}
-
-	if pluginCtx.User != nil {
-		logParams = append(logParams, "uname", pluginCtx.User.Login)
-	}
-
-	traceID := tracing.TraceIDFromContext(ctx, false)
-	if traceID != "" {
+	)
+	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
 		logParams = append(logParams, "traceID", traceID)
 	}
-
-	if pluginCtx.DataSourceInstanceSettings != nil {
-		logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
-		logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-	}
-
 	if status == statusError {
 		logParams = append(logParams, "error", err)
 	}
-
 	m.logger.Info("Plugin Request Completed", logParams...)
 	return err
 }
