@@ -11,8 +11,6 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
-import { getFromLocalStorage, setInLocalStorage } from './utils';
-
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -187,4 +185,16 @@ function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undef
     aActiveChild?.url === bActiveChild?.url &&
     navItemsAreTheSame(a?.parentItem, b?.parentItem)
   );
+}
+
+function getFromLocalStorage(key: string) {
+  const value = localStorage.getItem(key);
+  if (!value) {
+    return undefined;
+  }
+  return JSON.parse(value);
+}
+
+function setInLocalStorage(key: string, value: unknown) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
