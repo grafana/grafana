@@ -3652,7 +3652,7 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages-testing
+    target_bucket: grafana-packages
 - depends_on:
   - rgm-publish
   image: us.gcr.io/kubernetes-dev/package-publish:latest
@@ -3672,7 +3672,7 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages-testing
+    target_bucket: grafana-packages
 trigger:
   cron:
     include:
@@ -4644,6 +4644,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 64e7ecc6047c03401c5fa9a55daa8e925fdaa964db420b0f9a3699f759a95ebc
+hmac: 8656e3546cc4bc8af411e6a870a44f7beb980787e2963b8c1ccbf0a035eec13d
 
 ...

@@ -282,7 +282,7 @@ def rgm_nightly_publish():
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
-    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
+    package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
 
     return pipeline(
         name = "rgm-nightly-publish",
