@@ -1,6 +1,6 @@
 # Loki data source documentation for app plugins developers
 
-Welcome to the developer documentation for the Loki data source! This documentation is designed to assist app plugin developers in leveraging the power of Loki data source within Grafana. Loki data source provides a set of APIs to simplify common tasks, making it easier to create engaging app plugins.
+Welcome to the developer documentation for the Loki data source! The purpose of this document is to assist app plugin developers in leveraging the power of the Loki data source and Grafana. The Loki data source provides a set of APIs to simplify common tasks, making it easier to create engaging app plugins.
 
 ## Introduction
 
