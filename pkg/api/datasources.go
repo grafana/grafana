@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -372,9 +373,15 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to add datasource", err)
+	}
+
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
 	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = c.UserID
+	cmd.UserID = userID
 	if cmd.URL != "" {
 		if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 			return resp

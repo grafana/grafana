@@ -539,8 +539,8 @@ describe('Tempo service graph view', () => {
 
     expect(response.data[0].fields[6].config.links[0].url).toBe('');
     expect(response.data[0].fields[6].config.links[0].title).toBe('Tempo');
-    expect(response.data[0].fields[6].config.links[0].internal.query.queryType).toBe('nativeSearch');
-    expect(response.data[0].fields[6].config.links[0].internal.query.spanName).toBe('${__data.fields[0]}');
+    expect(response.data[0].fields[6].config.links[0].internal.query.queryType).toBe('traceqlSearch');
+    expect(response.data[0].fields[6].config.links[0].internal.query.filters[0].value).toBe('${__data.fields[0]}');
 
     // Service graph
     expect(response.data[1].name).toBe('Nodes');
@@ -683,8 +683,18 @@ describe('Tempo service graph view', () => {
           title: 'View traces',
           internal: {
             query: {
-              queryType: 'nativeSearch',
-              serviceName: '${__data.fields.target}',
+              refId: 'A',
+              queryType: 'traceqlSearch',
+              filters: [
+                {
+                  id: 'service-name',
+                  operator: '=',
+                  scope: 'resource',
+                  tag: 'service.name',
+                  value: '${__data.fields.target}',
+                  valueType: 'string',
+                },
+              ],
             },
             datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
@@ -764,8 +774,18 @@ describe('Tempo service graph view', () => {
           title: 'View traces',
           internal: {
             query: {
-              queryType: 'nativeSearch',
-              serviceName: '${__data.fields.target}',
+              queryType: 'traceqlSearch',
+              refId: 'A',
+              filters: [
+                {
+                  id: 'service-name',
+                  operator: '=',
+                  scope: 'resource',
+                  tag: 'service.name',
+                  value: '${__data.fields.target}',
+                  valueType: 'string',
+                },
+              ],
             },
             datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
@@ -842,8 +862,18 @@ describe('Tempo service graph view', () => {
       title: 'Tempo',
       internal: {
         query: {
-          queryType: 'nativeSearch',
-          spanName: '"${__data.fields[0]}"',
+          queryType: 'traceqlSearch',
+          refId: 'A',
+          filters: [
+            {
+              id: 'span-name',
+              operator: '=',
+              scope: 'span',
+              tag: 'name',
+              value: '"${__data.fields[0]}"',
+              valueType: 'string',
+            },
+          ],
         },
         datasourceUid: 'gdev-tempo',
         datasourceName: 'Tempo',
@@ -1169,8 +1199,18 @@ const serviceGraphLinks = [
     title: 'View traces',
     internal: {
       query: {
-        queryType: 'nativeSearch',
-        serviceName: '${__data.fields[0]}',
+        refId: 'A',
+        queryType: 'traceqlSearch',
+        filters: [
+          {
+            id: 'service-name',
+            operator: '=',
+            scope: 'resource',
+            tag: 'service.name',
+            value: '${__data.fields[0]}',
+            valueType: 'string',
+          },
+        ],
       } as TempoQuery,
       datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
