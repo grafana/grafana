@@ -61,7 +61,8 @@ type Service struct {
 
 const (
 	jwksCacheKey  = "signingkeys-jwks"
-	defaultExpiry = 60 * time.Second
+	jwksTTL       = 12 * time.Hour
+	privateKeyTTL = 60 * time.Second
 )
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
@@ -87,7 +88,7 @@ func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	// cache jwks
 	jwksBytes, err := json.Marshal(jwks)
 	if err == nil {
-		if err := s.remoteCache.Set(ctx, jwksCacheKey, jwksBytes, defaultExpiry); err != nil {
+		if err := s.remoteCache.Set(ctx, jwksCacheKey, jwksBytes, jwksTTL); err != nil {
 			s.log.Warn("Failed to cache JWKS", "err", err)
 		}
 	}
@@ -159,7 +160,7 @@ func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signe
 		return nil, err
 	}
 
-	s.localCache.Set(keyID, singer, defaultExpiry)
+	s.localCache.Set(keyID, singer, privateKeyTTL)
 	return singer, nil
 }
 
