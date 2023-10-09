@@ -3,8 +3,9 @@
   "type": "datasource",
   "name": "Sandbox datasource test plugin",
   "id": "sandbox-test-datasource",
+  "metrics": true,
   "info": {
-    "keywords": ["panel"],
+    "keywords": ["explore", "datasource"],
     "description": "",
     "author": {
       "name": "Grafana"
