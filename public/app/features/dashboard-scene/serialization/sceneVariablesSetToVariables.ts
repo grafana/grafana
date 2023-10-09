@@ -1,5 +1,5 @@
 import { SceneVariableSet, QueryVariable, CustomVariable, DataSourceVariable, ConstantVariable } from '@grafana/scenes';
-import { VariableModel, VariableHide } from '@grafana/schema';
+import { VariableModel, VariableHide, VariableSort } from '@grafana/schema';
 
 export function sceneVariablesSetToVariables(set: SceneVariableSet) {
   const variables: VariableModel[] = [];
@@ -29,7 +29,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
-        skipUrlSync: Boolean(variable.state.skipUrlSync),
+        skipUrlSync: variable.state.skipUrlSync,
         hide: variable.state.hide || VariableHide.dontHide,
       });
     } else if (variable instanceof CustomVariable) {
@@ -78,6 +78,29 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
       });
     } else {
       throw new Error('Unsupported variable type');
+    }
+  }
+
+  // Remove some defaults
+  for (const variable of variables) {
+    if (variable.hide === VariableHide.dontHide) {
+      delete variable.hide;
+    }
+
+    if (variable.skipUrlSync === false) {
+      delete variable.skipUrlSync;
+    }
+
+    if (variable.label === '') {
+      delete variable.label;
+    }
+
+    if (variable.multi === false) {
+      delete variable.multi;
+    }
+
+    if (variable.sort === VariableSort.disabled) {
+      delete variable.sort;
     }
   }
 

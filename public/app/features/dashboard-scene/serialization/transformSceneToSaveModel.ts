@@ -77,11 +77,7 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
         variables.push({
           name: control.state.name!,
           type: 'adhoc',
-          hide: 0,
-          skipUrlSync: false,
           datasource: control.state.datasource,
-          // TODO remove
-          id: '0',
         });
       }
     }
