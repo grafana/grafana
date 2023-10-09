@@ -103,8 +103,10 @@ export class AppChromeService {
   public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
     if (config.featureToggles.dockedMegaMenu) {
       window.localStorage.setItem('grafana.navigation.docked', JSON.stringify(newMegaMenuState === 'docked'));
+      reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
+    } else {
+      reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
     }
-    reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
     this.update({ megaMenu: newMegaMenuState });
   };
 
