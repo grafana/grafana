@@ -87,7 +87,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
       delete variable.hide;
     }
 
-    if (variable.skipUrlSync === false) {
+    if (!variable.skipUrlSync) {
       delete variable.skipUrlSync;
     }
 
@@ -95,7 +95,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
       delete variable.label;
     }
 
-    if (variable.multi === false) {
+    if (!variable.multi) {
       delete variable.multi;
     }
 
