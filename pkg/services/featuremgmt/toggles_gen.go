@@ -494,4 +494,8 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+	
+	// FlagPanelFilterVariable
+	// Enables use of variable to filter panels in dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
 )

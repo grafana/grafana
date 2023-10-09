@@ -54,33 +54,38 @@ export class DashboardGrid extends PureComponent<Props, State> {
   componentDidMount() {
     const { dashboard } = this.props;
 
-    // If panel filter variable is set on load then
-    // update state to filter panels
-    for (const variable of dashboard.getVariables()) {
-      if (variable.id === PANEL_FILTER_VARIABLE) {
-        if ('query' in variable) {
-          this.setPanelFilter(variable.query);
+    if (config.featureToggles.panelFilterVariable) {
+      // If panel filter variable is set on load then
+      // update state to filter panels
+      for (const variable of dashboard.getVariables()) {
+        if (variable.id === PANEL_FILTER_VARIABLE) {
+          if ('query' in variable) {
+            this.setPanelFilter(variable.query);
+          }
+          break;
         }
-        break;
       }
     }
 
     this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
-    this.eventSubs.add(
-      appEvents.subscribe(VariablesChanged, (e) => {
-        if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
-          if ('current' in e.payload.variable) {
-            let variable = e.payload.variable.current;
-            if ('value' in variable) {
-              let value = variable.value;
-              if (typeof value === 'string') {
-                this.setPanelFilter(value as string);
+
+    if (config.featureToggles.panelFilterVariable) {
+      this.eventSubs.add(
+        appEvents.subscribe(VariablesChanged, (e) => {
+          if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
+            if ('current' in e.payload.variable) {
+              let variable = e.payload.variable.current;
+              if ('value' in variable) {
+                let value = variable.value;
+                if (typeof value === 'string') {
+                  this.setPanelFilter(value as string);
+                }
               }
             }
           }
-        }
-      })
-    );
+        })
+      );
+    }
   }
 
   componentWillUnmount() {

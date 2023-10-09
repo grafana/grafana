@@ -147,6 +147,7 @@ Experimental features might be changed or removed without prior notice.
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
+| `panelFilterVariable`                       | Enables use of variable to filter panels in dashboard                                                        |
 
 ## Development feature toggles
 
