@@ -37,8 +37,7 @@ export const MegaMenu = React.memo(
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.onToggleDockedMegaMenu();
-      onClose();
+      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'closed' : 'docked');
     };
 
     return (
@@ -57,7 +56,7 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <IconButton
               tooltip={
-                state.megaMenuDocked === 'docked'
+                state.megaMenu === 'docked'
                   ? t('navigation.megamenu.undock', 'Undock menu')
                   : t('navigation.megamenu.dock', 'Dock menu')
               }
@@ -68,7 +67,12 @@ export const MegaMenu = React.memo(
             />
             <ul className={styles.itemList}>
               {navItems.map((link) => (
-                <MegaMenuItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+                <MegaMenuItem
+                  link={link}
+                  onClick={state.megaMenu === 'open' ? onClose : undefined}
+                  activeItem={activeItem}
+                  key={link.text}
+                />
               ))}
             </ul>
           </CustomScrollbar>

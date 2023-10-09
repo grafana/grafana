@@ -54,7 +54,7 @@ export function AppChrome({ children }: Props) {
               pageNav={state.pageNav}
               actions={state.actions}
               onToggleSearchBar={chrome.onToggleSearchBar}
-              onToggleMegaMenu={chrome.onToggleMegaMenu}
+              onToggleMegaMenu={() => chrome.setMegaMenu(state.megaMenu === 'closed' ? 'open' : 'closed')}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
           </div>
@@ -65,8 +65,8 @@ export function AppChrome({ children }: Props) {
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          {config.featureToggles.dockedMegaMenu && state.megaMenuDocked === 'docked' && (
-            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenu(false)} />
+          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenu === 'docked' && (
+            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenu('closed')} />
           )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
@@ -78,7 +78,7 @@ export function AppChrome({ children }: Props) {
           {config.featureToggles.dockedMegaMenu ? (
             <AppChromeMenu />
           ) : (
-            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu('closed')} />
           )}
           <CommandPalette />
         </>
