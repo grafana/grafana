@@ -148,14 +148,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   const permissionsTitle = t('dashboard-settings.permissions.title', 'Permissions');
 
   if (dashboard.id && dashboard.meta.canAdmin) {
-    if (!config.rbacEnabled) {
-      pages.push({
-        title: permissionsTitle,
-        id: 'permissions',
-        icon: 'lock',
-        component: DashboardPermissions,
-      });
-    } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
+    if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
         id: 'permissions',
