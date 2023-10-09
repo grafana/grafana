@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
@@ -48,22 +48,25 @@ export function useOpenAIStream(
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
 
+  const onError = useCallback(
+    (e: Error) => {
+      setStreamStatus(StreamStatus.IDLE);
+      setMessages([]);
+      setError(e);
+      notifyError(
+        'Failed to generate content using OpenAI',
+        `Please try again or if the problem persist, contact your organization admin.`
+      );
+      console.error(e);
+      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+    },
+    [messages, model, temperature, notifyError]
+  );
+
   const { error: enabledError, value: enabled } = useAsync(
     async () => await isLLMPluginEnabled(),
     [isLLMPluginEnabled]
   );
-
-  const onError = (e: Error) => {
-    setStreamStatus(StreamStatus.IDLE);
-    setMessages([]);
-    setError(e);
-    notifyError(
-      'Failed to generate content using OpenAI',
-      `Please try again or if the problem persist, contact your organization admin.`
-    );
-    console.error(e);
-    logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
-  };
 
   const { error: asyncError, value } = useAsync(async () => {
     if (!enabled || !messages.length) {
@@ -107,6 +110,7 @@ export function useOpenAIStream(
     };
   }, [messages, enabled]);
 
+  // Unsubscribe from the stream when the component unmounts.
   useEffect(() => {
     return () => {
       if (value?.stream) {
@@ -120,7 +124,7 @@ export function useOpenAIStream(
     let timeout: NodeJS.Timeout | undefined;
     if (streamStatus === StreamStatus.GENERATING && reply === '') {
       timeout = setTimeout(() => {
-        onError(new Error('OpenAI stream timed out'));
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
       }, TIMEOUT);
     }
     return () => {
