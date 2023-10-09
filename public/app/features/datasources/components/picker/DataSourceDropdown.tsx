@@ -72,7 +72,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     ...restProps
   } = props;
 
-  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
+  const styles = useStyles2(getStylesDropdown, props);
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
@@ -199,6 +199,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
           aria-label="Select a data source"
+          autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}

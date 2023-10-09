@@ -49,7 +49,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgID) {
+	for _, alertState := range srv.manager.GetAll(c.SignedInUser.GetOrgID()) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -185,7 +185,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}

@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
-import { DockedMegaMenu, MENU_WIDTH } from './DockedMegaMenu/DockedMegaMenu';
+import { MegaMenu, MENU_WIDTH } from './DockedMegaMenu/MegaMenu';
 import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -58,7 +58,7 @@ export function AppChromeMenu({}: Props) {
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
           <FocusScope contain autoFocus>
-            <DockedMegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+            <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
           </FocusScope>
         </CSSTransition>
         <CSSTransition

@@ -1,38 +1,42 @@
 package signingkeysimpl
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
-)
-
-const (
-	serverPrivateKeyID = "default"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService() (*Service, error) {
+func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service,
+	remoteCache remotecache.CacheStorage, routerRegister routing.RouteRegister,
+) (*Service, error) {
 	s := &Service{
-		log:  log.New("auth.key_service"),
-		keys: map[string]crypto.Signer{},
+		log:         log.New("auth.key_service"),
+		store:       signingkeystore.NewSigningKeyStore(dbStore, secretsService),
+		remoteCache: remoteCache,
 	}
 
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		s.log.Error("Error generating private key", "err", err)
-		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
-	}
-
-	if err := s.AddPrivateKey(serverPrivateKeyID, privateKey); err != nil {
-		return nil, err
-	}
+	s.registerAPIEndpoints(routerRegister)
 
 	return s, nil
 }
@@ -42,81 +46,117 @@ func ProvideEmbeddedSigningKeysService() (*Service, error) {
 //
 // The service is under active development and is not yet ready for production use.
 type Service struct {
-	log  log.Logger
-	keys map[string]crypto.Signer
+	log         log.Logger
+	store       signingkeystore.SigningStore
+	remoteCache remotecache.CacheStorage
 }
+
+const (
+	jwksCacheKey  = "signingkeys-jwks"
+	defaultExpiry = 12 * time.Hour
+)
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
-func (s *Service) GetJWKS() jose.JSONWebKeySet {
-	result := jose.JSONWebKeySet{}
-
-	for keyID := range s.keys {
-		// Skip error check because keyID must be a valid key ID
-		jwk, _ := s.GetJWK(keyID)
-		result.Keys = append(result.Keys, jwk)
+func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
+	// check cache for jwks
+	keySet := jose.JSONWebKeySet{}
+	if jwks, err := s.remoteCache.Get(ctx, jwksCacheKey); err == nil {
+		if err := json.Unmarshal(jwks, &keySet); err == nil {
+			return keySet, nil
+		}
 	}
 
-	return result
-}
-
-// GetJWK returns the JSON Web Key (JWK) with the specified key ID which can be used to verify tokens (public key)
-func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return jose.JSONWebKey{}, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
+	jwks, err := s.store.GetJWKS(ctx)
+	if err != nil {
+		return jose.JSONWebKeySet{}, err
 	}
 
-	result := jose.JSONWebKey{
-		Key: privateKey.Public(),
-		Use: "sig",
+	// cache jwks
+	jwksBytes, err := json.Marshal(jwks)
+	if err == nil {
+		if err := s.remoteCache.Set(ctx, jwksCacheKey, jwksBytes, defaultExpiry); err != nil {
+			s.log.Warn("Failed to cache JWKS", "err", err)
+		}
 	}
 
-	return result, nil
+	return jwks, err
 }
 
-// GetPublicKey returns the public key with the specified key ID
-func (s *Service) GetPublicKey(keyID string) (crypto.PublicKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
+// GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
+// created with the specified algorithm.
+// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
+	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
+	if alg != jose.ES256 {
+		s.log.Error("Only ES256 is supported", "alg", alg)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Only ES256 is supported: %v", alg)
 	}
 
-	return privateKey.Public(), nil
-}
+	keyID := keyMonthScopedID(keyPrefix, alg)
+	signer, err := s.store.GetPrivateKey(ctx, keyID)
+	if err == nil {
+		return keyID, signer, nil
+	}
+	s.log.Debug("Private key not found, generating new key", "keyID", keyID, "err", err)
 
-// GetPrivateKey returns the private key with the specified key ID
-func (s *Service) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
-	privateKey, ok := s.keys[keyID]
-	if !ok {
-		s.log.Error("The specified key was not found", "keyID", keyID)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		s.log.Error("Error generating private key", "err", err)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
 	}
 
-	return privateKey, nil
-}
-
-// AddPrivateKey adds a private key to the service
-func (s *Service) AddPrivateKey(keyID string, privateKey crypto.PrivateKey) error {
-	if _, ok := s.keys[keyID]; ok {
-		s.log.Error("The specified key ID is already in use", "keyID", keyID)
-		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key ID is already in use: %s", keyID)
+	expiry := time.Now().Add(30 * 24 * time.Hour)
+	if signer, err = s.store.AddPrivateKey(ctx, keyID, alg, privateKey, &expiry, false); err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {
+		return "", nil, err
 	}
-	s.keys[keyID] = privateKey.(crypto.Signer)
-	return nil
+
+	// invalidate cache
+	if err := s.remoteCache.Delete(ctx, jwksCacheKey); err != nil {
+		// not a critical error, key might not be in cache
+		s.log.Debug("Failed to invalidate JWKS cache", "err", err)
+	}
+
+	return keyID, signer, nil
 }
 
-// GetServerPrivateKey returns the private key used to sign tokens
-func (s *Service) GetServerPrivateKey() crypto.PrivateKey {
-	// The server private key is always available
-	pk, _ := s.GetPrivateKey(serverPrivateKeyID)
-	return pk
+func keyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {
+	keyID := keyPrefix + "-" + time.Now().UTC().Format("2006-01") + "-" + strings.ToLower(string(alg))
+	return keyID
 }
 
-// GetServerPrivateKey returns the private key used to sign tokens
-func (s *Service) GetServerPublicKey() crypto.PublicKey {
-	// The server public key is always available
-	publicKey, _ := s.GetPublicKey(serverPrivateKeyID)
-	return publicKey
+func (s *Service) registerAPIEndpoints(router routing.RouteRegister) {
+	router.Group("/api/signing-keys", func(grouper routing.RouteRegister) {
+		grouper.Get("/keys", s.exposeJWKS)
+	})
+}
+
+// swagger:response jwksResponse
+type RetrieveJWKSResponse struct {
+	// in: body
+	Body struct {
+		Keys []jose.JSONWebKey `json:"keys"`
+	}
+}
+
+// swagger:route GET /signing-keys/keys signing_keys retrieveJWKS
+//
+// # Get JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
+//
+// Required permissions
+// None
+//
+// Responses:
+// 200: jwksResponse
+// 500: internalServerError
+func (s *Service) exposeJWKS(ctx *contextmodel.ReqContext) response.Response {
+	jwks, err := s.GetJWKS(ctx.Req.Context())
+	if err != nil {
+		s.log.Error("Failed to get JWKS", "err", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get JWKS", err)
+	}
+
+	// set cache headers to 1 hour
+	ctx.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+
+	return response.JSON(http.StatusOK, jwks)
 }

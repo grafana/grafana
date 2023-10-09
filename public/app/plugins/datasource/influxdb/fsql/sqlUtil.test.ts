@@ -6,7 +6,7 @@ import { toRawSql } from './sqlUtil';
 
 describe('toRawSql', () => {
   it('should render sql properly', () => {
-    const expected = 'SELECT host FROM iox.value1 LIMIT 50';
+    const expected = 'SELECT host FROM iox.value1 WHERE time >= $__timeFrom AND time <= $__timeTo LIMIT 50';
     const testQuery: SQLQuery = {
       refId: 'A',
       sql: {
