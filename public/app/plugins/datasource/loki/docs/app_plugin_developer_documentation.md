@@ -17,6 +17,7 @@ We strongly advise using these recommended methods instead of direct API calls b
 - Proper authentication handling: The recommended methods correctly handle custom authentication data source options, ensuring seamless authentication when making requests. This enhances both security and data access control.
 
 - Improved instrumentation: By opting for these recommended methods, you gain access to advanced instrumentation features. These features provide better monitoring and analysis capabilities, offering deeper insights into your data source interactions.
+  > Note: To leverage the enhanced instrumentation, you as an app developer need to have access to server logs, metrics, and traces.
 
 ### Fetching Loki label names
 
