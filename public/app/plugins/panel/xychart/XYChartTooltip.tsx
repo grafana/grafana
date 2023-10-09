@@ -42,7 +42,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const yField = series.y(frame);
 
   // collect data links
-  let links: LinkModel[] | undefined = undefined;
+  let links: Array<LinkModel<Field>> = [];
   if (yField.getLinks) {
     const v = yField.values[rowIndex];
     const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
@@ -123,12 +123,11 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     return content;
   };
 
-  // @TODO Add content and footer
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} />
       <VizTooltipContent contentLabelValue={getContentLabel()} />
-      <VizTooltipFooter dataLinks={[]} canAnnotate={false} />
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
     </div>
   );
 };
