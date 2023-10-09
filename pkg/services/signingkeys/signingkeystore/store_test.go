@@ -10,13 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
 func TestIntegrationSigningKeyStore2(t *testing.T) {
 	setup := func() (context.Context, *Store) {
-		return context.Background(), NewSigningKeyStore(db.InitTestDB(t), fakes.NewFakeSecretsService())
+		return context.Background(), NewSigningKeyStore(db.InitTestDB(t))
 	}
 
 	t.Run("Should successfully add new singing key", func(_ *testing.T) {

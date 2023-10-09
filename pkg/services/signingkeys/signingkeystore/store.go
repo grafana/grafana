@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -32,10 +31,9 @@ var _ SigningStore = (*Store)(nil)
 const cleanupRateLimitKey = "signingkeys-cleanup"
 
 type Store struct {
-	dbStore        db.DB
-	secretsService secrets.Service
-	log            log.Logger
-	localCache     *localcache.CacheService
+	dbStore    db.DB
+	log        log.Logger
+	localCache *localcache.CacheService
 }
 
 type SigningKey struct {
@@ -47,12 +45,11 @@ type SigningKey struct {
 	Alg        jose.SignatureAlgorithm `json:"alg" xorm:"alg" db:"alg"`
 }
 
-func NewSigningKeyStore(dbStore db.DB, secretsService secrets.Service) *Store {
+func NewSigningKeyStore(dbStore db.DB) *Store {
 	return &Store{
-		dbStore:        dbStore,
-		secretsService: secretsService,
-		log:            log.New("signing.key_service"),
-		localCache:     localcache.New(12*time.Hour, 4*time.Hour),
+		dbStore:    dbStore,
+		log:        log.New("signing.key_service"),
+		localCache: localcache.New(12*time.Hour, 4*time.Hour),
 	}
 }
 

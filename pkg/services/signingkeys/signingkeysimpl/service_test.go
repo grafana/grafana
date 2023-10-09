@@ -47,7 +47,7 @@ func getPrivateKey(t *testing.T, svc *Service) []byte {
 func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	svc := &Service{
 		log:            log.NewNopLogger(),
-		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t), secretstest.NewFakeSecretsService()),
+		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    remotecache.NewFakeCacheStorage(),
 	}
@@ -85,7 +85,7 @@ func TestIntegrationEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 	cacheStorage := remotecache.NewFakeCacheStorage()
 	svc := &Service{
 		log:            log.NewNopLogger(),
-		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t), secretstest.NewFakeSecretsService()),
+		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    cacheStorage,
 	}
@@ -133,8 +133,8 @@ func TestExposeJWKS(t *testing.T) {
 	svc := &Service{
 		log:            log.NewNopLogger(),
 		store:          mockStore,
-		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    cacheStorage,
+		secretsService: secretstest.NewFakeSecretsService(),
 	}
 
 	routerRegister := routing.NewRouteRegister()
