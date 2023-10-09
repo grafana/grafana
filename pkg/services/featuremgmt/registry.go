@@ -164,7 +164,7 @@ var (
 		{
 			Name:         "dockedMegaMenu",
 			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},

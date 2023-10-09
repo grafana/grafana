@@ -63,7 +63,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `dockedMegaMenu`                 | Enable support for a persistent (docked) navigation menu                                                                                                                                     |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`            | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                  | Enable folder nesting                                                                                                                                                                        |
@@ -97,6 +96,7 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                       |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                           |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
+| `dockedMegaMenu`                            | Enable support for a persistent (docked) navigation menu                                                     |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
