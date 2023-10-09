@@ -1,4 +1,4 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { IntervalVariableModel, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import {
   MultiValueVariable,
@@ -8,6 +8,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -148,6 +149,33 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
     values: Array.isArray(value) ? value : [value],
     texts: Array.isArray(text) ? text : [text],
   };
+}
+
+// Transform old interval model to new interval model from scenes
+export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+  // separate intervals by quotes either single or double
+  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+  // if no intervals are found return initial state of interval reducer
+  if (!matchIntervals) {
+    const initialInterval = initialIntervalVariableModelState.query?.split(',');
+    return initialInterval ? initialInterval : [];
+  }
+
+  // when options are defined in variable.query
+  const intervals: string[] = matchIntervals.reduce((acc: string[], text: string) => {
+    // remove quotes
+    const intervalValue = text.replace(/["']+/g, '');
+    // if the interval is not already in the array add it
+    if (!acc.includes(intervalValue)) {
+      // remove interval option auto
+      // scenes will handle the auto interval
+      if (!intervalValue.startsWith('$auto_interval')) {
+        acc.push(intervalValue);
+      }
+    }
+    return acc;
+  }, []);
+  return intervals;
 }
 
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {

@@ -19,7 +19,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
-  IntervalVariable, //TODO: Make sure scenes has this released
+  IntervalVariable,
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
@@ -44,7 +44,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getIntervalsFromOldIntervalModel, getVizPanelKeyForPanelId } from '../utils/utils';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -279,12 +279,13 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       hide: variable.hide,
     });
   } else if (isIntervalVariable(variable)) {
+    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const currentInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : '';
     return new IntervalVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: currentInterval,
       description: variable.description,
-      intervals: variable.query,
+      intervals: intervals,
       autoEnabled: variable.auto,
       autoStepCount: variable.auto_count,
       autoMinInterval: variable.auto_min,
@@ -323,6 +324,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     height: panel.gridPos.h,
   });
 }
+
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
