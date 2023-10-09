@@ -29,7 +29,7 @@ export const OpenTsdbDetails = (props: Props) => {
 
   return (
     <>
-      <FieldSet label={"OpenTSDB settings"}>
+      <FieldSet label="OpenTSDB settings">
       <Field htmlFor={`select-version-${idSuffix}`} label="Version">
         <Select
           inputId={`select-version-${idSuffix}`}
