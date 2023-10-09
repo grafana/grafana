@@ -22,7 +22,11 @@ const ufuzzy = new uFuzzy();
 type RenderOptions = {
   canvasRef: RefObject<HTMLCanvasElement>;
   data: FlameGraphDataContainer;
-  levels: LevelItem[][];
+  root: LevelItem;
+  direction: 'children' | 'parents';
+
+  // Depth in number of levels
+  depth: number;
   wrapperWidth: number;
 
   // If we are rendering only zoomed in part of the graph.
@@ -49,7 +53,9 @@ export function useFlameRender2(options: RenderOptions) {
   const {
     canvasRef,
     data,
-    levels,
+    root,
+    depth,
+    direction,
     wrapperWidth,
     rangeMin,
     rangeMax,
@@ -80,7 +86,7 @@ export function useFlameRender2(options: RenderOptions) {
     return undefined;
   }, [search, data]);
 
-  const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
+  const ctx = useSetupCanvas(canvasRef, wrapperWidth, depth);
   const theme = getTheme();
 
   useEffect(() => {
@@ -93,7 +99,7 @@ export function useFlameRender2(options: RenderOptions) {
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
 
     const stack: Array<{ item: LevelItem; levelOffset: number }> = [];
-    stack.push({ item: levels[0][0], levelOffset: 0 });
+    stack.push({ item: root, levelOffset: 0 });
 
     let collapsedItemRendered: CollapseConfig | undefined = undefined;
 
@@ -119,7 +125,7 @@ export function useFlameRender2(options: RenderOptions) {
       const isCollapsedItem = collapsedItemConfig && collapsedItemConfig.collapsed;
       if (isCollapsedItem) {
         if (collapsedItemRendered === collapsedItemConfig) {
-          offsetModifier = -1;
+          offsetModifier = direction === 'children' ? -1 : +1;
           skipRender = true;
         } else {
           // This is a case where we have another collapsed group right after different collapsed group, so we need to
@@ -171,15 +177,18 @@ export function useFlameRender2(options: RenderOptions) {
           }
         }
       }
-      if (item.children) {
-        stack.unshift(...item.children.map((c) => ({ item: c, levelOffset: args.levelOffset + offsetModifier })));
+
+      const nextList = direction === 'children' ? item.children : item.parents;
+      if (nextList) {
+        stack.unshift(...nextList.map((c) => ({ item: c, levelOffset: args.levelOffset + offsetModifier })));
       }
     }
     console.timeEnd('render2');
   }, [
     ctx,
     data,
-    levels,
+    root,
+    depth,
     wrapperWidth,
     rangeMin,
     rangeMax,
