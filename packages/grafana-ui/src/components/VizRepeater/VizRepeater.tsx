@@ -181,6 +181,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const overflowText: React.CSSProperties = {
       marginLeft: '4px',
+      fontSize: '12px',
     };
 
     let vizHeight = height;
@@ -214,7 +215,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
         {this.props.isOverflow && (
           <Tooltip content="Some content may be hidden in overflow and requires scrolling">
             <div style={overflowStyle}>
-              <Icon name="info-circle" />
+              <Icon name="info-circle" size="sm" />
               <span style={overflowText}>Overflow</span>
             </div>
           </Tooltip>
