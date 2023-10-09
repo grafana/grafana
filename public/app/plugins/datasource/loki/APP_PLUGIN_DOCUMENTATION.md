@@ -104,7 +104,7 @@ try {
 }
 ```
 
-### Fetching Loki parser and label keys for log stream based on sampled lines
+### Detecting Loki parser and label keys for log stream based on sampled lines
 
 `datasource.languageProvider.getParserAndLabelKeys` receives a stream selector and returns the parsers and label keys that the query would generate. This is achieved by executing a sample query to Loki with the specified stream and extracting relevant information from the received log lines.
 
