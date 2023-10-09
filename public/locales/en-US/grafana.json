@@ -573,7 +573,7 @@
       "title": "Incidents"
     },
     "infrastructure": {
-      "title": "Infrastructure"
+      "title": "Integrations"
     },
     "kubernetes": {
       "title": "Kubernetes"

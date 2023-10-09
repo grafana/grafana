@@ -39,7 +39,7 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 			descriptor: descriptor,
 			logger:     logger,
 			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(newClientConfig(descriptor.executablePath, env(), logger, descriptor.versionedPlugins))
+				return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), logger, descriptor.versionedPlugins))
 			},
 		}, nil
 	}

@@ -1,8 +1,11 @@
+import React from 'react';
+
 import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -37,6 +40,7 @@ export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource
         ],
       })
       .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
