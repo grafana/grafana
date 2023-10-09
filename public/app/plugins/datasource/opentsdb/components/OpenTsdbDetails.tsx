@@ -5,7 +5,6 @@ import { Select, Input, Field, FieldSet } from '@grafana/ui';
 
 import { OpenTsdbOptions } from '../types';
 
-
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },
   { label: '==2.2', value: 2 },
@@ -29,34 +28,36 @@ export const OpenTsdbDetails = (props: Props) => {
 
   return (
     <>
-      <FieldSet label={"OpenTSDB settings"}>
-      <Field htmlFor={`select-version-${idSuffix}`} label="Version">
-        <Select
-          inputId={`select-version-${idSuffix}`}
-          options={tsdbVersions}
-          value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
-          onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
-        />
+      <FieldSet label={'OpenTSDB settings'}>
+        <Field htmlFor={`select-version-${idSuffix}`} label="Version">
+          <Select
+            inputId={`select-version-${idSuffix}`}
+            options={tsdbVersions}
+            value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
+            onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
+            width={20}
+          />
         </Field>
-      <Field htmlFor={`select-resolution-${idSuffix}`} label="Resolution">
-        <Select
-          inputId={`select-resolution-${idSuffix}`}
-          options={tsdbResolutions}
-          value={
-            tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??
-            tsdbResolutions[0]
-          }
-          onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
-        />
-      </Field>
-      <Field htmlFor={`lookup-input-${idSuffix}`} label="Lookup limit">
-        <Input
-          id={`lookup-input-${idSuffix}`}
-          type="number"
-          value={value.jsonData.lookupLimit ?? 1000}
-          onChange={onInputChangeHandler('lookupLimit', value, onChange)}
-        />
-      </Field>
+        <Field htmlFor={`select-resolution-${idSuffix}`} label="Resolution">
+          <Select
+            inputId={`select-resolution-${idSuffix}`}
+            options={tsdbResolutions}
+            value={
+              tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??
+              tsdbResolutions[0]
+            }
+            onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
+            width={20}
+          />
+        </Field>
+        <Field htmlFor={`lookup-input-${idSuffix}`} label="Lookup limit">
+          <Input
+            id={`lookup-input-${idSuffix}`}
+            type="number"
+            value={value.jsonData.lookupLimit ?? 1000}
+            onChange={onInputChangeHandler('lookupLimit', value, onChange)}
+          />
+        </Field>
       </FieldSet>
     </>
   );
