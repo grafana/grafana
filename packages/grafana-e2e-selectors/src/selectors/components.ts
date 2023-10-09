@@ -421,9 +421,6 @@ export const Components = {
   DebugOverlay: {
     wrapper: 'debug-overlay',
   },
-  OrgRolePicker: {
-    input: 'Role',
-  },
   AnalyticsToolbarButton: {
     button: 'Dashboard insights',
   },
