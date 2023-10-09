@@ -19,11 +19,10 @@ import (
 //
 // Responses:
 // 200: viewPublicDashboardResponse
-// 400: invalidAccessTokenPublicError
-// 400: publicDashboardNotEnabledError
+// 400: badRequestPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
-// 404: publicDashboardNotFoundPublicError
+// 404: notFoundPublicError
 // 500: internalServerPublicError
 func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
@@ -45,16 +44,10 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 //
 // Responses:
 // 200: queryPublicDashboardResponse
-// 400: invalidAccessTokenPublicError
-// 400: invalidPanelIdPublicError
 // 400: badRequestPublicError
-// 400: publicDashboardNotEnabledError
-// 400: invalidIntervalPublicError
-// 400: invalidMaxDataPointsPublicError
-// 400: invalidTimeRangePublicError
 // 401: unauthorisedPublicError
 // 404: panelNotFoundPublicError
-// 404: publicDashboardNotFoundPublicError
+// 404: notFoundPublicError
 // 403: forbiddenPublicError
 // 500: internalServerPublicError
 func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Response {
@@ -87,9 +80,8 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 //
 // Responses:
 // 200: getPublicAnnotationsResponse
-// 400: invalidAccessTokenPublicError
-// 400: publicDashboardNotEnabledError
-// 404: publicDashboardNotFoundPublicError
+// 400: badRequestPublicError
+// 404: notFoundPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
 // 500: internalServerPublicError

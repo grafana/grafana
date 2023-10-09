@@ -363,36 +363,6 @@
         },
         "description": "(empty)"
       },
-      "dashboardAccessTokenExistsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists."
-      },
-      "dashboardIsPublicPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "DashboardIsPublicPublicError is returned when the dashboard is already public."
-      },
-      "dashboardNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "DashboardNotFoundPublicError is returned when the dashboard is not found."
-      },
       "dashboardResponse": {
         "content": {
           "application/json": {
@@ -402,16 +372,6 @@
           }
         },
         "description": "(empty)"
-      },
-      "dashboardUidExistsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists."
       },
       "dashboardVersionResponse": {
         "content": {
@@ -1359,16 +1319,6 @@
         },
         "description": "(empty)"
       },
-      "identifierNotSetPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "IdentifierNotSetPublicError the identifier is not provided."
-      },
       "importDashboardResponse": {
         "content": {
           "application/json": {
@@ -1399,75 +1349,23 @@
         },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
-      "invalidAccessTokenPublicError": {
+      "jwksResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/publicError"
+              "properties": {
+                "keys": {
+                  "items": {
+                    "$ref": "#/components/schemas/JSONWebKey"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
             }
           }
         },
-        "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid."
-      },
-      "invalidIntervalPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidIntervalPublicError is returned when the interval is not valid"
-      },
-      "invalidMaxDataPointsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid"
-      },
-      "invalidPanelIdPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidPanelIdPublicError is returned when the panel is not valid"
-      },
-      "invalidShareTypePublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidShareTypePublicError is returned when the share type provided is not valid."
-      },
-      "invalidTimeRangePublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidTimeRangePublicError is returned when the time range is not valid"
-      },
-      "invalidUidPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "InvalidUidPublicError is returned when the uid provided is not valid."
+        "description": "(empty)"
       },
       "listBuiltinRolesResponse": {
         "content": {
@@ -1584,16 +1482,6 @@
           }
         },
         "description": "An OKResponse is returned if the request was successful."
-      },
-      "panelNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "PanelNotFoundPublicError is returned when the panel is not found"
       },
       "pauseAlertResponse": {
         "content": {
@@ -1749,26 +1637,6 @@
           }
         },
         "description": "PreconditionFailedError"
-      },
-      "publicDashboardNotEnabledError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled."
-      },
-      "publicDashboardNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
-        "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found."
       },
       "publicErrorResponse": {
         "content": {
@@ -2734,7 +2602,7 @@
             "type": "string"
           },
           "relativeTimeRange": {
-            "$ref": "#/components/schemas/RelativeTimeRange"
+            "$ref": "#/components/schemas/RelativeTimeRangeExport"
           }
         },
         "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -3274,6 +3142,9 @@
           "for": {
             "type": "string"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -3283,6 +3154,16 @@
           "record": {
             "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "AttributeTypeAndValue": {
+        "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+        "properties": {
+          "Type": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {}
         },
         "type": "object"
       },
@@ -3404,6 +3285,247 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "Certificate": {
+        "properties": {
+          "AuthorityKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "BasicConstraintsValid": {
+            "description": "BasicConstraintsValid indicates whether IsCA, MaxPathLen,\nand MaxPathLenZero are valid.",
+            "type": "boolean"
+          },
+          "CRLDistributionPoints": {
+            "description": "CRL Distribution Points",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "DNSNames": {
+            "description": "Subject Alternate Name values. (Note that these values may not be valid\nif invalid values were contained within a parsed certificate. For\nexample, an element of DNSNames may not be a valid DNS domain name.)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "EmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "ExcludedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ExtKeyUsage"
+            },
+            "type": "array"
+          },
+          "Extensions": {
+            "description": "Extensions contains raw X.509 extensions. When parsing certificates,\nthis can be used to extract non-critical extensions that are not\nparsed by this package. When marshaling certificates, the Extensions\nfield is ignored, see ExtraExtensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "ExtraExtensions": {
+            "description": "ExtraExtensions contains extensions to be copied, raw, into any\nmarshaled certificates. Values override any extensions that would\notherwise be produced based on the other fields. The ExtraExtensions\nfield is not populated when parsing certificates, see Extensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "IPAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "IsCA": {
+            "type": "boolean"
+          },
+          "Issuer": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "IssuingCertificateURL": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "KeyUsage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          },
+          "MaxPathLen": {
+            "description": "MaxPathLen and MaxPathLenZero indicate the presence and\nvalue of the BasicConstraints' \"pathLenConstraint\".\n\nWhen parsing a certificate, a positive non-zero MaxPathLen\nmeans that the field was specified, -1 means it was unset,\nand MaxPathLenZero being true mean that the field was\nexplicitly set to zero. The case of MaxPathLen==0 with MaxPathLenZero==false\nshould be treated equivalent to -1 (unset).\n\nWhen generating a certificate, an unset pathLenConstraint\ncan be requested with either MaxPathLen == -1 or using the\nzero value for both MaxPathLen and MaxPathLenZero.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "MaxPathLenZero": {
+            "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
+            "type": "boolean"
+          },
+          "NotBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "OCSPServer": {
+            "description": "RFC 5280, 4.2.2.1 (Authority Information Access)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomainsCritical": {
+            "description": "Name constraints",
+            "type": "boolean"
+          },
+          "PermittedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "PermittedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PolicyIdentifiers": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "PublicKey": {},
+          "PublicKeyAlgorithm": {
+            "$ref": "#/components/schemas/PublicKeyAlgorithm"
+          },
+          "Raw": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawIssuer": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubject": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubjectPublicKeyInfo": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawTBSCertificate": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "Signature": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SignatureAlgorithm": {
+            "$ref": "#/components/schemas/SignatureAlgorithm"
+          },
+          "Subject": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "SubjectKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "URIs": {
+            "items": {
+              "$ref": "#/components/schemas/URL"
+            },
+            "type": "array"
+          },
+          "UnhandledCriticalExtensions": {
+            "description": "UnhandledCriticalExtensions contains a list of extension IDs that\nwere not (fully) processed when parsing. Verify will fail if this\nslice is non-empty, unless verification is delegated to an OS\nlibrary which understands all the critical extensions.\n\nUsers can access these extensions using Extensions and can remove\nelements from this slice if they believe that they have been\nhandled.",
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "UnknownExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "Version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "A Certificate represents an X.509 certificate.",
         "type": "object"
       },
       "ChangeUserPasswordCommand": {
@@ -4450,6 +4572,9 @@
             "description": "Error is a property to be set if the corresponding DataQuery has an error.",
             "type": "string"
           },
+          "ErrorSource": {
+            "$ref": "#/components/schemas/ErrorSource"
+          },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
           },
@@ -4935,6 +5060,10 @@
         ],
         "type": "object"
       },
+      "ErrorSource": {
+        "description": "ErrorSource type defines the source of the error",
+        "type": "string"
+      },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
         "type": "string"
@@ -4994,6 +5123,12 @@
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
+      "ExtKeyUsage": {
+        "description": "Each of the ExtKeyUsage* constants define a unique action.",
+        "format": "int64",
+        "title": "ExtKeyUsage represents an extended set of actions that are valid for a given key.",
+        "type": "integer"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -5022,6 +5157,25 @@
           },
           "wechat_configs": {
             "$ref": "#/components/schemas/WechatConfig"
+          }
+        },
+        "type": "object"
+      },
+      "Extension": {
+        "description": "Extension represents the ASN.1 structure of the same name. See RFC\n5280, section 4.2.",
+        "properties": {
+          "Critical": {
+            "type": "boolean"
+          },
+          "Id": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -5505,6 +5659,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -5536,12 +5696,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -5597,6 +5751,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/GettableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -6045,6 +6202,27 @@
         "title": "HostPort represents a \"host:port\" network address.",
         "type": "object"
       },
+      "IPMask": {
+        "description": "See type IPNet and func ParseCIDR for details.",
+        "items": {
+          "format": "uint8",
+          "type": "integer"
+        },
+        "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
+        "type": "array"
+      },
+      "IPNet": {
+        "properties": {
+          "IP": {
+            "type": "string"
+          },
+          "Mask": {
+            "$ref": "#/components/schemas/IPMask"
+          }
+        },
+        "title": "An IPNet represents an IP network.",
+        "type": "object"
+      },
       "ImportDashboardInput": {
         "properties": {
           "name": {
@@ -6309,8 +6487,60 @@
         "title": "Type of the item.",
         "type": "string"
       },
+      "JSONWebKey": {
+        "properties": {
+          "Algorithm": {
+            "description": "Key algorithm, parsed from `alg` header.",
+            "type": "string"
+          },
+          "CertificateThumbprintSHA1": {
+            "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "CertificateThumbprintSHA256": {
+            "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Certificates": {
+            "description": "X.509 certificate chain, parsed from `x5c` header.",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "CertificatesURL": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "Key": {
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          },
+          "KeyID": {
+            "description": "Key identifier, parsed from `kid` header.",
+            "type": "string"
+          },
+          "Use": {
+            "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
+        "type": "object"
+      },
       "Json": {
         "type": "object"
+      },
+      "KeyUsage": {
+        "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
+        "format": "int64",
+        "type": "integer"
       },
       "Label": {
         "properties": {
@@ -6782,6 +7012,47 @@
         },
         "type": "array"
       },
+      "Name": {
+        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+        "properties": {
+          "Country": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtraNames": {
+            "description": "ExtraNames contains attributes to be copied, raw, into any marshaled\ndistinguished names. Values override any attributes with the same OID.\nThe ExtraNames field is not populated when parsing, see Names.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "Locality": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "Names": {
+            "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "StreetAddress": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "NamespaceConfigResponse": {
         "additionalProperties": {
           "items": {
@@ -6966,6 +7237,14 @@
         },
         "title": "OAuth2 is the oauth2 client configuration.",
         "type": "object"
+      },
+      "ObjectIdentifier": {
+        "items": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
+        "type": "array"
       },
       "ObjectMatchers": {
         "$ref": "#/components/schemas/Matchers"
@@ -7605,6 +7884,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -7636,12 +7921,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -7697,6 +7976,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/PostableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -8159,6 +8441,10 @@
         },
         "type": "object"
       },
+      "PublicKeyAlgorithm": {
+        "format": "int64",
+        "type": "integer"
+      },
       "PushoverConfig": {
         "properties": {
           "device": {
@@ -8195,6 +8481,9 @@
             "$ref": "#/components/schemas/Secret"
           },
           "token_file": {
+            "type": "string"
+          },
+          "ttl": {
             "type": "string"
           },
           "url": {
@@ -8436,6 +8725,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -8467,12 +8762,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -8586,6 +8875,19 @@
           },
           "to": {
             "$ref": "#/components/schemas/Duration"
+          }
+        },
+        "type": "object"
+      },
+      "RelativeTimeRangeExport": {
+        "properties": {
+          "from": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -9480,6 +9782,10 @@
           }
         },
         "type": "object"
+      },
+      "SignatureAlgorithm": {
+        "format": "int64",
+        "type": "integer"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -10446,6 +10752,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -10481,7 +10788,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -10854,6 +11161,32 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRuleGroupResponse": {
+        "properties": {
+          "created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -11290,7 +11623,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11314,6 +11646,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11474,14 +11807,12 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11745,6 +12076,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -16248,7 +16580,7 @@
             "$ref": "#/components/responses/getPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/components/responses/identifierNotSetPublicError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -16297,7 +16629,7 @@
             "$ref": "#/components/responses/createPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/components/responses/dashboardAccessTokenExistsPublicError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -16398,7 +16730,7 @@
             "$ref": "#/components/responses/updatePublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/components/responses/dashboardIsPublicPublicError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -20507,7 +20839,7 @@
             "$ref": "#/components/responses/viewPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/components/responses/publicDashboardNotEnabledError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -20516,7 +20848,7 @@
             "$ref": "#/components/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/components/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/components/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerPublicError"
@@ -20546,7 +20878,7 @@
             "$ref": "#/components/responses/getPublicAnnotationsResponse"
           },
           "400": {
-            "$ref": "#/components/responses/publicDashboardNotEnabledError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -20555,7 +20887,7 @@
             "$ref": "#/components/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/components/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/components/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerPublicError"
@@ -20594,7 +20926,7 @@
             "$ref": "#/components/responses/queryPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/components/responses/invalidTimeRangePublicError"
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedPublicError"
@@ -20603,7 +20935,7 @@
             "$ref": "#/components/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/components/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/components/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerPublicError"
@@ -21257,7 +21589,7 @@
         ]
       }
     },
-    "/reports/render/pdf/{dashboardId}": {
+    "/reports/render/pdf/{dashboardID}": {
       "get": {
         "deprecated": true,
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
@@ -21274,7 +21606,7 @@
           },
           {
             "in": "path",
-            "name": "dashboardId",
+            "name": "dashboardID",
             "required": true,
             "schema": {
               "format": "int64",
@@ -22275,6 +22607,24 @@
         "summary": "DeleteToken deletes service account tokens",
         "tags": [
           "service_accounts"
+        ]
+      }
+    },
+    "/signing-keys/keys": {
+      "get": {
+        "description": "Required permissions\nNone",
+        "operationId": "retrieveJWKS",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/jwksResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)",
+        "tags": [
+          "signing_keys"
         ]
       }
     },

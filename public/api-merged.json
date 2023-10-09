@@ -3976,7 +3976,7 @@
             "$ref": "#/responses/getPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/responses/identifierNotSetPublicError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -4023,7 +4023,7 @@
             "$ref": "#/responses/createPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/responses/dashboardAccessTokenExistsPublicError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -4116,7 +4116,7 @@
             "$ref": "#/responses/updatePublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/responses/dashboardIsPublicPublicError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -7929,7 +7929,7 @@
             "$ref": "#/responses/viewPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/responses/publicDashboardNotEnabledError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -7938,7 +7938,7 @@
             "$ref": "#/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/responses/internalServerPublicError"
@@ -7966,7 +7966,7 @@
             "$ref": "#/responses/getPublicAnnotationsResponse"
           },
           "400": {
-            "$ref": "#/responses/publicDashboardNotEnabledError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -7975,7 +7975,7 @@
             "$ref": "#/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/responses/internalServerPublicError"
@@ -8010,7 +8010,7 @@
             "$ref": "#/responses/queryPublicDashboardResponse"
           },
           "400": {
-            "$ref": "#/responses/invalidTimeRangePublicError"
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedPublicError"
@@ -8019,7 +8019,7 @@
             "$ref": "#/responses/forbiddenPublicError"
           },
           "404": {
-            "$ref": "#/responses/publicDashboardNotFoundPublicError"
+            "$ref": "#/responses/notFoundPublicError"
           },
           "500": {
             "$ref": "#/responses/internalServerPublicError"
@@ -8635,7 +8635,7 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardId}": {
+    "/reports/render/pdf/{dashboardID}": {
       "get": {
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": [
@@ -8659,7 +8659,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "dashboardId",
+            "name": "dashboardID",
             "in": "path",
             "required": true
           },
@@ -9565,6 +9565,24 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/signing-keys/keys": {
+      "get": {
+        "description": "Required permissions\nNone",
+        "tags": [
+          "signing_keys"
+        ],
+        "summary": "Get JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)",
+        "operationId": "retrieveJWKS",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/jwksResponse"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -11742,7 +11760,7 @@
           "type": "string"
         },
         "relativeTimeRange": {
-          "$ref": "#/definitions/RelativeTimeRange"
+          "$ref": "#/definitions/RelativeTimeRangeExport"
         }
       }
     },
@@ -12281,6 +12299,9 @@
         "for": {
           "type": "string"
         },
+        "keep_firing_for": {
+          "type": "string"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
@@ -12290,6 +12311,16 @@
         "record": {
           "type": "string"
         }
+      }
+    },
+    "AttributeTypeAndValue": {
+      "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+      "type": "object",
+      "properties": {
+        "Type": {
+          "$ref": "#/definitions/ObjectIdentifier"
+        },
+        "Value": {}
       }
     },
     "Authorization": {
@@ -12407,6 +12438,247 @@
           "$ref": "#/definitions/Json"
         },
         "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Certificate": {
+      "type": "object",
+      "title": "A Certificate represents an X.509 certificate.",
+      "properties": {
+        "AuthorityKeyId": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "BasicConstraintsValid": {
+          "description": "BasicConstraintsValid indicates whether IsCA, MaxPathLen,\nand MaxPathLenZero are valid.",
+          "type": "boolean"
+        },
+        "CRLDistributionPoints": {
+          "description": "CRL Distribution Points",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "DNSNames": {
+          "description": "Subject Alternate Name values. (Note that these values may not be valid\nif invalid values were contained within a parsed certificate. For\nexample, an element of DNSNames may not be a valid DNS domain name.)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "EmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedDNSDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedEmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedIPRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IPNet"
+          }
+        },
+        "ExcludedURIDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExtKeyUsage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtKeyUsage"
+          }
+        },
+        "Extensions": {
+          "description": "Extensions contains raw X.509 extensions. When parsing certificates,\nthis can be used to extract non-critical extensions that are not\nparsed by this package. When marshaling certificates, the Extensions\nfield is ignored, see ExtraExtensions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Extension"
+          }
+        },
+        "ExtraExtensions": {
+          "description": "ExtraExtensions contains extensions to be copied, raw, into any\nmarshaled certificates. Values override any extensions that would\notherwise be produced based on the other fields. The ExtraExtensions\nfield is not populated when parsing certificates, see Extensions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Extension"
+          }
+        },
+        "IPAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "IsCA": {
+          "type": "boolean"
+        },
+        "Issuer": {
+          "$ref": "#/definitions/Name"
+        },
+        "IssuingCertificateURL": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "KeyUsage": {
+          "$ref": "#/definitions/KeyUsage"
+        },
+        "MaxPathLen": {
+          "description": "MaxPathLen and MaxPathLenZero indicate the presence and\nvalue of the BasicConstraints' \"pathLenConstraint\".\n\nWhen parsing a certificate, a positive non-zero MaxPathLen\nmeans that the field was specified, -1 means it was unset,\nand MaxPathLenZero being true mean that the field was\nexplicitly set to zero. The case of MaxPathLen==0 with MaxPathLenZero==false\nshould be treated equivalent to -1 (unset).\n\nWhen generating a certificate, an unset pathLenConstraint\ncan be requested with either MaxPathLen == -1 or using the\nzero value for both MaxPathLen and MaxPathLenZero.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "MaxPathLenZero": {
+          "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
+          "type": "boolean"
+        },
+        "NotBefore": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OCSPServer": {
+          "description": "RFC 5280, 4.2.2.1 (Authority Information Access)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedDNSDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedDNSDomainsCritical": {
+          "description": "Name constraints",
+          "type": "boolean"
+        },
+        "PermittedEmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedIPRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IPNet"
+          }
+        },
+        "PermittedURIDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PolicyIdentifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "PublicKey": {},
+        "PublicKeyAlgorithm": {
+          "$ref": "#/definitions/PublicKeyAlgorithm"
+        },
+        "Raw": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawIssuer": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawSubject": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawSubjectPublicKeyInfo": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawTBSCertificate": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "SerialNumber": {
+          "type": "string"
+        },
+        "Signature": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "SignatureAlgorithm": {
+          "$ref": "#/definitions/SignatureAlgorithm"
+        },
+        "Subject": {
+          "$ref": "#/definitions/Name"
+        },
+        "SubjectKeyId": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "URIs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/URL"
+          }
+        },
+        "UnhandledCriticalExtensions": {
+          "description": "UnhandledCriticalExtensions contains a list of extension IDs that\nwere not (fully) processed when parsing. Verify will fail if this\nslice is non-empty, unless verification is delegated to an OS\nlibrary which understands all the critical extensions.\n\nUsers can access these extensions using Extensions and can remove\nelements from this slice if they believe that they have been\nhandled.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "UnknownExtKeyUsage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "Version": {
           "type": "integer",
           "format": "int64"
         }
@@ -13458,6 +13730,9 @@
           "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
+        "ErrorSource": {
+          "$ref": "#/definitions/ErrorSource"
+        },
         "Frames": {
           "$ref": "#/definitions/Frames"
         },
@@ -13941,6 +14216,10 @@
         }
       }
     },
+    "ErrorSource": {
+      "description": "ErrorSource type defines the source of the error",
+      "type": "string"
+    },
     "ErrorType": {
       "type": "string",
       "title": "ErrorType models the different API error types."
@@ -14000,6 +14279,12 @@
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
+    "ExtKeyUsage": {
+      "description": "Each of the ExtKeyUsage* constants define a unique action.",
+      "type": "integer",
+      "format": "int64",
+      "title": "ExtKeyUsage represents an extended set of actions that are valid for a given key."
+    },
     "ExtendedReceiver": {
       "type": "object",
       "properties": {
@@ -14029,6 +14314,25 @@
         },
         "wechat_configs": {
           "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
+    "Extension": {
+      "description": "Extension represents the ASN.1 structure of the same name. See RFC\n5280, section 4.2.",
+      "type": "object",
+      "properties": {
+        "Critical": {
+          "type": "boolean"
+        },
+        "Id": {
+          "$ref": "#/definitions/ObjectIdentifier"
+        },
+        "Value": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
         }
       }
     },
@@ -14512,6 +14816,12 @@
             "$ref": "#/definitions/GettableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -14544,12 +14854,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -14604,6 +14908,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -15051,6 +15358,27 @@
         }
       }
     },
+    "IPMask": {
+      "description": "See type IPNet and func ParseCIDR for details.",
+      "type": "array",
+      "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      }
+    },
+    "IPNet": {
+      "type": "object",
+      "title": "An IPNet represents an IP network.",
+      "properties": {
+        "IP": {
+          "type": "string"
+        },
+        "Mask": {
+          "$ref": "#/definitions/IPMask"
+        }
+      }
+    },
     "ImportDashboardInput": {
       "type": "object",
       "title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
@@ -15315,8 +15643,60 @@
       "type": "string",
       "title": "Type of the item."
     },
+    "JSONWebKey": {
+      "type": "object",
+      "title": "JSONWebKey represents a public or private key in JWK format.",
+      "properties": {
+        "Algorithm": {
+          "description": "Key algorithm, parsed from `alg` header.",
+          "type": "string"
+        },
+        "CertificateThumbprintSHA1": {
+          "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "CertificateThumbprintSHA256": {
+          "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "Certificates": {
+          "description": "X.509 certificate chain, parsed from `x5c` header.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificate"
+          }
+        },
+        "CertificatesURL": {
+          "$ref": "#/definitions/URL"
+        },
+        "Key": {
+          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+        },
+        "KeyID": {
+          "description": "Key identifier, parsed from `kid` header.",
+          "type": "string"
+        },
+        "Use": {
+          "description": "Key use, parsed from `use` header.",
+          "type": "string"
+        }
+      }
+    },
     "Json": {
       "type": "object"
+    },
+    "KeyUsage": {
+      "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
+      "type": "integer",
+      "format": "int64"
     },
     "Label": {
       "type": "object",
@@ -15788,6 +16168,47 @@
         "$ref": "#/definitions/MuteTimeInterval"
       }
     },
+    "Name": {
+      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+      "type": "object",
+      "properties": {
+        "Country": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExtraNames": {
+          "description": "ExtraNames contains attributes to be copied, raw, into any marshaled\ndistinguished names. Values override any attributes with the same OID.\nThe ExtraNames field is not populated when parsing, see Names.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttributeTypeAndValue"
+          }
+        },
+        "Locality": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Names": {
+          "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttributeTypeAndValue"
+          }
+        },
+        "SerialNumber": {
+          "type": "string"
+        },
+        "StreetAddress": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "NamespaceConfigResponse": {
       "type": "object",
       "additionalProperties": {
@@ -15971,6 +16392,14 @@
         "token_url": {
           "type": "string"
         }
+      }
+    },
+    "ObjectIdentifier": {
+      "type": "array",
+      "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
+      "items": {
+        "type": "integer",
+        "format": "int64"
       }
     },
     "ObjectMatchers": {
@@ -16613,6 +17042,12 @@
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -16645,12 +17080,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -16705,6 +17134,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -17166,6 +17598,10 @@
         }
       }
     },
+    "PublicKeyAlgorithm": {
+      "type": "integer",
+      "format": "int64"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -17203,6 +17639,9 @@
           "$ref": "#/definitions/Secret"
         },
         "token_file": {
+          "type": "string"
+        },
+        "ttl": {
           "type": "string"
         },
         "url": {
@@ -17445,6 +17884,12 @@
             "$ref": "#/definitions/EmailConfig"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -17477,12 +17922,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -17594,6 +18033,19 @@
         },
         "to": {
           "$ref": "#/definitions/Duration"
+        }
+      }
+    },
+    "RelativeTimeRangeExport": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "to": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -18488,6 +18940,10 @@
           "$ref": "#/definitions/Secret"
         }
       }
+    },
+    "SignatureAlgorithm": {
+      "type": "integer",
+      "format": "int64"
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -19454,8 +19910,9 @@
       "type": "string"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -19863,6 +20320,32 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "UpdateRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -20298,7 +20781,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20322,6 +20804,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -20482,14 +20965,12 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -20753,6 +21234,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -21129,34 +21611,10 @@
         "$ref": "#/definitions/NewApiKeyResult"
       }
     },
-    "dashboardAccessTokenExistsPublicError": {
-      "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "dashboardIsPublicPublicError": {
-      "description": "DashboardIsPublicPublicError is returned when the dashboard is already public.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "dashboardNotFoundPublicError": {
-      "description": "DashboardNotFoundPublicError is returned when the dashboard is not found.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
     "dashboardResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DashboardFullWithMeta"
-      }
-    },
-    "dashboardUidExistsPublicError": {
-      "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
       }
     },
     "dashboardVersionResponse": {
@@ -21809,12 +22267,6 @@
         }
       }
     },
-    "identifierNotSetPublicError": {
-      "description": "IdentifierNotSetPublicError the identifier is not provided.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
     "importDashboardResponse": {
       "description": "(empty)",
       "schema": {
@@ -21833,46 +22285,18 @@
         "$ref": "#/definitions/publicError"
       }
     },
-    "invalidAccessTokenPublicError": {
-      "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid.",
+    "jwksResponse": {
+      "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidIntervalPublicError": {
-      "description": "InvalidIntervalPublicError is returned when the interval is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidMaxDataPointsPublicError": {
-      "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidPanelIdPublicError": {
-      "description": "InvalidPanelIdPublicError is returned when the panel is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidShareTypePublicError": {
-      "description": "InvalidShareTypePublicError is returned when the share type provided is not valid.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidTimeRangePublicError": {
-      "description": "InvalidTimeRangePublicError is returned when the time range is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "invalidUidPublicError": {
-      "description": "InvalidUidPublicError is returned when the uid provided is not valid.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JSONWebKey"
+            }
+          }
+        }
       }
     },
     "listBuiltinRolesResponse": {
@@ -21953,12 +22377,6 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
-      }
-    },
-    "panelNotFoundPublicError": {
-      "description": "PanelNotFoundPublicError is returned when the panel is not found",
-      "schema": {
-        "$ref": "#/definitions/publicError"
       }
     },
     "pauseAlertResponse": {
@@ -22090,18 +22508,6 @@
       "description": "PreconditionFailedError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "publicDashboardNotEnabledError": {
-      "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
-    },
-    "publicDashboardNotFoundPublicError": {
-      "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
       }
     },
     "publicErrorResponse": {

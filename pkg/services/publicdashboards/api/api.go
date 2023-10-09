@@ -128,7 +128,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 //
 // Responses:
 // 200: getPublicDashboardResponse
-// 400: identifierNotSetPublicError
+// 400: badRequestPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
 // 404: notFoundPublicError
@@ -161,14 +161,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 //
 // Responses:
 // 200: createPublicDashboardResponse
-// 400: invalidUidPublicError
 // 400: badRequestPublicError
-// 400: invalidAccessTokenPublicError
-// 400: invalidShareTypePublicError
-// 400: dashboardNotFoundPublicError
-// 400: dashboardIsPublicPublicError
-// 400: dashboardUidExistsPublicError
-// 400: dashboardAccessTokenExistsPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
 // 500: internalServerPublicError
@@ -222,11 +215,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 //
 // Responses:
 // 200: updatePublicDashboardResponse
-// 400: invalidUidPublicError
 // 400: badRequestPublicError
-// 400: invalidShareTypePublicError
-// 400: dashboardNotFoundPublicError
-// 400: dashboardIsPublicPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
 // 500: internalServerPublicError
@@ -271,7 +260,6 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 //
 // Responses:
 // 200: okResponse
-// 400: invalidUidPublicError
 // 400: badRequestPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
