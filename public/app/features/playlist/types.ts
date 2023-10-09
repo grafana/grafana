@@ -11,6 +11,19 @@ export interface PlayListItemDTO {
   type: 'dashboard' | 'tag';
 }
 
+export interface PlaylistAPI {
+  getPlaylist(uid: string): Promise<Playlist>;
+  getAllPlaylist(): Promise<Playlist[]>;
+}
+
+export interface KubernetesPlaylistList {
+  playlists: KubernetesPlaylist[];
+}
+
+export interface KubernetesPlaylist {
+  spec: Playlist;
+}
+
 export interface Playlist {
   uid: string;
   name: string;

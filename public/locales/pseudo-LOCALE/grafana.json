@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Ŗőľę",
+      "serviceaccount-label": "Ŝęřvįčę Åččőūŉŧ",
       "team-label": "Ŧęäm",
       "title": "Åđđ pęřmįşşįőŉ ƒőř",
       "user-label": "Ůşęř"
@@ -18,6 +19,7 @@
       "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
       "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
       "role": "Ŗőľę",
+      "serviceaccount": "Ŝęřvįčę Åččőūŉŧ",
       "team": "Ŧęäm",
       "title": "Pęřmįşşįőŉş",
       "user": "Ůşęř"
@@ -55,7 +57,11 @@
       "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
+      "expand-folder-button": "Ēχpäŉđ ƒőľđęř {{title}}",
       "name-column": "Ńämę",
+      "select-all-header-checkbox": "Ŝęľęčŧ äľľ",
+      "select-checkbox": "Ŝęľęčŧ",
       "tags-column": "Ŧäģş"
     },
     "folder-actions-button": {
@@ -260,6 +266,9 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": "Åŉŉőŧäŧįőŉş"
+    },
     "dashboard-delete-button": "Đęľęŧę Đäşĥþőäřđ",
     "general": {
       "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
@@ -272,11 +281,22 @@
       "panel-options-graph-tooltip-label": "Ğřäpĥ ŧőőľŧįp",
       "panel-options-label": "Päŉęľ őpŧįőŉş",
       "tags-label": "Ŧäģş",
+      "title": "Ğęŉęřäľ",
       "title-label": "Ŧįŧľę"
     },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
-      "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
+      "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ.",
+      "title": "ĴŜØŃ Mőđęľ"
+    },
+    "links": {
+      "title": "Ŀįŉĸş"
+    },
+    "permissions": {
+      "title": "Pęřmįşşįőŉş"
+    },
+    "settings": {
+      "title": "Ŝęŧŧįŉģş"
     },
     "time-picker": {
       "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
@@ -287,9 +307,29 @@
       "time-options-label": "Ŧįmę őpŧįőŉş",
       "time-zone-label": "Ŧįmę žőŉę",
       "week-start-label": "Ŵęęĸ şŧäřŧ"
+    },
+    "variables": {
+      "title": "Väřįäþľęş"
+    },
+    "versions": {
+      "title": "Vęřşįőŉş"
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "Cőŉƒįģūřę ä ŉęŵ đäŧä şőūřčę",
+    "built-in-list": {
+      "description-dashboard": "Ŗęūşę qūęřy řęşūľŧş ƒřőm őŧĥęř vįşūäľįžäŧįőŉş",
+      "description-grafana": "Đįşčővęř vįşūäľįžäŧįőŉş ūşįŉģ mőčĸ đäŧä",
+      "description-mixed": "Ůşę mūľŧįpľę đäŧä şőūřčęş"
+    },
+    "list": {
+      "no-data-source-message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
+    },
+    "modal": {
+      "configure-new-data-source": "Øpęŉ ä ŉęŵ ŧäþ äŉđ čőŉƒįģūřę ä đäŧä şőūřčę",
+      "input-placeholder": "Ŝęľęčŧ đäŧä şőūřčę",
+      "title": "Ŝęľęčŧ đäŧä şőūřčę"
+    },
     "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
   "data-sources": {
@@ -549,7 +589,7 @@
       "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
-      "title": "Ĩŉƒřäşŧřūčŧūřę"
+      "title": "Ĩŉŧęģřäŧįőŉş"
     },
     "kubernetes": {
       "title": "Ķūþęřŉęŧęş"

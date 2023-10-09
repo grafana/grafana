@@ -1,7 +1,6 @@
 import { map, of } from 'rxjs';
 
-import { DataSourceApi, DataQueryRequest, PanelData } from '@grafana/data';
-import { LoadingState } from '@grafana/schema';
+import { DataSourceApi, DataQueryRequest, PanelData, LoadingState } from '@grafana/data';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';

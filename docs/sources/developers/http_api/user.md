@@ -24,7 +24,7 @@ user must have the Grafana Admin role.
 
 API Tokens can be used with Organization HTTP API to get users of specific organization.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions][] for more information.
 
 ## Search Users
 
@@ -32,7 +32,7 @@ API Tokens can be used with Organization HTTP API to get users of specific organ
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -198,7 +198,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -253,7 +253,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action      | Scope           |
 | ----------- | --------------- |
@@ -292,7 +292,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -330,7 +330,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -683,3 +683,8 @@ Content-Type: application/json
   "message": "User auth token revoked"
 }
 ```
+
+{{% docs/reference %}}
+[Role-based access control permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+[Role-based access control permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+{{% /docs/reference %}}

@@ -142,7 +142,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       if (variableUid === ds.uid) {
         filters = filters.concat(variable.filters);
       } else if (variableUid?.indexOf('$') === 0) {
-        if (this.replace(variableUid) === datasourceName) {
+        if (this.replace(variableUid) === ds.uid) {
           filters = filters.concat(variable.filters);
         }
       }
@@ -241,9 +241,20 @@ export class TemplateSrv implements BaseTemplateSrv {
     format?: string | Function | undefined,
     interpolations?: VariableInterpolation[]
   ): string {
+    // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
+        target,
+        scopedVars,
+        format as string | VariableCustomFormatterFn | undefined
+      );
+    }
+
+    // Scenes compatability: (secondary method) is using the current active scene as the scope for evaluation.
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      return sceneGraph.interpolate(
+        window.__grafanaSceneContext,
         target,
         scopedVars,
         format as string | VariableCustomFormatterFn | undefined
