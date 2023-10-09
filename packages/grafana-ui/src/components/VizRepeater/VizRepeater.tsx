@@ -175,7 +175,9 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     let resolvedOrientation = this.getOrientation();
 
-    const defaultVizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+    // calulate default height (for horizontal orientation) of one viz (e.g. one bar gauge bar)
+    // divide height on amount of values + spacing not include the last space
+    const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
 
     switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
