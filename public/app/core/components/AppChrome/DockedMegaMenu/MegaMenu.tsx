@@ -103,7 +103,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
     gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
     listStyleType: 'none',
-    width: MENU_WIDTH,
+    minWidth: MENU_WIDTH,
+    [theme.breakpoints.up('md')]: {
+      width: MENU_WIDTH,
+    },
   }),
   dockedMenuButton: css({
     position: 'absolute',
