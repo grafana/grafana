@@ -91,22 +91,30 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				logger.Error("Error GetProfile()", "err", err)
 				return err
 			}
-			frame := responseToDataFrames(prof)
+
+			var frame *data.Frame
+			if prof != nil {
+				frame = responseToDataFrames(prof)
+
+				// If query called with streaming on then return a channel
+				// to subscribe on a client-side and consume updates from a plugin.
+				// Feel free to remove this if you don't need streaming for your datasource.
+				if qm.WithStreaming {
+					channel := live.Channel{
+						Scope:     live.ScopeDatasource,
+						Namespace: pCtx.DataSourceInstanceSettings.UID,
+						Path:      "stream",
+					}
+					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				}
+			} else {
+				// We still send empty data frame to give feedback that query really run, just didn't return any data.
+				frame = getEmptyDataFrame()
+			}
 			responseMutex.Lock()
 			response.Frames = append(response.Frames, frame)
 			responseMutex.Unlock()
 
-			// If query called with streaming on then return a channel
-			// to subscribe on a client-side and consume updates from a plugin.
-			// Feel free to remove this if you don't need streaming for your datasource.
-			if qm.WithStreaming {
-				channel := live.Channel{
-					Scope:     live.ScopeDatasource,
-					Namespace: pCtx.DataSourceInstanceSettings.UID,
-					Path:      "stream",
-				}
-				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-			}
 			return nil
 		})
 	}
@@ -271,6 +279,18 @@ func (pt *ProfileTree) String() string {
 		}
 	}
 	return tree.String()
+}
+
+func getEmptyDataFrame() *data.Frame {
+	var emptyProfileDataFrame = data.NewFrame("response")
+	emptyProfileDataFrame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
+	emptyProfileDataFrame.Fields = data.Fields{
+		data.NewField("level", nil, []int64{}),
+		data.NewField("value", nil, []int64{}),
+		data.NewField("self", nil, []int64{}),
+		data.NewField("label", nil, []string{}),
+	}
+	return emptyProfileDataFrame
 }
 
 type CustomMeta struct {
