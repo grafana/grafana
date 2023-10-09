@@ -56,6 +56,7 @@ export const OpenTsdbDetails = (props: Props) => {
             type="number"
             value={value.jsonData.lookupLimit ?? 1000}
             onChange={onInputChangeHandler('lookupLimit', value, onChange)}
+            width={20}
           />
         </Field>
       </FieldSet>
