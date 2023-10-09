@@ -10,8 +10,9 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/models"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -51,9 +52,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
-		c.OrgID,
+		c.SignedInUser.GetOrgID(),
 		&folder.Folder{
-			OrgID: c.OrgID,
+			OrgID: c.SignedInUser.GetOrgID(),
 			UID:   body.NamespaceUID,
 			Title: body.NamespaceTitle,
 		},
@@ -226,7 +227,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		Title: cmd.Title,
 		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
 		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		Condition:       cmd.Condition,
 		Data:            queries,
 		IntervalSeconds: intervalSeconds,

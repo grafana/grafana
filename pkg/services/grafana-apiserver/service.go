@@ -3,7 +3,9 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net"
+	"net/http"
 	"path"
 	"strconv"
 
@@ -248,7 +250,23 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
 	serverConfig.SkipOpenAPIInstallation = false
+	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		requestHandler, err := getAPIHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
+		}
+		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
