@@ -14,7 +14,7 @@ import {
 
 import { AdHocFilterItem } from '../Table/types';
 
-import { SeriesVisibilityChangeMode } from '.';
+import { SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {

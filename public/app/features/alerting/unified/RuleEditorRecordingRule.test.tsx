@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -151,7 +151,7 @@ describe('RuleEditor recording rules', () => {
     await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // try to save, find out that recording rule name is invalid
-    await userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.saveAndExit.get());
     await waitFor(() =>
       expect(
         byText(
@@ -166,7 +166,7 @@ describe('RuleEditor recording rules', () => {
     await userEvent.type(await ui.inputs.name.find(), 'my:great:new:recording:rule');
 
     // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.saveAndExit.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: 'Prom', apiVersion: 'legacy' },

@@ -60,7 +60,7 @@ import {
   transformTraceList,
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
-  createTableFrameFromTraceQlQuery,
+  formatTraceQLResponse,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
@@ -164,7 +164,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   async labelNamesQuery(): Promise<Array<{ text: string }>> {
     await this.languageProvider.fetchTags();
     const tags = this.languageProvider.getAutocompleteTags();
-    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
   async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
@@ -359,7 +359,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               }).pipe(
                 map((response) => {
                   return {
-                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceql[0].tableType
+                    ),
                   };
                 }),
                 catchError((err) => {
@@ -413,7 +417,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               }).pipe(
                 map((response) => {
                   return {
-                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceqlSearch[0].tableType
+                    ),
                   };
                 }),
                 catchError((err) => {

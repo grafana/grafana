@@ -35,12 +35,13 @@ type Alertmanager interface {
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
 
 	// Silences
-	CreateSilence(*apimodels.PostableSilence) (string, error)
-	DeleteSilence(string) error
-	GetSilence(string) (apimodels.GettableSilence, error)
-	ListSilences([]string) (apimodels.GettableSilences, error)
+	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)
+	DeleteSilence(context.Context, string) error
+	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
+	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
 
 	// Alerts
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
@@ -51,7 +52,6 @@ type Alertmanager interface {
 	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
-	ApplyConfig(context.Context, *models.AlertConfiguration) error
 
 	// State
 	StopAndWait()
