@@ -113,11 +113,11 @@ export const setErrorMarkers = (
 
       while (start > 0) {
         startLine++;
-        start -= model.getLineLength(startLine);
+        start -= model.getLineLength(startLine) + 1; // new lines don't count for getLineLength() but they still count as a character for the parser
       }
       while (end > 0) {
         endLine++;
-        end -= model.getLineLength(endLine);
+        end -= model.getLineLength(endLine) + 1;
       }
 
       return {
