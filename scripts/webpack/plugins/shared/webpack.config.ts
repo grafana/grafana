@@ -22,8 +22,7 @@ function skipFiles(f: string): boolean {
 }
 
 const config = async (env: any): Promise<Configuration> => {
-  const pluginDir = env.dir;
-  const pluginJson = getPluginJson(pluginDir);
+  const pluginJson = getPluginJson();
   const baseConfig: Configuration = {
     cache: {
       type: 'filesystem',
@@ -32,11 +31,11 @@ const config = async (env: any): Promise<Configuration> => {
       },
     },
 
-    context: path.join(process.cwd(), pluginDir),
+    context: process.cwd(),
 
     devtool: env.production ? 'source-map' : 'eval-source-map',
 
-    entry: await getEntries(pluginDir),
+    entry: await getEntries(),
 
     externals: [
       'lodash',
@@ -139,7 +138,7 @@ const config = async (env: any): Promise<Configuration> => {
       library: {
         type: 'amd',
       },
-      path: path.resolve(process.cwd(), pluginDir, DIST_DIR),
+      path: path.resolve(process.cwd(), DIST_DIR),
       publicPath: `public/plugins/${pluginJson.id}/`,
     },
 
@@ -149,7 +148,7 @@ const config = async (env: any): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: hasLicense(pluginDir) ? 'LICENSE' : path.resolve(process.cwd(), 'LICENSE'), to: '.' }, // Point to Grafana License by default
+          { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -163,7 +162,7 @@ const config = async (env: any): Promise<Configuration> => {
       // Replace certain template-variables in the README and plugin.json
       new ReplaceInFileWebpackPlugin([
         {
-          dir: path.resolve(pluginDir, DIST_DIR),
+          dir: path.resolve(DIST_DIR),
           files: ['plugin.json', 'README.md'],
           rules: [
             {
@@ -186,7 +185,7 @@ const config = async (env: any): Promise<Configuration> => {
         issue: {
           include: [{ file: '**/*.{ts,tsx}' }],
         },
-        typescript: { configFile: path.join(process.cwd(), pluginDir, 'tsconfig.json') },
+        typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
       }),
       new ESLintPlugin({
         extensions: ['.ts', '.tsx'],

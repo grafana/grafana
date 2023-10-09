@@ -438,7 +438,9 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "plugins-bundled/internal/*"
+      "plugins-bundled/internal/*",
+      "public/app/plugins/*/*",
+      "scripts/webpack/plugins/shared"
     ]
   },
   "engines": {

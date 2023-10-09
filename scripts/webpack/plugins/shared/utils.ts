@@ -24,14 +24,14 @@ export function getPackageJson() {
   return require(path.resolve(process.cwd(), 'package.json'));
 }
 
-export function getPluginJson(pdir: string) {
-  return require(path.resolve(process.cwd(), pdir, 'plugin.json'));
+export function getPluginJson() {
+  return require(path.resolve(process.cwd(), 'plugin.json'));
 }
 
 // Support bundling nested plugins by finding all plugin.json files in src directory
 // then checking for a sibling module.[jt]sx? file.
-export async function getEntries(pdir: string): Promise<Record<string, string>> {
-  const pluginsJson = await glob(path.resolve(pdir, '**/plugin.json'), { absolute: true });
+export async function getEntries(): Promise<Record<string, string>> {
+  const pluginsJson = await glob(path.resolve('**/plugin.json'), { absolute: true });
 
   const plugins = await Promise.all(
     pluginsJson.map((pluginJson) => {
@@ -48,6 +48,6 @@ export async function getEntries(pdir: string): Promise<Record<string, string>> 
   }, {});
 }
 
-export function hasLicense(pdir: string) {
-  return fs.existsSync(path.resolve(process.cwd(), pdir, 'LICENSE'));
+export function hasLicense() {
+  return fs.existsSync(path.resolve(process.cwd(), 'LICENSE'));
 }

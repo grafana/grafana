@@ -1,0 +1,25 @@
+{
+  "name": "@grafana-plugins/shared",
+  "description": "Shared dependencies and files for core plugins",
+  "private": true,
+  "version": "10.2.0-pre",
+  "dependencies": {
+    "tslib": "2.6.0"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@types/webpack-livereload-plugin": "2.3.4",
+    "copy-webpack-plugin": "11.0.0",
+    "eslint-webpack-plugin": "4.0.1",
+    "fork-ts-checker-webpack-plugin": "8.0.0",
+    "glob": "10.3.3",
+    "replace-in-file-webpack-plugin": "1.0.6",
+    "webpack": "5.88.1",
+    "webpack-livereload-plugin": "3.0.2"
+  },
+  "scripts": {
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development"
+  },
+  "packageManager": "yarn@3.6.0"
+}

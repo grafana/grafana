@@ -2940,6 +2940,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
+  dependencies:
+    "@emotion/css": 11.11.2
+    "@grafana-plugins/shared": "workspace:*"
+    "@grafana/data": 10.2.0-pre
+    "@grafana/e2e-selectors": 10.2.0-pre
+    "@grafana/experimental": 1.7.0
+    "@grafana/runtime": 10.2.0-pre
+    "@grafana/schema": 10.2.0-pre
+    "@grafana/ui": 10.2.0-pre
+    "@testing-library/react": 14.0.0
+    "@testing-library/user-event": 14.4.3
+    "@types/jest": 29.5.4
+    "@types/lodash": 4.14.195
+    "@types/node": 18.16.16
+    "@types/react": 18.2.15
+    "@types/testing-library__jest-dom": 5.14.8
+    react: 18.2.0
+    react-use: 17.4.0
+    rxjs: 7.8.1
+    swc-loader: 0.2.3
+    ts-node: 10.9.1
+    tslib: 2.6.0
+    webpack: 5.88.1
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
@@ -2960,6 +2989,23 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.5.0
     webpack: 5.76.0
+  languageName: unknown
+  linkType: soft
+
+"@grafana-plugins/shared@workspace:*, @grafana-plugins/shared@workspace:scripts/webpack/plugins/shared":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/shared@workspace:scripts/webpack/plugins/shared"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    "@types/webpack-livereload-plugin": 2.3.4
+    copy-webpack-plugin: 11.0.0
+    eslint-webpack-plugin: 4.0.1
+    fork-ts-checker-webpack-plugin: 8.0.0
+    glob: 10.3.3
+    replace-in-file-webpack-plugin: 1.0.6
+    tslib: 2.6.0
+    webpack: 5.88.1
+    webpack-livereload-plugin: 3.0.2
   languageName: unknown
   linkType: soft
 
@@ -3301,7 +3347,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@10.2.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -9999,7 +10045,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/webpack-livereload-plugin@npm:^2.3.4":
+"@types/webpack-livereload-plugin@npm:2.3.4, @types/webpack-livereload-plugin@npm:^2.3.4":
   version: 2.3.4
   resolution: "@types/webpack-livereload-plugin@npm:2.3.4"
   dependencies:

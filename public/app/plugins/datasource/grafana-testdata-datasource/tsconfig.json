@@ -1,4 +1,4 @@
 {
-  "extends": "../../../../../scripts/webpack/plugins/tsconfig.json",
-  "include": [".", "../../../../../scripts/webpack/plugins/types"]
+  "extends": "@grafana-plugins/shared/tsconfig.json",
+  "include": ["."]
 }
