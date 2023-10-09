@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 
 import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, CustomScrollbar } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { StoreState, useSelector } from 'app/types';
 
@@ -14,14 +14,11 @@ import { getExploreItemSelector } from './state/selectors';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     explore: css`
+      label: explorePaneContainer;
       display: flex;
-      flex: 1 1 auto;
       flex-direction: column;
-      overflow: hidden;
       min-width: 600px;
-      & + & {
-        border-left: 1px dotted ${theme.colors.border.medium};
-      }
+      height: 100%;
     `,
   };
 };
@@ -51,9 +48,11 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
-      <Explore exploreId={exploreId} eventBus={eventBus.current} />
-    </div>
+    <CustomScrollbar>
+      <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+        <Explore exploreId={exploreId} eventBus={eventBus.current} />
+      </div>
+    </CustomScrollbar>
   );
 }
 

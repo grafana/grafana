@@ -4,7 +4,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, PanelContainer } from '@grafana/ui';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
@@ -56,7 +56,7 @@ export function ContentOutline() {
   };
 
   return (
-    <div className={styles.wrapper} id="content-outline-container">
+    <PanelContainer className={styles.wrapper} id="content-outline-container">
       <div className={styles.content}>
         <ContentOutlineItemButton
           title={expanded ? 'Collapse outline' : undefined}
@@ -78,6 +78,6 @@ export function ContentOutline() {
           />
         ))}
       </div>
-    </div>
+    </PanelContainer>
   );
 }

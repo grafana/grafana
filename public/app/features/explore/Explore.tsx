@@ -90,16 +90,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
     }),
     exploreContainer: css({
-      display: 'flex',
-      padding: theme.spacing(2),
-      paddingTop: 0,
-      flex: '1 0 auto',
-    }),
-    columnWrapper: css({
+      label: 'exploreContainer',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 0.25),
-      flex: '1 1 auto',
+      paddingRight: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+    }),
+    left: css({
+      marginBottom: theme.spacing(2),
+    }),
+    wrapper: css({
+      position: 'absolute',
+      top: 0,
+      left: theme.spacing(2),
+      right: 0,
+      bottom: 0,
+      display: 'flex',
     }),
   };
 };
@@ -564,91 +570,110 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
         />
-        <CustomScrollbar
-          testId={selectors.pages.Explore.General.scrollView}
-          scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+        <div
+          style={{
+            position: 'relative',
+            height: '100%',
+            paddingLeft: theme.spacing(2),
+          }}
         >
-          {datasourceInstance ? (
-            <div className={styles.exploreContainer} ref={this.topOfViewRef}>
-              {contentOutlineVisible && <ContentOutline />}
-              <div className={styles.columnWrapper}>
-                <PanelContainer className={styles.queryContainer}>
-                  <ContentOutlineItem title="Queries" icon="arrow">
-                    {correlationsBox}
-                    <QueryRows exploreId={exploreId} />
-                  </ContentOutlineItem>
-                  <SecondaryActions
-                    // do not allow people to add queries with potentially different datasources in correlations editor mode
-                    addQueryRowButtonDisabled={isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)}
-                    // We cannot show multiple traces at the same time right now so we do not show add query button.
-                    //TODO:unification
-                    addQueryRowButtonHidden={false}
-                    richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                    richHistoryButtonActive={showRichHistory}
-                    queryInspectorButtonActive={showQueryInspector}
-                    onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                    onClickRichHistoryButton={this.toggleShowRichHistory}
-                    onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                  />
-                  <ResponseErrorContainer exploreId={exploreId} />
-                </PanelContainer>
-                <AutoSizer onResize={this.onResize} disableHeight>
-                  {({ width }) => {
-                    if (width === 0) {
-                      return null;
-                    }
-
-                    return (
-                      <main className={cx(styles.exploreMain)} style={{ width }}>
-                        <ErrorBoundaryAlert>
-                          {showPanels && (
-                            <>
-                              {showMetrics && graphResult && (
-                                <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
-                              )}
-                              {showRawPrometheus && (
-                                <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
-                              )}
-                              {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                              {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-                              {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-                              {showFlameGraph && (
-                                <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
-                              )}
-                              {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                              {showLogsSample && (
-                                <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
-                              )}
-                              {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
-                              {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
-                            </>
-                          )}
-                          {showRichHistory && (
-                            <RichHistoryContainer
-                              width={width}
-                              exploreId={exploreId}
-                              onClose={this.toggleShowRichHistory}
-                            />
-                          )}
-                          {showQueryInspector && (
-                            <ExploreQueryInspector
-                              exploreId={exploreId}
-                              width={width}
-                              onClose={this.toggleShowQueryInspector}
-                              timeZone={timeZone}
-                            />
-                          )}
-                        </ErrorBoundaryAlert>
-                      </main>
-                    );
-                  }}
-                </AutoSizer>
+          <div className={styles.wrapper}>
+            {contentOutlineVisible && (
+              <div className={styles.left}>
+                <ContentOutline />
               </div>
-            </div>
-          ) : (
-            this.renderEmptyState(styles.exploreContainer)
-          )}
-        </CustomScrollbar>
+            )}
+            <CustomScrollbar
+              testId={selectors.pages.Explore.General.scrollView}
+              scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+              hideHorizontalTrack
+            >
+              <div className={styles.exploreContainer} ref={this.topOfViewRef}>
+                {datasourceInstance ? (
+                  <>
+                    <PanelContainer className={styles.queryContainer}>
+                      <ContentOutlineItem title="Queries" icon="arrow">
+                        {correlationsBox}
+                        <QueryRows exploreId={exploreId} />
+                      </ContentOutlineItem>
+                      <SecondaryActions
+                        // do not allow people to add queries with potentially different datasources in correlations editor mode
+                        addQueryRowButtonDisabled={
+                          isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
+                        }
+                        // We cannot show multiple traces at the same time right now so we do not show add query button.
+                        //TODO:unification
+                        addQueryRowButtonHidden={false}
+                        richHistoryRowButtonHidden={richHistoryRowButtonHidden}
+                        richHistoryButtonActive={showRichHistory}
+                        queryInspectorButtonActive={showQueryInspector}
+                        onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                        onClickRichHistoryButton={this.toggleShowRichHistory}
+                        onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                      />
+                      <ResponseErrorContainer exploreId={exploreId} />
+                    </PanelContainer>
+                    <AutoSizer onResize={this.onResize} disableHeight>
+                      {({ width }) => {
+                        if (width === 0) {
+                          return null;
+                        }
+
+                        return (
+                          <main className={cx(styles.exploreMain)} style={{ width }}>
+                            <ErrorBoundaryAlert>
+                              {showPanels && (
+                                <>
+                                  {showMetrics && graphResult && (
+                                    <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                                  )}
+                                  {showRawPrometheus && (
+                                    <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
+                                  )}
+                                  {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                                  {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                                  {showNodeGraph && (
+                                    <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>
+                                  )}
+                                  {showFlameGraph && (
+                                    <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
+                                  )}
+                                  {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                                  {showLogsSample && (
+                                    <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
+                                  )}
+                                  {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
+                                  {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                                </>
+                              )}
+                              {showRichHistory && (
+                                <RichHistoryContainer
+                                  width={width}
+                                  exploreId={exploreId}
+                                  onClose={this.toggleShowRichHistory}
+                                />
+                              )}
+                              {showQueryInspector && (
+                                <ExploreQueryInspector
+                                  exploreId={exploreId}
+                                  width={width}
+                                  onClose={this.toggleShowQueryInspector}
+                                  timeZone={timeZone}
+                                />
+                              )}
+                            </ErrorBoundaryAlert>
+                          </main>
+                        );
+                      }}
+                    </AutoSizer>
+                  </>
+                ) : (
+                  this.renderEmptyState(styles.exploreContainer)
+                )}
+              </div>
+            </CustomScrollbar>
+          </div>
+        </div>
       </ContentOutlineContextProvider>
     );
   }
