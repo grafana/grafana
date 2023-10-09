@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 
 import { DimensionContext } from '../dimensions';
 
-import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
+import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -84,6 +84,9 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** If item has an edit mode */
   hasEditMode?: boolean;
+
+  /** Optional config to customize what standard element editor options are available for the item */
+  standardEditorConfig?: StandardEditorConfig;
 }
 
 export const defaultBgColor = '#D9D9D9';

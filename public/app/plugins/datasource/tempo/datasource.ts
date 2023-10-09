@@ -164,7 +164,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   async labelNamesQuery(): Promise<Array<{ text: string }>> {
     await this.languageProvider.fetchTags();
     const tags = this.languageProvider.getAutocompleteTags();
-    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
   async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {

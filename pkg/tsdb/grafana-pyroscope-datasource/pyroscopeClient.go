@@ -149,6 +149,11 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 		return nil, err
 	}
 
+	if resp.Msg.Flamegraph == nil {
+		// Not an error, can happen when querying data oout of range.
+		return nil, nil
+	}
+
 	levels := make([]*Level, len(resp.Msg.Flamegraph.Levels))
 	for i, level := range resp.Msg.Flamegraph.Levels {
 		levels[i] = &Level{

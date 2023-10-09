@@ -7,22 +7,42 @@ import {
   VizPanel,
   dataLayers,
   SceneDataLayerProvider,
+  SceneQueryRunner,
+  SceneDataTransformer,
+  SceneVariableSet,
 } from '@grafana/scenes';
-import { AnnotationQuery, Dashboard, defaultDashboard, FieldConfigSource, Panel, RowPanel } from '@grafana/schema';
+import {
+  AnnotationQuery,
+  Dashboard,
+  DataTransformerConfig,
+  defaultDashboard,
+  FieldConfigSource,
+  Panel,
+  RowPanel,
+  VariableModel,
+} from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
+
+import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   const state = scene.state;
   const timeRange = state.$timeRange!.state;
   const data = state.$data;
+  const variablesSet = state.$variables;
   const body = state.body;
   const panels: Panel[] = [];
+
+  let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
     for (const child of body.state.children) {
@@ -43,8 +63,11 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   let annotations: AnnotationQuery[] = [];
   if (data instanceof SceneDataLayers) {
     const layers = data.state.layers;
-
     annotations = dataLayersToAnnotations(layers);
+  }
+
+  if (variablesSet instanceof SceneVariableSet) {
+    variables = sceneVariablesSetToVariables(variablesSet);
   }
 
   const dashboard: Dashboard = {
@@ -58,6 +81,9 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
     panels,
     annotations: {
       list: annotations,
+    },
+    templating: {
+      list: variables,
     },
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
@@ -75,6 +101,24 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
     h = 0;
 
   if (gridItem instanceof SceneGridItem) {
+    // Handle library panels, early exit
+    if (gridItem.state.body instanceof LibraryVizPanel) {
+      x = gridItem.state.x ?? 0;
+      y = gridItem.state.y ?? 0;
+      w = gridItem.state.width ?? 0;
+      h = gridItem.state.height ?? 0;
+
+      return {
+        id: getPanelIdForVizPanel(gridItem.state.body),
+        title: gridItem.state.body.state.title,
+        gridPos: { x, y, w, h },
+        libraryPanel: {
+          name: gridItem.state.body.state.name,
+          uid: gridItem.state.body.state.uid,
+        },
+      } as Panel;
+    }
+
     if (!(gridItem.state.body instanceof VizPanel)) {
       throw new Error('SceneGridItem body expected to be VizPanel');
     }
@@ -116,6 +160,58 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
     panel.timeFrom = panelTime.state.timeFrom;
     panel.timeShift = panelTime.state.timeShift;
     panel.hideTimeOverride = panelTime.state.hideTimeOverride;
+  }
+
+  const dataProvider = vizPanel.state.$data;
+
+  // Dashboard datasource handling
+  if (dataProvider instanceof ShareQueryDataProvider) {
+    panel.datasource = {
+      type: 'datasource',
+      uid: SHARED_DASHBOARD_QUERY,
+    };
+    panel.targets = [
+      {
+        datasource: { ...panel.datasource },
+        refId: 'A',
+        panelId: dataProvider.state.query.panelId,
+        topic: dataProvider.state.query.topic,
+      },
+    ];
+  }
+
+  // Regular queries handling
+  if (dataProvider instanceof SceneQueryRunner) {
+    panel.targets = dataProvider.state.queries;
+    panel.maxDataPoints = dataProvider.state.maxDataPoints;
+    panel.datasource = dataProvider.state.datasource;
+  }
+
+  // Transformations handling
+  if (dataProvider instanceof SceneDataTransformer) {
+    const panelData = dataProvider.state.$data;
+    if (panelData instanceof ShareQueryDataProvider) {
+      panel.datasource = {
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      };
+      panel.targets = [
+        {
+          datasource: { ...panel.datasource },
+          refId: 'A',
+          panelId: panelData.state.query.panelId,
+          topic: panelData.state.query.topic,
+        },
+      ];
+    }
+
+    if (panelData instanceof SceneQueryRunner) {
+      panel.targets = panelData.state.queries;
+      panel.maxDataPoints = panelData.state.maxDataPoints;
+      panel.datasource = panelData.state.datasource;
+    }
+
+    panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
 
   if (vizPanel.state.displayMode === 'transparent') {

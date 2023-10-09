@@ -90,7 +90,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         </Field>
       ) : (
         <Alert severity="info" title="History time span">
-          Grafana will keep entries up to {selectedOption?.label}.
+          Grafana will keep entries up to {selectedOption?.label}. Starred entries won&apos;t be deleted.
         </Alert>
       )}
       <InlineField

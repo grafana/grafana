@@ -20,10 +20,8 @@ export enum VariableHide {
   hideVariable,
 }
 
-export interface VariableModel extends Omit<raw.VariableModel, 'hide' | 'description' | 'datasource'> {
-  hide: VariableHide;
-  description?: string | null;
-  datasource: DataSourceRef | null;
+export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
+  datasource?: DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
@@ -63,9 +61,6 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
-  description: null,
-  hide: VariableHide.dontHide,
-  datasource: null,
 } as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;

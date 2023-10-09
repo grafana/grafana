@@ -104,6 +104,15 @@ export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & 
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
+export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
+  const defaults = {
+    grafana_version: config.buildInfo.version,
+    org_id: contextSrv.user.orgId,
+    user_id: contextSrv.user.id,
+  };
+  reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
+};
+
 export type AlertRuleTrackingProps = {
   user_id: number;
   grafana_version?: string;
