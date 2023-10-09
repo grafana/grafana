@@ -11,6 +11,8 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { getFromLocalStorage, setInLocalStorage } from './utils';
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -34,10 +36,7 @@ export class AppChromeService {
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     megaMenu:
-      config.featureToggles.dockedMegaMenu &&
-      JSON.parse(window.localStorage.getItem(DOCKED_LOCAL_STORAGE_KEY) ?? 'false')
-        ? 'docked'
-        : 'closed',
+      config.featureToggles.dockedMegaMenu && getFromLocalStorage(DOCKED_LOCAL_STORAGE_KEY) ? 'docked' : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
@@ -102,7 +101,7 @@ export class AppChromeService {
 
   public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
     if (config.featureToggles.dockedMegaMenu) {
-      window.localStorage.setItem('grafana.navigation.docked', JSON.stringify(newMegaMenuState === 'docked'));
+      setInLocalStorage(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
       reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
     } else {
       reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
