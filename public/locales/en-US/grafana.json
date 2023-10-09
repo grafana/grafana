@@ -702,6 +702,11 @@
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     },
+    "megamenu": {
+      "close": "Close menu",
+      "dock": "Dock menu",
+      "undock": "Undock menu"
+    },
     "toolbar": {
       "enable-kiosk": "Enable kiosk mode",
       "toggle-menu": "Toggle menu",

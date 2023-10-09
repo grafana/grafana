@@ -708,6 +708,11 @@
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
     },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "toolbar": {
       "enable-kiosk": "Activer le mode kiosque",
       "toggle-menu": "Afficher/Masquer le menu",

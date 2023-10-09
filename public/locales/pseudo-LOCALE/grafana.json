@@ -702,6 +702,11 @@
     "kiosk": {
       "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
     },
+    "megamenu": {
+      "close": "Cľőşę męŉū",
+      "dock": "Đőčĸ męŉū",
+      "undock": "Ůŉđőčĸ męŉū"
+    },
     "toolbar": {
       "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
       "toggle-menu": "Ŧőģģľę męŉū",

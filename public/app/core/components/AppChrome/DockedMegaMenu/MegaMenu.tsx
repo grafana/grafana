@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
 import { cloneDeep } from 'lodash';
 import React, { forwardRef } from 'react';
@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
@@ -37,9 +38,7 @@ export const MegaMenu = React.memo(
 
     const handleDockedMenu = () => {
       chrome.onToggleDockedMegaMenu();
-      if (state.megaMenuDocked === 'closed') {
-        onClose();
-      }
+      onClose();
     };
 
     return (
@@ -47,19 +46,21 @@ export const MegaMenu = React.memo(
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
-            aria-label="Close navigation menu"
-            tooltip="Close menu"
+            tooltip={t('navigation.megamenu.close', 'Close menu')}
             name="times"
             onClick={onClose}
             size="xl"
             variant="secondary"
           />
         </div>
-        <nav className={cx(styles.content, state.megaMenuDocked === 'docked' && styles.docked)}>
+        <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <IconButton
-              aria-label="Docked menu"
-              tooltip="Docked menu"
+              tooltip={
+                state.megaMenuDocked === 'docked'
+                  ? t('navigation.megamenu.undock', 'Undock menu')
+                  : t('navigation.megamenu.dock', 'Dock menu')
+              }
               name="bookmark"
               onClick={handleDockedMenu}
               variant="secondary"
@@ -83,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   content: css({
     display: 'flex',
     flexDirection: 'column',
-    flexGrow: 1,
+    height: '100%',
     minHeight: 0,
     position: 'relative',
   }),
@@ -102,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
     gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
     listStyleType: 'none',
-    minWidth: MENU_WIDTH,
+    width: MENU_WIDTH,
   }),
   dockedMenuButton: css({
     position: 'absolute',
@@ -110,5 +111,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     right: theme.spacing(1),
     zIndex: 1,
   }),
-  docked: css({}),
 });

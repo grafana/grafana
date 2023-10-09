@@ -10,6 +10,7 @@ import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
+import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
@@ -65,7 +66,7 @@ export function AppChrome({ children }: Props) {
             <SectionNav model={state.sectionNav} />
           )}
           {config.featureToggles.dockedMegaMenu && state.megaMenuDocked === 'docked' && (
-            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenu(false)} />
           )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
@@ -104,6 +105,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentChromeless: css({
       paddingTop: 0,
+    }),
+    dockedMegaMenu: css({
+      background: theme.colors.background.primary,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      zIndex: theme.zIndex.navbarFixed,
     }),
     topNav: css({
       display: 'flex',

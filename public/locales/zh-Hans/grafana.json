@@ -696,6 +696,11 @@
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "toolbar": {
       "enable-kiosk": "启用 kiosk 模式",
       "toggle-menu": "切换菜单",
