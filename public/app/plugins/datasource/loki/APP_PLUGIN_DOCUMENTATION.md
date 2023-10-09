@@ -10,7 +10,7 @@ It's important to note some APIs and methods were deliberately ommited, as those
 
 ## Recommended APIs
 
-e strongly advise using these recommended APIs instead of direct proxy calls because they offer several benefits:
+We strongly advise using these recommended methods instead of direct API calls because they offer several benefits:
 
 - Caching of results: These APIs intelligently cache results based on their input arguments and the currently selected time range. This caching mechanism improves performance by reducing redundant fetch requests.
 
