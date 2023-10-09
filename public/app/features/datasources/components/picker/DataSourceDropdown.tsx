@@ -72,7 +72,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     ...restProps
   } = props;
 
-  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
+  const styles = useStyles2(getStylesDropdown, props);
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');

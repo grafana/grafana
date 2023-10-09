@@ -206,24 +206,13 @@ const FlameGraphContainer = ({
 };
 
 function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(
-    dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.ValueBased
-  );
-  useEffect(() => {
-    if (
-      dataContainer?.isDiffFlamegraph() &&
-      (colorScheme === ColorScheme.ValueBased || colorScheme === ColorScheme.PackageBased)
-    ) {
-      setColorScheme(ColorSchemeDiff.Default);
-    }
+  const defaultColorScheme = dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
+  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(defaultColorScheme);
 
-    if (
-      !dataContainer?.isDiffFlamegraph() &&
-      (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
-    ) {
-      setColorScheme(ColorScheme.ValueBased);
-    }
-  }, [dataContainer, colorScheme]);
+  // This makes sure that if we change the data to/from diff profile we reset the color scheme.
+  useEffect(() => {
+    setColorScheme(defaultColorScheme);
+  }, [defaultColorScheme]);
 
   return [colorScheme, setColorScheme] as const;
 }

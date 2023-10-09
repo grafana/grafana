@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Role",
+      "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
       "user-label": "User"
@@ -18,6 +19,7 @@
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
+      "serviceaccount": "Service Account",
       "team": "Team",
       "title": "Permissions",
       "user": "User"
