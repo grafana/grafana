@@ -49,7 +49,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '12px',
     height: '12px',
     display: 'inline-block',
-    borderRadius: '2px',
+    borderRadius: theme.shape.radius.default,
     marginRight: '4px',
   }),
   value: css({
