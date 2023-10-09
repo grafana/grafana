@@ -34,25 +34,6 @@ type LoggerMiddleware struct {
 	logger plog.Logger
 }
 
-// logParams returns the logger params for the provided plugin context.
-// (pluginId, dsName, dsUID, uname).
-func logParams(pCtx backend.PluginContext) []any {
-	p := []any{"pluginId", pCtx.PluginID}
-	if pCtx.DataSourceInstanceSettings != nil {
-		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
-		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
-	}
-	if pCtx.User != nil {
-		p = append(p, "uname", pCtx.User.Login)
-	}
-	return p
-}
-
-// instrumentContext adds a contextual logger with plugin and request details to the given context.
-func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, logParams(pCtx)...))
-}
-
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
@@ -82,6 +63,25 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 	}
 	m.logger.Info("Plugin Request Completed", params...)
 	return err
+}
+
+// logParams returns the logger params for the provided plugin context.
+// (pluginId, dsName, dsUID, uname).
+func logParams(pCtx backend.PluginContext) []any {
+	p := []any{"pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
+	return p
+}
+
+// instrumentContext adds a contextual logger with plugin and request details to the given context.
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, logParams(pCtx)...))
 }
 
 func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
