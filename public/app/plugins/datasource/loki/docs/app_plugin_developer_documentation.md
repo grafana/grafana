@@ -1,16 +1,16 @@
 # Loki data source documentation for app plugins developers
 
-Welcome to the developer documentation for the Loki data source! This documentation is designed to assist app plugin developers in leveraging the power of Loki data source within Grafana. Loki data source provides a set of APIs to simplify common tasks, making it easier to create engaging app plugins.
+Welcome to the developer documentation for the Loki data source! The purpose of this document is to assist app plugin developers in leveraging the power of the Loki data source and Grafana. The Loki data source provides a set of APIs to simplify common tasks, making it easier to create engaging app plugins.
 
 ## Introduction
 
-Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key APIs that are highly recommended for app plugin development.
+The Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key APIs that are highly recommended for app plugin development.
 
-It's important to note that the other APIs and methods that are not mentioned here may undergo changes or may not be suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
+It's important to note some APIs and methods were deliberately ommited, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
 
 ## Recommended APIs
 
-e strongly advise using these recommended APIs instead of direct proxy calls because they offer several benefits:
+We strongly advise using these recommended methods instead of direct API calls because they offer several benefits:
 
 - Caching of results: These APIs intelligently cache results based on their input arguments and the currently selected time range. This caching mechanism improves performance by reducing redundant fetch requests.
 
@@ -20,7 +20,7 @@ e strongly advise using these recommended APIs instead of direct proxy calls bec
 
 ### Fetching Loki label names
 
-`datasource.languageProvider.fetchLabels()` can be used to fetch label names from connected Loki data source. Labels are essential for organizing and filtering log data. You can use this method to retrieve labels, providing a foundation for various data manipulation tasks within your app plugin.
+`datasource.languageProvider.fetchLabels()` can be used to fetch label names from the connected Loki data source. Labels are essential for selecting and filtering log data. You can use this method to retrieve labels, providing a foundation for various data manipulation tasks within your app plugin.
 
 ```ts
 /**
@@ -104,9 +104,9 @@ try {
 }
 ```
 
-### Fetching Loki parser and label keys for log stream based on sampled lines
+### Detecting Loki parser and label keys for log stream based on sampled lines
 
-`datasource.languageProvider.getParserAndLabelKeys` is responsible for fetching parsers and label keys associated with a selected log stream. It achieves this by executing a small query to Loki with the specified stream and extracting relevant information from the received log lines.
+`datasource.languageProvider.getParserAndLabelKeys` receives a stream selector and returns the parsers and label keys that the query would generate. This is achieved by executing a sample query to Loki with the specified stream and extracting relevant information from the received log lines.
 
 ```ts
 /**
