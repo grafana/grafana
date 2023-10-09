@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
+import { VizOrientation } from '@grafana/schema';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
@@ -81,6 +82,21 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
   render() {
     const { height, width, data, renderCounter, options } = this.props;
 
+    // We could make this not hard coded but instead dependent on panel dimensions / number of gauges
+    const GAUGE_MIN_HEIGHT = 200;
+    const GAUGE_MIN_WIDTH = 200;
+
+    // calculate if there is overflow
+    const numberOfGauges = this.getValues().length;
+
+    const remainderWidth = width - numberOfGauges * GAUGE_MIN_WIDTH;
+    const isHorizontalOverflow = options.orientation === VizOrientation.Horizontal && remainderWidth < 0;
+
+    const remainderHeight = height - numberOfGauges * GAUGE_MIN_HEIGHT;
+    const isVerticalOverflow = options.orientation === VizOrientation.Vertical && remainderHeight < 0;
+
+    const isOverflow = isHorizontalOverflow || isVerticalOverflow;
+
     return (
       <VizRepeater
         getValues={this.getValues}
@@ -91,8 +107,9 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
-        minVizHeight={options.minVizHeight}
-        minVizWidth={options.minVizWidth}
+        minVizHeight={GAUGE_MIN_HEIGHT}
+        minVizWidth={GAUGE_MIN_WIDTH}
+        isOverflow={isOverflow}
       />
     );
   }
