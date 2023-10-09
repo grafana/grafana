@@ -390,7 +390,7 @@ export async function getLogfmtCompletions(
      * Don't offer parsers if there is no label argument: {label="value"} | logfmt ^
      * The reason is that it would be unusual that they would want to use another parser just after logfmt, and
      * more likely that they would want a flag, labels, or continue with pipe operations.
-     * 
+     *
      * Offer parsers with at least one label argument: {label="value"} | logfmt label ^
      * The rationale here is to offer the same completions as getAfterSelectorCompletions().
      */
