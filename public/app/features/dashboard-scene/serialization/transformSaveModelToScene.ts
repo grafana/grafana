@@ -41,6 +41,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -322,6 +323,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    extendPanelContext: setDashboardPanelContext,
   };
 
   if (panel.timeFrom || panel.timeShift) {
