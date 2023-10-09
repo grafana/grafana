@@ -2814,7 +2814,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: grafana/grafana-build:main
@@ -3064,7 +3063,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: grafana/grafana-build:main
@@ -3246,7 +3244,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: grafana/grafana-build:main
@@ -3477,7 +3474,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: grafana/grafana-build:main
@@ -3520,7 +3516,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
@@ -3586,7 +3581,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
@@ -3624,7 +3618,6 @@ steps:
       from_secret: packages_gpg_public_key
     NPM_TOKEN:
       from_secret: npm_token
-    PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: grafana/grafana-build:main
@@ -4644,6 +4637,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8656e3546cc4bc8af411e6a870a44f7beb980787e2963b8c1ccbf0a035eec13d
+hmac: 64f26b010ead4ae69e840d53098bc6088a78e92ae0fa6dabc93ad4daee481b49
 
 ...

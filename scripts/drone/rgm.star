@@ -103,7 +103,6 @@ def rgm_env_secrets(env):
     env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
     env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
-    env["PACKAGES_DESTINATION"] = "gs://grafana-packages-testing"
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
     env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
