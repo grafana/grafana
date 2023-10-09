@@ -12,7 +12,7 @@ import (
 
 func (hs *HTTPServer) ValidateOrgPlaylist(c *contextmodel.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
-	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
+	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 	p, err := hs.playlistService.GetWithoutItems(c.Req.Context(), &query)
 
 	if err != nil {
@@ -25,7 +25,7 @@ func (hs *HTTPServer) ValidateOrgPlaylist(c *contextmodel.ReqContext) {
 		return
 	}
 
-	if p.OrgId != c.OrgID {
+	if p.OrgId != c.SignedInUser.GetOrgID() {
 		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
 		return
 	}
@@ -49,7 +49,7 @@ func (hs *HTTPServer) SearchPlaylists(c *contextmodel.ReqContext) response.Respo
 	searchQuery := playlist.GetPlaylistsQuery{
 		Name:  query,
 		Limit: limit,
-		OrgId: c.OrgID,
+		OrgId: c.SignedInUser.GetOrgID(),
 	}
 
 	playlists, err := hs.playlistService.Search(c.Req.Context(), &searchQuery)
@@ -72,7 +72,7 @@ func (hs *HTTPServer) SearchPlaylists(c *contextmodel.ReqContext) response.Respo
 // 500: internalServerError
 func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
+	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
@@ -94,7 +94,7 @@ func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response 
 // 500: internalServerError
 func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
+	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
@@ -117,7 +117,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 func (hs *HTTPServer) DeletePlaylist(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
-	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.OrgID}
+	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 	if err := hs.playlistService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
@@ -140,7 +140,7 @@ func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgId = c.SignedInUser.GetOrgID()
 
 	p, err := hs.playlistService.Create(c.Req.Context(), &cmd)
 	if err != nil {
@@ -165,7 +165,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgId = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]
 
 	_, err := hs.playlistService.Update(c.Req.Context(), &cmd)
@@ -175,7 +175,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &playlist.GetPlaylistByUidQuery{
 		UID:   cmd.UID,
-		OrgId: c.OrgID,
+		OrgId: c.SignedInUser.GetOrgID(),
 	})
 	if err != nil {
 		return response.Error(500, "Failed to load playlist", err)

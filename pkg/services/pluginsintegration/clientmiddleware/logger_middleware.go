@@ -13,17 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	statusOK        = "ok"
-	statusError     = "error"
-	statusCancelled = "cancelled"
-
-	endpointCallResource   = "callResource"
-	endpointCheckHealth    = "checkHealth"
-	endpointCollectMetrics = "collectMetrics"
-	endpointQueryData      = "queryData"
-)
-
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
 func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
@@ -120,7 +109,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return innerErr
 	})

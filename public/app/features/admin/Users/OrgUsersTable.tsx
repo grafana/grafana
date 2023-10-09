@@ -13,6 +13,7 @@ import {
   Tag,
   InteractiveTable,
   Column,
+  FetchDataFunc,
   Pagination,
   HorizontalGroup,
   VerticalGroup,
@@ -53,15 +54,24 @@ export interface Props {
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
+  fetchData?: FetchDataFunc<OrgUser>;
   changePage: (page: number) => void;
   page: number;
   totalPages: number;
 }
 
-export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, changePage, page, totalPages }: Props) => {
+export const OrgUsersTable = ({
+  users,
+  orgId,
+  onRoleChange,
+  onRemoveUser,
+  fetchData,
+  changePage,
+  page,
+  totalPages,
+}: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const enableSort = totalPages === 1;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -91,27 +101,25 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-        sortType: enableSort
-          ? (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime()
-          : undefined,
+        sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
       {
         id: 'role',
@@ -175,14 +183,19 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange, enableSort]
+    [orgId, roleOptions, onRoleChange]
   );
 
   return (
     <VerticalGroup spacing="md" data-testid={selectors.container}>
       <div className={styles.wrapper}>
-        <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
-        <HorizontalGroup justify="flex-end" height={'auto'}>
+        <InteractiveTable
+          columns={columns}
+          data={users}
+          getRowId={(user) => String(user.userId)}
+          fetchData={fetchData}
+        />
+        <HorizontalGroup justify="flex-end">
           <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
         </HorizontalGroup>
       </div>

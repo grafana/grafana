@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -280,11 +281,11 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
-	ids := make(map[string]int64, len(q))
+	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}
@@ -348,6 +349,6 @@ func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return 0, nil
 }
 
-func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	return 0, nil
 }

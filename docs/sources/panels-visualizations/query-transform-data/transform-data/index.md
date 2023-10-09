@@ -108,11 +108,17 @@ Use this transformation to add a new field calculated from two other fields. Eac
 
 - **Mode -** Select a mode:
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
-  - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
+  - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
+  - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
+    - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+    - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+    - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+    - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+    - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
   - **Row index -** Insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
-- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+- **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
 - **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -281,28 +287,41 @@ You'll get the following output:
 
 ### Filter by name
 
-Use this transformation to remove portions of the query results.
+Use this transformation to remove parts of the query results.
 
-Grafana displays the **Identifier** field, followed by the fields returned by your query.
+You can filter field names in three different ways:
 
-You can apply filters in one of two ways:
+- [Using a regular expression](#use-a-regular-expression)
+- [Manually selecting included fields](#manually-select-included-fields)
+- [Using a dashboard variable](#use-a-dashboard-variable)
 
-- Enter a regex expression.
-- Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
+#### Use a regular expression
 
-In the example below, I removed the Min field from the results.
+When you filter using a regular expression, field names that match the regular expression are included.
 
-Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+From the input data:
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
+| ------------------- | ----------- | ------------ | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 23.6        | 24.4         | 22.1         | 20.1          |
 
-Here is the table after I applied the transformation to remove the Min field.
+The result from using the regular expression `prod.*` would be:
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | prod-eu-west | prod-eu-north |
+| ------------------- | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 22.1         | 20.1          |
 
-Here is the same query using a Stat visualization.
+The regular expression can include an interpolated dashboard variable by using the `${[variable name]}` syntax.
 
-{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+#### Manually select included fields
+
+Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
+
+#### Use a dashboard variable
+
+Enable `From variable` to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
 ### Filter data by query
 
@@ -764,6 +783,11 @@ With the _Partition by values_ transformer, you can now issue a single query and
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
+There are two naming modes:
+
+- **As labels** - The value that results are partitioned by is set as a label.
+- **As frame name** - The value is used to set the frame name. This is useful if the data will be visualized in a table.
+
 ### Reduce
 
 The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
@@ -869,7 +893,7 @@ Output:
 
 The extra labels can now be used in the field display name provide more complete field names.
 
-If you want to extract config from one query and appply it to another you should use the config from query results transformation.
+If you want to extract config from one query and apply it to another you should use the config from query results transformation.
 
 #### Example
 
@@ -895,7 +919,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 {{% /admonition %}}
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/developers/plugin-tools/introduction/data-frames).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -988,9 +1012,6 @@ Use this transformation to format the output of a time field. Output can be form
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 
-[Data frames]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
-[Data frames]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
-
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 [Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 
@@ -1008,4 +1029,8 @@ Use this transformation to format the output of a time field. Output can be form
 
 [feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
+
+[dashboard variable]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[dashboard variable]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
 {{% /docs/reference %}}

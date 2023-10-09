@@ -76,7 +76,7 @@ dashboardEmbed,experimental,@grafana/grafana-as-code,false,false,false,true
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,false,true
-cloudWatchLogsMonacoEditor,preview,@grafana/aws-datasources,false,false,false,true
+cloudWatchLogsMonacoEditor,GA,@grafana/aws-datasources,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
@@ -90,6 +90,7 @@ mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
+grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false
@@ -103,7 +104,7 @@ alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
-newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
+newBrowseDashboards,GA,@grafana/grafana-frontend-platform,false,false,false,true
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
 requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false,false
@@ -114,3 +115,9 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,fal
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
+externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
+alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false
+panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
+enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
+transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
+kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
