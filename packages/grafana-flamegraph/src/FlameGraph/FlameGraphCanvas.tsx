@@ -27,13 +27,11 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
-import { useFlameRender2 } from './rendering2';
 
 type Props = {
   data: FlameGraphDataContainer;
-  collapsedMap: CollapsedMap;
   rangeMin: number;
   rangeMax: number;
   search: string;
@@ -47,7 +45,6 @@ type Props = {
   colorScheme: ColorScheme | ColorSchemeDiff;
   getTheme: () => GrafanaTheme2;
 
-  levels: LevelItem[][];
   root: LevelItem;
   direction: 'children' | 'parents';
   // Depth in number of levels
@@ -56,12 +53,10 @@ type Props = {
   totalProfileTicks: number;
   totalProfileTicksRight?: number;
   totalViewTicks: number;
-  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 };
 
 const FlameGraphCanvas = ({
   data,
-  collapsedMap,
   rangeMin,
   rangeMax,
   search,
@@ -73,11 +68,9 @@ const FlameGraphCanvas = ({
   onSandwich,
   colorScheme,
   getTheme,
-  levels,
   totalProfileTicks,
   totalProfileTicksRight,
   totalViewTicks,
-  setCollapsedMap,
   root,
   direction,
   depth,
@@ -95,24 +88,6 @@ const FlameGraphCanvas = ({
     colorScheme,
     data,
     focusedItemData,
-    levels,
-    rangeMax,
-    rangeMin,
-    search,
-    textAlign,
-    totalViewTicks,
-    // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
-    totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
-    totalTicksRight: totalProfileTicksRight,
-    wrapperWidth,
-    getTheme,
-  });
-
-  useFlameRender2({
-    canvasRef: graphRef,
-    colorScheme,
-    data,
-    focusedItemData,
     root,
     direction,
     depth,
@@ -126,22 +101,13 @@ const FlameGraphCanvas = ({
     totalTicksRight: totalProfileTicksRight,
     wrapperWidth,
     getTheme,
-    collapsedMap,
   });
 
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
       setTooltipItem(undefined);
       const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
-      const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-        { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
-        levels,
-        pixelsPerTick,
-        totalViewTicks,
-        rangeMin
-      );
-
-      const item = convertPixelCoordinatesToBarCoordinates2(
+      const item = convertPixelCoordinatesToBarCoordinates(
         { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
         root,
         direction,
@@ -149,13 +115,10 @@ const FlameGraphCanvas = ({
         pixelsPerTick,
         totalViewTicks,
         rangeMin,
-        collapsedMap
       );
 
       // if clicking on a block in the canvas
-      // if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
       if (item) {
-        // const item = levels[levelIndex][barIndex];
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
@@ -167,7 +130,7 @@ const FlameGraphCanvas = ({
         setClickedItemData(undefined);
       }
     },
-    [data, rangeMin, rangeMax, totalViewTicks, levels, collapsedMap]
+    [data, rangeMin, rangeMax, totalViewTicks, root, direction, depth]
   );
 
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
@@ -177,15 +140,7 @@ const FlameGraphCanvas = ({
         setTooltipItem(undefined);
         setMousePosition(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
-        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-          { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
-          levels,
-          pixelsPerTick,
-          totalViewTicks,
-          rangeMin
-        );
-
-        const item = convertPixelCoordinatesToBarCoordinates2(
+        const item = convertPixelCoordinatesToBarCoordinates(
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
           root,
           direction,
@@ -193,17 +148,15 @@ const FlameGraphCanvas = ({
           pixelsPerTick,
           totalViewTicks,
           rangeMin,
-          collapsedMap
         );
 
-        // if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
         if (item) {
           setMousePosition({ x: e.clientX, y: e.clientY });
           setTooltipItem(item);
         }
       }
     },
-    [rangeMin, rangeMax, totalViewTicks, clickedItemData, levels, setMousePosition, collapsedMap]
+    [rangeMin, rangeMax, totalViewTicks, clickedItemData, setMousePosition, root, direction, depth]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -245,7 +198,6 @@ const FlameGraphCanvas = ({
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
-          collapseConfig={collapsedMap.get(clickedItemData.item)}
           onMenuItemClick={() => {
             setClickedItemData(undefined);
           }}
@@ -256,24 +208,6 @@ const FlameGraphCanvas = ({
           }}
           onSandwich={() => {
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
-          }}
-          onExpandGroup={() => {
-            const newMap = new Map(collapsedMap);
-            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
-            const newConfig = { ...collapsedConfig, collapsed: false };
-            for (const item of collapsedConfig.items) {
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
-          }}
-          onCollapseGroup={() => {
-            const newMap = new Map(collapsedMap);
-            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
-            const newConfig = { ...collapsedConfig, collapsed: true };
-            for (const item of collapsedConfig.items) {
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
           }}
         />
       )}
@@ -312,7 +246,7 @@ const getStyles = () => ({
   `,
 });
 
-const convertPixelCoordinatesToBarCoordinates2 = (
+const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
   root: LevelItem,
@@ -321,9 +255,7 @@ const convertPixelCoordinatesToBarCoordinates2 = (
   pixelsPerTick: number,
   totalTicks: number,
   rangeMin: number,
-  collapsedMap: Map<LevelItem, CollapseConfig>
 ): LevelItem | undefined => {
-  console.time('convertPixelCoordinatesToBarCoordinates2');
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
@@ -344,71 +276,13 @@ const convertPixelCoordinatesToBarCoordinates2 = (
       const xEnd = getBarX(child.start + child.value, totalTicks, rangeMin, pixelsPerTick);
       if (xStart <= pos.x && pos.x < xEnd) {
         next = child;
-
-        // Check if item is a collapsed item. if so also check if the item is the first collapsed item in the chain,
-        // which we render, or a child which we don't render. If it's a child in the chain then don't increase the
-        // level end effectively skip it.
-        const collapsedConfig = collapsedMap.get(child);
-        if (!collapsedConfig || !collapsedConfig.collapsed || collapsedConfig.items[0] === child) {
-          currentLevel = currentLevel + (direction === 'children' ? 1 : -1);
-        }
+        currentLevel = currentLevel + (direction === 'children' ? 1 : -1);
         break;
       }
     }
   }
 
-  console.timeEnd('convertPixelCoordinatesToBarCoordinates2');
   return found;
-};
-
-// Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
-// the canvas.
-const convertPixelCoordinatesToBarCoordinates = (
-  // position relative to the start of the graph
-  pos: { x: number; y: number },
-  levels: LevelItem[][],
-  pixelsPerTick: number,
-  totalTicks: number,
-  rangeMin: number
-) => {
-  console.time('convertPixelCoordinatesToBarCoordinates');
-  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-  const barIndex = getBarIndex(pos.x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
-  console.timeEnd('convertPixelCoordinatesToBarCoordinates');
-  return { levelIndex, barIndex };
-};
-
-/**
- * Binary search for a bar in a level, based on the X pixel coordinate. Useful for detecting which bar did user click
- * on.
- */
-const getBarIndex = (x: number, level: LevelItem[], pixelsPerTick: number, totalTicks: number, rangeMin: number) => {
-  if (level) {
-    let start = 0;
-    let end = level.length - 1;
-
-    while (start <= end) {
-      const midIndex = (start + end) >> 1;
-      const startOfBar = getBarX(level[midIndex].start, totalTicks, rangeMin, pixelsPerTick);
-      const startOfNextBar = getBarX(
-        level[midIndex].start + level[midIndex].value,
-        totalTicks,
-        rangeMin,
-        pixelsPerTick
-      );
-
-      if (startOfBar <= x && startOfNextBar >= x) {
-        return midIndex;
-      }
-
-      if (startOfBar > x) {
-        end = midIndex - 1;
-      } else {
-        start = midIndex + 1;
-      }
-    }
-  }
-  return -1;
 };
 
 export default FlameGraphCanvas;

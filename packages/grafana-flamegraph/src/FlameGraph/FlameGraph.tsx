@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon } from '@grafana/ui';
@@ -27,7 +27,7 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import FlameGraphCanvas from './FlameGraphCanvas';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { CollapsedMap, FlameGraphDataContainer } from './dataTransform';
+import { FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -67,13 +67,6 @@ const FlameGraph = ({
 }: Props) => {
   const styles = getStyles();
 
-  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
-  useEffect(() => {
-    if (data) {
-      setCollapsedMap(data.getCollapsedMap());
-    }
-  }, [data]);
-
   const [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks] = useMemo(() => {
     let levels = data.getLevels();
     let totalProfileTicks = levels.length ? levels[0][0].value : 0;
@@ -94,7 +87,6 @@ const FlameGraph = ({
   const commonCanvasProps = {
     getTheme,
     data,
-    collapsedMap,
     rangeMin,
     rangeMax,
     search,
@@ -108,7 +100,6 @@ const FlameGraph = ({
     totalProfileTicks,
     totalProfileTicksRight,
     totalViewTicks,
-    setCollapsedMap,
   };
   const canvas = levelsCallers ? (
     <>
@@ -119,7 +110,6 @@ const FlameGraph = ({
         </div>
         <FlameGraphCanvas
           {...commonCanvasProps}
-          levels={levelsCallers}
           root={levelsCallers[levelsCallers.length - 1][0]}
           depth={levelsCallers.length}
           direction={'parents'}
@@ -131,19 +121,17 @@ const FlameGraph = ({
           <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
           Callees
         </div>
-        {/*<FlameGraphCanvas*/}
-        {/*  {...commonCanvasProps}*/}
-        {/*  levels={levels}*/}
-        {/*  root={levels[0][0]}*/}
-        {/*  depth={levels.length}*/}
-        {/*  direction={'children'}*/}
-        {/*/>*/}
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levels[0][0]}
+          depth={levels.length}
+          direction={'children'}
+        />
       </div>
     </>
   ) : (
     <FlameGraphCanvas
       {...commonCanvasProps}
-      levels={levels}
       root={levels[0][0]}
       depth={levels.length}
       direction={'children'}

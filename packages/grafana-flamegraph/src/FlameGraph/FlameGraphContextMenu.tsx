@@ -3,16 +3,12 @@ import React from 'react';
 import { MenuItem, ContextMenu } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
-import { CollapseConfig } from './dataTransform';
 
 type Props = {
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
   onItemFocus: () => void;
   onSandwich: () => void;
-  onExpandGroup: () => void;
-  onCollapseGroup: () => void;
-  collapseConfig?: CollapseConfig;
 };
 
 const FlameGraphContextMenu = ({
@@ -20,9 +16,6 @@ const FlameGraphContextMenu = ({
   onMenuItemClick,
   onItemFocus,
   onSandwich,
-  collapseConfig,
-  onExpandGroup,
-  onCollapseGroup,
 }: Props) => {
   function renderItems() {
     return (
@@ -52,27 +45,6 @@ const FlameGraphContextMenu = ({
             onMenuItemClick();
           }}
         />
-        {collapseConfig ? (
-          collapseConfig.collapsed ? (
-            <MenuItem
-              label="Expand group"
-              icon={'angle-double-down'}
-              onClick={() => {
-                onExpandGroup();
-                onMenuItemClick();
-              }}
-            />
-          ) : (
-            <MenuItem
-              label="Collapse group"
-              icon={'angle-double-up'}
-              onClick={() => {
-                onCollapseGroup();
-                onMenuItemClick();
-              }}
-            />
-          )
-        ) : null}
       </>
     );
   }
