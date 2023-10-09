@@ -54,7 +54,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.OrgID)
+	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
 	}

@@ -132,8 +132,8 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
   const styles = getStyles(props.getTheme(), false);
   let menu = (
     <Menu>
-      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
     </Menu>
   );
 
