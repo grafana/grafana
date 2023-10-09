@@ -18,10 +18,12 @@ export function useDetailState(frame: DataFrame) {
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
-      const newDetailStates = new Map(detailStates);
+      let newDetailStates = new Map(detailStates);
       if (newDetailStates.has(spanID)) {
-        newDetailStates.delete(spanID);
+        // newDetailStates.delete(spanID);
+        newDetailStates = new Map();
       } else {
+        newDetailStates = new Map();
         newDetailStates.set(spanID, new DetailState());
       }
       setDetailStates(newDetailStates);

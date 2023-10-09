@@ -321,6 +321,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getRowHeight = (index: number) => {
     const { span, isDetail } = this.getRowStates()[index];
+    return 0;
     if (!isDetail) {
       return DEFAULT_HEIGHTS.bar;
     }
