@@ -70,7 +70,7 @@ type AlertRuleService interface {
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgID)
+	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -82,7 +82,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgID)
+	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -90,7 +90,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := AlertingFileExportFromRoute(c.OrgID, policies)
+	e, err := AlertingFileExportFromRoute(c.SignedInUser.GetOrgID(), policies)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -100,7 +100,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgID, tree, alerting_models.Provenance(provenance))
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -115,7 +115,7 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.OrgID)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -125,7 +125,7 @@ func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) res
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) response.Response {
 	q := provisioning.ContactPointQuery{
 		Name:  c.Query("name"),
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
 	if err != nil {
@@ -140,7 +140,7 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqContext) response.Response {
 	q := provisioning.ContactPointQuery{
 		Name:    c.Query("name"),
-		OrgID:   c.OrgID,
+		OrgID:   c.SignedInUser.GetOrgID(),
 		Decrypt: c.QueryBoolWithDefault("decrypt", false),
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
@@ -151,7 +151,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := AlertingFileExportFromEmbeddedContactPoints(c.OrgID, cps)
+	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -161,7 +161,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
-	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgID, cp, alerting_models.Provenance(provenance))
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -174,7 +174,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
 	cp.UID = UID
 	provenance := determineProvenance(c)
-	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgID, cp, alerting_models.Provenance(provenance))
+	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -188,7 +188,7 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp 
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, UID string) response.Response {
-	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgID, UID)
+	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -196,7 +196,7 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgID)
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -208,7 +208,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgID)
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -224,7 +224,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 		Template:   body.Template,
 		Provenance: determineProvenance(c),
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgID, tmpl)
+	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -235,7 +235,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.OrgID, name)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -243,7 +243,7 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.OrgID)
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -256,7 +256,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) response.Response {
-	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.OrgID)
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -265,7 +265,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) resp
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	mt.Provenance = determineProvenance(c)
-	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.OrgID)
+	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -278,7 +278,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
 	mt.Name = name
 	mt.Provenance = determineProvenance(c)
-	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgID)
+	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -292,7 +292,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.OrgID)
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -300,7 +300,7 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, na
 }
 
 func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) response.Response {
-	rules, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.OrgID)
+	rules, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -308,7 +308,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgID, UID)
+	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
@@ -320,7 +320,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, U
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	upstreamModel, err := AlertRuleFromProvisionedAlertRule(ar)
-	upstreamModel.OrgID = c.OrgID
+	upstreamModel.OrgID = c.SignedInUser.GetOrgID()
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -348,7 +348,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	updated.OrgID = c.OrgID
+	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.Provenance(provenance))
@@ -371,7 +371,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgID, UID, alerting_models.Provenance(provenance))
+	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser.GetOrgID(), UID, alerting_models.Provenance(provenance))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -379,7 +379,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID
 }
 
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.OrgID, folder, group)
+	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
 		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -410,7 +410,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.OrgID, folderUIDs)
+	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUIDs)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
@@ -428,7 +428,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.OrgID, folder, group)
+	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
 		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -446,7 +446,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.OrgID, UID)
+	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -472,7 +472,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, alerting_models.Provenance(provenance))
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, c.UserID, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
