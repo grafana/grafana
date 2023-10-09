@@ -483,10 +483,11 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
   /**
-   * Top level examples:
+   * The following queries trigger resolveTopLevel().
    * - Empty query
-   * - {label="value"}
-   * - {label="value"} | parser
+   * - {label="value"} ^
+   * - {label="value"} | parser ^
+   * From here, we need to determine if the user is in a resolveLogOrLogRange() or simply at the root.
    */
   const logExprNode = walk(node, [
     ['lastChild', Expr],
