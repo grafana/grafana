@@ -47,6 +47,7 @@ describe('UnifiedAlertStatesWorker', () => {
 
   beforeEach(() => {
     config.publicDashboardAccessToken = '';
+    grantUserPermissions(Object.values(AccessControlAction));
   });
 
   describe('when canWork is called with correct props', () => {
