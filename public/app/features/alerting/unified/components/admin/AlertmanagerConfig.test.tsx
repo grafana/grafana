@@ -20,7 +20,6 @@ import {
   fetchStatus,
 } from '../../api/alertmanager';
 import {
-  disableRBAC,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
@@ -92,7 +91,6 @@ describe('Admin config', () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     contextSrv.isGrafanaAdmin = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
-    disableRBAC();
   });
 
   it('Reset alertmanager config', async () => {

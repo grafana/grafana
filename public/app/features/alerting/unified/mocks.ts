@@ -595,14 +595,6 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
   };
 };
 
-export const enableRBAC = () => {
-  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-};
-
-export const disableRBAC = () => {
-  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(false);
-};
-
 export const grantUserPermissions = (permissions: AccessControlAction[]) => {
   jest
     .spyOn(contextSrv, 'hasPermission')

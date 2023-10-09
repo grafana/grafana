@@ -31,8 +31,6 @@ const ui = {
 
 describe('RuleListGroupView', () => {
   describe('RBAC', () => {
-    jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-
     it('Should display Grafana rules when the user has the alert rule read permission', async () => {
       const grafanaNamespace = getGrafanaNamespace();
       const namespaces: CombinedRuleNamespace[] = [grafanaNamespace];

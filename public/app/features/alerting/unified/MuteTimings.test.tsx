@@ -9,7 +9,7 @@ import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasour
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
@@ -108,7 +108,6 @@ describe('Mute timings', () => {
   });
 
   it('creates a new mute timing', async () => {
-    disableRBAC();
     renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());

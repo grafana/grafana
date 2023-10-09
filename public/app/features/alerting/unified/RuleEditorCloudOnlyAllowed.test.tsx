@@ -13,7 +13,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType } from './utils/datasource';
@@ -140,8 +140,6 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
-
-  disableRBAC();
 
   it('for cloud alerts, should only allow to select editable rules sources', async () => {
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {

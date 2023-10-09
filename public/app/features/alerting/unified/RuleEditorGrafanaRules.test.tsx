@@ -15,7 +15,7 @@ import { searchFolders } from '../../../../app/features/manage-dashboards/state/
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -67,8 +67,6 @@ describe('RuleEditor grafana managed rules', () => {
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
-
-  disableRBAC();
 
   it('can create new grafana managed alert', async () => {
     const dataSources = {

@@ -17,7 +17,6 @@ import { DashboardMetaChangedEvent } from 'app/types/events';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
-import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
 import { AnnotationsSettings } from './AnnotationsSettings';

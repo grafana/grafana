@@ -1186,14 +1186,11 @@ export class DashboardModel implements TimeModel {
   canEditAnnotations(dashboardUID?: string) {
     let canEdit = true;
 
-    // if RBAC is enabled there are additional conditions to check
-    if (contextSrv.accessControlEnabled()) {
-      // dashboardUID is falsy when it is an organizational annotation
-      if (!dashboardUID) {
-        canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
-      } else {
-        canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
-      }
+    // dashboardUID is falsy when it is an organizational annotation
+    if (!dashboardUID) {
+      canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
+    } else {
+      canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
     return this.canEditDashboard() && canEdit;
   }
@@ -1201,13 +1198,11 @@ export class DashboardModel implements TimeModel {
   canDeleteAnnotations(dashboardUID?: string) {
     let canDelete = true;
 
-    if (contextSrv.accessControlEnabled()) {
-      // dashboardUID is falsy when it is an organizational annotation
-      if (!dashboardUID) {
-        canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
-      } else {
-        canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
-      }
+    // dashboardUID is falsy when it is an organizational annotation
+    if (!dashboardUID) {
+      canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
+    } else {
+      canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
     return canDelete && this.canEditDashboard();
   }
@@ -1220,7 +1215,7 @@ export class DashboardModel implements TimeModel {
     }
 
     // If RBAC is enabled there are additional conditions to check.
-    return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {

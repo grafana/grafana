@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -30,8 +29,6 @@ const ui = {
     delete: byRole('menuitem', { name: 'Delete' }),
   },
 };
-
-jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
 function renderRulesTable(rule: CombinedRule) {
   const store = configureStore();

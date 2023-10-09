@@ -13,7 +13,7 @@ import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-aler
 import { LogMessages } from '../../Analytics';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockFolderApi, mockProvisioningApi, setupMswServer } from '../../mockApi';
-import { disableRBAC, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
+import { mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -164,8 +164,6 @@ describe('Rules group tests', () => {
       groups: [group],
     };
 
-    disableRBAC();
-
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange
       mockUseHasRuler(true, true);
@@ -222,8 +220,6 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
-
-    disableRBAC();
 
     it('Should log info when closing the edit group rule modal without saving', async () => {
       mockUseHasRuler(true, true);

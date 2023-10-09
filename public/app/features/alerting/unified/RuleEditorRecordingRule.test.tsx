@@ -14,7 +14,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
@@ -98,7 +98,6 @@ describe('RuleEditor recording rules', () => {
     contextSrv.hasEditPermissionInFolders = true;
   });
 
-  disableRBAC();
   it('can create a new cloud recording rule', async () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));

@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { disableRBAC, enableRBAC, grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -47,10 +47,6 @@ describe('UnifiedAlertStatesWorker', () => {
 
   beforeEach(() => {
     config.publicDashboardAccessToken = '';
-  });
-
-  beforeAll(() => {
-    disableRBAC();
   });
 
   describe('when canWork is called with correct props', () => {
@@ -231,7 +227,6 @@ describe('UnifiedAlertStatesWorker', () => {
 
 describe('UnifiedAlertStateWorker with RBAC', () => {
   beforeAll(() => {
-    enableRBAC();
     grantUserPermissions([]);
   });
 

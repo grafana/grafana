@@ -18,7 +18,7 @@ import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -80,8 +80,6 @@ describe('RuleEditor grafana managed rules', () => {
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
-
-  disableRBAC();
 
   it('can edit grafana managed rule', async () => {
     const uid = 'FOOBAR123';

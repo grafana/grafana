@@ -18,7 +18,6 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
-  enableRBAC,
   grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
@@ -686,8 +685,6 @@ describe('RuleList', () => {
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
       it('Export button should be visible when the user has alert provisioning read permissions', async () => {
-        enableRBAC();
-
         grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
@@ -701,8 +698,6 @@ describe('RuleList', () => {
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
       it('Export button should be visible when the user has alert provisioning read secrets permissions', async () => {
-        enableRBAC();
-
         grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
@@ -716,8 +711,6 @@ describe('RuleList', () => {
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
       it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
-        enableRBAC();
-
         grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
@@ -733,8 +726,6 @@ describe('RuleList', () => {
     });
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -753,8 +744,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has alert rule create and folder read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -775,8 +764,6 @@ describe('RuleList', () => {
 
     describe('Cloud Alerts', () => {
       it('New alert button should be visible when the user has the alert rule external write and datasource read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           // AccessControlAction.AlertingRuleRead,
           AccessControlAction.DataSourcesRead,
@@ -803,8 +790,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has the alert rule external write and data source read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.DataSourcesRead,
           AccessControlAction.AlertingRuleExternalRead,
@@ -833,8 +818,6 @@ describe('RuleList', () => {
 
   describe('Analytics', () => {
     it('Sends log info when creating an alert rule from a scratch', async () => {
-      enableRBAC();
-
       grantUserPermissions([
         AccessControlAction.FoldersRead,
         AccessControlAction.AlertingRuleCreate,

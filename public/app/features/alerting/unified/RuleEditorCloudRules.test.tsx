@@ -12,7 +12,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
-import { disableRBAC, mockDataSource } from './mocks';
+import { mockDataSource } from './mocks';
 import {
   defaultAlertmanagerChoiceResponse,
   emptyExternalAlertmanagersResponse,
@@ -83,8 +83,6 @@ describe('RuleEditor cloud', () => {
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
-
-  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     mocks.api.setRulerRuleGroup.mockResolvedValue();

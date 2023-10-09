@@ -41,11 +41,9 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const teamId = parseInt(props.match.params.id, 10);
   const team = getTeam(state.team, teamId);
   let defaultPage = 'members';
-  if (contextSrv.accessControlEnabled()) {
-    // With RBAC the settings page will always be available
-    if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
-      defaultPage = 'settings';
-    }
+  // With RBAC the settings page will always be available
+  if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
+    defaultPage = 'settings';
   }
   const pageName = props.match.params.page ?? defaultPage;
   const teamLoadingNav = getTeamLoadingNav(pageName);
