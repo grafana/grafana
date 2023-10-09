@@ -1193,6 +1193,7 @@ steps:
   image: alpine/git:2.40.1
   name: clone-enterprise
 - commands:
+  - apk add --update git make
   - cd grafana
   - make swagger-clean && make openapi3-gen
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
@@ -4726,6 +4727,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 11802fb5591565922f453b48419635263a4229dd7ecbea7d8782db7ef1b03aa7
+hmac: 2da7fb2fbb1d9db404a9e057bc1ac84b7d29b4ea5f9a7c1f8e56eb19caa0edc4
 
 ...

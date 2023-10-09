@@ -55,6 +55,7 @@ def swagger_gen_step(ver_mode):
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            "apk add --update git make",
             "cd grafana",
             "make swagger-clean && make openapi3-gen",
             "for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done",
