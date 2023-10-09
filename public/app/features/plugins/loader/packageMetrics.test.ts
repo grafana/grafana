@@ -49,7 +49,6 @@ describe('trackPackageUsage', () => {
         key: 'foo',
         parent: 'your-package',
         packageName: 'your-package',
-        guessedPluginName: '',
       });
       expect(result).toEqual(obj);
     });
@@ -72,13 +71,11 @@ describe('trackPackageUsage', () => {
         key: 'foo2',
         parent: 'your-package',
         packageName: 'your-package',
-        guessedPluginName: '',
       });
       expect(logInfoMock).toHaveBeenCalledWith(`Plugin using your-package.foo2.bar`, {
         key: 'bar',
         parent: 'your-package.foo2',
         packageName: 'your-package',
-        guessedPluginName: '',
       });
 
       expect(result.foo2).toEqual(obj.foo2);
@@ -115,14 +112,12 @@ describe('trackPackageUsage', () => {
         key: 'foo3',
         parent: 'your-package',
         packageName: 'your-package',
-        guessedPluginName: '',
       });
       mockUsage(result2.foo3.bar);
       expect(logInfoMock).toHaveBeenCalledWith(`Plugin using your-package.foo3.bar`, {
         key: 'bar',
         parent: 'your-package.foo3',
         packageName: 'your-package',
-        guessedPluginName: '',
       });
 
       expect(result1.foo3).toEqual(obj.foo3);
@@ -157,43 +152,6 @@ describe('trackPackageUsage', () => {
 
       expect(result).toEqual(obj);
     });
-  });
-
-  it('should guess the plugin name from the stacktrace and urls', () => {
-    const mockErrorConstructor = jest.fn().mockImplementation(() => {
-      return {
-        stack: `Error
-    at eval (eval at get (http://localhost:3000/public/build/app.38735bee027ded74d65e.js:167859:11), <anonymous>:1:1)
-    at Object.get (http://localhost:3000/public/build/app.38735bee027ded74d65e.js:167859:11)
-    at eval (http://localhost:3000/public/plugins/alexanderzobnin-zabbix-app/panel-triggers/module.js?_cache=1695283550582:3:2582)
-    at eval (http://localhost:3000/public/plugins/alexanderzobnin-zabbix-app/panel-triggers/module.js?_cache=1695283550582:159:22081)
-    at Object.eval (http://localhost:3000/public/plugins/alexanderzobnin-zabbix-app/panel-triggers/module.js?_cache=1695283550582:159:22087)
-    at Object.execute (http://localhost:3000/public/build/app.38735bee027ded74d65e.js:529405:37)
-    at doExec (http://localhost:3000/public/build/app.38735bee027ded74d65e.js:529955:32)
-    at postOrderExec (http://localhost:3000/public/build/app.38735bee027ded74d65e.js:529951:12)
-    at http://localhost:3000/public/build/app.38735bee027ded74d65e.js:529899:14
-    at async http://localhost:3000/public/build/app.38735bee027ded74d65e.js:166261:16`,
-      };
-    });
-
-    const errorSpy = jest.spyOn(global, 'Error').mockImplementation(mockErrorConstructor);
-
-    const obj = {
-      lord: 'me',
-    };
-
-    const result = trackPackageUsage(obj, 'your-package');
-    mockUsage(result.lord);
-
-    expect(logInfoMock).toHaveBeenCalledTimes(1);
-    expect(logInfoMock).toHaveBeenLastCalledWith(`Plugin using your-package.lord`, {
-      key: 'lord',
-      parent: 'your-package',
-      packageName: 'your-package',
-      guessedPluginName: 'alexanderzobnin-zabbix-app',
-    });
-
-    errorSpy.mockRestore();
   });
 
   it('Should skip tracking if document.currentScript is not null', () => {

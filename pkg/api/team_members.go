@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := team.GetTeamMembersQuery{OrgID: c.OrgID, TeamID: teamId, SignedInUser: c.SignedInUser}
+	query := team.GetTeamMembersQuery{OrgID: c.SignedInUser.GetOrgID(), TeamID: teamId, SignedInUser: c.SignedInUser}
 
 	queryResult, err := hs.teamService.GetTeamMembers(c.Req.Context(), &query)
 	if err != nil {
@@ -77,13 +77,13 @@ func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.OrgID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.TeamID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	isTeamMember, err := hs.teamService.IsTeamMember(c.OrgID, cmd.TeamID, cmd.UserID)
+	isTeamMember, err := hs.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return response.Error(500, "Failed to add team member.", err)
 	}
@@ -124,7 +124,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Resp
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
-	orgId := c.OrgID
+	orgId := c.SignedInUser.GetOrgID()
 
 	isTeamMember, err := hs.teamService.IsTeamMember(orgId, teamId, userId)
 	if err != nil {
@@ -162,7 +162,7 @@ func getPermissionName(permission dashboards.PermissionType) string {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Response {
-	orgId := c.OrgID
+	orgId := c.SignedInUser.GetOrgID()
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)

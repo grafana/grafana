@@ -76,7 +76,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		OrgId:         c.OrgID,
+		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,

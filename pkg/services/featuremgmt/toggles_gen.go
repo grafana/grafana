@@ -332,7 +332,7 @@ const (
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
-	// Split panels between vizualizations and widgets
+	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
 	// FlagPrometheusIncrementalQueryInstrumentation
@@ -370,6 +370,10 @@ const (
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
 	FlagGrafanaAPIServer = "grafanaAPIServer"
+
+	// FlagGrafanaAPIServerWithExperimentalAPIs
+	// Register experimental APIs with the k8s API server
+	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
@@ -474,4 +478,20 @@ const (
 	// FlagAlertingModifiedExport
 	// Enables using UI for provisioned rules modification and export
 	FlagAlertingModifiedExport = "alertingModifiedExport"
+
+	// FlagPanelMonitoring
+	// Enables panel monitoring through logs and measurements
+	FlagPanelMonitoring = "panelMonitoring"
+
+	// FlagEnableNativeHTTPHistogram
+	// Enables native HTTP Histograms
+	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagTransformationsVariableSupport
+	// Allows using variables in transformations
+	FlagTransformationsVariableSupport = "transformationsVariableSupport"
+
+	// FlagKubernetesPlaylists
+	// Use the kubernetes API in the frontend for playlists
+	FlagKubernetesPlaylists = "kubernetesPlaylists"
 )

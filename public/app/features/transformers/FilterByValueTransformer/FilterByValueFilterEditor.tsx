@@ -96,7 +96,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           onChange={onChangeMatcher}
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing">
+      <div className="gf-form gf-form-spacing">
         <div className="gf-form-label">Value</div>
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </div>

@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
@@ -81,13 +83,11 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		mContext := web.FromContext(ctx)
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
-		defer span.End()
+		ctx, span := h.tracer.Start(r.Context(), "Auth - Middleware")
+		defer span.End() // this will span to next handlers as well
 
 		reqContext := &contextmodel.ReqContext{
-			Context: mContext,
+			Context: web.FromContext(ctx), // Extract web context from context (no knowledge of the trace)
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
@@ -97,17 +97,20 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			Logger:         log.New("context"),
 		}
 
-		// Inject ReqContext into http.Request.Context
-		*r = *r.WithContext(context.WithValue(ctx, reqContextKey{}, reqContext))
+		// inject ReqContext in the context
+		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
 		// store list of possible auth header in context
-		*reqContext.Req = *reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
+		ctx = WithAuthHTTPHeaders(ctx, h.Cfg)
+		// Set the context for the http.Request.Context
+		// This modifies both r and reqContext.Req since they point to the same value
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
+		traceID := tracing.TraceIDFromContext(reqContext.Req.Context(), false)
 		if traceID != "" {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
 			if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, authn.ErrExpiredAccessToken) {
 				// Burn the cookie in case of invalid, expired or missing token
@@ -125,13 +128,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
-		span.AddEvents(
-			[]string{"uname", "orgId", "userId"},
-			[]tracing.EventValue{
-				{Str: reqContext.Login},
-				{Num: reqContext.OrgID},
-				{Num: reqContext.UserID}},
-		)
+		span.AddEvent("user", trace.WithAttributes(
+			attribute.String("uname", reqContext.Login),
+			attribute.Int64("orgId", reqContext.OrgID),
+			attribute.Int64("userId", reqContext.UserID),
+		))
 
 		next.ServeHTTP(w, r)
 	})

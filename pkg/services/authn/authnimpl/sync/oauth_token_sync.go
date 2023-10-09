@@ -100,18 +100,24 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil
 	}
+	// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
+	updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 
-	if err := s.service.TryTokenRefresh(ctx, token); err != nil {
+	if err := s.service.TryTokenRefresh(updateCtx, token); err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
 		if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
-			s.log.FromContext(ctx).Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
+			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
 		}
 
 		if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
-			s.log.FromContext(ctx).Error("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
+			s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
 		}
 
 		if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
-			s.log.FromContext(ctx).Error("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
+			s.log.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 		}
 
 		return authn.ErrExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
