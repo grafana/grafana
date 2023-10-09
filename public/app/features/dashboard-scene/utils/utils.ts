@@ -155,27 +155,29 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
 export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
   // separate intervals by quotes either single or double
   const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
-  // if no intervals are found return initial state of interval reducer
+
+  // If no intervals are found in query, return the initial state of the interval reducer.
   if (!matchIntervals) {
-    const initialInterval = initialIntervalVariableModelState.query?.split(',');
-    return initialInterval ? initialInterval : [];
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
   }
+  const uniqueIntervals = new Set<string>();
 
   // when options are defined in variable.query
-  const intervals: string[] = matchIntervals.reduce((acc: string[], text: string) => {
-    // remove quotes
+  const intervals = matchIntervals.reduce((uniqueIntervals: Set<string>, text: string) => {
+    // Remove surrounding quotes from the interval value.
     const intervalValue = text.replace(/["']+/g, '');
-    // if the interval is not already in the array add it
-    if (!acc.includes(intervalValue)) {
-      // remove interval option auto
-      // scenes will handle the auto interval
-      if (!intervalValue.startsWith('$auto_interval')) {
-        acc.push(intervalValue);
-      }
+
+    // Skip intervals that start with "$auto_interval",scenes will handle them.
+    if (intervalValue.startsWith('$auto_interval')) {
+      return uniqueIntervals;
     }
-    return acc;
-  }, []);
-  return intervals;
+
+    // Add the interval if it's not already in the Set.
+    uniqueIntervals.add(intervalValue);
+    return uniqueIntervals;
+  }, uniqueIntervals);
+
+  return Array.from(intervals);
 }
 
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
