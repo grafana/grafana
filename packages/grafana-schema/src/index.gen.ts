@@ -48,7 +48,6 @@ export {
   defaultAnnotationPanelFilter,
   VariableRefresh,
   VariableSort,
-  LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
   defaultGridPos,

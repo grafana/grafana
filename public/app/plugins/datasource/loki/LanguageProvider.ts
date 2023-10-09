@@ -18,7 +18,7 @@ import {
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-import { ExtractedLabelKeys, LokiQuery, LokiQueryType } from './types';
+import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -365,7 +365,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetches all label keys
+   * Fetch all label keys
+   * This asynchronous function returns all available label keys from the data source.
+   * It returns a promise that resolves to an array of strings containing the label keys.
+   *
+   * @returns A promise containing an array of label keys.
+   * @throws An error if the fetch operation fails.
    */
   async fetchLabels(): Promise<string[]> {
     const url = 'labels';
@@ -386,12 +391,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a selector. This is cached by its args but also by the global timeRange currently selected as
-   * they can change over requested time.
-   * @param name
+   * Fetch series labels for a selector
+   *
+   * This method fetches labels for a given stream selector, such as `{job="grafana"}`.
+   * It returns a promise that resolves to a record mapping label names to their corresponding values.
+   *
+   * @param streamSelector - The stream selector for which you want to retrieve labels.
+   * @returns A promise containing a record of label names and their values.
+   * @throws An error if the fetch operation fails.
    */
-  fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
-    const interpolatedMatch = this.datasource.interpolateString(match);
+  fetchSeriesLabels = async (streamSelector: string): Promise<Record<string, string[]>> => {
+    const interpolatedMatch = this.datasource.interpolateString(streamSelector);
     const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
@@ -435,8 +445,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return await this.fetchLabelValues(key);
   }
 
-  async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+  /**
+   * Fetch label values
+   *
+   * This asynchronous function fetches values associated with a specified label name.
+   * It returns a promise that resolves to an array of strings containing the label values.
+   *
+   * @param labelName - The name of the label for which you want to retrieve values.
+   * @returns A promise containing an array of label values.
+   * @throws An error if the fetch operation fails.
+   */
+  async fetchLabelValues(labelName: string): Promise<string[]> {
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(labelName));
 
     const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
@@ -459,8 +479,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getParserAndLabelKeys(selector: string): Promise<ExtractedLabelKeys> {
-    const series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
+  /**
+   * Get parser and label keys for a selector
+   *
+   * This asynchronous function is used to fetch parsers and label keys for a selected log stream based on sampled lines.
+   * It returns a promise that resolves to an object with the following properties:
+   *
+   * - `extractedLabelKeys`: An array of available label keys associated with the log stream.
+   * - `hasJSON`: A boolean indicating whether JSON parsing is available for the stream.
+   * - `hasLogfmt`: A boolean indicating whether Logfmt parsing is available for the stream.
+   * - `hasPack`: A boolean indicating whether Pack parsing is available for the stream.
+   * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
+   *
+   * @param streamSelector - The selector for the log stream you want to analyze.
+   * @returns A promise containing an object with parser and label key information.
+   * @throws An error if the fetch operation fails.
+   */
+  async getParserAndLabelKeys(streamSelector: string): Promise<ParserAndLabelKeysResult> {
+    const series = await this.datasource.getDataSamples({ expr: streamSelector, refId: 'data-samples' });
 
     if (!series.length) {
       return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };

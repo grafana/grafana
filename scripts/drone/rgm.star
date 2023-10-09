@@ -84,7 +84,7 @@ nightly_trigger = {
     },
     "cron": {
         "include": [
-            "nightly",
+            "nightly-release",
         ],
     },
 }

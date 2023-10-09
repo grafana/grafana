@@ -1,9 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import React from 'react';
+
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
-export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getAlertsByStateScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -14,7 +17,6 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
         legendFormat: '{{state}}',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
@@ -26,6 +28,7 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) => b.matchFieldsWithName('active').overrideColor(overrideToFixedColor('active')))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

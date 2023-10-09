@@ -94,6 +94,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
 	}))
 
@@ -125,6 +126,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
 	}))
 
@@ -156,6 +158,7 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 			Type:     "test",
 			JsonData: jsonData,
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
 	}))
 
@@ -179,6 +182,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
 	}))
 
@@ -208,6 +212,7 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 			Type:     "test",
 			JsonData: jsonData,
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
 	}))
 
@@ -239,6 +244,8 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+
 		return hs.AddDataSource(c)
 	}))
 
@@ -375,7 +382,7 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 					body = strings.NewReader(tt.body)
 				}
 
-				res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, url, body), userWithPermissions(1, tt.permission)))
+				res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, url, body), authedUserWithPermissions(1, 1, tt.permission)))
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedCode, res.StatusCode)
 				require.NoError(t, res.Body.Close())

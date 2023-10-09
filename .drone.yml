@@ -827,6 +827,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -991,6 +996,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - pull_request
@@ -1187,6 +1205,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2107,6 +2130,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2250,6 +2278,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   branch: main
   event:
@@ -3342,7 +3383,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3417,7 +3458,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3523,7 +3564,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3669,7 +3710,7 @@ steps:
 trigger:
   cron:
     include:
-    - nightly
+    - nightly-release
   event:
     include:
     - cron
@@ -3780,6 +3821,11 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - /bin/mimir -target=backend
+  environment: {}
+  image: grafana/mimir:latest
+  name: mimir
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3916,6 +3962,19 @@ steps:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
+- commands:
+  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-remote-alertmanager
+- commands:
+  - apk add --update build-base
+  - go clean -testcache
+  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  depends_on:
+  - wire-install
+  - wait-for-remote-alertmanager
+  image: golang:1.20.8-alpine
+  name: remote-alertmanager-integration-tests
 trigger:
   event:
   - promote
@@ -4330,6 +4389,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4363,6 +4423,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4637,6 +4698,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 64f26b010ead4ae69e840d53098bc6088a78e92ae0fa6dabc93ad4daee481b49
+hmac: 593b79c82658d626566f9cbb11cb079860eb16fa65d94fbaa5e881aa580fd37b
 
 ...
