@@ -21,8 +21,6 @@ def cronjobs():
         scan_docker_image_pipeline("latest-ubuntu"),
         scan_docker_image_pipeline("main-ubuntu"),
         scan_build_test_publish_docker_image_pipeline(),
-        # This has been commented out in favor of the new nightly pipeline created on rgm.star
-        # grafana_com_nightly_pipeline(),
     ]
 
 def authenticate_gcr_step():
@@ -183,13 +181,3 @@ def post_to_grafana_com_step():
         "depends_on": ["compile-build-cmd"],
         "commands": ["./bin/build publish grafana-com --edition oss"],
     }
-
-def grafana_com_nightly_pipeline():
-    return cron_job_pipeline(
-        cronName = "grafana-com-nightly",
-        name = "grafana-com-nightly",
-        steps = [
-            compile_build_cmd(),
-            post_to_grafana_com_step(),
-        ],
-    )
