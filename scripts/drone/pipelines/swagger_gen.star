@@ -23,7 +23,7 @@ def clone_pr_branch(ver_mode):
     """Clones the PR branch, in contrast to the default cloning which checks out the target branch main and merges the changes on top.
 
     Args:
-        ver_mode: ??
+        ver_mode: ?
 
     Returns:
       Drone step.
