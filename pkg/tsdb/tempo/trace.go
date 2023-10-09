@@ -28,7 +28,11 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
+	if model.Query == nil || *model.Query == "" {
+		return result, fmt.Errorf("trace id is required")
+	}
+
+	request, err := s.createRequest(ctx, dsInfo, *model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
 		return result, err
 	}
@@ -50,7 +54,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.Query, resp.Status, string(body))
+		result.Error = fmt.Errorf("failed to get trace with id: %v Status: %s Body: %s", model.Query, resp.Status, string(body))
 		return result, nil
 	}
 

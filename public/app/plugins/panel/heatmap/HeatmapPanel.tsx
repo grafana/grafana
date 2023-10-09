@@ -68,15 +68,23 @@ export const HeatmapPanel = ({
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(
+        data.series,
+        data.annotations,
+        options,
+        palette,
+        theme,
+        getFieldLinksSupplier,
+        replaceVariables
+      );
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier, replaceVariables]);
 
   const facets = useMemo(() => {
-    let exemplarsXFacet: number[] = []; // "Time" field
-    let exemplarsyFacet: number[] = [];
+    let exemplarsXFacet: number[] | undefined = []; // "Time" field
+    let exemplarsyFacet: Array<number | undefined> = [];
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
@@ -87,9 +95,9 @@ export const HeatmapPanel = ({
 
       if (hasLabeledY) {
         let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
-        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
+        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
       } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values as number[]; // "Value" field
+        exemplarsyFacet = info.exemplars?.fields[1].values; // "Value" field
       }
     }
 
@@ -126,8 +134,7 @@ export const HeatmapPanel = ({
   dataRef.current = info;
 
   const builder = useMemo(() => {
-    const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
-      ?.scaleDistribution as ScaleDistributionConfig;
+    const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
     return prepConfig({
       dataRef,

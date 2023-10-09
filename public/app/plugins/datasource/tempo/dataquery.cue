@@ -27,7 +27,7 @@ composableKinds: DataQuery: {
 			schema: {
 				#TempoQuery: common.DataQuery & {
 					// TraceQL query or trace ID
-					query: string
+					query?: string
 					// @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
 					search?: string
 					// @deprecated Query traces by service name
@@ -49,6 +49,8 @@ composableKinds: DataQuery: {
 					filters: [...#TraceqlFilter]
 					// Filters that are used to query the metrics summary
 					groupBy?: [...#TraceqlFilter]
+					// The type of the table that is used to display the search results
+					tableType?: #SearchTableType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -56,6 +58,9 @@ composableKinds: DataQuery: {
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
+
+				// The type of the table that is used to display the search results
+				#SearchTableType: "traces" | "spans" @cuetsy(kind="enum")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
 				#TraceqlSearchScope: "intrinsic" | "unscoped" | "resource" | "span" @cuetsy(kind="enum")
