@@ -4468,43 +4468,6 @@ volumes:
 - name: config
   temp: {}
 ---
-clone:
-  retries: 3
-kind: pipeline
-name: grafana-com-nightly
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.20.8-alpine
-  name: compile-build-cmd
-- commands:
-  - ./bin/build publish grafana-com --edition oss
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: post-to-grafana-com
-trigger:
-  cron: grafana-com-nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
-  temp: {}
----
 get:
   name: credentials.json
   path: infra/data/ci/grafana-release-eng/grafanauploads
@@ -4698,6 +4661,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 593b79c82658d626566f9cbb11cb079860eb16fa65d94fbaa5e881aa580fd37b
+hmac: 68c3d5cfb08c1e5384f39ea57badfd6dbb46943a87d54571665ec29a1257b707
 
 ...

@@ -21,7 +21,8 @@ def cronjobs():
         scan_docker_image_pipeline("latest-ubuntu"),
         scan_docker_image_pipeline("main-ubuntu"),
         scan_build_test_publish_docker_image_pipeline(),
-        grafana_com_nightly_pipeline(),
+        # This has been commented out in favor of the new nightly pipeline created on rgm.star
+        # grafana_com_nightly_pipeline(),
     ]
 
 def authenticate_gcr_step():
