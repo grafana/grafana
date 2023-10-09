@@ -7,7 +7,7 @@ import {
   FieldSparkline,
   isDataFrame,
   Field,
-  DataFrameWithValue,
+  isDataFrameWithValue,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -88,7 +88,7 @@ export const SparklineCell = (props: TableCellProps) => {
   let valueWidth = 0;
   let valueElement: React.ReactNode = null;
   if (!hideValue) {
-    const value = (cell.value as DataFrameWithValue).value;
+    const value = isDataFrameWithValue(cell.value) ? cell.value.value : null;
     const displayValue = field.display!(value);
     const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
 
