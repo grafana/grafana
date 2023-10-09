@@ -128,8 +128,8 @@ export const setErrorMarkers = (
         endLineNumber: endLine,
 
         // `+ 1` because squiggles seem shifted by one
-        startColumn: start + model.getLineLength(startLine) + (startLine === 1 ? 1 : 0),
-        endColumn: end + model.getLineLength(endLine) + (endLine === 1 ? 1 : 0),
+        startColumn: start + model.getLineLength(startLine) + startLine,
+        endColumn: end + model.getLineLength(endLine) + endLine + (endLine === 1 ? 1 : 0),
       };
     })
   );
