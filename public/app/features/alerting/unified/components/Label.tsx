@@ -18,7 +18,7 @@ interface Props {
 
 // TODO allow customization with color prop
 const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, color, size));
+  const styles = useStyles2(getStyles, color, size);
 
   return (
     <div className={styles.wrapper} role="listitem">

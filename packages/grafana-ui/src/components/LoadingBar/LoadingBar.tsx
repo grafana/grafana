@@ -20,7 +20,7 @@ const MAX_TRANSLATE_X = (100 / BAR_WIDTH) * 100;
 
 export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel = 'Loading bar' }: LoadingBarProps) {
   const durationMs = Math.min(Math.max(Math.round(width * MILLISECONDS_PER_PIXEL), MIN_DURATION_MS), MAX_DURATION_MS);
-  const styles = useStyles2((theme) => getStyles(theme, delay, durationMs));
+  const styles = useStyles2(getStyles, delay, durationMs);
   const containerStyles: CSSProperties = {
     overflow: 'hidden',
   };
