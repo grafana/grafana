@@ -1,4 +1,4 @@
-import { isEmptyObject, PanelModel, TimeRange, toDataFrameDTO } from '@grafana/data';
+import { isEmptyObject, PanelModel, TimeRange } from '@grafana/data';
 import {
   SceneDataLayers,
   SceneGridItem,
@@ -22,7 +22,9 @@ import {
   VariableRefresh,
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -31,6 +33,8 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
+
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
@@ -215,8 +219,24 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
 
     panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
+
   if (dataProvider && isSnapshot) {
-    panel.snapshotData = dataProvider.state.data?.series.map((frame) => toDataFrameDTO(frame));
+    panel.datasource = GRAFANA_DATASOURCE_REF;
+
+    let data = getPanelDataFrames(dataProvider.state.data);
+    if (dataProvider instanceof SceneDataTransformer) {
+      // For transformations the non-transformed data is snapshoted
+      data = getPanelDataFrames(dataProvider.state.$data!.state.data);
+    }
+
+    panel.targets = [
+      {
+        refId: 'A',
+        datasource: panel.datasource,
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: data,
+      },
+    ];
   }
 
   if (gridItem instanceof PanelRepeaterGridItem) {
@@ -277,17 +297,9 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 
   // remove panel queries & links
   dash.panels?.forEach((panel) => {
-    if ('targets' in panel) {
-      panel.targets = [];
-    }
-
     // Some very very very old dashboards had links in panels?
     if ('links' in panel) {
       panel.links = [];
-    }
-
-    if ('datasource' in panel) {
-      panel.datasource = undefined;
     }
   });
 
@@ -299,11 +311,8 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
         name: annotation.name,
         enable: annotation.enable,
         iconColor: annotation.iconColor,
-        // @ts-expect-error
-        snapshotData: annotation.snapshotData,
         type: annotation.type,
-        // @ts-expect-error
-        builtIn: annotation.builtIn,
+        // builtIn: annotation.builtIn,
         hide: annotation.hide,
       };
     });
@@ -323,6 +332,7 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
       }
     });
   }
+
   return dash;
 
   // TODO snapshot single panel

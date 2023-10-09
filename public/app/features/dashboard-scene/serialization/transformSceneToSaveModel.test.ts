@@ -9,6 +9,7 @@ import {
   FieldType,
   PanelData,
   standardTransformersRegistry,
+  StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -40,6 +41,7 @@ import {
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel, trimDashboardForSnapshot } from './transformSceneToSaveModel';
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
 setPluginImportUtils({
@@ -107,7 +109,7 @@ jest.mock('@grafana/runtime', () => ({
       getRef: () => ({ type: 'mock-ds', uid: 'mock-uid' }),
       variables: {
         getType: () => VariableSupportType.Standard,
-        toDataQuery: (q) => q,
+        toDataQuery: (q: StandardVariableQuery) => q,
       },
     }),
   }),
@@ -470,7 +472,7 @@ describe('transformSceneToSaveModel', () => {
       advanceTo(fakeCurrentDate);
     });
 
-    it('attaches snapshotData to panels and annotations', async () => {
+    it('attaches snapshot data to panels using Grafana snapshot query', async () => {
       const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
 
       activateFullSceneTree(scene);
@@ -483,168 +485,49 @@ describe('transformSceneToSaveModel', () => {
 
       // Regular panel with SceneQueryRunner
       // @ts-expect-error
-      expect(snapshot.panels?.[0].snapshotData).toBeDefined();
+      expect(snapshot.panels?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
-      expect(snapshot.panels?.[0].snapshotData).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "time",
-                "type": "time",
-                "values": [
-                  100,
-                  200,
-                  300,
-                ],
-              },
-              {
-                "config": {},
-                "name": "values",
-                "type": "number",
-                "values": [
-                  1,
-                  2,
-                  3,
-                ],
-              },
-            ],
-            "name": "A",
-          },
-        ]
-       `);
+      expect(snapshot.panels?.[0].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
+      // @ts-expect-error
+      expect(snapshot.panels?.[0].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      });
 
       // Panel with transformations
       // @ts-expect-error
-      expect(snapshot.panels?.[1].snapshotData).toBeDefined();
+      expect(snapshot.panels?.[1].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
-      expect(snapshot.panels?.[1].snapshotData).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "Field",
-                "type": "string",
-                "values": [
-                  "values",
-                ],
-              },
-              {
-                "config": {},
-                "name": "Max",
-                "type": "number",
-                "values": [
-                  30,
-                ],
-              },
-            ],
-            "meta": {
-              "transformations": [
-                "reduce",
-              ],
-            },
-          },
-        ]
-      `);
+      expect(snapshot.panels?.[1].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
+      // @ts-expect-error
+      expect(snapshot.panels?.[1].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [100, 200, 300],
+          [10, 20, 30],
+        ],
+      });
+      // @ts-expect-error
+      expect(snapshot.panels?.[1].transformations).toEqual([
+        {
+          id: 'reduce',
+          options: {},
+        },
+      ]);
 
       // Panel with a shared query (dahsboard query)
       // @ts-expect-error
-      expect(snapshot.panels?.[2].snapshotData).toBeDefined();
+      expect(snapshot.panels?.[2].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
-      expect(snapshot.panels?.[2].snapshotData).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "time",
-                "type": "time",
-                "values": [
-                  100,
-                  200,
-                  300,
-                ],
-              },
-              {
-                "config": {},
-                "name": "values",
-                "type": "number",
-                "values": [
-                  1,
-                  2,
-                  3,
-                ],
-              },
-            ],
-            "name": "A",
-          },
-        ]
-       `);
+      expect(snapshot.panels?.[2].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
-      expect(snapshot.annotations?.list?.[0].snapshotData).toBeDefined();
-      // @ts-expect-error
-      expect(snapshot.annotations?.list?.[0].snapshotData).toMatchInlineSnapshot(`
-        [
-          {
-            "color": "red",
-            "id": "1",
-            "isRegion": false,
-            "text": "t1",
-            "time": 1,
-            "type": "Annotations & Alerts",
-          },
-          {
-            "color": "red",
-            "id": "2",
-            "isRegion": false,
-            "text": "t2",
-            "time": 2,
-            "type": "Annotations & Alerts",
-          },
-          {
-            "color": "red",
-            "id": "5",
-            "isRegion": false,
-            "text": "t4",
-            "time": 5,
-            "type": "Annotations & Alerts",
-          },
-        ]
-      `);
-
-      // @ts-expect-error
-      expect(snapshot.annotations?.list?.[1].snapshotData).toBeDefined();
-      // @ts-expect-error
-      expect(snapshot.annotations?.list?.[1].snapshotData).toMatchInlineSnapshot(`
-      [
-        {
-          "color": "red",
-          "id": "1",
-          "isRegion": false,
-          "text": "t1",
-          "time": 1,
-          "type": "New annotation",
-        },
-        {
-          "color": "red",
-          "id": "2",
-          "isRegion": false,
-          "text": "t2",
-          "time": 2,
-          "type": "New annotation",
-        },
-        {
-          "color": "red",
-          "id": "5",
-          "isRegion": false,
-          "text": "t4",
-          "time": 5,
-          "type": "New annotation",
-        },
-      ]
-    `);
+      expect(snapshot.panels?.[2].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      });
     });
 
     describe('trimDashboardForSnapshot', () => {
@@ -688,36 +571,6 @@ describe('transformSceneToSaveModel', () => {
           text: 'annotations',
           value: 'annotations',
         });
-      });
-
-      it('should remove queries, datasource and links(???) from panels', () => {
-        // @ts-expect-error
-        expect(snapshot.panels?.[0].datasource).toBeDefined();
-        // @ts-expect-error
-        expect(snapshot.panels?.[1].datasource).toBeDefined();
-        // @ts-expect-error
-        expect(snapshot.panels?.[2].datasource).toBeDefined();
-        // @ts-expect-error
-        expect(snapshot.panels?.[0].targets).not.toEqual([]);
-        // @ts-expect-error
-        expect(snapshot.panels?.[1].targets).not.toEqual([]);
-        // @ts-expect-error
-        expect(snapshot.panels?.[2].targets).not.toEqual([]);
-
-        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
-
-        // @ts-expect-error
-        expect(result.panels?.[0].datasource).toBeUndefined();
-        // @ts-expect-error
-        expect(result.panels?.[1].datasource).toBeUndefined();
-        // @ts-expect-error
-        expect(result.panels?.[2].datasource).toBeUndefined();
-        // @ts-expect-error
-        expect(result.panels?.[0].targets).toEqual([]);
-        // @ts-expect-error
-        expect(result.panels?.[1].targets).toEqual([]);
-        // @ts-expect-error
-        expect(result.panels?.[2].targets).toEqual([]);
       });
 
       // TODO: Uncomment when we support links
