@@ -22,6 +22,7 @@ type Props = {
   detailState: DetailState | undefined;
   traceStartTime: number;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
+  setDetailsPanelOffset: (offset: number) => void;
 };
 
 enum TabLabels {
@@ -33,7 +34,16 @@ enum TabLabels {
 }
 
 export function DetailsPanel(props: Props) {
-  const { span, timeZone, width, clearSelectedSpan, detailState, traceStartTime, detailLogItemToggle } = props;
+  const {
+    span,
+    timeZone,
+    width,
+    clearSelectedSpan,
+    detailState,
+    traceStartTime,
+    detailLogItemToggle,
+    setDetailsPanelOffset,
+  } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
 
@@ -84,8 +94,12 @@ export function DetailsPanel(props: Props) {
 
   const linksGetter = () => [];
 
+  const onDrawerResize = (e: MouseEvent | TouchEvent) => {
+    setDetailsPanelOffset(window.innerHeight - (e as unknown as MouseEvent).pageY);
+  };
+
   return (
-    <ExploreDrawer width={width}>
+    <ExploreDrawer width={width} onResize={onDrawerResize}>
       <div className={cx(styles.header, styles.flexSpaceBetween)}>
         <div
           className={cx(
@@ -117,7 +131,7 @@ export function DetailsPanel(props: Props) {
         })}
       </TabsBar>
 
-      <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar>
         <TabContent className={styles.tabContent}>
           {activeTab === TabLabels.Attributes && (
             <div style={{ display: 'flex', gap: '0 1rem' }}>

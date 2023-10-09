@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useMemo, useState } from 'react';
+import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -54,6 +54,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.h4.fontSize};
     color: ${theme.colors.text.secondary};
   `,
+  detailsPanel: css`
+    label: DetailsPanel;
+    position: sticky;
+    z-index: 999999999;
+  `,
 });
 
 type Props = {
@@ -86,6 +91,7 @@ export function TraceView(props: Props) {
     detailStackTracesToggle,
   } = useDetailState(props.dataFrames[0]);
 
+  const theme = useTheme2();
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
@@ -95,8 +101,19 @@ export function TraceView(props: Props) {
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
   const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
+  const [detailsPanelOffset, setDetailsPanelOffset] = useState(0);
 
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    if (selectedSpan) {
+      if (detailsPanelOffset === 0) {
+        setDetailsPanelOffset(theme.components.horizontalDrawer.defaultHeight);
+      }
+    } else {
+      setDetailsPanelOffset(0);
+    }
+  }, [selectedSpan, theme.components.horizontalDrawer.defaultHeight, detailsPanelOffset]);
 
   /**
    * Keeps state of resizable name column width
@@ -210,15 +227,18 @@ export function TraceView(props: Props) {
             setSelectedSpan={setSelectedSpan}
             selectedSpanId={selectedSpan?.spanID}
           />
-          <DetailsPanel
-            span={selectedSpan}
-            timeZone={timeZone}
-            width={width}
-            clearSelectedSpan={() => setSelectedSpan(undefined)}
-            detailState={detailStates.get(selectedSpan?.spanID ?? '')}
-            traceStartTime={traceProp.startTime}
-            detailLogItemToggle={detailLogItemToggle}
-          />
+          <div className={styles.detailsPanel} style={{ paddingTop: detailsPanelOffset }}>
+            <DetailsPanel
+              span={selectedSpan}
+              timeZone={timeZone}
+              width={width}
+              clearSelectedSpan={() => setSelectedSpan(undefined)}
+              detailState={detailStates.get(selectedSpan?.spanID ?? '')}
+              traceStartTime={traceProp.startTime}
+              detailLogItemToggle={detailLogItemToggle}
+              setDetailsPanelOffset={setDetailsPanelOffset}
+            />
+          </div>
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>
