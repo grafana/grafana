@@ -17,9 +17,5 @@
     "webpack": "5.88.1",
     "webpack-livereload-plugin": "3.0.2"
   },
-  "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development"
-  },
   "packageManager": "yarn@3.6.0"
 }
