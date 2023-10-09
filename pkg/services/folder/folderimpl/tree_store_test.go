@@ -774,6 +774,48 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 	}
 }
 
+func TestGetFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := sqlstore.InitTestDB(t)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
+
+	storeFolders(t, folderStore.db, true)
+
+	testCases := []struct {
+		desc         string
+		UIDs         []string
+		expectedTree []*folder.Folder
+	}{
+		{
+			desc: "get folders",
+			UIDs: []string{"3", "4"},
+			expectedTree: []*folder.Folder{
+				{
+					UID:      "3",
+					Fullpath: "TELEVISIONS/TUBE",
+					Title:    "TUBE",
+				},
+				{
+					UID:      "4",
+					Fullpath: "TELEVISIONS/LCD",
+					Title:    "LCD",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		folders, err := folderStore.GetFolders(context.Background(), orgID, tc.UIDs...)
+		require.NoError(t, err)
+
+		assert.Equal(t, len(tc.expectedTree), len(folders))
+	}
+}
+
 func TestIntegrationTreeStore(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	orgID := createOrg(t, db)

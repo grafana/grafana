@@ -333,7 +333,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 	return height, nil
 }
 
-func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids ...string) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}

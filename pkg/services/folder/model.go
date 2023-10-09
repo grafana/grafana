@@ -47,6 +47,8 @@ type Folder struct {
 
 	Lft int64
 	Rgt int64
+
+	Fullpath string `xorm:"fullpath"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}

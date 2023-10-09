@@ -172,20 +172,46 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.UID != "" {
-		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	if cmd.UID == "" {
+		folderUIDs := s.getAccessibleFolderUIDs(cmd.OrgID, cmd.SignedInUser)
+		accessibleFolders, err := s.store.GetFolders(ctx, cmd.OrgID, folderUIDs...)
 		if err != nil {
-			return nil, err
+			return nil, folder.ErrInternal.Errorf("failed to accessible subfolders from nested folder store: %w", err)
 		}
 
-		canView, err := g.CanView()
-		if err != nil {
-			return nil, err
-		}
+		children := make([]*folder.Folder, 0, len(accessibleFolders))
 
-		if !canView {
-			return nil, dashboards.ErrFolderAccessDenied
+		paths := make(map[string]struct{})
+		for _, f := range accessibleFolders {
+			ancestors := strings.Split(f.Fullpath, "/")
+			exclude := false
+			for i := range ancestors {
+				p := strings.Join(ancestors[:i], "/")
+				if _, found := paths[p]; found {
+					exclude = true
+					break
+				}
+			}
+			if !exclude {
+				paths[f.Fullpath] = struct{}{}
+				children = append(children, f)
+			}
 		}
+		return children, nil
+	}
+
+	g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
+
+	canView, err := g.CanView()
+	if err != nil {
+		return nil, err
+	}
+
+	if !canView {
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	children, err := s.store.GetChildren(ctx, *cmd)
@@ -198,25 +224,9 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		childrenUIDs = append(childrenUIDs, f.UID)
 	}
 
-	availableNonRootFolders := make([]*folder.Folder, 0)
-	if cmd.UID == "" {
-		availableNonRootFolders, err = s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-		}
-
-		for _, f := range availableNonRootFolders {
-			childrenUIDs = append(childrenUIDs, f.UID)
-		}
-	}
-
 	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	if cmd.UID == "" {
-		children = append(children, availableNonRootFolders...)
 	}
 
 	filtered := make([]*folder.Folder, 0, len(children))
@@ -231,38 +241,19 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		// always expose the dashboard store sequential ID
 		f.ID = dashFolder.ID
 
-		if cmd.UID != "" {
-			// parent access has been checked already
-			// the subfolder must be accessible as well (due to inheritance)
-			filtered = append(filtered, f)
-			continue
-		}
-
-		g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, err
-		}
-		canView, err := g.CanView()
-		if err != nil {
-			return nil, err
-		}
-		if canView {
-			filtered = append(filtered, f)
-		}
-	}
-
-	if cmd.UID == "" {
-		filtered = s.deduplicateAvailableFolders(ctx, filtered)
+		// parent access has been checked already
+		// the subfolder must be accessible as well (due to inheritance)
+		filtered = append(filtered, f)
+		continue
 	}
 
 	return filtered, nil
 }
 
-func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+func (s *Service) getAccessibleFolderUIDs(orgID int64, user identity.Requester) []string {
 	permissions := user.GetPermissions()
-	folderPermissions := permissions["folders:read"]
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
 	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
-	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0)
 	for _, p := range folderPermissions {
 		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
@@ -272,11 +263,19 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		}
 	}
 
+	return folderUids
+}
+
+/*
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	nonRootFolders := make([]*folder.Folder, 0)
+	folderUids := s.getAccessibleFolderUIDs(orgID, user)
+
 	if len(folderUids) == 0 {
 		return nonRootFolders, nil
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids...)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}
@@ -327,6 +326,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 
 	return foldersDedup
 }
+*/
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {

@@ -347,6 +347,77 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 	return int(height), nil
 }
 
+/*
+func (hs *treeStore) GetSubtree(ctx context.Context, orgID int64, UID *string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	groupConcatSep := ","
+	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		subpaths := hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep)
+		q := fmt.Sprintf(`
+		SELECT %s AS fullpath, node.*
+		FROM folder AS node,
+			folder AS parent,
+			folder AS root
+		WHERE node.lft BETWEEN root.lft AND root.rgt AND node.org_id = ? AND root.uid = ?
+		ORDER BY node.lft
+		`, subpaths)
+		if err := sess.SQL(q, orgID, *UID).Find(&folders); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
+		folders[idx].WithURL()
+		return nil
+	}); err != nil {
+		hs.log.Debug("failed to set URL to folders", "err", err)
+	}
+	return folders, nil
+}
+*/
+
+func (hs *treeStore) GetFolders(ctx context.Context, orgID int64, uids ...string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		b := strings.Builder{}
+		args := make([]any, 0, len(uids)+1)
+
+		groupConcatSep := ","
+		b.WriteString(fmt.Sprintf(`
+		SELECT %s AS fullpath, node.*
+		FROM folder AS node,
+			folder AS parent
+		WHERE node.lft > parent.lft AND node.rgt < parent.rgt AND node.org_id = ?
+		`, hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep)))
+		args = append(args, orgID)
+		for i, uid := range uids {
+			if i == 0 {
+				b.WriteString("  AND (")
+			}
+
+			if i > 0 {
+				b.WriteString(" OR ")
+			}
+			b.WriteString(" node.uid=? ")
+			args = append(args, uid)
+
+			if i == len(uids)-1 {
+				b.WriteString(")")
+			}
+		}
+		b.WriteString(" GROUP BY node.uid ORDER BY fullpath")
+		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	return folders, nil
+}
+
 func (hs *treeStore) getTree(ctx context.Context, orgID int64) ([]string, error) {
 	var tree []string
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {

@@ -5,7 +5,11 @@ import (
 )
 
 type Service interface {
-	// GetChildren returns an array containing all child folders.
+	// GetChildren returns an array containing all child folders the user has access to.
+	// If the UID is not empty, returns all the direct children of the folder with the given UID the user has access to.
+	// If the UID is empty, returns all the direct children of the root folder the user has access to
+	// including the subfolders that are not direct children but the user has access to
+	// and their ancestors up to the root folder are not included.
 	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
 	// GetParents returns an array containing add parent folders if nested folders are enabled
 	// otherwise it returns an empty array

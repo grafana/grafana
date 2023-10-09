@@ -35,5 +35,6 @@ type store interface {
 	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 
 	// GetFolders returns folders with given uids
-	GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error)
+	// The folders are ordered by their full paths
+	GetFolders(ctx context.Context, orgID int64, uids ...string) ([]*folder.Folder, error)
 }
