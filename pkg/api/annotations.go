@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -132,9 +133,14 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(400, "Failed to save annotation", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgID:       c.SignedInUser.GetOrgID(),
-		UserID:      c.UserID,
+		UserID:      userID,
 		DashboardID: cmd.DashboardId,
 		PanelID:     cmd.PanelId,
 		Epoch:       cmd.Time,
@@ -214,9 +220,14 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgID:  c.SignedInUser.GetOrgID(),
-		UserID: c.UserID,
+		UserID: userID,
 		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
@@ -264,9 +275,15 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return dashboardGuardianResponse(err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to update annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
-		UserID:   c.UserID,
+		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    cmd.Time,
 		EpochEnd: cmd.TimeEnd,
@@ -319,9 +336,15 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return dashboardGuardianResponse(err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to update annotation", err)
+	}
+
 	existing := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
-		UserID:   c.UserID,
+		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    annotation.Time,
 		EpochEnd: annotation.TimeEnd,
