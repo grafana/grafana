@@ -9,7 +9,7 @@ export interface PublicDashboardCfg {
   footerText: React.ReactNode;
   footerLogo: string;
   footerLink: string;
-  headerLogoShow: boolean;
+  headerLogoHide: boolean;
 }
 
 const FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=public-dashboards';
@@ -39,7 +39,7 @@ export let useGetPublicDashboardConfig = (): PublicDashboardCfg => {
     footerText: <span className={styles.text}>Powered by</span>,
     footerLogo: theme.isDark ? 'public/img/grafana_text_logo_light.svg' : 'public/img/grafana_text_logo_dark.svg',
     footerLink: FOOTER_URL,
-    headerLogoShow: true,
+    headerLogoHide: false,
   };
 };
 

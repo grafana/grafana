@@ -49,7 +49,7 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   return (
     <PageToolbar
       title={dashboard.title}
-      pageIcon={conf.headerLogoShow ? 'grafana' : undefined}
+      pageIcon={!conf.headerLogoHide ? 'grafana' : undefined}
       buttonOverflowAlignment="right"
     >
       {!dashboard.timepicker.hidden && (

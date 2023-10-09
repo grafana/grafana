@@ -133,8 +133,8 @@ To customize the footer of a public dashboard, add the following section to the 
 # Set to link for the footer
 ;footer_link =
 
-# Set to `true` to show the Grafana logo next to the title
-;header_logo_show =
+# Set to `true` to hide the Grafana logo next to the title
+;header_logo_hide =
 ```
 
 If you specify `footer_hide` to `true`, all the other values are ignored because the footer will not be shown.

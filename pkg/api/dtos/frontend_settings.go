@@ -98,7 +98,7 @@ type FrontendSettingsPublicDashboardConfigDTO struct {
 	FooterText     string `json:"footerText"`
 	FooterLogo     string `json:"footerLogo"`
 	FooterLink     string `json:"footerLink"`
-	HeaderLogoShow bool   `json:"headerLogoShow"`
+	HeaderLogoHide bool   `json:"headerLogoHide"`
 }
 
 // Enterprise-only
