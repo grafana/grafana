@@ -366,7 +366,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   /**
    * Fetch all label keys
-   * This asynchronous function is designed to retrieve all available label keys from the data source.
+   * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
    *
    * @returns A promise containing an array of label keys.
