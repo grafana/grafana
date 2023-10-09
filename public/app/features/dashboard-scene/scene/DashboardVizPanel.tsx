@@ -1,5 +1,5 @@
 import { AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import { SceneComponent, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { AdHocFilterItem } from '@grafana/ui';
 
 export class DashboardVizPanel extends VizPanel {
