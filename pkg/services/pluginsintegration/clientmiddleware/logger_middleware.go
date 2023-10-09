@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -14,7 +15,7 @@ import (
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
-// log requests.
+// log requests and add a contextual logger to the request context.
 func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
@@ -33,10 +34,25 @@ type LoggerMiddleware struct {
 	logger plog.Logger
 }
 
+// instrumentContext adds a contextual logger with plugin and request details to the given context.
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
+	return log.WithContextualAttributes(ctx, p)
+}
+
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
+
+	ctx = instrumentContext(ctx, endpoint, pluginCtx)
 	err := fn(ctx)
 	if err != nil {
 		status = statusError
