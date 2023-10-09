@@ -43,37 +43,37 @@ For more information about creating dashboards, refer to [Add and organize panel
 
 ## Browse dashboards
 
-On the Dashboards page, you can browse and manage folders and dashboards, including:
+On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
 
-- Creating folders and dashboards
+- Create folders and dashboards
 - Move dashboards between folders
 - Delete multiple dashboards and folders
 - Navigate to a folder
-- Manage folder permissions. For more information, see [Dashboard permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#dashboard-permissions)
+- Manage folder permissions. For more information, refer to [Dashboard permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#dashboard-permissions).
 
 {{% admonition type="note" %}}
-As of Grafana 10.2 there is no longer the special 'General' folder. Dashboards without a folder are now shown at the top level along side folders.
+As of Grafana 10.2, there is no longer a special **General** folder. Dashboards without a folder are now shown at the top level alongside folders.
 {{% /admonition %}}
 
 ## Create a dashboard folder
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-> **Before you begin:** Ensure you have Editor or greater permission to create folders. For more information about dashboard permissions, refer to [Dashboard permissions][].
+> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions][].
 
 **To create a dashboard folder:**
 
-1. Click **Dashboards** in the left-side menu.
-1. On the Dashboards page, click **New** and select **New folder** in the dropdown.
+1. Click **Dashboards** in the main menu.
+1. On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
 
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
 **To edit the name of a folder:**
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the folder by selecting it in the list, or searching for it.
-1. Click the pencil icon labelled **"Edit title"** in the header
+1. Click the pencil icon labelled **Edit title** in the header and update the name of the folder.
 
 The new folder name is automatically saved.
 
@@ -81,12 +81,14 @@ The new folder name is automatically saved.
 
 You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. You can assign permissions to **Organization Roles**, **Teams**, and **Users**.
 
-**To modify permissions on a folder:**
+**To modify permissions for a folder:**
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the folder by selecting it in the list, or searching for it.
-1. On the folder's page, click **Folder actions** and select **Manage permissions** in the dropdown.
-1. Update the permissions as desired. Changes are saved automatically.
+1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
+1. Update the permissions as desired. 
+
+Changes are saved automatically.
 
 For more information about dashboard permissions, refer to [Dashboard permissions][].
 
@@ -98,12 +100,12 @@ You can use the Grafana UI or the [HTTP API][] to export and import dashboards.
 
 The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
 1. Click the **Share** icon in the top navigation bar.
 1. Click **Export**.
 
-- If you are exporting the dashboard to use in another instance, with different data source UIDs, select the **Export for sharing externally** option.
+    If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
 
 1. Click **Save to file**.
 
