@@ -6,7 +6,7 @@ Welcome to the developer documentation for the Loki data source! The purpose of 
 
 Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key APIs that are highly recommended for app plugin development.
 
-It's important to note that the other APIs and methods that are not mentioned here may undergo changes or may not be suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
+It's important to note some APIs and methods were deliberately ommited, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
 
 ## Recommended APIs
 
