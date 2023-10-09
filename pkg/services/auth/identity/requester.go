@@ -94,7 +94,8 @@ func IntIdentifier(namespace, identifier string) (int64, error) {
 func UserIdentifier(namespace, identifier string) (int64, error) {
 	userID, err := IntIdentifier(namespace, identifier)
 	if err != nil {
-		return 0, err
+		// FIXME: return this error once entity namespaces are handled by stores
+		return 0, nil
 	}
 
 	switch namespace {
