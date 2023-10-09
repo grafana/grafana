@@ -73,7 +73,7 @@ const FlameGraphTopTableContainer = React.memo(
     // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
     // so with some max height it handles it fine)
     const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
-    const styles = getStyles(tableHeight);
+    const styles = getStyles(tableHeight, getTheme());
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
@@ -327,13 +327,15 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = (height: number) => {
+const getStyles = (height: number, theme: GrafanaTheme2) => {
   return {
     topTableContainer: css`
       label: topTableContainer;
       flex-grow: 1;
       flex-basis: 50%;
       overflow: hidden;
+      padding: ${theme.spacing(1)};
+      background-color: ${theme.colors.background.secondary};
       ${height
         ? css`
             min-height: ${height}px;

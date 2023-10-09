@@ -3,10 +3,11 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net"
+	"net/http"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -18,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -90,7 +91,8 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	restConfig *clientrest.Config
+	restConfig   *clientrest.Config
+	etcd_servers []string
 
 	enabled   bool
 	dataPath  string
@@ -100,17 +102,23 @@ type service struct {
 	rr       routing.RouteRegister
 	handler  web.Handler
 	builders []APIGroupBuilder
+
+	authorizer authorizer.Authorizer
 }
 
-func ProvideService(cfg *setting.Cfg,
+func ProvideService(
+	cfg *setting.Cfg,
 	rr routing.RouteRegister,
+	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
-		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
-		builders: []APIGroupBuilder{},
+		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		enabled:      cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:           rr,
+		dataPath:     path.Join(cfg.DataPath, "k8s"),
+		stopCh:       make(chan struct{}),
+		builders:     []APIGroupBuilder{},
+		authorizer:   authz,
 	}
 
 	// This will be used when running as a dskit service
@@ -119,7 +127,7 @@ func ProvideService(cfg *setting.Cfg,
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
@@ -134,7 +142,10 @@ func ProvideService(cfg *setting.Cfg,
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
+	}
+
+	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
 }
@@ -168,11 +179,13 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.Etcd = nil
+	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
+
 	o.Admission = nil
 	o.CoreAPI = nil
+	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
+		o.Etcd = nil
+	}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
@@ -213,6 +226,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
@@ -236,7 +250,23 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
 	serverConfig.SkipOpenAPIInstallation = false
+	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		requestHandler, err := getAPIHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
+		}
+		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
@@ -246,7 +276,11 @@ func (s *service) start(ctx context.Context) error {
 
 	// Install the API Group+version
 	for _, b := range builders {
-		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, serverConfig.RESTOptionsGetter)
+		if err != nil {
+			return err
+		}
+		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}
@@ -263,7 +297,6 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: this is a hack. see note in ProvideService
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
 			req.URL.Path = "/"
 		}
@@ -272,10 +305,6 @@ func (s *service) start(ctx context.Context) error {
 
 		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
 		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
-		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
-		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
-		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)

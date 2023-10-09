@@ -129,7 +129,14 @@ export function isPromise(value: unknown): value is Promise<unknown> {
 }
 
 export function isReactComponent(component: unknown): component is React.ComponentType {
+  const hasReactTypeProp = (obj: unknown): obj is { $$typeof: Symbol } =>
+    typeof obj === 'object' && obj !== null && '$$typeof' in obj;
+
+  // The sandbox wraps the plugin components with React.memo.
+  const isReactMemoObject = (obj: unknown): boolean =>
+    hasReactTypeProp(obj) && obj.$$typeof === Symbol.for('react.memo');
+
   // We currently don't have any strict runtime-checking for this.
   // (The main reason is that we don't want to start depending on React implementation details.)
-  return typeof component === 'function';
+  return typeof component === 'function' || isReactMemoObject(component);
 }

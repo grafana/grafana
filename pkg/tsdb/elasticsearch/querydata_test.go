@@ -139,7 +139,7 @@ func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, 
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo, log.New("test.logger"), tracing.NewFakeTracer())
+	result, err := queryData(context.Background(), queries, dsInfo, log.New("test.logger"), tracing.InitializeTracerForTest())
 	if err != nil {
 		return queryDataTestResult{}, err
 	}
