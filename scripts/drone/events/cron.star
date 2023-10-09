@@ -3,10 +3,6 @@ This module provides functions for cronjob pipelines and steps used within.
 """
 
 load(
-    "scripts/drone/steps/lib.star",
-    "compile_build_cmd",
-)
-load(
     "scripts/drone/utils/images.star",
     "images",
 )
