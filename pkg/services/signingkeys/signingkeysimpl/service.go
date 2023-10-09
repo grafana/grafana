@@ -36,7 +36,7 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 ) (*Service, error) {
 	s := &Service{
 		log:            log.New("auth.key_service"),
-		store:          signingkeystore.NewSigningKeyStore(dbStore, secretsService),
+		store:          signingkeystore.NewSigningKeyStore(dbStore),
 		secretsService: secretsService,
 		remoteCache:    remoteCache,
 		localCache:     localcache.New(1*time.Hour, 1*time.Hour),
@@ -61,7 +61,7 @@ type Service struct {
 
 const (
 	jwksCacheKey  = "signingkeys-jwks"
-	defaultExpiry = 12 * time.Hour
+	defaultExpiry = 60 * time.Second
 )
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
@@ -124,7 +124,6 @@ func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	}
 
 	keyID := keyMonthScopedID(keyPrefix, alg)
-
 	signer, err := s.getPrivateKey(ctx, keyID)
 	if err == nil {
 		return keyID, signer, nil
@@ -146,12 +145,22 @@ func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 }
 
 func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
+	if key, ok := s.localCache.Get(keyID); ok {
+		return key.(crypto.Signer), nil
+	}
+
 	key, err := s.store.Get(ctx, keyID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.decodePrivateKey(ctx, key.PrivateKey)
+	singer, err := s.decodePrivateKey(ctx, key.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	s.localCache.Set(keyID, singer, defaultExpiry)
+	return singer, nil
 }
 
 func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm, force bool) (crypto.Signer, error) {
@@ -183,6 +192,9 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 	if err != nil {
 		return nil, err
 	}
+
+	// invalidate local cache
+	s.localCache.Delete(keyID)
 
 	// invalidate cache
 	if err := s.remoteCache.Delete(ctx, jwksCacheKey); err != nil {
