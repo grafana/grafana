@@ -4,10 +4,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { HorizontalGroup, Input } from '..';
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button, ButtonVariant } from '../Button';
+import { Input } from '../Input/Input';
+import { HorizontalGroup } from '../Layout/Layout';
 import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {

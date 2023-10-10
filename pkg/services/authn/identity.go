@@ -29,6 +29,10 @@ const (
 	NamespaceRenderService  = identity.NamespaceRenderService
 )
 
+const (
+	AnonymousNamespaceID = NamespaceAnonymous + ":0"
+)
+
 var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
@@ -43,8 +47,6 @@ type Identity struct {
 	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID string
-	// IsAnonymous
-	IsAnonymous bool
 	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
@@ -202,6 +204,8 @@ func (i *Identity) NamespacedID() (string, int64) {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
+	namespace, id := i.GetNamespacedID()
+
 	u := &user.SignedInUser{
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
@@ -211,7 +215,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Email:           i.Email,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     i.IsAnonymous,
+		IsAnonymous:     namespace == NamespaceAnonymous,
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
@@ -220,7 +224,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDToken:         i.IDToken,
 	}
 
-	namespace, id := i.GetNamespacedID()
 	if namespace == NamespaceAPIKey {
 		u.ApiKeyID = intIdentifier(id)
 	} else {

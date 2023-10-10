@@ -1,6 +1,8 @@
+import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFilterSet,
   behaviors,
   CustomVariable,
   DataSourceVariable,
@@ -14,7 +16,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardCursorSync, defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
+import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -42,6 +44,9 @@ describe('transformSaveModelToScene', () => {
         title: 'test',
         uid: 'test-uid',
         time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
         templating: {
           list: [
             {
@@ -49,7 +54,6 @@ describe('transformSaveModelToScene', () => {
               name: 'constant',
               skipUrlSync: false,
               type: 'constant' as VariableType,
-              rootStateKey: 'N4XLmH5Vz',
               query: 'test',
               id: 'constant',
               global: false,
@@ -58,6 +62,19 @@ describe('transformSaveModelToScene', () => {
               error: null,
               description: '',
               datasource: null,
+            },
+            {
+              hide: 2,
+              name: 'CoolFilters',
+              type: 'adhoc' as VariableType,
+              datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+              id: 'adhoc',
+              global: false,
+              skipUrlSync: false,
+              index: 3,
+              state: LoadingState.Done,
+              error: null,
+              description: '',
             },
           ],
         },
@@ -69,8 +86,13 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
+      expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
+      expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
+      expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
+      expect(scene.state.controls![2]).toBeInstanceOf(AdHocFilterSet);
+      expect((scene.state.controls![2] as AdHocFilterSet).state.name).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -615,7 +637,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it.each(['adhoc', 'interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it.each(['interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,

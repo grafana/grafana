@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   LinkButton,
   FilterInput,
@@ -14,19 +16,18 @@ import {
   HorizontalGroup,
   Pagination,
   VerticalGroup,
+  useStyles2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { Avatar } from '../admin/Users/Avatar';
 
-import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
-import { isPermissionTeamAdmin } from './state/selectors';
+import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
 type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
 export interface OwnProps {}
@@ -44,13 +45,12 @@ export const TeamList = ({
   deleteTeam,
   changeQuery,
   totalPages,
-  signedInUser,
-  editorsCanAdmin,
   page,
   changePage,
+  changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const enableSort = totalPages === 1;
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadTeams(true);
@@ -76,19 +76,19 @@ export const TeamList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'memberCount',
         header: 'Members',
         cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
-        sortType: enableSort ? 'number' : undefined,
+        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
@@ -96,10 +96,9 @@ export const TeamList = ({
               id: 'role',
               header: 'Role',
               cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
                   AccessControlAction.ActionTeamsRolesList,
-                  original,
-                  false
+                  original
                 );
                 return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
               },
@@ -110,16 +109,7 @@ export const TeamList = ({
         id: 'edit',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          const isTeamAdmin = isPermissionTeamAdmin({
-            permission: original.permission,
-            editorsCanAdmin,
-            signedInUser,
-          });
-          const canReadTeam = contextSrv.hasAccessInMetadata(
-            AccessControlAction.ActionTeamsRead,
-            original,
-            isTeamAdmin
-          );
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           return canReadTeam ? (
             <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
               <Tooltip content={'Edit team'}>
@@ -133,16 +123,7 @@ export const TeamList = ({
         id: 'delete',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          const isTeamAdmin = isPermissionTeamAdmin({
-            permission: original.permission,
-            editorsCanAdmin,
-            signedInUser,
-          });
-          const canDelete = contextSrv.hasAccessInMetadata(
-            AccessControlAction.ActionTeamsDelete,
-            original,
-            isTeamAdmin
-          );
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
 
           return (
             <DeleteButton
@@ -155,7 +136,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam, enableSort]
+    [displayRolePicker, roleOptions, deleteTeam]
   );
 
   return (
@@ -185,16 +166,46 @@ export const TeamList = ({
               </LinkButton>
             </div>
             <VerticalGroup spacing={'md'}>
-              <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
-              <HorizontalGroup justify="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </HorizontalGroup>
+              <div className={styles.wrapper}>
+                <InteractiveTable
+                  columns={columns}
+                  data={teams}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <HorizontalGroup justify="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </HorizontalGroup>
+              </div>
             </VerticalGroup>
           </>
         )}
       </Page.Contents>
     </Page>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    // Enable RolePicker overflow
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      minHeight: '100vh',
+      width: '100%',
+      '& > div': {
+        overflowX: 'unset',
+        marginBottom: theme.spacing(2),
+      },
+    }),
+  };
 };
 
 function shouldDisplayRolePicker(): boolean {
@@ -214,8 +225,6 @@ function mapStateToProps(state: StoreState) {
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
@@ -224,6 +233,7 @@ const mapDispatchToProps = {
   deleteTeam,
   changePage,
   changeQuery,
+  changeSort,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

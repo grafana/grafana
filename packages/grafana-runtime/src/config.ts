@@ -94,13 +94,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
-  dashboardPreviews: {
-    systemRequirements: {
-      met: boolean;
-      requiredImageRendererPluginVersion: string;
-    };
-    thumbnailsExist: boolean;
-  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;

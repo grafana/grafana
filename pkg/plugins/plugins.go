@@ -29,6 +29,7 @@ var (
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	ErrUnsupportedAlias          = errors.New("can not set alias in plugin.json")
 )
 
 type Plugin struct {
@@ -64,9 +65,6 @@ type Plugin struct {
 	log            log.Logger
 
 	mu sync.Mutex
-
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
 }
 
 // JSONData represents the plugin's plugin.json
@@ -75,7 +73,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
-	Alias        string       `json:"alias,omitempty"`
+	AliasIDs     []string     `json:"aliasIDs,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -130,12 +128,20 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	switch plugin.ID {
 	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
-	case "grafana-pyroscope-datasource": // rebranding
-		plugin.Alias = "phlare"
+	case "grafana-pyroscope-datasource":
+		fallthrough
 	case "grafana-testdata-datasource":
-		plugin.Alias = "testdata"
-	case "debug": // panel plugin used for testing
-		plugin.Alias = "debugX"
+		fallthrough
+	case "annolist":
+		fallthrough
+	case "debug":
+		if len(plugin.AliasIDs) == 0 {
+			return plugin, fmt.Errorf("expected alias to be set")
+		}
+	default: // TODO: when gcom validates the alias, this condition can be removed
+		if len(plugin.AliasIDs) > 0 {
+			return plugin, ErrUnsupportedAlias
+		}
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {

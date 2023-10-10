@@ -254,7 +254,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values }),
+    reduce: (field: Field) => ({ allValues: [...field.values] }),
   },
   {
     id: ReducerID.uniqueValues,

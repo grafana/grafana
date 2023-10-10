@@ -49,6 +49,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
+| `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                     | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
 ## Preview feature toggles
@@ -63,7 +64,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `dockedMegaMenu`                 | Enable support for a persistent (docked) navigation menu                                                                                                                                     |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`            | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                  | Enable folder nesting                                                                                                                                                                        |
@@ -78,7 +78,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
-| `newBrowseDashboards`            | New browse/manage dashboards UI                                                                                                                                                              |
 
 ## Experimental feature toggles
 
@@ -97,6 +96,7 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                       |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                           |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
+| `dockedMegaMenu`                            | Enable support for a persistent (docked) navigation menu                                                     |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
@@ -120,7 +120,7 @@ Experimental features might be changed or removed without prior notice.
 | `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                   |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
-| `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
+| `vizAndWidgetSplit`                         | Split panels between visualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
@@ -128,6 +128,7 @@ Experimental features might be changed or removed without prior notice.
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                       |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                     |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
+| `grafanaAPIServerWithExperimentalAPIs`      | Register experimental APIs with the k8s API server                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
@@ -142,6 +143,12 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
+| `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                       |
+| `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
+| `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
+| `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
+| `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
+| `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
 
 ## Development feature toggles
 
