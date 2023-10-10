@@ -46,6 +46,10 @@ func getPrivateKey(t *testing.T, svc *Service) []byte {
 }
 
 func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	svc := &Service{
 		log:            log.NewNopLogger(),
 		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
@@ -84,6 +88,10 @@ func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T)
 }
 
 func TestIntegrationEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	cacheStorage := remotecache.NewFakeCacheStorage()
 	svc := &Service{
 		log:            log.NewNopLogger(),

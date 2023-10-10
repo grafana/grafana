@@ -13,6 +13,10 @@ import (
 )
 
 func TestIntegrationSigningKeyStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	setup := func() (context.Context, *Store) {
 		return context.Background(), NewSigningKeyStore(db.InitTestDB(t))
 	}
