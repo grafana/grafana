@@ -22,7 +22,6 @@ const (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups   []string
 	apiUrl          string
 	skipOrgRoleSync bool
 }

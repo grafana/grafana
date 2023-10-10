@@ -71,6 +71,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 	s.log.Debug("Resolved user info", "data", fmt.Sprintf("%+v", userInfo))
 
+	if !s.isGroupMember(groups) {
+		return nil, errMissingGroupMembership
+	}
+
 	return userInfo, nil
 }
 
