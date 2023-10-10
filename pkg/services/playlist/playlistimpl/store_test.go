@@ -77,6 +77,32 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 		})
 	})
 
+	t.Run("Can create playlist with known UID", func(t *testing.T) {
+		items := []playlist.PlaylistItem{
+			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
+			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
+		}
+		cmd := playlist.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1,
+			Items: items,
+			UID:   "abcd",
+		}
+		p, err := playlistStore.Insert(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Equal(t, "abcd", p.UID)
+
+		// Should get an error with an invalid UID
+		cmd.UID = "invalid uid"
+		_, err = playlistStore.Insert(context.Background(), &cmd)
+		require.Error(t, err)
+
+		// cleanup
+		err = playlistStore.Delete(context.Background(), &playlist.DeletePlaylistCommand{
+			OrgId: 1,
+			UID:   "abcd",
+		})
+		require.NoError(t, err)
+	})
+
 	t.Run("Search playlist", func(t *testing.T) {
 		items := []playlist.PlaylistItem{
 			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
