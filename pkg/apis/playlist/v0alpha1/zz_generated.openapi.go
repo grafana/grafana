@@ -14,8 +14,13 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	return map[string]common.OpenAPIDefinition{}
+func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Item":         schema_pkg_apis_playlist_v0alpha1_Item(ref),
+		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist":     schema_pkg_apis_playlist_v0alpha1_Playlist(ref),
+		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.PlaylistList": schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref),
+		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Spec":         schema_pkg_apis_playlist_v0alpha1_Spec(ref),
+	}
 }
 
 func schema_pkg_apis_playlist_v0alpha1_Item(ref common.ReferenceCallback) common.OpenAPIDefinition {
@@ -25,13 +30,6 @@ func schema_pkg_apis_playlist_v0alpha1_Item(ref common.ReferenceCallback) common
 				Description: "Item defines model for Item.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Title is an unused property -- it will be removed in the future",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Type of the item.",
@@ -84,15 +82,15 @@ func schema_pkg_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallback) co
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(kindPkg + "Spec"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Spec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			kindPkg + "Spec",
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Spec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -122,14 +120,14 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCallback
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"playlists": {
+					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(kindPkg + "Playlist"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist"),
 									},
 								},
 							},
@@ -139,7 +137,7 @@ func schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			kindPkg + "Playlist", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -150,29 +148,7 @@ func schema_pkg_apis_playlist_v0alpha1_Spec(ref common.ReferenceCallback) common
 				Description: "Spec defines model for Spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Interval sets the time between switching views in a playlist. FIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The ordered list of items that the playlist will iterate over. FIXME! This should not be optional, but changing it makes the godegen awkward",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(kindPkg + "Item"),
-									},
-								},
-							},
-						},
-					},
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name of the playlist.",
 							Default:     "",
@@ -180,19 +156,33 @@ func schema_pkg_apis_playlist_v0alpha1_Spec(ref common.ReferenceCallback) common
 							Format:      "",
 						},
 					},
-					"uid": {
+					"interval": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Unique playlist identifier. Generated on creation, either by the creator of the playlist of by the application.",
+							Description: "Interval sets the time between switching views in a playlist.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The ordered list of items that the playlist will iterate over.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Item"),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"interval", "name", "uid"},
+				Required: []string{"title", "interval"},
 			},
 		},
 		Dependencies: []string{
-			kindPkg + "Item"},
+			"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Item"},
 	}
 }

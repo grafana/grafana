@@ -38,11 +38,18 @@ class LegacyAPI implements PlaylistAPI {
 }
 
 interface KubernetesPlaylistList {
-  playlists: KubernetesPlaylist[];
+  items: KubernetesPlaylist[];
 }
 
 interface KubernetesPlaylist {
-  spec: Playlist;
+  metadata: {
+    name: string;
+  };
+  spec: {
+    title: string;
+    interval: string;
+    items: PlaylistItem[];
+  };
 }
 
 class K8sAPI implements PlaylistAPI {
@@ -50,13 +57,14 @@ class K8sAPI implements PlaylistAPI {
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
-    return result.playlists.map((p) => p.spec);
+    return result.items.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
-    const p = await getBackendSrv().get<KubernetesPlaylist>(this.url + '/' + uid);
-    await migrateInternalIDs(p.spec);
-    return p.spec;
+    const r = await getBackendSrv().get<KubernetesPlaylist>(this.url + '/' + uid);
+    const p = k8sResourceAsPlaylist(r);
+    await migrateInternalIDs(p);
+    return p;
   }
 
   async createPlaylist(playlist: Playlist): Promise<void> {
@@ -80,7 +88,10 @@ class K8sAPI implements PlaylistAPI {
         metadata: {
           name: playlist.uid,
         },
-        spec: playlist,
+        spec: {
+          ...playlist,
+          title: playlist.name,
+        },
       })
     );
   }
@@ -88,6 +99,18 @@ class K8sAPI implements PlaylistAPI {
   async deletePlaylist(uid: string): Promise<void> {
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
+}
+
+// This converts a saved k8s resource into a playlist object
+// the main difference is that k8s uses metdata.name as the uid
+// to avoid future confusion, the display name is now called "title"
+function k8sResourceAsPlaylist(r: KubernetesPlaylist): Playlist {
+  return {
+    uid: r.metadata.name, // fill the uid from k8s name
+    name: r.spec.title,
+    interval: r.spec.interval,
+    items: r.spec.items,
+  };
 }
 
 /** @deprecated -- this migrates playlists saved with internal ids to uid  */
