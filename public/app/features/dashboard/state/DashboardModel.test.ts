@@ -2,7 +2,6 @@ import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
 import { Dashboard, defaultVariableModel } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -21,8 +20,6 @@ import {
 } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
-
-const mockContextSrv = jest.mocked(contextSrv);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -950,7 +947,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canAddAnnotations();
         expect(result).toBe(expected);
       }
@@ -983,7 +979,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations();
         expect(result).toBe(expected);
       }
@@ -1014,7 +1009,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
@@ -1047,7 +1041,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations();
         expect(result).toBe(expected);
       }
@@ -1078,7 +1071,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }

@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   LinkButton,
   FilterInput,
@@ -14,6 +16,7 @@ import {
   HorizontalGroup,
   Pagination,
   VerticalGroup,
+  useStyles2,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -47,6 +50,7 @@ export const TeamList = ({
   changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadTeams(true);
@@ -163,21 +167,46 @@ export const TeamList = ({
               </LinkButton>
             </div>
             <VerticalGroup spacing={'md'}>
-              <InteractiveTable
-                columns={columns}
-                data={teams}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <HorizontalGroup justify="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </HorizontalGroup>
+              <div className={styles.wrapper}>
+                <InteractiveTable
+                  columns={columns}
+                  data={teams}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <HorizontalGroup justify="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </HorizontalGroup>
+              </div>
             </VerticalGroup>
           </>
         )}
       </Page.Contents>
     </Page>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    // Enable RolePicker overflow
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      minHeight: '100vh',
+      width: '100%',
+      '& > div': {
+        overflowX: 'unset',
+        marginBottom: theme.spacing(2),
+      },
+    }),
+  };
 };
 
 function shouldDisplayRolePicker(): boolean {
