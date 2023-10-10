@@ -83,10 +83,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryContainer: css({
       label: 'queryContainer',
-      // Need to override normal css class and don't want to count on ordering of the classes in html.
-      height: 'auto !important',
-      flex: 'unset !important',
-      display: 'unset !important',
       padding: theme.spacing(1),
     }),
     exploreContainer: css({
@@ -580,7 +576,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <div className={styles.wrapper}>
             {contentOutlineVisible && (
               <div className={styles.left}>
-                <ContentOutline />
+                <ContentOutline scroller={this.scrollElement} />
               </div>
             )}
             <CustomScrollbar
@@ -591,28 +587,28 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer} ref={this.topOfViewRef}>
                 {datasourceInstance ? (
                   <>
-                    <PanelContainer className={styles.queryContainer}>
-                      <ContentOutlineItem title="Queries" icon="arrow">
+                    <ContentOutlineItem title="Queries" icon="arrow">
+                      <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
-                      </ContentOutlineItem>
-                      <SecondaryActions
-                        // do not allow people to add queries with potentially different datasources in correlations editor mode
-                        addQueryRowButtonDisabled={
-                          isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
-                        }
-                        // We cannot show multiple traces at the same time right now so we do not show add query button.
-                        //TODO:unification
-                        addQueryRowButtonHidden={false}
-                        richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                        richHistoryButtonActive={showRichHistory}
-                        queryInspectorButtonActive={showQueryInspector}
-                        onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                        onClickRichHistoryButton={this.toggleShowRichHistory}
-                        onClickQueryInspectorButton={this.toggleShowQueryInspector}
-                      />
-                      <ResponseErrorContainer exploreId={exploreId} />
-                    </PanelContainer>
+                        <SecondaryActions
+                          // do not allow people to add queries with potentially different datasources in correlations editor mode
+                          addQueryRowButtonDisabled={
+                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
+                          }
+                          // We cannot show multiple traces at the same time right now so we do not show add query button.
+                          //TODO:unification
+                          addQueryRowButtonHidden={false}
+                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
+                          richHistoryButtonActive={showRichHistory}
+                          queryInspectorButtonActive={showQueryInspector}
+                          onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                          onClickRichHistoryButton={this.toggleShowRichHistory}
+                          onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                        />
+                        <ResponseErrorContainer exploreId={exploreId} />
+                      </PanelContainer>
+                    </ContentOutlineItem>
                     <AutoSizer onResize={this.onResize} disableHeight>
                       {({ width }) => {
                         if (width === 0) {
