@@ -91,6 +91,13 @@ func NewHysteresisCommand(refID string, referenceVar string, loadCondition Thres
 // The input data frame must have a single field of uint64 type.
 // Returns error if the input data frame has invalid format
 func FingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
+	frameType, frameVersion := frame.TypeInfo("")
+	if frameType != "fingerprints" {
+		return nil, fmt.Errorf("invalid format of loaded dimensions frame: expected frame type 'fingerprints'")
+	}
+	if frameVersion.Greater(data.FrameTypeVersion{1, 0}) {
+		return nil, fmt.Errorf("invalid format of loaded dimensions frame: expected frame type 'fingerprints' of version 1.0 or lower")
+	}
 	if len(frame.Fields) != 1 {
 		return nil, fmt.Errorf("invalid format of loaded dimensions frame: expected a single field but got %d", len(frame.Fields))
 	}

@@ -161,7 +161,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedDimensions": {"schema":{"name":"test","fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3,4,5]]}}
+				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3,4,5]]}}
 				    }
 				  ]
 				}`,

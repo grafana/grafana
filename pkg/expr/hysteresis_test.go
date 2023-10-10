@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -119,6 +120,7 @@ func TestHysteresisExecute(t *testing.T) {
 }
 
 func TestLoadedDimensionsFromFrame(t *testing.T) {
+	correctType := &data.FrameMeta{Type: "fingerprints", TypeVersion: data.FrameTypeVersion{1, 0}}
 	testCases := []struct {
 		name          string
 		frame         *data.Frame
@@ -126,8 +128,18 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 		expectedError bool
 	}{
 		{
+			name:          "should fail if frame has wrong type",
+			frame:         data.NewFrame("test").SetMeta(&data.FrameMeta{Type: "test"}),
+			expectedError: true,
+		},
+		{
+			name:          "should fail if frame has unsupported version",
+			frame:         data.NewFrame("test").SetMeta(&data.FrameMeta{Type: "fingerprints", TypeVersion: data.FrameTypeVersion{1, 1}}),
+			expectedError: true,
+		},
+		{
 			name:          "should fail if frame has no fields",
-			frame:         data.NewFrame("test"),
+			frame:         data.NewFrame("test").SetMeta(correctType),
 			expectedError: true,
 		},
 		{
@@ -135,28 +147,28 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 			frame: data.NewFrame("test",
 				data.NewField("fingerprints", nil, []uint64{}),
 				data.NewField("test", nil, []string{}),
-			),
+			).SetMeta(correctType),
 			expectedError: true,
 		},
 		{
 			name: "should fail if frame has field of a wrong type",
 			frame: data.NewFrame("test",
 				data.NewField("fingerprints", nil, []int64{}),
-			),
+			).SetMeta(correctType),
 			expectedError: true,
 		},
 		{
 			name: "should fail if frame has nullable uint64 field",
 			frame: data.NewFrame("test",
 				data.NewField("fingerprints", nil, []*uint64{}),
-			),
+			).SetMeta(correctType),
 			expectedError: true,
 		},
 		{
 			name: "should create LoadedMetrics",
 			frame: data.NewFrame("test",
 				data.NewField("fingerprints", nil, []uint64{1, 2, 3, 4, 5}),
-			),
+			).SetMeta(correctType),
 			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
 		},
 	}
@@ -168,6 +180,8 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.EqualValues(t, testCase.expected, result)
+				b, _ := json.Marshal(testCase.frame)
+				t.Log(string(b))
 			}
 		})
 	}
