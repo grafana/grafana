@@ -48,6 +48,7 @@ export type AccordianLogsProps = {
   linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logs: TraceLog[];
   onItemToggle?: (log: TraceLog) => void;
+  onToggle?: () => void;
   openedItems?: Set<TraceLog>;
   timestamp: number;
 };
