@@ -18,6 +18,12 @@ export interface QueryOperationRowHeaderProps {
   reportDragMousePosition: MouseEventHandler<HTMLButtonElement>;
   title?: string;
   id: string;
+  expanderMessages?: ExpanderMessages;
+}
+
+export interface ExpanderMessages {
+  open: string;
+  close: string;
 }
 
 export const QueryOperationRowHeader = ({
@@ -32,8 +38,16 @@ export const QueryOperationRowHeader = ({
   reportDragMousePosition,
   title,
   id,
+  expanderMessages,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
+
+  let tooltipMessage = isContentVisible ? 'Collapse query row' : 'Expand query row';
+  if (expanderMessages !== undefined && isContentVisible) {
+    tooltipMessage = expanderMessages.close;
+  } else if (expanderMessages !== undefined) {
+    tooltipMessage = expanderMessages?.open;
+  }
 
   return (
     <div className={styles.header}>
@@ -41,7 +55,7 @@ export const QueryOperationRowHeader = ({
         {collapsable && (
           <IconButton
             name={isContentVisible ? 'angle-down' : 'angle-right'}
-            tooltip={isContentVisible ? 'Collapse query row' : 'Expand query row'}
+            tooltip={tooltipMessage}
             className={styles.collapseIcon}
             onClick={onRowToggle}
             aria-expanded={isContentVisible}

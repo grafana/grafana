@@ -134,9 +134,15 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		if err != nil {
 			return err
 		}
-		if id, ok := ids[rule.UID]; ok {
-			rule.ID = id
-		} else {
+		var fixed bool
+		for _, key := range ids {
+			if key.UID == rule.UID {
+				rule.ID = key.ID
+				fixed = true
+				break
+			}
+		}
+		if !fixed {
 			return errors.New("couldn't find newly created id")
 		}
 
@@ -309,8 +315,8 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if err != nil {
 				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
-			for uid := range uids {
-				if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
+			for _, key := range uids {
+				if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: key.UID}, orgID, provenance); err != nil {
 					return err
 				}
 			}

@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Role",
+      "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
       "user-label": "User"
@@ -18,6 +19,7 @@
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
+      "serviceaccount": "Service Account",
       "team": "Team",
       "title": "Permissions",
       "user": "User"
@@ -314,6 +316,20 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "Configure a new data source",
+    "built-in-list": {
+      "description-dashboard": "Reuse query results from other visualizations",
+      "description-grafana": "Discover visualizations using mock data",
+      "description-mixed": "Use multiple data sources"
+    },
+    "list": {
+      "no-data-source-message": "No data sources found"
+    },
+    "modal": {
+      "configure-new-data-source": "Open a new tab and configure a data source",
+      "input-placeholder": "Select data source",
+      "title": "Select data source"
+    },
     "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {

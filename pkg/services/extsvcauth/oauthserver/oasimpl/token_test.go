@@ -22,8 +22,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -703,15 +703,13 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 		opt(client1)
 	}
 
-	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:         client1.ServiceAccountID,
+	sa1 := &extsvcauth.ExtSvcAccount{
+		ID:         client1.ServiceAccountID,
 		Name:       client1.Name,
 		Login:      client1.Name,
-		OrgId:      oauthserver.TmpOrgID,
+		OrgID:      oauthserver.TmpOrgID,
 		IsDisabled: false,
-		Created:    now,
-		Updated:    now,
-		Role:       "Viewer",
+		Role:       roletype.RoleNone,
 	}
 
 	user56 := &user.User{
@@ -735,7 +733,7 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 	// To retrieve the Client, its publicKey and its permissions
 	env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 	env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: Client1Key.Public(), Algorithm: "RS256"}, nil)
-	env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+	env.SAService.On("RetrieveExtSvcAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
 	env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 	// To retrieve the user to impersonate, its permissions and its teams
 	env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{

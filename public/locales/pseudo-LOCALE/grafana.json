@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Ŗőľę",
+      "serviceaccount-label": "Ŝęřvįčę Åččőūŉŧ",
       "team-label": "Ŧęäm",
       "title": "Åđđ pęřmįşşįőŉ ƒőř",
       "user-label": "Ůşęř"
@@ -18,6 +19,7 @@
       "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
       "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
       "role": "Ŗőľę",
+      "serviceaccount": "Ŝęřvįčę Åččőūŉŧ",
       "team": "Ŧęäm",
       "title": "Pęřmįşşįőŉş",
       "user": "Ůşęř"
@@ -314,6 +316,20 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "Cőŉƒįģūřę ä ŉęŵ đäŧä şőūřčę",
+    "built-in-list": {
+      "description-dashboard": "Ŗęūşę qūęřy řęşūľŧş ƒřőm őŧĥęř vįşūäľįžäŧįőŉş",
+      "description-grafana": "Đįşčővęř vįşūäľįžäŧįőŉş ūşįŉģ mőčĸ đäŧä",
+      "description-mixed": "Ůşę mūľŧįpľę đäŧä şőūřčęş"
+    },
+    "list": {
+      "no-data-source-message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
+    },
+    "modal": {
+      "configure-new-data-source": "Øpęŉ ä ŉęŵ ŧäþ äŉđ čőŉƒįģūřę ä đäŧä şőūřčę",
+      "input-placeholder": "Ŝęľęčŧ đäŧä şőūřčę",
+      "title": "Ŝęľęčŧ đäŧä şőūřčę"
+    },
     "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
   "data-sources": {

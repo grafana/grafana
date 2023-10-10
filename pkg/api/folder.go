@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -172,11 +172,20 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, folderDTO)
 }
 
-func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
+func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
-	if user.IsRealUser() && !user.IsAnonymous {
+	var userID int64
+
+	namespace, id := user.GetNamespacedID()
+	if namespace == identity.NamespaceUser {
+		var errID error
+		userID, errID = identity.IntIdentifier(namespace, id)
+		if errID != nil {
+			return errID
+		}
+
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+			UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 		})
 	}
 
