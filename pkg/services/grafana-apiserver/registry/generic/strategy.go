@@ -39,11 +39,11 @@ func (genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.E
 func (genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string { return nil }
 
 func (genericStrategy) AllowCreateOnUpdate() bool {
-	return true
+	return false
 }
 
 func (genericStrategy) AllowUnconditionalUpdate() bool {
-	return true
+	return false
 }
 
 func (genericStrategy) Canonicalize(obj runtime.Object) {}
