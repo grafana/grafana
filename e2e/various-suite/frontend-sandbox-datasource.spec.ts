@@ -1,3 +1,5 @@
+import { random } from 'lodash';
+
 import { e2e } from '../utils';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
@@ -50,6 +52,24 @@ describe('Datasource sandbox', () => {
         cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
       });
+
+      it('Should store values in jsonData and secureJsonData correctly', () => {
+        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+
+        const valueToStore = 'test' + random(100);
+
+        cy.get('[data-testid="sandbox-config-editor-query-input"]').should('not.be.disabled');
+        cy.get('[data-testid="sandbox-config-editor-query-input"]').type(valueToStore);
+        cy.get('[data-testid="sandbox-config-editor-query-input"]').should('have.value', valueToStore);
+
+        e2e.pages.DataSource.saveAndTest().click();
+        e2e.pages.DataSource.alert().should('exist').contains('Sandbox Success', {});
+
+        // validate the value was stored
+        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        cy.get('[data-testid="sandbox-config-editor-query-input"]').should('not.be.disabled');
+        cy.get('[data-testid="sandbox-config-editor-query-input"]').should('have.value', valueToStore);
+      });
     });
   });
 
@@ -69,6 +89,18 @@ describe('Datasource sandbox', () => {
         cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
       });
+
+      it('Should accept values when typed', () => {
+        e2e.pages.Explore.visit();
+        e2e.components.DataSourcePicker.container().should('be.visible').click();
+        cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
+        const valueToType = 'test' + random(100);
+
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').should('not.be.disabled');
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').type(valueToType);
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').should('have.value', valueToType);
+      });
     });
 
     describe('Sandbox enabled', () => {
@@ -84,6 +116,21 @@ describe('Datasource sandbox', () => {
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
+      });
+
+      it('Should accept values when typed', () => {
+        e2e.pages.Explore.visit();
+        e2e.components.DataSourcePicker.container().should('be.visible').click();
+        cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
+        const valueToType = 'test' + random(100);
+
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').should('not.be.disabled');
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').type(valueToType);
+        cy.get('[data-testid="sandbox-query-editor-query-input"]').should('have.value', valueToType);
+
+        // typing the query editor should reflect in the url
+        cy.url().should('include', valueToType);
       });
     });
   });

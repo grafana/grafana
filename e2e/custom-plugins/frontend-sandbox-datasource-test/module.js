@@ -26,6 +26,7 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
       React.createElement('input', {
         type: 'text',
         id: 'inputField',
+        'data-testid': 'sandbox-query-editor-query-input',
         value: value,
         onChange: handleChange,
       })
@@ -33,10 +34,16 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
   };
 
   const ConfigEditor = (props) => {
-    const [value, setValue] = useState('');
+    const { onOptionsChange, options } = props;
+    const value = options.jsonData.input || '';
 
     const handleChange = (event) => {
-      setValue(event.target.value);
+      onOptionsChange({
+        ...options,
+        jsonData: {
+          input: event.target.value,
+        },
+      });
     };
 
     return React.createElement(
@@ -46,6 +53,7 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
       React.createElement('input', {
         type: 'text',
         id: 'inputField',
+        'data-testid': 'sandbox-config-editor-query-input',
         value: value,
         onChange: handleChange,
       })
@@ -96,7 +104,7 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
     async testDatasource() {
       return {
         status: 'success',
-        message: 'Success',
+        message: 'Sandbox Success',
       };
     }
   }
