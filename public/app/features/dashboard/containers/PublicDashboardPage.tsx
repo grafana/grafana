@@ -14,10 +14,8 @@ import { useSelector, useDispatch } from 'app/types';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import {
-  PublicDashboardFooter,
-  useGetPublicDashboardConfig,
-} from '../components/PublicDashboardFooter/PublicDashboardsFooter';
+import { PublicDashboardFooter } from '../components/PublicDashboard/PublicDashboardsFooter';
+import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
