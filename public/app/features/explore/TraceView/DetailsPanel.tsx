@@ -96,7 +96,7 @@ export function DetailsPanel(props: Props) {
 
   const linksGetter = () => [];
 
-  const onDrawerResize = (e: MouseEvent | TouchEvent) => {
+  const onDrawerResize = () => {
     const height = (document.querySelector(`.${styles.container}`)?.firstChild as HTMLElement).style.height;
     const heightVal =
       height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
@@ -143,7 +143,7 @@ export function DetailsPanel(props: Props) {
           })}
         </TabsBar>
 
-        <TabContent className={styles.tabContent}>
+        <TabContent className={styles.tab}>
           {activeTab === TabLabels.Attributes && (
             <div style={{ display: 'flex', gap: '0 1rem' }}>
               <div className={styles.attributesCol}>
@@ -228,9 +228,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     flex: 1 0 auto;
   `,
-  tabContent: css`
-    label: DetailsPanelTabContent;
-    padding: 0.5rem 1rem 0 1rem;
+  tab: css`
+    label: DetailsPanelTab;
+    padding: 0.5rem 1rem;
 
     & .json-markup {
       line-height: 17px;
