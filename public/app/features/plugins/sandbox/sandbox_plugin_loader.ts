@@ -15,6 +15,7 @@ import {
   isLiveTarget,
   markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
+  patchWebAPIs,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
@@ -30,6 +31,7 @@ const pluginImportCache = new Map<string, Promise<System.Module>>();
 const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
+  patchWebAPIs();
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {

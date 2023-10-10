@@ -528,24 +528,5 @@ async function distortPostMessage(distortions: DistortionMap) {
  */
 export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
-
-  // This distorts the `history.replace` function in react-router-dom.
-  // constructed for each browser history and is only accessible within the react context.
-  // Note that this distortion does not affect `String.prototype.replace` calls.
-  // because they don't go through distortions
-  if (
-    originalValue instanceof Function &&
-    originalValue.name === 'replace' &&
-    originalValue.prototype.constructor.length === 2
-  ) {
-    return function replace(this: unknown, ...args: unknown[]) {
-      // validate history.replace signature further
-      if (args && args[0] && typeof args[0] === 'string' && args[1] && !(args[1] instanceof Function)) {
-        const newArgs = cloneDeep(args);
-        return Reflect.apply(originalValue, this, newArgs);
-      }
-      return Reflect.apply(originalValue, this, args);
-    };
-  }
   return;
 }
