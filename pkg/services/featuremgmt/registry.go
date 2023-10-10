@@ -926,11 +926,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
-			Name:         "panelFilterVariable",
-			Description:  "Enables use of variable to filter panels in dashboard",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:         "panelFilterVariable",
