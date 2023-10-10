@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isArray, isObject } from 'lodash';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   type PluginExtensionLinkConfig,
@@ -8,6 +8,7 @@ import {
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
+  type PluginExtensionOpenModalOptions,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -43,7 +44,7 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
 export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = (options) => {
+  const openModal: (options: PluginExtensionOpenModalOptions) => void = (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
@@ -56,20 +57,20 @@ export function getEventHelpers(context?: Readonly<object>): PluginExtensionEven
   return { openModal, context };
 }
 
-export type ModalWrapperProps = {
+type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
 // Wraps a component with a modal.
 // This way we can make sure that the modal is closable, and we also make the usage simpler.
-export const getModalWrapper = ({
+const getModalWrapper = ({
   // The title of the modal (appears in the header)
   title,
   // A component that serves the body of the modal
   body: Body,
   width,
   height,
-}: Parameters<PluginExtensionEventHelpers['openModal']>[0]) => {
+}: PluginExtensionOpenModalOptions) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
