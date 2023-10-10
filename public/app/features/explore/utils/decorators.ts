@@ -24,6 +24,7 @@ import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
 import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
+import { combineResponses } from 'app/plugins/datasource/loki/responseUtils';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -327,29 +328,10 @@ export function decorateData(
   );
 }
 
-export function decorateLoadMoreData(
-  data: PanelData,
-  lastExploreData: ExplorePanelData,
-  absoluteRange: AbsoluteTimeRange,
-  queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined,
-  showCorrelationEditorLinks: boolean,
-  defaultCorrelationTargetDatasource?: DataSourceApi
-): Observable<ExplorePanelData> {
-  return of(data).pipe(
-    map((data: PanelData) => preProcessPanelData(data)),
-    map(
-      decorateWithCorrelations({
-        defaultTargetDatasource: defaultCorrelationTargetDatasource,
-        showCorrelationEditorLinks,
-        queries,
-        correlations,
-      })
-    ),
-    map(decorateWithFrameTypeMetadata),
-    map((data: ExplorePanelData) => decorateWithNewLogsResult(data, lastExploreData, absoluteRange, queries)),
-  );
-}
+export function mergeDataSeries(currentData: PanelData, newData: PanelData): PanelData {
+  currentData.series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
+  return currentData;
+};
 
 /**
  * Check if frame contains time series, which for our purpose means 1 time column and 1 or more numeric columns.
