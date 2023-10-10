@@ -49,6 +49,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
+| `dashgpt`                                        | Enable AI powered features in dashboards                                                                                                                                                            | Yes                |
 | `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                     | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
@@ -134,7 +135,6 @@ Experimental features might be changed or removed without prior notice.
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                        |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                          |
-| `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
