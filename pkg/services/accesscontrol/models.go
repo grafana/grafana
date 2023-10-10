@@ -503,23 +503,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 // grants access to a user when they can either create teams or can read and update a team
 var TeamsAccessEvaluator = EvalAny(
 	EvalPermission(ActionTeamsCreate),
-	EvalAll(
-		EvalPermission(ActionTeamsRead),
-		EvalAny(
-			EvalPermission(ActionTeamsWrite),
-			EvalPermission(ActionTeamsPermissionsWrite),
-		),
-	),
-)
-
-// TeamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
-var TeamsEditAccessEvaluator = EvalAll(
 	EvalPermission(ActionTeamsRead),
-	EvalAny(
-		EvalPermission(ActionTeamsCreate),
-		EvalPermission(ActionTeamsWrite),
-		EvalPermission(ActionTeamsPermissionsWrite),
-	),
 )
 
 // OrgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access

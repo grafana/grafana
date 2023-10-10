@@ -141,8 +141,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
         {() => {
           return (
             <>
-              <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-                <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
+              <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>}>
+                <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')} disabled={disabled}>
                   <Select
                     options={this.themeOptions}
                     value={currentThemeOption}
@@ -159,6 +159,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                       </span>
                     </Label>
                   }
+                  disabled={disabled}
                   data-testid="User preferences home dashboard drop down"
                 >
                   <DashboardPicker
@@ -174,6 +175,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <Field
                   label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
                   data-testid={selectors.components.TimeZonePicker.containerV2}
+                  disabled={disabled}
                 >
                   <TimeZonePicker
                     includeInternal={true}
@@ -186,6 +188,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <Field
                   label={t('shared-preferences.fields.week-start-label', 'Week start')}
                   data-testid={selectors.components.WeekStartPicker.containerV2}
+                  disabled={disabled}
                 >
                   <WeekStartPicker
                     value={weekStart || ''}
@@ -204,6 +207,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Label>
                   }
                   data-testid="User preferences language drop down"
+                  disabled={disabled}
                 >
                   <Select
                     value={languages.find((lang) => lang.value === language)}
@@ -217,6 +221,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               <Button
                 type="submit"
                 variant="primary"
+                disabled={disabled}
                 data-testid={selectors.components.UserProfile.preferencesSaveButton}
               >
                 <Trans i18nKey="common.save">Save</Trans>
