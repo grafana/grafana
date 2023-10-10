@@ -1,4 +1,4 @@
-package playlist
+package v0alpha1
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func TestPlaylistClone(t *testing.T) {
 			APIVersion: APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "k8sname",
+			Name:              "TheUID",
 			ResourceVersion:   "12345",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 			Annotations: map[string]string{
@@ -24,8 +24,7 @@ func TestPlaylistClone(t *testing.T) {
 			},
 		},
 		Spec: Spec{
-			Uid:      "TheUID",
-			Name:     "A title",
+			Title:    "A title",
 			Interval: "20s",
 			Items: []Item{
 				{Type: ItemTypeDashboardByTag, Value: "graph-ng"},

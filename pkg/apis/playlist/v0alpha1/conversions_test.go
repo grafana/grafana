@@ -1,21 +1,22 @@
-package playlist
+package v0alpha1
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPlaylistConversion(t *testing.T) {
-	src := &PlaylistDTO{
+	src := &playlist.PlaylistDTO{
 		OrgID:     3,
-		Uid:       "abc",
-		Name:      "MyPlaylists",
+		Uid:       "abc",         // becomes k8s name
+		Name:      "MyPlaylists", // becomes title
 		Interval:  "10s",
 		CreatedAt: 12345,
 		UpdatedAt: 54321,
-		Items: []PlaylistItemDTO{
+		Items: []playlist.PlaylistItemDTO{
 			{Type: "dashboard_by_uid", Value: "UID0"},
 			{Type: "dashboard_by_tag", Value: "tagA"},
 			{Type: "dashboard_by_id", Value: "123"}, // deprecated
@@ -25,7 +26,7 @@ func TestPlaylistConversion(t *testing.T) {
 
 	require.Equal(t, "abc", src.Uid)
 	require.Equal(t, "abc", dst.Name)
-	require.Equal(t, src.Name, dst.Spec.Name)
+	require.Equal(t, src.Name, dst.Spec.Title)
 
 	out, err := json.MarshalIndent(dst, "", "  ")
 	require.NoError(t, err)

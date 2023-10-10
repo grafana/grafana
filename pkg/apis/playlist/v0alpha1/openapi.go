@@ -5,7 +5,7 @@ import (
 )
 
 // NOTE: this must match the golang fully qualified name!
-const kindPkg = "github.com/grafana/grafana/pkg/kinds/playlist."
+const kindPkg = "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.."
 
 func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{

@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -36,7 +35,7 @@ func newLegacyStorage(s playlistsvc.Service) *legacyStorage {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &playlist.Playlist{}
+	return &Playlist{}
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -50,7 +49,7 @@ func (s *legacyStorage) GetSingularName() string {
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &playlist.PlaylistList{}
+	return &PlaylistList{}
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -78,10 +77,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &playlist.PlaylistList{
+	list := &PlaylistList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PlaylistList",
-			APIVersion: playlist.APIVersion,
+			APIVersion: APIVersion,
 		},
 	}
 	for _, v := range res {
@@ -92,7 +91,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		if err != nil {
 			return nil, err
 		}
-		list.Items = append(list.Items, *playlistsvc.ConvertToK8sResource(p))
+		list.Items = append(list.Items, *ConvertToK8sResource(p))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -114,7 +113,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if err != nil {
 		return nil, err
 	}
-	return playlistsvc.ConvertToK8sResource(p), nil
+	return ConvertToK8sResource(p), nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -128,13 +127,13 @@ func (s *legacyStorage) Create(ctx context.Context,
 		orgId = 1
 	}
 
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*Playlist)
 	if !ok {
 		return nil, fmt.Errorf("expected playlist?")
 	}
 	spec := p.Spec
 	cmd := &playlistsvc.CreatePlaylistCommand{
-		Name:     spec.Name,
+		Name:     spec.Title,
 		Interval: spec.Interval,
 		OrgId:    orgId,
 	}
@@ -142,7 +141,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		cmd.UID = p.Name
 	}
 	for _, item := range spec.Items {
-		if item.Type == playlist.ItemTypeDashboardById {
+		if item.Type == ItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
@@ -183,7 +182,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, created, err
 	}
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*Playlist)
 	if !ok {
 		fmt.Printf("Expected playlist: %+v\n", obj)
 
@@ -195,12 +194,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 	spec := p.Spec
 	cmd := &playlistsvc.UpdatePlaylistCommand{
 		UID:      name,
-		Name:     spec.Name,
+		Name:     spec.Title,
 		Interval: spec.Interval,
 		OrgId:    orgId,
 	}
 	for _, item := range spec.Items {
-		if item.Type == playlist.ItemTypeDashboardById {
+		if item.Type == ItemTypeDashboardById {
 			return nil, false, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{

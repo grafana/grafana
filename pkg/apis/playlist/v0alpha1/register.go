@@ -1,7 +1,6 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
@@ -48,7 +47,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		playlist.GroupName, scheme, metav1.ParameterCodec, codecs)
+		GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := newLegacyStorage(b.service)
@@ -63,7 +62,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[playlist.VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -76,7 +75,7 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 }
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: playlist.GroupName, Version: playlist.VersionID}
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {
@@ -94,8 +93,8 @@ var (
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
+		&Playlist{},
+		&PlaylistList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

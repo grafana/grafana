@@ -1,13 +1,12 @@
-import { PlaylistItem as PlaylistItemFromSchema } from '@grafana/schema';
-
 import { DashboardQueryResult } from '../search/service';
+
+import { PlaylistItem as PlaylistItemFromSchema } from './playlist_types.gen';
 
 export type PlaylistMode = boolean | 'tv';
 
 export interface PlayListItemDTO {
   id: number;
   title: string;
-  playlistid: string;
   type: 'dashboard' | 'tag';
 }
 
