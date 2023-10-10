@@ -32,7 +32,7 @@ To sign in to Grafana for the first time:
 
    The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
 
-1. On the sign-in page, enter `admin` for the username and password.
+1. On the sign-in page, enter `admin` for both the username and password.
 1. Click **Sign in**.
 
    If successful, you will see a prompt to change the password.
