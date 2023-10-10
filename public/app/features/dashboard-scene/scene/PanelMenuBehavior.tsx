@@ -1,9 +1,7 @@
 import { locationUtil, PanelMenuItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
+import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
-import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -39,7 +37,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
         iconClassName: 'eye',
-        shortcut: 'v',
+        shortcut: 'e',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
         href: getDashboardUrl({
           uid: dashboard.state.uid,
