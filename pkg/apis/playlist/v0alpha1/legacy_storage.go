@@ -18,6 +18,7 @@ var (
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
+	_ rest.Storage              = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {

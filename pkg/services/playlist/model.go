@@ -64,7 +64,7 @@ type CreatePlaylistCommand struct {
 	Interval string         `json:"interval"`
 	Items    []PlaylistItem `json:"items"`
 	OrgId    int64          `json:"-"`
-	// Used to create playlists from kubectl when a known name/uid
+	// Used to create playlists from kubectl with a known uid/name
 	UID string `json:"-"`
 }
 
