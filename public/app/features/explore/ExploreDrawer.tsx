@@ -19,10 +19,10 @@ const drawerSlide = (theme: GrafanaTheme2) => keyframes`
   }
 `;
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, position: string | undefined) => {
   return {
     container: css`
-      position: fixed !important;
+      position: ${position ?? 'fixed'} !important;
       bottom: 0;
       background: ${theme.colors.background.primary};
       border-top: 1px solid ${theme.colors.border.weak};
@@ -56,12 +56,13 @@ export interface Props {
   children: React.ReactNode;
   onResize?: ResizeCallback;
   defaultHeight?: number;
+  position?: string;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { width, children, onResize, defaultHeight } = props;
+  const { width, children, onResize, defaultHeight, position } = props;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, position);
   const drawerWidth = `${width + 31.5}px`;
 
   return (

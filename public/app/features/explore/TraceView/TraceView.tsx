@@ -54,11 +54,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.h4.fontSize};
     color: ${theme.colors.text.secondary};
   `,
-  detailsPanel: css`
-    label: DetailsPanel;
-    position: sticky;
-    z-index: 999999999;
-  `,
 });
 
 type Props = {
@@ -188,59 +183,59 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
           />
-          <TraceTimelineViewer
-            findMatchesIDs={spanFilterMatches}
-            trace={traceProp}
-            datasourceType={datasourceType}
-            spanBarOptions={spanBarOptions?.spanBar}
-            traceTimeline={traceTimeline}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            collapseAll={collapseAll}
-            collapseOne={collapseOne}
-            expandAll={expandAll}
-            expandOne={expandOne}
-            childrenToggle={childrenToggle}
-            detailLogItemToggle={detailLogItemToggle}
-            detailLogsToggle={detailLogsToggle}
-            detailWarningsToggle={detailWarningsToggle}
-            detailStackTracesToggle={detailStackTracesToggle}
-            detailReferencesToggle={detailReferencesToggle}
-            detailReferenceItemToggle={detailReferenceItemToggle}
-            detailProcessToggle={detailProcessToggle}
-            detailTagsToggle={detailTagsToggle}
-            detailToggle={toggleDetail}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
-            createSpanLink={createSpanLink}
-            scrollElement={scrollElement}
-            focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
-            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-            createFocusSpanLink={createFocusSpanLink}
-            topOfViewRef={topOfViewRef}
-            topOfViewRefType={topOfViewRefType}
-            headerHeight={headerHeight}
-            setSelectedSpan={setSelectedSpan}
-            selectedSpanId={selectedSpan?.spanID}
-          />
-          <div className={styles.detailsPanel} style={{ paddingTop: detailsPanelOffset }}>
-            <DetailsPanel
-              span={selectedSpan}
+          <div style={{ paddingBottom: detailsPanelOffset }}>
+            <TraceTimelineViewer
+              findMatchesIDs={spanFilterMatches}
+              trace={traceProp}
+              datasourceType={datasourceType}
+              spanBarOptions={spanBarOptions?.spanBar}
+              traceTimeline={traceTimeline}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
               timeZone={timeZone}
-              width={width}
-              clearSelectedSpan={() => setSelectedSpan(undefined)}
-              detailState={detailStates.get(selectedSpan?.spanID ?? '')}
-              traceStartTime={traceProp.startTime}
+              setSpanNameColumnWidth={setSpanNameColumnWidth}
+              collapseAll={collapseAll}
+              collapseOne={collapseOne}
+              expandAll={expandAll}
+              expandOne={expandOne}
+              childrenToggle={childrenToggle}
               detailLogItemToggle={detailLogItemToggle}
-              setDetailsPanelOffset={setDetailsPanelOffset}
-              defaultDetailsPanelHeight={defaultDetailsPanelHeight}
+              detailLogsToggle={detailLogsToggle}
+              detailWarningsToggle={detailWarningsToggle}
+              detailStackTracesToggle={detailStackTracesToggle}
+              detailReferencesToggle={detailReferencesToggle}
+              detailReferenceItemToggle={detailReferenceItemToggle}
+              detailProcessToggle={detailProcessToggle}
+              detailTagsToggle={detailTagsToggle}
+              detailToggle={toggleDetail}
+              addHoverIndentGuideId={addHoverIndentGuideId}
+              removeHoverIndentGuideId={removeHoverIndentGuideId}
+              linksGetter={() => []}
+              createSpanLink={createSpanLink}
+              scrollElement={scrollElement}
+              focusedSpanId={focusedSpanId}
+              focusedSpanIdForSearch={focusedSpanIdForSearch}
+              showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+              createFocusSpanLink={createFocusSpanLink}
+              topOfViewRef={topOfViewRef}
+              topOfViewRefType={topOfViewRefType}
+              headerHeight={headerHeight}
+              setSelectedSpan={setSelectedSpan}
+              selectedSpanId={selectedSpan?.spanID}
             />
           </div>
+          <DetailsPanel
+            span={selectedSpan}
+            timeZone={timeZone}
+            width={width}
+            clearSelectedSpan={() => setSelectedSpan(undefined)}
+            detailState={detailStates.get(selectedSpan?.spanID ?? '')}
+            traceStartTime={traceProp.startTime}
+            detailLogItemToggle={detailLogItemToggle}
+            setDetailsPanelOffset={setDetailsPanelOffset}
+            defaultDetailsPanelHeight={defaultDetailsPanelHeight}
+          />
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

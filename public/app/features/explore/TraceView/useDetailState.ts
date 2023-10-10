@@ -20,7 +20,6 @@ export function useDetailState(frame: DataFrame) {
     function toggleDetail(spanID: string) {
       let newDetailStates = new Map(detailStates);
       if (newDetailStates.has(spanID)) {
-        // newDetailStates.delete(spanID);
         newDetailStates = new Map();
       } else {
         newDetailStates = new Map();

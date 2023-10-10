@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, TimeZone, TraceLog } from '@grafana/data';
-import { Button, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { ExploreDrawer } from '../ExploreDrawer';
 
@@ -97,43 +97,52 @@ export function DetailsPanel(props: Props) {
   const linksGetter = () => [];
 
   const onDrawerResize = (e: MouseEvent | TouchEvent) => {
-    setDetailsPanelOffset(window.innerHeight - (e as unknown as MouseEvent).pageY);
+    const height = (document.querySelector(`.${styles.container}`)?.firstChild as HTMLElement).style.height;
+    const heightVal =
+      height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
+    setDetailsPanelOffset(heightVal);
   };
 
   return (
-    <ExploreDrawer width={width} onResize={onDrawerResize} defaultHeight={defaultDetailsPanelHeight}>
-      <div className={cx(styles.header, styles.flexSpaceBetween)}>
-        <div
-          className={cx(
-            styles.flexSpaceBetween,
-            css`
-              flex: 1 0 auto;
-            `
-          )}
-        >
-          <h4 className={cx(ubM0)}>{operationName}</h4>
-          <div className={styles.listWrapper}>
-            <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+    <div className={styles.container}>
+      {/* The first child here needs to be the ExploreDrawer to we can get it's height via onDrawerResize. This is so we can set a paddingBottom in the TraceView according to this components height */}
+      <ExploreDrawer
+        width={width}
+        onResize={onDrawerResize}
+        defaultHeight={defaultDetailsPanelHeight}
+        position="relative"
+      >
+        <div className={cx(styles.header, styles.flexSpaceBetween)}>
+          <div
+            className={cx(
+              styles.flexSpaceBetween,
+              css`
+                flex: 1 0 auto;
+              `
+            )}
+          >
+            <h4 className={cx(ubM0)}>{operationName}</h4>
+            <div className={styles.listWrapper}>
+              <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+            </div>
           </div>
+          <Button icon={'times'} variant={'secondary'} fill={'outline'} onClick={clearSelectedSpan} size={'sm'} />
         </div>
-        <Button icon={'times'} variant={'secondary'} fill={'outline'} onClick={clearSelectedSpan} size={'sm'} />
-      </div>
 
-      <TabsBar>
-        {tabs.map((tab) => {
-          return (
-            <Tab
-              key={tab}
-              label={tab}
-              active={activeTab === tab}
-              counter={tabsCounters[tab]}
-              onChangeTab={() => setActiveTab(tab)}
-            />
-          );
-        })}
-      </TabsBar>
+        <TabsBar>
+          {tabs.map((tab) => {
+            return (
+              <Tab
+                key={tab}
+                label={tab}
+                active={activeTab === tab}
+                counter={tabsCounters[tab]}
+                onChangeTab={() => setActiveTab(tab)}
+              />
+            );
+          })}
+        </TabsBar>
 
-      <CustomScrollbar>
         <TabContent className={styles.tabContent}>
           {activeTab === TabLabels.Attributes && (
             <div style={{ display: 'flex', gap: '0 1rem' }}>
@@ -177,12 +186,19 @@ export function DetailsPanel(props: Props) {
           {tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
           {tabsState[4] && tabsState[4].active && <div>References not yet implemented</div>} */}
         </TabContent>
-      </CustomScrollbar>
-    </ExploreDrawer>
+      </ExploreDrawer>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    label: DetailsPanelContainer;
+    position: fixed;
+    overflow: auto;
+    bottom: 0;
+    z-index: 9;
+  `,
   header: css`
     gap: 0 1rem;
     margin-bottom: 0.25rem;
@@ -209,7 +225,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1 0 auto;
   `,
   tabContent: css`
-    padding: 0.5rem 1rem 90px 1rem;
+    label: DetailsPanelTabContent;
+    padding: 0.5rem 1rem 0 1rem;
 
     & .json-markup {
       line-height: 17px;
