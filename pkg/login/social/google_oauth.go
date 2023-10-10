@@ -30,6 +30,7 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	rawJSON       []byte `json:"-"`
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -59,6 +60,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Warn("Error retrieving groups", "error", errPage)
 	}
 
+	if !s.isGroupMember(groups) {
+		return nil, errMissingGroupMembership
+	}
+
 	userInfo := &BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
@@ -69,11 +74,22 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	s.log.Debug("Resolved user info", "data", fmt.Sprintf("%+v", userInfo))
+	// Remove s.roleAttributePath != "" after 2024-04-01,
+	// after that roleAttributePath will be required if not using skipOrgRoleSync
+	if !s.skipOrgRoleSync && s.roleAttributePath != "" {
+		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
+		if errRole != nil {
+			return nil, errRole
+		}
 
-	if !s.isGroupMember(groups) {
-		return nil, errMissingGroupMembership
+		if s.allowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.Role = role
 	}
+
+	s.log.Debug("Resolved user info", "data", fmt.Sprintf("%+v", userInfo))
 
 	return userInfo, nil
 }
@@ -102,6 +118,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			rawJSON:       response.Body,
 		}, nil
 	}
 
@@ -148,6 +165,8 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
+
+	data.rawJSON = rawJSON
 
 	return &data, nil
 }
