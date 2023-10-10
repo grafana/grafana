@@ -2,12 +2,12 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -63,7 +63,7 @@ type ConditionEvalJSON struct {
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles) (Command, error) {
 	cmdConfig := ThresholdCommandConfig{}
-	if err := jsoniter.Unmarshal(rn.QueryRaw, &cmdConfig); err != nil {
+	if err := json.Unmarshal(rn.QueryRaw, &cmdConfig); err != nil {
 		return nil, fmt.Errorf("failed to parse the threshold command: %w", err)
 	}
 	if cmdConfig.Expression == "" {
