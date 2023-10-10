@@ -256,7 +256,7 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 	return perms
 }
 
-// FixedRoleUID generates a UID of 27 bytes: "fixed_sha1(roleName)"
+// FixedRoleUID generates a UID of 34 bytes: "fixed_" + base64(sha1(roleName))
 func FixedRoleUID(roleName string) string {
 	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
 	hasher := sha1.New()
