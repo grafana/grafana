@@ -14,7 +14,6 @@ jest.mock('app/core/services/context_srv', () => {
     contextSrv: {
       ...originMock.context_srv,
       user: {},
-      hasAccess: jest.fn(() => false),
       hasPermission: jest.fn(() => false),
     },
   };
