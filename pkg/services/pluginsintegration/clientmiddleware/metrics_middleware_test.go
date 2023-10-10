@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestInstrumentationMiddleware(t *testing.T) {
@@ -75,7 +76,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 					JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 				}))
 
-				mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+				mw := newMetricsMiddleware(promRegistry, pluginsRegistry, featuremgmt.WithFeatures())
 				cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
 					plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 						mw.next = next

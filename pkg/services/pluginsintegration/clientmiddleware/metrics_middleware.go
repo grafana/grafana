@@ -11,6 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+// statusSource is an enum-like string value representing the source of a
+// plugin query data response status code
+type statusSource string
+
+const (
+	statusSourcePlugin     statusSource = "plugin"
+	statusSourceDownstream statusSource = "downstream"
+)
+
+// errQueryDataDownstreamError is an returned when a plugin QueryData request has
+// failed with at least one QueryData response having statusSource = "downstream".
+var errQueryDataDownstreamError = errutil.Internal("plugin.queryDataDownstreamError",
+	errutil.WithPublicMessage("Plugin QueryData downstream error"),
+	errutil.WithDownstream(),
 )
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
@@ -26,21 +44,26 @@ type pluginMetrics struct {
 type MetricsMiddleware struct {
 	pluginMetrics
 	pluginRegistry registry.Service
+	features       featuremgmt.FeatureToggles
 	next           plugins.Client
 }
 
-func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *MetricsMiddleware {
+func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
+	var additionalLabels []string
+	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		additionalLabels = []string{"status_source"}
+	}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status", "target"})
+	}, append([]string{"plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, []string{"plugin_id", "endpoint", "target"})
+	}, append([]string{"plugin_id", "endpoint", "target"}, additionalLabels...))
 	pluginRequestSize := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
@@ -69,12 +92,13 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
 		},
 		pluginRegistry: pluginRegistry,
+		features:       features,
 	}
 }
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
-func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
-	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
+func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
+	imw := newMetricsMiddleware(promRegisterer, pluginRegistry, features)
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		imw.next = next
 		return imw
@@ -108,20 +132,33 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	}
 
 	status := statusOK
+	statusSrc := statusSourcePlugin
 	start := time.Now()
 
 	err = fn(ctx)
 	if err != nil {
 		status = statusError
-		if errors.Is(err, context.Canceled) {
+		var grErr errutil.Error
+		if errors.As(err, &grErr) {
+			// Remove errQueryDataDownstreamError, which is only used internaly
+			// by Grafana, and return underlying error directly
+			err = errors.Unwrap(err)
+			statusSrc = statusSourceToLabel(grErr.Source)
+		} else if errors.Is(err, context.Canceled) {
 			status = statusCancelled
 		}
 	}
-
 	elapsed := time.Since(start)
 
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target)
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, target)
+	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
+	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
+	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSrc))
+		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSrc))
+	}
+
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)
 	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, target)
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
@@ -141,6 +178,19 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	return err
 }
 
+// statusSourceToLabel converts an errutil.Source to its corresponding status_source label value
+// used by plugin instrumentation Prometheus metrics.
+func statusSourceToLabel(s errutil.Source) statusSource {
+	switch s {
+	case errutil.SourceServer:
+		return statusSourcePlugin
+	case errutil.SourceDownstream:
+		return statusSourceDownstream
+	default:
+		return statusSource(s)
+	}
+}
+
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var requestSize float64
 	for _, v := range req.Queries {
@@ -150,8 +200,32 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		return nil, err
 	}
 	var resp *backend.QueryDataResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) error {
+		var innerErr error
 		resp, innerErr = m.next.QueryData(ctx, req)
+		if !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+			return innerErr
+		}
+
+		// Aggregate all errors whose ErrorSource is backend.ErrorSourceDownstream.
+		var queryDataResponseErr error
+		for _, r := range resp.Responses {
+			if r.Error == nil {
+				continue
+			}
+			if r.ErrorSource == backend.ErrorSourceDownstream {
+				queryDataResponseErr = errors.Join(queryDataResponseErr, r.Error)
+			} else {
+				// Other error source, this has higher priority, return the original
+				// error immediately.
+				return innerErr
+			}
+		}
+		if queryDataResponseErr != nil {
+			// If we have at least one downstream error, wrap the downstream errors and the original one in
+			// a errQueryDataDownstreamError.
+			return errQueryDataDownstreamError.Errorf("query data downstream error: %w: %w", queryDataResponseErr, innerErr)
+		}
 		return innerErr
 	})
 	return resp, err
