@@ -185,12 +185,14 @@ export function patchWebAPIs() {
  *
  * It is most likely this "original" function is not really the native function because
  * `useLocation` from `react-use` patches this function before the sandbox kicks in.
+ *
+ * Regarding the performance impact of this cloneDeep. The structures passed to history.replaceState
+ * are minimalistic and its impact will be neglegible.
  */
 function patchHistoryReplaceState() {
   const original = window.history.replaceState;
   Object.defineProperty(window.history, 'replaceState', {
     value: function (...args: Parameters<typeof window.history.replaceState>) {
-      console.log("I'm patched!");
       let newArgs = args;
       try {
         newArgs = cloneDeep(args);
