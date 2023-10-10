@@ -8,12 +8,12 @@ import { HttpRequestMethod } from '../../panelcfg.gen';
 import { APIEditorConfig } from './APIEditor';
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
-  // If API endpoint origin matches Grafana origin, don't call it.
-  if (requestMatchesGrafanaOrigin(api.endpoint)) {
-    appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
-    return;
-  }
   if (api && api.endpoint) {
+    // If API endpoint origin matches Grafana origin, don't call it.
+    if (requestMatchesGrafanaOrigin(api.endpoint)) {
+      appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
+      return;
+    }
     const request = getRequest(api);
 
     getBackendSrv()
