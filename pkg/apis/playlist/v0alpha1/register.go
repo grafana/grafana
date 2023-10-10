@@ -13,7 +13,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
@@ -29,6 +28,10 @@ func RegisterAPIService(p playlistsvc.Service, apiregistration grafanaapiserver.
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
+	return SchemeGroupVersion
 }
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -68,9 +71,8 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 	return getOpenAPIDefinitions
 }
 
-// Register additional routes with the server
-func (b *PlaylistAPIBuilder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	return nil
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	return nil // no custom API routes
 }
 
 // SchemeGroupVersion is group version used to register these objects

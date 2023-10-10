@@ -1,7 +1,14 @@
-import { AnnotationEvent, arrayToDataFrame, DataTopic, getDefaultTimeRange, PanelData } from '@grafana/data';
+import {
+  AnnotationEvent,
+  arrayToDataFrame,
+  DataTopic,
+  getDefaultTimeRange,
+  PanelData,
+  LoadingState,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { dataLayers } from '@grafana/scenes';
-import { AnnotationQuery, LoadingState } from '@grafana/schema';
+import { AnnotationQuery } from '@grafana/schema';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 /**

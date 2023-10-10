@@ -85,7 +85,7 @@ export function createTableFrame(
         const line = values[i];
         if (line) {
           for (let traceRegex of traceRegexs) {
-            const match = (line as string).match(traceRegex);
+            const match = line.match(traceRegex);
             if (match) {
               const traceId = match[1];
               const time = timeField ? timeField.values[i] : null;
@@ -274,7 +274,7 @@ export function transformFromOTLP(
             tags: getSpanTags(span),
             logs: getLogs(span),
             references: getReferences(span),
-          } as TraceSpanRow);
+          });
         }
       }
     }

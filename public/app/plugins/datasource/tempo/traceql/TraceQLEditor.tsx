@@ -70,7 +70,7 @@ export function TraceQLEditor(props: Props) {
         // Register callback for query changes
         editor.onDidChangeModelContent((changeEvent) => {
           const model = editor.getModel();
-          if (!model) {
+          if (!model || model.getValue() === '') {
             return;
           }
 
