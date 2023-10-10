@@ -859,5 +859,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "navAdminSubsections",
+			Description:  "Splits the administration section of the nav tree into subsections",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
 	}
 )

@@ -141,4 +141,5 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   panelFilterVariable?: boolean;
+  navAdminSubsections?: boolean;
 }
