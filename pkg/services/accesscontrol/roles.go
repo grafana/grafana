@@ -1,6 +1,8 @@
 package accesscontrol
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
@@ -251,6 +253,15 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 		perms = append(perms, p...)
 	}
 	return perms
+}
+
+// FixedRoleUID generates a UID of 27 bytes: "fixed_sha1(roleName)"
+func FixedRoleUID(roleName string) string {
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	hasher := sha1.New()
+	hasher.Write([]byte(roleName))
+
+	return fmt.Sprintf("%s%s", FixedRoleUIDPrefix, hex.EncodeToString(hasher.Sum(nil)))
 }
 
 // ValidateFixedRole errors when a fixed role does not match expected pattern
