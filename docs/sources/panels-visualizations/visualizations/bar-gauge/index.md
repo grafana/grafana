@@ -103,6 +103,12 @@ Limit the minimum height of the bar row in the horizontal direction.
 
 Automatically show y-axis scrollbar when there is a large amount of data.
 
+### Max height
+
+Limit the maximum height of the bar row in the horizontal direction.
+
+Automatically show y-axis scrollbar when there is a large amount of data.
+
 {{% docs/reference %}}
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 [Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
