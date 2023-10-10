@@ -245,9 +245,3 @@ func createTestDashAlert() migrationStore.DashAlert {
 		ParsedSettings: &migrationStore.DashAlertSettings{},
 	}
 }
-
-func createTestDashAlertCondition() condition {
-	return condition{
-		Condition: "A",
-	}
-}
