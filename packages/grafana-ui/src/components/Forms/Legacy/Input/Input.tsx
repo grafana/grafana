@@ -25,7 +25,7 @@ interface State {
   error: string | null;
 }
 
-/** @deprecated Please use the non legacy `Input` component */
+/** @deprecated Please use the `Input` component. {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-input--simple See Storybook for example.} */
 export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
