@@ -3,6 +3,7 @@ import { RefObject, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -41,7 +42,6 @@ type RenderOptions = {
   totalTicksRight: number | undefined;
   colorScheme: ColorScheme | ColorSchemeDiff;
   focusedItemData?: ClickedItemData;
-  getTheme: () => GrafanaTheme2;
 };
 
 export function useFlameRender(options: RenderOptions) {
@@ -59,7 +59,6 @@ export function useFlameRender(options: RenderOptions) {
     totalTicksRight,
     colorScheme,
     focusedItemData,
-    getTheme,
   } = options;
   const foundLabels = useMemo(() => {
     if (search) {
@@ -79,7 +78,7 @@ export function useFlameRender(options: RenderOptions) {
   }, [search, data]);
 
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
-  const theme = getTheme();
+  const theme = useTheme2();
 
   useEffect(() => {
     if (!ctx) {

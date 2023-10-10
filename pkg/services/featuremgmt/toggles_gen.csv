@@ -121,3 +121,4 @@ panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
+navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
