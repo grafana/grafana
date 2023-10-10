@@ -24,7 +24,7 @@ for (const fileName of locales) {
   let translatedCount = 0;
   let untranslatedCount = 0;
 
-  eachLeaf(parsedMessages, (value) => {
+  eachMessage(parsedMessages, (value) => {
     if (value === '') {
       untranslatedCount += 1;
     } else {
@@ -61,20 +61,18 @@ async function exists(filePath) {
 
 /**
  * @param {unknown} value
- * @param {(v: unknown) => void} callback
+ * @param {(v: string) => void} callback
  */
-function eachLeaf(value, callback) {
-  if (Array.isArray(value)) {
-    for (const arrayValue of value) {
-      eachLeaf(arrayValue, callback);
-    }
-  } else if (typeof value === 'object') {
+function eachMessage(value, callback) {
+  if (typeof value === 'object') {
     for (const key in value) {
       const element = value[key];
-      eachLeaf(element, callback);
+      eachMessage(element, callback);
     }
-  } else {
+  } else if (typeof value === 'string') {
     callback(value);
+  } else {
+    throw new Error(`Unknown value ${value} in eachMessage`);
   }
 }
 
