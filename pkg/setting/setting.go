@@ -482,7 +482,8 @@ type Cfg struct {
 	// Zero value means in-memory single node setup.
 	LiveHAEngine string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
-	LiveHAEngineAddress string
+	LiveHAEngineAddress  string
+	LiveHAEnginePassword string
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
@@ -1991,6 +1992,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 
 	var originPatterns []string
 	allowedOrigins := section.Key("allowed_origins").MustString("")
