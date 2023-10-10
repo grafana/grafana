@@ -772,7 +772,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 		systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "rpm", "systemd", "grafana-server.service"),
 		wrapperFilePath:        filepath.Join(grafanaDir, "packaging", "wrappers"),
 		// chkconfig is depended on since our systemd service wraps a SysV init script, and that requires chkconfig
-		depends: []string{"/sbin/service", "chkconfig", "fontconfig", "freetype", "urw-fonts"},
+		depends: []string{"/sbin/service", "chkconfig", "fontconfig", "freetype"},
 	}); err != nil {
 		return err
 	}
