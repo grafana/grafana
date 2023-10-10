@@ -321,6 +321,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 const (
 	GlobalOrgID                  = 0
 	FixedRolePrefix              = "fixed:"
+	FixedRoleUIDPrefix           = "fixed_"
 	ManagedRolePrefix            = "managed:"
 	BasicRolePrefix              = "basic:"
 	PluginRolePrefix             = "plugins:"
