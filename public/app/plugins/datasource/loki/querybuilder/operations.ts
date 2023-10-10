@@ -100,8 +100,33 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Logfmt,
       name: 'Logfmt',
-      params: [],
-      defaultParams: [],
+      params: [
+        {
+          name: 'Strict',
+          type: 'boolean',
+          optional: true,
+          description:
+            'With strict parsing enabled, the logfmt parser immediately stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
+        },
+        {
+          name: 'Keep empty',
+          type: 'boolean',
+          optional: true,
+          description:
+            'The logfmt parser retains standalone keys (keys without a value) as labels with its value set to empty string. ',
+        },
+        {
+          name: 'Expression',
+          type: 'string',
+          optional: true,
+          restParam: true,
+          minWidth: 18,
+          placeholder: 'field_name',
+          description:
+            'Using expressions with your logfmt parser will extract and rename (if provided) only the specified fields to labels. You can specify one or more expressions in this way.',
+        },
+      ],
+      defaultParams: [false, false],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Parsers,

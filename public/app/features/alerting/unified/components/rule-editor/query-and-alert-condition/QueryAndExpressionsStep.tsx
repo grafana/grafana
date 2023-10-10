@@ -82,8 +82,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(() => {
+    if (isCloudAlertRuleType) {
+      // we will skip preview for cloud rules, these do not have any time series preview
+      // Grafana Managed rules and recording rules do
+      return;
+    }
+
     runQueries(getValues('queries'));
-  }, [runQueries, getValues]);
+  }, [isCloudAlertRuleType, runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -104,18 +110,27 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const emptyQueries = queries.length === 0;
 
+  // apply some validations and asserts to the results of the evaluation when creating or editing
+  // Grafana-managed alert rules
   useEffect(() => {
-    const currentCondition = getValues('condition');
-
-    if (!currentCondition || !queryPreviewData[currentCondition]) {
+    if (!isGrafanaManagedType) {
       return;
     }
 
-    const error =
-      errorFromPreviewData(queryPreviewData[currentCondition]) ??
-      errorFromCurrentCondition(queryPreviewData[currentCondition]);
+    const currentCondition = getValues('condition');
+    if (!currentCondition) {
+      return;
+    }
+
+    const previewData = queryPreviewData[currentCondition];
+    if (!previewData) {
+      return;
+    }
+
+    const error = errorFromPreviewData(previewData) ?? errorFromCurrentCondition(previewData);
+
     onDataChange(error?.message || '');
-  }, [queryPreviewData, getValues, onDataChange]);
+  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {

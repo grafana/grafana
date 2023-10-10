@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -10,7 +10,6 @@ import {
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
-  SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
@@ -19,7 +18,13 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { findVizPanelByKey, forceRenderChildren, getDashboardUrl } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getDashboardUrl,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
@@ -73,12 +78,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    window.__grafanaSceneContext = this;
+
     if (this.state.isEditing) {
       this.startTrackingChanges();
     }
 
     // Deactivation logic
     return () => {
+      window.__grafanaSceneContext = undefined;
       this.stopTrackingChanges();
       this.stopUrlSync();
     };
@@ -129,7 +137,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
+    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
 
   public getPageNav(location: H.Location) {
@@ -191,5 +199,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public closeModal() {
     this.setState({ overlay: undefined });
+  }
+
+  /**
+   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   */
+  public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
+    const panel = getClosestVizPanel(sceneObject);
+
+    return {
+      app: CoreApp.Dashboard,
+      dashboardUID: this.state.uid,
+      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+    };
   }
 }

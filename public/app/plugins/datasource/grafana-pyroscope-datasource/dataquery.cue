@@ -36,7 +36,7 @@ composableKinds: DataQuery: {
 				// Allows to group the results.
 				groupBy: [...string]
 				// Sets the maximum number of nodes in the flamegraph.
-				maxNodes?:        int64
+				maxNodes?:           int64
 				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 			}
 		}]

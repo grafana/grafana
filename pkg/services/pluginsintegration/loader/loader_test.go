@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -555,7 +555,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				Signature: plugins.SignatureStatusUnsigned,
 				Module:    "/public/plugins/grafana-test-datasource/module.js",
 				BaseURL:   "/public/plugins/grafana-test-datasource",
-				ExternalService: &oauth.ExternalService{
+				ExternalService: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -576,8 +576,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		}
 
 		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
-			oauthServiceRegistry: &fakes.FakeOauthService{
-				Result: &oauth.ExternalService{
+			authServiceRegistry: &fakes.FakeAuthService{
+				Result: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -1468,7 +1468,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 type loaderDepOpts struct {
 	angularInspector       angularinspector.Inspector
-	oauthServiceRegistry   oauth.ExternalServiceRegistry
+	authServiceRegistry    auth.ExternalServiceRegistry
 	backendFactoryProvider plugins.BackendFactoryProvider
 }
 
@@ -1484,7 +1484,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
@@ -1503,9 +1503,9 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 		angularInspector = angularinspector.NewStaticInspector()
 	}
 
-	oauthServiceRegistry := opts.oauthServiceRegistry
-	if oauthServiceRegistry == nil {
-		oauthServiceRegistry = &fakes.FakeOauthService{}
+	authServiceRegistry := opts.authServiceRegistry
+	if authServiceRegistry == nil {
+		authServiceRegistry = &fakes.FakeAuthService{}
 	}
 
 	backendFactoryProvider := opts.backendFactoryProvider
@@ -1516,7 +1516,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, oauthServiceRegistry, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 

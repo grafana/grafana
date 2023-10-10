@@ -113,9 +113,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
-    dashboardRef: new SceneObjectRef(dashboard),
-    sourcePanelRef: new SceneObjectRef(panel),
-    panelRef: new SceneObjectRef(panelClone),
+    dashboardRef: dashboard.getRef(),
+    sourcePanelRef: panel.getRef(),
+    panelRef: panelClone.getRef(),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,

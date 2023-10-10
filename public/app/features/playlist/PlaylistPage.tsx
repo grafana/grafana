@@ -11,8 +11,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { deletePlaylist, getAllPlaylist, searchPlaylists } from './api';
+import { deletePlaylist, searchPlaylists, playlistAPI } from './api';
 import { Playlist } from './types';
+
+const { getAllPlaylist } = playlistAPI;
 
 export const PlaylistPage = () => {
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);

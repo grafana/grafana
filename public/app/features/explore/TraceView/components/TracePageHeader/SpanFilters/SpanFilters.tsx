@@ -69,7 +69,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setTagKeys(undefined);
     setTagValues({});
     setSearch(defaultFilters);
-  }, [setSearch]);
+    setShowSpanFilterMatchesOnly(false);
+  }, [setSearch, setShowSpanFilterMatchesOnly]);
 
   useEffect(() => {
     clear();

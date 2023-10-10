@@ -35,6 +35,11 @@ bulkAlertingDashboard() {
 		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml ../conf/provisioning/datasources/custom.yaml
 }
 
+bulkFolders() {
+	./bulk-folders/bulk-folders.sh "$1"
+	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
+}
+
 requiresJsonnet() {
 		if ! type "jsonnet" > /dev/null; then
 				echo "you need you install jsonnet to run this script"
@@ -57,23 +62,28 @@ devDatasources() {
 usage() {
 	echo -e "\n"
 	echo "Usage:"
-	echo "  bulk-dashboards                              - create and provisioning 400 dashboards"
-	echo "  bulk-alerting-dashboards                     - create and provisioning 400 dashboards with alerts"
-	echo "  no args                                      - provisioning core datasources and dev dashboards"
+	echo "  bulk-dashboards                      - provision 400 dashboards"
+	echo "  bulk-alerting-dashboards             - provision 400 dashboards with alerts"
+	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
+	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
+	echo "  no args                              - provision core datasources and dev dashboards"
 }
 
 main() {
-	echo -e "------------------------------------------------------------------"
-	echo -e "This script sets up provisioning for dev datasources and dashboards"
-	echo -e "------------------------------------------------------------------"
+	echo -e "----------------------------------------------------------------------------"
+	echo -e "This script sets up provisioning for dev datasources, dashboards and folders"
+	echo -e "----------------------------------------------------------------------------"
 	echo -e "\n"
 
 	local cmd=$1
+  local arg1=$2
 
 	if [[ $cmd == "bulk-alerting-dashboards" ]]; then
 		bulkAlertingDashboard
 	elif [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
+	elif [[ $cmd == "bulk-folders" ]]; then
+		bulkFolders "$arg1"
 	else
 		devDashboards
 		devDatasources

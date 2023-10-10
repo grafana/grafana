@@ -9,7 +9,7 @@ export const toUrl = (filters: AdHocVariableFilter[]): string[] => {
 
 export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
   if (isArray(value)) {
-    const values = value as any[];
+    const values = value;
     return values.map(toFilter).filter(isFilter);
   }
 

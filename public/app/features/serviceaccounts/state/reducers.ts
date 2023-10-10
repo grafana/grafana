@@ -13,7 +13,7 @@ import {
 export const initialStateProfile: ServiceAccountProfileState = {
   serviceAccount: {} as ServiceAccountDTO,
   isLoading: true,
-  tokens: [] as ApiKey[],
+  tokens: [],
 };
 
 export const serviceAccountProfileSlice = createSlice({
@@ -41,7 +41,7 @@ export const { serviceAccountLoaded, serviceAccountTokensLoaded, serviceAccountF
 
 // serviceAccountsListPage
 export const initialStateList: ServiceAccountsState = {
-  serviceAccounts: [] as ServiceAccountDTO[],
+  serviceAccounts: [],
   isLoading: true,
   roleOptions: [],
   query: '',

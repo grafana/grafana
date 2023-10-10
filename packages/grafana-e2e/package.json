@@ -60,7 +60,7 @@
     "webpack": "5.88.1"
   },
   "dependencies": {
-    "@babel/core": "7.22.9",
+    "@babel/core": "7.23.0",
     "@babel/preset-env": "7.22.9",
     "@cypress/webpack-preprocessor": "5.17.1",
     "@grafana/e2e-selectors": "10.2.0-pre",

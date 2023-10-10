@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -124,12 +125,23 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 			sess.Where("name LIKE ?", query.Name)
 		}
 
+		namespace, id := query.SignedInUser.GetNamespacedID()
+		var userID int64
+		switch namespace {
+		case identity.NamespaceServiceAccount, identity.NamespaceUser:
+			var err error
+			userID, err = identity.IntIdentifier(namespace, id)
+			if err != nil {
+				return err
+			}
+		}
+
 		// admins can see all snapshots, everyone else can only see their own snapshots
 		switch {
-		case query.SignedInUser.OrgRole == org.RoleAdmin:
-			sess.Where("org_id = ?", query.OrgID)
-		case !query.SignedInUser.IsAnonymous:
-			sess.Where("org_id = ? AND user_id = ?", query.OrgID, query.SignedInUser.UserID)
+		case query.SignedInUser.GetOrgRole() == org.RoleAdmin:
+			sess.Where("org_id = ?", query.SignedInUser.GetOrgID())
+		case namespace != identity.NamespaceAnonymous:
+			sess.Where("org_id = ? AND user_id = ?", query.OrgID, userID)
 		default:
 			queryResult = snapshots
 			return nil

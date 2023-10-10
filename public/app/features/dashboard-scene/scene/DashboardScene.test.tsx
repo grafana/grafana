@@ -1,4 +1,5 @@
-import { sceneGraph, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { CoreApp } from '@grafana/data';
+import { sceneGraph, SceneGridItem, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -50,6 +51,24 @@ describe('DashboardScene', () => {
       });
     });
   });
+
+  describe('Enriching data requests', () => {
+    let scene: DashboardScene;
+
+    beforeEach(() => {
+      scene = buildTestScene();
+      scene.onEnterEditMode();
+    });
+
+    it('Should add app, uid, and panelId', () => {
+      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
+      expect(scene.enrichDataRequest(queryRunner)).toEqual({
+        app: CoreApp.Dashboard,
+        dashboardUID: 'dash-1',
+        panelId: 1,
+      });
+    });
+  });
 });
 
 function buildTestScene() {
@@ -65,6 +84,7 @@ function buildTestScene() {
             title: 'Panel A',
             key: 'panel-1',
             pluginId: 'table',
+            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
           }),
         }),
         new SceneGridItem({

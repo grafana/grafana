@@ -37,10 +37,10 @@ weight: 10
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-The time series visualization type is the default and primary way to visualize time series data as a graph. It can render series as lines, points, or bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how it can be configured and styled.
+Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how a time series visualization can be configured and styled.
 
 {{% admonition type="note" %}}
-You can migrate from the old Graph visualization to the new Time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{% /admonition %}}
 
 ## Tooltip options

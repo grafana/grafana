@@ -15,6 +15,7 @@ export type NodeDatum = SimulationNodeDatum & {
   arcSections: Field[];
   color?: Field;
   icon?: IconName;
+  nodeRadius?: Field;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
@@ -31,6 +32,8 @@ export type EdgeDatum = LinkDatum & {
   mainStat: string;
   secondaryStat: string;
   dataFrameRowIndex: number;
+  sourceNodeRadius: number;
+  targetNodeRadius: number;
 };
 
 // After layout is run D3 will change the string IDs for actual references to the nodes.

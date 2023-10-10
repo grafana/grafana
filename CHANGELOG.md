@@ -1,3 +1,12 @@
+<!-- 10.1.4 START -->
+
+# 10.1.4 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75733](https://github.com/grafana/grafana/issues/75733), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.1.4 END -->
 <!-- 10.1.2 START -->
 
 # 10.1.2 (2023-09-18)
@@ -437,6 +446,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.8 START -->
+
+# 10.0.8 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75732](https://github.com/grafana/grafana/issues/75732), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.0.8 END -->
 <!-- 10.0.6 START -->
 
 # 10.0.6 (2023-09-18)
@@ -929,6 +947,15 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.12 START -->
+
+# 9.5.12 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75730](https://github.com/grafana/grafana/issues/75730), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 9.5.12 END -->
 <!-- 9.5.10 START -->
 
 # 9.5.10 (2023-09-18)

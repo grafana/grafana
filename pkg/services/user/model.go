@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type HelpFlags1 uint64
@@ -112,6 +113,7 @@ type SearchUsersQuery struct {
 	Page         int
 	Limit        int
 	AuthModule   string
+	SortOpts     []model.SortOption
 	Filters      []Filter
 
 	IsDisabled *bool

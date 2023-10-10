@@ -9,6 +9,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -372,7 +374,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		notify(states)
 	}
 
-	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span tracing.Span) {
+	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span) {
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
@@ -406,21 +408,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					}
 				}
 			}
+			span.SetStatus(codes.Error, "rule evaluation failed")
 			span.RecordError(err)
-			span.AddEvents(
-				[]string{"error", "message"},
-				[]tracing.EventValue{
-					{Str: fmt.Sprintf("%v", err)},
-					{Str: "rule evaluation failed"},
-				})
 		} else {
 			logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
-			span.AddEvents(
-				[]string{"message", "results"},
-				[]tracing.EventValue{
-					{Str: "rule evaluated"},
-					{Num: int64(len(results))},
-				})
+			span.AddEvent("rule evaluated", trace.WithAttributes(
+				attribute.Int64("results", int64(len(results))),
+			))
 		}
 		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 			logger.Debug("Skip updating the state because the context has been cancelled")
@@ -438,13 +432,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 		start = sch.clock.Now()
 		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-		span.AddEvents(
-			[]string{"message", "state_transitions", "alerts_to_send"},
-			[]tracing.EventValue{
-				{Str: "results processed"},
-				{Num: int64(len(processedStates))},
-				{Num: int64(len(alerts.PostableAlerts))},
-			})
+		span.AddEvent("results processed", trace.WithAttributes(
+			attribute.Int64("state_transitions", int64(len(processedStates))),
+			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
+		))
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
@@ -517,16 +508,17 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						logger.Debug("Skip rule evaluation because it is paused")
 						return nil
 					}
-					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution")
-					defer span.End()
 
-					span.SetAttributes("rule_uid", ctx.rule.UID, attribute.String("rule_uid", ctx.rule.UID))
-					span.SetAttributes("org_id", ctx.rule.OrgID, attribute.Int64("org_id", ctx.rule.OrgID))
-					span.SetAttributes("rule_version", ctx.rule.Version, attribute.Int64("rule_version", ctx.rule.Version))
 					fpStr := currentFingerprint.String()
-					span.SetAttributes("rule_fingerprint", fpStr, attribute.String("rule_fingerprint", fpStr))
 					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
-					span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
+					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution", trace.WithAttributes(
+						attribute.String("rule_uid", ctx.rule.UID),
+						attribute.Int64("org_id", ctx.rule.OrgID),
+						attribute.Int64("rule_version", ctx.rule.Version),
+						attribute.String("rule_fingerprint", fpStr),
+						attribute.String("tick", utcTick),
+					))
+					defer span.End()
 
 					evaluate(tracingCtx, f, attempt, ctx, span)
 					return nil

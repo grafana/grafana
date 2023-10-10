@@ -13,7 +13,7 @@ export function setupMockedResourcesAPI({
   getMock,
 }: {
   getMock?: jest.Mock;
-  response?: Array<{ text: string; label: string; value: string }>;
+  response?: unknown;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
 } = {}) {

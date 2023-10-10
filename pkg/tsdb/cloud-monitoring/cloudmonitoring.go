@@ -161,7 +161,7 @@ type datasourceService struct {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		var jsonData datasourceJSONData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {

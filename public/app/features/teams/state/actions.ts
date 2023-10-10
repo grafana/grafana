@@ -1,17 +1,26 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, TeamMember, ThunkResult } from 'app/types';
+import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
 
 import { buildNavModel } from './navModel';
-import { teamGroupsLoaded, queryChanged, pageChanged, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
+import {
+  teamGroupsLoaded,
+  queryChanged,
+  pageChanged,
+  teamLoaded,
+  teamMembersLoaded,
+  teamsLoaded,
+  sortChanged,
+} from './reducers';
 
 export function loadTeams(initial = false): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const { query, page, perPage } = getState().teams;
+    const { query, page, perPage, sort } = getState().teams;
     // Early return if the user cannot list teams
     if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
       dispatch(teamsLoaded({ teams: [], totalCount: 0, page: 1, perPage, noTeams: true }));
@@ -20,7 +29,7 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
     const response = await getBackendSrv().get(
       '/api/teams/search',
-      accessControlQueryParam({ query, page, perpage: perPage })
+      accessControlQueryParam({ query, page, perpage: perPage, sort })
     );
 
     // We only want to check if there is no teams on the initial request.
@@ -63,6 +72,14 @@ export function changeQuery(query: string): ThunkResult<void> {
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(pageChanged(page));
+    dispatch(loadTeams());
+  };
+}
+
+export function changeSort({ sortBy }: FetchDataArgs<Team>): ThunkResult<void> {
+  const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
+  return async (dispatch) => {
+    dispatch(sortChanged(sort));
     dispatch(loadTeams());
   };
 }

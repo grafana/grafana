@@ -150,21 +150,25 @@ type ProvisioningServiceImpl struct {
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
 	err := ps.ProvisionDatasources(ctx)
 	if err != nil {
+		ps.log.Error("Failed to provision data sources", "error", err)
 		return err
 	}
 
 	err = ps.ProvisionPlugins(ctx)
 	if err != nil {
+		ps.log.Error("Failed to provision plugins", "error", err)
 		return err
 	}
 
 	err = ps.ProvisionNotifications(ctx)
 	if err != nil {
+		ps.log.Error("Failed to provision alert notifications", "error", err)
 		return err
 	}
 
 	err = ps.ProvisionAlerting(ctx)
 	if err != nil {
+		ps.log.Error("Failed to provision alerting", "error", err)
 		return err
 	}
 

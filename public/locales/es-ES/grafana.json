@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -60,7 +62,11 @@
       "total__other": ""
     },
     "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
       "name-column": "",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
       "tags-column": ""
     },
     "folder-actions-button": {
@@ -130,6 +136,24 @@
     "search": {
       "placeholder": ""
     }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
   },
   "dashboard": {
     "add-menu": {
@@ -218,11 +242,124 @@
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
       "unmark-favorite": "Deshacer marca como favorito"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
     }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
+    "json-editor": {
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
   },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
     }
   },
   "folder-picker": {
@@ -296,6 +433,18 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "",
+      "body__many": "",
+      "body__other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
       "success": "Panel de librería guardado"
@@ -657,6 +806,22 @@
       "title": ""
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
@@ -736,6 +901,7 @@
       "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Cancelar",
       "info-text": "Exporte este panel de control.",
       "save-button": "Guardar en archivo",
@@ -837,6 +1003,12 @@
     },
     "title": "Preferencias"
   },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
   "tag-filter": {
     "loading": "Cargando...",
     "no-tags": "No se ha encontrado ninguna etiqueta",
@@ -853,7 +1025,8 @@
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list": "<0><0>Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí./0></0><1><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></1>",
+      "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
+      "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
     "footer": {

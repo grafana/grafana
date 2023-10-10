@@ -232,7 +232,7 @@ def validate_openapi_spec_step():
         "image": images["go"],
         "commands": [
             "apk add --update make",
-            "make validate-api-spec",
+            "make swagger-validate",
         ],
     }
 
@@ -434,7 +434,7 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}pre/g)",
+            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)",
             "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
             "yarn install --mode=update-lockfile",
@@ -788,6 +788,7 @@ def build_docs_website_step():
         "image": images["docs"],
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
+            "echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /hugo/content/docs/grafana/_index.md",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
@@ -959,6 +960,14 @@ def redis_integration_tests_steps():
     }
 
     return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
+
+def remote_alertmanager_integration_tests_steps():
+    cmds = [
+        "go clean -testcache",
+        "go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...",
+    ]
+
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir", "8080", None)
 
 def memcached_integration_tests_steps():
     cmds = [

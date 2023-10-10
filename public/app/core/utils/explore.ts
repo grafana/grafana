@@ -99,7 +99,8 @@ export function buildQueryTransaction(
   queryOptions: QueryOptions,
   range: TimeRange,
   scanning: boolean,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  scopedVars?: ScopedVars
 ): QueryTransaction {
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
@@ -131,6 +132,7 @@ export function buildQueryTransaction(
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
+      ...scopedVars,
     },
     maxDataPoints: queryOptions.maxDataPoints,
     liveStreaming: queryOptions.liveStreaming,

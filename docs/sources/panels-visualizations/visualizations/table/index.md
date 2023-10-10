@@ -21,20 +21,19 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Table
 title: Table
 weight: 100
 ---
 
 # Table
 
-The table panel visualization is very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
+Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
 ## Annotation and alert support
 
-Annotations and alerts are not currently supported in the new table panel.
+Annotations and alerts are not currently supported in tables.
 
 ## Sort column
 
@@ -45,7 +44,7 @@ Click a column title to change the sort order from default to descending to asce
 ## Table options
 
 {{% admonition type="note" %}}
-If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
+If you are using a table created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
 {{% /admonition %}}
 
 ### Show header
@@ -60,11 +59,11 @@ For example, if you enter `100` in the field, then when you click outside the fi
 
 ## Minimum column width
 
-By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table panel in pixels.
+By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table in pixels.
 
 For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
 
-For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table based panels to render correctly in dashboards.
+For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table-based panels to render correctly in dashboards.
 
 ## Column alignment
 

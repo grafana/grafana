@@ -16,9 +16,9 @@ weight: 100
 
 # Pie chart
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="1200px" lightbox="true" caption="Pie chart visualization" >}}
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="1200px" lightbox="true" caption="Pie charts" >}}
 
-The pie chart displays reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
+Pie charts display reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
 ## Value options
 
@@ -79,7 +79,27 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 {{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Legend options
+
+Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
+
+### Legend visibility
+
+Use the **Visibility** switch to show or hide the legend.
+
+### Legend mode
+
+Set the display mode of the legend:
+
+- **List -** Displays the legend as a list. This is a default display mode of the legend.
+- **Table -** Displays the legend as a table.
+
+### Legend placement
+
+Choose where to display the legend.
+
+- **Bottom -** Below the graph.
+- **Right -** To the right of the graph.
 
 ### Legend values
 
@@ -87,8 +107,6 @@ Select values to display in the legend. You can select more than one.
 
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
-
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
 {{% docs/reference %}}
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"

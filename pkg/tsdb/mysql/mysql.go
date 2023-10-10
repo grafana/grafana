@@ -51,7 +51,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 }
 
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,

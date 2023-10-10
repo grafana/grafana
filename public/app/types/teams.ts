@@ -63,6 +63,7 @@ export interface TeamsState {
   noTeams: boolean;
   totalPages: number;
   hasFetched: boolean;
+  sort?: string;
 }
 
 export interface TeamState {

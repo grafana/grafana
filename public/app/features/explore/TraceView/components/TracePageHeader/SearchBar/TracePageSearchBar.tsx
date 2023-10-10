@@ -64,9 +64,10 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.tags.length > 1 ||
       search.tags.some((tag) => {
         return tag.key;
-      })
+      }) ||
+      showSpanFilterMatchesOnly
     );
-  }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, showSpanFilterMatchesOnly]);
 
   return (
     <div className={styles.container}>

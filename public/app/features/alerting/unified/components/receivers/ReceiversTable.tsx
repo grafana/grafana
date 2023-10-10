@@ -511,7 +511,7 @@ function useGetColumns(
   ];
 }
 
-function UnusedContactPointBadge() {
+export function UnusedContactPointBadge() {
   return (
     <Badge
       text="Unused"

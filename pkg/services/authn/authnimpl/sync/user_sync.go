@@ -163,12 +163,8 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
-func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if !identity.ClientParams.EnableDisabledUsers {
-		return nil
-	}
-
-	if !identity.IsDisabled {
+func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if !identity.ClientParams.EnableUser {
 		return nil
 	}
 
