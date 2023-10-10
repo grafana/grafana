@@ -1,5 +1,100 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Rolle",
+      "serviceaccount-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": "Speichern"
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "Rolle",
+      "serviceaccount": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "Abbrechen",
+      "cannot-move-folders": "",
+      "delete-button": "",
+      "delete-modal-invalid-text": "",
+      "delete-modal-invalid-title": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__other": ""
+    },
+    "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
+      "name-column": "Name",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
+      "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "Ordner auswählen",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Warnregeln",
+      "dashboards": "Dashboards",
+      "panels": "",
+      "permissions": "",
+      "settings": "Einstellungen"
+    },
+    "new-folder-form": {
+      "cancel-label": "Abbrechen",
+      "create-label": "Erstellen",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopiert"
@@ -29,23 +124,53 @@
     },
     "save": "Speichern"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Datenquellen"
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
+  },
   "dashboard": {
     "add-menu": {
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
-      "visualization": "Visualisierung"
+      "visualization": "Visualisierung",
+      "widget": ""
     },
     "empty": {
-      "add-import-body": "Visualisierungen importieren, die mit anderen Dashboards geteilt werden.",
-      "add-import-button": "Bibliotheks-Panel importieren",
-      "add-import-header": "Panel importieren",
-      "add-row-body": "Gruppieren Sie Ihre Visualisierungen in erweiterbare Abschnitte.",
-      "add-row-button": "Zeile hinzufügen",
-      "add-row-header": "Eine Zeile hinzufügen",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
-      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen"
+      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": "Dashboard importieren"
     },
     "inspect": {
       "data-tab": "Daten",
@@ -112,26 +237,182 @@
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
-    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "new-dashboard": "Neues Dashboard",
-    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
-    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
-    "viewAll": "Alle anzeigen",
-    "welcome": "Willkommen bei Grafana Dashboards!"
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "Abbrechen",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "Ordner",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "Tags",
+      "title": "Allgemein",
+      "title-label": ""
+    },
+    "json-editor": {
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": "Einstellungen"
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "Zeitzone",
+      "week-start-label": "Wochenbeginn"
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-shortened-link": "",
+      "refresh-picker-cancel": "Abbrechen",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
+    }
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
       "no-options": "Keine Optionen gefunden"
+    },
+    "select": {
+      "no-options-label": "Keine Optionen gefunden",
+      "placeholder": ""
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Dashboard",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "Dashboard-Einstellungen",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "Dashboard speichern",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": "Zeitbereich verkleinern"
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -147,12 +428,34 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "",
+      "body__other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
       "success": "Bibliotheks-Panel wurde gespeichert"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "title": "",
+      "unknown": ""
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
@@ -201,12 +504,25 @@
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
       "title": "API-Schlüssel"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Verwaltung"
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
     },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
@@ -231,12 +547,22 @@
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
       "title": "Dashboards"
     },
+    "data-sources": {
+      "subtitle": "",
+      "title": "Datenquellen"
+    },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
       "title": "Datenquellen"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Entdecken"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
@@ -245,6 +571,9 @@
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
       "title": "Benutzer"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Hilfe"
@@ -256,9 +585,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
@@ -276,9 +617,18 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "observability": {
+      "title": "Beobachtbarkeit"
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -297,8 +647,17 @@
     "profile/settings": {
       "title": "Profil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Öffentliche Dashboards"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Szenen"
@@ -320,6 +679,9 @@
     "sign-out": {
       "title": "Abmelden"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Interaktive, öffentlich verfügbare Point-in-Time-Darstellungen von Dashboards",
       "title": "Schnappschüsse"
@@ -330,6 +692,9 @@
     "starred-empty": {
       "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
@@ -337,6 +702,9 @@
     "support-bundles": {
       "subtitle": "Support-Bundles herunterladen",
       "title": "Support-Bundles"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
@@ -388,10 +756,74 @@
       "view": "Anzeigen"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "",
+    "form": {
+      "add-tag-label": "",
+      "add-tag-placeholder": "",
+      "add-title-label": "",
+      "cancel": "Abbrechen",
+      "heading": "",
+      "interval-label": "",
+      "interval-placeholder": "",
+      "interval-required": "",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name ist erforderlich",
+      "save": "Speichern",
+      "table-delete": "",
+      "table-drag": "",
+      "table-empty": "",
+      "table-heading": ""
+    },
+    "sub-title": "",
+    "title": ""
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "",
+      "edit": "",
+      "start": "",
+      "tooltip": ""
+    },
+    "create-button": {
+      "title": ""
+    },
+    "delete-modal": {
+      "body": "",
+      "confirm-text": ""
+    },
+    "empty": {
+      "button": "",
+      "pro-tip": "",
+      "pro-tip-link-title": "",
+      "title": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
       "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
+    },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
     },
     "live-option": {
       "aria-label": "Live-Streaming einschalten",
@@ -401,8 +833,9 @@
       "aria-label": "Automatische Aktualisierung ausschalten",
       "label": "Aus"
     },
-    "select-button": {
-      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {
@@ -443,6 +876,12 @@
       "placeholder": "Nach Dashboards suchen"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Teilen"
@@ -456,6 +895,7 @@
       "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",
@@ -518,6 +958,26 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zeitzone"
@@ -533,12 +993,15 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "dark-label": "Dunkel",
-      "default-label": "Standard",
-      "light-label": "Hell",
-      "system-label": "System"
+      "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
   },
   "tag-filter": {
     "loading": "Wird geladen ...",
@@ -556,7 +1019,8 @@
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></1>",
+      "empty-recent-list-docs": "<0><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></0>",
+      "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {
