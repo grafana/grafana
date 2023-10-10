@@ -24,7 +24,6 @@ func TestKindRegistry(t *testing.T) {
 		"frame",
 		"geojson",
 		"jsonobj",
-		"playlist",
 		"png",
 		"preferences",
 		"snapshot",
@@ -32,9 +31,9 @@ func TestKindRegistry(t *testing.T) {
 	}, ids)
 
 	// Check playlist exists
-	info, err := registry.GetInfo(entity.StandardKindPlaylist)
+	info, err := registry.GetInfo(entity.StandardKindDashboard)
 	require.NoError(t, err)
-	require.Equal(t, "Playlist", info.Name)
+	require.Equal(t, "Dashboard", info.Name)
 	require.False(t, info.IsRaw)
 
 	// Check that we registered a test item
