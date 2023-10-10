@@ -67,7 +67,7 @@ export const getAllOptionEditors = () => {
     id: 'text',
     name: 'Text',
     description: 'Allows string values input',
-    editor: StringValueEditor as any,
+    editor: StringValueEditor,
   };
 
   const strings: StandardEditorsRegistryItem<string[]> = {
@@ -153,28 +153,28 @@ export const getAllOptionEditors = () => {
     id: 'timezone',
     name: 'Time zone',
     description: 'Time zone selection',
-    editor: TimeZonePicker as any,
+    editor: TimeZonePicker,
   };
 
   const fieldName: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
     id: 'field-name',
     name: 'Field name',
     description: 'Allows selecting a field name from a data frame',
-    editor: FieldNamePicker as any,
+    editor: FieldNamePicker,
   };
 
   const dashboardPicker: StandardEditorsRegistryItem<string, DashboardPickerOptions> = {
     id: 'dashboard-uid',
     name: 'Dashboard',
     description: 'Select dashboard',
-    editor: DashboardPicker as any,
+    editor: DashboardPicker,
   };
 
   const mappings: StandardEditorsRegistryItem<ValueMapping[]> = {
     id: 'mappings',
     name: 'Mappings',
     description: 'Allows defining value mappings',
-    editor: ValueMappingsEditor as any,
+    editor: ValueMappingsEditor,
   };
 
   const thresholds: StandardEditorsRegistryItem<ThresholdsConfig> = {
