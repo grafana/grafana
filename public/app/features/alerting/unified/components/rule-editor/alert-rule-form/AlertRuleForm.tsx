@@ -109,7 +109,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       notifyApp.error(conditionErrorMsg);
       return;
     }
-
     dispatch(
       saveRuleFormAction({
         values: {

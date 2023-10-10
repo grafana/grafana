@@ -140,6 +140,10 @@ export interface ClassicCondition {
     params: number[];
     type: EvalFunction;
   };
+  unloadEvaluator?: {
+    params: number[];
+    type: EvalFunction;
+  };
   operator?: {
     type: string;
   };
