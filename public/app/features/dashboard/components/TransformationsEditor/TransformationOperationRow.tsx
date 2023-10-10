@@ -122,7 +122,6 @@ export const TransformationOperationRow = ({
         )}
         <QueryOperationToggleAction
           title="Debug"
-          disabled={!isOpen}
           icon="bug"
           onClick={instrumentToggleCallback(toggleShowDebug, 'debug', showDebug)}
           active={showDebug}
@@ -183,6 +182,7 @@ export const TransformationOperationRow = ({
         configs={configs}
         uiConfig={uiConfig}
         onChange={onChange}
+        toggleShowDebug={toggleShowDebug}
       />
     </QueryOperationRow>
   );
