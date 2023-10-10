@@ -1195,6 +1195,9 @@ steps:
 - commands:
   - apk add --update git make
   - cd grafana
+  - ls -l
+  - pwd
+  - cat Makefile
   - make swagger-clean && make openapi3-gen
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
     git add $f; done
@@ -4727,6 +4730,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2da7fb2fbb1d9db404a9e057bc1ac84b7d29b4ea5f9a7c1f8e56eb19caa0edc4
+hmac: b28face828f506eb9198a5bc1846419c25d5087f26904098622a804b2bbf865c
 
 ...

@@ -57,6 +57,9 @@ def swagger_gen_step(ver_mode):
         "commands": [
             "apk add --update git make",
             "cd grafana",
+            "ls -l",
+            "pwd",
+            "cat Makefile",
             "make swagger-clean && make openapi3-gen",
             "for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done",
             'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else return 1; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
