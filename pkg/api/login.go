@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -240,9 +241,14 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 }
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if errID != nil {
+		hs.log.Error("failed to retrieve user ID", "error", errID)
+	}
+
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
+		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
 		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 			if authInfo.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
@@ -266,7 +272,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
+			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", userID, "error", err)
 		}
 	}
 
@@ -284,7 +290,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 		c.Redirect(rdUrl)
 	} else {
-		hs.log.Info("Successful Logout", "User", c.Email)
+		hs.log.Info("Successful Logout", "User", c.SignedInUser.GetEmail())
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 }
@@ -329,7 +335,16 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
 	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+		var userID int64
+		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
+			var errID error
+			userID, errID = identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			if errID != nil {
+				hs.log.Error("failed to retrieve user ID", "error", errID)
+			}
+		}
+
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 		if err != nil {
 			c.Redirect(hs.Cfg.AppSubURL + "/login")

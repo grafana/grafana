@@ -8,8 +8,10 @@ import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylist, updatePlaylist } from './api';
+import { playlistAPI, updatePlaylist } from './api';
 import { Playlist } from './types';
+
+const { getPlaylist } = playlistAPI;
 
 export interface RouteParams {
   uid: string;

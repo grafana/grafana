@@ -225,6 +225,7 @@ export const availableIconsIndex = {
   'vertical-align-bottom': true,
   'vertical-align-center': true,
   'vertical-align-top': true,
+  'web-section-alt': true,
   'wrap-text': true,
   rss: true,
   x: true,
