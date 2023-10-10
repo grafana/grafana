@@ -119,7 +119,7 @@ export function useOpenAIStream(
     };
   }, [value]);
 
-  // If the stream is generating and we haven't received a reply, it timed out.
+  // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
     let timeout: NodeJS.Timeout | undefined;
     if (streamStatus === StreamStatus.GENERATING && reply === '') {
