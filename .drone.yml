@@ -3143,14 +3143,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.42/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3175,7 +3173,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -4661,6 +4658,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 68c3d5cfb08c1e5384f39ea57badfd6dbb46943a87d54571665ec29a1257b707
+hmac: 51f2eb63b022feb76c4af586a1bf9f2e4d6751f8d4c364aff2eaedfbb459e666
 
 ...
