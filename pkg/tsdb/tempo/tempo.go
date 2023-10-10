@@ -76,7 +76,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}
 
-	s.logger.Debug("Successully processed query request")
+	s.logger.Debug("Successfully processed query request")
 	return response, nil
 }
 
