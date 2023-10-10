@@ -229,7 +229,10 @@ export function TraceView(props: Props) {
             span={selectedSpan}
             timeZone={timeZone}
             width={width}
-            clearSelectedSpan={() => setSelectedSpan(undefined)}
+            clearSelectedSpan={() => {
+              toggleDetail(selectedSpan?.spanID ?? '');
+              setSelectedSpan(undefined);
+            }}
             detailState={detailStates.get(selectedSpan?.spanID ?? '')}
             traceStartTime={traceProp.startTime}
             detailLogItemToggle={detailLogItemToggle}
