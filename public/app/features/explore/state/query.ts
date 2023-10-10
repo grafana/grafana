@@ -53,7 +53,7 @@ import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/expl
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
-import { decorateData, decorateLoadMoreData, mergeDataSeries } from '../utils/decorators';
+import { decorateData, mergeDataSeries } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
