@@ -140,5 +140,5 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
-  recoveryThreshold?: boolean;
+  navAdminSubsections?: boolean;
 }
