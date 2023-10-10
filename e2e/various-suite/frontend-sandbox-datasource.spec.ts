@@ -140,13 +140,6 @@ describe('Datasource sandbox', () => {
   });
 
   after(() => {
-    // delete the datasource
-    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
-    cy.request({
-      url: `${Cypress.env('BASE_URL')}/api/datasources/name/${DATASOURCE_TYPED_NAME}`,
-      method: 'DELETE',
-      failOnStatusCode: false,
-    });
     cy.clearCookies();
   });
 });
