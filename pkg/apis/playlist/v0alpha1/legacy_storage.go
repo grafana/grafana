@@ -2,16 +2,13 @@ package v0alpha1
 
 import (
 	"context"
-	"fmt"
 
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var (
@@ -59,7 +56,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// To test: kubectl get playlists --all-namespaces
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
 
 	limit := 100
@@ -81,21 +79,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		},
 	}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
-			},
-			Spec: playlistkind.Spec{
-				Name:     v.Name,
-				Uid:      v.UID,
-				Interval: v.Interval,
-			},
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: orgId, // required
+		})
+		if err != nil {
+			return nil, err
 		}
-		list.Items = append(list.Items, p)
+		list.Items = append(list.Items, *ConvertToK8sResource(p))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -106,33 +97,16 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
 
 	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
-		OrgId: orgId,
+		OrgId: orgId, // required
 	})
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
-		return nil, fmt.Errorf("not found?")
-	}
-
-	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
-		},
-		Spec: playlistkind.Spec{
-			Name:     p.Name,
-			Uid:      p.Uid,
-			Interval: p.Interval,
-			Items:    p.Items,
-		},
-	}, nil
+	return ConvertToK8sResource(p), nil
 }

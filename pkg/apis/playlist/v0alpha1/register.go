@@ -1,6 +1,9 @@
 package v0alpha1
 
 import (
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -9,16 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/playlist"
 )
-
-// GroupName is the group name for this API.
-const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
@@ -52,7 +46,8 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
+		GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := newLegacyStorage(b.service)
