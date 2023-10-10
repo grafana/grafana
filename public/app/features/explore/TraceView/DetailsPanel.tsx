@@ -110,7 +110,7 @@ export function DetailsPanel(props: Props) {
         width={width}
         onResize={onDrawerResize}
         defaultHeight={defaultDetailsPanelHeight}
-        position="relative"
+        className={styles.drawer}
       >
         <div className={cx(styles.header, styles.flexSpaceBetween)}>
           <div
@@ -198,6 +198,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: auto;
     bottom: 0;
     z-index: 9;
+  `,
+  drawer: css`
+    margin: 0;
+    position: relative !important;
   `,
   header: css`
     gap: 0 1rem;
