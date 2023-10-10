@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	kind "github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -35,7 +34,7 @@ func (s *Service) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistBy
 	return s.store.Get(ctx, q)
 }
 
-func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*kind.Playlist, error) {
+func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
 	v, err := s.store.Get(ctx, q)
 	if err != nil {
 		return nil, err
@@ -58,7 +57,12 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 			items[i].Title = &title
 		}
 	}
-	return playlist.ConvertToK8sResource(v, items), nil
+	return &playlist.PlaylistDTO{
+		Uid:      v.UID,
+		Name:     v.Name,
+		Interval: v.Interval,
+		Items:    items,
+	}, nil
 }
 
 func (s *Service) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {

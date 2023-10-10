@@ -2,11 +2,6 @@ package playlist
 
 import (
 	"errors"
-	"fmt"
-	"time"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
@@ -94,27 +89,9 @@ type GetPlaylistItemsByUidQuery struct {
 	OrgId       int64
 }
 
-func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playlist {
-	return &playlist.Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: playlist.APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.UID,
-			UID:               types.UID(v.UID),
-			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
-			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
-			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
-			// Annotations: map[string]string{
-			// 	"grafana.com/updatedTime": time.UnixMilli(v.UpdatedAt).Format(time.RFC3339),
-			// },
-		},
-		Spec: playlist.Spec{
-			Uid:      v.UID,
-			Name:     v.Name,
-			Interval: v.Interval,
-			Items:    items,
-		},
-	}
+func PlaylistToResource(p PlaylistDTO) playlist.K8sResource {
+	copy := p
+	r := playlist.NewK8sResource(p.Uid, &copy)
+	copy.Uid = "" // remove it from the payload
+	return r
 }

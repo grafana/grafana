@@ -1,10 +1,6 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana/pkg/kinds/playlist"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,16 +9,25 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
+
+// GroupName is the group name for this API.
+const GroupName = "playlist.x.grafana.com"
+const VersionID = "v0alpha1" //
+const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service playlistsvc.Service
+	service playlist.Service
 }
 
-func RegisterAPIService(p playlistsvc.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service: p,
 	}
@@ -47,8 +52,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		playlist.GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := newLegacyStorage(b.service)
@@ -63,7 +67,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[playlist.VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -76,7 +80,7 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 }
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: playlist.GroupName, Version: playlist.VersionID}
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {
@@ -94,8 +98,8 @@ var (
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
+		&Playlist{},
+		&PlaylistList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
