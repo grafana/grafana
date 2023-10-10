@@ -1,4 +1,4 @@
-import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
+import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 import semver from 'semver';
@@ -20,13 +20,13 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   getBackendSrv,
+  getTemplateSrv,
   reportInteraction,
   TemplateSrv,
-  getTemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -43,27 +43,27 @@ import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
+  defaultTableFilter,
+  durationMetric,
+  errorRateMetric,
   failedMetric,
   histogramMetric,
   mapPromMetricsToServiceMap,
+  rateMetric,
   serviceMapMetrics,
   totalsMetric,
-  rateMetric,
-  durationMetric,
-  errorRateMetric,
-  defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
+  createTableFrameFromSearch,
+  transformFromOTLP as transformFromOTEL,
   transformTrace,
   transformTraceList,
-  transformFromOTLP as transformFromOTEL,
-  createTableFrameFromSearch,
   formatTraceQLResponse,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
-import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
+import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage } from './utils';
 import { TempoVariableSupport } from './variables';
 
@@ -164,7 +164,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   async labelNamesQuery(): Promise<Array<{ text: string }>> {
     await this.languageProvider.fetchTags();
     const tags = this.languageProvider.getAutocompleteTags();
-    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
   async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
@@ -608,7 +608,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
     const validTargets = targets
       .filter((t) => t.query)
-      .map((t): TempoQuery => ({ ...t, query: t.query.trim(), queryType: 'traceId' }));
+      .map((t): TempoQuery => ({ ...t, query: t.query?.trim(), queryType: 'traceId' }));
     if (!validTargets.length) {
       return EMPTY;
     }
@@ -713,7 +713,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
       return result.join(', ');
     }
-    return query.query;
+    return query.query ?? '';
   }
 
   buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
@@ -1025,12 +1025,26 @@ export function getFieldConfig(
 }
 
 export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
-  let query = { queryType: 'nativeSearch' } as TempoQuery;
+  let query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
   if (serviceName !== '') {
-    query.serviceName = serviceName;
+    query.filters.push({
+      id: 'service-name',
+      scope: TraceqlSearchScope.Resource,
+      tag: 'service.name',
+      value: serviceName,
+      operator: '=',
+      valueType: 'string',
+    });
   }
   if (spanName !== '') {
-    query.spanName = spanName;
+    query.filters.push({
+      id: 'span-name',
+      scope: TraceqlSearchScope.Span,
+      tag: 'name',
+      value: spanName,
+      operator: '=',
+      valueType: 'string',
+    });
   }
 
   return {

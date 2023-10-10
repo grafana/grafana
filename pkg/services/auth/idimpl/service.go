@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -26,9 +27,9 @@ var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
-	features featuremgmt.FeatureToggles, authnService authn.Service,
+	features featuremgmt.FeatureToggles, authnService authn.Service, reg prometheus.Registerer,
 ) *Service {
-	s := &Service{cfg, log.New("id-service"), signer, cache}
+	s := &Service{cfg, log.New("id-service"), signer, cache, newMetrics(reg)}
 
 	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
 		authnService.RegisterPostAuthHook(s.hook, 140)
@@ -38,22 +39,29 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg    *setting.Cfg
-	logger log.Logger
-	signer auth.IDSigner
-	cache  remotecache.CacheStorage
+	cfg     *setting.Cfg
+	logger  log.Logger
+	signer  auth.IDSigner
+	cache   remotecache.CacheStorage
+	metrics *metrics
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
+	defer func(t time.Time) {
+		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	namespace, identifier := id.GetNamespacedID()
 
 	cacheKey := prefixCacheKey(id.GetCacheKey())
 	cachedToken, err := s.cache.Get(ctx, cacheKey)
 	if err == nil {
+		s.metrics.tokenSigningFromCacheCounter.Inc()
 		s.logger.Debug("Cached token found", "namespace", namespace, "id", identifier)
 		return string(cachedToken), nil
 	}
 
+	s.metrics.tokenSigningCounter.Inc()
 	s.logger.Debug("Sign new id token", "namespace", namespace, "id", identifier)
 
 	now := time.Now()
@@ -69,11 +77,12 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	})
 
 	if err != nil {
+		s.metrics.failedTokenSigningCounter.Inc()
 		return "", err
 	}
 
 	if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
-		s.logger.Error("failed to set cache", "error", err)
+		s.logger.Error("Failed to add id token to cache", "error", err)
 	}
 
 	return token, nil

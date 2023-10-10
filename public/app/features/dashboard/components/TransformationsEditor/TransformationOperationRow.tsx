@@ -167,6 +167,10 @@ export const TransformationOperationRow = ({
       isOpen={toggleExpand()}
       // Assure that showHelp is untoggled when the row becomes collapsed.
       onClose={() => toggleShowHelp(false)}
+      expanderMessages={{
+        close: 'Collapse transformation row',
+        open: 'Expand transformation row',
+      }}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (

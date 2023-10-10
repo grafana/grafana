@@ -30,6 +30,10 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
+  /** Determine whether the toggletip should be shown or not */
+  show?: boolean;
+  /** Callback function to be called when the toggletip is opened */
+  onOpen?: () => void;
 }
 
 export const Toggletip = React.memo(
@@ -43,24 +47,31 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
+    onOpen,
+    show,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const contentRef = useRef(null);
-    const [controlledVisible, setControlledVisible] = React.useState(false);
+    const [controlledVisible, setControlledVisible] = React.useState(show);
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update, tooltipRef, triggerRef } =
       usePopperTooltip(
         {
-          visible: controlledVisible,
+          visible: show ?? controlledVisible,
           placement: placement,
           interactive: true,
           offset: [0, 8],
+          // If show is undefined, the toggletip will be shown on click
           trigger: 'click',
-          onVisibleChange: (value: boolean) => {
-            setControlledVisible(value);
-            if (!value) {
+          onVisibleChange: (visible: boolean) => {
+            if (show === undefined) {
+              setControlledVisible(visible);
+            }
+            if (!visible) {
               onClose?.();
+            } else {
+              onOpen?.();
             }
           },
         },

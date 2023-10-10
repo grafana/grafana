@@ -6,6 +6,10 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 
+# ## 4.2.2 (2023-10-05)
+
+# - Added support for Jira data source and MongoDB data source plugins repositories.
+
 # ## 4.2.1 (2023-09-13)
 
 # ## Fixed
@@ -213,6 +217,8 @@ SOURCES_grafana_cloud_frontend_observability_faro_web_sdk='faro-web-sdk'
 SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
+SOURCES_plugins_grafana_jira_datasource='jira-datasource'
+SOURCES_plugins_grafana_mongodb_datasource='mongodb-datasource'
 SOURCES_plugins_grafana_splunk_datasource='splunk-datasource'
 
 VERSIONS_as_code='UNVERSIONED'

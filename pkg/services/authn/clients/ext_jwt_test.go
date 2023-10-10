@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -12,17 +13,19 @@ import (
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -513,8 +516,9 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	signingKeysSvc := &signingkeystest.FakeSigningKeysService{}
-	signingKeysSvc.ExpectedServerPublicKey = &pk.PublicKey
+	signingKeysSvc := &signingkeystest.FakeSigningKeysService{ExpectedKeys: map[string]crypto.Signer{
+		signingkeys.ServerPrivateKeyID: pk},
+	}
 
 	userSvc := &usertest.FakeUserService{}
 	oauthSvc := &oastest.FakeService{}

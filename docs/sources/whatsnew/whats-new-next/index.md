@@ -18,6 +18,23 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Distributed tracing in Grafana Cloud k6
+
+<!-- Heitor Tashiro Sergent -->
+
+_Generally available in Grafana Cloud_
+
+You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug failed performance tests and proactively improve application reliability.
+
+Distributed tracing in Grafana Cloud k6 only requires two things:
+
+- An application instrumented for tracing with Grafana Cloud Traces.
+- Adding a few lines of code to your existing k6 scripts.
+
+The integration works by having k6 inject tracing metadata into the requests it sends to your backend services when you run a test. The tracing data is then correlated with k6 test run data, so you can understand how your services and operations behaved during the whole test run. The collected tracing data is aggregated to generate real-time metrics—such as frequency of calls, error rates, and percentile latencies—that can help you narrow your search space and quickly spot anomalies.
+
+To learn more, refer to the [Integration with Grafana Cloud Traces documentation](/docs/grafana-cloud/k6/analyze-results/integration-with-grafana-cloud-traces/) and [Distributed Tracing in Grafana Cloud k6 blog post](https://grafana.com/blog/2023/09/19/troubleshoot-failed-performance-tests-faster-with-distributed-tracing-in-grafana-cloud-k6/).
+
 ## Tenant database instance name and number for SAP HANA® data source
 
 <!-- Miguel Palau -->
@@ -89,3 +106,14 @@ We are gradually rolling out our new browse dashboards user interface. With this
 To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+
+## Temporary credentials in CloudWatch data source
+
+<!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
+<!-- Cloud -->
+
+_Available in private preview in Grafana Cloud_
+
+The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
+
+To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
