@@ -128,6 +128,7 @@ Experimental features might be changed or removed without prior notice.
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                       |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                     |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
+| `grafanaAPIServerWithExperimentalAPIs`      | Register experimental APIs with the k8s API server                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
@@ -142,8 +143,10 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
+| `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                       |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
+| `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
 
 ## Development feature toggles
 

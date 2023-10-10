@@ -7,7 +7,7 @@ import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { OPEN_AI_MODEL, Message } from './utils';
+import { OPEN_AI_MODEL, Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -79,13 +79,13 @@ export const GenAIButton = ({
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
     if (isFirstHistoryEntry && reply) {
-      onGenerate(reply.replace(/^"|"$/g, ''));
+      onGenerate(sanitizeReply(reply));
     }
   }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
-      pushHistoryEntry(reply.replace(/^"|"$/g, ''));
+      pushHistoryEntry(sanitizeReply(reply));
     }
   }, [history, streamStatus, reply, pushHistoryEntry]);
 

@@ -90,6 +90,7 @@ mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
+grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false
@@ -116,5 +117,7 @@ idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
 externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
 alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false
+panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
+kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true

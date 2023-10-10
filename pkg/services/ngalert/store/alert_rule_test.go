@@ -514,6 +514,50 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	require.Equal(t, uid, actual.UID)
 }
 
+func TestIntegrationInsertAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(store.Cfg.BaseInterval)))
+	deref := make([]models.AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		deref = append(deref, *rule)
+	}
+
+	ids, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+	require.Len(t, ids, len(rules))
+
+	dbRules, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		OrgID: 1,
+	})
+	require.NoError(t, err)
+	for idx, keyWithID := range ids {
+		found := false
+		for _, rule := range dbRules {
+			if rule.GetKey() == keyWithID.AlertRuleKey {
+				expected := rules[idx]
+				require.Equal(t, keyWithID.ID, rule.ID)
+				require.Equal(t, expected.Title, rule.Title)
+				found = true
+				break
+			}
+		}
+		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
+	}
+}
+
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
