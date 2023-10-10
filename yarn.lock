@@ -2967,6 +2967,8 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.6.0
     webpack: 5.88.1
+  peerDependencies:
+    "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
 

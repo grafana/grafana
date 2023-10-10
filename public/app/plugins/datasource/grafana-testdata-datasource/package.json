@@ -30,6 +30,9 @@
     "ts-node": "10.9.1",
     "webpack": "5.88.1"
   },
+  "peerDependencies": {
+    "@grafana/runtime": "*"
+  },
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
