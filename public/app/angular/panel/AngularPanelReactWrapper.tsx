@@ -1,24 +1,15 @@
 import React, { ComponentType, useEffect, useRef } from 'react';
 import { Observable, ReplaySubject } from 'rxjs';
 
-import {
-  dateTimeFormat,
-  DateTimeInput,
-  EventBusSrv,
-  PanelData,
-  PanelPlugin,
-  PanelProps,
-  FieldConfigSource,
-} from '@grafana/data';
+import { EventBusSrv, PanelData, PanelPlugin, PanelProps, FieldConfigSource } from '@grafana/data';
 import { AngularComponent, getAngularLoader, RefreshEvent } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModelCompatabilityWrapper } from 'app/features/dashboard-scene/utils/DashboardModelCompatabilityWrapper';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { RenderEvent } from 'app/types/events';
 
 interface AngularScopeProps {
-  panel: PanelModel;
-  dashboard: DashboardModel;
+  panel: FakePanel;
+  dashboard: DashboardModelCompatabilityWrapper;
   queryRunner: FakeQueryRunner;
   size: {
     height: number;
@@ -46,7 +37,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
         // @ts-ignore
         panel: fakePanel,
         // @ts-ignore
-        dashboard: new FakeDashboard(),
+        dashboard: new DashboardModelCompatabilityWrapper(),
         size: { width: props.width, height: props.height },
         queryRunner: queryRunner,
       };
@@ -132,26 +123,4 @@ class FakeQueryRunner {
   }
 
   run() {}
-}
-
-class FakeDashboard {
-  events = new EventBusSrv();
-  panelInitialized() {}
-
-  getTimezone() {
-    const time = sceneGraph.getTimeRange(window.__grafanaSceneContext);
-    return time.getTimeZone();
-  }
-
-  sharedTooltipModeEnabled() {
-    // Todo access scene sync scope
-    return false;
-  }
-
-  formatDate(date: DateTimeInput, format?: string) {
-    return dateTimeFormat(date, {
-      format,
-      timeZone: this.getTimezone(),
-    });
-  }
 }
