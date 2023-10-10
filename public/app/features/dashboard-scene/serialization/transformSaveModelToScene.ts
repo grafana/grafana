@@ -46,6 +46,8 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { getAngularPanelMigrationHandler } from './angularMigration';
+
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
   isLoading?: boolean;
@@ -338,6 +340,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
   if (panel.timeFrom || panel.timeShift) {

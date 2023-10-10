@@ -3343,9 +3343,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.13.0":
-  version: 1.13.0
-  resolution: "@grafana/scenes@npm:1.13.0"
+"@grafana/scenes@npm:^1.15.0":
+  version: 1.15.0
+  resolution: "@grafana/scenes@npm:1.15.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3357,7 +3357,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 3a6c4419ee324d49f41b9569dc86ca7ffa926438eedd762aa79c3327c39cd16b9671047ad02f5de3c52190a81b4139cdb75653a4b3741753f851ca0c9155b9bf
+  checksum: 8416327ad9a0e3be35d5a106788248d5886f6aa220777cf0772ef73a3f64ecac889f58a8e804beea0de339acd571d6e49a10278180cf1c50a2a51f44e03bf93e
   languageName: node
   linkType: hard
 
@@ -6824,16 +6824,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.18.1":
-  version: 3.18.1
-  resolution: "@react-types/shared@npm:3.18.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 298822d1cca26b5da1bdf53a57d26d5619f3af816db3fdecdc8b99a3a305ca8ee352347ca43f426a5d79045b08cf32c00c6b083ad4a1002abf673de9dd4a9bb5
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.18.1, @react-types/shared@npm:^3.21.0":
+"@react-types/shared@npm:3.21.0, @react-types/shared@npm:^3.18.1, @react-types/shared@npm:^3.21.0":
   version: 3.21.0
   resolution: "@react-types/shared@npm:3.21.0"
   peerDependencies:
@@ -17654,7 +17645,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.6
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.13.0
+    "@grafana/scenes": ^1.15.0
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -17687,7 +17678,7 @@ __metadata:
     "@react-types/button": 3.9.0
     "@react-types/menu": 3.9.2
     "@react-types/overlays": 3.8.0
-    "@react-types/shared": 3.18.1
+    "@react-types/shared": 3.21.0
     "@reduxjs/toolkit": 1.9.5
     "@remix-run/router": ^1.5.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
