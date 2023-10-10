@@ -3,7 +3,7 @@ package v0alpha1
 import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,10 +18,10 @@ var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service playlistsvc.Service
+	service playlist.Service
 }
 
-func RegisterAPIService(p playlistsvc.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service: p,
 	}

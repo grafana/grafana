@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var (
@@ -18,17 +17,17 @@ var (
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
+	_ rest.Storage              = (*legacyStorage)(nil)
 	_ rest.Creater              = (*legacyStorage)(nil)
 	_ rest.Updater              = (*legacyStorage)(nil)
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
-	_ rest.Storage              = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
-	service playlistsvc.Service
+	service playlist.Service
 }
 
-func newLegacyStorage(s playlistsvc.Service) *legacyStorage {
+func newLegacyStorage(s playlist.Service) *legacyStorage {
 	return &legacyStorage{
 		service: s,
 	}
@@ -69,7 +68,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.Limit > 0 {
 		limit = int(options.Limit)
 	}
-	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
+	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
 		OrgId: orgId,
 		Limit: limit,
 	})
@@ -84,7 +83,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		},
 	}
 	for _, v := range res {
-		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			UID:   v.UID,
 			OrgId: orgId, // required
 		})
@@ -106,7 +105,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1
 	}
 
-	p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId, // required
 	})
@@ -132,7 +131,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("expected playlist?")
 	}
 	spec := p.Spec
-	cmd := &playlistsvc.CreatePlaylistCommand{
+	cmd := &playlist.CreatePlaylistCommand{
 		Name:     spec.Title,
 		Interval: spec.Interval,
 		OrgId:    orgId,
@@ -144,7 +143,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		if item.Type == ItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
-		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
+		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
 			Type:  string(item.Type),
 			Value: item.Value,
 		})
@@ -192,7 +191,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	fmt.Printf("NEW: %+v\n", obj)
 
 	spec := p.Spec
-	cmd := &playlistsvc.UpdatePlaylistCommand{
+	cmd := &playlist.UpdatePlaylistCommand{
 		UID:      name,
 		Name:     spec.Title,
 		Interval: spec.Interval,
@@ -202,7 +201,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		if item.Type == ItemTypeDashboardById {
 			return nil, false, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
-		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
+		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
 			Type:  string(item.Type),
 			Value: item.Value,
 		})
@@ -225,7 +224,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		orgId = 1
 	}
 
-	err := s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
+	err := s.service.Delete(ctx, &playlist.DeletePlaylistCommand{
 		UID:   name,
 		OrgId: orgId,
 	})
