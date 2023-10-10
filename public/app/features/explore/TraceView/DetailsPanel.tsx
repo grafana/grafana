@@ -126,7 +126,7 @@ export function DetailsPanel(props: Props) {
               <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
             </div>
           </div>
-          <Button icon={'times'} variant={'secondary'} fill={'outline'} onClick={clearSelectedSpan} size={'sm'} />
+          <Button icon={'times'} variant={'secondary'} onClick={clearSelectedSpan} size={'sm'} />
         </div>
 
         <TabsBar>
