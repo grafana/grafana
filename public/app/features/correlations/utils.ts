@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { DataFrame, DataLinkConfigOrigin, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
@@ -90,3 +90,6 @@ export const createCorrelation = async (
 ): Promise<CreateCorrelationResponse> => {
   return getBackendSrv().post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation);
 };
+
+export const generateDefaultLabel = (sourceDatasource: DataSourceApi, targetDatasource: DataSourceApi) =>
+  `${sourceDatasource?.name} to ${targetDatasource.name}`;

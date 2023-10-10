@@ -3,14 +3,16 @@ import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
-import { Collapse, Alert, Field, Input, Button, Card, IconButton, useStyles2 } from '@grafana/ui';
+import { Collapse, Alert, Field, Input, Button, Card, IconButton, useStyles2, DeleteButton } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
+import { generateDefaultLabel } from '../correlations/utils';
 
 import { CorrelationTransformationAddModal } from './CorrelationTransformationAddModal';
 import { changeCorrelationEditorDetails } from './state/main';
-import { selectCorrelationDetails } from './state/selectors';
+import { selectCorrelationDetails, selectPanes } from './state/selectors';
 
 interface Props {
   correlations: ExploreCorrelationHelperData;
@@ -24,7 +26,9 @@ interface FormValues {
 export const CorrelationHelper = ({ correlations }: Props) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const { register, watch } = useForm<FormValues>();
+  const panes = useSelector(selectPanes);
+  const panesVals = Object.values(panes);
+  const { register, watch, getValues } = useForm<FormValues>();
   const [correlationVars, setCorrelationVars] = useState(correlations.vars);
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
@@ -33,6 +37,11 @@ export const CorrelationHelper = ({ correlations }: Props) => {
   const [transformationIdxToEdit, setTransformationIdxToEdit] = useState<number | undefined>(undefined);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const id = useId();
+  // this needs to change when the datasource does
+  const defaultLabelVal =
+    panesVals[0]?.datasourceInstance && panesVals[1]?.datasourceInstance
+      ? generateDefaultLabel(panesVals[0]?.datasourceInstance, panesVals[1]?.datasourceInstance)
+      : '';
 
   useEffect(() => {
     const subscription = watch((value) => {
@@ -119,10 +128,17 @@ export const CorrelationHelper = ({ correlations }: Props) => {
           onToggle={() => {
             setIsLabelDescOpen(!isLabelDescOpen);
           }}
-          label="Label/Description"
+          label={
+            <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+              Label / Description
+              {!isLabelDescOpen && (
+                <span className={styles.labelCollapseDetails}>{getValues('label') || defaultLabelVal}</span>
+              )}
+            </Flex>
+          }
         >
           <Field label="Label" htmlFor={`${id}-label`}>
-            <Input {...register('label')} id={`${id}-label`} />
+            <Input {...register('label')} id={`${id}-label`} value={getValues('label') || defaultLabelVal} />
           </Field>
           <Field label="Description" htmlFor={`${id}-description`}>
             <Input {...register('description')} id={`${id}-description`} />
@@ -174,13 +190,10 @@ export const CorrelationHelper = ({ correlations }: Props) => {
                       setShowTransformationAddModal(true);
                     }}
                   />
-                  <IconButton
-                    key="delete"
-                    name="trash-alt"
+                  <DeleteButton
                     aria-label="delete transformation"
-                    onClick={() => {
-                      setTransformations(transformations.filter((_, idx) => i !== idx));
-                    }}
+                    onConfirm={() => setTransformations(transformations.filter((_, idx) => i !== idx))}
+                    closeOnConfirm
                   />
                 </Card.SecondaryActions>
               </Card>
@@ -194,6 +207,11 @@ export const CorrelationHelper = ({ correlations }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    labelCollapseDetails: css({
+      marginLeft: theme.spacing(2),
+      ...theme.typography['bodySmall'],
+      fontStyle: 'italic',
+    }),
     transformationAction: css({
       marginBottom: theme.spacing(2),
     }),
