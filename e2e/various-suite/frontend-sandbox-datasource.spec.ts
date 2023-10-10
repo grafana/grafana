@@ -34,6 +34,7 @@ describe('Datasource sandbox', () => {
       });
       it('Should not render a sandbox wrapper around the datasource config editor', () => {
         cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
       });
     });
@@ -65,6 +66,7 @@ describe('Datasource sandbox', () => {
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
+        cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
       });
     });
@@ -81,7 +83,7 @@ describe('Datasource sandbox', () => {
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
-        cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
+        cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
       });
     });
   });
