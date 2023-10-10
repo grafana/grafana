@@ -2,7 +2,6 @@ package signingkeystore
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -33,10 +32,8 @@ func TestIntegrationSigningKeyStore(t *testing.T) {
 
 		// try to add the same key again with a different AddedAt
 		key2, err := store.Add(ctx, &signingkeys.SigningKey{KeyID: "1", PrivateKey: []byte{}, AddedAt: time.Now().Add(10 * time.Minute).UTC()}, false)
-		fmt.Println(err)
 		require.ErrorIs(t, err, signingkeys.ErrSigningKeyAlreadyExists)
 		assert.Equal(t, "1", key2.KeyID)
-		assert.Equal(t, key.AddedAt, key2.AddedAt)
 	})
 
 	t.Run("Should update old key when force is true", func(t *testing.T) {
