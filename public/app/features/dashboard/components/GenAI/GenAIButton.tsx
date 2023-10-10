@@ -176,7 +176,9 @@ export const GenAIButton = ({
         <Tooltip
           show={error ? undefined : false}
           interactive
-          content={`'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.`}
+          content={
+            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+          }
         >
           {button}
         </Tooltip>
