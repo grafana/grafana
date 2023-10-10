@@ -1,21 +1,3 @@
-// This component is based on logic from the flamebearer project
-// https://github.com/mapbox/flamebearer
-
-// ISC License
-
-// Copyright (c) 2018, Mapbox
-
-// Permission to use, copy, modify, and/or distribute this software for any purpose
-// with or without fee is hereby granted, provided that the above copyright notice
-// and this permission notice appear in all copies.
-
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-// TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-// THIS SOFTWARE.
 import { css } from '@emotion/css';
 import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -114,7 +96,7 @@ const FlameGraphCanvas = ({
         depth,
         pixelsPerTick,
         totalViewTicks,
-        rangeMin,
+        rangeMin
       );
 
       // if clicking on a block in the canvas
@@ -147,7 +129,7 @@ const FlameGraphCanvas = ({
           depth,
           pixelsPerTick,
           totalViewTicks,
-          rangeMin,
+          rangeMin
         );
 
         if (item) {
@@ -216,34 +198,34 @@ const FlameGraphCanvas = ({
 };
 
 const getStyles = () => ({
-  graph: css`
-    label: graph;
-    overflow: auto;
-    height: 100%;
-    flex-grow: 1;
-    flex-basis: 50%;
-  `,
-  canvasContainer: css`
-    label: canvasContainer;
-    display: flex;
-  `,
-  canvasWrapper: css`
-    label: canvasWrapper;
-    cursor: pointer;
-    flex: 1;
-    overflow: hidden;
-  `,
-  sandwichMarker: css`
-    label: sandwichMarker;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    overflow: hidden;
-    white-space: nowrap;
-  `,
-  sandwichMarkerIcon: css`
-    label: sandwichMarkerIcon;
-    vertical-align: baseline;
-  `,
+  graph: css({
+    label: 'graph',
+    overflow: 'auto',
+    height: '100%',
+    flexGrow: 1,
+    flexBasis: '50%',
+  }),
+  canvasContainer: css({
+    label: 'canvasContainer',
+    display: 'flex',
+  }),
+  canvasWrapper: css({
+    label: 'canvasWrapper',
+    cursor: 'pointer',
+    flex: 1,
+    overflow: 'hidden',
+  }),
+  sandwichMarker: css({
+    label: 'sandwichMarker',
+    writingMode: 'vertical-lr',
+    transform: 'rotate(180deg)',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  sandwichMarkerIcon: css({
+    label: 'sandwichMarkerIcon',
+    verticalAlign: 'baseline',
+  }),
 });
 
 const convertPixelCoordinatesToBarCoordinates = (
@@ -254,7 +236,7 @@ const convertPixelCoordinatesToBarCoordinates = (
   depth: number,
   pixelsPerTick: number,
   totalTicks: number,
-  rangeMin: number,
+  rangeMin: number
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
