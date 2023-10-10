@@ -6,6 +6,7 @@ import {
   MovingAverageModelOption,
   MetricAggregationType,
   DateHistogram,
+  CalendarDateHistogram,
 } from './types';
 
 export const extendedStats: ExtendedStat[] = [
@@ -31,8 +32,6 @@ export const highlightTags = {
   pre: '@HIGHLIGHT@',
   post: '@/HIGHLIGHT@',
 };
-
-export const defaultGeoHashPrecisionString = '3';
 
 export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };

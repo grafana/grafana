@@ -32,93 +32,104 @@ title: ElasticsearchDataQuery kind
 
 ### BucketAggregation
 
-| Property | Type                                                                                                                                                                | Required | Default | Description |
-|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|-------------|
-| `object` | Possible types are: [DateHistogram](#datehistogram), [Histogram](#histogram), [Terms](#terms), [Filters](#filters), [GeoHashGrid](#geohashgrid), [Nested](#nested). |          |         |
+| Property | Type                                                                                                                                                                                                                 | Required | Default | Description |
+|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|-------------|
+| `object` | Possible types are: [CalendarDateHistogram](#calendardatehistogram), [DateHistogram](#datehistogram), [Histogram](#histogram), [Terms](#terms), [Filters](#filters), [GeoHashGrid](#geohashgrid), [Nested](#nested). |          |         |
 
-### DateHistogram
+### CalendarDateHistogram
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                                        |
-|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### BucketAggregationWithField
 
 It extends [BaseBucketAggregation](#basebucketaggregation).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                              |
-|------------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`       | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
-| `type`     | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         |                                                                                                                                                                          |
-| `settings` |        | No       |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                         |
+|------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                                                  |
+| `type`     | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         |                                                                                                                                                                                                     |
+| `settings` |        | No       |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                                                  |
 
 ### BaseBucketAggregation
 
-| Property   | Type   | Required | Default | Description                                                                                       |
-|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------|
-| `id`       | string | **Yes**  |         |                                                                                                   |
-| `type`     | string | **Yes**  |         | Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `settings` |        | No       |         |                                                                                                   |
+| Property   | Type   | Required | Default | Description                                                                                                                  |
+|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  |         |                                                                                                                              |
+| `type`     | string | **Yes**  |         | Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `settings` |        | No       |         |                                                                                                                              |
+
+### DateHistogram
+
+It extends [BucketAggregationWithField](#bucketaggregationwithfield).
+
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### Filters
 
 It extends [BaseBucketAggregation](#basebucketaggregation).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                              |
-|------------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`       | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
-| `type`     | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `settings` |        | No       |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                         |
+|------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                                                  |
+| `type`     | string | **Yes**  |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `settings` |        | No       |         | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                                                  |
 
 ### GeoHashGrid
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                                        |
-|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### Histogram
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                                        |
-|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### Nested
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                                        |
-|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### Terms
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type   | Required | Default | Description                                                                                                                                                                        |
-|------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Default | Description                                                                                                                                                                                                   |
+|------------|--------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `calendar_date_histogram`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `id`       | string | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
+| `settings` |        | No       |         | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                                                  |
 
 ### MetricAggregation
 

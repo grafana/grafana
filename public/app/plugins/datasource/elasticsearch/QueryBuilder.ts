@@ -7,13 +7,7 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import {
-  defaultBucketAgg,
-  defaultMetricAgg,
-  findMetricById,
-  highlightTags,
-  defaultGeoHashPrecisionString,
-} from './queryDef';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './queryDef';
 import {
   ElasticsearchQuery,
   TermsQuery,
@@ -23,6 +17,7 @@ import {
   MetricAggregationWithInlineScript,
   Histogram,
   DateHistogram,
+  CalendarDateHistogram,
 } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
@@ -100,7 +95,6 @@ export class ElasticQueryBuilder {
   getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
-    const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
     esAgg.field = aggDef.field || this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
@@ -116,14 +110,36 @@ export class ElasticQueryBuilder {
 
     const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
 
-    if (interval !== undefined && calendarIntervals.includes(interval)) {
-      esAgg.calendar_interval = interval;
-    } else {
-      esAgg.fixed_interval = interval;
-    }
+
+    esAgg.fixed_interval = interval;
 
     return esAgg;
   }
+
+  getCalendarDateHistogramAgg(aggDef: CalendarDateHistogram) {
+    const esAgg: any = {};
+    const settings = aggDef.settings || {};
+
+    esAgg.field = aggDef.field || this.timeField;
+    esAgg.min_doc_count = settings.min_doc_count || 0;
+    esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
+    esAgg.format = 'epoch_millis';
+    if (settings.timeZone && settings.timeZone !== InternalTimeZones.utc) {
+      esAgg.time_zone = settings.timeZone;
+    }
+
+    if (settings.offset !== '') {
+      esAgg.offset = settings.offset;
+    }
+
+    const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
+
+
+    esAgg.calendar_interval = interval;
+
+    return esAgg;
+  }
+
 
   getHistogramAgg(aggDef: Histogram) {
     const esAgg: any = {};
@@ -227,6 +243,13 @@ export class ElasticQueryBuilder {
           esAgg['date_histogram'] = this.getDateHistogramAgg(aggDef);
           break;
         }
+
+	 case 'calendar_date_histogram': {
+          esAgg['date_histogram'] = this.getCalendarDateHistogramAgg(aggDef);
+          break;
+        }
+
+
         case 'histogram': {
           esAgg['histogram'] = this.getHistogramAgg(aggDef);
           break;
@@ -242,7 +265,7 @@ export class ElasticQueryBuilder {
         case 'geohash_grid': {
           esAgg['geohash_grid'] = {
             field: aggDef.field,
-            precision: aggDef.settings?.precision || defaultGeoHashPrecisionString,
+            precision: aggDef.settings?.precision,
           };
           break;
         }
@@ -369,6 +392,7 @@ export class ElasticQueryBuilder {
       nestedAggs.aggs[metric.id] = aggField;
     }
 
+    console.log(query);
     return query;
   }
 

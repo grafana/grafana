@@ -32,6 +32,7 @@ const (
 	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
+	calDateHistType = "calendar_date_histogram"
 	nestedType      = "nested"
 	histogramType   = "histogram"
 	filtersType     = "filters"
@@ -407,7 +408,7 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 		}
 
 		if depth == maxDepth {
-			if aggDef.Type == dateHistType {
+			if aggDef.Type == dateHistType || aggDef.Type == calDateHistType {
 				err = processMetrics(esAgg, target, queryResult, props)
 			} else {
 				err = processAggregationDocs(esAgg, aggDef, target, queryResult, props)
@@ -821,7 +822,7 @@ func extractDataField(name string, v interface{}) *data.Field {
 func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
-		if bucketAgg.Type == dateHistType {
+		if bucketAgg.Type == dateHistType || bucketAgg.Type == calDateHistType {
 			histogram = bucketAgg
 			break
 		}

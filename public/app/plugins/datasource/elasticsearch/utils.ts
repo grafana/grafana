@@ -104,5 +104,5 @@ export const unsupportedVersionMessage =
 
 // To be considered a time series query, the last bucked aggregation must be a Date Histogram
 export const isTimeSeriesQuery = (query: ElasticsearchQuery): boolean => {
-  return query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+  return ( query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram' || query?.bucketAggs?.slice(-1)[0]?.type === 'calendar_date_histogram');
 };

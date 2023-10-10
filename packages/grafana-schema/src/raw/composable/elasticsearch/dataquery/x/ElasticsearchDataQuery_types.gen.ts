@@ -13,11 +13,11 @@ import * as common from '@grafana/schema';
 
 export const pluginVersion = "10.2.0-pre";
 
-export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
+export type BucketAggregation = (CalendarDateHistogram | DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
 export type MetricAggregation = (Count | PipelineMetricAggregation | MetricAggregationWithSettings);
 
-export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram' | 'nested');
+export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'calendar_date_histogram' | 'date_histogram' | 'histogram' | 'nested');
 
 export interface BaseBucketAggregation {
   id: string;
@@ -31,7 +31,7 @@ export interface BucketAggregationWithField extends BaseBucketAggregation {
 
 export interface DateHistogram extends BucketAggregationWithField {
   settings?: {
-    interval?: string;
+    fixed_interval?: string;
     min_doc_count?: string;
     trimEdges?: string;
     offset?: string;
@@ -40,8 +40,27 @@ export interface DateHistogram extends BucketAggregationWithField {
   type: 'date_histogram';
 }
 
+export interface CalendarDateHistogram extends BucketAggregationWithField {
+  settings?: {
+    calendar_interval?: string;
+    min_doc_count?: string;
+    trimEdges?: string;
+    offset?: string;
+    timeZone?: string;
+  };
+  type: 'calendar_date_histogram';
+}
+
 export interface DateHistogramSettings {
-  interval?: string;
+  fixed_interval?: string;
+  min_doc_count?: string;
+  offset?: string;
+  timeZone?: string;
+  trimEdges?: string;
+}
+
+export interface CalendarDateHistogramSettings {
+  calendar_interval?: string;
   min_doc_count?: string;
   offset?: string;
   timeZone?: string;

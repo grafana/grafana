@@ -1,6 +1,5 @@
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
 
-import { defaultGeoHashPrecisionString } from '../../../queryDef';
 import { BucketsConfiguration } from '../../../types';
 
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
@@ -27,19 +26,33 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     label: 'Geo Hash Grid',
     requiresField: true,
     defaultSettings: {
-      precision: defaultGeoHashPrecisionString,
+      precision: '3',
     },
   },
   date_histogram: {
-    label: 'Date Histogram',
+    label: 'Date Histogram (fixed interval)',
     requiresField: true,
     defaultSettings: {
+      type: 'fixed_interval',
       interval: 'auto',
       min_doc_count: '0',
       trimEdges: '0',
       timeZone: InternalTimeZones.utc,
     },
   },
+  calendar_date_histogram: {
+    label: 'Date Histogram (calendar interval)',
+    requiresField: true,
+    defaultSettings: {
+      type: 'calendar_interval',
+      interval: '1d',
+      min_doc_count: '0',
+      trimEdges: '0',
+      timeZone: InternalTimeZones.utc,
+    },
+  },
+
+
   histogram: {
     label: 'Histogram',
     requiresField: true,

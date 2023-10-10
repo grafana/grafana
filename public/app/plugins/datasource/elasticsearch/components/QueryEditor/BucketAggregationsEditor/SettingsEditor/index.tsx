@@ -10,6 +10,8 @@ import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig } from '../utils';
 
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';
+import { CalendarDateHistogramSettingsEditor } from './CalendarDateHistogramSettingsEditor';
+
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { TermsSettingsEditor } from './TermsSettingsEditor';
 import { useDescription } from './useDescription';
@@ -33,6 +35,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
     <SettingsEditorContainer label={settingsDescription}>
       {bucketAgg.type === 'terms' && <TermsSettingsEditor bucketAgg={bucketAgg} />}
       {bucketAgg.type === 'date_histogram' && <DateHistogramSettingsEditor bucketAgg={bucketAgg} />}
+      {bucketAgg.type === 'calendar_date_histogram' && <CalendarDateHistogramSettingsEditor bucketAgg={bucketAgg} />}
       {bucketAgg.type === 'filters' && <FiltersSettingsEditor bucketAgg={bucketAgg} />}
 
       {bucketAgg.type === 'geohash_grid' && (

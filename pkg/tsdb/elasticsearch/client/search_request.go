@@ -297,6 +297,7 @@ func (b *FilterQueryBuilder) AddQueryStringFilter(querystring string, analyseWil
 type AggBuilder interface {
 	Histogram(key, field string, fn func(a *HistogramAgg, b AggBuilder)) AggBuilder
 	DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder
+	CalendarDateHistogram(key, field string, fn func(a *CalendarDateHistogramAgg, b AggBuilder)) AggBuilder
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
 	Nested(key, path string, fn func(a *NestedAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
@@ -380,6 +381,27 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 
 	return b
 }
+
+func (b *aggBuilderImpl) CalendarDateHistogram(key, field string, fn func(a *CalendarDateHistogramAgg, b AggBuilder)) AggBuilder {
+        innerAgg := &CalendarDateHistogramAgg{
+                Field: field,
+        }
+        aggDef := newAggDef(key, &aggContainer{
+                Type:        "date_histogram",
+                Aggregation: innerAgg,
+        })
+
+        if fn != nil {
+                builder := newAggBuilder()
+                aggDef.builders = append(aggDef.builders, builder)
+                fn(innerAgg, builder)
+        }
+
+        b.aggDefs = append(b.aggDefs, aggDef)
+
+        return b
+}
+
 
 const termsOrderTerm = "_term"
 

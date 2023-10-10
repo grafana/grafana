@@ -38,10 +38,10 @@ composableKinds: DataQuery: {
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
 
-				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
+				#BucketAggregation: #CalendarDateHistogram | #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
 
-				#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "date_histogram" | "histogram" | "nested" @cuetsy(kind="type")
+				#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "calendar_date_histogram" |  "date_histogram" | "histogram" | "nested" @cuetsy(kind="type")
 
 				#BaseBucketAggregation: {
 					id:        string
@@ -60,13 +60,29 @@ composableKinds: DataQuery: {
 					settings?: #DateHistogramSettings
 				} @cuetsy(kind="interface")
 
+				#CalendarDateHistogram: {
+                                        #BucketAggregationWithField
+                                        type:      #BucketAggregationType & "calendar_date_histogram"
+                                        settings?: #CalendarDateHistogramSettings
+                                } @cuetsy(kind="interface")
+
+
 				#DateHistogramSettings: {
-					interval?:      string
+					fixed_interval?:      string
 					min_doc_count?: string
 					trimEdges?:     string
 					offset?:        string
 					timeZone?:      string
 				} @cuetsy(kind="interface")
+
+				#CalendarDateHistogramSettings: {
+                                        calendar_interval?: string
+                                        min_doc_count?: string
+                                        trimEdges?:     string
+                                        offset?:        string
+                                        timeZone?:      string
+                                } @cuetsy(kind="interface")
+
 
 				#Histogram: {
 					#BucketAggregationWithField

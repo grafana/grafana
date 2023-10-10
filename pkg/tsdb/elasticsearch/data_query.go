@@ -164,7 +164,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		var interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		if slices.Contains(es.GetCalendarIntervals(), interval) {
-			a.CalendarInterval = interval
+			//a.CalendarInterval = interval
 		} else {
 			if interval == "auto" {
 				// note this is not really a valid grafana-variable-handling,
@@ -202,6 +202,47 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 	return aggBuilder
 }
+
+func addCalendarDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
+        // If no field is specified, use the time field
+        field := bucketAgg.Field
+        if field == "" {
+                field = timeField
+        }
+        aggBuilder.CalendarDateHistogram(bucketAgg.ID, field, func(a *es.CalendarDateHistogramAgg, b es.AggBuilder) {
+                var interval = bucketAgg.Settings.Get("interval").MustString("auto")
+                
+                if interval == "auto" {
+		  //-- surely there is something better than this but thats for future me
+                  a.CalendarInterval = "1d"
+                } else {
+                  a.CalendarInterval = interval
+                }
+                a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
+                a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
+                a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
+
+                if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {
+                        a.Offset = offset
+                }
+
+                if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
+                        a.Missing = &missing
+                }
+
+                if timezone, err := bucketAgg.Settings.Get("timeZone").String(); err == nil {
+                        if timezone != "utc" {
+                                a.TimeZone = timezone
+                        }
+                }
+
+                aggBuilder = b
+        })
+
+        return aggBuilder
+}
+
+
 
 func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
@@ -398,7 +439,11 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 		bucketAgg.Settings = simplejson.NewFromAny(
 			bucketAgg.generateSettingsForDSL(),
 		)
+	
 		switch bucketAgg.Type {
+
+		case calDateHistType:
+                        aggBuilder = addCalendarDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		case dateHistType:
 			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		case histogramType:

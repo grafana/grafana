@@ -11,12 +11,13 @@ package dataquery
 
 // Defines values for BucketAggregationType.
 const (
-	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
-	BucketAggregationTypeFilters       BucketAggregationType = "filters"
-	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
-	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
-	BucketAggregationTypeNested        BucketAggregationType = "nested"
-	BucketAggregationTypeTerms         BucketAggregationType = "terms"
+	BucketAggregationTypeCalendarDateHistogram BucketAggregationType = "calendar_date_histogram"
+	BucketAggregationTypeDateHistogram         BucketAggregationType = "date_histogram"
+	BucketAggregationTypeFilters               BucketAggregationType = "filters"
+	BucketAggregationTypeGeohashGrid           BucketAggregationType = "geohash_grid"
+	BucketAggregationTypeHistogram             BucketAggregationType = "histogram"
+	BucketAggregationTypeNested                BucketAggregationType = "nested"
+	BucketAggregationTypeTerms                 BucketAggregationType = "terms"
 )
 
 // Defines values for ExtendedStatMetaType.
@@ -143,6 +144,23 @@ type BucketScript struct {
 	Type MetricAggregationType `json:"type"`
 }
 
+// CalendarDateHistogram defines model for CalendarDateHistogram.
+type CalendarDateHistogram struct {
+	BucketAggregationWithField
+	Id       string                `json:"id"`
+	Settings *any                  `json:"settings,omitempty"`
+	Type     BucketAggregationType `json:"type"`
+}
+
+// CalendarDateHistogramSettings defines model for CalendarDateHistogramSettings.
+type CalendarDateHistogramSettings struct {
+	CalendarInterval *string `json:"calendar_interval,omitempty"`
+	MinDocCount      *string `json:"min_doc_count,omitempty"`
+	Offset           *string `json:"offset,omitempty"`
+	TimeZone         *string `json:"timeZone,omitempty"`
+	TrimEdges        *string `json:"trimEdges,omitempty"`
+}
+
 // Count defines model for Count.
 type Count struct {
 	BaseMetricAggregation
@@ -197,11 +215,11 @@ type DateHistogram struct {
 
 // DateHistogramSettings defines model for DateHistogramSettings.
 type DateHistogramSettings struct {
-	Interval    *string `json:"interval,omitempty"`
-	MinDocCount *string `json:"min_doc_count,omitempty"`
-	Offset      *string `json:"offset,omitempty"`
-	TimeZone    *string `json:"timeZone,omitempty"`
-	TrimEdges   *string `json:"trimEdges,omitempty"`
+	FixedInterval *string `json:"fixed_interval,omitempty"`
+	MinDocCount   *string `json:"min_doc_count,omitempty"`
+	Offset        *string `json:"offset,omitempty"`
+	TimeZone      *string `json:"timeZone,omitempty"`
+	TrimEdges     *string `json:"trimEdges,omitempty"`
 }
 
 // Derivative defines model for Derivative.
