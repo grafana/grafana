@@ -10,6 +10,7 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
@@ -29,13 +30,14 @@ import {
   generateEmptyQuery,
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
+  getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   createAsyncThunk,
@@ -712,7 +714,6 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
     const {
       datasourceInstance,
       containerWidth,
-      range,
       queryResponse,
       correlationEditorHelperData,
       queries: exploreQueries,
@@ -759,6 +760,10 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
     }
 
     const timeZone = getTimeZone(getState().user);
+    const range =  getTimeRange(timeZone, {
+      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+    }, getFiscalYearStartMonth(getState().user));
     const transaction = buildQueryTransaction(
       exploreId,
       queries,
@@ -774,7 +779,8 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
       correlations$,
     ]).pipe(
       mergeMap(([data, correlations]) =>
-        decorateLoadMoreData(
+       {
+        return  decorateLoadMoreData(
           data,
           queryResponse,
           absoluteRange,
@@ -783,6 +789,7 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
         )
+       }
       )
     );
 
