@@ -79,7 +79,7 @@ The new folder name is automatically saved.
 
 ### Folder permissions
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. You can assign permissions to **Organization Roles**, **Teams**, and **Users**.
+You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. You can assign permissions to organization roles, teams, and users.
 
 **To modify permissions for a folder:**
 
