@@ -143,90 +143,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     datasourceType,
   } = props;
   const { isTagsOpen, isProcessOpen, isWarningsOpen, references: referencesState, isStackTracesOpen } = detailState;
-  const {
-    operationName,
-    process,
-    duration,
-    relativeStartTime,
-    startTime,
-    traceID,
-    spanID,
-    tags,
-    warnings,
-    references,
-    stackTraces,
-  } = span;
+  const { operationName, process, traceID, spanID, tags, warnings, references, stackTraces } = span;
   const { timeZone } = props;
-  let overviewItems = [
-    {
-      key: 'svc',
-      label: 'Service:',
-      value: process.serviceName,
-    },
-    {
-      key: 'duration',
-      label: 'Duration:',
-      value: formatDuration(duration),
-    },
-    {
-      key: 'start',
-      label: 'Start Time:',
-      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
-    },
-    ...(span.childSpanCount > 0
-      ? [
-          {
-            key: 'child_count',
-            label: 'Child Count:',
-            value: span.childSpanCount,
-          },
-        ]
-      : []),
-  ];
-
-  if (span.kind) {
-    overviewItems.push({
-      key: KIND,
-      label: 'Kind:',
-      value: span.kind,
-    });
-  }
-  if (span.statusCode !== undefined) {
-    overviewItems.push({
-      key: STATUS,
-      label: 'Status:',
-      value: SpanStatusCode[span.statusCode].toLowerCase(),
-    });
-  }
-  if (span.statusMessage) {
-    overviewItems.push({
-      key: STATUS_MESSAGE,
-      label: 'Status Message:',
-      value: span.statusMessage,
-    });
-  }
-  if (span.instrumentationLibraryName) {
-    overviewItems.push({
-      key: LIBRARY_NAME,
-      label: 'Library Name:',
-      value: span.instrumentationLibraryName,
-    });
-  }
-  if (span.instrumentationLibraryVersion) {
-    overviewItems.push({
-      key: LIBRARY_VERSION,
-      label: 'Library Version:',
-      value: span.instrumentationLibraryVersion,
-    });
-  }
-  if (span.traceState) {
-    overviewItems.push({
-      key: TRACE_STATE,
-      label: 'Trace State:',
-      value: span.traceState,
-    });
-  }
-
   const styles = useStyles2(getStyles);
 
   let logLinkButton: JSX.Element | undefined = undefined;
@@ -271,7 +189,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       <div className={styles.header}>
         <h2 className={cx(ubM0)}>{operationName}</h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+          <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
         </div>
       </div>
       {logLinkButton}
@@ -373,6 +291,82 @@ export default function SpanDetail(props: SpanDetailProps) {
     </div>
   );
 }
+
+export const getOverviewItems = (span: TraceSpan, timeZone: string) => {
+  const { process, duration, relativeStartTime, startTime } = span;
+
+  let overviewItems = [
+    {
+      key: 'svc',
+      label: 'Service:',
+      value: process.serviceName,
+    },
+    {
+      key: 'duration',
+      label: 'Duration:',
+      value: formatDuration(duration),
+    },
+    {
+      key: 'start',
+      label: 'Start Time:',
+      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
+    },
+    ...(span.childSpanCount > 0
+      ? [
+          {
+            key: 'child_count',
+            label: 'Child Count:',
+            value: span.childSpanCount,
+          },
+        ]
+      : []),
+  ];
+
+  if (span.kind) {
+    overviewItems.push({
+      key: KIND,
+      label: 'Kind:',
+      value: span.kind,
+    });
+  }
+  if (span.statusCode !== undefined) {
+    overviewItems.push({
+      key: STATUS,
+      label: 'Status:',
+      value: SpanStatusCode[span.statusCode].toLowerCase(),
+    });
+  }
+  if (span.statusMessage) {
+    overviewItems.push({
+      key: STATUS_MESSAGE,
+      label: 'Status Message:',
+      value: span.statusMessage,
+    });
+  }
+  if (span.instrumentationLibraryName) {
+    overviewItems.push({
+      key: LIBRARY_NAME,
+      label: 'Library Name:',
+      value: span.instrumentationLibraryName,
+    });
+  }
+  if (span.instrumentationLibraryVersion) {
+    overviewItems.push({
+      key: LIBRARY_VERSION,
+      label: 'Library Version:',
+      value: span.instrumentationLibraryVersion,
+    });
+  }
+  if (span.traceState) {
+    overviewItems.push({
+      key: TRACE_STATE,
+      label: 'Trace State:',
+      value: span.traceState,
+    });
+  }
+
+  return overviewItems;
+};
 
 export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
   const dateStr = dateTimeFormat(startTime / 1000, { timeZone, defaultWithMS: true });

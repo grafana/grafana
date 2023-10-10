@@ -7,12 +7,11 @@ import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { ExploreDrawer } from '../ExploreDrawer';
 
 import { autoColor, DetailState, TraceSpan } from './components';
-import { getAbsoluteTime } from './components/TraceTimelineViewer/SpanDetail';
+import { getOverviewItems } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
 import LabeledList from './components/common/LabeledList';
 import { ubM0, ubTxRightAlign } from './components/uberUtilityStyles';
-import { formatDuration } from './components/utils/date';
 
 type Props = {
   span?: TraceSpan;
@@ -57,7 +56,7 @@ export function DetailsPanel(props: Props) {
     return null;
   }
 
-  const { operationName, process, duration, relativeStartTime, startTime, tags, logs } = span;
+  const { operationName, process, tags, logs } = span;
   const { logs: logsState } = detailState;
 
   const tabs = [TabLabels.Attributes];
@@ -66,33 +65,6 @@ export function DetailsPanel(props: Props) {
   }
   const tabsCounters: Record<string, number> = {};
   tabsCounters[TabLabels.Events] = logs.length;
-
-  const overviewItems = [
-    {
-      key: 'svc',
-      label: 'Service:',
-      value: process.serviceName,
-    },
-    {
-      key: 'duration',
-      label: 'Duration:',
-      value: formatDuration(duration),
-    },
-    {
-      key: 'start',
-      label: 'Start Time:',
-      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
-    },
-    ...(span.childSpanCount > 0
-      ? [
-          {
-            key: 'child_count',
-            label: 'Child Count:',
-            value: span.childSpanCount,
-          },
-        ]
-      : []),
-  ];
 
   const linksGetter = () => [];
 
@@ -123,7 +95,7 @@ export function DetailsPanel(props: Props) {
           >
             <h4 className={cx(ubM0)}>{operationName}</h4>
             <div className={styles.listWrapper}>
-              <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+              <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
             </div>
           </div>
           <Button icon={'times'} variant={'secondary'} onClick={clearSelectedSpan} size={'sm'} />
