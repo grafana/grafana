@@ -2,9 +2,8 @@ package alerting
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/go-jose/go-jose/v3/json"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"io"
 	"net/http"
 	"sort"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
