@@ -22,8 +22,6 @@ const defaultProps = {
   inputWidth: 12,
 };
 
-FormField;
-
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
