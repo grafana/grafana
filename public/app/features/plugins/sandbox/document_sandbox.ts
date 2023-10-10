@@ -182,18 +182,27 @@ export function patchWebAPIs() {
  *
  * react-router is a runtime dependency and it is executed in the blue realm
  * and calls window.history.replaceState directly where the sandbox is not involved at all
+ *
+ * It is most likely this "original" function is not really the native function because
+ * `useLocation` from `react-use` patches this function before the sandbox kicks in.
  */
 function patchHistoryReplaceState() {
   const original = window.history.replaceState;
-  window.history.replaceState = function (...args) {
-    let newArgs: typeof args = args;
-    try {
-      newArgs = cloneDeep(args);
-    } catch (e) {
-      logWarning('Error cloning args in window.history.replaceState', {
-        error: String(e),
-      });
-    }
-    return Reflect.apply(original, this, newArgs);
-  };
+  Object.defineProperty(window.history, 'replaceState', {
+    value: function (...args: Parameters<typeof window.history.replaceState>) {
+      console.log("I'm patched!");
+      let newArgs = args;
+      try {
+        newArgs = cloneDeep(args);
+      } catch (e) {
+        logWarning('Error cloning args in window.history.replaceState', {
+          error: String(e),
+        });
+      }
+      return Reflect.apply(original, this, newArgs);
+    },
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  });
 }
