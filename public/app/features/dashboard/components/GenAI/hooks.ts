@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
@@ -12,6 +12,14 @@ import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = openai.Message;
 
+export enum StreamStatus {
+  IDLE = 'idle',
+  GENERATING = 'generating',
+  COMPLETED = 'completed',
+}
+
+export const TIMEOUT = 10000;
+
 // TODO: Add tests
 export function useOpenAIStream(
   model = OPEN_AI_MODEL,
@@ -19,7 +27,7 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  isGenerating: boolean;
+  streamStatus: StreamStatus;
   error: Error | undefined;
   value:
     | {
@@ -36,9 +44,24 @@ export function useOpenAIStream(
   const [messages, setMessages] = useState<Message[]>([]);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
+
+  const onError = useCallback(
+    (e: Error) => {
+      setStreamStatus(StreamStatus.IDLE);
+      setMessages([]);
+      setError(e);
+      notifyError(
+        'Failed to generate content using OpenAI',
+        `Please try again or if the problem persists, contact your organization admin.`
+      );
+      console.error(e);
+      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+    },
+    [messages, model, temperature, notifyError]
+  );
 
   const { error: enabledError, value: enabled } = useAsync(
     async () => await isLLMPluginEnabled(),
@@ -50,7 +73,7 @@ export function useOpenAIStream(
       return { enabled };
     }
 
-    setIsGenerating(true);
+    setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
     const stream = openai
@@ -74,21 +97,40 @@ export function useOpenAIStream(
       enabled,
       stream: stream.subscribe({
         next: setReply,
-        error: (e: Error) => {
-          setIsGenerating(false);
-          setMessages([]);
-          setError(e);
-          notifyError('OpenAI Error', `${e.message}`);
-          logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
-        },
+        error: onError,
         complete: () => {
-          setIsGenerating(false);
+          setStreamStatus(StreamStatus.COMPLETED);
+          setTimeout(() => {
+            setStreamStatus(StreamStatus.IDLE);
+          });
           setMessages([]);
           setError(undefined);
         },
       }),
     };
   }, [messages, enabled]);
+
+  // Unsubscribe from the stream when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (value?.stream) {
+        value.stream.unsubscribe();
+      }
+    };
+  }, [value]);
+
+  // If the stream is generating and we haven't received a reply, it times out.
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+    if (streamStatus === StreamStatus.GENERATING && reply === '') {
+      timeout = setTimeout(() => {
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+      }, TIMEOUT);
+    }
+    return () => {
+      timeout && clearTimeout(timeout);
+    };
+  }, [streamStatus, reply, onError]);
 
   if (asyncError || enabledError) {
     setError(asyncError || enabledError);
@@ -97,7 +139,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     reply,
-    isGenerating,
+    streamStatus,
     error,
     value,
   };

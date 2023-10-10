@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
@@ -15,12 +15,11 @@ type Props = {
   onSandwichPillClick: () => void;
   focusedItem?: ClickedItemData;
   sandwichedLabel?: string;
-  getTheme: () => GrafanaTheme2;
 };
 
 const FlameGraphMetadata = React.memo(
-  ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick, getTheme }: Props) => {
-    const styles = getStyles(getTheme());
+  ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
+    const styles = useStyles2(getStyles);
     const parts: ReactNode[] = [];
     const ticksVal = getValueFormat('short')(totalTicks);
 

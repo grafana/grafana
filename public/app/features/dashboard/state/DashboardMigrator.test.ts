@@ -59,7 +59,7 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = new DashboardModel({
         services: {
-          filter: { time: { from: 'now-1d', to: 'now' }, list: [{}] },
+          filter: { time: { from: 'now-1d', to: 'now' }, list: [{ name: 'server' }] },
         },
         pulldowns: [
           { type: 'filtering', enable: true },
@@ -165,7 +165,7 @@ describe('DashboardModel', () => {
 
     it('should move time and filtering list', () => {
       expect(model.time.from).toBe('now-1d');
-      expect(model.templating.list[0].allFormat).toBe('glob');
+      expect(model.templating.list[0].name).toBe('server');
     });
 
     it('graphite panel should change name too graph', () => {
@@ -921,58 +921,55 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = new DashboardModel({
+        editable: true,
+        graphTooltip: 0,
+        schemaVersion: 10,
         templating: {
           list: [
-            // @ts-expect-error
             {
+              name: 'server1',
               type: 'query',
               hide: VariableHide.dontHide,
               datasource: null,
-              allFormat: '',
             },
-            // @ts-expect-error
             {
+              name: 'server2',
               type: 'query',
               hide: VariableHide.hideLabel,
               datasource: null,
-              allFormat: '',
             },
-            // @ts-expect-error
             {
+              name: 'server3',
               type: 'query',
               hide: VariableHide.hideVariable,
               datasource: null,
-              allFormat: '',
             },
-            // @ts-expect-error
             {
+              name: 'server4',
               type: 'constant',
               hide: VariableHide.dontHide,
               query: 'default value',
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
-              allFormat: '',
             },
-            // @ts-expect-error
             {
+              name: 'server5',
               type: 'constant',
               hide: VariableHide.hideLabel,
               query: 'default value',
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
-              allFormat: '',
             },
-            // @ts-expect-error
             {
+              name: 'server6',
               type: 'constant',
               hide: VariableHide.hideVariable,
               query: 'default value',
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
-              allFormat: '',
             },
           ],
         },
@@ -991,34 +988,34 @@ describe('DashboardModel', () => {
 
     it('should migrate visible constant variables to textbox variables', () => {
       expect(model.templating.list[3]).toEqual({
+        name: 'server4',
         type: 'textbox',
         hide: VariableHide.dontHide,
         query: 'default value',
         current: { selected: true, text: 'default value', value: 'default value' },
         options: [{ selected: true, text: 'default value', value: 'default value' }],
         datasource: null,
-        allFormat: '',
       });
       expect(model.templating.list[4]).toEqual({
+        name: 'server5',
         type: 'textbox',
         hide: VariableHide.hideLabel,
         query: 'default value',
         current: { selected: true, text: 'default value', value: 'default value' },
         options: [{ selected: true, text: 'default value', value: 'default value' }],
         datasource: null,
-        allFormat: '',
       });
     });
 
     it('should change current and options for hidden constant variables', () => {
       expect(model.templating.list[5]).toEqual({
+        name: 'server6',
         type: 'constant',
         hide: VariableHide.hideVariable,
         query: 'default value',
         current: { selected: true, text: 'default value', value: 'default value' },
         options: [{ selected: true, text: 'default value', value: 'default value' }],
         datasource: null,
-        allFormat: '',
       });
     });
   });
@@ -1028,95 +1025,84 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = new DashboardModel({
+        editable: true,
+        graphTooltip: 0,
+        schemaVersion: 20,
         templating: {
           list: [
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 0,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_without_options',
               options: [],
               refresh: 0,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 1,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_without_options',
               options: [],
               refresh: 1,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 2,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_without_options',
               options: [],
               refresh: 2,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_without_options',
               options: [],
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
               refresh: 2001,
             },
-            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
               options: [],
               refresh: 2001,
             },
-            // @ts-expect-error
             {
               type: 'custom',
               name: 'custom',
               options: [{ text: 'custom', value: 'custom' }],
             },
-            // @ts-expect-error
             {
               type: 'textbox',
               name: 'textbox',
               options: [{ text: 'Hello', value: 'World' }],
             },
-            // @ts-expect-error
             {
               type: 'datasource',
               name: 'datasource',
               options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
             },
-            // @ts-expect-error
             {
               type: 'interval',
               name: 'interval',
@@ -2038,7 +2024,6 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
-            // @ts-expect-error
             {
               type: 'query',
               name: 'var',

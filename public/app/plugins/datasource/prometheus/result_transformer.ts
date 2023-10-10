@@ -15,7 +15,6 @@ import {
   formatLabels,
   getDisplayProcessor,
   Labels,
-  PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
@@ -249,7 +248,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       // Prometheus specific UI for instant queries
       meta: {
         ...dataFramesByRefId[refId][0].meta,
-        preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType,
+        preferredVisualisationType: 'rawPrometheus' as const,
       },
       length: timeField.values.length,
     };

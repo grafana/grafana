@@ -11,10 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -155,8 +156,10 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		var respModel apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(b, &respModel))
+		require.Len(t, respModel.Created, len(rules.Rules))
 	}
 
 	// Check that we cannot create a rule that has a panel_id and no dashboard_uid
@@ -434,8 +437,10 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		var respModel apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(b, &respModel))
+		require.Len(t, respModel.Created, len(rules.Rules))
 	}
 
 	expectedAllJSON := fmt.Sprintf(`

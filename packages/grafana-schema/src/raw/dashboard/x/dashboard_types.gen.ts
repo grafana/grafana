@@ -122,10 +122,6 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   /**
-   * Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
-   */
-  allFormat?: string;
-  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -140,11 +136,7 @@ export interface VariableModel {
   /**
    * Visibility configuration for the variable
    */
-  hide: VariableHide;
-  /**
-   * Unique numeric identifier for the variable.
-   */
-  id: string;
+  hide?: VariableHide;
   /**
    * Optional display name
    */
@@ -169,7 +161,11 @@ export interface VariableModel {
   /**
    * Whether the variable value should be managed by URL query params or not
    */
-  skipUrlSync: boolean;
+  skipUrlSync?: boolean;
+  /**
+   * Options sort order
+   */
+  sort?: VariableSort;
   /**
    * Type of variable
    */
@@ -177,7 +173,6 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
-  id: '00000000-0000-0000-0000-000000000000',
   multi: false,
   options: [],
   skipUrlSync: false,
@@ -242,18 +237,6 @@ export enum VariableSort {
   disabled = 0,
   numericalAsc = 3,
   numericalDesc = 4,
-}
-
-/**
- * Loading status
- * Accepted values are `NotStarted` (the request is not started), `Loading` (waiting for response), `Streaming` (pulling continuous data), `Done` (response received successfully) or `Error` (failed request).
- */
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
 }
 
 /**
