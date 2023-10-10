@@ -67,7 +67,7 @@ func (s *Store) List(ctx context.Context) ([]signingkeys.SigningKey, error) {
 	return keys, nil
 }
 
-// AddPrivateKey adds a private key to the service.
+// Add adds a private key to the service.
 func (s *Store) Add(ctx context.Context, key *signingkeys.SigningKey, force bool) (*signingkeys.SigningKey, error) {
 	var result *signingkeys.SigningKey
 
