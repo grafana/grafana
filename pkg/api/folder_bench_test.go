@@ -293,16 +293,17 @@ func setupDB(b testing.TB) benchScenario {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
-				ID:       dashID,
-				OrgID:    signedInUser.OrgID,
-				IsFolder: false,
-				UID:      str,
-				FolderID: f0.ID,
-				Slug:     str,
-				Title:    str,
-				Data:     simplejson.New(),
-				Created:  now,
-				Updated:  now,
+				ID:          dashID,
+				OrgID:       signedInUser.OrgID,
+				IsFolder:    false,
+				UID:         str,
+				FolderID:    f0.ID,
+				Slug:        str,
+				Title:       str,
+				Data:        simplejson.New(),
+				Created:     now,
+				Updated:     now,
+				PanelTitles: fmt.Sprintf(lorem+"panel_%d_%d", i, j),
 			})
 
 			dashTags = append(dashTags, &dashboardTag{
@@ -320,16 +321,17 @@ func setupDB(b testing.TB) benchScenario {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
-					ID:       dashID,
-					OrgID:    signedInUser.OrgID,
-					IsFolder: false,
-					UID:      str,
-					FolderID: f1.ID,
-					Slug:     str,
-					Title:    str,
-					Data:     simplejson.New(),
-					Created:  now,
-					Updated:  now,
+					ID:          dashID,
+					OrgID:       signedInUser.OrgID,
+					IsFolder:    false,
+					UID:         str,
+					FolderID:    f1.ID,
+					Slug:        str,
+					Title:       str,
+					Data:        simplejson.New(),
+					Created:     now,
+					Updated:     now,
+					PanelTitles: fmt.Sprintf(lorem+"panel_%d_%d_%d", i, j, k),
 				})
 
 				dashTags = append(dashTags, &dashboardTag{
@@ -347,16 +349,17 @@ func setupDB(b testing.TB) benchScenario {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
-						ID:       dashID,
-						OrgID:    signedInUser.OrgID,
-						IsFolder: false,
-						UID:      str,
-						FolderID: f2.ID,
-						Slug:     str,
-						Title:    str,
-						Data:     simplejson.New(),
-						Created:  now,
-						Updated:  now,
+						ID:          dashID,
+						OrgID:       signedInUser.OrgID,
+						IsFolder:    false,
+						UID:         str,
+						FolderID:    f2.ID,
+						Slug:        str,
+						Title:       str,
+						Data:        simplejson.New(),
+						Created:     now,
+						Updated:     now,
+						PanelTitles: fmt.Sprintf(lorem+"panel_%d_%d_%d_%d", i, j, k, l),
 					})
 
 					dashTags = append(dashTags, &dashboardTag{
@@ -514,3 +517,5 @@ func generateID(reserved map[int64]struct{}) int64 {
 	reserved[n] = struct{}{}
 	return n
 }
+
+const lorem = `Lorem Ipsum is simply dummy text of the printing`
