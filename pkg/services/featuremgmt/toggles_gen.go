@@ -494,4 +494,12 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagNavAdminSubsections
+	// Splits the administration section of the nav tree into subsections
+	FlagNavAdminSubsections = "navAdminSubsections"
+
+	// FlagRecoveryThreshold
+	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
+	FlagRecoveryThreshold = "recoveryThreshold"
 )
