@@ -63,7 +63,7 @@ export function ExploreDrawer(props: Props) {
   const { width, children, onResize, defaultHeight, className } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const drawerWidth = `${width}px`;
+  const drawerWidth = `${width + (className ? 0 : 31.5)}px`;
 
   return (
     <Resizable
