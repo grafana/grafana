@@ -44,7 +44,7 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
 export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: (options: PluginExtensionOpenModalOptions) => void = (options) => {
+  const openModal: PluginExtensionEventHelpers['openModal'] = (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
