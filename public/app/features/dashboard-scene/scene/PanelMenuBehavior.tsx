@@ -1,11 +1,11 @@
-import { locationUtil, PanelMenuItem } from '@grafana/data';
+import { PanelMenuItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -29,7 +29,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'v',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'view' }),
-        href: getViewPanelUrl(panel.state.key!),
+        href: getViewPanelUrl(panel),
       });
 
       // We could check isEditing here but I kind of think this should always be in the menu,
@@ -73,7 +73,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       iconClassName: 'info-circle',
       shortcut: 'i',
       onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data }),
-      href: locationUtil.getUrlForPartial(location, { inspect: panel.state.key }),
+      href: getInspectUrl(panel),
     });
 
     menu.setState({ items });

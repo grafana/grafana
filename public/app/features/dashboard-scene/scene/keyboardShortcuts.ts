@@ -1,8 +1,10 @@
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
-import { getDashboardUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { ShareModal } from '../sharing/ShareModal';
+import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -15,7 +17,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (!scene.state.viewPanelKey) {
-        locationService.push(getViewPanelUrl(vizPanel.state.key!));
+        locationService.push(getViewPanelUrl(vizPanel));
       }
     }),
   });
@@ -38,6 +40,22 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
+  // Panel share
+  keybindings.addBinding({
+    key: 'p s',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef(), dashboardRef: scene.getRef() }));
+    }),
+  });
+
+  // Panel inspect
+  keybindings.addBinding({
+    key: 'i',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      locationService.push(getInspectUrl(vizPanel));
+    }),
+  });
+
   // Got to Explore for panel
   keybindings.addBinding({
     key: 'p x',
@@ -47,6 +65,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         locationService.push(url);
       }
     }),
+  });
+
+  // Toggle legend
+  keybindings.addBinding({
+    key: 'p l',
+    onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
   });
 
   return () => keybindings.removeAll;
@@ -70,4 +94,23 @@ export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel)
       }
     }
   };
+}
+
+export function toggleVizPanelLegend(vizPanel: VizPanel) {
+  const options = vizPanel.state.options;
+  if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
+    vizPanel.setState({
+      options: {
+        ...options,
+        legend: {
+          ...options.legend,
+          showLegend: options.legend.showLegend ? false : true,
+        },
+      },
+    });
+  }
+}
+
+function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
+  return optionsWithLegend != null && 'legend' in optionsWithLegend;
 }

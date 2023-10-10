@@ -62,8 +62,12 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   return relativeUrl;
 }
 
-export function getViewPanelUrl(panelKey: string) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: panelKey });
+export function getViewPanelUrl(vizPanel: VizPanel) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
+}
+
+export function getInspectUrl(vizPanel: VizPanel) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
