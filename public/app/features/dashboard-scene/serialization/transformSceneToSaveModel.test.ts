@@ -548,7 +548,7 @@ describe('transformSceneToSaveModel', () => {
         expect(result.time!.to).toEqual('2023-01-01T20:00:00.000Z');
       });
 
-      it('should remove queries from annotations', () => {
+      it('should remove queries from annotations and attach empty snapshotData', () => {
         expect(snapshot.annotations?.list?.[0].target).toBeDefined();
         expect(snapshot.annotations?.list?.[1].target).toBeDefined();
 
@@ -556,7 +556,9 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result.annotations?.list?.length).toBe(2);
         expect(result.annotations?.list?.[0].target).toBeUndefined();
+        expect(result.annotations?.list?.[0].snapshotData).toEqual([]);
         expect(result.annotations?.list?.[1].target).toBeUndefined();
+        expect(result.annotations?.list?.[1].snapshotData).toEqual([]);
       });
       it('should remove queries from variables', () => {
         expect(snapshot.templating?.list?.length).toBe(1);

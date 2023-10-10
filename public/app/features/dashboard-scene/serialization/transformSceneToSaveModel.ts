@@ -35,7 +35,6 @@ import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
-
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -297,13 +296,12 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
 
   // remove panel queries & links
   dash.panels?.forEach((panel) => {
-    // Some very very very old dashboards had links in panels?
     if ('links' in panel) {
       panel.links = [];
     }
   });
 
-  // remove annotation queries
+  // Remove annotation queries, attach snapshotData: [] for backwards compatibility
   if (dash.annotations) {
     const annotations = dash.annotations.list?.filter((annotation) => annotation.enable) || [];
     dash.annotations.list = annotations.map((annotation) => {
@@ -312,8 +310,13 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
         enable: annotation.enable,
         iconColor: annotation.iconColor,
         type: annotation.type,
-        // builtIn: annotation.builtIn,
+        // @ts-expect-error
+        builtIn: annotation.builtIn,
         hide: annotation.hide,
+        // TODO: Remove when we migrate snapshots to snapshot queries.
+        // For now leaving this in here to avoid anno queries in snapshots.
+        // Annotations per panel are part of the snapshot query, so we don't need to store them here.
+        snapshotData: [],
       };
     });
   }
