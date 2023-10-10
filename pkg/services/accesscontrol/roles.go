@@ -3,7 +3,7 @@ package accesscontrol
 import (
 	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
 	"crypto/sha1"
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"sync"
@@ -262,7 +262,7 @@ func FixedRoleUID(roleName string) string {
 	hasher := sha1.New()
 	hasher.Write([]byte(roleName))
 
-	return fmt.Sprintf("%s%s", FixedRoleUIDPrefix, hex.EncodeToString(hasher.Sum(nil)))
+	return fmt.Sprintf("%s%s", FixedRoleUIDPrefix, base64.RawURLEncoding.EncodeToString(hasher.Sum(nil)))
 }
 
 // ValidateFixedRole errors when a fixed role does not match expected pattern
