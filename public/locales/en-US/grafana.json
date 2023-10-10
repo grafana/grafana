@@ -515,10 +515,16 @@
       "title": "Authentication"
     },
     "config": {
-      "access-title": "Users and access",
-      "general-title": "General",
-      "plugins-title": "Plugins and data",
       "title": "Administration"
+    },
+    "config-access": {
+      "title": "Users and access"
+    },
+    "config-general": {
+      "title": "General"
+    },
+    "config-plugins": {
+      "title": "Plugins and data"
     },
     "connect-data": {
       "title": "Connect data"

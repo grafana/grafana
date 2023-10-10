@@ -515,10 +515,16 @@
       "title": ""
     },
     "config": {
-      "access-title": "",
-      "general-title": "",
-      "plugins-title": "",
       "title": "Verwaltung"
+    },
+    "config-access": {
+      "title": ""
+    },
+    "config-general": {
+      "title": ""
+    },
+    "config-plugins": {
+      "title": ""
     },
     "connect-data": {
       "title": ""

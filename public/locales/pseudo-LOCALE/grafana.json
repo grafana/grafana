@@ -515,10 +515,16 @@
       "title": "Åūŧĥęŉŧįčäŧįőŉ"
     },
     "config": {
-      "access-title": "Ůşęřş äŉđ äččęşş",
-      "general-title": "Ğęŉęřäľ",
-      "plugins-title": "Pľūģįŉş äŉđ đäŧä",
       "title": "Åđmįŉįşŧřäŧįőŉ"
+    },
+    "config-access": {
+      "title": "Ůşęřş äŉđ äččęşş"
+    },
+    "config-general": {
+      "title": "Ğęŉęřäľ"
+    },
+    "config-plugins": {
+      "title": "Pľūģįŉş äŉđ đäŧä"
     },
     "connect-data": {
       "title": "Cőŉŉęčŧ đäŧä"

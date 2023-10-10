@@ -509,10 +509,16 @@
       "title": ""
     },
     "config": {
-      "access-title": "",
-      "general-title": "",
-      "plugins-title": "",
       "title": "管理"
+    },
+    "config-access": {
+      "title": ""
+    },
+    "config-general": {
+      "title": ""
+    },
+    "config-plugins": {
+      "title": ""
     },
     "connect-data": {
       "title": ""
