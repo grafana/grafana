@@ -21,6 +21,7 @@ type Props = {
   scrollToTopLogs: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
+  loadMore?: (range: AbsoluteTimeRange) => void;
 };
 
 export type LogsPage = {
@@ -39,6 +40,7 @@ function LogsNavigation({
   queries,
   clearCache,
   addResultsToCache,
+  loadMore,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
 
@@ -112,13 +114,25 @@ function LogsNavigation({
         });
         if (!onLastPage) {
           const indexChange = oldestLogsFirst ? -1 : 1;
-          changeTime({
-            from: pages[currentPageIndex + indexChange].queryRange.from,
-            to: pages[currentPageIndex + indexChange].queryRange.to,
-          });
+          if (loadMore) {
+            loadMore({
+              from: pages[currentPageIndex + indexChange].queryRange.from,
+              to: pages[currentPageIndex + indexChange].queryRange.to,
+            });
+          } else {
+            changeTime({
+              from: pages[currentPageIndex + indexChange].queryRange.from,
+              to: pages[currentPageIndex + indexChange].queryRange.to,
+            });
+          }
+          
         } else {
           //If we are on the last page, create new range
-          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+          if (loadMore) {
+            loadMore({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+          } else {
+            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+          }
         }
         scrollToTopLogs();
       }}
