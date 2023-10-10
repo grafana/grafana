@@ -18,15 +18,11 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import {
-  findVizPanelByKey,
-  forceRenderChildren,
-  getClosestVizPanel,
-  getDashboardUrl,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;
@@ -84,9 +80,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    const clearKeyBindings = setupKeyboardShortcuts(this);
+
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = undefined;
+      clearKeyBindings();
       this.stopTrackingChanges();
       this.stopUrlSync();
     };

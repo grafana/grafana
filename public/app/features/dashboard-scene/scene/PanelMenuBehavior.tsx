@@ -7,7 +7,8 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -32,7 +33,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'v',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'view' }),
-        href: locationUtil.getUrlForPartial(location, { viewPanel: panel.state.key }),
+        href: getViewPanelUrl(panel.state.key!),
       });
 
       // We could check isEditing here but I kind of think this should always be in the menu,
