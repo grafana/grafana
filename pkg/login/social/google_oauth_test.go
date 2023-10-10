@@ -246,6 +246,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		roleAttributePath       string
 		roleAttributeStrict     bool
 		allowAssignGrafanaAdmin bool
+		skipOrgRoleSync         bool
 	}
 	type args struct {
 		client *http.Client
@@ -262,7 +263,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		{
 			name: "Success id_token",
 			fields: fields{
-				Scopes: []string{},
+				Scopes:          []string{},
+				skipOrgRoleSync: true,
 			},
 			args: args{
 				token: tokenWithID,
@@ -278,7 +280,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		{
 			name: "Success id_token - groups requested",
 			fields: fields{
-				Scopes: []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				Scopes:          []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				skipOrgRoleSync: true,
 			},
 			args: args{
 				token: tokenWithID,
@@ -315,7 +318,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		{
 			name: "Legacy API URL",
 			fields: fields{
-				apiURL: legacyAPIURL,
+				apiURL:          legacyAPIURL,
+				skipOrgRoleSync: true,
 			},
 			args: args{
 				token: tokenWithoutID,
@@ -345,7 +349,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		{
 			name: "Legacy API URL - no id provided",
 			fields: fields{
-				apiURL: legacyAPIURL,
+				apiURL:          legacyAPIURL,
+				skipOrgRoleSync: true,
 			},
 			args: args{
 				token: tokenWithoutID,
@@ -431,7 +436,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		{
 			name: "Success",
 			fields: fields{
-				apiURL: "https://openidconnect.googleapis.com/v1/userinfo",
+				apiURL:          "https://openidconnect.googleapis.com/v1/userinfo",
+				skipOrgRoleSync: true,
 			},
 			args: args{
 				token: tokenWithoutID,
@@ -637,6 +643,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					roleAttributeStrict:     tt.fields.roleAttributeStrict,
 					allowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
 				},
+				skipOrgRoleSync: tt.fields.skipOrgRoleSync,
 			}
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)

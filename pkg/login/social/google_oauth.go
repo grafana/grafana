@@ -74,9 +74,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	// Remove s.roleAttributePath != "" after 2024-04-01,
-	// after that roleAttributePath will be required if not using skipOrgRoleSync
-	if !s.skipOrgRoleSync && s.roleAttributePath != "" {
+	if !s.skipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
 		if errRole != nil {
 			return nil, errRole
