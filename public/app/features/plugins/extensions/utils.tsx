@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import { isArray, isObject } from 'lodash';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   type PluginExtensionLinkConfig,
@@ -42,8 +43,14 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
 export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = ({ title, body }) => {
-    appEvents.publish(new ShowModalReactEvent({ component: getModalWrapper({ title, body }) }));
+  const openModal: PluginExtensionEventHelpers['openModal'] = (options) => {
+    const { title, body, width, height } = options;
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: getModalWrapper({ title, body, width, height }),
+      })
+    );
   };
 
   return { openModal, context };
@@ -60,10 +67,14 @@ export const getModalWrapper = ({
   title,
   // A component that serves the body of the modal
   body: Body,
+  width,
+  height,
 }: Parameters<PluginExtensionEventHelpers['openModal']>[0]) => {
+  const className = css({ width, height });
+
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
-      <Modal title={title} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
         <Body onDismiss={onDismiss} />
       </Modal>
     );
