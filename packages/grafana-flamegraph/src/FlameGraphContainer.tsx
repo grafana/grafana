@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
@@ -133,75 +134,76 @@ const FlameGraphContainer = ({
   }
 
   return (
-    <div ref={sizeRef} className={styles.container}>
-      <FlameGraphHeader
-        search={search}
-        setSearch={setSearch}
-        selectedView={selectedView}
-        setSelectedView={(view) => {
-          setSelectedView(view);
-          onViewSelected?.(view);
-        }}
-        containerWidth={containerWidth}
-        onReset={() => {
-          resetFocus();
-          resetSandwich();
-        }}
-        textAlign={textAlign}
-        onTextAlignChange={(align) => {
-          setTextAlign(align);
-          onTextAlignSelected?.(align);
-        }}
-        showResetButton={Boolean(focusedItemData || sandwichItem)}
-        colorScheme={colorScheme}
-        onColorSchemeChange={setColorScheme}
-        stickyHeader={Boolean(stickyHeader)}
-        extraHeaderElements={extraHeaderElements}
-        vertical={vertical}
-        isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
-        getTheme={getTheme}
-      />
+    // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
+    // isn't already provided.
+    <ThemeContext.Provider value={theme}>
+      <div ref={sizeRef} className={styles.container}>
+        <FlameGraphHeader
+          search={search}
+          setSearch={setSearch}
+          selectedView={selectedView}
+          setSelectedView={(view) => {
+            setSelectedView(view);
+            onViewSelected?.(view);
+          }}
+          containerWidth={containerWidth}
+          onReset={() => {
+            resetFocus();
+            resetSandwich();
+          }}
+          textAlign={textAlign}
+          onTextAlignChange={(align) => {
+            setTextAlign(align);
+            onTextAlignSelected?.(align);
+          }}
+          showResetButton={Boolean(focusedItemData || sandwichItem)}
+          colorScheme={colorScheme}
+          onColorSchemeChange={setColorScheme}
+          stickyHeader={Boolean(stickyHeader)}
+          extraHeaderElements={extraHeaderElements}
+          vertical={vertical}
+          isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+        />
 
-      <div className={styles.body}>
-        {selectedView !== SelectedView.FlameGraph && (
-          <FlameGraphTopTableContainer
-            data={dataContainer}
-            onSymbolClick={onSymbolClick}
-            height={selectedView === SelectedView.TopTable ? 600 : undefined}
-            search={search}
-            sandwichItem={sandwichItem}
-            onSandwich={setSandwichItem}
-            onSearch={setSearch}
-            onTableSort={onTableSort}
-            getTheme={getTheme}
-            vertical={vertical}
-          />
-        )}
+        <div className={styles.body}>
+          {selectedView !== SelectedView.FlameGraph && (
+            <FlameGraphTopTableContainer
+              data={dataContainer}
+              onSymbolClick={onSymbolClick}
+              height={selectedView === SelectedView.TopTable ? 600 : undefined}
+              search={search}
+              sandwichItem={sandwichItem}
+              onSandwich={setSandwichItem}
+              onSearch={setSearch}
+              onTableSort={onTableSort}
+              vertical={vertical}
+            />
+          )}
 
-        {selectedView !== SelectedView.TopTable && (
-          <FlameGraph
-            getTheme={getTheme}
-            data={dataContainer}
-            rangeMin={rangeMin}
-            rangeMax={rangeMax}
-            search={search}
-            setRangeMin={setRangeMin}
-            setRangeMax={setRangeMax}
-            onItemFocused={(data) => setFocusedItemData(data)}
-            focusedItemData={focusedItemData}
-            textAlign={textAlign}
-            sandwichItem={sandwichItem}
-            onSandwich={(label: string) => {
-              resetFocus();
-              setSandwichItem(label);
-            }}
-            onFocusPillClick={resetFocus}
-            onSandwichPillClick={resetSandwich}
-            colorScheme={colorScheme}
-          />
-        )}
+          {selectedView !== SelectedView.TopTable && (
+            <FlameGraph
+              data={dataContainer}
+              rangeMin={rangeMin}
+              rangeMax={rangeMax}
+              search={search}
+              setRangeMin={setRangeMin}
+              setRangeMax={setRangeMax}
+              onItemFocused={(data) => setFocusedItemData(data)}
+              focusedItemData={focusedItemData}
+              textAlign={textAlign}
+              sandwichItem={sandwichItem}
+              onSandwich={(label: string) => {
+                resetFocus();
+                setSandwichItem(label);
+              }}
+              onFocusPillClick={resetFocus}
+              onSandwichPillClick={resetSandwich}
+              colorScheme={colorScheme}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </ThemeContext.Provider>
   );
 };
 
