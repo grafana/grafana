@@ -5,14 +5,14 @@ import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylistAPI, getDefaultPlaylist } from './api';
+import { createPlaylist, getDefaultPlaylist } from './api';
 import { Playlist } from './types';
 
 export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
 
   const onSubmit = async (playlist: Playlist) => {
-    await getPlaylistAPI().createPlaylist(playlist);
+    await createPlaylist(playlist);
     locationService.push('/playlists');
   };
 

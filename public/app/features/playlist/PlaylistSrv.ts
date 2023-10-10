@@ -4,8 +4,9 @@ import { pickBy } from 'lodash';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { getPlaylistAPI, loadDashboards } from './api';
-import { PlaylistAPI } from './types';
+import { playlistAPI, loadDashboards } from './api';
+
+const { getPlaylist } = playlistAPI;
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -22,13 +23,11 @@ export class PlaylistSrv {
   private numberOfLoops = 0;
   private declare validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
-  private api: PlaylistAPI;
 
   isPlaying = false;
 
   constructor() {
     this.locationUpdated = this.locationUpdated.bind(this);
-    this.api = getPlaylistAPI();
   }
 
   next() {
@@ -82,7 +81,7 @@ export class PlaylistSrv {
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     const urls: string[] = [];
-    let playlist = await this.api.getPlaylist(playlistUid);
+    let playlist = await getPlaylist(playlistUid);
     if (!playlist.items?.length) {
       // alert
       return;
