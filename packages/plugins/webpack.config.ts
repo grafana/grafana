@@ -4,10 +4,9 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import { Configuration } from 'webpack';
-import LiveReloadPlugin from 'webpack-livereload-plugin';
 
 import { DIST_DIR } from './constants';
-import { getPackageJson, getPluginJson, getEntries, isWSL, hasLicense } from './utils';
+import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -148,7 +147,7 @@ const config = async (env: any): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: hasLicense() ? 'LICENSE' : '../../../../LICENSE', to: '.' }, // Point to Grafana License by default
+          { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -191,21 +190,18 @@ const config = async (env: any): Promise<Configuration> => {
         extensions: ['.ts', '.tsx'],
         lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
       }),
-      ...(env.development ? [new LiveReloadPlugin()] : []),
     ],
 
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
       unsafeCache: true,
     },
-  };
 
-  if (isWSL()) {
-    baseConfig.watchOptions = {
+    watchOptions: {
       poll: 3000,
-      ignored: /node_modules/,
-    };
-  }
+      ignored: ['**/node_modules', '**/dist', '**/.yarn/.cache'],
+    },
+  };
 
   return baseConfig;
 };

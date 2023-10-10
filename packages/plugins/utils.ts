@@ -1,24 +1,7 @@
 import fs from 'fs';
 import { glob } from 'glob';
-import os from 'os';
 import path from 'path';
 import process from 'process';
-
-export function isWSL() {
-  if (process.platform !== 'linux') {
-    return false;
-  }
-
-  if (os.release().toLowerCase().includes('microsoft')) {
-    return true;
-  }
-
-  try {
-    return fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft');
-  } catch {
-    return false;
-  }
-}
 
 export function getPackageJson() {
   return require(path.resolve(process.cwd(), 'package.json'));

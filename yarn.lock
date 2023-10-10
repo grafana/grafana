@@ -2940,12 +2940,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
+"@grafana-plugins/grafana-testdata-datasource@workspace:*, @grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
   dependencies:
     "@emotion/css": 11.11.2
-    "@grafana-plugins/shared": "workspace:*"
+    "@grafana-plugins/shared": 10.2.0-pre
     "@grafana/data": 10.2.0-pre
     "@grafana/e2e-selectors": 10.2.0-pre
     "@grafana/experimental": 1.7.0
@@ -2959,6 +2959,7 @@ __metadata:
     "@types/node": 18.16.16
     "@types/react": 18.2.15
     "@types/testing-library__jest-dom": 5.14.8
+    lodash: 4.17.21
     react: 18.2.0
     react-use: 17.4.0
     rxjs: 7.8.1
@@ -2992,12 +2993,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/shared@workspace:*, @grafana-plugins/shared@workspace:scripts/webpack/plugins/shared":
+"@grafana-plugins/shared@10.2.0-pre, @grafana-plugins/shared@workspace:packages/plugins":
   version: 0.0.0-use.local
-  resolution: "@grafana-plugins/shared@workspace:scripts/webpack/plugins/shared"
+  resolution: "@grafana-plugins/shared@workspace:packages/plugins"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@types/webpack-livereload-plugin": 2.3.4
     copy-webpack-plugin: 11.0.0
     eslint-webpack-plugin: 4.0.1
     fork-ts-checker-webpack-plugin: 8.0.0
@@ -3005,7 +3005,6 @@ __metadata:
     replace-in-file-webpack-plugin: 1.0.6
     tslib: 2.6.0
     webpack: 5.88.1
-    webpack-livereload-plugin: 3.0.2
   languageName: unknown
   linkType: soft
 
@@ -9927,13 +9926,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/source-list-map@npm:*":
-  version: 0.1.3
-  resolution: "@types/source-list-map@npm:0.1.3"
-  checksum: a001098786d75b82eef00a6e4f1f7bb73f9f2fdf3e97333f8b741183c3fbf92db91af8bcfc410c7e6c23c4497523a3210f3eee2077b1be93595206f9baf3d909
-  languageName: node
-  linkType: hard
-
 "@types/stack-utils@npm:^2.0.0":
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
@@ -9959,13 +9951,6 @@ __metadata:
   version: 6.13.1
   resolution: "@types/systemjs@npm:6.13.1"
   checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
-  languageName: node
-  linkType: hard
-
-"@types/tapable@npm:^1":
-  version: 1.0.9
-  resolution: "@types/tapable@npm:1.0.9"
-  checksum: 12bc0a0a949334777bd58e6467447004b8f921b38e5d18d0f7fb84f7fe978c6e8df0b8ae2e4519ab10b1e038c24f3f89807c13ef5caa932095dbeace8d3938c6
   languageName: node
   linkType: hard
 
@@ -10008,15 +9993,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uglify-js@npm:*":
-  version: 3.17.2
-  resolution: "@types/uglify-js@npm:3.17.2"
-  dependencies:
-    source-map: ^0.6.1
-  checksum: 6cd3ae5befd2bf147c6a37e94b1454dc85d9102ec1a6ab242268f37fe84ba8373904db2ed56fa418233fd93366bde8e0bb4f49c137b92f165b45c957296ac28a
-  languageName: node
-  linkType: hard
-
 "@types/unist@npm:*, @types/unist@npm:^2.0.0":
   version: 2.0.6
   resolution: "@types/unist@npm:2.0.6"
@@ -10042,40 +10018,6 @@ __metadata:
   version: 1.18.1
   resolution: "@types/webpack-env@npm:1.18.1"
   checksum: 3173c069763e51a96565d602af7e6dac9d772ae4aa6f26cac187cbf599a7f0b88f790b4b050b9dbdb0485daed3061b4a337863f3b8ce66f8a4e51f75ad387c6a
-  languageName: node
-  linkType: hard
-
-"@types/webpack-livereload-plugin@npm:2.3.4, @types/webpack-livereload-plugin@npm:^2.3.4":
-  version: 2.3.4
-  resolution: "@types/webpack-livereload-plugin@npm:2.3.4"
-  dependencies:
-    "@types/webpack": ^4
-  checksum: f313002c7394d7142ec8a747af99d833f725d23755a5901238d596d0102bc256a4f174f6579b21a1952d9c1b47aba87f74a9c6e6c8844e6f312466e94165a840
-  languageName: node
-  linkType: hard
-
-"@types/webpack-sources@npm:*":
-  version: 3.2.1
-  resolution: "@types/webpack-sources@npm:3.2.1"
-  dependencies:
-    "@types/node": "*"
-    "@types/source-list-map": "*"
-    source-map: ^0.7.3
-  checksum: c347c91ac4d3244c3c47519a797d0e73569fbabadfd95ff4ece5b731a2790276b4b484c7038b4a561e025f508d292395f7a072db849120626d7f64040bd1127a
-  languageName: node
-  linkType: hard
-
-"@types/webpack@npm:^4":
-  version: 4.41.34
-  resolution: "@types/webpack@npm:4.41.34"
-  dependencies:
-    "@types/node": "*"
-    "@types/tapable": ^1
-    "@types/uglify-js": "*"
-    "@types/webpack-sources": "*"
-    anymatch: ^3.0.0
-    source-map: ^0.6.0
-  checksum: 10bdbd6cabafa58b7d4263bbf23134196c606034f84886ee9906c9951a62ffe9d52f0b74b084cd59ad0ef7521742e958ce9e0794fd7ed04e7ca6bc475455e04d
   languageName: node
   linkType: hard
 
@@ -11301,16 +11243,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"anymatch@npm:^3.0.0, anymatch@npm:^3.1.1":
-  version: 3.1.3
-  resolution: "anymatch@npm:3.1.3"
-  dependencies:
-    normalize-path: ^3.0.0
-    picomatch: ^2.0.4
-  checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
-  languageName: node
-  linkType: hard
-
 "anymatch@npm:^3.0.3, anymatch@npm:~3.1.2":
   version: 3.1.2
   resolution: "anymatch@npm:3.1.2"
@@ -11318,6 +11250,16 @@ __metadata:
     normalize-path: ^3.0.0
     picomatch: ^2.0.4
   checksum: 985163db2292fac9e5a1e072bf99f1b5baccf196e4de25a0b0b81865ebddeb3b3eb4480734ef0a2ac8c002845396b91aa89121f5b84f93981a4658164a9ec6e9
+  languageName: node
+  linkType: hard
+
+"anymatch@npm:^3.1.1":
+  version: 3.1.3
+  resolution: "anymatch@npm:3.1.3"
+  dependencies:
+    normalize-path: ^3.0.0
+    picomatch: ^2.0.4
+  checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
   languageName: node
   linkType: hard
 
@@ -17995,6 +17937,7 @@ __metadata:
     "@emotion/react": 11.11.1
     "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
+    "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -18107,7 +18050,6 @@ __metadata:
     "@types/trusted-types": 2.0.3
     "@types/uuid": 9.0.2
     "@types/webpack-env": 1.18.1
-    "@types/webpack-livereload-plugin": ^2.3.4
     "@types/yargs": 17.0.24
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
