@@ -37,7 +37,12 @@ export interface PlaylistItem {
   /**
    * Type of the item.
    */
-  type: 'dashboard_by_uid' | 'dashboard_by_id' | 'dashboard_by_tag';
+  type: // Use an explicit dashboard
+  | 'dashboard_by_uid'
+    // find all dashboards with a given tag
+    | 'dashboard_by_tag'
+    // @deprecated use a dashboard with a given internal id
+    | 'dashboard_by_id';
 
   /**
    * Value depends on type and describes the playlist item.
@@ -51,6 +56,10 @@ export interface PlaylistItem {
    */
   value: string;
 
-  // Loaded at runtime by the frontend
+  /**
+   * Loaded at runtime by the frontend.
+   *
+   * The values are not stored in the backend database.
+   */
   dashboards?: DashboardQueryResult[];
 }
