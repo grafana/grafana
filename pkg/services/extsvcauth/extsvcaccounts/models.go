@@ -5,6 +5,11 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+const (
+	skvType  = "extsvc-token"
+	TmpOrgID = 1
+)
+
 type saveExtSvcAccountCmd struct {
 	ExtSvcSlug  string
 	OrgID       int64

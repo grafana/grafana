@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
@@ -17,10 +18,6 @@ import (
 )
 
 // TODO (gamab) more logs
-
-const (
-	skvType = "extsvc-token"
-)
 
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
@@ -53,6 +50,41 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 		IsDisabled: sa.IsDisabled,
 		Role:       roletype.RoleType(sa.Role),
 	}, nil
+}
+
+// SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
+func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
+	if cmd == nil {
+		esa.logger.Warn("Received no input")
+		return nil, nil
+	}
+
+	slug := slugify.Slugify(cmd.Name)
+
+	if cmd.Impersonation.Enabled {
+		esa.logger.Warn("Impersonation is not handled when using service account token", "service", slug)
+	}
+
+	saID, err := esa.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
+		ExtSvcSlug:  slug,
+		Enabled:     cmd.Self.Enabled,
+		OrgID:       TmpOrgID,
+		Permissions: cmd.Self.Permissions,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := esa.getExtSvcAccountToken(ctx, TmpOrgID, saID, slug)
+	if err != nil {
+		esa.logger.Error("Could not get the external svc token",
+			"service", slug,
+			"saID", saID,
+			"error", err.Error())
+		return nil, err
+	}
+
+	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
 }
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
@@ -142,8 +174,18 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 	return esa.DeleteExtSvcCredentials(ctx, orgID, slug)
 }
 
-// createExtSvcAccountToken generates the token of an External Service
-func (esa *ExtSvcAccountsService) createExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
+// getExtSvcAccountToken get or create the token of an External Service
+func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
+	// Get credentials from store
+	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
+	if err != nil && !errors.Is(err, extsvcauth.ErrCredentialsNotFound) {
+		return "", err
+	}
+	if credentials != nil {
+		return credentials.Secret, nil
+	}
+
+	// Generate token
 	esa.logger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
 	newKeyInfo, err := satokengen.New(extSvcSlug)
 	if err != nil {
