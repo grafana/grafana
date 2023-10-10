@@ -126,9 +126,6 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 
 		if navAdminSubsectionsEnabled {
 			generalNodeLinks := []*NavLink{}
-			pluginsNodeLinks := []*NavLink{}
-			accessNodeLinks := []*NavLink{}
-
 			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading")) // TODO does this even exist
 			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("licensing"))
 			generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("org-settings"))
@@ -139,12 +136,14 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 
 			generalNode := &NavLink{
 				Text:     "General",
+				SubTitle: "Manage default preferences and settings across Grafana",
 				Id:       NavIDCfgGeneral,
 				Url:      "/admin/general",
 				Icon:     "shield",
 				Children: generalNodeLinks,
 			}
 
+			pluginsNodeLinks := []*NavLink{}
 			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
 			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
 			pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries"))
@@ -153,12 +152,14 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 
 			pluginsNode := &NavLink{
 				Text:     "Plugins and data",
+				SubTitle: "Install plugins and define the relationships between data",
 				Id:       NavIDCfgPlugins,
 				Url:      "/admin/plugins",
 				Icon:     "shield",
 				Children: pluginsNodeLinks,
 			}
 
+			accessNodeLinks := []*NavLink{}
 			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("global-users"))
 			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
 			accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app"))
@@ -167,6 +168,7 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 
 			usersNode := &NavLink{
 				Text:     "Users and access",
+				SubTitle: "Configure access for individual users, teams, and service accounts",
 				Id:       NavIDCfgAccess,
 				Url:      "/admin/access",
 				Icon:     "shield",
