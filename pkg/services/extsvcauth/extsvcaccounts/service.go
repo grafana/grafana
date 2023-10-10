@@ -4,24 +4,30 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 type ExtSvcAccountsService struct {
-	acSvc  ac.Service
-	logger log.Logger
-	saSvc  sa.Service
+	acSvc   ac.Service
+	logger  log.Logger
+	saSvc   sa.Service
+	kvStore *kvstore.SecretsKVStoreSQL
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
+	logger := log.New("serviceauth.extsvcaccounts")
 	return &ExtSvcAccountsService{
-		acSvc:  acSvc,
-		logger: log.New("serviceauth.extsvcaccounts"),
-		saSvc:  saSvc,
+		acSvc:   acSvc,
+		logger:  logger,
+		saSvc:   saSvc,
+		kvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger),
 	}
 }
 
@@ -123,4 +129,14 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 		return err
 	}
 	return esa.acSvc.DeleteExternalServiceRole(ctx, slug)
+}
+
+// GetExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
+func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
+	panic("unimplemented")
+}
+
+// SaveExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
+func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *extsvcauth.SaveExtSvcCredentialsCmd) error {
+	panic("unimplemented")
 }

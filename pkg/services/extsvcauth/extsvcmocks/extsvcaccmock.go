@@ -14,6 +14,32 @@ type MockExtSvcAccountsService struct {
 	mock.Mock
 }
 
+// GetExtSvcCredentials provides a mock function with given fields: ctx, orgID, ExtSvcSlug
+func (_m *MockExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
+	ret := _m.Called(ctx, orgID, ExtSvcSlug)
+
+	var r0 *extsvcauth.ExtSvcCredentials
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*extsvcauth.ExtSvcCredentials, error)); ok {
+		return rf(ctx, orgID, ExtSvcSlug)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *extsvcauth.ExtSvcCredentials); ok {
+		r0 = rf(ctx, orgID, ExtSvcSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*extsvcauth.ExtSvcCredentials)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgID, ExtSvcSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ManageExtSvcAccount provides a mock function with given fields: ctx, cmd
 func (_m *MockExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *extsvcauth.ManageExtSvcAccountCmd) (int64, error) {
 	ret := _m.Called(ctx, cmd)
@@ -62,6 +88,20 @@ func (_m *MockExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, 
 	}
 
 	return r0, r1
+}
+
+// SaveExtSvcCredentials provides a mock function with given fields: ctx, cmd
+func (_m *MockExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *extsvcauth.SaveExtSvcCredentialsCmd) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *extsvcauth.SaveExtSvcCredentialsCmd) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewMockExtSvcAccountsService creates a new instance of MockExtSvcAccountsService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

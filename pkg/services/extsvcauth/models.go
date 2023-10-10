@@ -26,6 +26,11 @@ type ExtSvcAccountsService interface {
 	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
 	// RetrieveExtSvcAccount fetches an external service account by ID
 	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
+
+	// SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
+	SaveExtSvcCredentials(ctx context.Context, cmd *SaveExtSvcCredentialsCmd) error
+	// GetExtSvcCredentials retrieves the credentials of an External Service from an encrypted storage
+	GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*ExtSvcCredentials, error)
 }
 
 // ExtSvcAccount represents the service account associated to an external service
@@ -43,6 +48,18 @@ type ManageExtSvcAccountCmd struct {
 	Enabled     bool // disabled: the service account and its permissions will be deleted
 	OrgID       int64
 	Permissions []accesscontrol.Permission
+	WithToken   bool // get or create a service account token
+}
+
+// ExtSvcCredentials represents the credentials associated to an external service
+type ExtSvcCredentials struct {
+	Secret string
+}
+
+type SaveExtSvcCredentialsCmd struct {
+	ExtSvcSlug string
+	OrgID      int64
+	Secret     string
 }
 
 type SelfCfg struct {
