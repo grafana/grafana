@@ -56,7 +56,7 @@ def swagger_gen_step(ver_mode):
         },
         "commands": [
             "apk add --update git make",
-            "cd grafana",
+            "cd grafana/grafana",
             "ls -l",
             "pwd",
             "cat Makefile",
