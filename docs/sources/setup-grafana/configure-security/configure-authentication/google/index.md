@@ -149,6 +149,8 @@ This setting denies user access if no role or an invalid role is returned.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
+> By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
+
 ### Role mapping examples
 
 This section includes examples of JMESPath expressions used for role mapping.
@@ -160,6 +162,7 @@ All other users are granted the `Viewer` role.
 
 ```ini
 role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
+skip_org_role_sync = false
 ```
 
 #### Map roles using groups
@@ -169,6 +172,7 @@ All other users are granted the `Viewer` role.
 
 ```ini
 role_attribute_path = contains(groups[*], 'example-group@google.com') && 'Editor' || 'Viewer'
+skip_org_role_sync = false
 ```
 
 > Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
