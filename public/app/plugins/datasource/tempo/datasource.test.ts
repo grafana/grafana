@@ -987,7 +987,15 @@ const backendSrvWithPrometheus = {
       return {
         query() {
           return of({
-            data: [rateMetric, errorRateMetric, durationMetric, totalsPromMetric, secondsPromMetric, failedPromMetric],
+            data: [
+              rateMetric,
+              errorRateMetric,
+              durationMetric,
+              emptyDurationMetric,
+              totalsPromMetric,
+              secondsPromMetric,
+              failedPromMetric,
+            ],
           });
         },
       };
@@ -1077,6 +1085,12 @@ const durationMetric = createDataFrame({
       values: [0.12003505696757232],
     },
   ],
+});
+
+const emptyDurationMetric = createDataFrame({
+  refId:
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
+  fields: [],
 });
 
 const totalsPromMetric = createDataFrame({
