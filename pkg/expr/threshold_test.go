@@ -3,6 +3,7 @@ package expr
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -181,6 +182,10 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				for fingerprint := range cmd.LoadedDimensions {
 					actual = append(actual, uint64(fingerprint))
 				}
+				sort.Slice(actual, func(i, j int) bool {
+					return actual[i] < actual[j]
+				})
+
 				require.EqualValues(t, []uint64{1, 2, 3, 4, 5}, actual)
 			},
 		},
