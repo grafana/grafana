@@ -32,18 +32,27 @@ type Playlist struct {
 }
 
 type PlaylistDTO struct {
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
 	// Interval sets the time between switching views in a playlist.
 	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
 	Items []PlaylistItemDTO `json:"items,omitempty"`
 
-	// Name of the playlist.
-	Name string `json:"name"`
+	// Returned for k8s
+	CreatedAt int64 `json:"-"`
 
-	// Unique playlist identifier. Generated on creation, either by the
-	// creator of the playlist of by the application.
-	Uid string `json:"uid"`
+	// Returned for k8s
+	UpdatedAt int64 `json:"-"`
+
+	// Returned for k8s
+	OrgID int64 `json:"-"`
 }
 
 type PlaylistItemDTO struct {
@@ -122,13 +131,13 @@ type GetPlaylistItemsByUidQuery struct {
 	OrgId       int64
 }
 
-func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playlist {
+func ConvertToK8sResource(v *PlaylistDTO) *playlist.Playlist {
 	spec := playlist.Spec{
-		Uid:      v.UID,
+		Uid:      v.Uid,
 		Name:     v.Name,
 		Interval: v.Interval,
 	}
-	for _, item := range items {
+	for _, item := range v.Items {
 		spec.Items = append(spec.Items, playlist.Item{
 			Type:  playlist.ItemType(item.Type),
 			Value: item.Value,
@@ -140,11 +149,11 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 			APIVersion: playlist.APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.UID,
-			UID:               types.UID(v.UID),
+			Name:              v.Uid,
+			UID:               types.UID(v.Uid),
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
-			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
+			Namespace:         fmt.Sprintf("org-%d", v.OrgID),
 		},
 		Spec: spec,
 	}

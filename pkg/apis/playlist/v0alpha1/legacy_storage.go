@@ -85,17 +85,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		},
 	}
 	for _, v := range res {
-		p := playlistsvc.ConvertToK8sResource(v, nil)
-		if true { // Only if not table view
-			p, err = s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
-				UID:   v.UID,
-				OrgId: orgId,
-			})
-			if err != nil {
-				return nil, err
-			}
+		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: orgId, // required
+		})
+		if err != nil {
+			return nil, err
 		}
-		list.Items = append(list.Items, *p)
+		list.Items = append(list.Items, *playlistsvc.ConvertToK8sResource(p))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -110,10 +107,14 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1
 	}
 
-	return s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+	p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId, // required
 	})
+	if err != nil {
+		return nil, err
+	}
+	return playlistsvc.ConvertToK8sResource(p), nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,

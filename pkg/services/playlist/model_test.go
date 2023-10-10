@@ -8,23 +8,22 @@ import (
 )
 
 func TestPlaylistConversion(t *testing.T) {
-	src := &Playlist{
-		OrgId:     3,
-		UID:       "abc",
+	src := &PlaylistDTO{
+		OrgID:     3,
+		Uid:       "abc",
 		Name:      "MyPlaylists",
 		Interval:  "10s",
 		CreatedAt: 12345,
 		UpdatedAt: 54321,
+		Items: []PlaylistItemDTO{
+			{Type: "dashboard_by_uid", Value: "UID0"},
+			{Type: "dashboard_by_tag", Value: "tagA"},
+			{Type: "dashboard_by_id", Value: "123"}, // deprecated
+		},
 	}
-	items := []PlaylistItemDTO{
-		{Type: "dashboard_by_uid", Value: "UID0"},
-		{Type: "dashboard_by_tag", Value: "tagA"},
-		{Type: "dashboard_by_id", Value: "123"}, // deprecated
-	}
+	dst := ConvertToK8sResource(src)
 
-	dst := ConvertToK8sResource(src, items)
-
-	require.Equal(t, "abc", src.UID)
+	require.Equal(t, "abc", src.Uid)
 	require.Equal(t, "abc", dst.Name)
 	require.Equal(t, src.Name, dst.Spec.Name)
 
