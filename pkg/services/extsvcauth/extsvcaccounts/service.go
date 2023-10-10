@@ -124,12 +124,16 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	}
 
 	if cmd.WithToken {
-		esa.logger.Debug("Update role permissions", "service", cmd.ExtSvcSlug, "saID", cmd.SaID)
-		r.logger.Debug("Get service account token from skv", "service", slug, "saID", saID)
-
-		if !ok {
-			token, err := r.createServiceAccountToken(ctx, slug, saID)
-			return saID, token.Key, err
+		credentials, err := esa.GetExtSvcCredentials(ctx, cmd.OrgID, cmd.ExtSvcSlug)
+		if errors.Is(err, extsvcauth.ErrCredentialsNotFound) {
+			token, err := esa.createServiceAccountToken(ctx, cmd.ExtSvcSlug, cmd.SaID)
+			if err != nil {
+				return 0, err
+			}
+			return cmd.SaID, err // TODO TOKEN
+		}
+		if err != nil {
+			return 0, err
 		}
 	}
 
@@ -147,10 +151,15 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 
 // GetExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
+	esa.logger.Debug("Get service account token from skv", "service", slug, "saID", saID)
 	token, ok, err := esa.skvStore.Get(ctx, orgID, ExtSvcSlug, skvType)
 	if err != nil {
 		return nil, err
 	}
+	if !ok {
+		return nil, extsvcauth.ErrCredentialsNotFound
+	}
+	return &extsvcauth.ExtSvcCredentials{Secret: token}, nil
 }
 
 // SaveExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
