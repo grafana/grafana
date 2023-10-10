@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
 let DATASOURCE_CONNECTION_ID = '';
-const DATASOURCE_TYPED_NAME = 'sandbox datasource ' + (Math.random() * 100).toFixed(0);
+const DATASOURCE_TYPED_NAME = 'sandbox datasource test instance';
 
 describe('Datasource sandbox', () => {
   before(() => {
