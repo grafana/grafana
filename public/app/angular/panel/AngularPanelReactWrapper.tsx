@@ -8,7 +8,7 @@ import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { RenderEvent } from 'app/types/events';
 
 interface AngularScopeProps {
-  panel: FakePanel;
+  panel: PanelModelCompatabilityWrapper;
   dashboard: DashboardModelCompatabilityWrapper;
   queryRunner: FakeQueryRunner;
   size: {
@@ -31,7 +31,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
       const loader = getAngularLoader();
       const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
       const queryRunner = new FakeQueryRunner();
-      const fakePanel = new FakePanel(plugin, props, queryRunner);
+      const fakePanel = new PanelModelCompatabilityWrapper(plugin, props, queryRunner);
 
       angularState.current = {
         // @ts-ignore
@@ -71,7 +71,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
   };
 }
 
-class FakePanel {
+class PanelModelCompatabilityWrapper {
   id: number;
   type: string;
   title: string;
