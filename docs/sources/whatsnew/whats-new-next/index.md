@@ -18,17 +18,15 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Enhanced user experience in Kubernetes Monitoring
+## User experience updates in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
 
 _Generally available in Grafana Cloud_
 
-We have upgraded the user experience of Kubernetes Monitoring.
+### Quickly troubleshoot with issues snapshot
 
-## Quickly troubleshoot with home page snapshot
-
-Release 1.3.1. To provide quicker identification and troubleshooting of issues, you can view a snapshot of issues on the home page that reach these specific thresholds:
+Release 1.3.1. To provide quicker identification and troubleshooting, you can view a snapshot of issues on the home page that reach these specific thresholds:
 
   - Pods that have been in a non-running state for more than 15 minutes
   - Nodes with CPU usage above 90% for more than five minutes
@@ -36,32 +34,42 @@ Release 1.3.1. To provide quicker identification and troubleshooting of issues, 
   - Persistent Volumes with capacity above 90%
   - Node disks with capacity above 90%
 
-## Navigate with tabs
+### Navigate with tabs
 
-Quickly switch between the Cluster, namespace, workload, and Node views on the [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) using tabs.
+Quickly switch between the Cluster, namespace, workload, and Node views on the [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) by using tabs.
 
-  (ADD SCREENSHOT)
+(ADD SCREENSHOT)
 
-# Configuration updates in Kubernetes Monitoring
+### Change data source on Cost and Efficiency views
+
+Release 1.2.1. You can change the data source you are viewing on the Cost and Efficiency views. 
+
+(SCREENSHOT)
+
+### Predict namespace memory usage
+
+Release 1.2.1. Click **Predict Memory usage** to predict namespace  memory usage on the namespace detail page.
+
+(SCREENSHOT)
+
+## Configuration updates in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
 
 _Generally available in Grafana Cloud_
 
-The following configuration updates are added.
-
-## Configure with streamlined process
+### Configure with streamlined process
 
 Release 1.2.0. Configure with Grafana Kubernetes Monitoring Helm chart using a streamlined process. With this method, you select with toggle buttons to gather metrics, logs, events, traces, and cost metrics.
 
   (ADD SCREENSHOT)
-## Collect traces
+### Collect traces
 
 Release 1.3.0. Collect traces when you configure Kubernetes Monitoring, and then use Tempo to create search queries. Refer to [Navigate to traces](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#navigate-to-traces) for more information.
 
 ## Use Kafka integration
 
-Release 1.3.6 The Kafka integration is available for use in Kubernetes Monitoring.
+Release 1.3.6. The Kafka integration is available for use in Kubernetes Monitoring.
 
 ## Distributed tracing in Grafana Cloud k6
 
