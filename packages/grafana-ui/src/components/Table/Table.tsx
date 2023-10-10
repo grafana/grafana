@@ -254,7 +254,7 @@ export const Table = memo((props: Props) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              rowIndex={row.index}
+              rowIndex={index}
               width={width}
               cellHeight={cellHeight}
             />
