@@ -99,7 +99,7 @@ export function TraceView(props: Props) {
   const [detailsPanelOffset, setDetailsPanelOffset] = useState(0);
 
   const styles = useStyles2(getStyles);
-  const defaultDetailsPanelHeight = theme.components.horizontalDrawer.defaultHeight - 80;
+  const defaultDetailsPanelHeight = theme.components.horizontalDrawer.defaultHeight - (exploreId ? 80 : 165);
 
   useEffect(() => {
     if (selectedSpan) {
