@@ -143,6 +143,17 @@ const (
 	VariableRefreshN2 VariableRefresh = 2
 )
 
+// Defines values for VariableSort.
+const (
+	VariableSortN0 VariableSort = 0
+	VariableSortN1 VariableSort = 1
+	VariableSortN2 VariableSort = 2
+	VariableSortN3 VariableSort = 3
+	VariableSortN4 VariableSort = 4
+	VariableSortN5 VariableSort = 5
+	VariableSortN6 VariableSort = 6
+)
+
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc      VariableType = "adhoc"
@@ -900,9 +911,6 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
-	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
-	AllFormat *string `json:"allFormat,omitempty"`
-
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -914,10 +922,7 @@ type VariableModel struct {
 
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
-	Hide VariableHide `json:"hide"`
-
-	// Unique numeric identifier for the variable.
-	Id string `json:"id"`
+	Hide *VariableHide `json:"hide,omitempty"`
 
 	// Optional display name
 	Label *string `json:"label,omitempty"`
@@ -941,7 +946,18 @@ type VariableModel struct {
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
-	SkipUrlSync bool `json:"skipUrlSync"`
+	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
+
+	// Sort variable options
+	// Accepted values are:
+	// `0`: No sorting
+	// `1`: Alphabetical ASC
+	// `2`: Alphabetical DESC
+	// `3`: Numerical ASC
+	// `4`: Numerical DESC
+	// `5`: Alphabetical Case Insensitive ASC
+	// `6`: Alphabetical Case Insensitive DESC
+	Sort *VariableSort `json:"sort,omitempty"`
 
 	// Dashboard variable type
 	// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
@@ -972,6 +988,17 @@ type VariableOption struct {
 // `1`: Queries the data source every time the dashboard loads.
 // `2`: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
+
+// Sort variable options
+// Accepted values are:
+// `0`: No sorting
+// `1`: Alphabetical ASC
+// `2`: Alphabetical DESC
+// `3`: Numerical ASC
+// `4`: Numerical DESC
+// `5`: Alphabetical Case Insensitive ASC
+// `6`: Alphabetical Case Insensitive DESC
+type VariableSort int
 
 // Dashboard variable type
 // `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.

@@ -182,13 +182,6 @@ func setupDB(b testing.TB) benchScenario {
 	userSvc, err := userimpl.ProvideService(db, orgService, cfg, teamSvc, cache, &quotatest.FakeQuotaService{}, bundleregistry.ProvideService())
 	require.NoError(b, err)
 
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-
-	b.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
 	var orgID int64 = 1
 
 	userIDs := make([]int64, 0, TEAM_MEMBER_NUM)
@@ -293,6 +286,8 @@ func setupDB(b testing.TB) benchScenario {
 				Created: now,
 			},
 		)
+		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
@@ -440,15 +435,20 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 
 	starSvc := startest.NewStarServiceFake()
 	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[int64]bool)}
+
 	hs := &HTTPServer{
-		CacheService:  localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:           sc.cfg,
-		SQLStore:      sc.db,
-		Features:      features,
-		QuotaService:  quotaSrv,
-		SearchService: search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
-		folderService: folderServiceWithFlagOn,
+		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
+		Cfg:              sc.cfg,
+		SQLStore:         sc.db,
+		Features:         features,
+		QuotaService:     quotaSrv,
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		folderService:    folderServiceWithFlagOn,
+		DashboardService: dashboardSvc,
 	}
+
+	hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)
