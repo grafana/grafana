@@ -47,6 +47,8 @@ describe('Render', () => {
   });
 
   it('should show invite button', () => {
+    setup();
+
     expect(screen.getByRole('link', { name: 'Invite' })).toHaveAttribute('href', 'org/users/invite');
   });
 
@@ -64,6 +66,8 @@ describe('Render', () => {
     config.externalUserMngInfo = 'truthy';
     config.disableLoginForm = true;
 
+    setup();
+
     expect(screen.queryByRole('link', { name: 'Invite' })).not.toBeInTheDocument();
     // Reset the disableLoginForm mock to its original value
     config.externalUserMngInfo = originalExternalUserMngInfo;
@@ -73,6 +77,8 @@ describe('Render', () => {
     config.externalUserMngInfo = '';
     config.disableLoginForm = true;
 
+    setup();
+
     expect(screen.getByRole('link', { name: 'Invite' })).toHaveAttribute('href', 'org/users/invite');
     // Reset the disableLoginForm mock to its original value
     config.disableLoginForm = false;
@@ -81,6 +87,8 @@ describe('Render', () => {
   it('should show invite button when externalUserMngInfo is set and disableLoginForm is false', () => {
     const originalExternalUserMngInfo = config.externalUserMngInfo;
     config.externalUserMngInfo = 'truthy';
+
+    setup();
 
     expect(screen.getByRole('link', { name: 'Invite' })).toHaveAttribute('href', 'org/users/invite');
     // Reset the disableLoginForm mock to its original value
