@@ -87,6 +87,16 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		return innerErr
 	})
 
+	if err != nil {
+		return resp, err
+	}
+
+	for refID, dr := range resp.Responses {
+		if dr.Error != nil {
+			m.logger.Error("Query response error", "refID", refID, "error", dr.Error)
+		}
+	}
+
 	return resp, err
 }
 
