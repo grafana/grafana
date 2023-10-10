@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
-export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getRuleGroupEvaluationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -23,7 +23,6 @@ export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasour
         legendFormat: 'failed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({

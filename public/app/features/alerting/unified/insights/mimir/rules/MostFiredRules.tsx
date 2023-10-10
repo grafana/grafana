@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
-export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -18,8 +18,6 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
         format: 'table',
       },
     ],
-
-    $timeRange: timeRange,
   });
 
   const transformation = new SceneDataTransformer({

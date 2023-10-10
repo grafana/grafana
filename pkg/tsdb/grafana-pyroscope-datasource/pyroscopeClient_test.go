@@ -51,10 +51,21 @@ func Test_PyroscopeClient(t *testing.T) {
 		}
 		require.Equal(t, series, resp)
 	})
+
+	t.Run("GetProfile with empty response", func(t *testing.T) {
+		connectClient.SendEmptyProfileResponse = true
+		maxNodes := int64(-1)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		require.Nil(t, err)
+		// Mainly ensuring this does not panic like before
+		require.Nil(t, resp)
+		connectClient.SendEmptyProfileResponse = false
+	})
 }
 
 type FakePyroscopeConnectClient struct {
-	Req any
+	Req                      any
+	SendEmptyProfileResponse bool
 }
 
 func (f *FakePyroscopeConnectClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {
@@ -75,6 +86,9 @@ func (f *FakePyroscopeConnectClient) Series(ctx context.Context, c *connect.Requ
 
 func (f *FakePyroscopeConnectClient) SelectMergeStacktraces(ctx context.Context, c *connect.Request[querierv1.SelectMergeStacktracesRequest]) (*connect.Response[querierv1.SelectMergeStacktracesResponse], error) {
 	f.Req = c
+	if f.SendEmptyProfileResponse {
+		return &connect.Response[querierv1.SelectMergeStacktracesResponse]{Msg: &querierv1.SelectMergeStacktracesResponse{}}, nil
+	}
 	return &connect.Response[querierv1.SelectMergeStacktracesResponse]{
 		Msg: &querierv1.SelectMergeStacktracesResponse{
 			Flamegraph: &querierv1.FlameGraph{

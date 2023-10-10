@@ -449,10 +449,14 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   if (folderUid && pageNav) {
     if (newBrowseDashboardsEnabled()) {
       const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-      pageNav = {
-        ...pageNav,
-        parentItem: folderNavModel,
-      };
+      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+      // don't show the "page not found" breadcrumb
+      if (folderNavModel.id !== 'not-found') {
+        pageNav = {
+          ...pageNav,
+          parentItem: folderNavModel,
+        };
+      }
     } else {
       // Check if folder changed
       if (folderTitle && pageNav.parentItem?.text !== folderTitle) {

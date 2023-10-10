@@ -1,7 +1,7 @@
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { openai } from './llms';
-import { getDashboardChanges, isLLMPluginEnabled } from './utils';
+import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
 
 // Mock the llms.openai module
 jest.mock('./llms', () => ({
@@ -80,5 +80,23 @@ describe('isLLMPluginEnabled', () => {
     const enabled = await isLLMPluginEnabled();
 
     expect(enabled).toBe(false);
+  });
+});
+
+describe('sanitizeReply', () => {
+  it('should remove quotes from the beginning and end of a string', () => {
+    expect(sanitizeReply('"Hello, world!"')).toBe('Hello, world!');
+  });
+
+  it('should not remove quotes from the middle of a string', () => {
+    expect(sanitizeReply('Hello, "world"!')).toBe('Hello, "world"!');
+  });
+
+  it('should only remove quotes if they are at the beginning or end of a string, and not in the middle', () => {
+    expect(sanitizeReply('"Hello", world!')).toBe('Hello", world!');
+  });
+
+  it('should return an empty string if given an empty string', () => {
+    expect(sanitizeReply('')).toBe('');
   });
 });
