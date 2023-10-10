@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
-	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
-	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
+	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,15 +68,22 @@ type FakePyroscopeConnectClient struct {
 	SendEmptyProfileResponse bool
 }
 
+func (f *FakePyroscopeConnectClient) LabelValues(ctx context.Context, c *connect.Request[typesv1.LabelValuesRequest]) (*connect.Response[typesv1.LabelValuesResponse], error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f *FakePyroscopeConnectClient) LabelNames(ctx context.Context, c *connect.Request[typesv1.LabelNamesRequest]) (*connect.Response[typesv1.LabelNamesResponse], error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f *FakePyroscopeConnectClient) Diff(ctx context.Context, c *connect.Request[querierv1.DiffRequest]) (*connect.Response[querierv1.DiffResponse], error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (f *FakePyroscopeConnectClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {
-	panic("implement me")
-}
-
-func (f *FakePyroscopeConnectClient) LabelValues(ctx context.Context, c *connect.Request[querierv1.LabelValuesRequest]) (*connect.Response[querierv1.LabelValuesResponse], error) {
-	panic("implement me")
-}
-
-func (f *FakePyroscopeConnectClient) LabelNames(context.Context, *connect.Request[querierv1.LabelNamesRequest]) (*connect.Response[querierv1.LabelNamesResponse], error) {
 	panic("implement me")
 }
 

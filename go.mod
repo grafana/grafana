@@ -197,7 +197,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.10.0 // indirect
-	github.com/prometheus/procfs v0.10.1 // indirect
+	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.9.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
@@ -230,7 +230,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/backend-platform
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
-	github.com/bufbuild/connect-go v1.4.1 // @grafana/observability-traces-and-profiling
+	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
 	github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-operator-experience-squad
@@ -338,6 +338,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
+	github.com/grafana/pyroscope/api v0.2.0 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
