@@ -1,5 +1,10 @@
 import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
+import { getExploreUrl } from 'app/core/utils/explore';
+
+import { getQueryRunnerFor } from './utils';
 
 export interface DashboardUrlOptions {
   uid?: string;
@@ -59,4 +64,23 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
 export function getViewPanelUrl(panelKey: string) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: panelKey });
+}
+
+export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
+  //const dashboard = panel.getRoot();
+  const panelPlugin = vizPanel.getPlugin();
+  const queryRunner = getQueryRunnerFor(vizPanel);
+
+  if (!contextSrv.hasAccessToExplore() || panelPlugin?.meta.skipDataQuery || !queryRunner) {
+    return Promise.resolve(undefined);
+  }
+
+  const timeRange = sceneGraph.getTimeRange(vizPanel);
+
+  return getExploreUrl({
+    queries: queryRunner.state.queries,
+    dsRef: queryRunner.state.datasource,
+    timeRange: timeRange.state.value,
+    scopedVars: { __sceneObject: { value: vizPanel } },
+  });
 }

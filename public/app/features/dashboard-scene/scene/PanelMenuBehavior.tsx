@@ -7,8 +7,8 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -24,8 +24,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const items: PanelMenuItem[] = [];
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = panel.getRoot();
-    const panelPlugin = panel.getPlugin();
-    const queryRunner = getQueryRunnerFor(panel);
 
     if (dashboard instanceof DashboardScene) {
       items.push({
@@ -61,20 +59,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (contextSrv.hasAccessToExplore() && !panelPlugin?.meta.skipDataQuery && queryRunner) {
-      const timeRange = sceneGraph.getTimeRange(panel);
-
+    const exploreUrl = await tryGetExploreUrlForPanel(panel);
+    if (exploreUrl) {
       items.push({
         text: t('panel.header-menu.explore', `Explore`),
         iconClassName: 'compass',
         shortcut: 'p x',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'explore' }),
-        href: await getExploreUrl({
-          queries: queryRunner.state.queries,
-          dsRef: queryRunner.state.datasource,
-          timeRange: timeRange.state.value,
-          scopedVars: { __sceneObject: { value: panel } },
-        }),
+        href: exploreUrl,
       });
     }
 
