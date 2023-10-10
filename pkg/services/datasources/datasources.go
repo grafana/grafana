@@ -59,6 +59,8 @@ type DataSourceService interface {
 	// configured for this Datasource. Not every datasource can has the option
 	// to configure those.
 	CustomHeaders(ctx context.Context, ds *DataSource) (map[string]string, error)
+
+	LabelHeaders(ctx context.Context, user identity.Requester, resourceID string) (map[string]string, error)
 }
 
 // CacheService interface for retrieving a cached datasource.

@@ -7,6 +7,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -135,5 +136,9 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 }
 
 func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	return nil, nil
+}
+
+func (s *FakeDataSourceService) LabelHeaders(ctx context.Context, user identity.Requester, resourceID string) (map[string]string, error) {
 	return nil, nil
 }

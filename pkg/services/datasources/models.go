@@ -63,6 +63,9 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	// label based access
+	HasLabels bool
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of

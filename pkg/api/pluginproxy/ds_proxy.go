@@ -19,6 +19,7 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -98,6 +99,22 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
 	)
+
+	fmt.Printf("%v+", teams)
+	accesscontrol.ManagedTeamRoleName(1)
+	proxy.dataSourcesService.LabelHeaders(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser, "b6833e11-5fb1-4901-a0f5-9b2ab09d7907")
+
+	if proxy.ds.HasLabels {
+		// query for labels
+		teams := proxy.ctx.SignedInUser.Teams
+		// 1,24,6
+	}
+
+	// we could add to the permissions table
+	// datasources.query.label
+	// accesscontrol.DatasourcePermissionsService.GetPermissions()
+
+	// we could other wise add it to:
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
 	if err != nil {

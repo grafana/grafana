@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -721,4 +722,15 @@ func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource)
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)
 	}
 	return s.getCustomHeaders(ds.JsonData, values), nil
+}
+
+// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
+func (s *Service) LabelHeaders(ctx context.Context, user identity.Requester, resourceID string) (map[string]string, error) {
+	permissions, err := s.permissionsService.GetPermissions(ctx, user, resourceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	fmt.Printf("%v+", permissions)
+	return map[string]string{}, nil
+	// return s.getCustomHeaders(ds.JsonData, values), nil
 }
