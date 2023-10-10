@@ -14,6 +14,20 @@ type MockExtSvcAccountsService struct {
 	mock.Mock
 }
 
+// DeleteExtSvcCredentials provides a mock function with given fields: ctx, orgID, extSvcSlug
+func (_m *MockExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
+	ret := _m.Called(ctx, orgID, extSvcSlug)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, orgID, extSvcSlug)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetExtSvcCredentials provides a mock function with given fields: ctx, orgID, ExtSvcSlug
 func (_m *MockExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
 	ret := _m.Called(ctx, orgID, ExtSvcSlug)

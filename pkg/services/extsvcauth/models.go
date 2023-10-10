@@ -23,14 +23,14 @@ type ExternalServiceRegistry interface {
 //go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output extsvcmocks --outpkg extsvcmocks --filename extsvcaccmock.go
 type ExtSvcAccountsService interface {
 	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (*ExtSvcAccount, error)
+	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
 	// RetrieveExtSvcAccount fetches an external service account by ID
 	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
 
+	// GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
+	GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*ExtSvcCredentials, error)
 	// SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
 	SaveExtSvcCredentials(ctx context.Context, cmd *SaveExtSvcCredentialsCmd) error
-	// GetExtSvcCredentials retrieves the credentials of an External Service from an encrypted storage
-	GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*ExtSvcCredentials, error)
 	// DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
 	DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error
 }
@@ -51,7 +51,6 @@ type ManageExtSvcAccountCmd struct {
 	Enabled     bool // disabled: the service account and its permissions will be deleted
 	OrgID       int64
 	Permissions []accesscontrol.Permission
-	WithToken   bool // get or create a service account token
 }
 
 // ExtSvcCredentials represents the credentials associated to an external service

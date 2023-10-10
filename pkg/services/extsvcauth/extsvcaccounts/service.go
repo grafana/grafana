@@ -85,7 +85,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, nil
 	}
 
-	saID, token, errSave := esa.saveExtSvcAccount(ctx, &saveExtSvcAccountCmd{
+	saID, errSave := esa.saveExtSvcAccount(ctx, &saveExtSvcAccountCmd{
 		ExtSvcSlug:  cmd.ExtSvcSlug,
 		OrgID:       cmd.OrgID,
 		Permissions: cmd.Permissions,
@@ -100,7 +100,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 }
 
 // saveExtSvcAccount creates or updates the service account associated with an external service
-func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveExtSvcAccountCmd) (int64, string, error) {
+func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveExtSvcAccountCmd) (int64, error) {
 	if cmd.SaID <= 0 {
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
@@ -110,7 +110,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 			IsDisabled: newBool(false),
 		})
 		if err != nil {
-			return 0, "", err
+			return 0, err
 		}
 		cmd.SaID = sa.Id
 	}
@@ -124,52 +124,10 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		ServiceAccountID:  cmd.SaID,
 		Permissions:       cmd.Permissions,
 	}); err != nil {
-		return 0, "", err
+		return 0, err
 	}
 
-	if cmd.WithToken {
-		credentials, err := esa.GetExtSvcCredentials(ctx, cmd.OrgID, cmd.ExtSvcSlug)
-		if err != nil {
-			if errors.Is(err, extsvcauth.ErrCredentialsNotFound) {
-				token, err := esa.createServiceAccountToken(ctx, cmd)
-				if err != nil {
-					return 0, "", err
-				}
-				return 0, token, err
-			}
-			return 0, "", err
-		}
-		return cmd.SaID, credentials.Secret, nil
-	}
-
-	return cmd.SaID, "", nil
-}
-
-func (esa *ExtSvcAccountsService) createServiceAccountToken(ctx context.Context, cmd *saveExtSvcAccountCmd) (string, error) {
-	esa.logger.Debug("Generate new key", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
-	newKeyInfo, err := satokengen.New(cmd.ExtSvcSlug)
-	if err != nil {
-		return "", err
-	}
-
-	esa.logger.Debug("Generate service account token", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
-	if _, err := esa.saSvc.AddServiceAccountToken(ctx, cmd.SaID, &serviceaccounts.AddServiceAccountTokenCommand{
-		Name:  skvType + "-" + cmd.ExtSvcSlug,
-		OrgId: cmd.OrgID,
-		Key:   newKeyInfo.HashedKey,
-	}); err != nil {
-		return "", err
-	}
-
-	if err := esa.SaveExtSvcCredentials(ctx, &extsvcauth.SaveExtSvcCredentialsCmd{
-		ExtSvcSlug: cmd.ExtSvcSlug,
-		OrgID:      cmd.OrgID,
-		Secret:     newKeyInfo.ClientSecret,
-	}); err != nil {
-		return "", err
-	}
-
-	return newKeyInfo.ClientSecret, nil
+	return cmd.SaID, nil
 }
 
 // deleteExtSvcAccount deletes a service account by ID and removes its associated role
@@ -184,7 +142,35 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 	return esa.DeleteExtSvcCredentials(ctx, orgID, slug)
 }
 
-// GetExtSvcCredentials retrieves the credentials of an External Service from an encrypted storage
+// createExtSvcAccountToken generates the token of an External Service
+func (esa *ExtSvcAccountsService) createExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
+	esa.logger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
+	newKeyInfo, err := satokengen.New(extSvcSlug)
+	if err != nil {
+		return "", err
+	}
+
+	esa.logger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
+	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &serviceaccounts.AddServiceAccountTokenCommand{
+		Name:  skvType + "-" + extSvcSlug,
+		OrgId: orgID,
+		Key:   newKeyInfo.HashedKey,
+	}); err != nil {
+		return "", err
+	}
+
+	if err := esa.SaveExtSvcCredentials(ctx, &extsvcauth.SaveExtSvcCredentialsCmd{
+		ExtSvcSlug: extSvcSlug,
+		OrgID:      orgID,
+		Secret:     newKeyInfo.ClientSecret,
+	}); err != nil {
+		return "", err
+	}
+
+	return newKeyInfo.ClientSecret, nil
+}
+
+// GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
 	esa.logger.Debug("Get service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	token, ok, err := esa.skvStore.Get(ctx, orgID, extSvcSlug, skvType)
@@ -205,6 +191,6 @@ func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd
 
 // DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
-	esa.logger.Debug("Save service account token in skv", "service", extSvcSlug, "orgID", orgID)
+	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	return esa.skvStore.Del(ctx, orgID, extSvcSlug, skvType) // TODO test deleting unexisting value
 }
