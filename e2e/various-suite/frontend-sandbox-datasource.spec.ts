@@ -98,6 +98,7 @@ describe('Datasource sandbox', () => {
     cy.request({
       url: `${Cypress.env('BASE_URL')}/api/datasources/name/${DATASOURCE_TYPED_NAME}`,
       method: 'DELETE',
+      failOnStatusCode: false,
     });
     cy.clearCookies();
   });
