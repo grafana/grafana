@@ -142,4 +142,5 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   panelFilterVariable?: boolean;
   navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
 }
