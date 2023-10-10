@@ -1194,7 +1194,7 @@ steps:
   name: clone-enterprise
 - commands:
   - apk add --update git make
-  - cd grafana/grafana
+  - cd grafana
   - ls -l
   - pwd
   - cat Makefile
@@ -4730,6 +4730,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 40a53642d90fc799044a0ecbf27b5bc8ad8ad5c23958f2be3e867e9ef3c7b345
+hmac: b28face828f506eb9198a5bc1846419c25d5087f26904098622a804b2bbf865c
 
 ...
