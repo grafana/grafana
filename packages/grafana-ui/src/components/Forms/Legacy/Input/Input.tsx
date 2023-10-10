@@ -4,7 +4,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { ValidationEvents, ValidationRule } from '../../../../types';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
 
-/** @deprecated Please use the non legacy `Input` component, which does not require this enum. */
+/** @deprecated Please use the `Input` component, which does not require this enum. */
 export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
