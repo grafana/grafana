@@ -277,7 +277,7 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 		FROM folder AS node,
 			folder AS parent
 		WHERE node.lft > parent.lft AND node.lft < parent.rgt
-			AND node.org_id = ? AND node.uid = ?
+			AND node.org_id = ? AND node.uid = ? AND parent.org_id = node.org_id
 		ORDER BY parent.lft
 		`, cmd.OrgID, cmd.UID).Find(&folders); err != nil {
 			return err
@@ -310,7 +310,7 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 		s := fmt.Sprintf(`SELECT %s
 		FROM folder AS node,
 			folder AS parent
-		WHERE node.org_id = ? AND node.lft >= parent.lft AND node.lft <= parent.rgt
+		WHERE node.org_id = ? AND node.lft >= parent.lft AND node.lft <= parent.rgt AND parent.org_id = node.org_id
 		AND node.rgt = node.lft + 1 -- leaf nodes
 		GROUP BY node.uid
 		HAVING %s > 0 -- folder appears in the subpath
@@ -353,7 +353,7 @@ func (hs *treeStore) getTree(ctx context.Context, orgID int64) ([]string, error)
 		q := fmt.Sprintf(`
 		SELECT %s
 		FROM folder AS node, folder AS parent
-		WHERE node.lft BETWEEN parent.lft AND parent.rgt AND node.org_id = ?
+		WHERE node.lft BETWEEN parent.lft AND parent.rgt AND node.org_id = ? AND parent.org_id = node.org_id
 		GROUP BY node.title, node.lft
 		ORDER BY node.lft
 		`, hs.db.GetDialect().Concat("COUNT(parent.title)", "'-'", "node.title"))
