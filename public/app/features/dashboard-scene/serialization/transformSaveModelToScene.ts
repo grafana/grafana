@@ -1,4 +1,5 @@
 import {
+  AdHocVariableModel,
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
@@ -29,6 +30,7 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
+  AdHocFilterSet,
 } from '@grafana/scenes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -92,17 +94,10 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         }
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      const gridItem = new SceneGridItem({
-        body: new LibraryVizPanel({
-          title: panel.title,
-          uid: panel.libraryPanel.uid,
-        }),
-        y: panel.gridPos.y,
-        x: panel.gridPos.x,
-        width: panel.gridPos.w,
-        height: panel.gridPos.h,
-      });
-      panels.push(gridItem);
+      const gridItem = buildGridItemForLibPanel(panel);
+      if (gridItem) {
+        panels.push(gridItem);
+      }
     } else {
       const panelObject = buildGridItemForPanel(panel);
 
@@ -157,11 +152,24 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
+  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
+          if (isAdhocVariable(v)) {
+            filtersSets.push(
+              new AdHocFilterSet({
+                name: v.name,
+                datasource: v.datasource,
+                filters: v.filters ?? [],
+                baseFilters: v.baseFilters ?? [],
+              })
+            );
+            return null;
+          }
+
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -192,6 +200,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   const controls: SceneObject[] = [
     new SceneDataLayerControls(),
     new VariableValueSelectors({}),
+    ...filtersSets,
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({
@@ -208,7 +217,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
-    $timeRange: new SceneTimeRange(oldModel.time),
+    $timeRange: new SceneTimeRange({
+      from: oldModel.time.from,
+      to: oldModel.time.to,
+      fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
+      timeZone: oldModel.timezone,
+      weekStart: oldModel.weekStart,
+    }),
     $variables: variables,
     $behaviors: [
       new behaviors.CursorSync({
@@ -290,6 +305,24 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
+export function buildGridItemForLibPanel(panel: PanelModel) {
+  if (!panel.libraryPanel) {
+    return null;
+  }
+
+  return new SceneGridItem({
+    body: new LibraryVizPanel({
+      title: panel.title,
+      uid: panel.libraryPanel.uid,
+      name: panel.libraryPanel.name,
+      key: getVizPanelKeyForPanelId(panel.id),
+    }),
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -347,3 +380,4 @@ const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type 
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
 const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';

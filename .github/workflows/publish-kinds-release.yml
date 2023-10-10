@@ -13,6 +13,7 @@ on:
 jobs:
   config:
     runs-on: "ubuntu-latest"
+    if: github.repository == 'grafana/grafana'
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -26,7 +27,7 @@ jobs:
 
   main:
     needs: config
-    if: needs.config.outputs.has-secrets
+    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"

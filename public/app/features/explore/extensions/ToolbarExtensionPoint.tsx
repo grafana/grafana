@@ -1,13 +1,13 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { getPluginLinkExtensions, config } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
-import { getExploreItemSelector } from '../state/selectors';
+import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
@@ -81,11 +81,19 @@ export type PluginExtensionExploreContext = {
   data: ExplorePanelData;
   timeRange: RawTimeRange;
   timeZone: TimeZone;
+  shouldShowAddCorrelation: boolean;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;
+  const isCorrelationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
+
+  const datasourceUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
+  const numUniqueIds = [...new Set(datasourceUids)].length;
+  const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   return useMemo(() => {
     return {
@@ -94,8 +102,24 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       data: queryResponse,
       timeRange: range.raw,
       timeZone: timeZone,
+      shouldShowAddCorrelation:
+        config.featureToggles.correlations === true &&
+        canWriteCorrelations &&
+        !isCorrelationsEditorMode &&
+        isLeftPane &&
+        numUniqueIds === 1,
     };
-  }, [exploreId, queries, queryResponse, range, timeZone]);
+  }, [
+    exploreId,
+    queries,
+    queryResponse,
+    range.raw,
+    timeZone,
+    canWriteCorrelations,
+    isCorrelationsEditorMode,
+    isLeftPane,
+    numUniqueIds,
+  ]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

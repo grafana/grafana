@@ -752,7 +752,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).toBeInTheDocument()
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
       );
     });
 
@@ -764,8 +764,25 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).not.toBeInTheDocument()
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
       );
+    });
+
+    it('should display a custom deprecation message if the plugin has it set', async () => {
+      const statusContext = 'A detailed explanation of why this plugin is deprecated.';
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+
+      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
     });
   });
 

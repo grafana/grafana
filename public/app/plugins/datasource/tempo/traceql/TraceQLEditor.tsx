@@ -11,6 +11,7 @@ import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
+import { getErrorNodes, setErrorMarkers } from './errorHighlighting';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -31,6 +32,8 @@ export function TraceQLEditor(props: Props) {
   // and wouldn't get new version of onRunQuery
   const onRunQueryRef = useRef(onRunQuery);
   onRunQueryRef.current = onRunQuery;
+
+  const errorTimeoutId = useRef<number>();
 
   return (
     <CodeEditor
@@ -63,6 +66,33 @@ export function TraceQLEditor(props: Props) {
           setupPlaceholder(editor, monaco, styles);
         }
         setupAutoSize(editor);
+
+        // Register callback for query changes
+        editor.onDidChangeModelContent((changeEvent) => {
+          const model = editor.getModel();
+          if (!model) {
+            return;
+          }
+
+          // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
+          window.clearTimeout(errorTimeoutId.current);
+
+          const errorNodes = getErrorNodes(model.getValue());
+          const cursorPosition = changeEvent.changes[0].rangeOffset;
+
+          // Immediately updates the squiggles, in case the user fixed an error,
+          // excluding the error around the cursor position
+          setErrorMarkers(
+            monaco,
+            model,
+            errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
+          );
+
+          // Later on, show all errors
+          errorTimeoutId.current = window.setTimeout(() => {
+            setErrorMarkers(monaco, model, errorNodes);
+          }, 500);
+        });
       }}
     />
   );
