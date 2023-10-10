@@ -759,7 +759,7 @@
             {
               "targetBlank": true,
               "title": "Show list of sample transactions",
-              "url": "/explore?left={\"datasource\":\"${ds:raw}﻿﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"﻿${ds:raw}﻿\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿﻿${sub}﻿﻿﻿/resourceGroups/﻿﻿﻿${rg}﻿﻿﻿/providers/﻿${ns}﻿/﻿﻿﻿${res}﻿﻿﻿\"],\"filters\":[{\"property\":\"problemId\",\"filters\":[\"﻿﻿﻿${__data.fields.Exception}﻿\"],\"operation\":\"eq\"}﻿],\"traceTypes\": [\"exceptions\"]}}],\"range\":{\"from\": \"﻿${__from}﻿\", \"to\":\"﻿${__to}﻿\" }}"
+              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"problemId\",\"filters\":[\"${__data.fields.Exception}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"exceptions\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
             }
           ],
           "mappings": [],
@@ -991,7 +991,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open dependencies in explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"﻿${ds:raw}﻿\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿﻿${sub}﻿﻿﻿/resourceGroups/﻿﻿﻿${rg}﻿﻿﻿/providers/﻿${ns}﻿/﻿﻿﻿${res}﻿﻿﻿\"],\"filters\":[{\"property\":\"problemId\",\"filters\":[\"﻿﻿﻿${__data.fields.Exception}﻿\"],\"operation\":\"eq\"}﻿],\"traceTypes\": [\"exceptions\"]}}],\"range\":{\"from\": \"﻿${__from}﻿\", \"to\":\"﻿${__to}﻿\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"problemId\",\"filters\":[\"${__data.fields.Exception}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"exceptions\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
