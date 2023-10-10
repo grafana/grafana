@@ -182,6 +182,8 @@ skip_org_role_sync = false
 In this example, the user with email `admin@company.com` has been granted the `Admin` organization role as well as the Grafana server admin role.
 All other users are granted the `Viewer` role.
 
-```bash
+```ini
+allow_assign_grafana_admin = true
+skip_org_role_sync = false
 role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
 ```
