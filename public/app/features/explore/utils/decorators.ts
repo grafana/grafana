@@ -329,7 +329,7 @@ export function decorateData(
 
 export function decorateLoadMoreData(
   data: PanelData,
-  lastData: PanelData,
+  lastExploreData: ExplorePanelData,
   absoluteRange: AbsoluteTimeRange,
   queries: DataQuery[] | undefined,
   correlations: CorrelationData[] | undefined,
@@ -347,7 +347,7 @@ export function decorateLoadMoreData(
       })
     ),
     map(decorateWithFrameTypeMetadata),
-    map((data: ExplorePanelData) => decorateWithNewLogsResult(data, decorateWithFrameTypeMetadata(preProcessPanelData(lastData)), absoluteRange, queries)),
+    map((data: ExplorePanelData) => decorateWithNewLogsResult(data, lastExploreData, absoluteRange, queries)),
   );
 }
 
