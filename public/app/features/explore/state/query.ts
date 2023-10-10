@@ -53,7 +53,7 @@ import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/expl
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
-import { decorateData, decorateLoadMoreData } from '../utils/decorators';
+import { decorateData, decorateLoadMoreData, mergeDataSeries } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -779,17 +779,16 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
       correlations$,
     ]).pipe(
       mergeMap(([data, correlations]) =>
-       {
-        return  decorateLoadMoreData(
-          data,
+        decorateData(
+          mergeDataSeries(queryResponse, data),
           queryResponse,
           absoluteRange,
+          undefined,
           queries,
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
         )
-       }
       )
     );
 
