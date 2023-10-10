@@ -2,27 +2,30 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"os"
 	"testing"
-	_ "time/tzdata" // for timeZone support in CronJob
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/openapi"
+	"k8s.io/apiserver/pkg/features"
 	"k8s.io/apiserver/pkg/registry/generic"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage"
 	etcd3testing "k8s.io/apiserver/pkg/storage/etcd3/testing"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	_ "k8s.io/component-base/logs/json/register"          // for JSON log format registration
-	_ "k8s.io/component-base/metrics/prometheus/clientgo" // load all the prometheus client-go plugins
-	_ "k8s.io/component-base/metrics/prometheus/version"  // for version metric registration
-	"k8s.io/kubernetes/cmd/kube-apiserver/app"
-	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
-	"k8s.io/kubernetes/pkg/kubeapiserver"
+	"k8s.io/sample-apiserver/pkg/apiserver"
+	"k8s.io/sample-apiserver/pkg/cmd/server"
+	sampleopenapi "k8s.io/sample-apiserver/pkg/generated/openapi"
+	netutils "k8s.io/utils/net"
 )
 
 const (
@@ -46,75 +49,59 @@ func main() {
 }
 
 func run(ctx context.Context, optsGetter generic.RESTOptionsGetter) error {
-	serverRunOptions := options.NewServerRunOptions()
-	serverRunOptions.ServiceClusterIPRanges = "127.0.0.0/24"
-	serverRunOptions.GenericServerRunOptions.ExternalHost = DefaultAPIServerHost
-	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = []string{"http://127.0.0.1:2379"} // this is needed to pass cli validation
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
-	serverRunOptions.Authentication.Anonymous.Allow = false
-	serverRunOptions.Authorization.Modes = []string{"AlwaysAllow"}
-	serverRunOptions.SecureServing.BindAddress = net.ParseIP(DefaultAPIServerIp)
-	serverRunOptions.Authentication.WithBootstrapToken()
-	serverRunOptions.SecureServing.BindPort = DefaultServerPort
-	serverRunOptions.SecureServing.ServerCert.CertDirectory = "./certs"
+	o := server.NewWardleServerOptions(os.Stdout, os.Stderr)
 
-	opts, err := serverRunOptions.Complete()
-	if err != nil {
+	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = []string{"http://127.0.0.1:2379"} // this is needed to pass cli validation
+	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(DefaultAPIServerIp)
+	o.RecommendedOptions.SecureServing.BindPort = DefaultServerPort
+	o.RecommendedOptions.SecureServing.ServerCert.CertDirectory = "./certs"
+	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+	o.RecommendedOptions.Admission = nil
+
+	// TODO have a "real" external address
+	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")}); err != nil {
+		return fmt.Errorf("error creating self-signed certificates: %v", err)
+	}
+
+	serverConfig := genericapiserver.NewRecommendedConfig(apiserver.Codecs)
+
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(sampleopenapi.GetOpenAPIDefinitions, openapi.NewDefinitionNamer(apiserver.Scheme))
+	serverConfig.OpenAPIConfig.Info.Title = "Wardle"
+	serverConfig.OpenAPIConfig.Info.Version = "0.1"
+
+	if utilfeature.DefaultFeatureGate.Enabled(features.OpenAPIV3) {
+		serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(sampleopenapi.GetOpenAPIDefinitions, openapi.NewDefinitionNamer(apiserver.Scheme))
+		serverConfig.OpenAPIV3Config.Info.Title = "Wardle"
+		serverConfig.OpenAPIV3Config.Info.Version = "0.1"
+	}
+
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
 		return err
 	}
-	serverRunOptions.Etcd.StorageConfig.Transport.ServerList = []string{}
-
-	config, err := app.NewConfig(opts)
-	if err != nil {
-		return err
-	}
-
-	if optsGetter != nil {
-		config.Aggregator.GenericConfig.RESTOptionsGetter = wrapRESTOptionsGetter(config.Aggregator.GenericConfig.RESTOptionsGetter, optsGetter)
-		config.ControlPlane.GenericConfig.RESTOptionsGetter = wrapRESTOptionsGetter(config.ControlPlane.GenericConfig.RESTOptionsGetter, optsGetter)
-		config.ApiExtensions.GenericConfig.RESTOptionsGetter = wrapRESTOptionsGetter(config.ApiExtensions.GenericConfig.RESTOptionsGetter, optsGetter)
-		config.ApiExtensions.ExtraConfig.CRDRESTOptionsGetter = wrapRESTOptionsGetter(config.ApiExtensions.ExtraConfig.CRDRESTOptionsGetter, optsGetter)
-
-		storageFactoryConfig := kubeapiserver.NewStorageFactoryConfig()
-		storageFactoryConfig.APIResourceConfig = config.ControlPlane.GenericConfig.MergedResourceConfig
-
-		// the GroupResource doesn't matter here. we just need the storage config
-		restOpts, err := config.ControlPlane.GenericConfig.RESTOptionsGetter.GetRESTOptions(schema.GroupResource{})
-		if err != nil {
-			return err
-		}
-
-		storageFactory, err := storageFactoryConfig.Complete(config.Options.Etcd).New()
-		if err != nil {
-			return err
-		}
-		// override the storage config with the one from the RESTOptionsGetter
-		storageFactory.StorageConfig = restOpts.StorageConfig.Config
-		config.ControlPlane.ExtraConfig.StorageFactory = storageFactory
-	}
-
-	completed, err := config.Complete()
-	if err != nil {
+	if err := o.RecommendedOptions.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 		return err
 	}
 
-	config.Options.Etcd = nil
+	serverConfig.RESTOptionsGetter = wrapRESTOptionsGetter(serverConfig.RESTOptionsGetter, optsGetter)
 
-	server, err := app.CreateServerChain(completed)
+	cfg := &apiserver.Config{
+		GenericConfig: serverConfig,
+		ExtraConfig:   apiserver.ExtraConfig{},
+	}
+
+	completed := cfg.Complete()
+
+	if err := writeKubeConfiguration(completed.GenericConfig.LoopbackClientConfig); err != nil {
+		return err
+	}
+
+	server, err := completed.New()
 	if err != nil {
 		return err
 	}
 
-	if err := writeKubeConfiguration(server.GenericAPIServer.LoopbackClientConfig); err != nil {
-		return err
-	}
-
-	prepared, err := server.PrepareRun()
-	if err != nil {
-		return err
-	}
-
-	return prepared.Run(ctx.Done())
+	return server.GenericAPIServer.PrepareRun().Run(ctx.Done())
 }
 
 func writeKubeConfiguration(restConfig *rest.Config) error {
