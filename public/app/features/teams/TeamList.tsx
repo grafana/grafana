@@ -96,10 +96,9 @@ export const TeamList = ({
               id: 'role',
               header: 'Role',
               cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
                   AccessControlAction.ActionTeamsRolesList,
-                  original,
-                  false
+                  original
                 );
                 return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
               },
