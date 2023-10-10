@@ -55,7 +55,7 @@ export function useOpenAIStream(
       setError(e);
       notifyError(
         'Failed to generate content using OpenAI',
-        `Please try again or if the problem persist, contact your organization admin.`
+        `Please try again or if the problem persists, contact your organization admin.`
       );
       console.error(e);
       logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
