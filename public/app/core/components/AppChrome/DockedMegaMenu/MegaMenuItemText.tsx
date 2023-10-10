@@ -115,18 +115,6 @@ const getStyles = (
       outlineOffset: '-2px',
       transition: 'none',
     },
-    '&::before': {
-      display: isActive ? 'block' : 'none',
-      content: '" "',
-      height: theme.spacing(3),
-      position: 'absolute',
-      left: level !== 0 ? theme.spacing(6) : theme.spacing(1),
-      top: '50%',
-      transform: 'translateY(-50%)',
-      width: theme.spacing(0.5),
-      borderRadius: theme.shape.radius.default,
-      backgroundImage: theme.colors.gradients.brandVertical,
-    },
   }),
   wrapper: css({
     boxSizing: 'border-box',

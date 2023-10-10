@@ -112,8 +112,20 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       alignItems: 'center',
       display: 'flex',
     },
-    !showExpandButton && {
-      marginLeft: theme.spacing(4),
+    showExpandButton &&
+      level !== 0 && {
+        marginLeft: theme.spacing(1.5),
+      },
+    !showExpandButton &&
+      level === 0 && {
+        marginLeft: theme.spacing(4.5),
+      },
+    !showExpandButton &&
+      level === 1 && {
+        marginLeft: theme.spacing(11.5),
+      },
+    level === 2 && {
+      marginLeft: theme.spacing(6),
     },
   ]),
   collapseButton: css([
@@ -157,18 +169,28 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
   isActive: css({
     color: theme.colors.text.primary,
 
-    '&::before': {
-      display: 'block',
-      content: '" "',
-      height: theme.spacing(3),
-      position: 'absolute',
-      left: level !== 0 ? theme.spacing(6) : theme.spacing(1),
-      top: '50%',
-      transform: 'translateY(-50%)',
-      width: theme.spacing(0.5),
-      borderRadius: theme.shape.radius.default,
-      backgroundImage: theme.colors.gradients.brandVertical,
-    },
+    '&::before': [
+      {
+        display: 'block',
+        content: '" "',
+        height: theme.spacing(3),
+        position: 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: theme.spacing(0.5),
+        borderRadius: theme.shape.radius.default,
+        backgroundImage: theme.colors.gradients.brandVertical,
+      },
+      level === 0 && {
+        left: theme.spacing(1),
+      },
+      level === 1 && {
+        left: theme.spacing(-1),
+      },
+      level === 2 && {
+        left: theme.spacing(6),
+      },
+    ],
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,
