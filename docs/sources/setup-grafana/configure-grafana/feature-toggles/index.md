@@ -64,7 +64,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
-| `dockedMegaMenu`                 | Enable support for a persistent (docked) navigation menu                                                                                                                                     |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`            | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                  | Enable folder nesting                                                                                                                                                                        |
@@ -97,6 +96,7 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                       |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                           |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
+| `dockedMegaMenu`                            | Enable support for a persistent (docked) navigation menu                                                     |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
@@ -143,9 +143,12 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
+| `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                       |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
+| `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
+| `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
 
 ## Development feature toggles
 
