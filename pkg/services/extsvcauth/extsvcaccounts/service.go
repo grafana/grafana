@@ -14,20 +14,24 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
+const (
+	skvType = "extsvc-token"
+)
+
 type ExtSvcAccountsService struct {
-	acSvc   ac.Service
-	logger  log.Logger
-	saSvc   sa.Service
-	kvStore *kvstore.SecretsKVStoreSQL
+	acSvc    ac.Service
+	logger   log.Logger
+	saSvc    sa.Service
+	skvStore *kvstore.SecretsKVStoreSQL
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	return &ExtSvcAccountsService{
-		acSvc:   acSvc,
-		logger:  logger,
-		saSvc:   saSvc,
-		kvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger),
+		acSvc:    acSvc,
+		logger:   logger,
+		saSvc:    saSvc,
+		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger),
 	}
 }
 
@@ -119,6 +123,16 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		return 0, err
 	}
 
+	if cmd.WithToken {
+		esa.logger.Debug("Update role permissions", "service", cmd.ExtSvcSlug, "saID", cmd.SaID)
+		r.logger.Debug("Get service account token from skv", "service", slug, "saID", saID)
+
+		if !ok {
+			token, err := r.createServiceAccountToken(ctx, slug, saID)
+			return saID, token.Key, err
+		}
+	}
+
 	return cmd.SaID, nil
 }
 
@@ -133,7 +147,10 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 
 // GetExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*extsvcauth.ExtSvcCredentials, error) {
-	panic("unimplemented")
+	token, ok, err := esa.skvStore.Get(ctx, orgID, ExtSvcSlug, skvType)
+	if err != nil {
+		return nil, err
+	}
 }
 
 // SaveExtSvcCredentials implements extsvcauth.ExtSvcAccountsService.
