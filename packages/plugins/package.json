@@ -1,5 +1,5 @@
 {
-  "name": "@grafana-plugins/shared",
+  "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
   "version": "10.2.0-pre",

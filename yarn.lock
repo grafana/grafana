@@ -2945,10 +2945,10 @@ __metadata:
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
   dependencies:
     "@emotion/css": 11.11.2
-    "@grafana-plugins/shared": 10.2.0-pre
     "@grafana/data": 10.2.0-pre
     "@grafana/e2e-selectors": 10.2.0-pre
     "@grafana/experimental": 1.7.0
+    "@grafana/plugin-configs": 10.2.0-pre
     "@grafana/runtime": 10.2.0-pre
     "@grafana/schema": 10.2.0-pre
     "@grafana/ui": 10.2.0-pre
@@ -2990,21 +2990,6 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.5.0
     webpack: 5.76.0
-  languageName: unknown
-  linkType: soft
-
-"@grafana-plugins/shared@10.2.0-pre, @grafana-plugins/shared@workspace:packages/plugins":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/shared@workspace:packages/plugins"
-  dependencies:
-    "@grafana/tsconfig": ^1.2.0-rc1
-    copy-webpack-plugin: 11.0.0
-    eslint-webpack-plugin: 4.0.1
-    fork-ts-checker-webpack-plugin: 8.0.0
-    glob: 10.3.3
-    replace-in-file-webpack-plugin: 1.0.6
-    tslib: 2.6.0
-    webpack: 5.88.1
   languageName: unknown
   linkType: soft
 
@@ -3345,6 +3330,21 @@ __metadata:
   checksum: cce4a8ed8aaefee9211c4f2e283e5b4e551a942cd6673f13c5b9afca750432493388e383815f0f81bd2f119526115c2ecd8dfb23060ea61511eeecfc2a9750a4
   languageName: node
   linkType: hard
+
+"@grafana/plugin-configs@10.2.0-pre, @grafana/plugin-configs@workspace:packages/plugins":
+  version: 0.0.0-use.local
+  resolution: "@grafana/plugin-configs@workspace:packages/plugins"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    copy-webpack-plugin: 11.0.0
+    eslint-webpack-plugin: 4.0.1
+    fork-ts-checker-webpack-plugin: 8.0.0
+    glob: 10.3.3
+    replace-in-file-webpack-plugin: 1.0.6
+    tslib: 2.6.0
+    webpack: 5.88.1
+  languageName: unknown
+  linkType: soft
 
 "@grafana/runtime@10.2.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
