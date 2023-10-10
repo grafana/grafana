@@ -509,6 +509,9 @@
       "title": ""
     },
     "config": {
+      "access-title": "",
+      "general-title": "",
+      "plugins-title": "",
       "title": "管理"
     },
     "connect-data": {

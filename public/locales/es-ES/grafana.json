@@ -521,6 +521,9 @@
       "title": ""
     },
     "config": {
+      "access-title": "",
+      "general-title": "",
+      "plugins-title": "",
       "title": "Administración"
     },
     "connect-data": {

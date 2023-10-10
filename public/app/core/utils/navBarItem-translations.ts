@@ -74,6 +74,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-admin.title', 'Admin');
     case 'cfg':
       return t('nav.config.title', 'Administration');
+    case 'cfg/general':
+      return t('nav.config.general-title', 'General');
+    case 'cfg/plugins':
+      return t('nav.config.plugins-title', 'Plugins and data');
+    case 'cfg/access':
+      return t('nav.config.access-title', 'Users and access');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'authentication':

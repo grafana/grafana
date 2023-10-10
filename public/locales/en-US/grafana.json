@@ -515,6 +515,9 @@
       "title": "Authentication"
     },
     "config": {
+      "access-title": "Users and access",
+      "general-title": "General",
+      "plugins-title": "Plugins and data",
       "title": "Administration"
     },
     "connect-data": {

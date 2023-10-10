@@ -515,6 +515,9 @@
       "title": ""
     },
     "config": {
+      "access-title": "",
+      "general-title": "",
+      "plugins-title": "",
       "title": "Verwaltung"
     },
     "connect-data": {
