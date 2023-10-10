@@ -38,7 +38,7 @@ class LegacyAPI implements PlaylistAPI {
 }
 
 interface KubernetesPlaylistList {
-  items: KubernetesPlaylist[];
+  playlists: KubernetesPlaylist[];
 }
 
 interface KubernetesPlaylist {
@@ -46,19 +46,22 @@ interface KubernetesPlaylist {
     name: string;
   };
   spec: {
-    title: string;
+    name: string;
     interval: string;
     items: PlaylistItem[];
   };
 }
 
 class K8sAPI implements PlaylistAPI {
-  readonly url = `/apis/playlists.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`;
+  readonly url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`;
   readonly legacy = new LegacyAPI(); // set to null for full CRUD
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
-    return result.items.map(k8sResourceAsPlaylist);
+    console.log('getAllPlaylist', result);
+    const v = result.playlists.map(k8sResourceAsPlaylist);
+    console.log('after', v);
+    return v;
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
@@ -116,10 +119,8 @@ class K8sAPI implements PlaylistAPI {
 // to avoid future confusion, the display name is now called "title"
 function k8sResourceAsPlaylist(r: KubernetesPlaylist): Playlist {
   return {
-    uid: r.metadata.name, // fill the uid from k8s name
-    name: r.spec.title,
-    interval: r.spec.interval,
-    items: r.spec.items,
+    ...r.spec,
+    uid: r.metadata.name, // replace the uid from the k8s name
   };
 }
 
