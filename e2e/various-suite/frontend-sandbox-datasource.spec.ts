@@ -35,7 +35,7 @@ describe('Datasource sandbox', () => {
         });
       });
       it('Should not render a sandbox wrapper around the datasource config editor', () => {
-        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        e2e.pages.EditDataSource.visit(DATASOURCE_CONNECTION_ID);
         cy.wait(300); // wait to prevent false positives because cypress checks too fast
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('not.exist');
       });
@@ -49,12 +49,12 @@ describe('Datasource sandbox', () => {
       });
 
       it('Should render a sandbox wrapper around the datasource config editor', () => {
-        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        e2e.pages.EditDataSource.visit(DATASOURCE_CONNECTION_ID);
         cy.get(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`).should('exist');
       });
 
       it('Should store values in jsonData and secureJsonData correctly', () => {
-        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        e2e.pages.EditDataSource.visit(DATASOURCE_CONNECTION_ID);
 
         const valueToStore = 'test' + random(100);
 
@@ -66,7 +66,7 @@ describe('Datasource sandbox', () => {
         e2e.pages.DataSource.alert().should('exist').contains('Sandbox Success', {});
 
         // validate the value was stored
-        cy.visit('connections/datasources/edit/' + DATASOURCE_CONNECTION_ID);
+        e2e.pages.EditDataSource.visit(DATASOURCE_CONNECTION_ID);
         cy.get('[data-testid="sandbox-config-editor-query-input"]').should('not.be.disabled');
         cy.get('[data-testid="sandbox-config-editor-query-input"]').should('have.value', valueToStore);
       });
