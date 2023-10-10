@@ -326,7 +326,7 @@ export const Table = memo((props: Props) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
     if (state.expanded[row.index] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, indexForPagination, tableStyles);
+      return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
 
     return tableStyles.rowHeight;
