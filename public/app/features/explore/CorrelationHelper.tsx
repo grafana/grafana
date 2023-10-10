@@ -3,7 +3,19 @@ import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
-import { Collapse, Alert, Field, Input, Button, Card, IconButton, useStyles2, DeleteButton } from '@grafana/ui';
+import {
+  Collapse,
+  Alert,
+  Field,
+  Input,
+  Button,
+  Card,
+  IconButton,
+  useStyles2,
+  DeleteButton,
+  Tooltip,
+  Icon,
+} from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -132,7 +144,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
             <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
               Label / Description
               {!isLabelDescOpen && (
-                <span className={styles.labelCollapseDetails}>{getValues('label') || defaultLabelVal}</span>
+                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabelVal}`}</span>
               )}
             </Flex>
           }
@@ -150,7 +162,14 @@ export const CorrelationHelper = ({ correlations }: Props) => {
           onToggle={() => {
             setIsTransformOpen(!isTransformOpen);
           }}
-          label="Transformations"
+          label={
+            <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+              Transformations
+              <Tooltip content="A transformation extracts one or more variables out of a single field.">
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Flex>
+          }
         >
           <Button
             variant="secondary"

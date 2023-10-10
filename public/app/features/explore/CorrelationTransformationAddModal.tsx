@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useState, useMemo } from 'react';
+import React, { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
@@ -49,7 +49,7 @@ export const CorrelationTransformationAddModal = ({
   });
   const [isExpValid, setIsExpValid] = useState(false); // keep the highlighter from erroring on bad expressions
   const [validToSave, setValidToSave] = useState(false);
-  const { getValues, control, register } = useForm<DataLinkTransformationConfig>({
+  const { getValues, control, register, watch } = useForm<DataLinkTransformationConfig>({
     defaultValues: useMemo(() => {
       if (transformationToEdit) {
         const exampleVal = fieldList[transformationToEdit?.field!];
@@ -87,40 +87,42 @@ export const CorrelationTransformationAddModal = ({
   });
   const id = useId();
 
-  const calcTransformationVars = () => {
-    const expression = getValues('expression');
-    let isExpressionValid = false;
-    if (expression !== undefined) {
-      isExpressionValid = true;
-      try {
-        new RegExp(expression);
-      } catch (e) {
-        isExpressionValid = false;
+  useEffect(() => {
+    const subscription = watch((formValues) => {
+      const expression = formValues.expression;
+      let isExpressionValid = false;
+      if (expression !== undefined) {
+        isExpressionValid = true;
+        try {
+          new RegExp(expression);
+        } catch (e) {
+          isExpressionValid = false;
+        }
+      } else {
+        isExpressionValid = !formFieldsVis.expressionDetails.show;
       }
-    } else {
-      isExpressionValid = !formFieldsVis.expressionDetails.show;
-    }
-    setIsExpValid(isExpressionValid);
+      setIsExpValid(isExpressionValid);
+      const transformationVars = getTransformationVars(
+        {
+          type: formValues.type,
+          expression: isExpressionValid ? expression : '',
+          mapValue: formValues.mapValue,
+        },
+        fieldList[formValues.field!] || '',
+        formValues.field!
+      );
 
-    const transformationVars = getTransformationVars(
-      {
-        type: getValues('type'),
-        expression: isExpressionValid ? expression : '',
-        mapValue: getValues('mapValue'),
-      },
-      exampleValue || '',
-      getValues('field')!
-    );
+      const transKeys = Object.keys(transformationVars);
+      setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
 
-    const transKeys = Object.keys(transformationVars);
-    setTransformationVars(transKeys.length > 0 ? { ...transformationVars } : {});
-
-    if (transKeys.length === 0 || !isExpressionValid) {
-      setValidToSave(false);
-    } else {
-      setValidToSave(true);
-    }
-  };
+      if (transKeys.length === 0 || !isExpressionValid) {
+        setValidToSave(false);
+      } else {
+        setValidToSave(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [fieldList, formFieldsVis.expressionDetails.show, watch]);
 
   return (
     <Modal
@@ -177,7 +179,6 @@ export const CorrelationTransformationAddModal = ({
                       mapValueDetails: transformationTypeDetails.mapValueDetails,
                       expressionDetails: transformationTypeDetails.expressionDetails,
                     });
-                    calcTransformationVars(); // not all transformation types require more input
                   }}
                   options={getTransformOptions()}
                   aria-label="type"
@@ -198,7 +199,7 @@ export const CorrelationTransformationAddModal = ({
               htmlFor={`${id}-expression`}
               required={formFieldsVis.expressionDetails.required}
             >
-              <Input {...register('expression')} id={`${id}-expression`} onKeyUp={calcTransformationVars} />
+              <Input {...register('expression')} id={`${id}-expression`} />
             </Field>
           )}
           {formFieldsVis.mapValueDetails.show && (
@@ -212,7 +213,7 @@ export const CorrelationTransformationAddModal = ({
               }
               htmlFor={`${id}-mapValue`}
             >
-              <Input {...register('mapValue')} id={`${id}-mapValue`} onKeyUp={calcTransformationVars} />
+              <Input {...register('mapValue')} id={`${id}-mapValue`} />
             </Field>
           )}
           {Object.entries(transformationVars).length > 0 && (
