@@ -13,6 +13,25 @@ weight: 40
 
 Make sure you have permission to add new correlations. Only users with write permissions to data sources can define new correlations.
 
+## Create a correlation in Explore's Correlations Editor
+
+1. Go to Explore page.
+1. Click "Add to..." button in the top toolbar and select "Add Correlation" (you can also select "Correlations Editor" in [Command Palette]({{< relref "/docs/grafana/latest/search/#command-palette" >}}).
+1. Explore is now in Correlations Editor mode indicated by a blue border.
+1. Select a data source that you would like to be [the source data source]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration/#source-data-source-and-result-field" >}} for a new correlation.
+1. Run a query producing data in [a supported visualization]({{< relref "/docs/grafana/latest/administration/correlations/#correlations" >}}.
+1. The visualization is enriched with links. 
+1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/#correlations" >}}
+   - Logs panel: open log details and click on a link next to a field
+   - Table: click on any cell 
+1. Explore opens in split view. 
+1. Use the right pane to setup [target query source of the correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration/#target-query" >}}.
+1. In the target query use variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
+1. Provided optional label and description.
+1. Click "Save" button in the blue bar to save the correlation and exit Correlations Editor mode.
+
+Please check and example how to create a test correlation.
+
 ## Create a correlation in Administration page
 
 1. Go to the Administration section in Grafana.
