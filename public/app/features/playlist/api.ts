@@ -30,10 +30,13 @@ export const playlistAPI: PlaylistAPI = {
   getAllPlaylist: config.featureToggles.kubernetesPlaylists ? k8sGetAllPlaylist : legacyGetAllPlaylist,
 };
 
+// orgId 1 >> default namespace
+const namespace = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
+
 /** This returns a playlist where all ids are replaced with UIDs */
 export async function k8sGetPlaylist(uid: string): Promise<Playlist> {
   const k8splaylist = await getBackendSrv().get<KubernetesPlaylist>(
-    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists/${uid}`
+    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${namespace}/playlists/${uid}`
   );
   const playlist = k8splaylist.spec;
   if (playlist.items) {
@@ -52,7 +55,7 @@ export async function k8sGetPlaylist(uid: string): Promise<Playlist> {
 
 export async function k8sGetAllPlaylist(): Promise<Playlist[]> {
   const k8splaylists = await getBackendSrv().get<KubernetesPlaylistList>(
-    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`
+    `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${namespace}/playlists`
   );
   return k8splaylists.playlists.map((p) => p.spec);
 }

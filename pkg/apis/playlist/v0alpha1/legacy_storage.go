@@ -57,9 +57,9 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := grafanarequest.OrgIDFrom(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	limit := 100
@@ -67,7 +67,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		limit = int(options.Limit)
 	}
 	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
-		OrgId: orgId,
+		OrgId: info.OrgID,
 		Limit: limit,
 	})
 	if err != nil {
@@ -104,14 +104,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := grafanarequest.OrgIDFrom(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
-		OrgId: orgId,
+		OrgId: info.OrgID,
 	})
 	if err != nil {
 		return nil, err

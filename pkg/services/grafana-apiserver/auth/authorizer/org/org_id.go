@@ -10,17 +10,23 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authorizer.Authorizer = &OrgIDAuthorizer{}
 
 type OrgIDAuthorizer struct {
-	log log.Logger
-	org org.Service
+	log     log.Logger
+	org     org.Service
+	stackID string
 }
 
-func ProvideOrgIDAuthorizer(orgService org.Service) *OrgIDAuthorizer {
-	return &OrgIDAuthorizer{log: log.New("grafana-apiserver.authorizer.orgid"), org: orgService}
+func ProvideOrgIDAuthorizer(orgService org.Service, cfg *setting.Cfg) *OrgIDAuthorizer {
+	return &OrgIDAuthorizer{
+		log:     log.New("grafana-apiserver.authorizer.orgid"),
+		org:     orgService,
+		stackID: cfg.StackID, // this lets a single tenant grafana validate stack id (rather than orgs)
+	}
 }
 
 func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
@@ -29,9 +35,22 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
-	orgID, ok := grafanarequest.ParseOrgID(a.GetNamespace())
-	if !ok {
-		return authorizer.DecisionNoOpinion, "", nil
+	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
+	}
+
+	if auth.stackID != "" {
+		if info.StackID != auth.stackID {
+			return authorizer.DecisionDeny, "wrong stack id is selected", nil
+		}
+		// TODO: does the signedInUser knows its stackID?
+		return authorizer.DecisionDeny, "Cloud stack validation is not yet implemented", nil
+	}
+
+	// Quick check that the same org is used
+	if signedInUser.OrgID == info.OrgID {
+		return authorizer.DecisionAllow, "", nil
 	}
 
 	query := org.GetUserOrgListQuery{UserID: signedInUser.UserID}
@@ -41,10 +60,10 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 	}
 
 	for _, org := range result {
-		if org.OrgID == orgID {
+		if org.OrgID == info.OrgID {
 			return authorizer.DecisionAllow, "", nil
 		}
 	}
 
-	return authorizer.DecisionDeny, fmt.Sprintf("user %d is not a member of org %d", signedInUser.UserID, orgID), nil
+	return authorizer.DecisionDeny, fmt.Sprintf("user %d is not a member of org %d", signedInUser.UserID, info.OrgID), nil
 }

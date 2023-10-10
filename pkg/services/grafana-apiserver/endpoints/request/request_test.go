@@ -1,61 +1,86 @@
 package request_test
 
 import (
-	"context"
 	"testing"
-
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
-func TestOrgIDFrom(t *testing.T) {
+func TestParseNamespace(t *testing.T) {
 	tests := []struct {
-		name     string
-		ctx      context.Context
-		expected int64
-		ok       bool
+		name      string
+		namespace string
+		expected  grafanarequest.NamespaceInfo
+		ok        bool
 	}{
 		{
-			name:     "empty namespace",
-			ctx:      context.Background(),
-			expected: 0,
-			ok:       false,
+			name: "empty namespace",
+			ok:   false,
 		},
 		{
-			name:     "incorrect number of parts",
-			ctx:      request.WithNamespace(context.Background(), "org-123-a"),
-			expected: 0,
-			ok:       false,
+			name:      "incorrect number of parts",
+			namespace: "org-123-a",
+			ok:        false,
 		},
 		{
-			name:     "incorrect prefix",
-			ctx:      request.WithNamespace(context.Background(), "abc-123"),
-			expected: 0,
-			ok:       false,
+			name:      "incorrect prefix",
+			namespace: "abc-123",
+			ok:        false,
 		},
 		{
-			name:     "org id not a number",
-			ctx:      request.WithNamespace(context.Background(), "org-invalid"),
-			expected: 0,
-			ok:       false,
+			name:      "org id not a number",
+			namespace: "org-invalid",
+			ok:        false,
 		},
 		{
-			name:     "valid org id",
-			ctx:      request.WithNamespace(context.Background(), "org-123"),
-			expected: 123,
-			ok:       true,
+			name:      "valid org id",
+			namespace: "org-123",
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: 123,
+			},
+			ok: true,
+		},
+		{
+			name:      "org should not be 1 in the namespace",
+			namespace: "org-1",
+			ok:        false,
+		},
+		{
+			name:      "default is org 1",
+			namespace: "default",
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: 1,
+			},
+			ok: true,
+		},
+		{
+			name:      "valid stack",
+			namespace: "stack-abcdef",
+			expected: grafanarequest.NamespaceInfo{
+				OrgID:   1,
+				StackID: "abcdef",
+			},
+			ok: true,
+		},
+		{
+			name:      "invalid stack id",
+			namespace: "stack-",
+			ok:        false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, ok := grafanarequest.OrgIDFrom(tt.ctx)
-			if actual != tt.expected {
-				t.Errorf("OrgIDFrom() returned %d, expected %d", actual, tt.expected)
+			info, err := grafanarequest.ParseNamespace(tt.namespace)
+			isOK := err == nil
+			if isOK != tt.ok {
+				t.Errorf("ParseNamespace() returned %+v, expected an error", info)
 			}
-			if ok != tt.ok {
-				t.Errorf("OrgIDFrom() returned %t, expected %t", ok, tt.ok)
+			if info.OrgID != tt.expected.OrgID {
+				t.Errorf("ParseNamespace() returned %d, expected %d", info.OrgID, tt.expected.OrgID)
+			}
+			if info.StackID != tt.expected.StackID {
+				t.Errorf("ParseNamespace() returned %s, expected %s", info.StackID, tt.expected.StackID)
 			}
 		})
 	}
