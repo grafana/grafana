@@ -173,7 +173,13 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isFirstHistoryEntry && <Spinner size={14} />}
       {!hasHistory && (
-        <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
+        <Tooltip
+          show={error ? undefined : false}
+          interactive
+          content={
+            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+          }
+        >
           {button}
         </Tooltip>
       )}
