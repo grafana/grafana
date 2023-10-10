@@ -294,30 +294,43 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   }
 }
 
-export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: Dashboard, panel?: PanelModel) {
-  // change title
-  dash.title = title;
-
-  // make relative times absolute
-  dash.time = {
-    from: time.from.toISOString(),
-    to: time.to.toISOString(),
+export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: Dashboard, panel?: VizPanel) {
+  let result = {
+    ...dash,
+    title,
+    time: {
+      from: time.from.toISOString(),
+      to: time.to.toISOString(),
+    },
+    links: [],
   };
 
-  // Remove links
-  dash.links = [];
+  // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
+  // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
+  if (panel) {
+    // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
+    const singlePanel = dash.panels?.find((p) => p.id === getPanelIdForVizPanel(panel));
+    if (singlePanel) {
+      // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
+      singlePanel.gridPos = { w: 24, x: 0, y: 0, h: 20 };
+      result = {
+        ...result,
+        panels: [singlePanel],
+      };
+    }
+  }
 
-  // remove panel queries & links
-  dash.panels?.forEach((panel) => {
+  // Remove links from all panels
+  result.panels?.forEach((panel) => {
     if ('links' in panel) {
       panel.links = [];
     }
   });
 
   // Remove annotation queries, attach snapshotData: [] for backwards compatibility
-  if (dash.annotations) {
-    const annotations = dash.annotations.list?.filter((annotation) => annotation.enable) || [];
-    dash.annotations.list = annotations.map((annotation) => {
+  if (result.annotations) {
+    const annotations = result.annotations.list?.filter((annotation) => annotation.enable) || [];
+    const trimedAnnotations = annotations.map((annotation) => {
       return {
         name: annotation.name,
         enable: annotation.enable,
@@ -327,15 +340,17 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
         builtIn: annotation.builtIn,
         hide: annotation.hide,
         // TODO: Remove when we migrate snapshots to snapshot queries.
-        // For now leaving this in here to avoid anno queries in snapshots.
+        // For now leaving this in here to avoid annotation queries in snapshots.
         // Annotations per panel are part of the snapshot query, so we don't need to store them here.
         snapshotData: [],
       };
     });
+
+    result.annotations.list = trimedAnnotations;
   }
 
-  if (dash.templating) {
-    dash.templating.list?.forEach((variable) => {
+  if (result.templating) {
+    result.templating.list?.forEach((variable) => {
       if ('query' in variable) {
         variable.query = '';
       }
@@ -349,15 +364,5 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
     });
   }
 
-  return dash;
-
-  // TODO snapshot single panel
-  // if (panel) {
-  //   const singlePanel = panel.getSaveModel();
-  //   singlePanel.gridPos.w = 24;
-  //   singlePanel.gridPos.x = 0;
-  //   singlePanel.gridPos.y = 0;
-  //   singlePanel.gridPos.h = 20;
-  //   dash.panels = [singlePanel];
-  // }
+  return result;
 }

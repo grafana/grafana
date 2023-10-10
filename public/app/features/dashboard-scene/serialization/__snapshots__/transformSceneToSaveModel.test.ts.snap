@@ -209,6 +209,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "name": "server",
         "options": [],
         "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
+        "type": "custom",
       },
       {
         "current": {
@@ -226,6 +227,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "name": "pod",
         "options": [],
         "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
+        "type": "custom",
       },
     ],
   },

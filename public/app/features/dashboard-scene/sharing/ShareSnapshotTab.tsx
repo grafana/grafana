@@ -94,15 +94,25 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
 
   private prepareSnapshot() {
     const timeRange = sceneGraph.getTimeRange(this);
-    const { dashboardRef } = this.state;
+    const { dashboardRef, panelRef } = this.state;
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
-    return trimDashboardForSnapshot(this.state.snapshotName || '', timeRange.state.value, saveModel);
+    return trimDashboardForSnapshot(
+      this.state.snapshotName || '',
+      timeRange.state.value,
+      saveModel,
+      panelRef?.resolve()
+    );
   }
 
   public onSnapshotCreate = async (external = false) => {
     const { selectedExpireOption } = this.state;
     const snapshot = this.prepareSnapshot();
+
+    // TODO
+    // snapshot.snapshot = {
+    //   originalUrl: window.location.href,
+    // };
 
     const cmdData = {
       dashboard: snapshot,

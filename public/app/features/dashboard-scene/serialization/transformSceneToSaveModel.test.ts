@@ -22,6 +22,7 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneVariable,
+  VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -31,7 +32,9 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { activateFullSceneTree } from '../utils/test-utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
@@ -41,7 +44,6 @@ import {
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel, trimDashboardForSnapshot } from './transformSceneToSaveModel';
-import { GRAFANA_DATASOURCE_REF } from './const';
 
 standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
 setPluginImportUtils({
@@ -539,6 +541,11 @@ describe('transformSceneToSaveModel', () => {
         snapshot = transformSceneToSaveModel(scene, true);
       });
 
+      it('should not mutate provided dashboard', () => {
+        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
+        expect(result).not.toBe(snapshot);
+      });
+
       it('should apply provided title and absolute time range', async () => {
         const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
 
@@ -573,6 +580,24 @@ describe('transformSceneToSaveModel', () => {
           text: 'annotations',
           value: 'annotations',
         });
+      });
+
+      it('should snapshot a single panel when provided', () => {
+        const vizPanel = new VizPanel({
+          key: getVizPanelKeyForPanelId(2),
+        });
+
+        const result = trimDashboardForSnapshot(
+          'Snap title',
+          getTimeRange({ from: 'now-6h', to: 'now' }),
+          snapshot,
+          vizPanel
+        );
+
+        expect(snapshot.panels?.length).toBe(3);
+        expect(result.panels?.length).toBe(1);
+        // @ts-expect-error
+        expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 
       // TODO: Uncomment when we support links
