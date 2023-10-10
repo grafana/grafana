@@ -185,7 +185,11 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 				adminNodeLinks = append(adminNodeLinks, usersNode)
 			}
 
-			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
+			authenticationNode := root.FindById("authentication")
+			if authenticationNode != nil {
+				authenticationNode.IsSection = true
+				adminNodeLinks = append(adminNodeLinks, authenticationNode)
+			}
 		} else {
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
