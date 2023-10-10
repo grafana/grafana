@@ -164,7 +164,7 @@ var (
 		{
 			Name:         "dockedMegaMenu",
 			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
@@ -851,6 +851,13 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:         "navAdminSubsections",
+			Description:  "Splits the administration section of the nav tree into subsections",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 	}
 )

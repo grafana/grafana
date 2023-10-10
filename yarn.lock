@@ -3343,9 +3343,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.13.0":
-  version: 1.13.0
-  resolution: "@grafana/scenes@npm:1.13.0"
+"@grafana/scenes@npm:^1.15.0":
+  version: 1.15.0
+  resolution: "@grafana/scenes@npm:1.15.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3357,7 +3357,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 3a6c4419ee324d49f41b9569dc86ca7ffa926438eedd762aa79c3327c39cd16b9671047ad02f5de3c52190a81b4139cdb75653a4b3741753f851ca0c9155b9bf
+  checksum: 8416327ad9a0e3be35d5a106788248d5886f6aa220777cf0772ef73a3f64ecac889f58a8e804beea0de339acd571d6e49a10278180cf1c50a2a51f44e03bf93e
   languageName: node
   linkType: hard
 
@@ -3409,7 +3409,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.8
     "@mdx-js/react": 1.6.22
-    "@monaco-editor/react": 4.5.1
+    "@monaco-editor/react": 4.6.0
     "@popperjs/core": 2.11.8
     "@react-aria/button": 3.8.0
     "@react-aria/dialog": 3.5.3
@@ -5009,27 +5009,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.3.3":
-  version: 1.3.3
-  resolution: "@monaco-editor/loader@npm:1.3.3"
+"@monaco-editor/loader@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@monaco-editor/loader@npm:1.4.0"
   dependencies:
     state-local: ^1.0.6
   peerDependencies:
     monaco-editor: ">= 0.21.0 < 1"
-  checksum: 037dd4758651cb623482398fba884c0ddec1ed40502185f1fa417e54f47485291e236eb13bcdffb7bca292edd97ca8e3c51c2c3505e17a3184f4c6d11016fcac
+  checksum: 374ec0ea872ee15b33310e105a43217148161480d3955c5cece87d0f801754cd2c45a3f6c539a75da18a066c1615756fb87eaf1003f1df6a64a0cbce5d2c3749
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.5.1":
-  version: 4.5.1
-  resolution: "@monaco-editor/react@npm:4.5.1"
+"@monaco-editor/react@npm:4.6.0":
+  version: 4.6.0
+  resolution: "@monaco-editor/react@npm:4.6.0"
   dependencies:
-    "@monaco-editor/loader": ^1.3.3
+    "@monaco-editor/loader": ^1.4.0
   peerDependencies:
     monaco-editor: ">= 0.25.0 < 1"
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 989b98f5750f0b0ad54dc1dd7da8e92c67fcab55e89e26465ab7312fae87b3795f2e4603e7979e9545b7ad5d00fbcb3f21d20144d9e7eafa6f6989a76ad78c3a
+  checksum: 9d44e76c5baad6db5f84c90a5540fbd3c9af691b97d76cf2a99b3c8273004d0efe44c2572d80e9d975c9af10022c21e4a66923924950a5201e82017c8b20428c
   languageName: node
   linkType: hard
 
@@ -6767,14 +6767,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.7.3, @react-types/button@npm:^3.7.3":
-  version: 3.7.3
-  resolution: "@react-types/button@npm:3.7.3"
+"@react-types/button@npm:3.9.0, @react-types/button@npm:^3.7.3":
+  version: 3.9.0
+  resolution: "@react-types/button@npm:3.9.0"
   dependencies:
-    "@react-types/shared": ^3.18.1
+    "@react-types/shared": ^3.21.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: fc1cf6764462dee520a4d2aba845d7b211c0230e15ced831fb95f4ac56f9b73615232580bbc89cbfd2d4f0ce6c28a4f2df700630b56e68f177f732611182cb26
+  checksum: 93bd08f894c2a5e0b53b680759326b3151773bf3594f3169ecff012cbfc376e6a0472506f8b2bbf43aa41e37e410d8054dfaee728da9db86287d06adb80c9809
   languageName: node
   linkType: hard
 
@@ -6824,12 +6824,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.18.1, @react-types/shared@npm:^3.18.1":
-  version: 3.18.1
-  resolution: "@react-types/shared@npm:3.18.1"
+"@react-types/shared@npm:3.21.0, @react-types/shared@npm:^3.18.1, @react-types/shared@npm:^3.21.0":
+  version: 3.21.0
+  resolution: "@react-types/shared@npm:3.21.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 298822d1cca26b5da1bdf53a57d26d5619f3af816db3fdecdc8b99a3a305ca8ee352347ca43f426a5d79045b08cf32c00c6b083ad4a1002abf673de9dd4a9bb5
+  checksum: 1decbd6765c345104225e9245eb865e154fa6b869f6f9ee298f4e0a988333b9d819fb05217eb6ce38c7f3d3f1b81e6aabf14c1ee378acbc2c21a162d1181ac12
   languageName: node
   linkType: hard
 
@@ -17645,7 +17645,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.6
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.13.0
+    "@grafana/scenes": ^1.15.0
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -17675,10 +17675,10 @@ __metadata:
     "@react-stately/collections": 3.9.0
     "@react-stately/menu": 3.5.3
     "@react-stately/tree": 3.7.0
-    "@react-types/button": 3.7.3
+    "@react-types/button": 3.9.0
     "@react-types/menu": 3.9.2
     "@react-types/overlays": 3.8.0
-    "@react-types/shared": 3.18.1
+    "@react-types/shared": 3.21.0
     "@reduxjs/toolkit": 1.9.5
     "@remix-run/router": ^1.5.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
@@ -17933,7 +17933,7 @@ __metadata:
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.9
     test: "link:./public/test"
-    testing-library-selector: 0.2.1
+    testing-library-selector: 0.3.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.6.0
     tracelib: 1.0.1
@@ -24002,7 +24002,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.4.31":
+"postcss@npm:8.4.31, postcss@npm:^8.4.21, postcss@npm:^8.4.24":
   version: 8.4.31
   resolution: "postcss@npm:8.4.31"
   dependencies:
@@ -24010,17 +24010,6 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: 1d8611341b073143ad90486fcdfeab49edd243377b1f51834dc4f6d028e82ce5190e4f11bb2633276864503654fb7cab28e67abdc0fbf9d1f88cad4a0ff0beea
-  languageName: node
-  linkType: hard
-
-"postcss@npm:^8.4.21, postcss@npm:^8.4.24":
-  version: 8.4.26
-  resolution: "postcss@npm:8.4.26"
-  dependencies:
-    nanoid: ^3.3.6
-    picocolors: ^1.0.0
-    source-map-js: ^1.0.2
-  checksum: 1cf08ee10d58cbe98f94bf12ac49a5e5ed1588507d333d2642aacc24369ca987274e1f60ff4cbf0081f70d2ab18a5cd3a4a273f188d835b8e7f3ba381b184e57
   languageName: node
   linkType: hard
 
@@ -28354,12 +28343,12 @@ __metadata:
   languageName: node
   linkType: soft
 
-"testing-library-selector@npm:0.2.1":
-  version: 0.2.1
-  resolution: "testing-library-selector@npm:0.2.1"
+"testing-library-selector@npm:0.3.1":
+  version: 0.3.1
+  resolution: "testing-library-selector@npm:0.3.1"
   peerDependencies:
-    "@testing-library/dom": ^8.2.0
-  checksum: 4bb6d071f20b89f7954b03addd6c97479817e348c5a63f2c40693a5a93010b40418d90e30c0dfd7dc2a05e2f66a880ff4b1fa9004e7def5fbf489130b70b050b
+    "@testing-library/dom": ^9.3.3
+  checksum: ee0b4ed2e266ba8d7d86a625e7326a20177b6492c611eca5696ab7c4ab03c34bf967358cca1593c9b584aea28b8f0b7a2a071868d0b821817026b892c1e84310
   languageName: node
   linkType: hard
 
