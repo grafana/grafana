@@ -1,7 +1,7 @@
 import { SceneDataLayerProvider, dataLayers } from '@grafana/scenes';
 import { AnnotationQuery } from '@grafana/schema';
 
-export function dataLayersToAnnotations(layers: SceneDataLayerProvider[], isSnapshot = false) {
+export function dataLayersToAnnotations(layers: SceneDataLayerProvider[]) {
   const annotations: AnnotationQuery[] = [];
   for (const layer of layers) {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
