@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
@@ -32,9 +31,38 @@ type Playlist struct {
 	UpdatedAt int64 `json:"-" db:"updated_at"`
 }
 
-type PlaylistDTO = playlist.Spec
-type PlaylistItemDTO = playlist.Item
-type PlaylistItemType = playlist.ItemType
+type PlaylistDTO struct {
+	// Interval sets the time between switching views in a playlist.
+	Interval string `json:"interval"`
+
+	// The ordered list of items that the playlist will iterate over.
+	Items []PlaylistItemDTO `json:"items,omitempty"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid"`
+}
+
+type PlaylistItemDTO struct {
+	// Title is an unused property -- it will be removed in the future
+	Title *string `json:"title,omitempty"`
+
+	// Type of the item.
+	Type string `json:"type"`
+
+	// Value depends on type and describes the playlist item.
+	//
+	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+	//  is not portable as the numerical identifier is non-deterministic between different instances.
+	//  Will be replaced by dashboard_by_uid in the future. (deprecated)
+	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+	//  dashboards behind the tag will be added to the playlist.
+	//  - dashboard_by_uid: The value is the dashboard UID
+	Value string `json:"value"`
+}
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`
@@ -64,7 +92,7 @@ type CreatePlaylistCommand struct {
 	Interval string         `json:"interval"`
 	Items    []PlaylistItem `json:"items"`
 	OrgId    int64          `json:"-"`
-	// Used to create playlists from kubectl when a known name/uid
+	// Used to create playlists from kubectl with a known uid/name
 	UID string `json:"-"`
 }
 
@@ -95,6 +123,17 @@ type GetPlaylistItemsByUidQuery struct {
 }
 
 func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playlist {
+	spec := playlist.Spec{
+		Uid:      v.UID,
+		Name:     v.Name,
+		Interval: v.Interval,
+	}
+	for _, item := range items {
+		spec.Items = append(spec.Items, playlist.Item{
+			Type:  playlist.ItemType(item.Type),
+			Value: item.Value,
+		})
+	}
 	return &playlist.Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
@@ -106,15 +145,7 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
-			// Annotations: map[string]string{
-			// 	"grafana.com/updatedTime": time.UnixMilli(v.UpdatedAt).Format(time.RFC3339),
-			// },
 		},
-		Spec: playlist.Spec{
-			Uid:      v.UID,
-			Name:     v.Name,
-			Interval: v.Interval,
-			Items:    items,
-		},
+		Spec: spec,
 	}
 }

@@ -20,6 +20,11 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 	p := playlist.Playlist{}
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
+	} else {
+		err := util.ValidateUID(cmd.UID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
