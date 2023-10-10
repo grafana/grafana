@@ -17933,7 +17933,7 @@ __metadata:
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.9
     test: "link:./public/test"
-    testing-library-selector: 0.2.1
+    testing-library-selector: 0.3.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.6.0
     tracelib: 1.0.1
@@ -28354,12 +28354,12 @@ __metadata:
   languageName: node
   linkType: soft
 
-"testing-library-selector@npm:0.2.1":
-  version: 0.2.1
-  resolution: "testing-library-selector@npm:0.2.1"
+"testing-library-selector@npm:0.3.1":
+  version: 0.3.1
+  resolution: "testing-library-selector@npm:0.3.1"
   peerDependencies:
-    "@testing-library/dom": ^8.2.0
-  checksum: 4bb6d071f20b89f7954b03addd6c97479817e348c5a63f2c40693a5a93010b40418d90e30c0dfd7dc2a05e2f66a880ff4b1fa9004e7def5fbf489130b70b050b
+    "@testing-library/dom": ^9.3.3
+  checksum: ee0b4ed2e266ba8d7d86a625e7326a20177b6492c611eca5696ab7c4ab03c34bf967358cca1593c9b584aea28b8f0b7a2a071868d0b821817026b892c1e84310
   languageName: node
   linkType: hard
 
