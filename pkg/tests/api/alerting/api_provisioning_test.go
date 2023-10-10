@@ -368,7 +368,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		})
 		require.Equal(t, definitions.Provenance("api"), rules[0].Provenance)
 		require.Equal(t, definitions.Provenance(""), rules[1].Provenance)
-
 	})
 }
 
