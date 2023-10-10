@@ -340,7 +340,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
   if (panel.timeFrom || panel.timeShift) {
