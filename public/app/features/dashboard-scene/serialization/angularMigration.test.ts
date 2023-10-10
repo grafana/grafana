@@ -19,17 +19,17 @@ describe('getAngularPanelMigrationHandler', () => {
         type: 'timeseries',
       });
 
-      const mutedModel = {
+      const mutatedModel = {
         id: 1,
         type: 'timeseries',
         options: {},
         fieldConfig: { defaults: {}, overrides: [] },
       };
 
-      getAngularPanelMigrationHandler(oldModel)(mutedModel, reactPlugin);
+      getAngularPanelMigrationHandler(oldModel)(mutatedModel, reactPlugin);
 
-      expect(mutedModel.options).toEqual({ name: 'old name' });
-      expect(mutedModel.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
+      expect(mutatedModel.options).toEqual({ name: 'old name' });
+      expect(mutatedModel.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
     });
   });
 });

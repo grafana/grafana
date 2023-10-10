@@ -18,7 +18,5 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
         Object.assign(panel.options, plugin.onPanelTypeChanged(panel, prevPluginId, prevOptions, panel.fieldConfig));
       }
     }
-
-    return {};
   };
 }
