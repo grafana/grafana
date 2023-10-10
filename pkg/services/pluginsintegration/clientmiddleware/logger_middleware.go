@@ -11,27 +11,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests and add a contextual logger to the request context.
-func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
+func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
 			return next
 		}
 
 		return &LoggerMiddleware{
-			next:   next,
-			logger: logger,
+			next:     next,
+			logger:   logger,
+			features: features,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next   plugins.Client
-	logger plog.Logger
+	next     plugins.Client
+	logger   plog.Logger
+	features featuremgmt.FeatureToggles
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
@@ -60,6 +64,14 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 	}
 	if status == statusError {
 		params = append(params, "error", err)
+	}
+	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		statusSrc := statusSourcePlugin
+		var grErr errutil.Error
+		if errQueryDataDownstreamError.Is(err) && errors.As(err, &grErr) {
+			statusSrc = convertStatusSource(grErr.Source)
+		}
+		params = append(params, "status_source", statusSrc)
 	}
 	m.logger.Info("Plugin Request Completed", params...)
 	return err

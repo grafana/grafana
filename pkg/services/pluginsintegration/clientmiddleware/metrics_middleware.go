@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// TODO: move to different file as it's shared between logs & metrics
+
 // statusSource is an enum-like string value representing the source of a
 // plugin query data response status code
 type statusSource string
@@ -24,12 +26,17 @@ const (
 	statusSourceDownstream statusSource = "downstream"
 )
 
-// errQueryDataDownstreamError is an returned when a plugin QueryData request has
-// failed with at least one QueryData response having statusSource = "downstream".
-var errQueryDataDownstreamError = errutil.Internal("plugin.queryDataDownstreamError",
-	errutil.WithPublicMessage("Plugin QueryData downstream error"),
-	errutil.WithDownstream(),
-)
+// convertStatusSource converts an errutil.Source to its corresponding statusSource value.
+func convertStatusSource(s errutil.Source) statusSource {
+	switch s {
+	case errutil.SourceServer:
+		return statusSourcePlugin
+	case errutil.SourceDownstream:
+		return statusSourceDownstream
+	default:
+		return statusSource(s)
+	}
+}
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
@@ -138,14 +145,18 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	err = fn(ctx)
 	if err != nil {
 		status = statusError
+		if errors.Is(err, context.Canceled) {
+			status = statusCancelled
+		}
+
 		var grErr errutil.Error
-		if errors.As(err, &grErr) {
+		if errQueryDataDownstreamError.Is(err) && errors.As(err, &grErr) {
+			statusSrc = convertStatusSource(grErr.Source)
+
 			// Remove errQueryDataDownstreamError, which is only used internaly
 			// by Grafana, and return underlying error directly
-			err = errors.Unwrap(err)
-			statusSrc = statusSourceToLabel(grErr.Source)
-		} else if errors.Is(err, context.Canceled) {
-			status = statusCancelled
+			// TODO: are we potentially skipping some errors in the chain by using .Underlying?
+			err = grErr.Underlying
 		}
 	}
 	elapsed := time.Since(start)
@@ -178,19 +189,6 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	return err
 }
 
-// statusSourceToLabel converts an errutil.Source to its corresponding status_source label value
-// used by plugin instrumentation Prometheus metrics.
-func statusSourceToLabel(s errutil.Source) statusSource {
-	switch s {
-	case errutil.SourceServer:
-		return statusSourcePlugin
-	case errutil.SourceDownstream:
-		return statusSourceDownstream
-	default:
-		return statusSource(s)
-	}
-}
-
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var requestSize float64
 	for _, v := range req.Queries {
@@ -200,32 +198,8 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		return nil, err
 	}
 	var resp *backend.QueryDataResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) error {
-		var innerErr error
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		if !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-			return innerErr
-		}
-
-		// Aggregate all errors whose ErrorSource is backend.ErrorSourceDownstream.
-		var queryDataResponseErr error
-		for _, r := range resp.Responses {
-			if r.Error == nil {
-				continue
-			}
-			if r.ErrorSource == backend.ErrorSourceDownstream {
-				queryDataResponseErr = errors.Join(queryDataResponseErr, r.Error)
-			} else {
-				// Other error source, this has higher priority, return the original
-				// error immediately.
-				return innerErr
-			}
-		}
-		if queryDataResponseErr != nil {
-			// If we have at least one downstream error, wrap the downstream errors and the original one in
-			// a errQueryDataDownstreamError.
-			return errQueryDataDownstreamError.Errorf("query data downstream error: %w: %w", queryDataResponseErr, innerErr)
-		}
 		return innerErr
 	})
 	return resp, err
