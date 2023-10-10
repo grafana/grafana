@@ -62,6 +62,13 @@ jobs:
           replace-with: "'"
           flags: 'g'
 
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
+          application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
+
       - name: "Check that issue author is not part of the team"
         if: ${{ env.TEAM != 'null' }}
         run: |
@@ -75,7 +82,7 @@ jobs:
             echo "USER_FOUND=maybe" >> $GITHUB_ENV
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
 
       - name: "Send Slack notification"
         if: ${{ (env.CHANNEL != 'null') && ((env.USER_FOUND == 'false') || (env.TEAM != 'null')) }}

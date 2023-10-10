@@ -1,13 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import React from 'react';
+
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
-export function getGrafanaRulesByEvaluationScene(
-  timeRange: SceneTimeRange,
-  datasource: DataSourceRef,
-  panelTitle: string
-) {
+export function getGrafanaRulesByEvaluationScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -18,7 +17,6 @@ export function getGrafanaRulesByEvaluationScene(
         legendFormat: '{{state}} evaluation',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
@@ -32,6 +30,7 @@ export function getGrafanaRulesByEvaluationScene(
       .setOverrides((b) =>
         b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
       )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

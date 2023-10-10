@@ -25,6 +25,10 @@ replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
+// Includes https://github.com/kubernetes/kube-openapi/pull/420
+// This will not be required in the next k8s release
+replace k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f => github.com/ryantxu/kube-openapi v0.0.0-20230824154605-fe0f3703fd8d // @grafana/grafana-app-platform-squad
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -59,7 +63,7 @@ require (
 	github.com/google/uuid v1.3.1 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20230918125844-e60d564786c9 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20231005194306-939f55779e5f // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
@@ -121,7 +125,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // indirect; @grafana/backend-platform
+	xorm.io/builder v0.3.6 // @grafana/backend-platform
 	xorm.io/core v0.7.3 // @grafana/backend-platform
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -168,12 +172,12 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v23.1.21+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // @grafana/backend-platform
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.0 // @grafana/backend-platform
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/grafana-as-code
+	github.com/hashicorp/go-multierror v1.1.1 // @grafana/grafana-as-code
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect

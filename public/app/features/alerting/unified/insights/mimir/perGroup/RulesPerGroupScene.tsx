@@ -1,9 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import React from 'react';
+
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
-export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -14,7 +17,6 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
         legendFormat: 'number of rules',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
@@ -32,6 +34,7 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
         })
       )
       .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

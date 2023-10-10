@@ -17,19 +17,19 @@ type MockStore struct {
 }
 
 // GetExternalService provides a mock function with given fields: ctx, id
-func (_m *MockStore) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {
+func (_m *MockStore) GetExternalService(ctx context.Context, id string) (*oauthserver.OAuthExternalService, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 *oauthserver.ExternalService
+	var r0 *oauthserver.OAuthExternalService
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*oauthserver.ExternalService, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*oauthserver.OAuthExternalService, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *oauthserver.ExternalService); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *oauthserver.OAuthExternalService); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*oauthserver.ExternalService)
+			r0 = ret.Get(0).(*oauthserver.OAuthExternalService)
 		}
 	}
 
@@ -43,19 +43,19 @@ func (_m *MockStore) GetExternalService(ctx context.Context, id string) (*oauths
 }
 
 // GetExternalServiceByName provides a mock function with given fields: ctx, name
-func (_m *MockStore) GetExternalServiceByName(ctx context.Context, name string) (*oauthserver.ExternalService, error) {
+func (_m *MockStore) GetExternalServiceByName(ctx context.Context, name string) (*oauthserver.OAuthExternalService, error) {
 	ret := _m.Called(ctx, name)
 
-	var r0 *oauthserver.ExternalService
+	var r0 *oauthserver.OAuthExternalService
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*oauthserver.ExternalService, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*oauthserver.OAuthExternalService, error)); ok {
 		return rf(ctx, name)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *oauthserver.ExternalService); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *oauthserver.OAuthExternalService); ok {
 		r0 = rf(ctx, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*oauthserver.ExternalService)
+			r0 = ret.Get(0).(*oauthserver.OAuthExternalService)
 		}
 	}
 
@@ -95,11 +95,11 @@ func (_m *MockStore) GetExternalServicePublicKey(ctx context.Context, clientID s
 }
 
 // RegisterExternalService provides a mock function with given fields: ctx, client
-func (_m *MockStore) RegisterExternalService(ctx context.Context, client *oauthserver.ExternalService) error {
+func (_m *MockStore) RegisterExternalService(ctx context.Context, client *oauthserver.OAuthExternalService) error {
 	ret := _m.Called(ctx, client)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *oauthserver.ExternalService) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *oauthserver.OAuthExternalService) error); ok {
 		r0 = rf(ctx, client)
 	} else {
 		r0 = ret.Error(0)
@@ -109,11 +109,11 @@ func (_m *MockStore) RegisterExternalService(ctx context.Context, client *oauths
 }
 
 // SaveExternalService provides a mock function with given fields: ctx, client
-func (_m *MockStore) SaveExternalService(ctx context.Context, client *oauthserver.ExternalService) error {
+func (_m *MockStore) SaveExternalService(ctx context.Context, client *oauthserver.OAuthExternalService) error {
 	ret := _m.Called(ctx, client)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *oauthserver.ExternalService) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *oauthserver.OAuthExternalService) error); ok {
 		r0 = rf(ctx, client)
 	} else {
 		r0 = ret.Error(0)

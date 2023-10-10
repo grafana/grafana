@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -87,7 +86,7 @@ type CreateFolderCommand struct {
 	Description string `json:"description"`
 	ParentUID   string `json:"parentUid"`
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -106,7 +105,7 @@ type UpdateFolderCommand struct {
 	// Overwrite only used by the legacy folder implementation
 	Overwrite bool `json:"overwrite"`
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
@@ -116,7 +115,7 @@ type MoveFolderCommand struct {
 	NewParentUID string `json:"parentUid"`
 	OrgID        int64  `json:"-"`
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
@@ -126,7 +125,7 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -163,15 +162,15 @@ type GetChildrenQuery struct {
 	Limit int64
 	Page  int64
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 // GetDescendantCountsQuery captures the information required by the folder service
@@ -180,7 +179,7 @@ type GetDescendantCountsQuery struct {
 	UID   *string
 	OrgID int64
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 type DescendantCounts map[string]int64

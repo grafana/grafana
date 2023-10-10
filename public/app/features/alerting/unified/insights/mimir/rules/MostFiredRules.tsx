@@ -1,9 +1,12 @@
-import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import React from 'react';
+
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
-export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -15,8 +18,6 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
         format: 'table',
       },
     ],
-
-    $timeRange: timeRange,
   });
 
   const transformation = new SceneDataTransformer({
@@ -40,6 +41,11 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.table().setTitle(panelTitle).setDescription(panelTitle).setData(transformation).build(),
+    body: PanelBuilders.table()
+      .setTitle(panelTitle)
+      .setDescription(panelTitle)
+      .setData(transformation)
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .build(),
   });
 }

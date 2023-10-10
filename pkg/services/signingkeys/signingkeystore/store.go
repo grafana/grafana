@@ -13,6 +13,8 @@ import (
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -32,9 +34,13 @@ type SigningStore interface {
 
 var _ SigningStore = (*Store)(nil)
 
+const cleanupRateLimitKey = "signingkeys-cleanup"
+
 type Store struct {
 	dbStore        db.DB
 	secretsService secrets.Service
+	log            log.Logger
+	localCache     *localcache.CacheService
 }
 
 type SigningKey struct {
@@ -50,6 +56,8 @@ func NewSigningKeyStore(dbStore db.DB, secretsService secrets.Service) *Store {
 	return &Store{
 		dbStore:        dbStore,
 		secretsService: secretsService,
+		log:            log.New("signing.key_service"),
+		localCache:     localcache.New(12*time.Hour, 4*time.Hour),
 	}
 }
 
@@ -129,6 +137,24 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 
 		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key already exists: %s", keyID)
 	})
+
+	if _, ok := s.localCache.Get(cleanupRateLimitKey); !ok {
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					s.log.Error("panic during expired signing key cleanup", "err", err)
+				}
+			}()
+
+			ctxGo, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+
+			if err := s.cleanupExpiredKeys(ctxGo); err != nil {
+				s.log.Error("Failed to cleanup expired signing keys", "err", err)
+			}
+		}()
+		s.localCache.Set(cleanupRateLimitKey, true, 1*time.Hour)
+	}
 
 	return signer, err
 }
@@ -217,4 +243,15 @@ func (s *Store) decodePrivateKey(ctx context.Context, signingKey *SigningKey) (c
 		return nil, errors.New("failed to assert private key as crypto.Signer")
 	}
 	return assertedKey, nil
+}
+
+// cleanupExpiredKeys removes expired keys from the database that have expired more than 61 days ago
+func (s *Store) cleanupExpiredKeys(ctx context.Context) error {
+	err := s.dbStore.WithTransactionalDbSession(ctx, func(tx *sqlstore.DBSession) error {
+		_, err := tx.Exec("DELETE FROM signing_key WHERE expires_at IS NOT NULL AND expires_at < ?",
+			time.Now().UTC().Add(-61*24*time.Hour))
+		return err
+	})
+
+	return err
 }

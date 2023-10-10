@@ -63,10 +63,17 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       } else {
         patchObjectAsLiveTarget(originalValue);
       }
-      distortLiveApis();
-      const distortion = generalDistortionMap.get(originalValue);
-      if (distortion) {
-        return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+
+      // static distortions are faster distortions with direct object descriptors checks
+      const staticDistortion = generalDistortionMap.get(originalValue);
+      if (staticDistortion) {
+        return staticDistortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+      }
+
+      // live distortions are slower and have to do runtime checks
+      const liveDistortion = distortLiveApis(originalValue);
+      if (liveDistortion) {
+        return liveDistortion;
       }
       return originalValue;
     }

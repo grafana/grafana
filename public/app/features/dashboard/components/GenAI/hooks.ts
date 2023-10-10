@@ -12,6 +12,12 @@ import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = openai.Message;
 
+export enum StreamStatus {
+  IDLE = 'idle',
+  GENERATING = 'generating',
+  COMPLETED = 'completed',
+}
+
 // TODO: Add tests
 export function useOpenAIStream(
   model = OPEN_AI_MODEL,
@@ -19,7 +25,7 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  isGenerating: boolean;
+  streamStatus: StreamStatus;
   error: Error | undefined;
   value:
     | {
@@ -36,7 +42,7 @@ export function useOpenAIStream(
   const [messages, setMessages] = useState<Message[]>([]);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
 
@@ -50,7 +56,7 @@ export function useOpenAIStream(
       return { enabled };
     }
 
-    setIsGenerating(true);
+    setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
     const stream = openai
@@ -75,14 +81,17 @@ export function useOpenAIStream(
       stream: stream.subscribe({
         next: setReply,
         error: (e: Error) => {
-          setIsGenerating(false);
+          setStreamStatus(StreamStatus.IDLE);
           setMessages([]);
           setError(e);
           notifyError('OpenAI Error', `${e.message}`);
           logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
         },
         complete: () => {
-          setIsGenerating(false);
+          setStreamStatus(StreamStatus.COMPLETED);
+          setTimeout(() => {
+            setStreamStatus(StreamStatus.IDLE);
+          });
           setMessages([]);
           setError(undefined);
         },
@@ -97,7 +106,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     reply,
-    isGenerating,
+    streamStatus,
     error,
     value,
   };
