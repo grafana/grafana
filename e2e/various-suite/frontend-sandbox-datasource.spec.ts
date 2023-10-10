@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const DATASOURCE_ID = 'sandbox-test-datasource';
 let DATASOURCE_CONNECTION_ID = '';
-const DATASOURCE_TYPED_NAME = 'sandbox datasource test instance';
+const DATASOURCE_TYPED_NAME = 'SandboxDatasourceInstance';
 
 describe('Datasource sandbox', () => {
   before(() => {
@@ -93,6 +93,12 @@ describe('Datasource sandbox', () => {
   });
 
   after(() => {
+    // delete the datasource
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
+    cy.request({
+      url: `${Cypress.env('BASE_URL')}/api/datasources/name/${DATASOURCE_TYPED_NAME}`,
+      method: 'DELETE',
+    });
     cy.clearCookies();
   });
 });
