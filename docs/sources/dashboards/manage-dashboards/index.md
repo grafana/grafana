@@ -86,7 +86,7 @@ You can assign permissions to a folder. Any permissions you assign are inherited
 1. Click **Dashboards** in the main menu.
 1. Navigate to the folder by selecting it in the list, or searching for it.
 1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
-1. Update the permissions as desired. 
+1. Update the permissions as desired.
 
 Changes are saved automatically.
 
@@ -105,7 +105,7 @@ The dashboard export action creates a Grafana JSON file that contains everything
 1. Click the **Share** icon in the top navigation bar.
 1. Click **Export**.
 
-    If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+   If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
 
 1. Click **Save to file**.
 
