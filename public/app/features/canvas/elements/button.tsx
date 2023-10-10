@@ -73,6 +73,10 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   description: 'Button',
   state: PluginState.alpha,
 
+  standardEditorConfig: {
+    background: false,
+  },
+
   display: ButtonDisplay,
 
   defaultSize: {

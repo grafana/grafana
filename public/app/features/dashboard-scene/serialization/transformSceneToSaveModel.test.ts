@@ -14,7 +14,11 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
-import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
+import {
+  buildGridItemForLibPanel,
+  buildGridItemForPanel,
+  transformSaveModelToScene,
+} from './transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 describe('transformSceneToSaveModel', () => {
@@ -100,6 +104,47 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.y).toBe(2);
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
+    });
+  });
+
+  describe('Library panels', () => {
+    it('given a library panel', () => {
+      const panel = buildGridItemFromPanelSchema({
+        id: 4,
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        libraryPanel: {
+          name: 'Some lib panel panel',
+          uid: 'lib-panel-uid',
+        },
+        title: 'A panel',
+        transformations: [],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.id).toBe(4);
+      expect(result.libraryPanel).toEqual({
+        name: 'Some lib panel panel',
+        uid: 'lib-panel-uid',
+      });
+      expect(result.gridPos).toEqual({
+        h: 8,
+        w: 12,
+        x: 0,
+        y: 0,
+      });
+      expect(result.title).toBe('A panel');
+      expect(result.transformations).toBeUndefined();
+      expect(result.fieldConfig).toBeUndefined();
     });
   });
 
@@ -318,5 +363,8 @@ describe('transformSceneToSaveModel', () => {
 });
 
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
+  if (panel.libraryPanel) {
+    return buildGridItemForLibPanel(new PanelModel(panel))!;
+  }
   return buildGridItemForPanel(new PanelModel(panel));
 }
