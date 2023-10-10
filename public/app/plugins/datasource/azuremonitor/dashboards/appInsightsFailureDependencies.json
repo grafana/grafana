@@ -323,7 +323,7 @@
             {
               "targetBlank": false,
               "title": "Filter Result code",
-              "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
+              "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
             }
           ],
           "mappings": [],
@@ -377,7 +377,7 @@
                 "value": [
                   {
                     "title": "Filter result code",
-                    "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
+                    "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
                   }
                 ]
               }
