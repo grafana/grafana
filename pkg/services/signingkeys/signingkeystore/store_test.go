@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
-func TestIntegrationSigningKeyStore2(t *testing.T) {
+func TestIntegrationSigningKeyStore(t *testing.T) {
 	setup := func() (context.Context, *Store) {
 		return context.Background(), NewSigningKeyStore(db.InitTestDB(t))
 	}

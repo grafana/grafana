@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -50,6 +51,7 @@ func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T)
 		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    remotecache.NewFakeCacheStorage(),
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
 
 	_, _, err := svc.GetOrCreatePrivateKey(context.Background(), "key-1", jose.ES256)
@@ -88,6 +90,7 @@ func TestIntegrationEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    cacheStorage,
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
 
 	wantedKeyID := keyMonthScopedID("test", jose.ES256)
@@ -135,6 +138,7 @@ func TestExposeJWKS(t *testing.T) {
 		store:          mockStore,
 		remoteCache:    cacheStorage,
 		secretsService: secretstest.NewFakeSecretsService(),
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
 
 	routerRegister := routing.NewRouteRegister()

@@ -102,7 +102,6 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 
 func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
-
 }
 
 func getSubject(namespace, identifier string) string {
