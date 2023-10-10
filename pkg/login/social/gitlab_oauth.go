@@ -47,22 +47,6 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func (s *SocialGitlab) isGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.allowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
 	groups := make([]string, 0)
 	nextPage := new(int)
