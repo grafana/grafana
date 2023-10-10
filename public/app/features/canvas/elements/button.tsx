@@ -17,7 +17,6 @@ import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { CanvasElementItem, CanvasElementProps, defaultLightTextColor } from '../element';
 import { Align, TextConfig, TextData } from '../types';
 
-// TODO: Figure out how to support vertical align for button content
 interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
@@ -67,7 +66,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefi
     display: 'grid',
 
     '> span': {
-      // TODO: Refactor text styling to use flex instead of relying on textAlign / verticalAlign
       display: 'inline-grid',
       textAlign: data?.align,
       fontSize: `${data?.size}px`,
