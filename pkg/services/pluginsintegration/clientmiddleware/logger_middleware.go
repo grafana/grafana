@@ -39,7 +39,6 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	ctx = instrumentContext(ctx, endpoint, pluginCtx)
 	err := fn(ctx)
 	if err != nil {
 		status = statusError
@@ -47,41 +46,22 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 			status = statusCancelled
 		}
 	}
-	params := logParams(pluginCtx)
-	params = append(params,
+
+	params := []any{
 		"endpoint", endpoint,
 		"status", status,
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
-	)
+	}
 	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
 		params = append(params, "traceID", traceID)
 	}
 	if status == statusError {
 		params = append(params, "error", err)
 	}
-	m.logger.Info("Plugin Request Completed", params...)
+	m.logger.FromContext(ctx).Info("Plugin Request Completed", params...)
 	return err
-}
-
-// logParams returns the logger params for the provided plugin context.
-// (pluginId, dsName, dsUID, uname).
-func logParams(pCtx backend.PluginContext) []any {
-	p := []any{"pluginId", pCtx.PluginID}
-	if pCtx.DataSourceInstanceSettings != nil {
-		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
-		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
-	}
-	if pCtx.User != nil {
-		p = append(p, "uname", pCtx.User.Login)
-	}
-	return p
-}
-
-// instrumentContext adds a contextual logger with plugin and request details to the given context.
-func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, logParams(pCtx)...))
 }
 
 func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
