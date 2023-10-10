@@ -26,6 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	FULLPATH_GROUPCONCAT_SEPARATOR = ","
+	PATH_SEPARATOR                 = " "
+)
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -167,25 +172,35 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 }
 
 func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return nil, folder.ErrBadRequest.Errorf("nested folders are not enabled")
+	}
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	if cmd.UID == "" {
-		folderUIDs := s.getAccessibleFolderUIDs(cmd.OrgID, cmd.SignedInUser)
+		folderUIDs := s.getAccessibleFolderUIDs(cmd.OrgID, cmd.SignedInUser, dashboards.ActionFoldersRead)
+		if slices.Contains(folderUIDs, dashboards.ScopeFoldersAll) {
+			children, err := s.store.GetChildren(ctx, *cmd)
+			if err != nil {
+				return nil, err
+			}
+			return children, nil
+		}
 		accessibleFolders, err := s.store.GetFolders(ctx, cmd.OrgID, folderUIDs...)
 		if err != nil {
 			return nil, folder.ErrInternal.Errorf("failed to accessible subfolders from nested folder store: %w", err)
 		}
 
 		children := make([]*folder.Folder, 0, len(accessibleFolders))
-
 		paths := make(map[string]struct{})
 		for _, f := range accessibleFolders {
-			ancestors := strings.Split(f.Fullpath, "/")
 			exclude := false
+			ancestors := strings.Split(f.Fullpath, PATH_SEPARATOR)
 			for i := range ancestors {
-				p := strings.Join(ancestors[:i], "/")
+				p := strings.Join(ancestors[:i], FULLPATH_GROUPCONCAT_SEPARATOR)
 				if _, found := paths[p]; found {
 					exclude = true
 					break
@@ -249,13 +264,12 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	return filtered, nil
 }
 
-func (s *Service) getAccessibleFolderUIDs(orgID int64, user identity.Requester) []string {
+func (s *Service) getAccessibleFolderUIDs(orgID int64, user identity.Requester, action string) []string {
 	permissions := user.GetPermissions()
-	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	folderPermissions := permissions[action]
 	folderUids := make([]string, 0)
 	for _, p := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
 			if !slices.Contains(folderUids, folderUid) {
 				folderUids = append(folderUids, folderUid)
 			}

@@ -299,14 +299,12 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 
 func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, _ *string) (int, error) {
 	var paths []string
-	groupConcatSep := ","
-	pathSep := " "
 	if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 		// group_concat() is used to get the paths of the leaf nodes where the given folder is present
 		// the order of the group_concat() in SQLite is arbitrary, so we need to include the lft column in order to sort the paths later
 		// the path format is <lft><pathSep><uid>
-		leafSubpaths := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", pathSep), "parent.uid"), groupConcatSep)
-		folderInPath := hs.db.GetDialect().Position(hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep), "?")
+		leafSubpaths := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", PATH_SEPARATOR), "parent.uid"), FULLPATH_GROUPCONCAT_SEPARATOR)
+		folderInPath := hs.db.GetDialect().Position(hs.db.GetDialect().GroupConcat("parent.uid", FULLPATH_GROUPCONCAT_SEPARATOR), "?")
 		s := fmt.Sprintf(`SELECT %s
 		FROM folder AS node,
 			folder AS parent
@@ -323,13 +321,13 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 	// get the length of the maximum path
 	var height uint32
 	if err := concurrency.ForEachJob(ctx, len(paths), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		ancestors := strings.Split(paths[i], groupConcatSep)
+		ancestors := strings.Split(paths[i], FULLPATH_GROUPCONCAT_SEPARATOR)
 		sort.Slice(ancestors, func(j, k int) bool {
-			return strings.Split(ancestors[j], pathSep)[0] < strings.Split(ancestors[k], pathSep)[0]
+			return strings.Split(ancestors[j], PATH_SEPARATOR)[0] < strings.Split(ancestors[k], PATH_SEPARATOR)[0]
 		})
 		index := 0
 		for l, ancestor := range ancestors {
-			if strings.Split(ancestor, pathSep)[1] == foldrUID {
+			if strings.Split(ancestor, PATH_SEPARATOR)[1] == foldrUID {
 				index = l
 				break
 			}
@@ -386,13 +384,13 @@ func (hs *treeStore) GetFolders(ctx context.Context, orgID int64, uids ...string
 		b := strings.Builder{}
 		args := make([]any, 0, len(uids)+1)
 
-		groupConcatSep := ","
+		fullpath := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", PATH_SEPARATOR), "parent.uid"), FULLPATH_GROUPCONCAT_SEPARATOR)
 		b.WriteString(fmt.Sprintf(`
 		SELECT %s AS fullpath, node.*
 		FROM folder AS node,
 			folder AS parent
 		WHERE node.lft > parent.lft AND node.rgt < parent.rgt AND node.org_id = ?
-		`, hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep)))
+		`, fullpath))
 		args = append(args, orgID)
 		for i, uid := range uids {
 			if i == 0 {
@@ -411,6 +409,18 @@ func (hs *treeStore) GetFolders(ctx context.Context, orgID int64, uids ...string
 		}
 		b.WriteString(" GROUP BY node.uid ORDER BY fullpath")
 		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
+		f := folders[idx]
+		ancestors := strings.Split(f.Fullpath, FULLPATH_GROUPCONCAT_SEPARATOR)
+		sort.Slice(ancestors, func(j, k int) bool {
+			return strings.Split(ancestors[j], PATH_SEPARATOR)[0] < strings.Split(ancestors[k], PATH_SEPARATOR)[0]
+		})
+		f.Fullpath = strings.Join(ancestors, FULLPATH_GROUPCONCAT_SEPARATOR)
+		return nil
 	}); err != nil {
 		return nil, err
 	}
