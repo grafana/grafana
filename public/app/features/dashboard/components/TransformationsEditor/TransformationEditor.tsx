@@ -32,7 +32,7 @@ export const TransformationEditor = ({
   uiConfig,
   configs,
   onChange,
-  toggleShowDebug
+  toggleShowDebug,
 }: TransformationEditorProps) => {
   const styles = useStyles2(getStyles);
   const [input, setInput] = useState<DataFrame[]>([]);
