@@ -235,6 +235,18 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
+			Name:        "nestedFoldersMaterilizedPath",
+			Description: "Enable folder nesting with stored materialized path",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "nestedFoldersTreeStore",
+			Description: "Enable folder nesting with tree store",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
 			Name:         "nestedFolderPicker",
 			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag",
 			Stage:        FeatureStageGeneralAvailability,

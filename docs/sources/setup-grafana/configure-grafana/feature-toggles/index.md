@@ -99,6 +99,8 @@ Experimental features might be changed or removed without prior notice.
 | `dockedMegaMenu`                            | Enable support for a persistent (docked) navigation menu                                                     |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
+| `nestedFoldersMaterilizedPath`              | Enable folder nesting with stored materialized path                                                          |
+| `nestedFoldersTreeStore`                    | Enable folder nesting with tree store                                                                        |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
 | `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                     |
