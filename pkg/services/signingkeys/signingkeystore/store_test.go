@@ -57,8 +57,12 @@ func TestIntegrationSigningKeyStore(t *testing.T) {
 	})
 
 	t.Run("List should return all keys that are not expired", func(t *testing.T) {
+		// expire key 3
+		_, err := store.Add(ctx, &signingkeys.SigningKey{KeyID: "3", PrivateKey: []byte{}, AddedAt: time.Now().UTC(), ExpiresAt: &time.Time{}}, true)
+		require.NoError(t, err)
+
 		keys, err := store.List(ctx)
 		require.NoError(t, err)
-		require.Len(t, keys, 3)
+		require.Len(t, keys, 2)
 	})
 }
