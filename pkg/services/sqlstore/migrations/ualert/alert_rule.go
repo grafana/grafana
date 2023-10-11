@@ -1,7 +1,6 @@
-package migration
+package ualert
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -9,11 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -23,7 +19,78 @@ const (
 	ContactLabel = "__contacts__"
 )
 
-func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[string]string, map[string]string) {
+type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
+	OrgID           int64 `xorm:"org_id"`
+	Title           string
+	Condition       string
+	Data            []alertQuery
+	IntervalSeconds int64
+	Version         int64
+	UID             string `xorm:"uid"`
+	NamespaceUID    string `xorm:"namespace_uid"`
+	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	NoDataState     string
+	ExecErrState    string
+	For             duration
+	Updated         time.Time
+	Annotations     map[string]string
+	Labels          map[string]string
+	IsPaused        bool
+}
+
+type alertRuleVersion struct {
+	RuleOrgID        int64  `xorm:"rule_org_id"`
+	RuleUID          string `xorm:"rule_uid"`
+	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
+	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
+	ParentVersion    int64
+	RestoredFrom     int64
+	Version          int64
+
+	Created         time.Time
+	Title           string
+	Condition       string
+	Data            []alertQuery
+	IntervalSeconds int64
+	NoDataState     string
+	ExecErrState    string
+	// ideally this field should have been apimodels.ApiDuration
+	// but this is currently not possible because of circular dependencies
+	For         duration
+	Annotations map[string]string
+	Labels      map[string]string
+	IsPaused    bool
+}
+
+func (a *alertRule) makeVersion() *alertRuleVersion {
+	return &alertRuleVersion{
+		RuleOrgID:        a.OrgID,
+		RuleUID:          a.UID,
+		RuleNamespaceUID: a.NamespaceUID,
+		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
+		ParentVersion:    0,
+		RestoredFrom:     0,
+		Version:          1,
+
+		Created:         time.Now().UTC(),
+		Title:           a.Title,
+		Condition:       a.Condition,
+		Data:            a.Data,
+		IntervalSeconds: a.IntervalSeconds,
+		NoDataState:     a.NoDataState,
+		ExecErrState:    a.ExecErrState,
+		For:             a.For,
+		Annotations:     a.Annotations,
+		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
+	}
+}
+
+func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
 	lbls := make(map[string]string, len(tagsMap))
 
@@ -32,22 +99,15 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
-	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelID)
-	annotations["__alertId__"] = fmt.Sprintf("%v", da.ID)
+	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
+	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
 }
 
-// MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
-	l.Debug("Migrating alert rule to Unified Alerting")
-	cond, err := transConditions(ctx, da, om.migrationStore)
-	if err != nil {
-		return nil, fmt.Errorf("transform conditions: %w", err)
-	}
-
-	lbls, annotations := addMigrationInfo(da, dashboardUID)
+func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
+	lbls, annotations := addMigrationInfo(&da)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
 	annotations["message"] = message
@@ -57,38 +117,33 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
 
+	uid, err := m.seenUIDs.generateUid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule: %w", err)
+	}
+
+	name := normalizeRuleName(da.Name, uid)
+
 	isPaused := false
 	if da.State == "paused" {
 		isPaused = true
 	}
 
-	// Here we ensure that the alert rule title is unique within the folder.
-	dedupSet := om.AlertTitleDeduplicator(folderUID)
-	name := truncateRuleName(da.Name)
-	if dedupSet.contains(name) {
-		dedupedName := dedupSet.deduplicate(name)
-		l.Debug("Duplicate alert rule name detected, renaming", "old_name", name, "new_name", dedupedName)
-		name = dedupedName
-	}
-	dedupSet.add(name)
-
-	ar := &ngmodels.AlertRule{
-		OrgID:           da.OrgID,
-		Title:           name,
-		UID:             util.GenerateShortUID(),
+	ar := &alertRule{
+		OrgID:           da.OrgId,
+		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		UID:             uid,
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		DashboardUID:    &dashboardUID,
-		PanelID:         &da.PanelID,
 		RuleGroup:       name,
-		For:             da.For,
+		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
-		RuleGroupIndex:  1, // Every rule is in its own group.
+		RuleGroupIndex:  1,
 		IsPaused:        isPaused,
 		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
 		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
@@ -98,24 +153,20 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
-	if da.ParsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
-		if err := om.addErrorSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
-		}
+	if err := m.addErrorSilence(da, ar); err != nil {
+		m.mg.Logger.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
 	}
 
-	if da.ParsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
-		if err := om.addNoDataSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
-		}
+	if err := m.addNoDataSilence(da, ar); err != nil {
+		m.mg.Logger.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 	}
 
 	return ar, nil
 }
 
 // migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
-func migrateAlertRuleQueries(l log.Logger, data []ngmodels.AlertQuery) ([]ngmodels.AlertQuery, error) {
-	result := make([]ngmodels.AlertQuery, 0, len(data))
+func migrateAlertRuleQueries(l log.Logger, data []alertQuery) ([]alertQuery, error) {
+	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
 		if d.DatasourceUID == expressionDatasourceUID {
@@ -223,6 +274,55 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 	return datasource.Type == "prometheus", nil
 }
 
+type alertQuery struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID string `json:"refId"`
+
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType string `json:"queryType"`
+
+	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
+
+	DatasourceUID string `json:"datasourceUid"`
+
+	// JSON is the raw JSON query and includes the above properties as well as custom properties.
+	Model json.RawMessage `json:"model"`
+}
+
+// RelativeTimeRange is the per query start and end time
+// for requests.
+type relativeTimeRange struct {
+	From duration `json:"from"`
+	To   duration `json:"to"`
+}
+
+// duration is a type used for marshalling durations.
+type duration time.Duration
+
+func (d duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).Seconds())
+}
+
+func (d *duration) UnmarshalJSON(b []byte) error {
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
 func ruleAdjustInterval(freq int64) int64 {
 	// 10 corresponds to the SchedulerCfg, but TODO not worrying about fetching for now.
 	var baseFreq int64 = 10
@@ -232,47 +332,50 @@ func ruleAdjustInterval(freq int64) int64 {
 	return freq - (freq % baseFreq)
 }
 
-func transNoData(l log.Logger, s string) ngmodels.NoDataState {
+func transNoData(l log.Logger, s string) string {
 	switch legacymodels.NoDataOption(s) {
 	case legacymodels.NoDataSetOK:
-		return ngmodels.OK // values from ngalert/models/rule
+		return string(ngmodels.OK) // values from ngalert/models/rule
 	case "", legacymodels.NoDataSetNoData:
-		return ngmodels.NoData
+		return string(ngmodels.NoData)
 	case legacymodels.NoDataSetAlerting:
-		return ngmodels.Alerting
+		return string(ngmodels.Alerting)
 	case legacymodels.NoDataKeepState:
-		return ngmodels.NoData // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+		return string(ngmodels.NoData) // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	default:
 		l.Warn("Unable to translate execution of NoData state. Using default execution", "old", s, "new", ngmodels.NoData)
-		return ngmodels.NoData
+		return string(ngmodels.NoData)
 	}
 }
 
-func transExecErr(l log.Logger, s string) ngmodels.ExecutionErrorState {
+func transExecErr(l log.Logger, s string) string {
 	switch legacymodels.ExecutionErrorOption(s) {
 	case "", legacymodels.ExecutionErrorSetAlerting:
-		return ngmodels.AlertingErrState
+		return string(ngmodels.AlertingErrState)
 	case legacymodels.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
-		return ngmodels.ErrorErrState
+		return string(ngmodels.ErrorErrState)
 	case legacymodels.ExecutionErrorSetOk:
-		return ngmodels.OkErrState
+		return string(ngmodels.OkErrState)
 	default:
 		l.Warn("Unable to translate execution of Error state. Using default execution", "old", s, "new", ngmodels.ErrorErrState)
-		return ngmodels.ErrorErrState
+		return string(ngmodels.ErrorErrState)
 	}
 }
 
-// truncateRuleName truncates the rule name to the maximum allowed length.
-func truncateRuleName(daName string) string {
-	if len(daName) > store.AlertDefinitionMaxTitleLength {
-		return daName[:store.AlertDefinitionMaxTitleLength]
+func normalizeRuleName(daName string, uid string) string {
+	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
+	// Append the UID to the suffix to forcibly break any collisions.
+	if len(daName) > DefaultFieldMaxLength {
+		trunc := DefaultFieldMaxLength - 1 - len(uid)
+		daName = daName[:trunc] + "_" + uid
 	}
+
 	return daName
 }
 
-func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
+func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 	// Extracting channel UID/ID.
 	for _, ui := range d.ParsedSettings.Notifications {
 		if ui.UID != "" {
