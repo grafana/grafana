@@ -34,4 +34,6 @@ export default () => {
 
   // mock the endpoint for contact point metadata
   mockApi(server).grafanaNotifiers(grafanaNotifiersMock);
+
+  return server;
 };
