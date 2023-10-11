@@ -43,6 +43,7 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 ## Authentication and Authorization
 
 ### No Basic Role
+
 Generally available in all editions of Grafana.
 
 We're excited to introduce the "No Basic Role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
