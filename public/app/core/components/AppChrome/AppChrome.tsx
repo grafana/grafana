@@ -110,7 +110,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       borderRight: `1px solid ${theme.colors.border.weak}`,
       borderTop: `1px solid ${theme.colors.border.weak}`,
+      display: 'none',
       zIndex: theme.zIndex.navbarFixed,
+
+      [theme.breakpoints.up('md')]: {
+        display: 'block',
+      },
     }),
     topNav: css({
       display: 'flex',
