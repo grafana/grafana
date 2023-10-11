@@ -62,7 +62,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 	slug := slugify.Slugify(cmd.Name)
 
 	if cmd.Impersonation.Enabled {
-		esa.logger.Warn("Impersonation is not handled when using service account token", "service", slug)
+		esa.logger.Warn("Impersonation setup skipped. It is not possible to impersonate with a service account token.", "service", slug)
 	}
 
 	saID, err := esa.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
