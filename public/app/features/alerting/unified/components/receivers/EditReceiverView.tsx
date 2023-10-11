@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const EditReceiverView = ({ config, receiverName, alertManagerSourceName }: Props) => {
-  const [_, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
 
   const receiver = config.alertmanager_config.receivers?.find(({ name }) => name === receiverName);
   if (!receiver) {
@@ -27,7 +27,7 @@ export const EditReceiverView = ({ config, receiverName, alertManagerSourceName 
     );
   }
 
-  const readOnly = !editAllowed;
+  const readOnly = !editSupported || !editAllowed;
 
   if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return (
