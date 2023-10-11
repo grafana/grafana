@@ -1172,8 +1172,14 @@ services: []
 steps:
 - commands:
   - apk add --update git
+  - echo 'cloning repo'
   - git clone https://github.com/grafana/grafana.git grafana
+  - echo 'cloned repo'
   - cd grafana
+  - echo 'listing...'
+  - ls -l
+  - pwd
+  - cat Makefile
   - git checkout ${DRONE_SOURCE_BRANCH}
   image: golang:1.20.8-alpine
   name: clone-pr-branch
@@ -1194,7 +1200,10 @@ steps:
   name: clone-enterprise
 - commands:
   - apk add --update git make
+  - pwd
+  - echo 'cd into grafana'
   - cd grafana
+  - echo 'listing...'
   - ls -l
   - pwd
   - cat Makefile
@@ -4730,6 +4739,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b28face828f506eb9198a5bc1846419c25d5087f26904098622a804b2bbf865c
+hmac: bd813690923668ae3d36a58348699a5c04ebdfc82be03c80ce09b7478d5b2889
 
 ...

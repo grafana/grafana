@@ -37,8 +37,14 @@ def clone_pr_branch(ver_mode):
         "image": images["go"],
         "commands": [
             "apk add --update git",
+            "echo 'cloning repo'",
             "git clone https://github.com/grafana/grafana.git grafana",
+            "echo 'cloned repo'",
             "cd grafana",
+            "echo 'listing...'",
+            "ls -l",
+            "pwd",
+            "cat Makefile",
             "git checkout {}".format(committish),
         ],
     }
@@ -56,7 +62,10 @@ def swagger_gen_step(ver_mode):
         },
         "commands": [
             "apk add --update git make",
+            "pwd",
+            "echo 'cd into grafana'",
             "cd grafana",
+            "echo 'listing...'",
             "ls -l",
             "pwd",
             "cat Makefile",
