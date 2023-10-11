@@ -31,6 +31,7 @@ import { getColorByKey } from '../utils/color-generator';
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
+import SpanDetailRow from './SpanDetailRow';
 import {
   createViewedBoundsFunc,
   findServerChildSpan,
@@ -321,7 +322,11 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getRowHeight = (index: number) => {
     const { span, isDetail } = this.getRowStates()[index];
-    return 0;
+
+    if (config.featureToggles.traceViewDrawer) {
+      return 0;
+    }
+
     if (!isDetail) {
       return DEFAULT_HEIGHTS.bar;
     }
@@ -333,7 +338,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderRow = (key: string, style: React.CSSProperties, index: number, attrs: {}) => {
     const { isDetail, span, spanIndex } = this.getRowStates()[index];
-    return isDetail ? null : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
+
+    if (config.featureToggles.traceViewDrawer) {
+      return isDetail ? null : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
+    }
+
+    return isDetail
+      ? this.renderSpanDetailRow(span, key, style, attrs)
+      : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
   scrollToSpan = (headerHeight: number, spanID?: string) => {
@@ -352,6 +364,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const {
       childrenHiddenIDs,
       childrenToggle,
+      detailStates,
       detailToggle,
       findMatchesIDs,
       spanNameColumnWidth,
@@ -375,7 +388,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
-    const isDetailExpanded = spanID === selectedSpanId;
+    const isDetailExpanded = config.featureToggles.traceViewDrawer
+      ? spanID === selectedSpanId
+      : detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
     const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
@@ -437,6 +452,72 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
+          datasourceType={datasourceType}
+        />
+      </div>
+    );
+  }
+
+  renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}) {
+    const { spanID } = span;
+    const { serviceName } = span.process;
+    const {
+      detailLogItemToggle,
+      detailLogsToggle,
+      detailProcessToggle,
+      detailReferencesToggle,
+      detailReferenceItemToggle,
+      detailWarningsToggle,
+      detailStackTracesToggle,
+      detailStates,
+      detailTagsToggle,
+      detailToggle,
+      spanNameColumnWidth,
+      trace,
+      timeZone,
+      hoverIndentGuideIds,
+      addHoverIndentGuideId,
+      removeHoverIndentGuideId,
+      linksGetter,
+      createSpanLink,
+      focusedSpanId,
+      createFocusSpanLink,
+      topOfViewRefType,
+      theme,
+      datasourceType,
+    } = this.props;
+    const detailState = detailStates.get(spanID);
+    if (!trace || !detailState) {
+      return null;
+    }
+    const color = getColorByKey(serviceName, theme);
+    const styles = getStyles(this.props);
+    return (
+      <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
+        <SpanDetailRow
+          color={color}
+          columnDivision={spanNameColumnWidth}
+          onDetailToggled={detailToggle}
+          detailState={detailState}
+          linksGetter={linksGetter}
+          logItemToggle={detailLogItemToggle}
+          logsToggle={detailLogsToggle}
+          processToggle={detailProcessToggle}
+          referenceItemToggle={detailReferenceItemToggle}
+          referencesToggle={detailReferencesToggle}
+          warningsToggle={detailWarningsToggle}
+          stackTracesToggle={detailStackTracesToggle}
+          span={span}
+          timeZone={timeZone}
+          tagsToggle={detailTagsToggle}
+          traceStartTime={trace.startTime}
+          hoverIndentGuideIds={hoverIndentGuideIds}
+          addHoverIndentGuideId={addHoverIndentGuideId}
+          removeHoverIndentGuideId={removeHoverIndentGuideId}
+          createSpanLink={createSpanLink}
+          focusedSpanId={focusedSpanId}
+          createFocusSpanLink={createFocusSpanLink}
+          topOfViewRefType={topOfViewRefType}
           datasourceType={datasourceType}
         />
       </div>
