@@ -7,10 +7,12 @@ export function transformPluginSourceForCDN({
   url,
   source,
   transformSourceMapURL = false,
+  transformAssets = true,
 }: {
   url: string;
   source: string;
   transformSourceMapURL?: boolean;
+  transformAssets?: boolean;
 }): string {
   const splitUrl = url.split('/public/plugins/');
   const baseAddress = splitUrl[0];
@@ -18,8 +20,10 @@ export function transformPluginSourceForCDN({
 
   // handle basic asset paths that include public/plugins
   let newSource = source;
-  newSource = newSource.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
-  newSource = newSource.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
+  if (transformAssets) {
+    newSource = newSource.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
+    newSource = newSource.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
+  }
 
   if (transformSourceMapURL) {
     newSource = newSource.replace(
