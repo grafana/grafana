@@ -24,7 +24,6 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction, useSelector } from 'app/types';
 
 import { trackDashboardSharingActionPerType } from '../../analytics';
@@ -121,7 +120,7 @@ export const EmailSharingConfiguration = () => {
   const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const {
     register,

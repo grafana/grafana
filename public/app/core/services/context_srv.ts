@@ -167,14 +167,6 @@ export class ContextSrv {
     return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean): boolean {
-    return this.hasPermission(action);
-  }
-
-  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean): boolean {
-    return this.hasPermissionInMetadata(action, object);
-  }
-
   // evaluates access control permissions, granting access if the user has any of them
   evaluatePermission(actions: string[]) {
     if (actions.some((action) => this.hasPermission(action))) {
