@@ -102,6 +102,8 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		}
 	}
 
+	req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
+
 	return req, nil
 }
 
