@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { dateTimeParse } from '../../datetime';
+import { DateTimeOptionsWhenParsing, dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
 import { fieldMatchers } from '../matchers';
@@ -179,12 +179,22 @@ function fieldToBooleanField(field: Field): Field {
   };
 }
 
-function fieldToStringField(field: Field, dateFormat?: string): Field {
+/**
+ * @internal
+ * 
+ * @param field
+ *  A gr
+ * @param dateFormat
+ *  A moment.js date time format string.
+ * @returns 
+ *    A new field with the 
+ */
+export function fieldToStringField(field: Field, dateFormat?: string, parseOptions?: DateTimeOptionsWhenParsing): Field {
   let values = field.values;
 
   switch (field.type) {
     case FieldType.time:
-      values = values.map((v) => dateTimeParse(v).format(dateFormat));
+      values = values.map((v) => dateTimeParse(v, parseOptions).format(dateFormat));
       break;
 
     case FieldType.other:

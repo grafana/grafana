@@ -1,16 +1,20 @@
 import moment from 'moment-timezone';
 import { map } from 'rxjs/operators';
 
+import { TimeZone } from '@grafana/schema';
+
 import { getTimeZone, getTimeZoneInfo } from '../../datetime';
 import { Field, FieldType } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
+import { fieldToStringField } from './convertFieldType';
 import { DataTransformerID } from './ids';
 
 export interface FormatTimeTransformerOptions {
   timeField: string;
   outputFormat: string;
   useTimezone: boolean;
+  timezone: TimeZone;
 }
 
 export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOptions> = {
@@ -23,7 +27,7 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
       map((data) => {
         // If a field and a format are configured
         // then format the time output
-        const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.useTimezone);
+        const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
 
         if (!Array.isArray(data) || data.length === 0) {
           return data;
@@ -41,34 +45,22 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
  * @internal
  */
 export const createTimeFormatter =
-  (timeField: string, outputFormat: string, useTimezone: boolean) => (fields: Field[]) => {
-    const tz = getTimeZone();
+  (timeField: string, outputFormat: string, timezone: string) => (fields: Field[]) => {
+    // const tz = getTimeZone();
 
     return fields.map((field) => {
       // Find the configured field
       if (field.name === timeField) {
         // Update values to use the configured format
-        const newVals = field.values.map((value) => {
-          const date = moment(value);
-
-          // Apply configured timezone if the
-          // option has been set. Otherwise
-          // use the date directly
-          if (useTimezone) {
-            const info = getTimeZoneInfo(tz, value);
-            const realTz = info !== undefined ? info.ianaName : 'UTC';
-
-            return date.tz(realTz).format(outputFormat);
-          } else {
-            return date.format(outputFormat);
+          let formattedField = null;
+          if (timezone) {
+            formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone});
           }
-        });
+          else {
+            formattedField = fieldToStringField(field, outputFormat);
+          }
 
-        return {
-          ...field,
-          type: FieldType.string,
-          values: newVals,
-        };
+        return formattedField;
       }
 
       return field;

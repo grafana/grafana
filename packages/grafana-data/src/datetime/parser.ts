@@ -21,6 +21,7 @@ export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
    */
   roundUp?: boolean;
   fiscalYearStartMonth?: number;
+  applyTz?: boolean;
 }
 
 type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateTimeInput, options?: T) => DateTime;

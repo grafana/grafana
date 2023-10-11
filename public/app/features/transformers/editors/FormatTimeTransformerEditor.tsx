@@ -8,6 +8,7 @@ import {
   TransformerUIProps,
   getFieldDisplayName,
   PluginState,
+  getTimeZones,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input, InlineSwitch } from '@grafana/ui';
@@ -18,6 +19,7 @@ export function FormatTimeTransfomerEditor({
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
   const timeFields: Array<SelectableValue<string>> = [];
+  const timeZoneOptions: Array<SelectableValue<string>> = [];
 
   // Get time fields
   for (const frame of input) {
@@ -27,6 +29,12 @@ export function FormatTimeTransfomerEditor({
         timeFields.push({ label: name, value: name });
       }
     }
+  }
+
+  // Format timezone options
+  const tzs = getTimeZones();
+  for (const tz of tzs) {
+    timeZoneOptions.push({ label: tz, value: tz});
   }
 
   const onSelectField = useCallback(
@@ -55,6 +63,15 @@ export function FormatTimeTransfomerEditor({
     onChange({
       ...options,
       useTimezone: !options.useTimezone,
+    });
+  }, [onChange, options]);
+
+  const onTzChange = useCallback(
+    (value: SelectableValue<string>) => {
+    const val = value?.value !== undefined ? value.value : '';
+    onChange({
+      ...options,
+      timezone: val,
     });
   }, [onChange, options]);
 
@@ -87,12 +104,23 @@ export function FormatTimeTransfomerEditor({
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
-        <InlineField
+        {/* <InlineField
           label="Use Timezone"
           tooltip="Use the user's configured timezone when formatting time."
           labelWidth={20}
         >
           <InlineSwitch value={options.useTimezone} transparent={true} onChange={onUseTzChange} />
+        </InlineField> */}
+        <InlineField
+          label="Set Timezone"
+          tooltip="Use a configured value for the timezone."
+          labelWidth={20}
+          >
+            <Select 
+              options={timeZoneOptions} 
+              value={options.timezone} 
+              onChange={onTzChange}
+              isClearable />
         </InlineField>
       </InlineFieldRow>
     </>
