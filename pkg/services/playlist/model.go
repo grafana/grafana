@@ -8,9 +8,8 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound                = errors.New("Playlist not found")
-	ErrPlaylistFailedGenerateUniqueUid = errors.New("failed to generate unique playlist UID")
-	ErrCommandValidationFailed         = errors.New("command missing required fields")
+	ErrPlaylistNotFound        = errors.New("Playlist not found")
+	ErrCommandValidationFailed = errors.New("command missing required fields")
 )
 
 // Playlist model
@@ -20,6 +19,12 @@ type Playlist struct {
 	Name     string `json:"name" db:"name"`
 	Interval string `json:"interval" db:"interval"`
 	OrgId    int64  `json:"-" db:"org_id"`
+
+	// Added for kubernetes migration + synchronization
+	// Hidden from json because this is used for openapi generation
+	// Using int64 rather than time.Time to avoid database issues with time support
+	CreatedAt int64 `json:"-" db:"created_at"`
+	UpdatedAt int64 `json:"-" db:"updated_at"`
 }
 
 type PlaylistDTO = playlist.Spec
@@ -54,6 +59,8 @@ type CreatePlaylistCommand struct {
 	Interval string         `json:"interval"`
 	Items    []PlaylistItem `json:"items"`
 	OrgId    int64          `json:"-"`
+	// Used to create playlists from kubectl with a known uid/name
+	UID string `json:"-"`
 }
 
 type DeletePlaylistCommand struct {

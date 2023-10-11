@@ -16,17 +16,8 @@ type Service struct {
 var _ playlist.Service = &Service{}
 
 func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
-	var sqlstore store
-
-	// 🐢🐢🐢 pick the store
-	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
-		sqlstore = &sqlxStore{
-			sess: db.GetSqlxSession(),
-		}
-	} else {
-		sqlstore = &sqlStore{
-			db: db,
-		}
+	sqlstore := &sqlStore{
+		db: db,
 	}
 	return &Service{store: sqlstore}
 }

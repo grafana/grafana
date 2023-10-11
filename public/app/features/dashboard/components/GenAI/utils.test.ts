@@ -1,4 +1,4 @@
-import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { openai } from './llms';
 import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
@@ -21,7 +21,7 @@ describe('getDashboardChanges', () => {
     const deprecatedVersion = 37;
     const dashboard = createDashboardModelFixture({
       schemaVersion: deprecatedVersion,
-      panels: [createPanelJSONFixture({ title: 'Panel 1', options: deprecatedOptions })],
+      panels: [createPanelSaveModel({ title: 'Panel 1', options: deprecatedOptions })],
     });
 
     // Update title for the first panel
