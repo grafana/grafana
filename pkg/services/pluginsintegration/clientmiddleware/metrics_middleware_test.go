@@ -75,7 +75,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 					JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 				}))
 
-				mw := newInstrumentationMiddleware(promRegistry, pluginsRegistry)
+				mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
 				cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
 					plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 						mw.next = next
