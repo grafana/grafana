@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function ContentOutline({ scroller }: { scroller: HTMLElement }) {
+export function ContentOutline({ scroller }: { scroller: HTMLElement | undefined }) {
   const [expanded, toggleExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
@@ -46,7 +46,7 @@ export function ContentOutline({ scroller }: { scroller: HTMLElement }) {
       el = el?.offsetParent as HTMLElement;
     } while (el && el !== scroller);
 
-    scroller.scroll({
+    scroller?.scroll({
       top: scrollValue,
       behavior: 'smooth',
     });

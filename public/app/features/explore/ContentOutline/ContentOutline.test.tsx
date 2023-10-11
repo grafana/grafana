@@ -8,9 +8,12 @@ jest.mock('./ContentOutlineContext', () => ({
 }));
 
 const scrollIntoViewMock = jest.fn();
+const scrollerMock = document.createElement('div');
 
 const setup = () => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+  scrollerMock.scroll = jest.fn();
 
   // Mock useContentOutlineContext with custom outlineItems
   const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
@@ -33,7 +36,7 @@ const setup = () => {
     unregister: jest.fn(),
   });
 
-  return render(<ContentOutline />);
+  return render(<ContentOutline scroller={scrollerMock} />);
 };
 
 describe('<ContentOutline />', () => {
@@ -58,12 +61,10 @@ describe('<ContentOutline />', () => {
     const itemButtons = screen.getAllByLabelText(/Item/i);
 
     itemButtons.forEach((button) => {
-      scrollIntoViewMock.mockClear();
-
       fireEvent.click(button);
 
       //assert scrollIntoView is called
-      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(scrollerMock.scroll).toHaveBeenCalled();
     });
   });
 });
