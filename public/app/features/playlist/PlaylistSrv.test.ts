@@ -15,6 +15,7 @@ jest.mock('./api', () => ({
     getPlaylist: jest.fn().mockReturnValue({
       interval: '1s',
       uid: 'xyz',
+      name: 'The display',
       items: [
         { type: 'dashboard_by_uid', value: 'aaa' },
         { type: 'dashboard_by_uid', value: 'bbb' },

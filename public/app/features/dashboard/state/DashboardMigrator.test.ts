@@ -128,7 +128,6 @@ describe('DashboardModel', () => {
           {
             type: 'row',
             panels: [
-              // @ts-expect-error
               {
                 id: 501,
                 type: 'table',
@@ -845,7 +844,6 @@ describe('DashboardModel', () => {
               '# Angular Text Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n',
             mode: 'markdown',
           },
-          // @ts-expect-error
           {
             id: 3,
             type: 'text2',
@@ -856,7 +854,6 @@ describe('DashboardModel', () => {
                 '# React Text Panel from scratch\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text',
             },
           },
-          // @ts-expect-error
           {
             id: 4,
             type: 'text2',
@@ -1594,7 +1591,6 @@ describe('DashboardModel', () => {
           ],
         },
         panels: [
-          // @ts-expect-error
           {
             gridPos: {
               h: 8,
@@ -1717,7 +1713,6 @@ describe('DashboardModel', () => {
               title: 'DynamoDB',
               type: 'row',
               panels: [
-                // @ts-expect-error
                 {
                   gridPos: {
                     h: 8,
@@ -1772,7 +1767,6 @@ describe('DashboardModel', () => {
                   title: 'Panel Title',
                   type: 'timeseries',
                 },
-                // @ts-expect-error
                 {
                   gridPos: {
                     h: 8,
@@ -1982,8 +1976,8 @@ describe('DashboardModel', () => {
   describe('when migrating time series axis visibility', () => {
     test('preserves x axis visibility', () => {
       const model = new DashboardModel({
+        schemaVersion: 25,
         panels: [
-          // @ts-expect-error
           {
             type: 'timeseries',
             fieldConfig: {
@@ -2204,7 +2198,6 @@ describe('when migrating table cell display mode to cell options', () => {
   beforeEach(() => {
     model = new DashboardModel({
       panels: [
-        // @ts-expect-error
         {
           id: 1,
           type: 'table',
@@ -2216,9 +2209,8 @@ describe('when migrating table cell display mode to cell options', () => {
                 inspect: false,
               },
             },
-          } as unknown as FieldConfigSource, // missing overrides
+          } as unknown as FieldConfigSource, // missing overrides on purpose
         },
-        // @ts-expect-error
         {
           id: 2,
           type: 'table',
@@ -2233,7 +2225,6 @@ describe('when migrating table cell display mode to cell options', () => {
             overrides: [],
           },
         },
-        // @ts-expect-error
         {
           id: 3,
           type: 'table',
@@ -2248,7 +2239,6 @@ describe('when migrating table cell display mode to cell options', () => {
             overrides: [],
           },
         },
-        // @ts-expect-error
         {
           id: 4,
           type: 'table',
@@ -2263,7 +2253,6 @@ describe('when migrating table cell display mode to cell options', () => {
             overrides: [],
           },
         },
-        // @ts-expect-error
         {
           id: 5,
           type: 'table',
@@ -2278,7 +2267,6 @@ describe('when migrating table cell display mode to cell options', () => {
             overrides: [],
           },
         },
-        // @ts-expect-error
         {
           id: 6,
           type: 'table',
@@ -2346,7 +2334,6 @@ describe('when migrating table cell display mode to cell options', () => {
             ],
           },
         },
-        // @ts-expect-error
         {
           id: 7,
           type: 'table',

@@ -1,5 +1,5 @@
 import { SceneVariableSet, QueryVariable, CustomVariable, DataSourceVariable, ConstantVariable } from '@grafana/scenes';
-import { VariableModel, VariableHide, VariableSort } from '@grafana/schema';
+import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
 
 export function sceneVariablesSetToVariables(set: SceneVariableSet) {
   const variables: VariableModel[] = [];
@@ -10,6 +10,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
       description: variable.state.description,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || VariableHide.dontHide,
+      type: variable.state.type,
     };
     if (variable instanceof QueryVariable) {
       variables.push({
@@ -58,6 +59,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         },
         options: [],
         regex: variable.state.regex,
+        refresh: VariableRefresh.onDashboardLoad,
         query: variable.state.pluginId,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,

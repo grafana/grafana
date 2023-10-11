@@ -37,11 +37,11 @@ class LegacyAPI implements PlaylistAPI {
   }
 }
 
-interface KubernetesPlaylistList {
-  items: KubernetesPlaylist[];
+interface K8sPlaylistList {
+  items: K8sPlaylist[];
 }
 
-interface KubernetesPlaylist {
+interface K8sPlaylist {
   metadata: {
     name: string;
   };
@@ -53,21 +53,35 @@ interface KubernetesPlaylist {
 }
 
 class K8sAPI implements PlaylistAPI {
-  readonly url = `/apis/playlists.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`;
+  readonly url: string;
+  readonly legacy: PlaylistAPI | undefined;
+
+  constructor() {
+    const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
+    this.url = `/apis/playlists.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
+
+    // When undefined, this will use k8s for all CRUD features
+    if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+      this.legacy = new LegacyAPI();
+    }
+  }
 
   async getAllPlaylist(): Promise<Playlist[]> {
-    const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
+    const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
     return result.items.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
-    const r = await getBackendSrv().get<KubernetesPlaylist>(this.url + '/' + uid);
+    const r = await getBackendSrv().get<K8sPlaylist>(this.url + '/' + uid);
     const p = k8sResourceAsPlaylist(r);
     await migrateInternalIDs(p);
     return p;
   }
 
   async createPlaylist(playlist: Playlist): Promise<void> {
+    if (this.legacy) {
+      return this.legacy.createPlaylist(playlist);
+    }
     await withErrorHandling(() =>
       getBackendSrv().post(this.url, {
         apiVersion: 'playlists.grafana.com/v0alpha1',
@@ -81,6 +95,9 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {
+    if (this.legacy) {
+      return this.legacy.updatePlaylist(playlist);
+    }
     await withErrorHandling(() =>
       getBackendSrv().put(`${this.url}/${playlist.uid}`, {
         apiVersion: 'playlists.grafana.com/v0alpha1',
@@ -97,6 +114,9 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async deletePlaylist(uid: string): Promise<void> {
+    if (this.legacy) {
+      return this.legacy.deletePlaylist(uid);
+    }
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
 }
@@ -104,12 +124,11 @@ class K8sAPI implements PlaylistAPI {
 // This converts a saved k8s resource into a playlist object
 // the main difference is that k8s uses metdata.name as the uid
 // to avoid future confusion, the display name is now called "title"
-function k8sResourceAsPlaylist(r: KubernetesPlaylist): Playlist {
+function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
   return {
-    uid: r.metadata.name, // fill the uid from k8s name
+    ...r.spec,
+    uid: r.metadata.name, // replace the uid from the k8s name
     name: r.spec.title,
-    interval: r.spec.interval,
-    items: r.spec.items,
   };
 }
 
