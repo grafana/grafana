@@ -14,13 +14,11 @@ import {
   getFieldDisplayName,
   LoadingState,
   toDataFrame,
+  VariableHide,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
-
-import { VariableHide } from '../../../features/variables/types';
 
 import {
   alignRange,
@@ -440,50 +438,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  // Remove when prometheusResourceBrowserCache is removed
-  describe('When prometheusResourceBrowserCache feature flag is off, there should be no change to the query intervals ', () => {
-    beforeEach(() => {
-      config.featureToggles.prometheusResourceBrowserCache = false;
-    });
-
-    it('test default 1 minute quantization', () => {
-      const dataSource = new PrometheusDatasource(
-        {
-          ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Low },
-        },
-        templateSrvStub as unknown as TemplateSrv,
-        timeSrvStub as unknown as TimeSrv
-      );
-      const quantizedRange = dataSource.getAdjustedInterval();
-      const oldRange = dataSource.getTimeRangeParams();
-      // For "1 minute" the window is unchanged
-      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
-      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
-    });
-
-    it('test 10 minute quantization', () => {
-      const dataSource = new PrometheusDatasource(
-        {
-          ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Medium },
-        },
-        templateSrvStub as unknown as TemplateSrv,
-        timeSrvStub as unknown as TimeSrv
-      );
-      const quantizedRange = dataSource.getAdjustedInterval();
-      const oldRange = dataSource.getTimeRangeParams();
-
-      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
-      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
-    });
-  });
-
   describe('Test query range snapping', () => {
-    beforeEach(() => {
-      config.featureToggles.prometheusResourceBrowserCache = true;
-    });
-
     it('test default 1 minute quantization', () => {
       const dataSource = new PrometheusDatasource(
         {
