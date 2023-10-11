@@ -49,16 +49,11 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 			status = statusCancelled
 		}
 	}
-	params := logParams(pluginCtx)
-	params = append(params,
-		"endpoint", endpoint,
+	logParams := []any{
 		"status", status,
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
-	)
-	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		params = append(params, "traceID", traceID)
 	}
 	if status == statusError {
 		logParams = append(logParams, "error", err)
@@ -69,7 +64,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 		if errQueryDataDownstreamError.Is(err) && errors.As(err, &grErr) {
 			statusSrc = convertStatusSource(grErr.Source)
 		}
-		logParams = append(params, "status_source", statusSrc)
+		logParams = append(logParams, "status_source", statusSrc)
 	}
 	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
 	return err
