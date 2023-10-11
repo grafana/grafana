@@ -338,7 +338,6 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 	if err != nil {
 		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s: %w", uid, err)
 	}
-	
 	if existingPubdash == nil {
 		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
 	}
