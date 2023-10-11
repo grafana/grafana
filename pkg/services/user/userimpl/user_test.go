@@ -106,7 +106,6 @@ func TestUserService(t *testing.T) {
 		})
 
 		require.ErrorIs(t, err, user.ErrEmptyUsernameAndEmail)
-
 	})
 
 	t.Run("GetByID - email conflict", func(t *testing.T) {
