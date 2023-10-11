@@ -52,6 +52,7 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  nestedFoldersTreeStore?: boolean;
   nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;

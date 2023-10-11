@@ -143,6 +143,10 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagNestedFoldersTreeStore
+	// Enable folder nesting tree store
+	FlagNestedFoldersTreeStore = "nestedFoldersTreeStore"
+
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"

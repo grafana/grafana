@@ -99,6 +99,7 @@ Experimental features might be changed or removed without prior notice.
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
+| `nestedFoldersTreeStore`                    | Enable folder nesting tree store                                                                             |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
 | `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                     |
