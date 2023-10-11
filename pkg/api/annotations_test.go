@@ -312,5 +312,5 @@ func setUpRBACGuardian(t *testing.T) {
 		guardian.New = origNewGuardian
 	})
 
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true})
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
 }
