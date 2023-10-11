@@ -1,9 +1,10 @@
 /// @ts-check
 
 import { readdir, stat, readFile } from 'fs/promises';
-import path from 'path';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const LOCALES_DIR = path.join('.', 'public', 'locales');
+const LOCALES_DIR = path.resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'locales');
 
 const locales = await readdir(LOCALES_DIR);
 
