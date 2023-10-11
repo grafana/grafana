@@ -271,13 +271,21 @@ export default class LokiLanguageProvider extends LanguageProvider {
     );
 
     if (!series.length) {
-      return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };
+      return {
+        extractedLabelKeys: [],
+        structuredMetadataKeys: [],
+        unwrapLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+        hasPack: false,
+      };
     }
 
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
       extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], 'S'),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,

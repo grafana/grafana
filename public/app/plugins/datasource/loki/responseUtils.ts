@@ -54,15 +54,21 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type = 'I'): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
+  const labelTypeArray: Array<{ [key: string]: string }> | undefined =
+    frame?.fields?.find((field) => field.name === 'labelTypes')?.values ?? [];
 
   if (!labelsArray?.length) {
     return [];
   }
 
-  return Object.keys(labelsArray[0]);
+  const labelTypes = labelTypeArray[0];
+
+  const allLabelKeys = Object.keys(labelsArray[0]).filter((k) => labelTypes[k] === type);
+
+  return allLabelKeys;
 }
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
