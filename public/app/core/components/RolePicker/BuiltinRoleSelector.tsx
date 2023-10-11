@@ -6,12 +6,10 @@ import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 
-
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
-  .map((r) => ({
-    label: r === OrgRole.None ? 'No basic role' : r,
-    value: r,
-  }));
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
+  label: r === OrgRole.None ? 'No basic role' : r,
+  value: r,
+}));
 
 interface Props {
   value?: OrgRole;

@@ -19,7 +19,6 @@ import {
   Label,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
 import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
@@ -39,11 +38,10 @@ const tooltipMessage = (
   </>
 );
 
-const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
-  .map((r) => ({
-    label: r === OrgRole.None ? 'No basic role' : r,
-    value: r,
-  }));
+const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
+  label: r === OrgRole.None ? 'No basic role' : r,
+  value: r,
+}));
 
 export interface FormModel {
   role: OrgRole;

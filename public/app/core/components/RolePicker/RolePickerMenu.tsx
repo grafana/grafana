@@ -34,7 +34,7 @@ const fixedRoleGroupNames: Record<string, string> = {
   current: 'Current org',
 };
 
-const tooltipMessage =  (
+const tooltipMessage = (
   <>
     You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
     information in&nbsp;
