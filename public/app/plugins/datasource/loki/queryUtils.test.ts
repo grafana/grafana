@@ -18,6 +18,7 @@ import {
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
   formatLogqlQuery,
+  getLogQueryFromMetricsQueryAtPosition,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -426,6 +427,39 @@ describe('getLogQueryFromMetricsQuery', () => {
         'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
       )
     ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+  it('does not return a query when there is no log query', () => {
+    expect(getLogQueryFromMetricsQuery('1+1')).toBe('');
+    expect(getLogQueryFromMetricsQuery('count_over_time([1s])')).toBe('');
+  });
+});
+
+describe('getLogQueryFromMetricsQueryAtPosition', () => {
+  it('works like getLogQueryFromMetricsQuery for simple queries', () => {
+    expect(
+      getLogQueryFromMetricsQueryAtPosition('count_over_time({job="grafana"} | logfmt | label="value" [1m])', 57)
+    ).toBe('{job="grafana"} | logfmt | label="value"');
+    expect(getLogQueryFromMetricsQueryAtPosition('count_over_time({job="grafana"} [1m])', 37)).toBe('{job="grafana"}');
+    expect(
+      getLogQueryFromMetricsQueryAtPosition(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))',
+        45
+      )
+    ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+  it.each([
+    [
+      'count_over_time({place="moon"} | json test="test" [1m]) + avg_over_time({place="luna"} | logfmt test="test" [1m])',
+      '{place="moon"} | json test="test"',
+      49,
+    ],
+    [
+      'count_over_time({place="moon"} | json test="test" [1m]) + avg_over_time({place="luna"} | logfmt test="test" [1m])',
+      '{place="luna"} | logfmt test="test"',
+      107,
+    ],
+  ])('gets the right query for complex queries', (metric: string, log: string, position: number) => {
+    expect(getLogQueryFromMetricsQueryAtPosition(metric, position)).toBe(log);
   });
 });
 

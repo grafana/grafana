@@ -57,9 +57,9 @@ export function getBarColorByPackage(label: string, theme: GrafanaTheme2) {
   // TODO: similar thing happens in trace view with selecting colors of the spans, so maybe this could be unified.
   const hash = murmurhash3_32_gc(packageName || '', 0);
   const colorIndex = hash % packageColors.length;
-  let packageColor = packageColors[colorIndex];
+  let packageColor = packageColors[colorIndex].clone();
   if (theme.isLight) {
-    packageColor = packageColor.clone().brighten(15);
+    packageColor = packageColor.brighten(15);
   }
   return packageColor;
 }
@@ -77,21 +77,28 @@ export function getBarColorByDiff(
   totalTicksRight: number,
   colorScheme: ColorSchemeDiff
 ) {
-  const ticksLeft = ticks - ticksRight;
-  const totalTicksLeft = totalTicks - totalTicksRight;
-
-  const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
-  const percentageRight = Math.round((10000 * ticksRight) / totalTicksRight) / 100;
-
-  const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
-
   const range = colorScheme === ColorSchemeDiff.Default ? diffDefaultColors : diffColorBlindColors;
-
   const colorScale = scaleLinear()
     .domain([-100, 0, 100])
     // TODO types from DefinitelyTyped seem to mismatch
     // @ts-ignore
     .range(range);
+
+  const ticksLeft = ticks - ticksRight;
+  const totalTicksLeft = totalTicks - totalTicksRight;
+
+  if (totalTicksRight === 0 || totalTicksLeft === 0) {
+    // TODO types from DefinitelyTyped seem to mismatch
+    // @ts-ignore
+    const rgbString: string = colorScale(0);
+    // Fallback to neutral color as we probably have no data for one of the sides.
+    return color(rgbString);
+  }
+
+  const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
+  const percentageRight = Math.round((10000 * ticksRight) / totalTicksRight) / 100;
+
+  const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
 
   // TODO types from DefinitelyTyped seem to mismatch
   // @ts-ignore

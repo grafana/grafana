@@ -46,11 +46,11 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
 
   if (theme.isDark) {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).darken(30).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).lighten(15).toString();
   } else {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).lighten(20).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).darken(20).toString();
   }
 

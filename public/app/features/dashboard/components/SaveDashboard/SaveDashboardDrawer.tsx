@@ -128,7 +128,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
           )}
         </TabsBar>
       }
-      scrollableContent
     >
       {renderSaveBody()}
 

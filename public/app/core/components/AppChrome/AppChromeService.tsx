@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -17,10 +17,12 @@ export interface AppChromeState {
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
-  megaMenuOpen?: boolean;
+  megaMenu: 'open' | 'closed' | 'docked';
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
 }
+
+const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -31,6 +33,8 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+    megaMenu:
+      config.featureToggles.dockedMegaMenu && store.getBool(DOCKED_LOCAL_STORAGE_KEY, false) ? 'docked' : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
   });
@@ -93,14 +97,14 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 
-  public onToggleMegaMenu = () => {
-    const isOpen = !this.state.getValue().megaMenuOpen;
-    reportInteraction('grafana_toggle_menu_clicked', { action: isOpen ? 'open' : 'close' });
-    this.update({ megaMenuOpen: isOpen });
-  };
-
-  public setMegaMenu = (megaMenuOpen: boolean) => {
-    this.update({ megaMenuOpen });
+  public setMegaMenu = (newMegaMenuState: AppChromeState['megaMenu']) => {
+    if (config.featureToggles.dockedMegaMenu) {
+      store.set(DOCKED_LOCAL_STORAGE_KEY, newMegaMenuState === 'docked');
+      reportInteraction('grafana_mega_menu_state', { state: newMegaMenuState });
+    } else {
+      reportInteraction('grafana_toggle_menu_clicked', { action: newMegaMenuState === 'open' ? 'open' : 'close' });
+    }
+    this.update({ megaMenu: newMegaMenuState });
   };
 
   public onToggleSearchBar = () => {

@@ -119,6 +119,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 				TargetUID: &dsWithoutCorrelations.UID,
 			},
 		})
+		require.NoError(t, err)
 		require.Equal(t, int64(2), created)
 		return err
 	})

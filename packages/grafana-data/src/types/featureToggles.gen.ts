@@ -109,6 +109,7 @@ export interface FeatureToggles {
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -132,4 +133,13 @@ export interface FeatureToggles {
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
+  cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  alertingModifiedExport?: boolean;
+  panelMonitoring?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
 }

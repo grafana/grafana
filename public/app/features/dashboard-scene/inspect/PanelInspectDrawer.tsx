@@ -102,7 +102,6 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
   return (
     <Drawer
       title={model.getDrawerTitle()}
-      scrollableContent
       onClose={model.onClose}
       size="md"
       tabs={

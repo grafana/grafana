@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDataFrame, createTheme } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { ColorScheme } from '../types';
 
@@ -48,7 +48,6 @@ describe('FlameGraph', () => {
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
         colorScheme={ColorScheme.ValueBased}
-        getTheme={() => createTheme({ colors: { mode: 'dark' } })}
       />
     );
     return {

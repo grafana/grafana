@@ -12,6 +12,7 @@ interface GrafanaExportDrawerProps {
   children: React.ReactNode;
   onClose: () => void;
   formatProviders: Array<ExportProvider<ExportFormats>>;
+  title?: string;
 }
 
 export function GrafanaExportDrawer({
@@ -20,15 +21,15 @@ export function GrafanaExportDrawer({
   children,
   onClose,
   formatProviders,
+  title = 'Export',
 }: GrafanaExportDrawerProps) {
   const grafanaRulesTabs = Object.values(formatProviders).map((provider) => ({
     label: provider.name,
     value: provider.exportFormat,
   }));
-
   return (
     <Drawer
-      title="Export"
+      title={title}
       subtitle="Select the format and download the file or copy the contents to clipboard"
       tabs={
         <RuleInspectorTabs<ExportFormats> tabs={grafanaRulesTabs} setActiveTab={onTabChange} activeTab={activeTab} />

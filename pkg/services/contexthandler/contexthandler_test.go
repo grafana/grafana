@@ -25,7 +25,7 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should set auth error if authentication was unsuccessful", func(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 		)
@@ -46,7 +46,7 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
@@ -64,10 +64,10 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
-		identity := &authn.Identity{IsAnonymous: true, OrgID: 1}
+		identity := &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
@@ -88,7 +88,7 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{OrgID: 1, AuthenticatedBy: login.RenderModule}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
@@ -109,7 +109,7 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should delete session cookie on invalid session", func(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedErr: auth.ErrInvalidSessionToken},
 		)
@@ -129,7 +129,7 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should delete session cookie when oauth token refresh failed", func(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedErr: authn.ErrExpiredAccessToken.Errorf("")},
 		)
@@ -158,7 +158,7 @@ func TestContextHandler(t *testing.T) {
 
 		handler := contexthandler.ProvideService(
 			cfg,
-			tracing.NewFakeTracer(),
+			tracing.InitializeTracerForTest(),
 			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 		)

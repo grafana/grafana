@@ -41,6 +41,10 @@ func TestQueryData(t *testing.T) {
 				err:           errors.New("surprise surprise"),
 				expectedError: plugins.ErrPluginDownstreamErrorBase,
 			},
+			{
+				err:           context.Canceled,
+				expectedError: plugins.ErrPluginRequestCanceledErrorBase,
+			},
 		}
 
 		for _, tc := range tcs {
@@ -97,7 +101,11 @@ func TestCheckHealth(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamErrorBase,
+				expectedError: plugins.ErrPluginHealthCheck,
+			},
+			{
+				err:           context.Canceled,
+				expectedError: plugins.ErrPluginRequestCanceledErrorBase,
 			},
 		}
 

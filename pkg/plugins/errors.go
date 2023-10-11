@@ -18,9 +18,21 @@ var (
 	// ErrMethodNotImplemented error returned when a plugin method is not implemented.
 	ErrMethodNotImplemented = errMethodNotImplementedBase.Errorf("method not implemented")
 
+	// ErrPluginHealthCheck error returned when a plugin fails its health check.
+	// Exposed as a base error to wrap it with plugin error.
+	ErrPluginHealthCheck = errutil.Internal("plugin.healthCheck",
+		errutil.WithPublicMessage("Plugin health check failed"),
+		errutil.WithDownstream())
+
 	// ErrPluginDownstreamError error returned when a plugin request fails.
 	// Exposed as a base error to wrap it with plugin downstream errors.
 	ErrPluginDownstreamErrorBase = errutil.Internal("plugin.downstreamError",
 		errutil.WithPublicMessage("An error occurred within the plugin"),
 		errutil.WithDownstream())
+
+	// ErrPluginRequestCanceledErrorBase error returned when a plugin request
+	// is cancelled by the client (context is cancelled).
+	// Exposed as a base error to wrap it with plugin cancelled errors.
+	ErrPluginRequestCanceledErrorBase = errutil.ClientClosedRequest("plugin.requestCanceled",
+		errutil.WithPublicMessage("Plugin request canceled"))
 )

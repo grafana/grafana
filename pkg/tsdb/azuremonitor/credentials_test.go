@@ -77,6 +77,66 @@ func TestCredentials_getAuthType(t *testing.T) {
 			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
 		})
 	})
+
+	t.Run("when workload identities enabled", func(t *testing.T) {
+		cfg.Azure.WorkloadIdentityEnabled = true
+
+		t.Run("should be client secret if auth type is set to client secret", func(t *testing.T) {
+			jsonData := &types.AzureClientSettings{
+				AzureAuthType: azcredentials.AzureAuthClientSecret,
+			}
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
+		})
+
+		t.Run("should be workload identity if datasource not configured and managed identity is disabled", func(t *testing.T) {
+			jsonData := &types.AzureClientSettings{
+				AzureAuthType: "",
+			}
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthWorkloadIdentity, authType)
+		})
+
+		t.Run("should be client secret if auth type not specified but credentials configured", func(t *testing.T) {
+			jsonData := &types.AzureClientSettings{
+				AzureAuthType: "",
+				TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
+				ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
+			}
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
+		})
+	})
+
+	t.Run("when workload identities disabled", func(t *testing.T) {
+		cfg.Azure.WorkloadIdentityEnabled = false
+
+		t.Run("should be workload identity if auth type is set to workload identity", func(t *testing.T) {
+			jsonData := &types.AzureClientSettings{
+				AzureAuthType: azcredentials.AzureAuthWorkloadIdentity,
+			}
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthWorkloadIdentity, authType)
+		})
+
+		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
+			jsonData := &types.AzureClientSettings{
+				AzureAuthType: "",
+			}
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
+		})
+	})
 }
 
 func TestCredentials_getAzureCloud(t *testing.T) {

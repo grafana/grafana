@@ -19667,42 +19667,6 @@
         ]
       }
     },
-    "/playlists/{uid}/dashboards": {
-      "get": {
-        "operationId": "getPlaylistDashboards",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getPlaylistDashboardsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get playlist dashboards.",
-        "tags": [
-          "playlists"
-        ]
-      }
-    },
     "/playlists/{uid}/items": {
       "get": {
         "operationId": "getPlaylistItems",

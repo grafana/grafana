@@ -59,3 +59,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return s.resourceHandler.CallResource(ctx, req, sender)
 }
+
+func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
+}

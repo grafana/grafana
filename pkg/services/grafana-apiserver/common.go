@@ -1,12 +1,12 @@
 package grafanaapiserver
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -15,6 +15,9 @@ import (
 // TODO: this (or something like it) belongs in grafana-app-sdk,
 // but lets keep it here while we iterate on a few simple examples
 type APIGroupBuilder interface {
+	// Get the main group name
+	GetGroupVersion() schema.GroupVersion
+
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
@@ -22,42 +25,33 @@ type APIGroupBuilder interface {
 	GetAPIGroupInfo(
 		scheme *runtime.Scheme,
 		codecs serializer.CodecFactory, // pointer?
-	) *genericapiserver.APIGroupInfo
+		optsGetter generic.RESTOptionsGetter,
+	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Register additional routes with the server
-	GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error)
+	// Get the API routes for each version
+	GetAPIRoutes() *APIRoutes
 }
 
-func OrgIdToNamespace(orgId int64) string {
-	if orgId > 1 {
-		return fmt.Sprintf("org-%d", orgId)
-	}
-	return "default"
+// This is used to implement dynamic sub-resources like pods/x/logs
+type APIRouteHandler struct {
+	Path    string           // added to the appropriate level
+	Spec    *spec3.PathProps // Exposed in the open api service discovery
+	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
 }
 
-func NamespaceToOrgID(ns string) (int64, error) {
-	parts := strings.Split(ns, "-")
-	switch len(parts) {
-	case 1:
-		if parts[0] == "default" {
-			return 1, nil
-		}
-		if parts[0] == "" {
-			return 0, nil // no orgId, cluster scope
-		}
-		return 0, fmt.Errorf("invalid namespace (expected default)")
-	case 2:
-		if !(parts[0] == "org" || parts[0] == "tenant") {
-			return 0, fmt.Errorf("invalid namespace (org|tenant)")
-		}
-		n, err := strconv.ParseInt(parts[1], 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("invalid namepscae (%w)", err)
-		}
-		return n, nil
-	}
-	return 0, fmt.Errorf("invalid namespace (%d parts)", len(parts))
+// APIRoutes define the
+type APIRoutes struct {
+	// Root handlers are registered directly after the apiVersion identifier
+	Root []APIRouteHandler
+
+	// Namespace handlers are mounted under the namespace
+	Namespace []APIRouteHandler
+
+	// Resource routes behave the same as pod/logs
+	// it looks like a sub-resource, however the response is backed directly by an http handler
+	// The current resource can be fetched through context
+	Resource map[string]APIRouteHandler
 }
