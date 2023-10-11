@@ -10,7 +10,7 @@ type NamespaceMapper = func(orgId int64) string
 
 func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 	if cfg.StackID != "" {
-		return func(orgId int64) string { return cfg.StackID }
+		return func(orgId int64) string { return "stack-" + cfg.StackID }
 	}
 	return OrgNamespaceMapper
 }
