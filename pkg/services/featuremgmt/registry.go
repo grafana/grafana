@@ -764,7 +764,7 @@ var (
 			Name:         "alertingInsights",
 			Description:  "Show the new alerting insights landing page",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
 		},
