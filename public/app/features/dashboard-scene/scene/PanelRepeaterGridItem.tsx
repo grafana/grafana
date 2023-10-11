@@ -15,7 +15,6 @@ import {
   sceneGraph,
   MultiValueVariable,
   LocalValueVariable,
-  SceneObjectState,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 

@@ -49,8 +49,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.viewPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
       if (!panel) {
+        // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         if (values.viewPanel.indexOf('clone')) {
-          this.handleViewRepeatClone(values.viewPanel);
+          this._handleViewRepeatClone(values.viewPanel);
           return;
         }
 
@@ -69,7 +70,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
   }
 
-  handleViewRepeatClone(viewPanel: string) {
+  private _handleViewRepeatClone(viewPanel: string) {
     if (!this._eventSub) {
       this._eventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
         const panel = findVizPanelByKey(this._scene, viewPanel);
