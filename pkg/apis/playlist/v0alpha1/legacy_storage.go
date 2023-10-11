@@ -3,15 +3,12 @@ package v0alpha1
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -83,23 +80,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		},
 	}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              v.UID,
-				CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
-				ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
-				UID:               types.UID(v.UID),
-			},
-			Spec: playlistkind.Spec{
-				Title:    v.Name,
-				Interval: v.Interval,
-			},
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: orgId, // required
+		})
+		if err != nil {
+			return nil, err
 		}
-		list.Items = append(list.Items, p)
+		list.Items = append(list.Items, *convertToK8sResource(p))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -124,28 +112,5 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, fmt.Errorf("not found?")
 	}
 
-	p := &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              dto.Uid,
-			CreationTimestamp: metav1.NewTime(time.UnixMilli(dto.CreatedAt)),
-			ResourceVersion:   fmt.Sprintf("%d", dto.UpdatedAt),
-			UID:               types.UID(dto.Uid),
-		},
-		Spec: playlistkind.Spec{
-			Title:    dto.Name,
-			Interval: dto.Interval,
-		},
-	}
-	for _, item := range dto.Items {
-		p.Spec.Items = append(p.Spec.Items, playlistkind.Item{
-			Type:  playlistkind.ItemType(item.Type),
-			Value: item.Value,
-		})
-	}
-
-	return p, nil
+	return convertToK8sResource(dto), nil
 }

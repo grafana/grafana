@@ -58,8 +58,7 @@ class K8sAPI implements PlaylistAPI {
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
-    const v = result.playlists.map(k8sResourceAsPlaylist);
-    return v;
+    return result.playlists.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
