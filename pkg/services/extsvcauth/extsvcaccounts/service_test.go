@@ -244,6 +244,8 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, mock.Anything, mock.Anything).Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
+				// A token was previously stored in the secret store
+				env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, skvType, "ExtSvcSecretToken")
 			},
 			cmd: extsvcauth.ExternalServiceRegistration{
 				Name: extSvcSlug,
@@ -261,6 +263,8 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
 				env.AcStore.AssertCalled(t, "DeleteExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(slug string) bool { return slug == extSvcSlug }))
+				_, ok, _ := env.SkvStore.Get(context.Background(), tmpOrgID, extSvcSlug, skvType)
+				require.False(t, ok, "secret should have been removed from store")
 			},
 			want:    nil,
 			wantErr: false,
