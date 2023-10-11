@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -45,14 +44,10 @@ func getPrivateKey(t *testing.T, svc *Service) []byte {
 	return bytes
 }
 
-func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
+func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	svc := &Service{
 		log:            log.NewNopLogger(),
-		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
+		store:          signingkeystore.NewFakeStore(),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    remotecache.NewFakeCacheStorage(),
 		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
@@ -87,15 +82,11 @@ func TestIntegrationEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T)
 	}
 }
 
-func TestIntegrationEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
+func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 	cacheStorage := remotecache.NewFakeCacheStorage()
 	svc := &Service{
 		log:            log.NewNopLogger(),
-		store:          signingkeystore.NewSigningKeyStore(db.InitTestDB(t)),
+		store:          signingkeystore.NewFakeStore(),
 		secretsService: secretstest.NewFakeSecretsService(),
 		remoteCache:    cacheStorage,
 		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),

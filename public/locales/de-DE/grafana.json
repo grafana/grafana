@@ -539,6 +539,18 @@
     "config": {
       "title": "Verwaltung"
     },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
+    },
     "connect-data": {
       "title": ""
     },
