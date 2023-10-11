@@ -1,5 +1,6 @@
 import { CoreApp } from '@grafana/data';
 import { sceneGraph, SceneGridItem, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -21,6 +22,15 @@ describe('DashboardScene', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
       expect(scene.state.viewPanelKey).toBe('2');
+    });
+  });
+
+  describe('DashboardSrv.getCurrent compatibility', () => {
+    it('Should set to compatibility wrapper', () => {
+      const scene = buildTestScene();
+      scene.activate();
+
+      expect(getDashboardSrv().getCurrent()?.uid).toBe('dash-1');
     });
   });
 

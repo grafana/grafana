@@ -32,7 +32,6 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
 } from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -59,9 +58,6 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
-
-  // Setting for built-in annotations query to run
-  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
