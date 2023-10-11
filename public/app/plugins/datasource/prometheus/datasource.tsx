@@ -27,6 +27,7 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
   MetricFindValue,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -680,7 +681,7 @@ export class PrometheusDatasource
     let expr = target.expr;
 
     // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(expr);
+    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -1112,16 +1113,21 @@ export class PrometheusDatasource
     );
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
+  interpolateVariablesInQueries(
+    queries: PromQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
+        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
+
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.enhanceExprWithAdHocFilters(
-            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
-          ),
+          expr: withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;
@@ -1250,10 +1256,12 @@ export class PrometheusDatasource
     return getOriginalMetricName(labelData);
   }
 
-  enhanceExprWithAdHocFilters(expr: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+  enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
+    if (!filters || filters.length === 0) {
+      return expr;
+    }
 
-    const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -1273,7 +1281,11 @@ export class PrometheusDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(
+    target: PromQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 
     // We want to interpolate these variables on backend
@@ -1284,7 +1296,7 @@ export class PrometheusDatasource
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
     // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(expr);
+    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
 
     return {
       ...target,

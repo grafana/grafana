@@ -2,7 +2,7 @@ package annotations
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type ItemQuery struct {
@@ -18,7 +18,7 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 
 	Limit int64 `json:"limit"`
 }

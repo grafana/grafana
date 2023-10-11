@@ -29,7 +29,6 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
 func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 	return []DecorateFunc{
-		AliasDecorateFunc,
 		AppDefaultNavURLDecorateFunc,
 		AppChildDecorateFunc(cfg),
 	}
@@ -77,19 +76,6 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 	}
 
 	return res, nil
-}
-
-// AliasDecorateFunc is a DecorateFunc that sets the alias for the plugin.
-func AliasDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	switch p.ID {
-	case "grafana-pyroscope-datasource": // rebranding
-		p.Alias = "phlare"
-	case "grafana-testdata-datasource":
-		p.Alias = "testdata"
-	case "debug": // panel plugin used for testing
-		p.Alias = "debugX"
-	}
-	return p, nil
 }
 
 // AppDefaultNavURLDecorateFunc is a DecorateFunc that sets the default nav URL for app plugins.

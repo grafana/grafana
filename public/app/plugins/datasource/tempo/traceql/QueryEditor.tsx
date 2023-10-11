@@ -31,7 +31,7 @@ export function QueryEditor(props: Props) {
       </InlineLabel>
       <TraceQLEditor
         placeholder="Enter a TraceQL query or trace ID (run with Shift+Enter)"
-        value={query.query}
+        value={query.query || ''}
         onChange={onEditorChange}
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}

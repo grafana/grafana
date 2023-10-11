@@ -19,6 +19,10 @@ weight: 800
 
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
+{{% admonition type="note" %}}
+To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, please [file a support ticket](/profile/org/tickets/new). Note that standard ingest and retention rates apply for ingesting these audit logs.
+{{% /admonition %}}
+
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
@@ -426,7 +430,7 @@ The HTTP option for the Loki exporter is available only in Grafana Enterprise ve
 [auditing.logs.loki]
 # Set the communication protocol to use with Loki (can be grpc or http)
 type = grpc
-# Set the address for writing logs to Loki (format must be host:port)
+# Set the address for writing logs to Loki
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
@@ -440,6 +444,15 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 - **host** - OS hostname on which the Grafana instance is running.
 - **grafana_instance** - Application URL.
 - **kind** - `auditing`
+
+When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
+
+```ini
+# Set the communication protocol to use with Loki (can be grpc or http)
+type = http
+# Set the address for writing logs to Loki
+url = user:password@localhost:3000
+```
 
 ### Console exporter
 

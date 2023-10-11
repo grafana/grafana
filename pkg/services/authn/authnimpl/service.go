@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -21,11 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -225,12 +226,12 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("Failed to authenticate request", "client", c.Name(), "error", err)
+		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
-		s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+		s.errorLogFunc(ctx, err)("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 		return nil, err
 	}
 
@@ -240,7 +241,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	if hc, ok := c.(authn.HookClient); ok {
 		if err := hc.Hook(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+			s.errorLogFunc(ctx, err)("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 			return nil, err
 		}
 	}
@@ -262,9 +263,10 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
-	ctx, span := s.tracer.Start(ctx, "authn.Login")
+	ctx, span := s.tracer.Start(ctx, "authn.Login", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
@@ -316,9 +318,10 @@ func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uin
 }
 
 func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
+	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	c, ok := s.clients[client]
 	if !ok {
@@ -345,6 +348,17 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	// hack to not update last seen on external syncs
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	return s.runPostAuthHooks(ctx, identity, r)
+}
+
+func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	l := s.log.FromContext(ctx)
+
+	var grfErr errutil.Error
+	if errors.As(err, &grfErr) {
+		return grfErr.LogLevel.LogFunc(l)
+	}
+
+	return l.Warn
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

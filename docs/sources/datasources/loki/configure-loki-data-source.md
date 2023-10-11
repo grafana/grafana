@@ -94,7 +94,7 @@ To troubleshoot configuration and other issues, check the log file located at `/
 Derived Fields are used to extract new fields from a log message and create a link from the value of the field.
 
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
-These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
+These links appear in the [log details][].
 
 You can add multiple derived fields.
 
@@ -128,3 +128,8 @@ Select **Show example log message** to display a text area where you can enter a
 The new field with the link shown in log details:
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
+
+{{% docs/reference %}}
+[log details]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+[log details]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+{{% /docs/reference %}}

@@ -15,7 +15,10 @@ type Service interface {
 	// GetFolder takes a GetFolderCommand and returns a folder matching the
 	// request. One of ID, UID, or Title must be included. If multiple values
 	// are included in the request, Grafana will select one in order of
-	// specificity (ID, UID, Title).
+	// specificity (UID, ID,Title).
+	// If Title is set, it will fetch the folder in the root folder.
+	// If nested folders are enabled, callers can additionally set the ParentUID field
+	// to fetch a folder by title under a specific folder.
 	Get(ctx context.Context, cmd *GetFolderQuery) (*Folder, error)
 
 	// Update is used to update a folder's UID, Title and Description. To change

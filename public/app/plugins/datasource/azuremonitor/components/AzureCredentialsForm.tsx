@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
@@ -9,39 +9,64 @@ import { AzureAuthType, AzureCredentials } from '../types';
 
 export interface Props {
   managedIdentityEnabled: boolean;
+  workloadIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
-  onCredentialsChange?: (updatedCredentials: AzureCredentials) => void;
+  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
   children?: JSX.Element;
 }
 
-const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
-  {
-    value: 'msi',
-    label: 'Managed Identity',
-  },
-  {
-    value: 'clientsecret',
-    label: 'App Registration',
-  },
-];
-
 export const AzureCredentialsForm = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, disabled, managedIdentityEnabled } = props;
+  const {
+    credentials,
+    azureCloudOptions,
+    onCredentialsChange,
+    disabled,
+    managedIdentityEnabled,
+    workloadIdentityEnabled,
+  } = props;
+
+  const authTypeOptions = useMemo(() => {
+    let opts: Array<SelectableValue<AzureAuthType>> = [
+      {
+        value: 'clientsecret',
+        label: 'App Registration',
+      },
+    ];
+
+    if (managedIdentityEnabled) {
+      opts.push({
+        value: 'msi',
+        label: 'Managed Identity',
+      });
+    }
+
+    if (workloadIdentityEnabled) {
+      opts.push({
+        value: 'workloadidentity',
+        label: 'Workload Identity',
+      });
+    }
+
+    return opts;
+  }, [managedIdentityEnabled, workloadIdentityEnabled]);
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
-    if (onCredentialsChange) {
-      const updated: AzureCredentials = {
-        ...credentials,
-        authType: selected.value || 'msi',
-      };
-      onCredentialsChange(updated);
-    }
+    const defaultAuthType = managedIdentityEnabled
+      ? 'msi'
+      : workloadIdentityEnabled
+      ? 'workloadidentity'
+      : 'clientsecret';
+    const updated: AzureCredentials = {
+      ...credentials,
+      authType: selected.value || defaultAuthType,
+    };
+    onCredentialsChange(updated);
   };
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
@@ -51,7 +76,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
@@ -61,7 +86,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
@@ -71,7 +96,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
@@ -81,7 +106,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretReset = () => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
@@ -92,7 +117,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   return (
     <ConfigSection title="Authentication">
-      {managedIdentityEnabled && (
+      {authTypeOptions.length > 1 && (
         <Field
           label="Authentication"
           description="Choose the type of authentication to Azure services"

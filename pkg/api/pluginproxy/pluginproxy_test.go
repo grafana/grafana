@@ -9,9 +9,13 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -20,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPluginProxy(t *testing.T) {
@@ -260,7 +262,7 @@ func TestPluginProxy(t *testing.T) {
 		ps := &pluginsettings.DTO{
 			SecureJSONData: map[string][]byte{},
 		}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -398,7 +400,7 @@ func TestPluginProxyRoutes(t *testing.T) {
 			ps := &pluginsettings.DTO{
 				SecureJSONData: map[string][]byte{},
 			}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, &setting.Cfg{}, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
@@ -429,7 +431,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{})
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)

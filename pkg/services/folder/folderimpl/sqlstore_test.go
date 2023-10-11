@@ -407,6 +407,17 @@ func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
 	})
 	require.NoError(t, err)
 
+	// create subfolder with same title
+	subfolderUID := util.GenerateShortUID()
+	subfolder, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       folderTitle,
+		Description: folderDsc,
+		OrgID:       orgID,
+		UID:         subfolderUID,
+		ParentUID:   f.UID,
+	})
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
 		err := folderStore.Delete(context.Background(), f.UID, orgID)
 		require.NoError(t, err)
@@ -428,15 +439,14 @@ func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
 	})
 
-	t.Run("get folder by title should succeed", func(t *testing.T) {
+	t.Run("get folder by title should return folder under root", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-			Title: &f.Title,
+			Title: &folderTitle,
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
@@ -445,13 +455,30 @@ func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
 	})
 
-	t.Run("get folder by title should succeed", func(t *testing.T) {
+	t.Run("get folder by title and parent UID should return subfolder", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			Title:     &folderTitle,
+			OrgID:     orgID,
+			ParentUID: &f.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolder.ID, ff.ID)
+		assert.Equal(t, subfolder.UID, ff.UID)
+		assert.Equal(t, subfolder.OrgID, ff.OrgID)
+		assert.Equal(t, subfolder.Title, ff.Title)
+		assert.Equal(t, subfolder.Description, ff.Description)
+		assert.Equal(t, subfolder.ParentUID, ff.ParentUID)
+		assert.NotEmpty(t, subfolder.Created)
+		assert.NotEmpty(t, subfolder.Updated)
+		assert.NotEmpty(t, subfolder.URL)
+	})
+
+	t.Run("get folder by ID should succeed", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
 			ID: &f.ID,
 		})
@@ -461,7 +488,6 @@ func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)

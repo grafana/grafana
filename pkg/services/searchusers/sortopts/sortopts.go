@@ -65,7 +65,7 @@ func newTimeSortOption(field string, desc bool, index int) model.SortOption {
 	return model.SortOption{
 		Name:        fmt.Sprintf("%v-%v", field, direction),
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
-		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
+		Description: fmt.Sprintf("Sort %v by time in an %vending order", field, direction),
 		Index:       index,
 		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},
 	}
