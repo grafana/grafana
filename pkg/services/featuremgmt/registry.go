@@ -766,6 +766,7 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "externalCorePlugins",
