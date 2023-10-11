@@ -418,7 +418,7 @@
     "underscore": "1.13.6",
     "@types/slate": "0.47.11",
     "@rushstack/rig-package": "0.5.1",
-    "@rushstack/ts-command-line": "4.15.1",
+    "@rushstack/ts-command-line": "4.16.1",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "trim": "1.0.1",
     "semver@~7.0.0": "7.5.4",
