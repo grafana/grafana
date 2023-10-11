@@ -517,6 +517,18 @@
     "config": {
       "title": "管理"
     },
+    "config-access": {
+      "subtitle": "",
+      "title": "用户和访问权限"
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": "概况"
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": "插件和数据"
+    },
     "connect-data": {
       "title": ""
     },
