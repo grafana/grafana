@@ -17,6 +17,7 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 
+import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
@@ -45,7 +46,6 @@ import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/Inst
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
 import { getMostFiredRulesScene } from '../insights/mimir/rules/MostFiredRules';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
-import { SectionFooter } from '../insights/SectionFooter';
 
 export interface DataSourceInformation {
   type: string;
@@ -295,7 +295,7 @@ function getCloudScenes() {
         }),
         new SceneFlexLayout({
           children: [
-            getAlertsByStateScene(cloudUsageDs, 'Notifications of firing alerts by state'),
+            getAlertsByStateScene(cloudUsageDs, 'Firing alerts by state'),
             getNotificationsScene(cloudUsageDs, 'Notification delivery'),
           ],
         }),
@@ -343,7 +343,7 @@ function getMimirManagedRulesScenes() {
         new SceneFlexLayout({
           children: [
             getEvalSuccessVsFailuresScene(cloudUsageDs, 'Evaluation success vs failures'),
-            getMissedIterationsScene(cloudUsageDs, 'Iterations missed'),
+            getMissedIterationsScene(cloudUsageDs, 'Missed evaluations'),
           ],
         }),
         new SceneReactObject({

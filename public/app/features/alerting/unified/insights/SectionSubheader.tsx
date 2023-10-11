@@ -16,7 +16,7 @@ export function SectionSubheader({
 
   return (
     <div className={styles.container}>
-      {children && <div>{children}</div>}
+      {children}
       {datasources && <DataSourcesInfo datasources={datasources} />}
     </div>
   );
