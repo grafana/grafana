@@ -31,7 +31,7 @@ export const createLogger = (name: string): Logger => {
         return;
       }
       const fn = throttle ? throttledLog : console.log;
-      fn(`[${name}: ${id}]: `, ...t);
+      fn(`[${name}: ${id}]:`, ...t);
     },
     enable: () => (loggingEnabled = true),
     disable: () => (loggingEnabled = false),
