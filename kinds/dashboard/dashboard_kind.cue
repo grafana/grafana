@@ -108,6 +108,9 @@ lineage: schemas: [{
 
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
+			// Whether the angular deprecation UI should be disabled or not for this dashboard.
+			disableAngularUI?: bool
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////

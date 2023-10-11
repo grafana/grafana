@@ -102,6 +102,7 @@ export class DashboardModel implements TimeModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  disableAngularUI?: boolean;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -172,6 +173,7 @@ export class DashboardModel implements TimeModel {
     this.version = data.version ?? 0;
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
+    this.disableAngularUI = data.disableAngularUI ?? false;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);

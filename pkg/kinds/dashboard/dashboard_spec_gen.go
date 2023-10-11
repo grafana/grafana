@@ -733,6 +733,9 @@ type Spec struct {
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`
 
+	// Whether the angular deprecation UI should be disabled or not for this dashboard.
+	DisableAngularUI *bool `json:"disableAngularUI,omitempty"`
+
 	// Whether a dashboard is editable or not.
 	Editable bool `json:"editable"`
 

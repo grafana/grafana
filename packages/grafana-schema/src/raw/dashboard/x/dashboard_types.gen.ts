@@ -989,6 +989,10 @@ export interface Dashboard {
    */
   description?: string;
   /**
+   * Whether the angular deprecation UI should be disabled or not for this dashboard.
+   */
+  disableAngularUI?: boolean;
+  /**
    * Whether a dashboard is editable or not.
    */
   editable: boolean;

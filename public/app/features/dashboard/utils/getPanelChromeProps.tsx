@@ -89,7 +89,9 @@ export function getPanelChromeProps(props: CommonProps) {
     : false;
   const isAngularPanel = props.panel.isAngularPlugin();
   const showAngularNotice =
-    (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
+    (config.featureToggles.angularDeprecationUI ?? false) &&
+    !props.dashboard.disableAngularUI &&
+    (isAngularDatasource || isAngularPanel);
 
   const showTitleItems =
     (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
