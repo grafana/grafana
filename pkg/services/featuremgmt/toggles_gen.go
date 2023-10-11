@@ -147,6 +147,10 @@ const (
 	// Enable folder nesting tree store
 	FlagNestedFoldersTreeStore = "nestedFoldersTreeStore"
 
+	// FlagNestedFoldersMaterializedPath
+	// Enable folder nesting with materialized path
+	FlagNestedFoldersMaterializedPath = "nestedFoldersMaterializedPath"
+
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"

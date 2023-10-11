@@ -53,6 +53,7 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFoldersTreeStore?: boolean;
+  nestedFoldersMaterializedPath?: boolean;
   nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
