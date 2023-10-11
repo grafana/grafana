@@ -47,6 +47,14 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Add index for lft and rgt", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"org_id", "lft", "rgt"},
 	}))
+
+	mg.AddMigration("Add column path in folder table", migrator.NewAddColumnMigration(folderv1(), &migrator.Column{
+		Name: "fullpath", Type: migrator.DB_Text, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for fullpath", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Cols: []string{"fullpath"},
+	}))
 }
 
 func folderv1() migrator.Table {

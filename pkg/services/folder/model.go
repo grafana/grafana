@@ -30,6 +30,7 @@ type Folder struct {
 	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`
 	ParentUID   string `xorm:"parent_uid"`
+	Fullpath    string `xorm:"fullpath"`
 	Title       string
 	Description string
 

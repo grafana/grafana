@@ -57,6 +57,12 @@ func ProvideService(
 			panic(fmt.Sprintf("failed to initialize folder store: %v", err))
 		}
 		nestedFolderStore = store
+	} else if features.IsEnabled(featuremgmt.FlagNestedFoldersMaterializedPath) {
+		store, err := ProvideMaterializedPathStore(db)
+		if err != nil {
+			panic(fmt.Sprintf("failed to initialize folder store: %v", err))
+		}
+		nestedFolderStore = store
 	} else {
 		nestedFolderStore = ProvideStore(db)
 	}

@@ -19,14 +19,12 @@ const MIGRATION_ID = "folder_tree_set_lft_rgt_columns_migration"
 
 type treeStore struct {
 	sqlStore
-	db  db.DB
 	log log.Logger
 }
 
 func ProvideTreeStore(db db.DB) (*treeStore, error) {
 	logger := log.New("folder-tree-store")
 	store := &treeStore{
-		db:  db,
 		log: logger,
 	}
 	store.sqlStore = sqlStore{db: db, log: logger}
@@ -39,14 +37,15 @@ func ProvideTreeStore(db db.DB) (*treeStore, error) {
 }
 
 func (hs *treeStore) migrate() error {
-	return hs.db.RunAndRegisterCodeMigration(context.Background(), MIGRATION_ID, func(sess *db.Session) error {
-		if err := hs.db.WithDbSession(context.Background(), func(sess *db.Session) error {
+	ctx := context.Background()
+	return hs.db.RunAndRegisterCodeMigration(ctx, MIGRATION_ID, func(sess *db.Session) error {
+		if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 			var orgIDs []int64
 			if err := sess.SQL("SELECT DISTINCT org_id FROM folder").Find(&orgIDs); err != nil {
 				return err
 			}
 
-			return concurrency.ForEachJob(context.Background(), len(orgIDs), runtime.NumCPU(), func(ctx context.Context, idx int) error {
+			return concurrency.ForEachJob(ctx, len(orgIDs), runtime.NumCPU(), func(ctx context.Context, idx int) error {
 				if err := hs.migrateTreeForOrg(orgIDs[idx]); err != nil {
 					return folder.ErrInternal.Errorf("failed to migrate tree for org: %w", err)
 				}

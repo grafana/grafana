@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -330,4 +331,19 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
+}
+
+func (ss *sqlStore) getFullpath(ctx context.Context, orgID int64, uid string) (string, error) {
+	parents, err := ss.GetParents(ctx, folder.GetParentsQuery{OrgID: orgID, UID: uid})
+	if err != nil {
+		return "", err
+	}
+
+	fullpath := ""
+	for _, p := range parents {
+		fullpath = path.Join(fullpath, p.UID)
+	}
+	fullpath = path.Join(fullpath, uid)
+
+	return fullpath, nil
 }

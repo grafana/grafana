@@ -108,6 +108,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersTreeStore),
 		},
 		{
+			desc:        "get root folders with nested folders feature and materialized path store enabled",
+			url:         "/api/folders",
+			expectedLen: LEVEL0_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersMaterializedPath),
+		},
+		{
 			desc:        "get subfolders with nested folders feature enabled",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
@@ -118,6 +124,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersTreeStore),
+		},
+		{
+			desc:        "get subfolders with nested folders feature and materialized path store enabled",
+			url:         "/api/folders?parentUid=folder0",
+			expectedLen: LEVEL1_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersMaterializedPath),
 		},
 		{
 			desc:        "list all inherited dashboards with nested folders feature enabled",
@@ -132,6 +144,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersTreeStore),
 		},
 		{
+			desc:        "list all inherited dashboards with nested folders feature and materialized path store enabled",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersMaterializedPath),
+		},
+		{
 			desc:        "search for pattern with nested folders feature enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
@@ -144,6 +162,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersTreeStore),
 		},
 		{
+			desc:        "search for pattern with nested folders feature and materialized path store enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersMaterializedPath),
+		},
+		{
 			desc:        "search for specific dashboard nested folders feature enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
@@ -154,6 +178,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersTreeStore),
+		},
+		{
+			desc:        "search for specific dashboard nested folders feature and materialized path store enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery, featuremgmt.FlagNestedFoldersMaterializedPath),
 		},
 		{
 			desc:        "get root folders with nested folders feature disabled",
