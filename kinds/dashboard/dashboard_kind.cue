@@ -42,11 +42,11 @@ lineage: schemas: [{
 			timezone?: string | *"browser"
 
 			// Whether a dashboard is editable or not.
-			editable: bool | *true
+			editable?: bool | *true
 
 			// Configuration of dashboard cursor sync behavior.
 			// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
-			graphTooltip: #DashboardCursorSync
+			graphTooltip?: #DashboardCursorSync
 
 			// Time range for dashboard.
 			// Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
@@ -515,7 +515,7 @@ lineage: schemas: [{
 			description?: string
 
 			// Whether to display the panel without a background.
-			transparent: bool | *false
+			transparent?: bool | *false
 
 			// The datasource used in all targets.
 			datasource?: #DataSourceRef
@@ -543,7 +543,7 @@ lineage: schemas: [{
 			// List of transformations that are applied to the panel data before rendering.
 			// When there are multiple transformations, Grafana applies them in the order they are listed.
 			// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
-			transformations: [...#DataTransformerConfig]
+			transformations?: [...#DataTransformerConfig]
 
 			// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
 			// This value must be formatted as a number followed by a valid time
@@ -574,10 +574,10 @@ lineage: schemas: [{
 			libraryPanel?: #LibraryPanelRef
 
 			// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-			options: {...} @grafanamaturity(NeedsExpertReview)
+			options?: {...} @grafanamaturity(NeedsExpertReview)
 
 			// Field options allow you to change how the data is displayed in your visualizations.
-			fieldConfig: #FieldConfigSource
+			fieldConfig?: #FieldConfigSource
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.

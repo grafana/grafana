@@ -14,13 +14,13 @@ import {
   FieldType,
   formatLabels,
   getDisplayProcessor,
+  getFieldDisplayName,
   Labels,
+  renderLegendFormat,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  renderLegendFormat,
 } from '@grafana/data';
-import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
 import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 import {
@@ -79,7 +79,7 @@ export function transformV2(
         f.fields.forEach((field) => {
           if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
             const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
-            field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+            field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
           }
         });
       }
