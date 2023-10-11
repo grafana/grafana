@@ -148,6 +148,7 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
+| `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                  |
 
 ## Development feature toggles
 
