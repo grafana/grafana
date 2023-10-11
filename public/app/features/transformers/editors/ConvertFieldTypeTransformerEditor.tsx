@@ -155,7 +155,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                         width={24}
                       />
                     </InlineField>
-                    <InlineField label="Set timezone" tooltip="">
+                    <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
                       <Select 
                         options={timeZoneOptions} 
                         value={c.timezone}

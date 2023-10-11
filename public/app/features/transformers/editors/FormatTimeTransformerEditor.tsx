@@ -100,7 +100,7 @@ export function FormatTimeTransfomerEditor({
         </InlineField>
         <InlineField
           label="Set Timezone"
-          tooltip="Use a configured value for the timezone."
+          tooltip="Set the timezone of the date manually"
           labelWidth={20}
           >
             <Select 
