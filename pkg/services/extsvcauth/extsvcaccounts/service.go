@@ -196,7 +196,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 	esa.logger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
 	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
-		Name:  skvType + "-" + extSvcSlug,
+		Name:  tokenNamePrefix + "-" + extSvcSlug,
 		OrgId: orgID,
 		Key:   newKeyInfo.HashedKey,
 	}); err != nil {
@@ -217,12 +217,12 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*Credentials, error) {
 	esa.logger.Debug("Get service account token from skv", "service", extSvcSlug, "orgID", orgID)
-	token, ok, err := esa.skvStore.Get(ctx, orgID, extSvcSlug, skvType)
+	token, ok, err := esa.skvStore.Get(ctx, orgID, extSvcSlug, secretKVStoreType)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
-		return nil, extsvcauth.ErrCredentialsNotFound
+		return nil, extsvcauth.ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
 	}
 	return &Credentials{Secret: token}, nil
 }
@@ -230,11 +230,11 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 // SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
 func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *SaveCredentialsCmd) error {
 	esa.logger.Debug("Save service account token in skv", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
-	return esa.skvStore.Set(ctx, cmd.OrgID, cmd.ExtSvcSlug, skvType, cmd.Secret)
+	return esa.skvStore.Set(ctx, cmd.OrgID, cmd.ExtSvcSlug, secretKVStoreType, cmd.Secret)
 }
 
 // DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
 	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
-	return esa.skvStore.Del(ctx, orgID, extSvcSlug, skvType)
+	return esa.skvStore.Del(ctx, orgID, extSvcSlug, secretKVStoreType)
 }
