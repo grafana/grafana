@@ -38,6 +38,7 @@ import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
+import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
 import {
   buildGridItemForLibPanel,
   buildGridItemForPanel,
@@ -67,6 +68,14 @@ const BFrame = toDataFrame({
   ],
 });
 
+const CFrame = toDataFrame({
+  name: 'C',
+  fields: [
+    { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+    { name: 'values', type: FieldType.number, values: [100, 200, 300] },
+  ],
+});
+
 const AnnoFrame = toDataFrame({
   fields: [
     { name: 'time', values: [1, 2, 2, 5, 5] },
@@ -82,6 +91,7 @@ const VariableQueryFrame = toDataFrame({
 const testSeries: Record<string, DataFrame> = {
   A: AFrame,
   B: BFrame,
+  C: CFrame,
   Anno: AnnoFrame,
   VariableQuery: VariableQueryFrame,
 };
@@ -530,6 +540,61 @@ describe('transformSceneToSaveModel', () => {
           [1, 2, 3],
         ],
       });
+    });
+
+    it('handles basic rows', async () => {
+      const scene = transformSaveModelToScene({ dashboard: snapshotableWithRowsDashboardJson as any, meta: {} });
+
+      activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const snapshot = transformSceneToSaveModel(scene, true);
+
+      expect(snapshot.panels?.length).toBe(5);
+
+      // @ts-expect-error
+      expect(snapshot.panels?.[0].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
+      // @ts-expect-error
+      expect(snapshot.panels?.[0].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      });
+
+      // @ts-expect-error
+      expect(snapshot.panels?.[1].targets).toBeUndefined();
+      // @ts-expect-error
+      expect(snapshot.panels?.[1].panels).toEqual([]);
+      // @ts-expect-error
+      expect(snapshot.panels?.[1].collapsed).toEqual(false);
+
+      // @ts-expect-error
+      expect(snapshot.panels?.[2].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
+      // @ts-expect-error
+      expect(snapshot.panels?.[2].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [100, 200, 300],
+          [10, 20, 30],
+        ],
+      });
+      // @ts-expect-error
+      expect(snapshot.panels?.[3].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
+      // @ts-expect-error
+      expect(snapshot.panels?.[3].targets?.[0].snapshot[0].data).toEqual({
+        values: [
+          [1000, 2000, 3000],
+          [100, 200, 300],
+        ],
+      });
+
+      // @ts-expect-error
+      expect(snapshot.panels?.[4].targets).toBeUndefined();
+      // @ts-expect-error
+      expect(snapshot.panels?.[4].panels).toHaveLength(1);
+      // @ts-expect-error
+      expect(snapshot.panels?.[4].collapsed).toEqual(true);
     });
 
     describe('trimDashboardForSnapshot', () => {
