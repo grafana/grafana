@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,9 +51,6 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
-	}
-	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		logParams = append(logParams, "traceID", traceID)
 	}
 	if status == statusError {
 		logParams = append(logParams, "error", err)
