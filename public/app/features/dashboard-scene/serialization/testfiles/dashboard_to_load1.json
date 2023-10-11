@@ -191,7 +191,19 @@
   "style": "dark",
   "tags": ["gdev", "graph-ng", "demo"],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k"
+        },
+        "filters": [],
+        "hide": 0,
+        "name": "Filters",
+        "skipUrlSync": false,
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
     "from": "now-5m",

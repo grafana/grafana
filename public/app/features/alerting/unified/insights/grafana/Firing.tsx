@@ -1,13 +1,13 @@
 import React from 'react';
 
 import { ThresholdsMode } from '@grafana/data';
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
-export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getFiringGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -17,7 +17,6 @@ export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
         expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="active"})',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({

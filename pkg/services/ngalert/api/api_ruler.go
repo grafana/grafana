@@ -77,7 +77,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		deletionCandidates := map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup{}
 		if group != "" {
 			key := ngmodels.AlertRuleGroupKey{
-				OrgID:        c.OrgID,
+				OrgID:        c.SignedInUser.GetOrgID(),
 				NamespaceUID: namespace.UID,
 				RuleGroup:    group,
 			}
@@ -173,7 +173,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	}
 
 	rules, err := srv.getAuthorizedRuleGroup(c.Req.Context(), c, ngmodels.AlertRuleGroupKey{
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		RuleGroup:    ruleGroup,
 		NamespaceUID: namespace.UID,
 	})
@@ -194,7 +194,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
@@ -289,7 +289,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.OrgID, groupChanges); err != nil {
+		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {
 			return err
 		}
 
@@ -328,15 +328,23 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
-			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
+			added, err := srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
 				return fmt.Errorf("failed to add rules: %w", err)
+			}
+			if len(added) != len(finalChanges.New) {
+				logger.Error("Cannot match inserted rules with final changes", "insertedCount", len(added), "changes", len(finalChanges.New))
+			} else {
+				for i, newRule := range finalChanges.New {
+					newRule.ID = added[i].ID
+					newRule.UID = added[i].UID
+				}
 			}
 		}
 
 		if len(finalChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, ngmodels.QuotaTargetSrv, &quota.ScopeParameters{
-				OrgID:  c.OrgID,
+				OrgID:  c.SignedInUser.GetOrgID(),
 				UserID: c.UserID,
 			}) // alert rule is table name
 			if err != nil {
@@ -363,12 +371,30 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
+	return changesToResponse(finalChanges)
+}
 
-	if finalChanges.IsEmpty() {
-		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
+func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+	body := apimodels.UpdateRuleGroupResponse{
+		Message: "rule group updated successfully",
+		Created: make([]string, 0, len(finalChanges.New)),
+		Updated: make([]string, 0, len(finalChanges.Update)),
+		Deleted: make([]string, 0, len(finalChanges.Delete)),
 	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
+	if finalChanges.IsEmpty() {
+		body.Message = "no changes detected in the rule group"
+	} else {
+		for _, r := range finalChanges.New {
+			body.Created = append(body.Created, r.UID)
+		}
+		for _, r := range finalChanges.Update {
+			body.Updated = append(body.Updated, r.Existing.UID)
+		}
+		for _, r := range finalChanges.Delete {
+			body.Deleted = append(body.Deleted, r.UID)
+		}
+	}
+	return response.JSON(http.StatusAccepted, body)
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
@@ -482,7 +508,7 @@ func (srv RulerSrv) getAuthorizedRuleByUid(ctx context.Context, c *contextmodel.
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	q := ngmodels.GetAlertRulesGroupByRuleUIDQuery{
 		UID:   ruleUID,
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 	}
 	var err error
 	rules, err := srv.store.GetAlertRulesGroupByRuleUID(ctx, &q)
@@ -527,7 +553,7 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmodel.ReqContext, folderUIDs []string, dashboardUID string, panelID int64) (map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup, int, error) {
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	query := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.OrgID,
+		OrgID:         c.SignedInUser.GetOrgID(),
 		NamespaceUIDs: folderUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
