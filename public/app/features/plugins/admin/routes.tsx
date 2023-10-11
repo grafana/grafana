@@ -38,7 +38,8 @@ const DEFAULT_ROUTES = [
   },
 ];
 
-// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
+// while we don't have a permissions for listing plugins the legacy check has to stay as a default
 function evaluateAccess(actions: AccessControlAction[], userRoles: string[]): () => string[] {
   return () => {
     if (actions.some((action) => contextSrv.hasPermission(action))) {
