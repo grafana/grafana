@@ -1,9 +1,7 @@
-package migration
+package ualert
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,22 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// It is defined in pkg/expr/service.go as "DatasourceType"
-const expressionDatasourceUID = "__expr__"
-
-//nolint:gocyclo
-func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store migrationStore.Store) (*condition, error) {
-	// TODO: needs a significant refactor to reduce complexity.
-	usr := getMigrationUser(alert.OrgID)
-	set := alert.ParsedSettings
-
+func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (*condition, error) {
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -135,16 +123,8 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 				}
 			}
 
-			// Could have an alert saved but datasource deleted, so can not require match.
-			dsUid := ""
-			if ds, err := store.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr); err == nil {
-				dsUid = ds.UID
-			} else {
-				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
-					return nil, err
-				}
-			}
-
+			// one could have an alert saved but datasource deleted, so can not require match.
+			dsUID := dsUIDMap.GetUID(orgID, set.Conditions[condIdx].Query.DatasourceID)
 			queryObj["refId"] = refID
 
 			// See services/alerting/conditions/query.go's newQueryCondition
@@ -173,11 +153,11 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 				return nil, err
 			}
 
-			alertQuery := ngmodels.AlertQuery{
+			alertQuery := alertQuery{
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsUid,
+				DatasourceUID:     dsUID,
 				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
@@ -188,7 +168,7 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 	conditions := make([]classicConditionJSON, len(set.Conditions))
 	for i, cond := range set.Conditions {
 		newCond := classicConditionJSON{}
-		newCond.Evaluator = migrationStore.ConditionEvalJSON{
+		newCond.Evaluator = conditionEvalJSON{
 			Type:   cond.Evaluator.Type,
 			Params: cond.Evaluator.Params,
 		}
@@ -204,7 +184,7 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		return nil, err
 	}
 	newCond.Condition = ccRefID // set the alert condition to point to the classic condition
-	newCond.OrgID = alert.OrgID
+	newCond.OrgID = orgID
 
 	exprModel := struct {
 		Type       string                 `json:"type"`
@@ -221,7 +201,7 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		return nil, err
 	}
 
-	ccAlertQuery := ngmodels.AlertQuery{
+	ccAlertQuery := alertQuery{
 		RefID:         ccRefID,
 		Model:         exprModelJSON,
 		DatasourceUID: expressionDatasourceUID,
@@ -243,7 +223,7 @@ type condition struct {
 	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
-	Data []ngmodels.AlertQuery `json:"data"`
+	Data []alertQuery `json:"data"`
 }
 
 const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -270,7 +250,7 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 
 // getRelativeDuration turns the alerting durations for dashboard conditions
 // into a relative time range.
-func getRelativeDuration(rawFrom, rawTo string) (*ngmodels.RelativeTimeRange, error) {
+func getRelativeDuration(rawFrom, rawTo string) (*relativeTimeRange, error) {
 	fromD, err := getFrom(rawFrom)
 	if err != nil {
 		return nil, err
@@ -280,9 +260,9 @@ func getRelativeDuration(rawFrom, rawTo string) (*ngmodels.RelativeTimeRange, er
 	if err != nil {
 		return nil, err
 	}
-	return &ngmodels.RelativeTimeRange{
-		From: ngmodels.Duration(fromD),
-		To:   ngmodels.Duration(toD),
+	return &relativeTimeRange{
+		From: duration(fromD),
+		To:   duration(toD),
 	}, nil
 }
 
@@ -317,7 +297,7 @@ func getTo(to string) (time.Duration, error) {
 }
 
 type classicConditionJSON struct {
-	Evaluator migrationStore.ConditionEvalJSON `json:"evaluator"`
+	Evaluator conditionEvalJSON `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`
