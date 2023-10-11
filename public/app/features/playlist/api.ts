@@ -37,11 +37,11 @@ class LegacyAPI implements PlaylistAPI {
   }
 }
 
-interface KubernetesPlaylistList {
-  playlists: KubernetesPlaylist[];
+interface K8sPlaylistList {
+  playlists: K8sPlaylist[];
 }
 
-interface KubernetesPlaylist {
+interface K8sPlaylist {
   metadata: {
     name: string;
   };
@@ -57,7 +57,7 @@ class K8sAPI implements PlaylistAPI {
   readonly legacy = new LegacyAPI(); // set to null for full CRUD
 
   async getAllPlaylist(): Promise<Playlist[]> {
-    const result = await getBackendSrv().get<KubernetesPlaylistList>(this.url);
+    const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
     console.log('getAllPlaylist', result);
     const v = result.playlists.map(k8sResourceAsPlaylist);
     console.log('after', v);
@@ -65,7 +65,7 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
-    const r = await getBackendSrv().get<KubernetesPlaylist>(this.url + '/' + uid);
+    const r = await getBackendSrv().get<K8sPlaylist>(this.url + '/' + uid);
     const p = k8sResourceAsPlaylist(r);
     await migrateInternalIDs(p);
     return p;
@@ -117,7 +117,7 @@ class K8sAPI implements PlaylistAPI {
 // This converts a saved k8s resource into a playlist object
 // the main difference is that k8s uses metdata.name as the uid
 // to avoid future confusion, the display name is now called "title"
-function k8sResourceAsPlaylist(r: KubernetesPlaylist): Playlist {
+function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
   return {
     ...r.spec,
     uid: r.metadata.name, // replace the uid from the k8s name
