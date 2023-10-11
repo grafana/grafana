@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	skvType  = "extsvc-token"
-	TmpOrgID = 1
+	skvType = "extsvc-token"
 )
 
 type saveExtSvcAccountCmd struct {

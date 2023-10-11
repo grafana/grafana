@@ -9,6 +9,9 @@ import (
 
 const (
 	OAuth2Server AuthProvider = "OAuth2Server"
+
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgID int64 = 1
 )
 
 type AuthProvider string
@@ -26,13 +29,6 @@ type ExtSvcAccountsService interface {
 	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
 	// RetrieveExtSvcAccount fetches an external service account by ID
 	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
-
-	// GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
-	GetExtSvcCredentials(ctx context.Context, orgID int64, ExtSvcSlug string) (*ExtSvcCredentials, error)
-	// SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
-	SaveExtSvcCredentials(ctx context.Context, cmd *SaveExtSvcCredentialsCmd) error
-	// DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
-	DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error
 }
 
 // ExtSvcAccount represents the service account associated to an external service

@@ -68,14 +68,14 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 	saID, err := esa.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slug,
 		Enabled:     cmd.Self.Enabled,
-		OrgID:       TmpOrgID,
+		OrgID:       extsvcauth.TmpOrgID,
 		Permissions: cmd.Self.Permissions,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := esa.getExtSvcAccountToken(ctx, TmpOrgID, saID, slug)
+	token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
 	if err != nil {
 		esa.logger.Error("Could not get the external svc token",
 			"service", slug,
