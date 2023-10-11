@@ -3,13 +3,15 @@ package signingkeystore
 import (
 	"context"
 	"crypto"
-	"fmt"
-	"time"
 
 	"github.com/go-jose/go-jose/v3"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
+var _ SigningStore = (*FakeStore)(nil)
+
 type FakeStore struct {
+	Keys        map[string]signingkeys.SigningKey
 	PrivateKeys map[string]crypto.Signer
 	jwks        jose.JSONWebKeySet
 }
@@ -17,46 +19,34 @@ type FakeStore struct {
 func NewFakeStore() *FakeStore {
 	return &FakeStore{
 		PrivateKeys: make(map[string]crypto.Signer),
+		Keys:        make(map[string]signingkeys.SigningKey),
 		jwks:        jose.JSONWebKeySet{},
 	}
 }
 
-func (s *FakeStore) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
-	return s.jwks, nil
-}
-
-func (s *FakeStore) AddPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm,
-	privateKey crypto.Signer, expiresAt *time.Time, force bool) (crypto.Signer, error) {
+func (s *FakeStore) Add(ctx context.Context, key *signingkeys.SigningKey, force bool) (*signingkeys.SigningKey, error) {
 	if !force {
-		if key, ok := s.PrivateKeys[keyID]; ok {
-			if !hasExpired(key) {
-				return nil, fmt.Errorf("key already exists and has not expired")
-			}
+		if _, ok := s.Keys[key.KeyID]; ok {
+			return nil, signingkeys.ErrSigningKeyAlreadyExists
 		}
 	}
 
-	s.PrivateKeys[keyID] = privateKey
-
-	jwk := jose.JSONWebKey{
-		Key:       privateKey.Public(),
-		Algorithm: string(alg),
-		KeyID:     keyID,
-		Use:       "sig",
-	}
-
-	s.jwks.Keys = append(s.jwks.Keys, jwk)
-
-	return privateKey, nil
+	s.Keys[key.KeyID] = *key
+	return key, nil
 }
 
-func (s *FakeStore) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
-	if key, ok := s.PrivateKeys[keyID]; ok {
-		return key, nil
+func (s *FakeStore) List(ctx context.Context) ([]signingkeys.SigningKey, error) {
+	out := make([]signingkeys.SigningKey, 0, len(s.Keys))
+	for _, key := range s.Keys {
+		out = append(out, key)
 	}
-
-	return nil, fmt.Errorf("key not found")
+	return out, nil
 }
 
-func hasExpired(key crypto.Signer) bool {
-	return false
+func (s *FakeStore) Get(ctx context.Context, keyID string) (*signingkeys.SigningKey, error) {
+	if key, ok := s.Keys[keyID]; ok {
+		return &key, nil
+	}
+
+	return nil, signingkeys.ErrSigningKeyNotFound
 }
