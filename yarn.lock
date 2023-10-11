@@ -3331,9 +3331,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-configs@10.2.0-pre, @grafana/plugin-configs@workspace:packages/plugins":
+"@grafana/plugin-configs@10.2.0-pre, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
-  resolution: "@grafana/plugin-configs@workspace:packages/plugins"
+  resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     copy-webpack-plugin: 11.0.0
