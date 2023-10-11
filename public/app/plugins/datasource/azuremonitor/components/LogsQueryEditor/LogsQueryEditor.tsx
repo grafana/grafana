@@ -122,10 +122,11 @@ const LogsQueryEditor = ({
                 setError={setError}
                 inputId={'azure-monitor-logs'}
                 options={[
+                  { label: 'Log', value: ResultFormat.Logs },
                   { label: 'Time series', value: ResultFormat.TimeSeries },
                   { label: 'Table', value: ResultFormat.Table },
                 ]}
-                defaultValue={ResultFormat.Table}
+                defaultValue={ResultFormat.Logs}
                 setFormatAs={setFormatAs}
                 resultFormat={query.azureLogAnalytics?.resultFormat}
               />
