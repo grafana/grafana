@@ -786,7 +786,8 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
     ]).pipe(
       mergeMap(([data, correlations]) =>
         decorateData(
-          mergeDataSeries(queryResponse, data),
+          // Query splitting, otherwise duplicates results
+          data.state === LoadingState.Done ? mergeDataSeries(queryResponse, data) : data,
           queryResponse,
           absoluteRange,
           undefined,
