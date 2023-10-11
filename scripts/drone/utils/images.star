@@ -8,7 +8,7 @@ images = {
     "publish_image": "grafana/grafana-ci-deploy:1.3.3",
     "alpine_image": "alpine:3.18.3",
     "curl_image": "byrnedo/alpine-curl:0.1.8",
-    "go_image": "golang:1.20.8",
+    "go_image": "golang:1.20.10",
     "plugins_slack_image": "plugins/slack",
     "postgres_alpine_image": "postgres:12.3-alpine",
     "mysql5_image": "mysql:5.7.39",
