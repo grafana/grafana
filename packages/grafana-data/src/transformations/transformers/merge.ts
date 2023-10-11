@@ -19,7 +19,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  applicator: (options, context) => {
+  applicator: (options, context, data) => {
     return true;
   },
   operator: (options) => (source) =>

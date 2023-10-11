@@ -33,7 +33,7 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * given the current data.
    * @param options
    */
-  applicator?: (options: TOptions, context: DataTransformContext) => boolean;
+  applicator?: (options: TOptions, context: DataTransformContext, data: DataFrame[]) => boolean;
 }
 
 /**
