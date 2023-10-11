@@ -9,13 +9,12 @@ import { Editor } from 'slate-react';
 
 import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 
-import { makeValue } from '../../index';
 import { SlatePrism } from '../../slate-plugins';
 import { useStyles2 } from '../../themes';
-import { SCHEMA } from '../../utils/slate';
+import { SCHEMA, makeValue } from '../../utils/slate';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { getInputStyles } from '../Input/Input';
-import { Portal } from '../index';
+import { Portal } from '../Portal/Portal';
 
 import { DataLinkSuggestions } from './DataLinkSuggestions';
 import { SelectionReference } from './SelectionReference';

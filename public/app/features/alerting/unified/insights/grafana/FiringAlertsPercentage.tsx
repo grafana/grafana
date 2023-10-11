@@ -1,9 +1,9 @@
-import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 
-export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getFiringAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -18,7 +18,6 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
         expr: 'sum(count_over_time({from="state-history"} | json [1w]))',
       },
     ],
-    $timeRange: timeRange,
   });
 
   const transformation = new SceneDataTransformer({
@@ -61,6 +60,11 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.stat().setTitle(panelTitle).setData(transformation).setUnit('percent').build(),
+    body: PanelBuilders.stat()
+      .setTitle(panelTitle)
+      .setDescription(panelTitle)
+      .setData(transformation)
+      .setUnit('percent')
+      .build(),
   });
 }

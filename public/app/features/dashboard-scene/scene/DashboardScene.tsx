@@ -78,12 +78,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    window.__grafanaSceneContext = this;
+
     if (this.state.isEditing) {
       this.startTrackingChanges();
     }
 
     // Deactivation logic
     return () => {
+      window.__grafanaSceneContext = undefined;
       this.stopTrackingChanges();
       this.stopUrlSync();
     };

@@ -127,6 +127,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     const direction = this.getRepeatDirection();
     const stateChange: Partial<PanelRepeaterGridItemState> = { repeatedPanels: repeatedPanels };
     const itemHeight = this.state.itemHeight ?? 10;
+    const prevHeight = this.state.height;
     const maxPerRow = this.getMaxPerRow();
 
     if (direction === 'h') {
@@ -139,8 +140,11 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     this.setState(stateChange);
 
     // In case we updated our height the grid layout needs to be update
-    if (this.parent instanceof SceneGridLayout) {
-      this.parent!.forceRender();
+    if (prevHeight !== this.state.height) {
+      const layout = sceneGraph.getLayout(this);
+      if (layout instanceof SceneGridLayout) {
+        layout.forceRender();
+      }
     }
   }
 

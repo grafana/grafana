@@ -7,7 +7,13 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: () => {
+      getInstanceSettings: (datasourceUid?: string) => {
+        switch (datasourceUid) {
+          case 'tempo-datasource-uid':
+            return { name: 'Tempo', type: 'tempo' };
+          case 'xray-datasource-uid':
+            return { name: 'X-ray', type: 'grafana-x-ray-datasource' };
+        }
         return { name: 'Loki1' };
       },
     };
@@ -36,8 +42,22 @@ describe('getDerivedFields', () => {
         datasourceUid: 'uid2',
         urlDisplayLabel: 'Custom Label',
       },
+      {
+        matcherRegex: 'trace=(\\w+)',
+        name: 'tempoTraceId',
+        url: 'test',
+        datasourceUid: 'tempo-datasource-uid',
+        urlDisplayLabel: 'Tempo',
+      },
+      {
+        matcherRegex: 'trace=(\\w+)',
+        name: 'xrayTraceId',
+        url: 'test',
+        datasourceUid: 'xray-datasource-uid',
+        urlDisplayLabel: 'AWS X-ray',
+      },
     ]);
-    expect(newFields.length).toBe(2);
+    expect(newFields.length).toBe(4);
     const trace1 = newFields.find((f) => f.name === 'trace1');
     expect(trace1!.values).toEqual([null, '1234', null]);
     expect(trace1!.config.links![0]).toEqual({
@@ -56,6 +76,32 @@ describe('getDerivedFields', () => {
     expect(trace2!.config.links![1]).toEqual({
       title: 'Custom Label',
       internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
+      url: '',
+    });
+
+    const tempoTraceId = newFields.find((f) => f.name === 'tempoTraceId');
+    expect(tempoTraceId!.values).toEqual([null, null, null]);
+    expect(tempoTraceId!.config.links!.length).toBe(1);
+    expect(tempoTraceId!.config.links![0]).toEqual({
+      title: 'Tempo',
+      internal: {
+        datasourceName: 'Tempo',
+        datasourceUid: 'tempo-datasource-uid',
+        query: { query: 'test', queryType: 'traceql' },
+      },
+      url: '',
+    });
+
+    const xrayTraceId = newFields.find((f) => f.name === 'xrayTraceId');
+    expect(xrayTraceId!.values).toEqual([null, null, null]);
+    expect(xrayTraceId!.config.links!.length).toBe(1);
+    expect(xrayTraceId!.config.links![0]).toEqual({
+      title: 'AWS X-ray',
+      internal: {
+        datasourceName: 'X-ray',
+        datasourceUid: 'xray-datasource-uid',
+        query: { query: 'test', queryType: 'getTrace' },
+      },
       url: '',
     });
   });

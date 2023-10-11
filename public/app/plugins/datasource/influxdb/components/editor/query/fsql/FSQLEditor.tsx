@@ -8,9 +8,8 @@ import { SQLQuery } from '../../../../../../../features/plugins/sql';
 import { SqlQueryEditor } from '../../../../../../../features/plugins/sql/components/QueryEditor';
 import { applyQueryDefaults } from '../../../../../../../features/plugins/sql/defaults';
 import InfluxDatasource from '../../../../datasource';
+import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
 import { InfluxQuery } from '../../../../types';
-
-import { FlightSQLDatasource } from './FlightSQLDatasource';
 
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;

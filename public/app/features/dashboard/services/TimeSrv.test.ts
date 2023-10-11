@@ -3,7 +3,7 @@ import { ContextSrvStub } from 'test/specs/helpers';
 
 import { dateTime, isDateTime } from '@grafana/data';
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
-import { SceneTimeRange } from '@grafana/scenes';
+import { EmbeddedScene, SceneCanvasText, SceneTimeRange } from '@grafana/scenes';
 
 import { TimeModel } from '../state/TimeModel';
 
@@ -348,17 +348,16 @@ describe('timeSrv', () => {
     it('should use scene provided range if active', () => {
       timeSrv.setTime({ from: 'now-6h', to: 'now' });
 
-      const timeRange = new SceneTimeRange({
-        from: 'now-1h',
-        to: 'now',
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+        body: new SceneCanvasText({ text: 'hello' }),
       });
-      window.__timeRangeSceneObject = timeRange;
 
       let time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-6h');
       expect(time.raw.to).toBe('now');
 
-      timeRange.activate();
+      window.__grafanaSceneContext.activate();
       time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-1h');
       expect(time.raw.to).toBe('now');

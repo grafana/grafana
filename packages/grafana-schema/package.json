@@ -39,7 +39,7 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "25.0.2",
     "@rollup/plugin-json": "6.0.0",
-    "@rollup/plugin-node-resolve": "15.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
     "esbuild": "0.18.12",
     "glob": "^10.2.7",
     "rimraf": "5.0.1",
