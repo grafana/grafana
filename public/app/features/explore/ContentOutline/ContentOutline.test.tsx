@@ -36,7 +36,7 @@ const setup = () => {
     unregister: jest.fn(),
   });
 
-  return render(<ContentOutline scroller={scrollerMock} />);
+  return render(<ContentOutline scroller={scrollerMock} panelId="content-outline-container-1" />);
 };
 
 describe('<ContentOutline />', () => {
