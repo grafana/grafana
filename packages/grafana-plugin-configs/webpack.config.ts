@@ -198,7 +198,6 @@ const config = async (env: any): Promise<Configuration> => {
     },
 
     watchOptions: {
-      poll: 3000,
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
   };

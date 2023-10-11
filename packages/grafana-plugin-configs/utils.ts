@@ -11,13 +11,11 @@ export function getPluginJson() {
   return require(path.resolve(process.cwd(), 'plugin.json'));
 }
 
-// Support bundling nested plugins by finding all plugin.json files in src directory
-// then checking for a sibling module.[jt]sx? file.
 export async function getEntries(): Promise<Record<string, string>> {
-  const pluginsJson = await glob(path.resolve(process.cwd(), `module.{ts,tsx}`));
-  if (pluginsJson.length > 0) {
+  const pluginModules = await glob(path.resolve(process.cwd(), `module.{ts,tsx}`));
+  if (pluginModules.length > 0) {
     return {
-      module: pluginsJson[0],
+      module: pluginModules[0],
     };
   }
   throw new Error('Could not find module.ts or module.tsx file');
