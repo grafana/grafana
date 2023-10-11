@@ -252,4 +252,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   private isValidConfigField(field: string | undefined): boolean {
     return typeof field === 'string' && field.length > 0;
   }
+
+  async getAzureLogAnalyticsCheatsheetQueries() {
+    return await this.getResource(`${routeNames.logAnalytics}/v1/metadata`);
+  }
 }

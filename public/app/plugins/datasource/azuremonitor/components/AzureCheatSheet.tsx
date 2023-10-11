@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Card,
@@ -15,6 +15,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import AzureLogAnalyticsDatasource from '../azure_log_analytics/azure_log_analytics_datasource';
 import {
   AzureMonitorQuery,
   AzureQueryType,
@@ -27,13 +28,13 @@ import {
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';
 
-export interface Props {
-  onClickExample: (query: AzureMonitorQuery) => void;
+export interface AzureCheatSheetProps {
+  onChange: (query: AzureMonitorQuery) => void;
   query: AzureMonitorQuery;
-  getCheatsheetQueries?: () => Promise<CheatsheetQueries>;
+  datasource: AzureLogAnalyticsDatasource;
 }
 
-const AzureCheatSheet = (props: Props) => {
+const AzureCheatSheet = (props: AzureCheatSheetProps) => {
   const [cheatsheetQueries, setCheatsheetQueries] = useState<CheatsheetQueries | null>(null);
   const [areDropdownsOpen, setAreDropdownsOpen] = useState<DropdownCategories>({});
   const [visibleQueries, setVisibleQueries] = useState<CheatsheetQueries | null>(null);
@@ -54,32 +55,30 @@ const AzureCheatSheet = (props: Props) => {
   }, [cheatsheetQueries]);
 
   const getCheatsheetQueries = async () => {
-    await getBackendSrv()
-      .get(`https://api.loganalytics.io/v1/metadata`)
-      .then((result) => {
-        result.categories.sort((a: Category, b: Category) => {
-          return a.displayName.toLowerCase() === b.displayName.toLowerCase()
-            ? 0
-            : a.displayName.toLowerCase() < b.displayName.toLowerCase()
-            ? -1
-            : 1;
-        });
-        const alphabetizedQueries = result.categories.reduce(
-          (queriesByCategory: CheatsheetQueries, category: Category) => {
-            const categoryQueries = category.related.queries.map((queryId: string) => {
-              return result.queries.find((query: CheatsheetQuery) => query.id === queryId);
-            });
-            queriesByCategory[category.displayName] = categoryQueries;
-            setAreDropdownsOpen({ ...areDropdownsOpen, [category.id]: false });
-            return queriesByCategory;
-          },
-          {}
-        );
-        setCheatsheetQueries(alphabetizedQueries);
-        setVisibleQueries(alphabetizedQueries);
-        setIsLoading(false);
-        return alphabetizedQueries;
+    await props.datasource.getAzureLogAnalyticsCheatsheetQueries().then((result) => {
+      result.categories.sort((a: Category, b: Category) => {
+        return a.displayName.toLowerCase() === b.displayName.toLowerCase()
+          ? 0
+          : a.displayName.toLowerCase() < b.displayName.toLowerCase()
+          ? -1
+          : 1;
       });
+      const alphabetizedQueries = result.categories.reduce(
+        (queriesByCategory: CheatsheetQueries, category: Category) => {
+          const categoryQueries = category.related.queries.map((queryId: string) => {
+            return result.queries.find((query: CheatsheetQuery) => query.id === queryId);
+          });
+          queriesByCategory[category.displayName] = categoryQueries;
+          setAreDropdownsOpen({ ...areDropdownsOpen, [category.id]: false });
+          return queriesByCategory;
+        },
+        {}
+      );
+      setCheatsheetQueries(alphabetizedQueries);
+      setVisibleQueries(alphabetizedQueries);
+      setIsLoading(false);
+      return alphabetizedQueries;
+    });
   };
 
   useEffect(() => {
@@ -135,108 +134,101 @@ const AzureCheatSheet = (props: Props) => {
 
   return (
     <div>
-      <h3>Azure Monitor Cheat Sheet</h3>
-      <Collapse
-        label="Logs"
-        collapsible={true}
-        isOpen={areDropdownsOpen.Logs}
-        onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, Logs: isOpen })}
-      >
-        {!isLoading && visibleQueries ? (
-          <div>
-            <div className={styles.filterAlignment}>
-              <Input
-                value={searchInputValue}
-                onChange={(e) => {
-                  setSearchInputValue(e.currentTarget.value);
-                  const filteredQueries = filterQueriesBySearch(e.currentTarget.value);
-                  setVisibleQueries(filteredQueries);
-                }}
-                placeholder="Search Logs queries"
-                width={50}
+      {!isLoading && visibleQueries ? (
+        <div>
+          <div className={styles.filterAlignment}>
+            <Input
+              value={searchInputValue}
+              onChange={(e) => {
+                setSearchInputValue(e.currentTarget.value);
+                const filteredQueries = filterQueriesBySearch(e.currentTarget.value);
+                setVisibleQueries(filteredQueries);
+              }}
+              placeholder="Search Logs queries"
+              width={40}
+            />
+            <Field label="Categories" className={styles.categoryDropdown}>
+              <Select
+                options={dropdownMenu}
+                value={''}
+                onChange={(a) => filterQueriesByCategory(a)}
+                allowCustomValue={false}
+                backspaceRemovesValue={true}
+                placeholder="All categories"
+                isClearable={true}
+                noOptionsMessage="Unable to list all categories"
+                formatCreateLabel={(input: string) => `Category: ${input}`}
+                isSearchable={true}
+                isMulti={true}
+                width={40}
               />
-              <Field label="Categories" className={styles.categoryDropdown}>
-                <Select
-                  options={dropdownMenu}
-                  value={''}
-                  onChange={(a) => filterQueriesByCategory(a)}
-                  allowCustomValue={false}
-                  backspaceRemovesValue={true}
-                  placeholder="All categories"
-                  isClearable={true}
-                  noOptionsMessage="Unable to list all categories"
-                  formatCreateLabel={(input: string) => `Category: ${input}`}
-                  isSearchable={true}
-                  isMulti={true}
-                  width={50}
-                />
-              </Field>
-            </div>
-            <div className={styles.spacing}>
-              Query results:{' '}
-              {Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
-                totalQueries = visibleQueries[category]!.length + totalQueries;
-                return totalQueries;
-              }, 0)}
-            </div>
-            <CustomScrollbar showScrollIndicators={true} autoHeightMax="350px">
-              {Object.keys(visibleQueries).map((category: string) => {
-                if (visibleQueries[category]!.length) {
-                  return (
-                    <Collapse
-                      label={category + ' ' + `(${visibleQueries[category]!.length})`}
-                      collapsible={true}
-                      isOpen={areDropdownsOpen[category]}
-                      onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
-                      key={category}
-                    >
-                      {visibleQueries[category]!.map((query) => {
-                        return (
-                          <Card className={styles.card} key={query.id}>
-                            <Card.Heading>{query.displayName}</Card.Heading>
-                            <CustomScrollbar showScrollIndicators={true} autoHeightMax="100px">
-                              <RawQuery
-                                aria-label={`${query.displayName} raw query`}
-                                query={query.body}
-                                lang={lang}
-                                className={styles.rawQuery}
-                              />
-                            </CustomScrollbar>
-                            <Card.Actions>
-                              <Button
-                                size="sm"
-                                aria-label="use this query button"
-                                onClick={() => {
-                                  props.onClickExample({
-                                    refId: 'A',
-                                    queryType: AzureQueryType.LogAnalytics,
-                                    azureLogAnalytics: { query: query.body },
-                                  });
-                                  reportInteraction('grafana_azure_cheatsheet_logs_query_selected', {
-                                    id: query.id,
-                                    queryName: query.displayName,
-                                    query: query.body,
-                                    queryCategories: query.related.categories,
-                                  });
-                                }}
-                              >
-                                Use this query
-                              </Button>
-                            </Card.Actions>
-                          </Card>
-                        );
-                      })}
-                    </Collapse>
-                  );
-                }
-                return;
-              })}
-            </CustomScrollbar>
+            </Field>
           </div>
-        ) : (
-          <LoadingPlaceholder text="Loading..." />
-        )}
-      </Collapse>
+          <div className={styles.spacing}>
+            Query results:{' '}
+            {Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
+              totalQueries = visibleQueries[category]!.length + totalQueries;
+              return totalQueries;
+            }, 0)}
+          </div>
+          <CustomScrollbar showScrollIndicators={true} autoHeightMax="350px">
+            {Object.keys(visibleQueries).map((category: string) => {
+              if (visibleQueries[category]!.length) {
+                return (
+                  <Collapse
+                    label={category + ' ' + `(${visibleQueries[category]!.length})`}
+                    collapsible={true}
+                    isOpen={areDropdownsOpen[category]}
+                    onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
+                    key={category}
+                  >
+                    {visibleQueries[category]!.map((query) => {
+                      return (
+                        <Card className={styles.card} key={query.id}>
+                          <Card.Heading>{query.displayName}</Card.Heading>
+                          <CustomScrollbar showScrollIndicators={true} autoHeightMax="100px">
+                            <RawQuery
+                              aria-label={`${query.displayName} raw query`}
+                              query={query.body}
+                              lang={lang}
+                              className={styles.rawQuery}
+                            />
+                          </CustomScrollbar>
+                          <Card.Actions>
+                            <Button
+                              size="sm"
+                              aria-label="use this query button"
+                              onClick={() => {
+                                props.onChange({
+                                  refId: 'A',
+                                  queryType: AzureQueryType.LogAnalytics,
+                                  azureLogAnalytics: { query: query.body },
+                                  datasource: props.datasource,
+                                });
+                                reportInteraction('grafana_azure_cheatsheet_logs_query_selected', {
+                                  id: query.id,
+                                  queryName: query.displayName,
+                                  query: query.body,
+                                  queryCategories: query.related.categories,
+                                });
+                              }}
+                            >
+                              Use this query
+                            </Button>
+                          </Card.Actions>
+                        </Card>
+                      );
+                    })}
+                  </Collapse>
+                );
+              }
+              return;
+            })}
+          </CustomScrollbar>
+        </div>
+      ) : (
+        <LoadingPlaceholder text="Loading..." />
+      )}
     </div>
   );
 };
@@ -246,7 +238,7 @@ export default AzureCheatSheet;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
-      width: '49.5%',
+      width: '90%',
       display: 'flex',
       flexDirection: 'column',
     }),
@@ -262,7 +254,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     categoryDropdown: css({
-      marginLeft: '10px',
+      margin: '0 0 10px 10px',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
     }),
   };
 };
