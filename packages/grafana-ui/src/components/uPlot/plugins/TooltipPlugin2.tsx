@@ -119,10 +119,18 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         }
 
         pendingRender = true;
+      }
 
-        if (setPinned) {
-          pendingPinned = true;
-        }
+      if (setPinned) {
+        pendingPinned = true;
+      }
+    };
+
+    const mousedownOutside = (e: MouseEvent) => {
+      let clickedOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
+
+      if (clickedOutside) {
+        dismiss();
       }
     };
 
@@ -130,7 +138,19 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
       pendingRender = false;
 
       if (pendingPinned) {
+        _style = { pointerEvents: _isPinned ? 'all' : 'none' };
+
         domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+
+        // @ts-ignore
+        _plot!.cursor._lock = _isPinned;
+
+        if (_isPinned) {
+          document.addEventListener('mousedown', mousedownOutside, true);
+        } else {
+          document.removeEventListener('mousedown', mousedownOutside, true);
+        }
+
         pendingPinned = false;
       }
 
@@ -148,35 +168,18 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     const dismiss = () => {
       _isPinned = false;
       _isHovering = false;
-      _style = { pointerEvents: 'none' };
-
-      // @ts-ignore
-      _plot!.cursor._lock = _isPinned;
-
+      _plot!.setCursor({ left: -10, top: -10 });
       scheduleRender(true);
     };
 
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
-      // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
+      // this handles pinning
       u.over.addEventListener('click', (e) => {
-        if (_isHovering) {
-          if (e.target === u.over) {
-            _isPinned = !_isPinned;
-            _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-            scheduleRender(true);
-          }
-
-          // @ts-ignore
-          u.cursor._lock = _isPinned;
-
-          // hack to trigger cursor to new position after unlock
-          // (should not be necessary after using the cursor.lock API)
-          if (!_isPinned) {
-            u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
-            _isHovering = false;
-          }
+        if (_isHovering && !_isPinned && e.target === u.over) {
+          _isPinned = true;
+          scheduleRender(true);
         }
       });
     });
@@ -278,7 +281,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={styles.tooltipWrapper} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
+        {isPinned && <CloseButton onClick={dismiss} style={{ top: '15px' }} />}
         {contents}
       </div>,
       plot.over
