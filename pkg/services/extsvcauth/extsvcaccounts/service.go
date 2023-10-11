@@ -21,7 +21,7 @@ type ExtSvcAccountsService struct {
 	acSvc    ac.Service
 	logger   log.Logger
 	saSvc    sa.Service
-	skvStore *kvstore.SecretsKVStoreSQL
+	skvStore kvstore.SecretsKVStore
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
@@ -30,7 +30,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, 
 		acSvc:    acSvc,
 		logger:   logger,
 		saSvc:    saSvc,
-		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger),
+		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
 }
 
@@ -73,16 +73,19 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 		return nil, err
 	}
 
-	token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
-	if err != nil {
-		esa.logger.Error("Could not get the external svc token",
-			"service", slug,
-			"saID", saID,
-			"error", err.Error())
-		return nil, err
+	if saID > 0 {
+		token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
+		if err != nil {
+			esa.logger.Error("Could not get the external svc token",
+				"service", slug,
+				"saID", saID,
+				"error", err.Error())
+			return nil, err
+		}
+		return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
 	}
 
-	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
+	return nil, nil
 }
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
