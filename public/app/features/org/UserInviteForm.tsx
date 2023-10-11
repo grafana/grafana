@@ -24,8 +24,7 @@ import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
-const tooltipMessage = noBasicRoleFlag ? (
+const tooltipMessage = (
   <>
     You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
     information in&nbsp;
@@ -38,12 +37,9 @@ const tooltipMessage = noBasicRoleFlag ? (
     </TextLink>
     .
   </>
-) : (
-  ''
 );
 
 const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
-  .filter((r) => noBasicRoleFlag || r !== OrgRole.None)
   .map((r) => ({
     label: r === OrgRole.None ? 'No basic role' : r,
     value: r,

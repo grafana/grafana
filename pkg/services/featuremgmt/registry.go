@@ -696,14 +696,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:            "noBasicRole",
-			Description:     "Enables a new role that has no permissions by default",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    true,
-			Owner:           grafanaAuthnzSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
 			Stage:           FeatureStagePrivatePreview,
