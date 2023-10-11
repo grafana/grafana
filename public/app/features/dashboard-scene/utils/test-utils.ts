@@ -1,4 +1,4 @@
-import { DeepPartial, SceneDeactivationHandler, SceneObject, SceneQueryRunner } from '@grafana/scenes';
+import { DeepPartial, SceneDeactivationHandler, SceneObject } from '@grafana/scenes';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardDTO } from 'app/types';
 
