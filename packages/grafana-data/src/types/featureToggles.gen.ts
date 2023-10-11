@@ -142,4 +142,5 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
 }

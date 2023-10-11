@@ -867,5 +867,12 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "lokiStructuredMetadata",
+			Description:  "Enables the loki data source to request structured metadata from the Loki server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
