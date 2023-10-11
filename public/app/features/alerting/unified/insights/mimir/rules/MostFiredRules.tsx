@@ -43,7 +43,7 @@ export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: st
     ...PANEL_STYLES,
     body: PanelBuilders.table()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The alert rules that have fired the most')
       .setData(transformation)
       .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
