@@ -502,4 +502,8 @@ const (
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagPluginsInstrumentationStatusSource
+	// Include a status source label for plugin request metrics and logs
+	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 )
