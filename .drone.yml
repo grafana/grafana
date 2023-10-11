@@ -1201,8 +1201,6 @@ steps:
 - commands:
   - apk add --update git make
   - pwd
-  - echo 'cd into grafana'
-  - cd grafana
   - echo 'listing...'
   - ls -l
   - pwd
@@ -4739,6 +4737,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bd813690923668ae3d36a58348699a5c04ebdfc82be03c80ce09b7478d5b2889
+hmac: 8d8fc057bf22711a4d98295f17b53eaff98407989bbf91861fff5af81262f054
 
 ...

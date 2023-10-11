@@ -63,8 +63,6 @@ def swagger_gen_step(ver_mode):
         "commands": [
             "apk add --update git make",
             "pwd",
-            "echo 'cd into grafana'",
-            "cd grafana",
             "echo 'listing...'",
             "ls -l",
             "pwd",
