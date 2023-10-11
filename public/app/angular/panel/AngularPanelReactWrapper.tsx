@@ -3,13 +3,13 @@ import { Observable, ReplaySubject } from 'rxjs';
 
 import { EventBusSrv, PanelData, PanelPlugin, PanelProps, FieldConfigSource } from '@grafana/data';
 import { AngularComponent, getAngularLoader, RefreshEvent } from '@grafana/runtime';
-import { DashboardModelCompatabilityWrapper } from 'app/features/dashboard-scene/utils/DashboardModelCompatabilityWrapper';
+import { DashboardModelCompatibilityWrapper } from 'app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { RenderEvent } from 'app/types/events';
 
 interface AngularScopeProps {
-  panel: PanelModelCompatabilityWrapper;
-  dashboard: DashboardModelCompatabilityWrapper;
+  panel: PanelModelCompatibilityWrapper;
+  dashboard: DashboardModelCompatibilityWrapper;
   queryRunner: FakeQueryRunner;
   size: {
     height: number;
@@ -31,13 +31,13 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
       const loader = getAngularLoader();
       const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
       const queryRunner = new FakeQueryRunner();
-      const fakePanel = new PanelModelCompatabilityWrapper(plugin, props, queryRunner);
+      const fakePanel = new PanelModelCompatibilityWrapper(plugin, props, queryRunner);
 
       angularState.current = {
         // @ts-ignore
         panel: fakePanel,
         // @ts-ignore
-        dashboard: new DashboardModelCompatabilityWrapper(),
+        dashboard: new DashboardModelCompatibilityWrapper(),
         size: { width: props.width, height: props.height },
         queryRunner: queryRunner,
       };

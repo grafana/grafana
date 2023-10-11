@@ -6,7 +6,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
  */
-export class DashboardModelCompatabilityWrapper {
+export class DashboardModelCompatibilityWrapper {
   events = new EventBusSrv();
   panelInitialized() {}
 
