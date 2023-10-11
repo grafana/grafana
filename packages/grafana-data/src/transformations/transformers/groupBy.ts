@@ -29,7 +29,23 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   defaultOptions: {
     fields: {},
   },
+  applicator: (data) => {
+    let maxFields = 0;
 
+    // Group by needs at least two fields
+    // a field to group on and a field to aggregate
+    // We make sure that at least one frame has at
+    // least two fields
+    for (const frame of data) {
+      if (frame.fields.length > maxFields) {
+        maxFields = frame.fields.length;
+      }
+    }
+
+    console.log(maxFields);
+
+    return maxFields >= 2;
+  },
   /**
    * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
