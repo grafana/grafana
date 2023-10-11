@@ -5,12 +5,9 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -193,98 +190,6 @@ func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
 
 func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
-}
-
-type FakeKVStore struct {
-	mtx   sync.Mutex
-	store map[int64]map[string]map[string]string
-}
-
-func NewFakeKVStore(t *testing.T) *FakeKVStore {
-	t.Helper()
-
-	return &FakeKVStore{
-		store: map[int64]map[string]map[string]string{},
-	}
-}
-
-func (fkv *FakeKVStore) Get(_ context.Context, orgId int64, namespace string, key string) (string, bool, error) {
-	fkv.mtx.Lock()
-	defer fkv.mtx.Unlock()
-	org, ok := fkv.store[orgId]
-	if !ok {
-		return "", false, nil
-	}
-	k, ok := org[namespace]
-	if !ok {
-		return "", false, nil
-	}
-
-	v, ok := k[key]
-	if !ok {
-		return "", false, nil
-	}
-
-	return v, true, nil
-}
-func (fkv *FakeKVStore) Set(_ context.Context, orgId int64, namespace string, key string, value string) error {
-	fkv.mtx.Lock()
-	defer fkv.mtx.Unlock()
-	org, ok := fkv.store[orgId]
-	if !ok {
-		fkv.store[orgId] = map[string]map[string]string{}
-	}
-	_, ok = org[namespace]
-	if !ok {
-		fkv.store[orgId][namespace] = map[string]string{}
-	}
-
-	fkv.store[orgId][namespace][key] = value
-
-	return nil
-}
-func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, key string) error {
-	fkv.mtx.Lock()
-	defer fkv.mtx.Unlock()
-	org, ok := fkv.store[orgId]
-	if !ok {
-		return nil
-	}
-	_, ok = org[namespace]
-	if !ok {
-		return nil
-	}
-
-	delete(fkv.store[orgId][namespace], key)
-
-	return nil
-}
-
-func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Key, error) {
-	fkv.mtx.Lock()
-	defer fkv.mtx.Unlock()
-	var keys []kvstore.Key
-	for orgIDFromStore, namespaceMap := range fkv.store {
-		if orgID != kvstore.AllOrganizations && orgID != orgIDFromStore {
-			continue
-		}
-		if keyMap, exists := namespaceMap[namespace]; exists {
-			for k := range keyMap {
-				if strings.HasPrefix(k, keyPrefix) {
-					keys = append(keys, kvstore.Key{
-						OrgId:     orgIDFromStore,
-						Namespace: namespace,
-						Key:       keyPrefix,
-					})
-				}
-			}
-		}
-	}
-	return keys, nil
-}
-
-func (fkv *FakeKVStore) GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error) {
-	return nil, nil
 }
 
 type fakeState struct {
