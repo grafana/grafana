@@ -114,7 +114,7 @@
 /pkg/services/navtree/ @grafana/backend-platform
 /pkg/services/notifications/ @grafana/backend-platform
 /pkg/services/org/ @grafana/backend-platform
-/pkg/services/playlist/ @grafana/backend-platform
+/pkg/services/playlist/ @grafana/grafana-app-platform-squad
 /pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
