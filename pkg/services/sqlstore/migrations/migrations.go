@@ -54,9 +54,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
+	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 
-	ualert.FixEarlyMigration(mg)
+	ualert.RerunDashAlertMigration(mg)
 	addSecretsMigration(mg)
 	addKVStoreMigrations(mg)
 	ualert.AddDashboardUIDPanelIDMigration(mg)
@@ -75,6 +76,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
+	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
@@ -99,9 +101,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	anonservice.AddMigration(mg)
 	signingkeys.AddMigration(mg)
-
-	ualert.MigrationServiceMigration(mg)
-	ualert.CreatedFoldersMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
