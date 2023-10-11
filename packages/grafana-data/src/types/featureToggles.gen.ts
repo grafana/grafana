@@ -125,6 +125,7 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;

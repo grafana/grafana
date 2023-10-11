@@ -747,6 +747,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:            "libraryPanelRBAC",
+			Description:     "Enables RBAC support for library panels",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
