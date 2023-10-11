@@ -1591,7 +1591,6 @@ describe('DashboardModel', () => {
           ],
         },
         panels: [
-          // @ts-expect-error
           {
             gridPos: {
               h: 8,
