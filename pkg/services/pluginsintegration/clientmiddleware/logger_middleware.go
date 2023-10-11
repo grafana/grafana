@@ -16,7 +16,7 @@ import (
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
-// log requests and add a contextual logger to the request context.
+// log requests.
 func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
@@ -49,6 +49,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 			status = statusCancelled
 		}
 	}
+	
 	logParams := []any{
 		"status", status,
 		"duration", time.Since(start),
