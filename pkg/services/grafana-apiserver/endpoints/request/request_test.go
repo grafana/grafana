@@ -11,19 +11,18 @@ func TestParseNamespace(t *testing.T) {
 		name      string
 		namespace string
 		expected  grafanarequest.NamespaceInfo
-		ok        bool
+		expectErr bool
 	}{
 		{
 			name: "empty namespace",
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
-			ok: true,
 		},
 		{
 			name:      "incorrect number of parts",
 			namespace: "org-123-a",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
@@ -31,7 +30,7 @@ func TestParseNamespace(t *testing.T) {
 		{
 			name:      "org id not a number",
 			namespace: "org-invalid",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
@@ -42,12 +41,11 @@ func TestParseNamespace(t *testing.T) {
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: 123,
 			},
-			ok: true,
 		},
 		{
 			name:      "org should not be 1 in the namespace",
 			namespace: "org-1",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
@@ -55,7 +53,7 @@ func TestParseNamespace(t *testing.T) {
 		{
 			name:      "can not be negative",
 			namespace: "org--5",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
@@ -63,7 +61,7 @@ func TestParseNamespace(t *testing.T) {
 		{
 			name:      "can not be zero",
 			namespace: "org-0",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
@@ -74,7 +72,6 @@ func TestParseNamespace(t *testing.T) {
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: 1,
 			},
-			ok: true,
 		},
 		{
 			name:      "valid stack",
@@ -83,20 +80,27 @@ func TestParseNamespace(t *testing.T) {
 				OrgID:   1,
 				StackID: "abcdef",
 			},
-			ok: true,
 		},
 		{
 			name:      "invalid stack id",
 			namespace: "stack-",
-			ok:        false,
+			expectErr: true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
 		{
+			name:      "invalid stack id (too short)",
+			namespace: "stack-1",
+			expectErr: true,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID:   -1,
+				StackID: "1",
+			},
+		},
+		{
 			name:      "other namespace",
 			namespace: "anything",
-			ok:        true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
 				Value: "anything",
@@ -107,8 +111,7 @@ func TestParseNamespace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			info, err := grafanarequest.ParseNamespace(tt.namespace)
-			isOK := err == nil
-			if isOK != tt.ok {
+			if tt.expectErr != (err != nil) {
 				t.Errorf("ParseNamespace() returned %+v, expected an error", info)
 			}
 			if info.OrgID != tt.expected.OrgID {
