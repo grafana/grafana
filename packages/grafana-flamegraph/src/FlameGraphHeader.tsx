@@ -4,7 +4,7 @@ import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Dropdown, Input, Menu, RadioButtonGroup } from '@grafana/ui';
+import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
@@ -25,7 +25,6 @@ type Props = {
   stickyHeader: boolean;
   vertical?: boolean;
   isDiffMode: boolean;
-  getTheme: () => GrafanaTheme2;
 
   extraHeaderElements?: React.ReactNode;
 };
@@ -46,9 +45,8 @@ const FlameGraphHeader = ({
   extraHeaderElements,
   vertical,
   isDiffMode,
-  getTheme,
 }: Props) => {
-  const styles = getStyles(getTheme(), stickyHeader);
+  const styles = useStyles2(getStyles, stickyHeader);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   const suffix =
@@ -95,12 +93,7 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton
-          value={colorScheme}
-          onChange={onColorSchemeChange}
-          isDiffMode={isDiffMode}
-          getTheme={getTheme}
-        />
+        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -124,12 +117,11 @@ const FlameGraphHeader = ({
 type ColorSchemeButtonProps = {
   value: ColorScheme | ColorSchemeDiff;
   onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  getTheme: () => GrafanaTheme2;
   isDiffMode: boolean;
 };
 function ColorSchemeButton(props: ColorSchemeButtonProps) {
   // TODO: probably create separate getStyles
-  const styles = getStyles(props.getTheme(), false);
+  const styles = useStyles2(getStyles, false);
   let menu = (
     <Menu>
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
