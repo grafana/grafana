@@ -10,13 +10,9 @@
 
 export interface PlaylistItem {
   /**
-   * Title is an unused property -- it will be removed in the future
-   */
-  title?: string;
-  /**
    * Type of the item.
    */
-  type: ('dashboard_by_uid' | 'dashboard_by_id' | 'dashboard_by_tag');
+  type: ('dashboard_by_uid' | 'dashboard_by_tag');
   /**
    * Value depends on type and describes the playlist item.
    * 
@@ -44,12 +40,7 @@ export interface Playlist {
   /**
    * Name of the playlist.
    */
-  name: string;
-  /**
-   * Unique playlist identifier. Generated on creation, either by the
-   * creator of the playlist of by the application.
-   */
-  uid: string;
+  title: string;
 }
 
 export const defaultPlaylist: Partial<Playlist> = {

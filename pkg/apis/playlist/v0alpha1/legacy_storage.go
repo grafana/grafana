@@ -3,10 +3,12 @@ package v0alpha1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
@@ -87,11 +89,13 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 				APIVersion: APIVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
+				Name:              v.UID,
+				CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
+				ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
+				UID:               types.UID(v.UID),
 			},
 			Spec: playlistkind.Spec{
-				Name:     v.Name,
-				Uid:      v.UID,
+				Title:    v.Name,
 				Interval: v.Interval,
 			},
 		}
@@ -109,30 +113,39 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1 // TODO: default org ID 1 for now
 	}
 
-	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+	dto, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
+	if dto == nil {
 		return nil, fmt.Errorf("not found?")
 	}
 
-	return &Playlist{
+	p := &Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
 			APIVersion: APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
+			Name:              dto.Uid,
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(dto.CreatedAt)),
+			ResourceVersion:   fmt.Sprintf("%d", dto.UpdatedAt),
+			UID:               types.UID(dto.Uid),
 		},
 		Spec: playlistkind.Spec{
-			Name:     p.Name,
-			Uid:      p.Uid,
-			Interval: p.Interval,
-			Items:    p.Items,
+			Title:    dto.Name,
+			Interval: dto.Interval,
 		},
-	}, nil
+	}
+	for _, item := range dto.Items {
+		p.Spec.Items = append(p.Spec.Items, playlistkind.Item{
+			Type:  playlistkind.ItemType(item.Type),
+			Value: item.Value,
+		})
+	}
+
+	return p, nil
 }
