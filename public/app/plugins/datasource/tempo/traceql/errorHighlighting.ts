@@ -83,6 +83,12 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
     return [];
   }
 
+  // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
+  const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
+  if (query.trim().match(hexOnlyRegex)) {
+    return [];
+  }
+
   const tree = parser.parse(query);
 
   // Find all error nodes and compute the associated erro boundaries
