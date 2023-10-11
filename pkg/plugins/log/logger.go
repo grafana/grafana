@@ -46,7 +46,10 @@ func (d *grafanaInfraLogWrapper) Error(msg string, ctx ...any) {
 }
 
 func (d *grafanaInfraLogWrapper) FromContext(ctx context.Context) Logger {
-	concreteInfraLogger := d.l.FromContext(ctx).(*log.ConcreteLogger)
+	concreteInfraLogger, ok := d.l.FromContext(ctx).(*log.ConcreteLogger)
+	if !ok {
+		return d.New()
+	}
 	return &grafanaInfraLogWrapper{
 		l: concreteInfraLogger,
 	}
