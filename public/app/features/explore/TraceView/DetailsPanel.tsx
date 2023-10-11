@@ -11,7 +11,7 @@ import { getOverviewItems } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
 import LabeledList from './components/common/LabeledList';
-import { ubM0, ubTxRightAlign } from './components/uberUtilityStyles';
+import { ubTxRightAlign } from './components/uberUtilityStyles';
 
 type Props = {
   span?: TraceSpan;
@@ -93,10 +93,8 @@ export function DetailsPanel(props: Props) {
               `
             )}
           >
-            <h4 className={cx(ubM0)}>{operationName}</h4>
-            <div className={styles.listWrapper}>
-              <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
-            </div>
+            <h4 style={{ margin: 0 }}>{operationName}</h4>
+            <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
           </div>
           <Button icon={'times'} variant={'secondary'} onClick={clearSelectedSpan} size={'sm'} />
         </div>
@@ -118,7 +116,7 @@ export function DetailsPanel(props: Props) {
         <TabContent className={styles.tab}>
           {activeTab === TabLabels.Attributes && (
             <div style={{ display: 'flex', gap: '0 1rem' }}>
-              <div className={styles.attributesCol}>
+              <div className={styles.attributesContainer}>
                 <AccordianKeyValues
                   className={styles.attributeValues}
                   data={tags}
@@ -129,7 +127,7 @@ export function DetailsPanel(props: Props) {
                   interactive={false}
                 />
               </div>
-              <div className={styles.attributesCol}>
+              <div className={styles.attributesContainer}>
                 {process.tags && (
                   <AccordianKeyValues
                     className={styles.attributeValues}
@@ -177,7 +175,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     gap: 0 1rem;
-    margin-bottom: 0.25rem;
     padding: 0.6rem;
     overflow: scroll;
   `,
@@ -185,20 +182,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     justify-content: space-between;
-  `,
-  attributesCol: css`
-    display: flex;
-    flex: 1 0 auto;
-    flex-direction: column;
-    flex: 0 50%;
-  `,
-  listWrapper: css`
-    overflow: hidden;
-  `,
-  attributeValues: css`
-    display: flex;
-    flex-direction: column;
-    flex: 1 0 auto;
   `,
   tab: css`
     label: DetailsPanelTab;
@@ -230,5 +213,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & .json-markup-number {
       color: ${autoColor(theme, 'blue', 'black')};
     }
+  `,
+  attributesContainer: css`
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    flex: 0 50%;
+  `,
+  attributeValues: css`
+    display: flex;
+    flex-direction: column;
   `,
 });
