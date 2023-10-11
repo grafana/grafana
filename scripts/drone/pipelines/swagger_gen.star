@@ -37,8 +37,11 @@ def clone_pr_branch(ver_mode):
         "image": images["go"],
         "commands": [
             "apk add --update git",
+            "echo 'listing before cloning'",
+            "ls -l",
+            "cat Makefile",
             "echo 'cloning repo'",
-            "git clone https://github.com/grafana/grafana.git grafana",
+            "git clone https://github.com/grafana/grafana.git",
             "echo 'cloned repo'",
             "cd grafana",
             "echo 'listing...'",

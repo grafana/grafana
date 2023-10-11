@@ -1172,8 +1172,11 @@ services: []
 steps:
 - commands:
   - apk add --update git
+  - echo 'listing before cloning'
+  - ls -l
+  - cat Makefile
   - echo 'cloning repo'
-  - git clone https://github.com/grafana/grafana.git grafana
+  - git clone https://github.com/grafana/grafana.git
   - echo 'cloned repo'
   - cd grafana
   - echo 'listing...'
@@ -4737,6 +4740,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8d8fc057bf22711a4d98295f17b53eaff98407989bbf91861fff5af81262f054
+hmac: 9a4d5d5c8a67c20e33509ce5c4ec8bcfa2311c26454526c61a9d2434b6b1f28b
 
 ...
