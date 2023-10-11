@@ -5,14 +5,13 @@ import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
-  // or via .children() render prop callback?
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -67,7 +66,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const className = useStyles2(getStyles).tooltipWrapper;
+  const styles = useStyles2(getStyles);
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -108,8 +107,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
+    let pendingPinned = false;
 
-    const scheduleRender = () => {
+    const scheduleRender = (setPinned = false) => {
       if (!pendingRender) {
         // defer unrender for 100ms to reduce flickering in small gaps
         if (!_isHovering) {
@@ -119,11 +119,20 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         }
 
         pendingRender = true;
+
+        if (setPinned) {
+          pendingPinned = true;
+        }
       }
     };
 
     const _render = () => {
       pendingRender = false;
+
+      if (pendingPinned) {
+        domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+        pendingPinned = false;
+      }
 
       let state: TooltipContainerState = {
         style: _style,
@@ -144,7 +153,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
       // @ts-ignore
       _plot!.cursor._lock = _isPinned;
 
-      scheduleRender();
+      scheduleRender(true);
     };
 
     config.addHook('init', (u) => {
@@ -156,7 +165,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
           if (e.target === u.over) {
             _isPinned = !_isPinned;
             _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-            scheduleRender();
+            scheduleRender(true);
           }
 
           // @ts-ignore
@@ -268,7 +277,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={className} style={style} ref={domRef}>
+      <div className={styles.tooltipWrapper} style={style} ref={domRef}>
         {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
         {contents}
       </div>,
