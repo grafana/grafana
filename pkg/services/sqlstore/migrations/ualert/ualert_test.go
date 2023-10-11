@@ -1,33 +1,74 @@
-package migration
+package ualert
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var MigTitle = migTitle
+var RmMigTitle = rmMigTitle
+var ClearMigrationEntryTitle = clearMigrationEntryTitle
+
+type RmMigration = rmMigration
+
+// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
+func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
+	var rawMatchers [][3]string
+	if err := json.Unmarshal(data, &rawMatchers); err != nil {
+		return err
+	}
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
+		if err != nil {
+			return err
+		}
+		*m = append(*m, matcher)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
 		name      string
-		receivers []*apimodels.PostableGrafanaReceiver
+		receivers []*PostableGrafanaReceiver
 		err       error
 	}{
 		{
 			name: "when a slack receiver does not have a valid URL - it should error",
-			receivers: []*apimodels.PostableGrafanaReceiver{
+			receivers: []*PostableGrafanaReceiver{
 				{
 					UID:            "test-uid",
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
-					Settings:       mustRawMessage(map[string]any{}),
+					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
@@ -35,38 +76,36 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
-			receivers: []*apimodels.PostableGrafanaReceiver{
+			receivers: []*PostableGrafanaReceiver{
 				{
 					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadRecipient",
 					Type:           "slack",
-					Settings:       mustRawMessage(map[string]any{"recipient": "this passes"}),
+					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this passes"}),
 					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
 				},
 			},
 		},
 		{
 			name: "when the configuration is valid - it should not error",
-			receivers: []*apimodels.PostableGrafanaReceiver{
+			receivers: []*PostableGrafanaReceiver{
 				{
 					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
-					Settings:       mustRawMessage(map[string]interface{}{"recipient": "#a-good-channel"}),
+					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "#a-good-channel"}),
 					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
 				},
 			},
 		},
 	}
 
-	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			mg := service.newOrgMigration(1)
+			mg := newTestMigration(t)
 
 			config := configFromReceivers(t, tt.receivers)
-			require.NoError(t, encryptSecureSettings(config, mg)) // make sure we encrypt the settings
+			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
 			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
@@ -78,24 +117,24 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func configFromReceivers(t *testing.T, receivers []*apimodels.PostableGrafanaReceiver) *apimodels.PostableUserConfig {
+func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
 	t.Helper()
 
-	return &apimodels.PostableUserConfig{
-		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
-			Receivers: []*apimodels.PostableApiReceiver{
-				{PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{GrafanaManagedReceivers: receivers}},
+	return &PostableUserConfig{
+		AlertmanagerConfig: PostableApiAlertingConfig{
+			Receivers: []*PostableApiReceiver{
+				{GrafanaManagedReceivers: receivers},
 			},
 		},
 	}
 }
 
-func encryptSecureSettings(c *apimodels.PostableUserConfig, m *OrgMigration) error {
+func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			err := m.encryptSecureSettings(gr.SecureSettings)
-			if err != nil {
-				return err
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
 			}
 		}
 	}
@@ -106,13 +145,13 @@ const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh
 
 func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 	t.Run("should include full title", func(t *testing.T) {
-		dash := &dashboards.Dashboard{
-			UID:   util.GenerateShortUID(),
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
 			Title: "TEST",
 		}
 		folder := getAlertFolderNameFromDashboard(dash)
 		require.Contains(t, folder, dash.Title)
-		require.Contains(t, folder, dash.UID)
+		require.Contains(t, folder, dash.Uid)
 	})
 	t.Run("should cut title to the length", func(t *testing.T) {
 		title := ""
@@ -124,25 +163,25 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 			}
 		}
 
-		dash := &dashboards.Dashboard{
-			UID:   util.GenerateShortUID(),
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
 			Title: title,
 		}
 		folder := getAlertFolderNameFromDashboard(dash)
 		require.Len(t, folder, MaxFolderName)
-		require.Contains(t, folder, dash.UID)
+		require.Contains(t, folder, dash.Uid)
 	})
 }
 
 func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
-	s := Deduplicator{
+	s := uidSet{
 		set:             make(map[string]struct{}),
 		caseInsensitive: true,
 	}
 
 	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
 	for i := 0; i < 10000; i++ {
-		s.add(util.GenerateShortUID())
+		_, _ = s.generateUid()
 	}
 
 	// check if any are case-insensitive duplicates.
@@ -152,9 +191,4 @@ func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
 	}
 
 	require.Equal(t, len(s.set), len(deduped))
-}
-
-func mustRawMessage[T any](s T) apimodels.RawMessage {
-	js, _ := json.Marshal(s)
-	return js
 }
