@@ -623,6 +623,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "traceViewDrawer",
+			Description:  "Enables the new Trace View drawer for viewing span details in tracing data sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
 			Stage:        FeatureStageExperimental,

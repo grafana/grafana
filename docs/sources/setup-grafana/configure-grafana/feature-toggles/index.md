@@ -127,6 +127,7 @@ Experimental features might be changed or removed without prior notice.
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                       |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                     |
+| `traceViewDrawer`                           | Enables the new Trace View drawer for viewing span details in tracing data sources                           |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |

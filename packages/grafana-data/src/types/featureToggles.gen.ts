@@ -108,6 +108,7 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
+  traceViewDrawer?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;

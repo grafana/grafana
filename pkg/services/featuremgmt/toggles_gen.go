@@ -367,6 +367,10 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagTraceViewDrawer
+	// Enables the new Trace View drawer for viewing span details in tracing data sources
+	FlagTraceViewDrawer = "traceViewDrawer"
+
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
 	FlagGrafanaAPIServer = "grafanaAPIServer"
