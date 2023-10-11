@@ -1,8 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { defaultVariableModel } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Dashboard, defaultVariableModel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -16,13 +15,11 @@ import { PanelModel } from '../state/PanelModel';
 import {
   createAnnotationJSONFixture,
   createDashboardModelFixture,
-  createPanelJSONFixture,
+  createPanelSaveModel,
   createVariableJSONFixture,
 } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
-
-const mockContextSrv = jest.mocked(contextSrv);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -52,12 +49,35 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('when storing original dashboard data', () => {
+    let originalDashboard: Dashboard = {
+      editable: true,
+      graphTooltip: 0,
+      schemaVersion: 1,
+      timezone: '',
+      title: 'original.title',
+    };
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel(originalDashboard);
+    });
+
+    it('should be returned from getOriginalDashboard without modifications', () => {
+      expect(model.getOriginalDashboard()).toEqual(originalDashboard);
+    });
+
+    it('should return a copy of the provided object', () => {
+      expect(model.getOriginalDashboard()).not.toBe(originalDashboard);
+    });
+  });
+
   describe('when getting next panel id', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = createDashboardModelFixture({
-        panels: [createPanelJSONFixture({ id: 5 })],
+        panels: [createPanelSaveModel({ id: 5 })],
       });
     });
 
@@ -72,10 +92,10 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 6 }),
-          createPanelJSONFixture({ id: 2 }),
-          createPanelJSONFixture({}), // undefined
-          createPanelJSONFixture({ id: 2 }),
+          createPanelSaveModel({ id: 6 }),
+          createPanelSaveModel({ id: 2 }),
+          createPanelSaveModel({}), // undefined
+          createPanelSaveModel({ id: 2 }),
         ],
       });
     });
@@ -197,7 +217,7 @@ describe('DashboardModel', () => {
       model = createDashboardModelFixture({
         schemaVersion: 1,
         panels: [
-          createPanelJSONFixture({
+          createPanelSaveModel({
             type: 'graph',
             targets: [
               {
@@ -398,11 +418,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       dashboard = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -927,7 +947,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canAddAnnotations();
         expect(result).toBe(expected);
       }
@@ -960,7 +979,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations();
         expect(result).toBe(expected);
       }
@@ -991,7 +1009,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
@@ -1024,7 +1041,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations();
         expect(result).toBe(expected);
       }
@@ -1055,7 +1071,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }

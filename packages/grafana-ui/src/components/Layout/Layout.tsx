@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps, useCallback } from 'react';
+import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -41,12 +41,7 @@ export const Layout = ({
   height = '100%',
   ...rest
 }: LayoutProps) => {
-  const styles = useStyles2(
-    useCallback(
-      (theme) => getStyles(theme, orientation, spacing, justify, align, wrap),
-      [align, justify, orientation, spacing, wrap]
-    )
-  );
+  const styles = useStyles2(getStyles, orientation, spacing, justify, align, wrap);
 
   return (
     <div className={styles.layout} style={{ width, height }} {...rest}>
@@ -105,7 +100,7 @@ export const VerticalGroup = ({
 );
 
 export const Container = ({ children, padding, margin, grow, shrink }: React.PropsWithChildren<ContainerProps>) => {
-  const styles = useStyles2(useCallback((theme) => getContainerStyles(theme, padding, margin), [padding, margin]));
+  const styles = useStyles2(getContainerStyles, padding, margin);
 
   return (
     <div

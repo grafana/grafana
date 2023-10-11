@@ -1,6 +1,28 @@
 import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
 import createMockQuery from './__mocks__/query';
+import { singleVariable } from './__mocks__/variables';
 import Datasource from './datasource';
+import { AzureQueryType } from './types';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: (target?: string) => {
+        if (target === '$resourceGroup') {
+          return 'the-resource-group';
+        }
+        return target || '';
+      },
+      getVariables: jest.fn(),
+      updateTimeRange: jest.fn(),
+      containsTemplate: (target?: string) => {
+        return (target || '').includes('$');
+      },
+    }),
+  };
+});
 
 describe('Azure Monitor Datasource', () => {
   describe('interpolateVariablesInQueries()', () => {
@@ -48,5 +70,46 @@ describe('Azure Monitor Datasource', () => {
     const query = createMockQuery();
     delete query.queryType;
     expect(ds.filterQuery(query)).toBe(false);
+  });
+
+  describe('When performing targetContainsTemplate', () => {
+    it('should return false when no variable is being used', () => {
+      const query = {
+        ...createMockQuery(),
+        queryType: AzureQueryType.AzureResourceGraph,
+      };
+      const ds = new Datasource(createMockInstanceSetttings());
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should return true when resource field is using a variable', () => {
+      const query = {
+        ...createMockQuery(),
+        queryType: AzureQueryType.AzureResourceGraph,
+        azureResourceGraph: { query: '$temp-var' },
+      };
+      const ds = new Datasource(createMockInstanceSetttings());
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return true when resource field is using a variable in the subscriptions field', () => {
+      const query = {
+        ...createMockQuery(),
+        queryType: AzureQueryType.AzureResourceGraph,
+        subscriptions: ['$temp-var'],
+      };
+      const ds = new Datasource(createMockInstanceSetttings());
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return false when a variable is used in a different part of the query', () => {
+      const query = {
+        ...createMockQuery(),
+        queryType: AzureQueryType.AzureResourceGraph,
+        azureMonitor: { metricName: `$${singleVariable.name}` },
+      };
+      const ds = new Datasource(createMockInstanceSetttings());
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
   });
 });

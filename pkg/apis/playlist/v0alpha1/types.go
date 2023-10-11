@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -12,7 +14,7 @@ type Playlist struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Name string `json:"name,omitempty"`
+	Spec playlist.Spec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -35,9 +35,9 @@ describe('Panel edit tests', () => {
 
         //  Bottom pane tabs
         //  Can change to Transform tab
-        e2e.components.Tab.title('Transform').should('be.visible').click();
+        e2e.components.Tab.title('Transform data').should('be.visible').click();
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
-          expect(li.text()).equals('Transform0'); // there's no transform so therefore Transform + 0
+          expect(li.text()).equals('Transform data0'); // there's no transform so therefore Transform + 0
         });
         e2e.components.Transforms.card('Merge').scrollIntoView().should('be.visible');
         e2e.components.QueryTab.content().should('not.exist');

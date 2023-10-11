@@ -10,7 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 
 import {
   createDashboardModelFixture,
-  createPanelJSONFixture,
+  createPanelSaveModel,
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
@@ -49,19 +49,19 @@ describe('DashboardQueryEditor', () => {
   beforeEach(() => {
     mockDashboard = createDashboardModelFixture({
       panels: [
-        createPanelJSONFixture({
+        createPanelSaveModel({
           targets: [],
           type: 'timeseries',
           id: 1,
           title: 'My first panel',
         }),
-        createPanelJSONFixture({
+        createPanelSaveModel({
           targets: [],
           id: 2,
           type: 'timeseries',
           title: 'Another panel',
         }),
-        createPanelJSONFixture({
+        createPanelSaveModel({
           datasource: {
             uid: SHARED_DASHBOARD_QUERY,
           },

@@ -29,7 +29,6 @@ jest.mock('./state/apis', () => ({
 }));
 jest.mock('../../core/services/context_srv', () => ({
   contextSrv: {
-    hasAccess: () => true,
     hasPermission: () => true,
   },
 }));

@@ -24,6 +24,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERT
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
+import { deepFreeze } from 'app/features/plugins/extensions/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -172,7 +173,8 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
-    this.originalDashboard = data;
+    // Deep clone original dashboard to avoid mutations by object reference
+    this.originalDashboard = cloneDeep(data);
     this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
@@ -1081,7 +1083,7 @@ export class DashboardModel implements TimeModel {
   }
 
   resetOriginalTime() {
-    this.originalTime = cloneDeep(this.time);
+    this.originalTime = deepFreeze(this.time);
   }
 
   hasTimeChanged() {
@@ -1184,14 +1186,11 @@ export class DashboardModel implements TimeModel {
   canEditAnnotations(dashboardUID?: string) {
     let canEdit = true;
 
-    // if RBAC is enabled there are additional conditions to check
-    if (contextSrv.accessControlEnabled()) {
-      // dashboardUID is falsy when it is an organizational annotation
-      if (!dashboardUID) {
-        canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
-      } else {
-        canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
-      }
+    // dashboardUID is falsy when it is an organizational annotation
+    if (!dashboardUID) {
+      canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
+    } else {
+      canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
     return this.canEditDashboard() && canEdit;
   }
@@ -1199,13 +1198,11 @@ export class DashboardModel implements TimeModel {
   canDeleteAnnotations(dashboardUID?: string) {
     let canDelete = true;
 
-    if (contextSrv.accessControlEnabled()) {
-      // dashboardUID is falsy when it is an organizational annotation
-      if (!dashboardUID) {
-        canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
-      } else {
-        canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
-      }
+    // dashboardUID is falsy when it is an organizational annotation
+    if (!dashboardUID) {
+      canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
+    } else {
+      canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
     return canDelete && this.canEditDashboard();
   }
@@ -1218,7 +1215,7 @@ export class DashboardModel implements TimeModel {
     }
 
     // If RBAC is enabled there are additional conditions to check.
-    return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {
@@ -1267,8 +1264,8 @@ export class DashboardModel implements TimeModel {
     return variables.map((variable) => ({
       name: variable.name,
       type: variable.type,
-      current: cloneDeep(variable.current),
-      filters: cloneDeep(variable.filters),
+      current: deepFreeze(variable.current),
+      filters: deepFreeze(variable.filters),
     }));
   }
 
