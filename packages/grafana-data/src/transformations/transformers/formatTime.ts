@@ -18,6 +18,19 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
   name: 'Format Time',
   description: 'Set the output format of a time field',
   defaultOptions: { timeField: '', outputFormat: '', useTimezone: true },
+  applicator: (data) => {
+    // Search for a time field
+    // if there is one then we can use this transformation
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type === 'time') {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
