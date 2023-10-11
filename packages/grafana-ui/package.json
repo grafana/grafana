@@ -118,7 +118,7 @@
     "@babel/core": "7.23.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
-    "@rollup/plugin-node-resolve": "15.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
     "@storybook/addon-a11y": "7.4.5",
     "@storybook/addon-actions": "7.4.5",
     "@storybook/addon-docs": "7.4.5",

@@ -2991,7 +2991,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@testing-library/dom": 9.3.1
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
@@ -3053,7 +3053,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@types/node": 18.16.19
     esbuild: 0.18.12
     rimraf: 5.0.1
@@ -3088,7 +3088,7 @@ __metadata:
     "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@types/chrome-remote-interface": 0.31.10
     "@types/lodash": 4.14.195
     "@types/node": 18.16.19
@@ -3227,7 +3227,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@leeoniya/ufuzzy": 1.0.8
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@testing-library/jest-dom": ^6.1.2
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.4.3
@@ -3309,7 +3309,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@testing-library/dom": 9.3.1
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.4.3
@@ -3368,7 +3368,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     esbuild: 0.18.12
     glob: ^10.2.7
     rimraf: 5.0.1
@@ -3418,7 +3418,7 @@ __metadata:
     "@react-aria/overlays": 3.15.0
     "@react-aria/utils": 3.18.0
     "@react-stately/menu": 3.5.3
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@storybook/addon-a11y": 7.4.5
     "@storybook/addon-actions": 7.4.5
     "@storybook/addon-docs": 7.4.5
@@ -6893,9 +6893,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:15.1.0":
-  version: 15.1.0
-  resolution: "@rollup/plugin-node-resolve@npm:15.1.0"
+"@rollup/plugin-node-resolve@npm:15.2.3":
+  version: 15.2.3
+  resolution: "@rollup/plugin-node-resolve@npm:15.2.3"
   dependencies:
     "@rollup/pluginutils": ^5.0.1
     "@types/resolve": 1.20.2
@@ -6904,11 +6904,11 @@ __metadata:
     is-module: ^1.0.0
     resolve: ^1.22.1
   peerDependencies:
-    rollup: ^2.78.0||^3.0.0
+    rollup: ^2.78.0||^3.0.0||^4.0.0
   peerDependenciesMeta:
     rollup:
       optional: true
-  checksum: 83617cdbb90cb780251e8b16dc1671e35bde90b8d4d30e008aefe706b5b643057f6299bdd3226b2a30bf5e4f807a880169de3faa47b9f2ba38d39f294f85f951
+  checksum: 730f32c2f8fdddff07cf0fca86a5dac7c475605fb96930197a868c066e62eb6388c557545e4f7d99b7a283411754c9fbf98944ab086b6074e04fc1292e234aa8
   languageName: node
   linkType: hard
 
