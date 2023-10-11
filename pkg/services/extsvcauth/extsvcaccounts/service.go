@@ -119,7 +119,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, nil
 	}
 
-	saID, errSave := esa.saveExtSvcAccount(ctx, &saveExtSvcAccountCmd{
+	saID, errSave := esa.saveExtSvcAccount(ctx, &saveCmd{
 		ExtSvcSlug:  cmd.ExtSvcSlug,
 		OrgID:       cmd.OrgID,
 		Permissions: cmd.Permissions,
@@ -134,7 +134,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 }
 
 // saveExtSvcAccount creates or updates the service account associated with an external service
-func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveExtSvcAccountCmd) (int64, error) {
+func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveCmd) (int64, error) {
 	if cmd.SaID <= 0 {
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
@@ -203,7 +203,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 		return "", err
 	}
 
-	if err := esa.SaveExtSvcCredentials(ctx, &SaveExtSvcCredentialsCmd{
+	if err := esa.SaveExtSvcCredentials(ctx, &SaveCredentialsCmd{
 		ExtSvcSlug: extSvcSlug,
 		OrgID:      orgID,
 		Secret:     newKeyInfo.ClientSecret,
@@ -215,7 +215,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 }
 
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
-func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*ExtSvcCredentials, error) {
+func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*Credentials, error) {
 	esa.logger.Debug("Get service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	token, ok, err := esa.skvStore.Get(ctx, orgID, extSvcSlug, skvType)
 	if err != nil {
@@ -224,11 +224,11 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	if !ok {
 		return nil, extsvcauth.ErrCredentialsNotFound
 	}
-	return &ExtSvcCredentials{Secret: token}, nil
+	return &Credentials{Secret: token}, nil
 }
 
 // SaveExtSvcCredentials stores the credentials of an External Service in an encrypted storage
-func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *SaveExtSvcCredentialsCmd) error {
+func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd *SaveCredentialsCmd) error {
 	esa.logger.Debug("Save service account token in skv", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 	return esa.skvStore.Set(ctx, cmd.OrgID, cmd.ExtSvcSlug, skvType, cmd.Secret)
 }

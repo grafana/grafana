@@ -9,18 +9,18 @@ const (
 	skvType = "extsvc-token"
 )
 
-// ExtSvcCredentials represents the credentials associated to an external service
-type ExtSvcCredentials struct {
+// Credentials represents the credentials associated to an external service
+type Credentials struct {
 	Secret string
 }
 
-type SaveExtSvcCredentialsCmd struct {
+type SaveCredentialsCmd struct {
 	ExtSvcSlug string
 	OrgID      int64
 	Secret     string
 }
 
-type saveExtSvcAccountCmd struct {
+type saveCmd struct {
 	ExtSvcSlug  string
 	OrgID       int64
 	Permissions []ac.Permission
