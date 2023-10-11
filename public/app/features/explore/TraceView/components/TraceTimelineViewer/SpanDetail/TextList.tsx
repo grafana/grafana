@@ -16,9 +16,10 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     TextList: css`
       max-height: 450px;
@@ -34,7 +35,7 @@ const getStyles = () => {
       padding: 0.25rem 0.5rem;
       vertical-align: top;
       &:nth-child(2n) {
-        background: #f5f5f5;
+        background: ${theme.colors.background.secondary};
       }
     `,
   };

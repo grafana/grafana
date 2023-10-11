@@ -10,6 +10,7 @@ import { autoColor, DetailState, TraceSpan } from './components';
 import { getOverviewItems } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
+import TextList from './components/TraceTimelineViewer/SpanDetail/TextList';
 import LabeledList from './components/common/LabeledList';
 import { ubTxRightAlign } from './components/uberUtilityStyles';
 
@@ -56,15 +57,21 @@ export function DetailsPanel(props: Props) {
     return null;
   }
 
-  const { operationName, process, tags, logs } = span;
+  let { operationName, process, tags, logs, warnings } = span;
   const { logs: logsState } = detailState;
 
   const tabs = [TabLabels.Attributes];
+  warnings = ['Testing the warning', 'And here is another', 'Two more', 'Last one!'];
   if (logs && logs.length > 0) {
     tabs.push(TabLabels.Events);
   }
+  if (warnings && warnings.length > 0) {
+    tabs.push(TabLabels.Warnings);
+  }
+
   const tabsCounters: Record<string, number> = {};
   tabsCounters[TabLabels.Events] = logs.length;
+  tabsCounters[TabLabels.Warnings] = warnings.length;
 
   const linksGetter = () => [];
 
@@ -152,8 +159,8 @@ export function DetailsPanel(props: Props) {
               timestamp={traceStartTime}
             />
           )}
-          {/* {tabsState[2] && tabsState[2].active && <div>Warnings not yet implemented</div>}
-          {tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
+          {activeTab === TabLabels.Warnings && <TextList data={warnings} />}
+          {/*tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
           {tabsState[4] && tabsState[4].active && <div>References not yet implemented</div>} */}
         </TabContent>
       </ExploreDrawer>
