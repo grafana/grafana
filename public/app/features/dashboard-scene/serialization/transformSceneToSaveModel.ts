@@ -60,7 +60,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         if (child.state.key!.indexOf('-clone-') > 0) {
           continue;
         }
-        gridRowToSaveModel(child, panels);
+        gridRowToSaveModel(child, panels, isSnapshot);
       }
     }
   }
@@ -260,7 +260,7 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   return panel;
 }
 
-export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>) {
+export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
   const rowPanel: RowPanel = {
     type: 'row',
     id: getPanelIdForVizPanel(gridRow),
@@ -285,7 +285,7 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
 
   panelsArray.push(rowPanel);
 
-  const panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c));
+  const panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c, isSnapshot));
 
   if (gridRow.state.isCollapsed) {
     rowPanel.panels = panelsInsideRow;
