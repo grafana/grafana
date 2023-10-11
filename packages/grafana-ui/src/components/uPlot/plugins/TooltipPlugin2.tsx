@@ -281,7 +281,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={styles.tooltipWrapper} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={dismiss} style={{ top: '15px' }} />}
+        {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
         {contents}
       </div>,
       plot.over
