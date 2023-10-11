@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Make sure ParcaDatasource implements required interfaces. This is important to do
@@ -29,10 +32,11 @@ var (
 // ParcaDatasource is a datasource for querying application performance profiles.
 type ParcaDatasource struct {
 	client queryv1alpha1connect.QueryServiceClient
+	tracer tracing.Tracer
 }
 
 // NewParcaDatasource creates a new datasource instance.
-func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, tracer tracing.Tracer) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -44,6 +48,7 @@ func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend
 
 	return &ParcaDatasource{
 		client: queryv1alpha1connect.NewQueryServiceClient(httpClient, settings.URL, connect.WithGRPCWeb()),
+		tracer: tracer,
 	}, nil
 }
 
@@ -56,6 +61,9 @@ func (d *ParcaDatasource) Dispose() {
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
+	ctx, span := d.tracer.Start(ctx, "datasource.parca.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
+	defer span.End()
+
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
 	}
