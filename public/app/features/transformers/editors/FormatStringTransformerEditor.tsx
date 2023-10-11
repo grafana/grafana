@@ -10,6 +10,7 @@ import {
   FieldType,
   StandardEditorsRegistryItem,
   FieldNamePickerConfigSettings,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   FormatStringOutput,
@@ -118,4 +119,5 @@ export const formatStringTransformerRegistryItem: TransformerRegistryItem<Format
   name: standardTransformers.formatStringTransformer.name,
   state: PluginState.beta,
   description: standardTransformers.formatStringTransformer.description,
+  categories: new Set([TransformerCategory.Reformat]),
 };
