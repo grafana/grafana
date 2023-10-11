@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/pluginmeta"
+	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -130,7 +130,7 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
 	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		prmd := pluginmeta.GetPluginRequestMetaData(ctx)
+		prmd := pluginrequestmeta.FromContext(ctx)
 		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(prmd.StatusSource))
 		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(prmd.StatusSource))
 	}
@@ -158,7 +158,7 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// Setup plugin
-	ctx = pluginmeta.SetRequestMetaData(ctx, pluginmeta.DefaultPluginRequestMetadata())
+	ctx = pluginrequestmeta.WithMetaData(ctx, pluginrequestmeta.DefaultPluginRequestMetadata())
 
 	var requestSize float64
 	for _, v := range req.Queries {
@@ -188,7 +188,7 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		// A plugin error has higher priority than a downstream error,
 		// so set to downstream only if there's no plugin error
 		if hasDownstreamError && !hasPluginError {
-			pluginmeta.WithDownstreamStatusSource(ctx)
+			pluginrequestmeta.WithDownstreamStatusSource(ctx)
 		}
 
 		return innerErr

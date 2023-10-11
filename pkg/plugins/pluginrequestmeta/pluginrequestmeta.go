@@ -1,4 +1,4 @@
-package pluginmeta
+package pluginrequestmeta
 
 import "context"
 
@@ -11,10 +11,10 @@ const (
 	StatusSourceDownstream StatusSource = "downstream"
 )
 
-// PluginRequestMetaData contains metadata about a plugin request.
-// It can be stored into a [context.Context] with [SetRequestMetaData]
-// and later retrieved with [GetPluginRequestMetaData].
-type PluginRequestMetaData struct {
+// MetaData contains metadata about a plugin request.
+// It can be stored into a [context.Context] with [WithMetaData]
+// and later retrieved with [FromContext].
+type MetaData struct {
 	// StatusSource is the source of the status code in the plugin response.
 	StatusSource StatusSource
 }
@@ -23,12 +23,12 @@ type rMDContextKey struct{}
 
 var pluginRequestMetaDataContextKey = rMDContextKey{}
 
-// GetPluginRequestMetaData returns the plugin request metadata for the context.
+// FromContext returns the plugin request metadata stored in the context.
 // if request metadata is missing it will return the default values.
-func GetPluginRequestMetaData(ctx context.Context) *PluginRequestMetaData {
+func FromContext(ctx context.Context) *MetaData {
 	val := ctx.Value(pluginRequestMetaDataContextKey)
 
-	value, ok := val.(*PluginRequestMetaData)
+	value, ok := val.(*MetaData)
 	if ok {
 		return value
 	}
@@ -37,21 +37,21 @@ func GetPluginRequestMetaData(ctx context.Context) *PluginRequestMetaData {
 	return &rmd
 }
 
-// SetRequestMetaData sets the plugin request metadata for the context.
-func SetRequestMetaData(ctx context.Context, prmd PluginRequestMetaData) context.Context {
+// WithMetaData sets the plugin request metadata for the context.
+func WithMetaData(ctx context.Context, prmd MetaData) context.Context {
 	return context.WithValue(ctx, pluginRequestMetaDataContextKey, &prmd)
 }
 
-// WithDownstreamStatusSource sets the StatusSource field of the [PluginRequestMetaData] for the
+// WithDownstreamStatusSource sets the StatusSource field of the [MetaData] for the
 // context to [StatusSourceDownstream].
 func WithDownstreamStatusSource(ctx context.Context) {
-	v := GetPluginRequestMetaData(ctx)
+	v := FromContext(ctx)
 	v.StatusSource = StatusSourceDownstream
 }
 
-// DefaultPluginRequestMetadata returns the default PluginRequestMetaData.
-func DefaultPluginRequestMetadata() PluginRequestMetaData {
-	return PluginRequestMetaData{
+// DefaultPluginRequestMetadata returns the default MetaData.
+func DefaultPluginRequestMetadata() MetaData {
+	return MetaData{
 		StatusSource: StatusSourcePlugin,
 	}
 }
