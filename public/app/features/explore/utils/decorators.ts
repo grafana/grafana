@@ -283,22 +283,6 @@ export const decorateWithLogsResult =
     return { ...data, logsResult };
   };
 
-export const decorateWithNewLogsResult = (data: ExplorePanelData, lastData: ExplorePanelData | undefined, absoluteRange: AbsoluteTimeRange, queries?: DataQuery[]): ExplorePanelData => {
-  if (data.logsFrames.length === 0) {
-    return { ...data, logsResult: null };
-  }
-
-  const logsFrames = lastData ? [...lastData.logsFrames, ...data.logsFrames] : data.logsFrames;
-
-  const intervalMs = data.request?.intervalMs;
-  const newResults = dataFrameToLogsModel(logsFrames, intervalMs, absoluteRange, queries);
-  const sortOrder = refreshIntervalToSortOrder();
-  const sortedNewResults = sortLogsResult(newResults, sortOrder);
-  const logsResult = { ...sortedNewResults };
-
-  return { ...(lastData || data), logsResult };
-};
-
 // decorateData applies all decorators
 export function decorateData(
   data: PanelData,
