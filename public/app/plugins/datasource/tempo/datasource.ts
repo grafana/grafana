@@ -1187,30 +1187,33 @@ function getServiceGraphView(
     });
   }
 
-  if (duration.length > 0 && duration[0].fields?.length > 1) {
+  if (duration.length > 0) {
     let durationObj: any = {};
-    duration.map((d) => {
-      const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
-      const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { value: d.fields[1].values[0] };
+    duration.forEach((d) => {
+      if (d.fields.length > 1) {
+        const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
+        const name = d.refId?.split(delimiter)[1].split('"}')[0];
+        durationObj[name] = { value: d.fields[1].values[0] };
+      }
     });
-
-    df.fields.push({
-      ...duration[0].fields[1],
-      name: 'Duration (p90)',
-      values: getRateAlignedValues({ ...rate }, durationObj),
-      config: {
-        links: [
-          makePromLink(
-            'Duration',
-            buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
-            datasourceUid,
-            false
-          ),
-        ],
-        unit: 's',
-      },
-    });
+    if (Object.keys(durationObj).length > 0) {
+      df.fields.push({
+        ...duration[0].fields[1],
+        name: 'Duration (p90)',
+        values: getRateAlignedValues({ ...rate }, durationObj),
+        config: {
+          links: [
+            makePromLink(
+              'Duration',
+              buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+              datasourceUid,
+              false
+            ),
+          ],
+          unit: 's',
+        },
+      });
+    }
   }
 
   if (df.fields.length > 0 && df.fields[0].values) {

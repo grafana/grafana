@@ -122,3 +122,4 @@ enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
+recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
