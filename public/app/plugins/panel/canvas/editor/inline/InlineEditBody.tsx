@@ -151,8 +151,8 @@ function getOptionsPaneCategoryDescriptor<T = any>(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  selectElement: css`
-    color: ${theme.colors.text.secondary};
-    padding: ${theme.spacing(2)};
-  `,
+  selectElement: css({
+    color: theme.colors.text.secondary,
+    padding: theme.spacing(2),
+  }),
 });

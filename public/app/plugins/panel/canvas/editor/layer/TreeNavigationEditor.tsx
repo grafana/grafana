@@ -167,8 +167,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addLayerButton: css`
-    margin-left: 18px;
-    min-width: 150px;
-  `,
+  addLayerButton: css({
+    marginLeft: '18px',
+    minWidth: '150px',
+  }),
 });

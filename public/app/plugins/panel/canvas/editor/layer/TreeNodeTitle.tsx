@@ -92,29 +92,29 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  actionButtonsWrapper: css`
-    display: flex;
-    align-items: flex-end;
-  `,
-  actionIcon: css`
-    color: ${theme.colors.text.secondary};
-    cursor: pointer;
-    &:hover {
-      color: ${theme.colors.text.primary};
-    }
-  `,
-  textWrapper: css`
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    overflow: hidden;
-    margin-right: ${theme.spacing(1)};
-  `,
-  layerName: css`
-    font-weight: ${theme.typography.fontWeightMedium};
-    color: ${theme.colors.primary.text};
-    cursor: pointer;
-    overflow: hidden;
-    margin-left: ${theme.spacing(0.5)};
-  `,
+  actionButtonsWrapper: css({
+    display: 'flex',
+    alignItems: 'flex-end',
+  }),
+  actionIcon: css({
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+  textWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexGrow: 1,
+    overflow: 'hidden',
+    marginRight: theme.spacing(1),
+  }),
+  layerName: css({
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.primary.text,
+    cursor: 'pointer',
+    overflow: 'hidden',
+    marginLeft: theme.spacing(0.5),
+  }),
 });

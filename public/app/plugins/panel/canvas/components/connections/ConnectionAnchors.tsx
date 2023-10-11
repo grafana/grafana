@@ -114,36 +114,35 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  root: css`
-    position: absolute;
-    display: none;
-  `,
-  mouseoutDiv: css`
-    position: absolute;
-    margin: -30px;
-    width: calc(100% + 60px);
-    height: calc(100% + 60px);
-  `,
-  anchor: css`
-    padding: ${ANCHOR_PADDING}px;
-    position: absolute;
-    cursor: cursor;
-    width: calc(5px + 2 * ${ANCHOR_PADDING}px);
-    height: calc(5px + 2 * ${ANCHOR_PADDING}px);
-    z-index: 100;
-    pointer-events: auto !important;
-  `,
-  highlightElement: css`
-    background-color: #00ff00;
-    opacity: 0.3;
-    position: absolute;
-    cursor: cursor;
-    position: absolute;
-    pointer-events: auto;
-    width: 16px;
-    height: 16px;
-    border-radius: ${theme.shape.radius.circle};
-    display: none;
-    z-index: 110;
-  `,
+  root: css({
+    position: 'absolute',
+    display: 'none',
+  }),
+  mouseoutDiv: css({
+    position: 'absolute',
+    margin: '-30px',
+    width: 'calc(100% + 60px)',
+    height: 'calc(100% + 60px)',
+  }),
+  anchor: css({
+    padding: `${ANCHOR_PADDING}px`,
+    position: 'absolute',
+    cursor: 'cursor',
+    width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
+    height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
+    zIndex: 100,
+    pointerEvents: 'auto',
+  }),
+  highlightElement: css({
+    backgroundColor: '#00ff00',
+    opacity: 0.3,
+    position: 'absolute',
+    cursor: 'cursor',
+    pointerEvents: 'auto',
+    width: '16px',
+    height: '16px',
+    borderRadius: theme.shape.radius.circle,
+    display: 'none',
+    zIndex: 110,
+  }),
 });
