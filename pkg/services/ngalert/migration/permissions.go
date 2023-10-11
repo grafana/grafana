@@ -101,10 +101,10 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 
 	// Check if the dashboard has custom permissions. If it does, we need to create a new folder for it.
 	// This folder will be cached for re-use for each dashboard in the folder with the same permissions.
-	customFolders, ok := om.permissionsMap[parentFolder.ID]
+	permissionsToFolder, ok := om.permissionsMap[parentFolder.ID]
 	if !ok {
-		customFolders = make(map[permissionHash]*folder.Folder)
-		om.permissionsMap[dash.FolderID] = customFolders
+		permissionsToFolder = make(map[permissionHash]*folder.Folder)
+		om.permissionsMap[dash.FolderID] = permissionsToFolder
 
 		folderPerms, err := om.getFolderPermissions(ctx, parentFolder)
 		if err != nil {
@@ -117,7 +117,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 		if err != nil {
 			return nil, fmt.Errorf("hash of folder permissions: %w", err)
 		}
-		customFolders[folderPermsHash] = parentFolder
+		permissionsToFolder[folderPermsHash] = parentFolder
 	}
 
 	// Now we compute the hash of the dashboard permissions and check if we have a folder for it. If not, we create a new one.
@@ -131,7 +131,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 		return nil, fmt.Errorf("hash of dashboard permissions: %w", err)
 	}
 
-	customFolder, ok := customFolders[hash]
+	customFolder, ok := permissionsToFolder[hash]
 	if !ok {
 		folderName := generateAlertFolderName(parentFolder, hash)
 		l.Info("Dashboard has custom permissions, create a new folder for alerts.", "newFolder", folderName)
@@ -150,7 +150,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 			l.Warn("Some roles were not migrated but had the potential to allow additional access. Please verify the permissions of the new folder.", "roles", overrides, "newFolder", folderName)
 		}
 
-		customFolders[hash] = f
+		permissionsToFolder[hash] = f
 		return f, nil
 	}
 
