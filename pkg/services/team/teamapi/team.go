@@ -1,19 +1,17 @@
 package teamapi
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
@@ -244,7 +242,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return tapi.getPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId)
+	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -267,7 +265,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return tapi.updatePreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences
@@ -381,94 +379,4 @@ func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
 	orgID int64, prefix string, resourceID string) accesscontrol.Metadata {
 	ids := map[string]bool{resourceID: true}
 	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
-}
-
-func (tapi *TeamAPI) updatePreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
-	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
-		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
-	}
-
-	dashboardID := dtoCmd.HomeDashboardID
-	if dtoCmd.HomeDashboardUID != nil {
-		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
-		if query.UID == "" {
-			// clear the value
-			dashboardID = 0
-		} else {
-			queryResult, err := tapi.ds.GetDashboard(ctx, &query)
-			if err != nil {
-				return response.Error(http.StatusNotFound, "Dashboard not found", err)
-			}
-			dashboardID = queryResult.ID
-		}
-	}
-	dtoCmd.HomeDashboardID = dashboardID
-
-	saveCmd := pref.SavePreferenceCommand{
-		UserID:            userID,
-		OrgID:             orgID,
-		TeamID:            teamId,
-		Theme:             dtoCmd.Theme,
-		Language:          dtoCmd.Language,
-		Timezone:          dtoCmd.Timezone,
-		WeekStart:         dtoCmd.WeekStart,
-		HomeDashboardID:   dtoCmd.HomeDashboardID,
-		QueryHistory:      dtoCmd.QueryHistory,
-		CookiePreferences: dtoCmd.Cookies,
-	}
-
-	if err := tapi.preferenceService.Save(ctx, &saveCmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
-	}
-
-	return response.Success("Preferences updated")
-}
-
-func (tapi *TeamAPI) getPreferencesFor(ctx context.Context, orgID, userID, teamID int64) response.Response {
-	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
-
-	preference, err := tapi.preferenceService.Get(ctx, &prefsQuery)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
-	}
-
-	var dashboardUID string
-
-	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
-	if preference.HomeDashboardID != 0 {
-		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
-		queryResult, err := tapi.ds.GetDashboard(ctx, &query)
-		if err == nil {
-			dashboardUID = queryResult.UID
-		}
-	}
-
-	dto := preferences.Spec{}
-
-	if preference.WeekStart != nil && *preference.WeekStart != "" {
-		dto.WeekStart = preference.WeekStart
-	}
-	if preference.Theme != "" {
-		dto.Theme = &preference.Theme
-	}
-	if dashboardUID != "" {
-		dto.HomeDashboardUID = &dashboardUID
-	}
-	if preference.Timezone != "" {
-		dto.Timezone = &preference.Timezone
-	}
-
-	if preference.JSONData != nil {
-		if preference.JSONData.Language != "" {
-			dto.Language = &preference.JSONData.Language
-		}
-
-		if preference.JSONData.QueryHistory.HomeTab != "" {
-			dto.QueryHistory = &preferences.QueryHistoryPreference{
-				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
-			}
-		}
-	}
-
-	return response.JSON(http.StatusOK, &dto)
 }
