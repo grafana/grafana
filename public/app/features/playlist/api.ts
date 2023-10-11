@@ -61,9 +61,8 @@ class K8sAPI implements PlaylistAPI {
     this.url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
 
     // When undefined, this will use k8s for all CRUD features
-    if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
-      this.legacy = new LegacyAPI();
-    }
+    // if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+    this.legacy = new LegacyAPI();
   }
 
   async getAllPlaylist(): Promise<Playlist[]> {
