@@ -9,6 +9,7 @@ import { getDashboardChanges, Message, Role } from './utils';
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
   onGenerate: (title: string) => void;
+  disabled?: boolean;
 }
 
 const CHANGES_GENERATION_STANDARD_PROMPT = [
@@ -26,7 +27,7 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   '',
 ].join('.\n');
 
-export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
+export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
   return (
@@ -37,6 +38,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
       temperature={0}
       eventTrackingSrc={EventTrackingSrc.dashboardChanges}
       toggleTipTitle={'Improve your dashboard changes summary'}
+      disabled={disabled}
     />
   );
 };
