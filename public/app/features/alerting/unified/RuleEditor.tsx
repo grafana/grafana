@@ -48,7 +48,7 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   const [searchParams] = useURLSearchParams();
 
   const { type } = match.params;
-  const id = ruleId.useRuleIdFromPathname(match.params);
+  const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = ruleId.tryParse(id, true);
 
   const copyFromId = searchParams.get('copyFrom') ?? undefined;

@@ -36,7 +36,7 @@ enum Tabs {
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
-  const id = ruleId.useRuleIdFromPathname(match.params);
+  const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
     if (!id) {
       throw new Error('Rule ID is required');

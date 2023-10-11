@@ -1,5 +1,6 @@
 import { nth } from 'lodash';
 
+import { locationService } from '@grafana/runtime';
 import { CombinedRule, Rule, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { Annotations, Labels, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -254,8 +255,8 @@ export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): stri
 // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
 // It was probably fixed in React-Router v6
 type PathWithOptionalID = { id?: string };
-export function useRuleIdFromPathname(params: PathWithOptionalID): string | undefined {
-  const { pathname = '' } = window.location;
+export function getRuleIdFromPathname(params: PathWithOptionalID): string | undefined {
+  const { pathname = '' } = locationService.getLocation();
   const { id } = params;
 
   return id ? nth(pathname.split('/'), -2) : undefined;

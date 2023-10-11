@@ -44,7 +44,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const [expandQuery, setExpandQuery] = useToggle(false);
 
   const identifier = useMemo(() => {
-    const id = ruleId.useRuleIdFromPathname(match.params);
+    const id = ruleId.getRuleIdFromPathname(match.params);
     if (!id) {
       throw new Error('Rule ID is required');
     }

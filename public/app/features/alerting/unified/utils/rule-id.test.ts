@@ -9,7 +9,7 @@ import {
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { hashRulerRule, parse, stringifyIdentifier, useRuleIdFromPathname } from './rule-id';
+import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname } from './rule-id';
 
 describe('hashRulerRule', () => {
   it('should not hash unknown rule types', () => {
@@ -120,7 +120,7 @@ describe('hashRulerRule', () => {
 describe('useRuleIdFromPathname', () => {
   it('should return undefined when there is no id in params', () => {
     const { result } = renderHook(() => {
-      useRuleIdFromPathname({ id: undefined });
+      getRuleIdFromPathname({ id: undefined });
     });
 
     expect(result.current).toBe(undefined);
