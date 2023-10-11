@@ -72,19 +72,21 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 		return nil, err
 	}
 
-	if saID > 0 {
-		token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
-		if err != nil {
-			esa.logger.Error("Could not get the external svc token",
-				"service", slug,
-				"saID", saID,
-				"error", err.Error())
-			return nil, err
-		}
-		return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
+	// No need for a token if we don't have a service account
+	if saID <= 0 {
+		esa.logger.Debug("Skipping service account token creation", "service", slug)
+		return nil, nil
 	}
 
-	return nil, nil
+	token, err := esa.getExtSvcAccountToken(ctx, extsvcauth.TmpOrgID, saID, slug)
+	if err != nil {
+		esa.logger.Error("Could not get the external svc token",
+			"service", slug,
+			"saID", saID,
+			"error", err.Error())
+		return nil, err
+	}
+	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
 }
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
