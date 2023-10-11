@@ -1,6 +1,6 @@
-import { formatMilliseconds } from './utils';
+import { formatMilliseconds, getInterval } from './utils';
 
-describe('format milliseconds', () => {
+describe('heatmap tooltip utils', () => {
   it('converts ms to appropriate unit', async () => {
     let msToFormat = 10;
     let formatted = formatMilliseconds(msToFormat);
@@ -41,5 +41,11 @@ describe('format milliseconds', () => {
     msToFormat = 1000 * 60 * 60 * 24 * 365 * 2;
     formatted = formatMilliseconds(msToFormat);
     expect(formatted).toBe('2 years');
+  });
+
+  it('should return the correct interval', () => {
+    const fieldValues = [1696618200000, 1696618200000, 1696618200000, 1696618260000, 1696618260000, 1696618320000];
+    const interval = getInterval(fieldValues);
+    expect(interval).toBe(60000);
   });
 });

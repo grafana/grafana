@@ -25,7 +25,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from '../fields';
 
-import { formatMilliseconds, getHoverCellColor, xDisp } from './utils';
+import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor, xDisp } from './utils';
 
 interface Props {
   dataIdxs: Array<number | null>;
@@ -68,9 +68,13 @@ const HeatmapTooltipHover = ({
 
   const index = dataIdxs[1]!;
 
-  const xField = data.heatmap?.fields[0];
-  const yField = data.heatmap?.fields[1];
-  const countField = data.heatmap?.fields[2];
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
+
+  const xField = getFieldFromData(data.heatmap!, 'x', isSparse);
+  const yField = getFieldFromData(data.heatmap!, 'y', isSparse);
+  const countField = getFieldFromData(data.heatmap!, 'count', isSparse);
 
   const xVals = xField?.values;
   const yVals = yField?.values;
@@ -80,61 +84,72 @@ const HeatmapTooltipHover = ({
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
-  const yValueIdx = index % data.yBucketCount! ?? 0;
+  const count = countVals?.[index];
+  let interval = xField?.config.interval;
 
   let yBucketMin: string;
   let yBucketMax: string;
 
-  let nonNumericOrdinalDisplay: string | undefined = undefined;
-
-  if (meta.yOrdinalDisplay) {
-    const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
-    const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
-    yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
-    yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
-
-    // e.g. "pod-xyz123"
-    if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
-      nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
-    }
-  } else {
-    const value = yVals?.[yValueIdx];
-
-    if (data.yLayout === HeatmapCellLayout.le) {
-      yBucketMax = `${value}`;
-
-      if (data.yLog) {
-        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
-        let exp = logFn(value) - 1 / data.yLogSplit!;
-        yBucketMin = `${data.yLog ** exp}`;
-      } else {
-        yBucketMin = `${value - data.yBucketSize!}`;
-      }
-    } else {
-      yBucketMin = `${value}`;
-
-      if (data.yLog) {
-        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
-        let exp = logFn(value) + 1 / data.yLogSplit!;
-        yBucketMax = `${data.yLog ** exp}`;
-      } else {
-        yBucketMax = `${value + data.yBucketSize!}`;
-      }
-    }
-  }
-
   let xBucketMin: number;
   let xBucketMax: number;
 
-  if (data.xLayout === HeatmapCellLayout.le) {
-    xBucketMax = xVals?.[index];
-    xBucketMin = xBucketMax - data.xBucketSize!;
-  } else {
-    xBucketMin = xVals?.[index];
-    xBucketMax = xBucketMin + data.xBucketSize!;
-  }
+  let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  const count = countVals?.[index];
+  if (isSparse) {
+    if (xVals && yVals) {
+      const bucketsMinMax = calculateSparseBucketMinMax(data!, xVals, yVals, index);
+      xBucketMin = bucketsMinMax.xBucketMin;
+      xBucketMax = bucketsMinMax.xBucketMax;
+      yBucketMin = bucketsMinMax.yBucketMin;
+      yBucketMax = bucketsMinMax.yBucketMax;
+    }
+  } else {
+    const yValueIdx = index % data.yBucketCount! ?? 0;
+
+    if (meta.yOrdinalDisplay) {
+      const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
+      const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+      yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
+      yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
+
+      // e.g. "pod-xyz123"
+      if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
+        nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
+      }
+    } else {
+      const value = yVals?.[yValueIdx];
+
+      if (data.yLayout === HeatmapCellLayout.le) {
+        yBucketMax = `${value}`;
+
+        if (data.yLog) {
+          let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+          let exp = logFn(value) - 1 / data.yLogSplit!;
+          yBucketMin = `${data.yLog ** exp}`;
+        } else {
+          yBucketMin = `${value - data.yBucketSize!}`;
+        }
+      } else {
+        yBucketMin = `${value}`;
+
+        if (data.yLog) {
+          let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+          let exp = logFn(value) + 1 / data.yLogSplit!;
+          yBucketMax = `${data.yLog ** exp}`;
+        } else {
+          yBucketMax = `${value + data.yBucketSize!}`;
+        }
+      }
+    }
+
+    if (data.xLayout === HeatmapCellLayout.le) {
+      xBucketMax = xVals?.[index];
+      xBucketMin = xBucketMax - data.xBucketSize!;
+    } else {
+      xBucketMin = xVals?.[index];
+      xBucketMax = xBucketMin + data.xBucketSize!;
+    }
+  }
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -251,18 +266,6 @@ const HeatmapTooltipHover = ({
     [index]
   );
 
-  const [isSparse] = useState(
-    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
-  );
-
-  if (isSparse) {
-    return (
-      <div>
-        <DataHoverView data={data.heatmap} rowIndex={index} />
-      </div>
-    );
-  }
-
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
   const getLabelValue = (): LabelValue[] => {
@@ -319,8 +322,6 @@ const HeatmapTooltipHover = ({
 
     if (data.xLayout !== HeatmapCellLayout.unknown) {
       fromToInt.push({ label: 'To', value: xDisp(xBucketMax, xField)! });
-
-      const interval = xField?.config.interval;
 
       if (interval) {
         const formattedString = formatMilliseconds(interval);
