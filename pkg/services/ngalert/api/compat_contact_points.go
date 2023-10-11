@@ -35,7 +35,8 @@ func ContactPointFromContactPointExport(rawContactPoint definitions.ContactPoint
 }
 
 // ContactPointToContactPointExport converts definitions.ContactPoint to notify.APIReceiver.
-// It uses special extension for jsoniter.API that properly handles marshalling of some specific fields.
+// It uses special extension for json-iterator API that properly handles marshalling of some specific fields.
+//
 //nolint:gocyclo
 func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIReceiver, error) {
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
