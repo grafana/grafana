@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.2",
-    "@rollup/plugin-node-resolve": "15.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
     "@types/node": "18.16.19",
     "esbuild": "0.18.12",
     "rimraf": "5.0.1",

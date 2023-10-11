@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -206,10 +205,10 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *user.SignedInUser, uid string) (int64, error) {
+func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
@@ -490,7 +489,8 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	return result, err
 }
 
-func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *model.LibraryElement, fromFolderID int64, toFolderID int64, user *user.SignedInUser) error {
+func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *model.LibraryElement,
+	fromFolderID int64, toFolderID int64, user identity.Requester) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -514,13 +514,13 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *user.SignedInUser, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
 	var dto model.LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		elementInDB, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		elementInDB, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
@@ -537,15 +537,26 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				return model.ErrLibraryElementUIDTooLong
 			}
 
-			_, err := getLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.OrgID)
+			_, err := getLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.GetOrgID())
 			if !errors.Is(err, model.ErrLibraryElementNotFound) {
 				return model.ErrLibraryElementAlreadyExists
 			}
 		}
 
+		var userID int64
+		namespaceID, identifier := signedInUser.GetNamespacedID()
+		switch namespaceID {
+		case identity.NamespaceUser, identity.NamespaceServiceAccount:
+			var errID error
+			userID, errID = identity.IntIdentifier(namespaceID, identifier)
+			if errID != nil {
+				l.log.Warn("Error while parsing userID", "namespaceID", namespaceID, "userID", identifier, "err", errID)
+			}
+		}
+
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
-			OrgID:       signedInUser.OrgID,
+			OrgID:       signedInUser.GetOrgID(),
 			FolderID:    cmd.FolderID,
 			UID:         updateUID,
 			Name:        cmd.Name,
@@ -557,7 +568,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 			Created:     elementInDB.Created,
 			CreatedBy:   elementInDB.CreatedBy,
 			Updated:     time.Now(),
-			UpdatedBy:   signedInUser.UserID,
+			UpdatedBy:   userID,
 		}
 
 		if cmd.Name == "" {
@@ -603,8 +614,8 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
-					Name:      signedInUser.Login,
-					AvatarUrl: dtos.GetGravatarUrl(signedInUser.Email),
+					Name:      signedInUser.GetLogin(),
+					AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
 				},
 			},
 		}
@@ -615,7 +626,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 }
 
 // getConnections gets all connections for a Library Element.
-func (l *LibraryElementService) getConnections(c context.Context, signedInUser *user.SignedInUser, uid string) ([]model.LibraryElementConnectionDTO, error) {
+func (l *LibraryElementService) getConnections(c context.Context, signedInUser identity.Requester, uid string) ([]model.LibraryElementConnectionDTO, error) {
 	connections := make([]model.LibraryElementConnectionDTO, 0)
 	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
 	if err != nil {
@@ -623,7 +634,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
@@ -634,7 +645,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
-		if signedInUser.OrgRole != org.RoleAdmin {
+		if signedInUser.GetOrgRole() != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
