@@ -156,23 +156,23 @@ export const droneTopItem: CanvasElementItem = {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  propeller: css`
-    transform-origin: 50% 50%;
-    transform-box: fill-box;
-    display: block;
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  `,
-  propellerCW: css`
-    animation-direction: normal;
-  `,
-  propellerCCW: css`
-    animation-direction: reverse;
-  `,
+  propeller: css({
+    transformOrigin: '50% 50%',
+    transformBox: 'fill-box',
+    display: 'block',
+    '@keyframes spin': {
+      from: {
+        transform: 'rotate(0deg)',
+      },
+      to: {
+        transform: 'rotate(360deg)',
+      },
+    },
+  }),
+  propellerCW: css({
+    animationDirection: 'normal',
+  }),
+  propellerCCW: css({
+    animationDirection: 'reverse',
+  }),
 });
