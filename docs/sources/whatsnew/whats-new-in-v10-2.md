@@ -40,7 +40,7 @@ You must use relative references when linking to docs within the Grafana repo. P
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
 
-## Authentication and Authorization
+## Authentication and authorization
 
 ### No Basic Role
 
