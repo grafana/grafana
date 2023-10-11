@@ -179,7 +179,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
-            Run queries
+            {queries && queries.length > 1 ? `Run queries` : `Run query`}
           </Button>
         )}
         <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />

@@ -23,7 +23,6 @@ type SocialAzureAD struct {
 	*SocialBase
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
-	allowedGroups        []string
 	forceUseGraphAPI     bool
 	skipOrgRoleSync      bool
 }
@@ -99,7 +98,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
-	if !s.IsGroupMember(groups) {
+	if !s.isGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -180,22 +179,6 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
 
 	return nil, &Error{"AzureAD OAuth: signing key not found"}
-}
-
-func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.allowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 func (claims *azureClaims) extractEmail() string {

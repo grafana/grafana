@@ -51,6 +51,8 @@ export const MenuList = (props: MenuListProps) => {
     </components.MenuList>
   );
 };
+
+/** @deprecated Please use the `Select` component, as seen {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-select--basic in Storybook}. */
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
@@ -168,6 +170,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   }
 }
 
+/** @deprecated Please use the `Select` component with async functionality, as seen {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-select--basic-select-async in Storybook}. */
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
   static contextType = ThemeContext;
 

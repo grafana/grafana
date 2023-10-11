@@ -29,17 +29,18 @@ const versions: Array<SelectableValue<InfluxVersion>> = [
   {
     label: 'Flux',
     value: InfluxVersion.Flux,
-    description: 'Advanced data scripting and query language. Supported in InfluxDB 2.x and 1.8+',
+    description: 'Supported in InfluxDB 2.x and 1.8+',
   },
 ];
 
 const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
-  ...versions,
+  { ...versions[0] },
   {
     label: 'SQL',
     value: InfluxVersion.SQL,
     description: 'Native SQL language. Supported in InfluxDB 3.0',
   },
+  { ...versions[1] },
 ];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
