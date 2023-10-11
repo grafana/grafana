@@ -81,7 +81,6 @@ def swagger_gen_step(ver_mode):
 
 def swagger_gen(trigger, ver_mode, source = "${DRONE_COMMIT}"):
     test_steps = [
-        clone_pr_branch(ver_mode = ver_mode),
         clone_enterprise_step_pr(source = source),
         swagger_gen_step(ver_mode = ver_mode),
     ]
@@ -92,9 +91,5 @@ def swagger_gen(trigger, ver_mode, source = "${DRONE_COMMIT}"):
         services = [],
         steps = test_steps,
     )
-
-    p["clone"] = {
-        "disable": True,
-    }
 
     return p

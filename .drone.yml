@@ -1157,7 +1157,7 @@ volumes:
   name: docker
 ---
 clone:
-  disable: true
+  retries: 3
 depends_on: []
 image_pull_secrets:
 - dockerconfigjson
@@ -1170,22 +1170,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - apk add --update git
-  - echo 'listing before cloning'
-  - ls -l
-  - cat Makefile
-  - echo 'cloning repo'
-  - git clone https://github.com/grafana/grafana.git
-  - echo 'cloned repo'
-  - cd grafana
-  - echo 'listing...'
-  - ls -l
-  - pwd
-  - cat Makefile
-  - git checkout ${DRONE_SOURCE_BRANCH}
-  image: golang:1.20.8-alpine
-  name: clone-pr-branch
 - commands:
   - apk add --update curl jq bash
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -4740,6 +4724,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9a4d5d5c8a67c20e33509ce5c4ec8bcfa2311c26454526c61a9d2434b6b1f28b
+hmac: f2cf366d0399e019dfa3f53d82882492adee744e892dafd3cd823413a5d64e17
 
 ...
