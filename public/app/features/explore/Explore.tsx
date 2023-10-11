@@ -11,7 +11,6 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  LogRowModel,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
