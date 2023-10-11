@@ -10,7 +10,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
-  getTimeZones
+  getTimeZones,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
@@ -37,7 +37,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   // Format timezone options
   const tzs = getTimeZones();
   for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz});
+    timeZoneOptions.push({ label: tz, value: tz });
   }
 
   const onSelectField = useCallback(
@@ -100,13 +100,15 @@ export const ConvertFieldTypeTransformerEditor = ({
 
   const onTzChange = useCallback(
     (idx: number) => (value: SelectableValue<string>) => {
-    const conversions = options.conversions;
-    conversions[idx] = { ...conversions[idx], timezone: value?.value };
-    onChange({
-      ...options,
-      conversions: conversions,
-    });
-  }, [onChange, options]);
+      const conversions = options.conversions;
+      conversions[idx] = { ...conversions[idx], timezone: value?.value };
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    },
+    [onChange, options]
+  );
 
   return (
     <>
@@ -156,12 +158,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                       />
                     </InlineField>
                     <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
-                      <Select 
-                        options={timeZoneOptions} 
-                        value={c.timezone}
-                        onChange={onTzChange(idx)}
-                        isClearable
-                      />
+                      <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
                     </InlineField>
                   </>
                 )}

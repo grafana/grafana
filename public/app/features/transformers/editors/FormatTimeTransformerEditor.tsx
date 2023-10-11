@@ -34,7 +34,7 @@ export function FormatTimeTransfomerEditor({
   // Format timezone options
   const tzs = getTimeZones();
   for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz});
+    timeZoneOptions.push({ label: tz, value: tz });
   }
 
   const onSelectField = useCallback(
@@ -59,15 +59,16 @@ export function FormatTimeTransfomerEditor({
     [onChange, options]
   );
 
-
   const onTzChange = useCallback(
     (value: SelectableValue<string>) => {
-    const val = value?.value !== undefined ? value.value : '';
-    onChange({
-      ...options,
-      timezone: val,
-    });
-  }, [onChange, options]);
+      const val = value?.value !== undefined ? value.value : '';
+      onChange({
+        ...options,
+        timezone: val,
+      });
+    },
+    [onChange, options]
+  );
 
   return (
     <>
@@ -98,16 +99,8 @@ export function FormatTimeTransfomerEditor({
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
-        <InlineField
-          label="Set Timezone"
-          tooltip="Set the timezone of the date manually"
-          labelWidth={20}
-          >
-            <Select 
-              options={timeZoneOptions} 
-              value={options.timezone} 
-              onChange={onTzChange}
-              isClearable />
+        <InlineField label="Set Timezone" tooltip="Set the timezone of the date manually" labelWidth={20}>
+          <Select options={timeZoneOptions} value={options.timezone} onChange={onTzChange} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

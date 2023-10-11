@@ -28,10 +28,10 @@ export interface ConvertFieldTypeOptions {
    */
   dateFormat?: string;
   /**
-   * When converting a date to a string an option timezone. 
+   * When converting a date to a string an option timezone.
    */
   timezone?: TimeZone;
-  /** 
+  /**
    * When converting to an enumeration, this is the target config
    */
   enumConfig?: EnumFieldConfig;
@@ -103,7 +103,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field, opts.dateFormat, {timeZone: opts.timezone});
+      return fieldToStringField(field, opts.dateFormat, { timeZone: opts.timezone });
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.enum:
@@ -189,7 +189,11 @@ function fieldToBooleanField(field: Field): Field {
 /**
  * @internal
  */
-export function fieldToStringField(field: Field, dateFormat?: string, parseOptions?: DateTimeOptionsWhenParsing): Field {
+export function fieldToStringField(
+  field: Field,
+  dateFormat?: string,
+  parseOptions?: DateTimeOptionsWhenParsing
+): Field {
   let values = field.values;
 
   switch (field.type) {

@@ -41,23 +41,21 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
 /**
  * @internal
  */
-export const createTimeFormatter =
-  (timeField: string, outputFormat: string, timezone: string) => (fields: Field[]) => {
-    return fields.map((field) => {
-      // Find the configured field
-      if (field.name === timeField) {
-        // Update values to use the configured format
-        let formattedField = null;
-        if (timezone) {
-          formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone});
-        }
-        else {
-          formattedField = fieldToStringField(field, outputFormat);
-        }
-
-        return formattedField;
+export const createTimeFormatter = (timeField: string, outputFormat: string, timezone: string) => (fields: Field[]) => {
+  return fields.map((field) => {
+    // Find the configured field
+    if (field.name === timeField) {
+      // Update values to use the configured format
+      let formattedField = null;
+      if (timezone) {
+        formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone });
+      } else {
+        formattedField = fieldToStringField(field, outputFormat);
       }
 
-      return field;
-    });
-  };
+      return formattedField;
+    }
+
+    return field;
+  });
+};
