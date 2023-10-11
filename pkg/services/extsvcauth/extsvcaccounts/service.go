@@ -17,8 +17,6 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-// TODO (gamab) more logs
-
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
 	logger   log.Logger
