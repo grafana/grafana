@@ -33,7 +33,18 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     rowField: DEFAULT_ROW_FIELD,
     valueField: DEFAULT_VALUE_FIELD,
   },
+  /**
+   * Grouping to matrix requires at least 3 fields to work.
+   */
+  applicator: (data) => {
+    let numFields = 0;
 
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
+
+    return numFields >= 3;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {

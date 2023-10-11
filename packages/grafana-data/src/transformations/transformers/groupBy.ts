@@ -42,8 +42,6 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
       }
     }
 
-    console.log(maxFields);
-
     return maxFields >= 2;
   },
   /**
