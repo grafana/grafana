@@ -26,6 +26,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
@@ -280,12 +281,12 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.options).toEqual(panel.options);
       expect(vizPanel.state.fieldConfig).toEqual(panel.fieldConfig);
       expect(vizPanel.state.pluginVersion).toBe('1.0.0');
-      expect(((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries).toEqual(
-        panel.targets
-      );
-      expect(
-        ((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
-      ).toEqual(100);
+
+      const queryRunner = getQueryRunnerFor(vizPanel)!;
+      expect(queryRunner.state.queries).toEqual(panel.targets);
+      expect(queryRunner.state.maxDataPoints).toEqual(100);
+      expect(queryRunner.state.maxDataPointsFromWidth).toEqual(true);
+
       expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
     });
 
