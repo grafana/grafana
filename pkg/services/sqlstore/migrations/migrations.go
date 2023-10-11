@@ -89,6 +89,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
+	accesscontrol.AddManagedFolderLibraryPanelActionsMigration(mg)
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
