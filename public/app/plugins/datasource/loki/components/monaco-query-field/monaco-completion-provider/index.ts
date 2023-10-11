@@ -115,8 +115,6 @@ export const calculateRange = (
   monaco: Monaco,
   position: monacoTypes.Position
 ): monacoTypes.Range => {
-  console.log('word', word);
-  console.log('wordUntil', wordUntil);
   if (
     situation &&
     situation?.type === 'IN_LABEL_SELECTOR_WITH_LABEL_NAME' &&

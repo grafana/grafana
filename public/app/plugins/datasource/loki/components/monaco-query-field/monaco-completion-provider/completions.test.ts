@@ -1,6 +1,5 @@
 import { Monaco, monacoTypes } from '@grafana/ui/src';
 
-import MonacoMock from '../../../../cloudwatch/__mocks__/monarch/Monaco';
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
 import { createLokiDatasource } from '../../../mocks';
@@ -816,7 +815,8 @@ describe('IN_LOGFMT completions', () => {
     });
 
     it('getSituation fails to return autocomplete when inserting before any other labels', () => {
-      // Note this is not desirable functionality
+      // Ideally we'd be able to autocomplete in this situation as well, but currently not supported to insert labels at the start.
+      //{^label1="value1",label2="value2"}
       const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 1);
       expect(situation).toBe(null);
     });
@@ -843,32 +843,6 @@ describe('IN_LOGFMT completions', () => {
         endLineNumber: 1,
         startColumn: 17,
         endColumn: 17,
-      });
-    });
-    it('tests inserting new label within existing label value', () => {
-      //{label1="value1",label2="^value2"}
-      const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 25);
-      expect(situation?.type).toBe('IN_LABEL_SELECTOR_WITH_LABEL_NAME');
-      const word: monacoTypes.editor.IWordAtPosition = {
-        word: 'label2="value2"',
-        startColumn: 18,
-        endColumn: 33,
-      };
-      const wordUntil: monacoTypes.editor.IWordAtPosition = {
-        word: 'label2="',
-        startColumn: 18,
-        endColumn: 26,
-      };
-      const position: monacoTypes.Position = {
-        lineNumber: 1,
-        column: 25,
-      } as monacoTypes.Position;
-
-      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
-        startLineNumber: 1,
-        endLineNumber: 1,
-        startColumn: 26,
-        endColumn: 32,
       });
     });
     it('tests inserting new label within existing label value', () => {
