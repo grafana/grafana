@@ -2,7 +2,7 @@ import React from 'react';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   LinkButton,
