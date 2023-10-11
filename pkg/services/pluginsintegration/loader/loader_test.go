@@ -1335,8 +1335,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 					Screenshots: []plugins.Screenshots{},
 					Description: "Grafana App Plugin Template",
-					Version:     "%VERSION%",
-					Updated:     "%TODAY%",
+					Version:     "",
+					Updated:     "",
 				},
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion:    "7.0.0",
@@ -1415,8 +1415,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 					Screenshots: []plugins.Screenshots{},
 					Description: "Grafana Panel Plugin Template",
-					Version:     "%VERSION%",
-					Updated:     "%TODAY%",
+					Version:     "",
+					Updated:     "",
 				},
 				Dependencies: plugins.Dependencies{
 					GrafanaDependency: ">=7.0.0",

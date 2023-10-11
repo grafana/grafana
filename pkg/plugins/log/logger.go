@@ -1,6 +1,8 @@
 package log
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -41,4 +43,14 @@ func (d *grafanaInfraLogWrapper) Warn(msg string, ctx ...any) {
 
 func (d *grafanaInfraLogWrapper) Error(msg string, ctx ...any) {
 	d.l.Error(msg, ctx...)
+}
+
+func (d *grafanaInfraLogWrapper) FromContext(ctx context.Context) Logger {
+	concreteInfraLogger, ok := d.l.FromContext(ctx).(*log.ConcreteLogger)
+	if !ok {
+		return d.New()
+	}
+	return &grafanaInfraLogWrapper{
+		l: concreteInfraLogger,
+	}
 }
