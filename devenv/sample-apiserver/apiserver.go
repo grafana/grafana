@@ -113,9 +113,15 @@ func writeKubeConfiguration(restConfig *rest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token:    restConfig.BearerToken,
-		Username: restConfig.Username,
-		Password: restConfig.Password,
+		ImpersonateUserExtra: map[string][]string{
+			"org-id":  []string{"1"},
+			"user-id": []string{"1"},
+		},
+		Username:     restConfig.Username,
+		Password:     restConfig.Password,
+		AuthProvider: &clientcmdapi.AuthProviderConfig{},
+		Exec:         &clientcmdapi.ExecConfig{},
+		Extensions:   map[string]runtime.Object{},
 	}
 
 	clientConfig := clientcmdapi.Config{
