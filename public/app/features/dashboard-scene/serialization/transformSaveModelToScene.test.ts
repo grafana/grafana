@@ -13,7 +13,6 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
-  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
