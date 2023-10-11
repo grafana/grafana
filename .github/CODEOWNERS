@@ -323,6 +323,7 @@
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
+/packages/grafana-data/src/transformations/ @grafana/grafana-bi-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
