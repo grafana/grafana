@@ -310,3 +310,35 @@ func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
 func (db *MySQLDialect) GroupConcat(colName string, sep string) string {
 	return "GROUP_CONCAT(" + colName + " SEPARATOR '" + sep + "')"
 }
+
+func (db *MySQLDialect) CreateIndexSQL(tableName string, index *Index) string {
+	quote := db.dialect.Quote
+	var unique string
+	if index.Type == UniqueIndex {
+		unique = " UNIQUE"
+	}
+
+	idxName := index.XName(tableName)
+
+	quotedCols := []string{}
+
+	if index.ColLengths == nil {
+		index.ColLengths = map[string]int{}
+	}
+
+	for _, col := range index.Cols {
+		length, ok := index.ColLengths[col]
+		if !ok {
+			// ignore
+			length = 0
+		}
+
+		col = db.dialect.Quote(col)
+		if length > 0 {
+			col += "(" + strconv.Itoa(length) + ")"
+		}
+		quotedCols = append(quotedCols, col)
+	}
+
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique, quote(idxName), quote(tableName), strings.Join(quotedCols, ","))
+}

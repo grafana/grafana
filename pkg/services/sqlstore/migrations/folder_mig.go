@@ -52,8 +52,9 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Name: "fullpath", Type: migrator.DB_Text, Nullable: true,
 	}))
 
+	// only the first 255 characters of the fullpath column are indexed
 	mg.AddMigration("Add index for fullpath", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Cols: []string{"fullpath"},
+		Cols: []string{"fullpath"}, ColLengths: map[string]int{"fullpath": 255},
 	}))
 }
 

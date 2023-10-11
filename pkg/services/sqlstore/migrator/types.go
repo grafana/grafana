@@ -51,9 +51,10 @@ const (
 )
 
 type Index struct {
-	Name string
-	Type int
-	Cols []string
+	Name       string
+	Type       int
+	Cols       []string
+	ColLengths map[string]int
 }
 
 func (index *Index) XName(tableName string) string {
