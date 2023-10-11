@@ -13,7 +13,7 @@ type NamespaceInfo struct {
 	// OrgID defined in namespace (1 when using stack ids)
 	OrgID int64
 
-	// The cloud stack ID (must match the value is cfg.Settings)
+	// The cloud stack ID (must match the value in cfg.Settings)
 	StackID string
 
 	// For namespaces that are not org-{id} or stack-{id}
