@@ -14,7 +14,6 @@ type saveExtSvcAccountCmd struct {
 	OrgID       int64
 	Permissions []ac.Permission
 	SaID        int64
-	WithToken   bool
 }
 
 func newRole(r roletype.RoleType) *roletype.RoleType {
