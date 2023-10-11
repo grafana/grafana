@@ -39,7 +39,6 @@ type ExtSvcAccount struct {
 	OrgID      int64
 	IsDisabled bool
 	Role       roletype.RoleType
-	Secret     string
 }
 
 type ManageExtSvcAccountCmd struct {
@@ -47,17 +46,6 @@ type ManageExtSvcAccountCmd struct {
 	Enabled     bool // disabled: the service account and its permissions will be deleted
 	OrgID       int64
 	Permissions []accesscontrol.Permission
-}
-
-// ExtSvcCredentials represents the credentials associated to an external service
-type ExtSvcCredentials struct {
-	Secret string
-}
-
-type SaveExtSvcCredentialsCmd struct {
-	ExtSvcSlug string
-	OrgID      int64
-	Secret     string
 }
 
 type SelfCfg struct {
