@@ -72,5 +72,5 @@ For more information on how to set up refresh token handling, please refer to [t
 {{% admonition type="note" %}}
 The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana will not check the expiration of the access token and will not automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
 
-The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.
+The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
