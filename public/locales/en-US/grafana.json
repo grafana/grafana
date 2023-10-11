@@ -824,13 +824,13 @@
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
-      "expand-row": "Expand query row",
       "datasource-help": "Show data source help",
-      "toggle-edit-mode": "Toggle text edit mode",
-      "duplicate-query": "Duplicate query",
       "disable-query": "Disable query",
+      "drag-and-drop": "Drag and drop to reorder",
+      "duplicate-query": "Duplicate query",
+      "expand-row": "Expand query row",
       "remove-query": "Remove query",
-      "drag-and-drop": "Drag and drop to reorder"
+      "toggle-edit-mode": "Toggle text edit mode"
     }
   },
   "refresh-picker": {
