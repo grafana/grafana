@@ -1,26 +1,17 @@
 import React, { useEffect, useState } from 'react';
 
-import { EditorFieldGroup, EditorRow, EditorRows, Stack } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  ResultFormat,
-  EngineSchema,
-  AzureQueryType,
-} from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
 import FormatAsField from '../FormatAsField';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
-import { AzureCheatSheetModal } from './AzureCheatSheetModal';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setFormatAs } from './setQueryValue';
@@ -60,7 +51,6 @@ const LogsQueryEditor = ({
     return rowResourceNS !== selectedRowSampleNs;
   };
   const [schema, setSchema] = useState<EngineSchema | undefined>();
-  const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
 
   useEffect(() => {
     if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
@@ -72,66 +62,43 @@ const LogsQueryEditor = ({
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
-      <AzureCheatSheetModal
-        datasource={datasource.azureLogAnalyticsDatasource}
-        isOpen={azureLogsCheatSheetModalOpen}
-        onClose={() => setAzureLogsCheatSheetModalOpen(false)}
-        onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
-      />
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
-            <Stack gap={1} alignItems="center">
-              <Button
-                aria-label="Azure logs kick start your query button"
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setAzureLogsCheatSheetModalOpen((prevValue) => !prevValue);
-
-                  reportInteraction('grafana_azure_logs_query_patterns_opened', {
-                    version: 'v2',
-                    editorMode: query.azureLogAnalytics,
-                  });
-                }}
-              >
-                Kick start your query
-              </Button>
-              <ResourceField
-                query={query}
-                datasource={datasource}
-                inlineField={true}
-                labelWidth={10}
-                subscriptionId={subscriptionId}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-                selectableEntryTypes={[
-                  ResourceRowType.Subscription,
-                  ResourceRowType.ResourceGroup,
-                  ResourceRowType.Resource,
-                  ResourceRowType.Variable,
-                ]}
-                resources={query.azureLogAnalytics?.resources ?? []}
-                queryType="logs"
-                disableRow={disableRow}
-                renderAdvanced={(resources, onChange) => (
-                  // It's required to cast resources because the resource picker
-                  // specifies the type to string | AzureMonitorResource.
-                  // eslint-disable-next-line
-                  <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
-                )}
-                selectionNotice={() => 'You may only choose items of the same resource type.'}
-              />
-              <TimeManagement
-                query={query}
-                datasource={datasource}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-                schema={schema}
-              />
-            </Stack>
+            <ResourceField
+              query={query}
+              datasource={datasource}
+              inlineField={true}
+              labelWidth={10}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+              selectableEntryTypes={[
+                ResourceRowType.Subscription,
+                ResourceRowType.ResourceGroup,
+                ResourceRowType.Resource,
+                ResourceRowType.Variable,
+              ]}
+              resources={query.azureLogAnalytics?.resources ?? []}
+              queryType="logs"
+              disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMonitorResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+              )}
+              selectionNotice={() => 'You may only choose items of the same resource type.'}
+            />
+            <TimeManagement
+              query={query}
+              datasource={datasource}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+              schema={schema}
+            />
           </EditorFieldGroup>
         </EditorRow>
         <QueryField
