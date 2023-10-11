@@ -73,6 +73,18 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
   });
 
+  // Refresh
+  keybindings.addBinding({
+    key: 'd r',
+    onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
+  });
+
+  // toggle all panel legends (TODO)
+  // delete panel (TODO when we work on editing)
+  // toggle all exemplars (TODO)
+  // collapse all rows (TODO)
+  // expand all rows (TODO)
+
   return () => keybindings.removeAll;
 }
 
