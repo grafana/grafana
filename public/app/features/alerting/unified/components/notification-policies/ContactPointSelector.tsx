@@ -38,7 +38,7 @@ const ReceiversSummary = ({ receivers }: ReceiversProps) => {
   return (
     <Stack direction="row" wrap={false}>
       {receivers.map((receiver, index) => (
-        <Stack direction="row" gap={0.5}>
+        <Stack key={receiver.uid ?? index} direction="row" gap={0.5}>
           {receiver[RECEIVER_PLUGIN_META_KEY]?.icon && (
             <img
               width="16px"
