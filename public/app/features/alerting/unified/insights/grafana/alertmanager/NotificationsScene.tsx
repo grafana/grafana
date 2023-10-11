@@ -12,7 +12,7 @@ export function getGrafanaAlertmanagerNotificationsScene(datasource: DataSourceR
     queries: [
       {
         refId: 'A',
-        expr: 'grafanacloud_grafana_instance_alerting_notifications_total:rate5m - grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m',
+        expr: '(grafanacloud_grafana_instance_alerting_notifications_total:rate5m - grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m) or vector(0)',
         range: true,
         legendFormat: 'success',
       },
