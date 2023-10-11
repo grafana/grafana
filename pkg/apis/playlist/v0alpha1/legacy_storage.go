@@ -25,7 +25,7 @@ var (
 
 type legacyStorage struct {
 	service playlist.Service
-	mapper  NamespaceMapper
+	mapper  namespaceMapper
 }
 
 func (s *legacyStorage) New() runtime.Object {

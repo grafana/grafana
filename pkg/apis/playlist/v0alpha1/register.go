@@ -26,7 +26,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
 	service playlist.Service
-	mapper  NamespaceMapper
+	mapper  namespaceMapper
 }
 
 func RegisterAPIService(p playlist.Service,
@@ -35,7 +35,7 @@ func RegisterAPIService(p playlist.Service,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service: p,
-		mapper:  GetNamespaceMapper(cfg),
+		mapper:  getNamespaceMapper(cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder

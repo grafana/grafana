@@ -3,8 +3,9 @@ package v0alpha1
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestNamespaceMapper(t *testing.T) {
@@ -34,7 +35,7 @@ func TestNamespaceMapper(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapper := GetNamespaceMapper(&setting.Cfg{StackID: tt.cfg})
+			mapper := getNamespaceMapper(&setting.Cfg{StackID: tt.cfg})
 			require.Equal(t, tt.expected, mapper(tt.orgId))
 		})
 	}

@@ -6,16 +6,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type NamespaceMapper = func(orgId int64) string
+type namespaceMapper = func(orgId int64) string
 
-func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
+func getNamespaceMapper(cfg *setting.Cfg) namespaceMapper {
 	if cfg.StackID != "" {
 		return func(orgId int64) string { return "stack-" + cfg.StackID }
 	}
-	return OrgNamespaceMapper
+	return orgNamespaceMapper
 }
 
-func OrgNamespaceMapper(orgId int64) string {
+func orgNamespaceMapper(orgId int64) string {
 	if orgId == 1 {
 		return "default"
 	}
