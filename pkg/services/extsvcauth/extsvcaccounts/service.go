@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -194,7 +193,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	}
 
 	esa.logger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
-	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &serviceaccounts.AddServiceAccountTokenCommand{
+	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
 		Name:  skvType + "-" + extSvcSlug,
 		OrgId: orgID,
 		Key:   newKeyInfo.HashedKey,
@@ -235,5 +234,5 @@ func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd
 // DeleteExtSvcCredentials removes the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
 	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
-	return esa.skvStore.Del(ctx, orgID, extSvcSlug, skvType) // TODO test deleting unexisting value
+	return esa.skvStore.Del(ctx, orgID, extSvcSlug, skvType)
 }

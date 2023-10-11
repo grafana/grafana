@@ -245,7 +245,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 				// A token was previously stored in the secret store
-				env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, skvType, "ExtSvcSecretToken")
+				_ = env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, skvType, "ExtSvcSecretToken")
 			},
 			cmd: extsvcauth.ExternalServiceRegistration{
 				Name: extSvcSlug,
@@ -348,7 +348,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 				// This time we don't add a token but rely on the secret store
-				env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, skvType, "ExtSvcSecretToken")
+				_ = env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, skvType, "ExtSvcSecretToken")
 			},
 			cmd: extsvcauth.ExternalServiceRegistration{
 				Name: extSvcSlug,
