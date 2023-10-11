@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	secretKVStoreType = "extsvc-token"
-	tokenNamePrefix   = "extsvc-token"
+	KVStoreType     = "extsvc-token"
+	tokenNamePrefix = "extsvc-token"
 )
 
 // Credentials represents the credentials associated to an external service
