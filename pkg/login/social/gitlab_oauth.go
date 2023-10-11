@@ -22,7 +22,6 @@ const (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups   []string
 	apiUrl          string
 	skipOrgRoleSync bool
 }
@@ -46,22 +45,6 @@ type userData struct {
 	EmailVerified  bool              `json:"email_verified"`
 	Role           roletype.RoleType `json:"-"`
 	IsGrafanaAdmin *bool             `json:"-"`
-}
-
-func (s *SocialGitlab) isGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.allowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {

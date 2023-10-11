@@ -8,18 +8,13 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneQueryRunner,
-  SceneTimeRange,
 } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
-export function getGrafanaMissedIterationsScene(
-  timeRange: SceneTimeRange,
-  datasource: DataSourceRef,
-  panelTitle: string
-) {
+export function getGrafanaMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -30,7 +25,6 @@ export function getGrafanaMissedIterationsScene(
         legendFormat: '{{rule_group}}',
       },
     ],
-    $timeRange: timeRange,
   });
 
   const legendTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {

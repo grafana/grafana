@@ -48,7 +48,7 @@ export const ThresholdDragHandle = ({
   }
 
   const disabled = typeof onChange !== 'function';
-  const styles = useStyles2((theme) => getStyles(theme, step, outOfBounds, disabled));
+  const styles = useStyles2(getStyles, step, outOfBounds, disabled);
   const [currentValue, setCurrentValue] = useState(step.value);
 
   const textColor = useMemo(() => {

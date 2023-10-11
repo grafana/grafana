@@ -72,7 +72,6 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;

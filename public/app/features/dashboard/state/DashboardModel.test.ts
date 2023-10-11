@@ -1,8 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { defaultVariableModel } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Dashboard, defaultVariableModel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -21,8 +20,6 @@ import {
 } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
-
-const mockContextSrv = jest.mocked(contextSrv);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -49,6 +46,29 @@ describe('DashboardModel', () => {
 
     it('should have default properties', () => {
       expect(model.panels.length).toBe(0);
+    });
+  });
+
+  describe('when storing original dashboard data', () => {
+    let originalDashboard: Dashboard = {
+      editable: true,
+      graphTooltip: 0,
+      schemaVersion: 1,
+      timezone: '',
+      title: 'original.title',
+    };
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel(originalDashboard);
+    });
+
+    it('should be returned from getOriginalDashboard without modifications', () => {
+      expect(model.getOriginalDashboard()).toEqual(originalDashboard);
+    });
+
+    it('should return a copy of the provided object', () => {
+      expect(model.getOriginalDashboard()).not.toBe(originalDashboard);
     });
   });
 
@@ -927,7 +947,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canAddAnnotations();
         expect(result).toBe(expected);
       }
@@ -960,7 +979,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations();
         expect(result).toBe(expected);
       }
@@ -991,7 +1009,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
@@ -1024,7 +1041,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations();
         expect(result).toBe(expected);
       }
@@ -1055,7 +1071,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
