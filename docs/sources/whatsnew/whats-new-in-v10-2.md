@@ -50,4 +50,4 @@ We're excited to introduce the "No Basic Role," a new basic role with no permiss
 
 Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No Basic Role," you have the flexibility to be even more granular.
 
-For more details on basic roles, permissions please refer to the [documentation](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles).
+For more details on basic roles and permissions, refer to the [documentation]{{< relref "../administration/roles-and-permissions#organization-roles" >}}).
