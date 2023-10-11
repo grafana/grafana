@@ -59,7 +59,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	s.logger.Debug("Received query request", "queries", req.Queries)
+	s.logger.Debug("QueryData called", "queries", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -81,11 +81,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
+	s.logger.Debug("query called")
+
 	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
 		return s.getTrace(ctx, pCtx, query)
 	}
 
-	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
+	err := fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
+	s.logger.Debug("query error", "error", err)
+	return nil, err
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {

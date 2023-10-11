@@ -10,11 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+var logger = log.New("tsdb.tempo")
 
 // This function creates a new gRPC client to connect to a streaming query service.
 // It starts by parsing the URL from the data source settings and extracting the host, since that's what the gRPC connection expects.
@@ -22,8 +25,11 @@ import (
 // If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
 // Otherwise, it uses insecure credentials.
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
+	logger.Debug("newGrpcClient called")
+
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
+		logger.Debug("newGrpcClient error", "error", err)
 		return nil, err
 	}
 
@@ -48,9 +54,13 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	clientConn, err := grpc.Dial(onlyHost, dialOps...)
 	if err != nil {
+		logger.Debug("newGrpcClient error", "error", err)
 		return nil, err
 	}
-	return tempopb.NewStreamingQuerierClient(clientConn), nil
+
+	client := tempopb.NewStreamingQuerierClient(clientConn)
+	logger.Debug("newGrpcClient completed")
+	return client, nil
 }
 
 type basicAuth struct {

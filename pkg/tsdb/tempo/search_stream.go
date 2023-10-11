@@ -27,6 +27,8 @@ type StreamSender interface {
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+	s.logger.Debug("runSearchStream called")
+
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
@@ -56,10 +58,14 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		return err
 	}
 
-	return s.processStream(stream, sender)
+	processedStream := s.processStream(stream, sender)
+	s.logger.Debug("runSearchStream completed")
+	return processedStream
 }
 
 func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
+	s.logger.Debug("processStream called")
+
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
 	for {
@@ -72,6 +78,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 					Traces:  traceList,
 				},
 			}, sender); err != nil {
+				s.logger.Debug("processStream error", "error", err)
 				return err
 			}
 			break
@@ -92,6 +99,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 				Traces:  traceList,
 			},
 		}, sender); err != nil {
+			s.logger.Debug("processStream error", "error", err)
 			return err
 		}
 	}
