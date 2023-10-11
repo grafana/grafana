@@ -1,4 +1,4 @@
-import { isEmptyObject, PanelModel, TimeRange } from '@grafana/data';
+import { isEmptyObject, TimeRange } from '@grafana/data';
 import {
   SceneDataLayers,
   SceneGridItem,
@@ -69,7 +69,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   if (data instanceof SceneDataLayers) {
     const layers = data.state.layers;
 
-    annotations = dataLayersToAnnotations(layers, isSnapshot);
+    annotations = dataLayersToAnnotations(layers);
   }
 
   if (variablesSet instanceof SceneVariableSet) {
