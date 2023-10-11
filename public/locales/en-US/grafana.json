@@ -821,6 +821,18 @@
       "passwords-must-match": "Passwords must match"
     }
   },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Collapse query row",
+      "expand-row": "Expand query row",
+      "datasource-help": "Show data source help",
+      "toggle-edit-mode": "Toggle text edit mode",
+      "duplicate-query": "Duplicate query",
+      "disable-query": "Disable query",
+      "remove-query": "Remove query",
+      "drag-and-drop": "Drag and drop to reorder"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
