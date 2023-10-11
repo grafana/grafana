@@ -19,7 +19,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
@@ -45,7 +44,6 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
-  getTheme: () => GrafanaTheme2;
 };
 
 const FlameGraph = ({
@@ -63,7 +61,6 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
-  getTheme,
 }: Props) => {
   const styles = getStyles();
 
@@ -85,7 +82,6 @@ const FlameGraph = ({
   }, [data, sandwichItem]);
 
   const commonCanvasProps = {
-    getTheme,
     data,
     rangeMin,
     rangeMax,
@@ -141,7 +137,6 @@ const FlameGraph = ({
   return (
     <div className={styles.graph}>
       <FlameGraphMetadata
-        getTheme={getTheme}
         data={data}
         focusedItem={focusedItemData}
         sandwichedLabel={sandwichItem}

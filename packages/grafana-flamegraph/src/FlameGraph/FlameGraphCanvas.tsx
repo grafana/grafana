@@ -2,8 +2,6 @@ import { css } from '@emotion/css';
 import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
 import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
@@ -25,7 +23,6 @@ type Props = {
   textAlign: TextAlign;
   onSandwich: (label: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
-  getTheme: () => GrafanaTheme2;
 
   root: LevelItem;
   direction: 'children' | 'parents';
@@ -49,7 +46,6 @@ const FlameGraphCanvas = ({
   textAlign,
   onSandwich,
   colorScheme,
-  getTheme,
   totalProfileTicks,
   totalProfileTicksRight,
   totalViewTicks,
@@ -82,7 +78,6 @@ const FlameGraphCanvas = ({
     totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
     totalTicksRight: totalProfileTicksRight,
     wrapperWidth,
-    getTheme,
   });
 
   const onGraphClick = useCallback(
@@ -171,7 +166,6 @@ const FlameGraphCanvas = ({
         />
       </div>
       <FlameGraphTooltip
-        getTheme={getTheme}
         position={mousePosition}
         item={tooltipItem}
         data={data}
