@@ -1,4 +1,4 @@
-module github.com/grafana/grafana/devenv/kube-apiserver
+module github.com/grafana/grafana/devenv/sample-apiserver
 
 go 1.21.1
 
@@ -69,6 +69,7 @@ require (
 	k8s.io/apiserver v0.28.2
 	k8s.io/client-go v0.28.2
 	k8s.io/sample-apiserver v0.0.0
+	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 )
 
 require (
@@ -174,7 +175,6 @@ require (
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kms v0.28.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
-	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect

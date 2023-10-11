@@ -37,29 +37,19 @@ const (
 func main() {
 	ctx := context.Background()
 
-	// TODO: add unified storage RESTOptionsGetter here
-	optsGetter := newFakeOptsGetter()
-
-	// TODO: this is only needed for the fakeOptsGetter, and can be removed
-	defer optsGetter.server.Terminate(optsGetter.t)
-
-	if err := run(ctx, optsGetter); err != nil {
+	if err := run(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func run(ctx context.Context, optsGetter generic.RESTOptionsGetter) error {
+func run(ctx context.Context) error {
 	o := server.NewWardleServerOptions(os.Stdout, os.Stderr)
 
-	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = []string{"http://127.0.0.1:2379"} // this is needed to pass cli validation
+	o.RecommendedOptions.Etcd.SkipHealthEndpoints = true
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(DefaultAPIServerIp)
 	o.RecommendedOptions.SecureServing.BindPort = DefaultServerPort
 	o.RecommendedOptions.SecureServing.ServerCert.CertDirectory = "./certs"
-	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Admission = nil
 
-	// TODO have a "real" external address
 	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")}); err != nil {
 		return fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
@@ -82,6 +72,9 @@ func run(ctx context.Context, optsGetter generic.RESTOptionsGetter) error {
 	if err := o.RecommendedOptions.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 		return err
 	}
+
+	optsGetter := newFakeOptsGetter()
+	//optsGetter := jsonstorage.NewRESTOptionsGetter("/tmp/wardle", o.RecommendedOptions.Etcd.StorageConfig)
 
 	serverConfig.RESTOptionsGetter = wrapRESTOptionsGetter(serverConfig.RESTOptionsGetter, optsGetter)
 
@@ -163,7 +156,7 @@ func (o *optsGetterWrapper) GetRESTOptions(gr schema.GroupResource) (generic.RES
 		StorageConfig: &storagebackend.ConfigForResource{
 			Config: storagebackend.Config{
 				Type:                      b.StorageConfig.Type,
-				Prefix:                    a.StorageConfig.Prefix,
+				Prefix:                    b.StorageConfig.Prefix,
 				Transport:                 b.StorageConfig.Transport,
 				Paging:                    a.StorageConfig.Paging,
 				Codec:                     a.StorageConfig.Codec,
@@ -182,7 +175,7 @@ func (o *optsGetterWrapper) GetRESTOptions(gr schema.GroupResource) (generic.RES
 		Decorator:                 b.Decorator,
 		EnableGarbageCollection:   b.EnableGarbageCollection,
 		DeleteCollectionWorkers:   b.DeleteCollectionWorkers,
-		ResourcePrefix:            a.ResourcePrefix,
+		ResourcePrefix:            b.ResourcePrefix,
 		CountMetricPollPeriod:     b.CountMetricPollPeriod,
 		StorageObjectCountTracker: b.StorageObjectCountTracker,
 	}, nil

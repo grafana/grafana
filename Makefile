@@ -289,7 +289,7 @@ devenv-down: ## Stop optional services.
 
 
 devenv-apiserver:
-	@cd devenv/kube-apiserver; \
+	@cd devenv/sample-apiserver; \
 	go run .
 
 devenv-postgres:
