@@ -18,7 +18,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -112,12 +112,12 @@ describe('transformSaveModelToScene', () => {
 
   describe('when organizing panels as scene children', () => {
     it('should create panels within collapsed rows', () => {
-      const panel = createPanelJSONFixture({
+      const panel = createPanelSaveModel({
         title: 'test',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
       }) as Panel;
 
-      const row = createPanelJSONFixture({
+      const row = createPanelSaveModel({
         title: 'test',
         type: 'row',
         gridPos: { x: 0, y: 0, w: 12, h: 1 },
@@ -146,7 +146,7 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should create panels within expanded row', () => {
-      const panelOutOfRow = createPanelJSONFixture({
+      const panelOutOfRow = createPanelSaveModel({
         title: 'Out of a row',
         gridPos: {
           h: 8,
@@ -155,7 +155,7 @@ describe('transformSaveModelToScene', () => {
           y: 0,
         },
       });
-      const rowWithPanel = createPanelJSONFixture({
+      const rowWithPanel = createPanelSaveModel({
         title: 'Row with panel',
         type: 'row',
         id: 10,
@@ -169,7 +169,7 @@ describe('transformSaveModelToScene', () => {
         // This panels array is not used if the row is not collapsed
         panels: [],
       });
-      const panelInRow = createPanelJSONFixture({
+      const panelInRow = createPanelSaveModel({
         gridPos: {
           h: 8,
           w: 12,
@@ -178,7 +178,7 @@ describe('transformSaveModelToScene', () => {
         },
         title: 'In row 1',
       });
-      const emptyRow = createPanelJSONFixture({
+      const emptyRow = createPanelSaveModel({
         collapsed: false,
         gridPos: {
           h: 1,
