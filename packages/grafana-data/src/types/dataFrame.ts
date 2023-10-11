@@ -103,7 +103,7 @@ export interface FieldConfig<TOptions = any> {
   custom?: TOptions;
 
   // Calculate min max per field
-  localMinMax?: boolean;
+  fieldMinMax?: boolean;
 }
 
 export interface FieldTypeConfig {

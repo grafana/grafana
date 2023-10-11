@@ -330,7 +330,7 @@ describe('applyFieldOverrides', () => {
     expect(range.min).toEqual(-20);
   });
 
-  it('should calculate min/max per field when localMinMax is set', () => {
+  it('should calculate min/max per field when fieldMinMax is set', () => {
     const df = toDataFrame([
       { title: 'AAA', value: 100, value2: 1234 },
       { title: 'BBB', value: -20, value2: null },
@@ -339,7 +339,7 @@ describe('applyFieldOverrides', () => {
 
     const fieldCfgSource: FieldConfigSource = {
       defaults: {
-        localMinMax: true,
+        fieldMinMax: true,
       },
       overrides: [],
     };
@@ -362,7 +362,7 @@ describe('applyFieldOverrides', () => {
     expect(range2.min).toEqual(1000);
   });
 
-  it('should calculate min/max locally for fields with localMinMax and globally for other fields', () => {
+  it('should calculate min/max locally for fields with fieldMinMax and globally for other fields', () => {
     const df = toDataFrame({
       fields: [
         { name: 'first', type: FieldType.number, values: [-1, -2] },
@@ -376,7 +376,7 @@ describe('applyFieldOverrides', () => {
       overrides: [
         {
           matcher: { id: FieldMatcherID.byName, options: 'second' },
-          properties: [{ id: 'localMinMax', value: true }],
+          properties: [{ id: 'fieldMinMax', value: true }],
         },
       ],
     };
@@ -412,7 +412,7 @@ describe('applyFieldOverrides', () => {
     const fieldCfgSource: FieldConfigSource = {
       defaults: {
         min: 1,
-        localMinMax: true,
+        fieldMinMax: true,
       },
       overrides: [],
     };

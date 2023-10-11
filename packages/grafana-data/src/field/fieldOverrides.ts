@@ -250,7 +250,7 @@ function calculateRange(
   }
 
   // Calculate the min/max from the field.
-  if (config.localMinMax) {
+  if (config.fieldMinMax) {
     const localRange = getMinMaxAndDelta(field);
     const min = config.min ?? localRange.min;
     const max = config.max ?? localRange.max;

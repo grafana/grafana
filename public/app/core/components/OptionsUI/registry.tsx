@@ -248,10 +248,10 @@ export const getAllStandardFieldConfigs = () => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const localMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
-    id: 'localMinMax',
-    path: 'localMinMax',
-    name: 'Local min/max',
+  const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
+    id: 'fieldMinMax',
+    path: 'fieldMinMax',
+    name: 'Field min/max',
     description: 'Calculate min max per field',
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
@@ -419,5 +419,5 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, localMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
 };
