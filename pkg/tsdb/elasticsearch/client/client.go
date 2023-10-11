@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -171,9 +172,10 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	var err error
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
-	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch")
-	span.SetAttributes("queryParams", queryParams, attribute.Key("queryParams").String(queryParams))
-	span.SetAttributes("url", c.ds.URL, attribute.Key("url").String(c.ds.URL))
+	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch", trace.WithAttributes(
+		attribute.String("queryParams", queryParams),
+		attribute.String("url", c.ds.URL),
+	))
 	defer func() {
 		if err != nil {
 			span.RecordError(err)

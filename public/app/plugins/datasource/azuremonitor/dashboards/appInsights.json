@@ -2472,7 +2472,7 @@
         "allValue": null,
         "current": {},
         "datasource": "${ds}",
-        "definition": "ResourceGroups($sub)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2481,7 +2481,14 @@
         "multi": false,
         "name": "rg",
         "options": [],
-        "query": "ResourceGroups($sub)",
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Insights/components\"\r\n| distinct resourceGroup"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2492,7 +2499,7 @@
         "allValue": null,
         "current": {},
         "datasource": "${ds}",
-        "definition": "Namespaces($sub, $rg)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 2,
@@ -2501,9 +2508,16 @@
         "multi": false,
         "name": "ns",
         "options": [],
-        "query": "Namespaces($sub, $rg)",
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Insights/components\" and resourceGroup =~ \"$rg\"\r\n| distinct [\"type\"]"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
         "refresh": 1,
-        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
+        "regex": "",
         "skipUrlSync": false,
         "sort": 5,
         "type": "query"
@@ -2512,7 +2526,7 @@
         "allValue": null,
         "current": {},
         "datasource": "${ds}",
-        "definition": "ResourceNames($sub, $rg, $ns)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2521,7 +2535,13 @@
         "multi": false,
         "name": "res",
         "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
+        "query": {
+          "namespace": "$ns",
+          "queryType": "Azure Resource Names",
+          "refId": "A",
+          "resourceGroup": "$rg",
+          "subscription": "$sub"
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

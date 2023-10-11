@@ -101,6 +101,18 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesConfig(ctx *contextmode
 	return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf, namespace)
 }
 
+func (f *RulerApiHandler) handleRoutePostRulesGroupForExport(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, namespace string) response.Response {
+	payloadType := conf.Type()
+	if payloadType != apimodels.GrafanaBackend {
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, conf.Type().String()))
+	}
+	return f.GrafanaRuler.ExportFromPayload(ctx, conf, namespace)
+}
+
+func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.ExportRules(ctx)
+}
+
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {
 	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {

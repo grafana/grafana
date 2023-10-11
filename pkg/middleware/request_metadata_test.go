@@ -16,7 +16,7 @@ func TestRequestMetaDefault(t *testing.T) {
 
 	m.Get("/", func(rw http.ResponseWriter, req *http.Request) {
 		v := requestmeta.GetRequestMetaData(req.Context())
-		assert.Equal(t, requestmeta.TeamCore, v.Team)
+		assert.Equal(t, requestmeta.TeamBackend, v.Team)
 	})
 
 	req, _ := http.NewRequest(http.MethodGet, "/", nil)

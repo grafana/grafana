@@ -38,7 +38,6 @@ import {
   MssqlSecureOptions,
 } from '../types';
 
-const SHORT_WIDTH = 15;
 const LONG_WIDTH = 40;
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions, MssqlSecureOptions>) => {
@@ -297,7 +296,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         isCollapsible={true}
         isInitiallyOpen={true}
       >
-        <ConnectionLimits labelWidth={SHORT_WIDTH} options={dsSettings} onOptionsChange={onOptionsChange} />
+        <ConnectionLimits options={dsSettings} onOptionsChange={onOptionsChange} />
 
         <ConfigSubSection title="Connection details">
           <Field

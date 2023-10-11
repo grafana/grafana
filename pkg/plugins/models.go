@@ -243,18 +243,18 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	Alias           string `json:"alias,omitempty"`
-	Info            Info   `json:"info"`
-	HideFromList    bool   `json:"hideFromList"`
-	Sort            int    `json:"sort"`
-	SkipDataQuery   bool   `json:"skipDataQuery"`
-	ReleaseState    string `json:"state"`
-	BaseURL         string `json:"baseUrl"`
-	Signature       string `json:"signature"`
-	Module          string `json:"module"`
-	AngularDetected bool   `json:"angularDetected"`
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	AliasIDs        []string `json:"aliasIds,omitempty"`
+	Info            Info     `json:"info"`
+	HideFromList    bool     `json:"hideFromList"`
+	Sort            int      `json:"sort"`
+	SkipDataQuery   bool     `json:"skipDataQuery"`
+	ReleaseState    string   `json:"state"`
+	BaseURL         string   `json:"baseUrl"`
+	Signature       string   `json:"signature"`
+	Module          string   `json:"module"`
+	AngularDetected bool     `json:"angularDetected"`
 }
 
 type AppDTO struct {

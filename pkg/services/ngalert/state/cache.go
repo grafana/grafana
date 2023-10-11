@@ -41,7 +41,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 			Namespace:   metrics.Namespace,
 			Subsystem:   metrics.Subsystem,
 			Name:        "alerts",
-			Help:        "How many alerts by state.",
+			Help:        "How many alerts by state are in the scheduler.",
 			ConstLabels: prometheus.Labels{"state": strings.ToLower(state.String())},
 		}, func() float64 {
 			return c.countAlertsBy(state)

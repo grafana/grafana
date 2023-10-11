@@ -9,6 +9,8 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   createDataFrame,
+  AdHocVariableFilter,
+  ScopedVars,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -21,9 +23,18 @@ import {
 } from './DataSourceWithBackend';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
-class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
+interface MyQuery extends DataQuery {
+  filters?: AdHocVariableFilter[];
+  applyTemplateVariablesCalled?: boolean;
+}
+
+class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
     super(instanceSettings);
+  }
+
+  applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[] | undefined): MyQuery {
+    return { ...query, applyTemplateVariablesCalled: true, filters };
   }
 }
 
@@ -58,6 +69,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
+      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
       queryGroupId: 'abc',
     } as DataQueryRequest);
 
@@ -69,11 +81,19 @@ describe('DataSourceWithBackend', () => {
         "data": {
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": [
+                {
+                  "key": "key1",
+                  "operator": "=",
+                  "value": "val1",
+                },
+              ],
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -126,11 +146,13 @@ describe('DataSourceWithBackend', () => {
         "data": {
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -194,11 +216,13 @@ describe('DataSourceWithBackend', () => {
         "data": {
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
