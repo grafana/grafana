@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -174,7 +175,7 @@ func TestEvaluatorTest(t *testing.T) {
 	}
 	manager := &fakeStateManager{}
 
-	backtestingEvaluatorFactory = func(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition) (backtestingEvaluator, error) {
+	backtestingEvaluatorFactory = func(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition) (backtestingEvaluator, error) {
 		return evaluator, nil
 	}
 

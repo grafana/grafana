@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -229,7 +228,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return ruleList, nil
 }
 
-func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*folder.Folder, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -246,7 +245,7 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -256,7 +255,7 @@ func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []any{orgID, uid},
