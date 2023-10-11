@@ -436,28 +436,9 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		return nil, err
 	}
 
-	headers := s.getCustomHeaders(ds.JsonData, decryptedValues)
-
-	// if featureToggle enabled
-	// AND has teamHeaders
-	//
-	// add teamHeaders
-	// this adds all the team headers to the headers map
-	// Q: how do i get the teamids from the user
-	if ds.JsonData != nil && ds.JsonData.Get("teamHeaders").MustBool(false) {
-		for k, v := range ds.JsonData.Get("teamHeaders").MustMap() {
-			fmt.Printf("key: %s, value: %s\n", k, v)
-			// cast v any to []interface{}
-			v := v.([]map[string]interface{})
-			for _, header := range v {
-				headers[header["header"].(string)] = header["value"].(string)
-			}
-		}
-	}
-
 	opts := &sdkhttpclient.Options{
 		Timeouts: timeouts,
-		Headers:  headers,
+		Headers:  s.getCustomHeaders(ds.JsonData, decryptedValues),
 		Labels: map[string]string{
 			"datasource_type": ds.Type,
 			"datasource_name": ds.Name,
@@ -620,41 +601,6 @@ func (s *Service) getTimeout(ds *datasources.DataSource) time.Duration {
 // getCustomHeaders returns a map with all the to be set headers
 // The map key represents the HeaderName and the value represents this header's value
 func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string) map[string]string {
-	headers := make(map[string]string)
-	if jsonData == nil {
-		return headers
-	}
-
-	index := 0
-	for {
-		index++
-		headerNameSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderName, index)
-		headerValueSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderValue, index)
-
-		key := jsonData.Get(headerNameSuffix).MustString()
-		if key == "" {
-			// No (more) header values are available
-			break
-		}
-
-		// skip a header with name that corresponds to auth proxy header's name
-		// to make sure that data source proxy isn't used to circumvent auth proxy.
-		// For more context take a look at CVE-2022-35957
-		if s.cfg.AuthProxyEnabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(s.cfg.AuthProxyHeaderName) {
-			continue
-		}
-
-		if val, ok := decryptedValues[headerValueSuffix]; ok {
-			headers[key] = val
-		}
-	}
-
-	return headers
-}
-
-// getTeamHeaders returns a map with all the teams headers
-// The map key represents the HeaderName and the value represents this header's value
-func (s *Service) getTeamHeaders(jsonData *simplejson.Json, decryptedValues map[string]string, teams []int64) map[string]string {
 	headers := make(map[string]string)
 	if jsonData == nil {
 		return headers
