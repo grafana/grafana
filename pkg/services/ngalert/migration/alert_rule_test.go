@@ -252,6 +252,58 @@ func TestMakeAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, fmt.Sprintf("%s - %d", info.DashboardName, da.PanelID), ar.RuleGroup)
 	})
+
+	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.PanelID = 42
+		info := migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		require.NoError(t, err)
+		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
+		require.Equal(t, fmt.Sprintf("%s - %d", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-5), da.PanelID), ar.RuleGroup)
+	})
+
+	t.Run("deduplicate rule group name if truncation is not unique", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.PanelID = 42
+		info := migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		da = createTestDashAlert()
+		da.PanelID = 42
+		info = migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		require.NoError(t, err)
+		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
+		parts := strings.SplitN(ar.RuleGroup, "_", 2)
+		require.Len(t, parts, 2)
+		require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
+		require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+	})
 }
 
 func createTestDashAlert() migrationStore.DashAlert {
