@@ -34,11 +34,16 @@ type Service struct {
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*PyroscopeDatasource, error) {
+	logger.Debug("Get intance")
+
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
+		logger.Debug("Error in getting intance", "error", err)
 		return nil, err
 	}
+
 	in := i.(*PyroscopeDatasource)
+	logger.Debug("Successfully got instance")
 	return in, nil
 }
 
@@ -55,50 +60,71 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, ac accesscontro
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger.Debug("Received query request", "queries", req.Queries)
+
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Failure in processing query request", "error", err)
 		return nil, err
 	}
-	return i.QueryData(ctx, req)
+
+	response, err := i.QueryData(ctx, req)
+	logger.Debug("Successfully processed query request")
+	return response, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger.Debug("Successfully processed query request")
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Successfully processed query request")
 		return err
 	}
+	logger.Debug("Successfully processed query request")
 	return i.CallResource(ctx, req, sender)
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger.Debug("Successfully processed query request")
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Successfully processed query request")
 		return nil, err
 	}
+	logger.Debug("Successfully processed query request")
 	return i.CheckHealth(ctx, req)
 }
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	logger.Debug("Successfully processed query request")
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Successfully processed query request")
 		return nil, err
 	}
+	logger.Debug("Successfully processed query request")
 	return i.SubscribeStream(ctx, req)
 }
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	logger.Debug("Successfully processed query request")
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Successfully processed query request")
 		return err
 	}
+	logger.Debug("Successfully processed query request")
 	return i.RunStream(ctx, req, sender)
 }
 
 // PublishStream is called when a client sends a message to the stream.
 func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	logger.Debug("Successfully processed query request")
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		logger.Debug("Successfully processed query request")
 		return nil, err
 	}
+	logger.Debug("Successfully processed query request")
 	return i.PublishStream(ctx, req)
 }
