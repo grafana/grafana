@@ -45,7 +45,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
   const [tooltipRef, setTooltipRef] = useState<HTMLDivElement | null>(null);
   const [editorRef, setEditorRef] = useState<HTMLDivElement | null>(null);
 
-  const popoverRenderTimeout = useRef<NodeJS.Timer>();
+  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
 
   const popper = usePopper(markerRef, tooltipRef, POPPER_CONFIG);
   const editorPopper = usePopper(markerRef, editorRef, POPPER_CONFIG);
