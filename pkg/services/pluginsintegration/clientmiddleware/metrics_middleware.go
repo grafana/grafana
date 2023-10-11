@@ -11,32 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/pluginmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
-
-// TODO: move to different file as it's shared between logs & metrics
-
-// statusSource is an enum-like string value representing the source of a
-// plugin query data response status code
-type statusSource string
-
-const (
-	statusSourcePlugin     statusSource = "plugin"
-	statusSourceDownstream statusSource = "downstream"
-)
-
-// convertStatusSource converts an errutil.Source to its corresponding statusSource value.
-func convertStatusSource(s errutil.Source) statusSource {
-	switch s {
-	case errutil.SourceServer:
-		return statusSourcePlugin
-	case errutil.SourceDownstream:
-		return statusSourceDownstream
-	default:
-		return statusSource(s)
-	}
-}
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
@@ -139,7 +116,6 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	}
 
 	status := statusOK
-	statusSrc := statusSourcePlugin
 	start := time.Now()
 
 	err = fn(ctx)
@@ -148,24 +124,15 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 		if errors.Is(err, context.Canceled) {
 			status = statusCancelled
 		}
-
-		var grErr errutil.Error
-		if errQueryDataDownstreamError.Is(err) && errors.As(err, &grErr) {
-			statusSrc = convertStatusSource(grErr.Source)
-
-			// Remove errQueryDataDownstreamError, which is only used internaly
-			// by Grafana, and return underlying error directly
-			// TODO: are we potentially skipping some errors in the chain by using .Underlying?
-			err = grErr.Underlying
-		}
 	}
 	elapsed := time.Since(start)
 
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
 	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSrc))
-		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSrc))
+		prmd := pluginmeta.GetPluginRequestMetaData(ctx)
+		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(prmd.StatusSource))
+		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(prmd.StatusSource))
 	}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
@@ -190,6 +157,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Setup plugin
+	ctx = pluginmeta.SetRequestMetaData(ctx, pluginmeta.DefaultPluginRequestMetadata())
+
 	var requestSize float64
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
@@ -200,6 +170,27 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var resp *backend.QueryDataResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
+
+		// Set downstream status source in the context if there's at least one response with downstream status source,
+		// and if there's no plugin error
+		var hasPluginError bool
+		var hasDownstreamError bool
+		for _, r := range resp.Responses {
+			if r.Error == nil {
+				continue
+			}
+			if r.ErrorSource == backend.ErrorSourceDownstream {
+				hasDownstreamError = true
+			} else {
+				hasPluginError = true
+			}
+		}
+		// A plugin error has higher priority than a downstream error,
+		// so set to downstream only if there's no plugin error
+		if hasDownstreamError && !hasPluginError {
+			pluginmeta.WithDownstreamStatusSource(ctx)
+		}
+
 		return innerErr
 	})
 	return resp, err

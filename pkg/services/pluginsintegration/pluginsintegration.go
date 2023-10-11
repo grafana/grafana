@@ -158,7 +158,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
 		clientmiddleware.NewContextualLoggerMiddleware(),
-		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
+		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
@@ -180,10 +180,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
-
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		middlewares = append(middlewares, clientmiddleware.NewQueryDataErrorSourceMiddleware())
-	}
 
 	return middlewares
 }
