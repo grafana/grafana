@@ -867,5 +867,12 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "teamHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
 	}
 )

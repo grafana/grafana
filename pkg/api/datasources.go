@@ -346,7 +346,9 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 				return errors.New("validation error, invalid header name specified")
 			}
 		}
+		// TODO: need validation of the teamHeaders
 	}
+
 	return nil
 }
 

@@ -502,4 +502,8 @@ const (
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagTeamHeaders
+	// Enables datasources to apply team headers to the client requests
+	FlagTeamHeaders = "teamHeaders"
 )

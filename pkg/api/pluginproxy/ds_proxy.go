@@ -272,6 +272,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
+
+	if proxy.features.IsEnabled(featuremgmt.FlagTeamHeaders) {
+		proxyutil.ApplyTeamHeaders(req, proxy.ds, proxy.ctx.Teams)
+
+	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {

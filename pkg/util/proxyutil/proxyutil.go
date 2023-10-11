@@ -5,9 +5,11 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const (
@@ -129,4 +131,33 @@ func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
 	if token := user.GetIDToken(); token != "" {
 		req.Header.Set(IDHeaderName, token)
 	}
+}
+
+func ApplyTeamHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) {
+	if ds.JsonData != nil && ds.JsonData.Get("teamHeaders").MustBool(false) {
+		for teamID, headers := range ds.JsonData.Get("teamHeaders").MustMap() {
+			id, err := strconv.ParseInt(teamID, 10, 64)
+			if err != nil {
+				// FIXME: logging here
+				continue
+			}
+			if !contains(teams, id) {
+				continue
+			}
+
+			v := headers.([]map[string]interface{})
+			for _, header := range v {
+				req.Header.Set(header["header"].(string), header["value"].(string))
+			}
+		}
+	}
+}
+
+func contains(slice []int64, value int64) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

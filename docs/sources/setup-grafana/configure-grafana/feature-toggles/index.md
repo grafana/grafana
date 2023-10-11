@@ -149,6 +149,7 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
+| `teamHeaders`                               | Enables datasources to apply team headers to the client requests                                             |
 
 ## Development feature toggles
 

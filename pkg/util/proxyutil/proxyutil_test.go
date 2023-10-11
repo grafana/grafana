@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -176,6 +178,61 @@ func TestApplyUserHeader(t *testing.T) {
 
 		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin"})
 		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should not apply user header when user is nil, should remove the existing", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Grafana-User", "admin")
+
+		ApplyUserHeader(false, req, nil)
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should not apply user header for anonomous user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true})
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should apply user header for non-anonomous user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin"})
+		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
+	})
+}
+
+func TestApplyTeamHeaders(t *testing.T) {
+	t.Run("Should not apply user header when not enabled, should remove the existing", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Grafana-User", "admin")
+		ds := &datasources.DataSource{
+			JsonData: simplejson.New(),
+		}
+		// add team headers
+		ds.JsonData.Set("teamHeaders", map[string]interface{}{
+			"1": []map[string]interface{}{
+				{
+					"header": "X-Team-Header",
+					"value":  "1",
+				},
+			},
+			"2": []map[string]interface{}{
+				{
+					"header": "X-Prom-Label-Policy",
+					"value":  "2",
+				},
+			},
+		})
+
+		ApplyTeamHeaders(req, ds, []int64{1, 2})
+		require.Contains(t, req.Header, "X-Team-Header")
+		require.Contains(t, req.Header, "X-Prom-Label-Policy")
 	})
 
 	t.Run("Should not apply user header when user is nil, should remove the existing", func(t *testing.T) {
