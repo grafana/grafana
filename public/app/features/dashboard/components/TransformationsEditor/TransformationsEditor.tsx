@@ -486,6 +486,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 <TransformationsGrid
                   showIllustrations={this.state.showIllustrations}
                   transformations={xforms}
+                  data={this.state.data}
                   onClick={(id) => {
                     this.onTransformationAdd({ value: id });
                   }}
@@ -680,40 +681,50 @@ interface TransformationsGridProps {
   transformations: Array<TransformerRegistryItem<any>>;
   showIllustrations?: boolean;
   onClick: (id: string) => void;
+  data: DataFrame[];
 }
 
-function TransformationsGrid({ showIllustrations, transformations, onClick }: TransformationsGridProps) {
+function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.grid}>
-      {transformations.map((transform) => (
-        <Card
-          key={transform.id}
-          className={styles.newCard}
-          data-testid={selectors.components.TransformTab.newTransform(transform.name)}
-          onClick={() => onClick(transform.id)}
-        >
-          <Card.Heading className={styles.heading}>
-            <>
-              <span>{transform.name}</span>
-              <span className={styles.pluginStateInfoWrapper}>
-                <PluginStateInfo state={transform.state} />
-              </span>
-            </>
-          </Card.Heading>
-          <Card.Description className={styles.description}>
-            <>
-              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
-              {showIllustrations && (
-                <span>
-                  <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
+      {transformations.map((transform) => {
+        // Check to see if the transform 
+        // is applicable to the given data
+        let applicable = true;
+        if (transform.transformation.applicator !== undefined) {
+          applicable = transform.transformation.applicator(data);
+        }
+
+        return (
+          <Card
+            key={transform.id}
+            className={styles.newCard}
+            data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+            onClick={() => onClick(transform.id)}
+            disabled={!applicable}
+          >
+            <Card.Heading className={styles.heading}>
+              <>
+                <span>{transform.name}</span>
+                <span className={styles.pluginStateInfoWrapper}>
+                  <PluginStateInfo state={transform.state} />
                 </span>
-              )}
-            </>
-          </Card.Description>
-        </Card>
-      ))}
+              </>
+            </Card.Heading>
+            <Card.Description className={styles.description}>
+              <>
+                <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+                {showIllustrations && (
+                  <span>
+                    <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
+                  </span>
+                )}
+              </>
+            </Card.Description>
+          </Card>
+        )})}
     </div>
   );
 }
