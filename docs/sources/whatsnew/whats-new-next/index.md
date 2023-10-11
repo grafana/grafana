@@ -89,3 +89,18 @@ We are gradually rolling out our new browse dashboards user interface. With this
 To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+
+## Authentication and authorization
+
+### No Basic Role
+
+<!-- Eric Leijonmarck -->
+<!-- OSS, Enterprise -->
+
+Generally available in all editions of Grafana.
+
+We're excited to introduce the "No Basic Role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
+
+Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No Basic Role," you have the flexibility to be even more granular.
+
+For more details on basic roles and permissions, refer to the [documentation]{{< relref "../../administration/roles-and-permissions#organization-roles" >}}.
