@@ -67,6 +67,13 @@ export function TraceQLEditor(props: Props) {
         }
         setupAutoSize(editor);
 
+        // Parse query that might already exist (e.g., after a page refresh)
+        const model = editor.getModel();
+        if (model) {
+          const errorNodes = getErrorNodes(model.getValue());
+          setErrorMarkers(monaco, model, errorNodes);
+        }
+
         // Register callback for query changes
         editor.onDidChangeModelContent((changeEvent) => {
           const model = editor.getModel();
@@ -78,8 +85,7 @@ export function TraceQLEditor(props: Props) {
           // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
           window.clearTimeout(errorTimeoutId.current);
 
-          const query = model.getValue();
-          const errorNodes = query.trim() !== '' ? getErrorNodes(query) : [];
+          const errorNodes = getErrorNodes(model.getValue());
           const cursorPosition = changeEvent.changes[0].rangeOffset;
 
           // Immediately updates the squiggles, in case the user fixed an error,
