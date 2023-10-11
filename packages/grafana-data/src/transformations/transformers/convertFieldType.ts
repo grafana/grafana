@@ -1,5 +1,7 @@
 import { map } from 'rxjs/operators';
 
+import { TimeZone } from '@grafana/schema';
+
 import { DateTimeOptionsWhenParsing, dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
@@ -25,8 +27,13 @@ export interface ConvertFieldTypeOptions {
    * Date format to parse a string datetime
    */
   dateFormat?: string;
-
-  /** When converting to an enumeration, this is the target config */
+  /**
+   * When converting a date to a string an option timezone. 
+   */
+  timezone?: TimeZone;
+  /** 
+   * When converting to an enumeration, this is the target config
+   */
   enumConfig?: EnumFieldConfig;
 }
 
@@ -36,7 +43,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
   description: 'Convert a field to a specified field type.',
   defaultOptions: {
     fields: {},
-    conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined }],
+    conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined, timezone: undefined }],
   },
 
   operator: (options, ctx) => (source) =>
@@ -96,7 +103,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field, opts.dateFormat);
+      return fieldToStringField(field, opts.dateFormat, {timeZone: opts.timezone});
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.enum:
@@ -181,13 +188,6 @@ function fieldToBooleanField(field: Field): Field {
 
 /**
  * @internal
- * 
- * @param field
- *  A gr
- * @param dateFormat
- *  A moment.js date time format string.
- * @returns 
- *    A new field with the 
  */
 export function fieldToStringField(field: Field, dateFormat?: string, parseOptions?: DateTimeOptionsWhenParsing): Field {
   let values = field.values;
