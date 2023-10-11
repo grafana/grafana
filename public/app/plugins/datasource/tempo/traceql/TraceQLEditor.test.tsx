@@ -65,7 +65,10 @@ describe('Check for syntax errors in query', () => {
     expect(computeErrorMessage(errorNode)).toBe(expectedErrorMessage);
   });
 
-  it.each([['123'], ['abc'], ['1a2b3c']])('valid query - %s', (query: string) => {
-    expect(getErrorNodes(query)).toStrictEqual([]);
-  });
+  it.each([['123'], ['abc'], ['1a2b3c'], ['{span.status = $code}'], ['{span.${attribute} = "GET"}']])(
+    'valid query - %s',
+    (query: string) => {
+      expect(getErrorNodes(query)).toStrictEqual([]);
+    }
+  );
 });
