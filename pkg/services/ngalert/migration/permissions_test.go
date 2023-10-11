@@ -39,8 +39,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 		return a
 	}
 
-	genAlert := func(title string, namespaceUID string, dashboardUID string) *ngModels.AlertRule {
-		return &ngModels.AlertRule{
+	genAlert := func(title string, namespaceUID string, dashboardUID string, mutators ...func(*ngModels.AlertRule)) *ngModels.AlertRule {
+		a := &ngModels.AlertRule{
 			ID:        1,
 			OrgID:     1,
 			Title:     title,
@@ -69,6 +69,20 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			Labels:   map[string]string{},
 			IsPaused: false,
+		}
+		if len(mutators) > 0 {
+			for _, mutator := range mutators {
+				mutator(a)
+			}
+		}
+		return a
+	}
+
+	withPanelId := func(id int64) func(*ngModels.AlertRule) {
+		return func(a *ngModels.AlertRule) {
+			a.PanelID = pointer(id)
+			a.Annotations["__panelId__"] = fmt.Sprintf("%d", id)
+			a.RuleGroup = fmt.Sprintf("Dashboard Title %s - %d", *a.DashboardUID, id)
 		}
 	}
 
@@ -235,8 +249,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 	)
 
-	basicAlert1 := genLegacyAlert("alert1", basicDashboard.ID)
-	basicAlert2 := genLegacyAlert("alert2", basicDashboard.ID)
+	basicAlert1 := genLegacyAlert("alert1", basicDashboard.ID, func(a *models.Alert) { a.PanelID = 1 })
+	basicAlert2 := genLegacyAlert("alert2", basicDashboard.ID, func(a *models.Alert) { a.PanelID = 2 })
 
 	basicPerms := func() map[accesscontrol.Role][]accesscontrol.Permission {
 		basic := make(map[accesscontrol.Role][]accesscontrol.Permission)
@@ -272,12 +286,12 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			alerts:         []*models.Alert{basicAlert1, basicAlert2},
 			expected: []expectedAlertMigration{
 				{
-					Alert:  genAlert(basicAlert1.Name, basicFolder.UID, basicDashboard.UID),
+					Alert:  genAlert(basicAlert1.Name, basicFolder.UID, basicDashboard.UID, withPanelId(basicAlert1.PanelID)),
 					Folder: basicFolder,
 					Perms:  defaultPerms,
 				},
 				{
-					Alert:  genAlert(basicAlert2.Name, basicFolder.UID, basicDashboard.UID),
+					Alert:  genAlert(basicAlert2.Name, basicFolder.UID, basicDashboard.UID, withPanelId(basicAlert2.PanelID)),
 					Folder: basicFolder,
 					Perms:  defaultPerms,
 				},
