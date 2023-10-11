@@ -31,7 +31,7 @@ export const playlistAPI: PlaylistAPI = {
 };
 
 // orgId 1 >> default namespace
-const namespace = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
+const namespace = contextSrv?.user?.orgId === 1 ? 'default' : `org-${contextSrv?.user?.orgId}`;
 
 /** This returns a playlist where all ids are replaced with UIDs */
 export async function k8sGetPlaylist(uid: string): Promise<Playlist> {

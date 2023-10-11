@@ -10,12 +10,22 @@ import (
 )
 
 type NamespaceInfo struct {
-	OrgID   int64
+	// OrgID defined in namespace (1 when using stack ids)
+	OrgID int64
+
+	// The cloud stack ID (must match the value is cfg.Settings)
 	StackID string
+
+	// For namespaces that are not org-{id} or stack-{id}
+	Other string
 }
 
-func OrgIDFrom(ctx context.Context) (NamespaceInfo, error) {
-	return ParseNamespace(request.NamespaceValue(ctx))
+func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, error) {
+	info, err := ParseNamespace(request.NamespaceValue(ctx))
+	if err == nil && requireOrgID && info.OrgID < 1 {
+		return info, fmt.Errorf("expected valid orgId")
+	}
+	return info, err
 }
 
 func ParseNamespace(ns string) (NamespaceInfo, error) {
@@ -27,6 +37,9 @@ func ParseNamespace(ns string) (NamespaceInfo, error) {
 
 	if strings.HasPrefix(ns, "org-") {
 		id, err := strconv.Atoi(ns[4:])
+		if id < 1 {
+			return NamespaceInfo{}, fmt.Errorf("invalid org id")
+		}
 		if id == 1 {
 			return NamespaceInfo{}, fmt.Errorf("use default rather than org-1")
 		}
@@ -46,5 +59,9 @@ func ParseNamespace(ns string) (NamespaceInfo, error) {
 		}, nil
 	}
 
-	return NamespaceInfo{}, fmt.Errorf("unable to parse org/stack from namespace")
+	// For non grafana scoped namespaces
+	return NamespaceInfo{
+		OrgID: -1,
+		Other: ns,
+	}, nil
 }

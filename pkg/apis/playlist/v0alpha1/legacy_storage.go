@@ -57,7 +57,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	info, err := grafanarequest.OrgIDFrom(ctx)
+	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := grafanarequest.OrgIDFrom(ctx)
+	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}

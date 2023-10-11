@@ -34,14 +34,14 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
-	ns := a.GetNamespace()
-	if ns == "" {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
-	info, err := grafanarequest.ParseNamespace(ns)
+	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
+	}
+
+	// No opinion when the namespace is arbitrary
+	if info.OrgID == -1 {
+		return authorizer.DecisionNoOpinion, "", nil
 	}
 
 	// Single tenant deployment is tied to an explicit stack ID
