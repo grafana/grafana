@@ -52,15 +52,14 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
 	var nestedFolderStore store
-	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		store := ProvideStore(db)
-		/*
-			store, err := ProvideTreeStore(db)
-			if err != nil {
-				panic(fmt.Sprintf("failed to initialize folder store: %v", err))
-			}
-		*/
+	if features.IsEnabled(featuremgmt.FlagNestedFoldersTreeStore) {
+		store, err := ProvideTreeStore(db)
+		if err != nil {
+			panic(fmt.Sprintf("failed to initialize folder store: %v", err))
+		}
 		nestedFolderStore = store
+	} else {
+		nestedFolderStore = ProvideStore(db)
 	}
 	srv := &Service{
 		cfg:                  cfg,
