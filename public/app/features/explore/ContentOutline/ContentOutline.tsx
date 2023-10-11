@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function ContentOutline({ scroller }: { scroller: HTMLElement | undefined }) {
+export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [expanded, toggleExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
@@ -65,7 +65,7 @@ export function ContentOutline({ scroller }: { scroller: HTMLElement | undefined
   };
 
   return (
-    <PanelContainer className={styles.wrapper} id="content-outline-container">
+    <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
         <div className={styles.content}>
           <ContentOutlineItemButton

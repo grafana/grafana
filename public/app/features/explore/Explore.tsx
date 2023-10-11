@@ -576,7 +576,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <div className={styles.wrapper}>
             {contentOutlineVisible && (
               <div className={styles.left}>
-                <ContentOutline scroller={this.scrollElement} />
+                <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
               </div>
             )}
             <CustomScrollbar
