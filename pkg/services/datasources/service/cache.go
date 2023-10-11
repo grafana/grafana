@@ -11,19 +11,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
 	DefaultCacheTTL = 5 * time.Second
 )
 
-func ProvideCacheService(cacheService *localcache.CacheService, sqlStore db.DB, dsGuardian guardian.DatasourceGuardianProvider) *CacheServiceImpl {
+func ProvideCacheService(cacheService *localcache.CacheService, sqlStore db.DB, dsGuardian guardian.DatasourceGuardianProvider, plugins pluginstore.Store) *CacheServiceImpl {
 	return &CacheServiceImpl{
 		logger:       log.New("datasources"),
 		cacheTTL:     DefaultCacheTTL,
 		CacheService: cacheService,
 		SQLStore:     sqlStore,
 		dsGuardian:   dsGuardian,
+		plugins:      plugins,
 	}
 }
 
@@ -33,6 +35,7 @@ type CacheServiceImpl struct {
 	CacheService *localcache.CacheService
 	SQLStore     db.DB
 	dsGuardian   guardian.DatasourceGuardianProvider
+	plugins      pluginstore.Store
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
@@ -58,7 +61,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.GetOrgID())
 
 	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()}
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := CreateStore(dc.SQLStore, dc.logger, dc.plugins)
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -104,7 +107,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.GetOrgID())
 	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.GetOrgID()}
-	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
+	ss := CreateStore(dc.SQLStore, dc.logger, dc.plugins)
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err

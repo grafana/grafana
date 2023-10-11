@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -60,10 +61,10 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service,
+	quotaService quota.Service, plugins pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger}
+	store := CreateStore(db, dslogger, plugins)
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,

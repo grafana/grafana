@@ -42,7 +42,8 @@ func TestHandleRequest(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
 		quotaService := quotatest.New(false, nil)
-		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
+		pStore := &pluginstore.FakePluginStore{}
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService, pStore)
 		require.NoError(t, err)
 
 		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{

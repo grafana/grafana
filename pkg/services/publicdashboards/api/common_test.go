@@ -103,7 +103,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 
 	// default cache service
 	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian())
+		pStore := &pluginstore.FakePluginStore{}
+		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian(), pStore)
 	}
 
 	// default fakePluginClient
