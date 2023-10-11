@@ -10,6 +10,7 @@ import (
 
 const (
 	StandardKindDashboard   = "dashboard"
+	StandardKindPlaylist    = "playlist"
 	StandardKindSnapshot    = "snapshot"
 	StandardKindFolder      = "folder"
 	StandardKindPreferences = "preferences"
