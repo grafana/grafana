@@ -67,7 +67,6 @@ export interface FeatureToggles {
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -141,4 +140,6 @@ export interface FeatureToggles {
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
 }
