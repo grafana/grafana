@@ -100,6 +100,28 @@
       "text": ""
     }
   },
+  "cheat-sheet": {
+    "macros": {
+      "conditionals-note": "",
+      "description": "",
+      "example-note": "",
+      "title": ""
+    },
+    "optional": {
+      "description": "",
+      "title": ""
+    },
+    "table": {
+      "description": "",
+      "title": ""
+    },
+    "time-series": {
+      "description": "",
+      "note": "",
+      "title": ""
+    },
+    "title": ""
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copié"
