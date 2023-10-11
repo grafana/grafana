@@ -69,7 +69,7 @@ export const QuerySettings = (props: Props) => {
               onChange={(event: { currentTarget: { value: string } }) =>
                 onPredefinedOperationsChange(event.currentTarget.value)
               }
-              width={16}
+              width={42}
               placeholder="| unpack | line_format"
               spellCheck={false}
             />
