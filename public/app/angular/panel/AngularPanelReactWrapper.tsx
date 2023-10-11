@@ -71,7 +71,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
   };
 }
 
-class PanelModelCompatabilityWrapper {
+class PanelModelCompatibilityWrapper {
   id: number;
   type: string;
   title: string;
