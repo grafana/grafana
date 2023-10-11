@@ -15,35 +15,18 @@ export function MegaMenuItemIcon({ link }: NavBarItemIconProps) {
   const styles = getStyles(theme);
 
   if (link.icon === 'grafana') {
-    return (
-      <div className={styles.iconWrapper}>
-        <Branding.MenuLogo className={styles.img} />
-      </div>
-    );
+    return <Branding.MenuLogo className={styles.img} />;
   } else if (link.icon) {
     const iconName = toIconName(link.icon);
-    return (
-      <div className={styles.iconWrapper}>
-        <Icon name={iconName ?? 'link'} size="xl" />
-      </div>
-    );
+    return <Icon name={iconName ?? 'link'} size="xl" />;
   } else {
     // consumer of NavBarItemIcon gives enclosing element an appropriate label
-    return (
-      <div className={styles.iconWrapper}>
-        <img className={cx(styles.img, link.roundIcon && styles.round)} src={link.img} alt="" />
-      </div>
-    );
+    return <img className={cx(styles.img, link.roundIcon && styles.round)} src={link.img} alt="" />;
   }
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    iconWrapper: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
     img: css({
       height: theme.spacing(3),
       width: theme.spacing(3),
