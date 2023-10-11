@@ -62,7 +62,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
               })}
             >
               <FeatureHighlightWrapper>
-                <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
+                <>{level === 0 && <MegaMenuItemIcon link={link} />}</>
               </FeatureHighlightWrapper>
               <Indent level={Math.max(0, level - 1)} spacing={2} />
               <Text truncate>{link.text}</Text>
@@ -144,11 +144,6 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
     padding: theme.spacing(1, 1.5, 1, 7),
-  }),
-  iconWrapper: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   }),
   labelWrapper: css([
     {
