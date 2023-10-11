@@ -23,7 +23,7 @@ func TestPlaylistConversion(t *testing.T) {
 			{Type: "dashboard_by_id", Value: "123"}, // deprecated
 		},
 	}
-	dst := convertToK8sResource(src)
+	dst := convertToK8sResource(src, orgNamespaceMapper)
 
 	require.Equal(t, "abc", src.Uid)
 	require.Equal(t, "abc", dst.Name)

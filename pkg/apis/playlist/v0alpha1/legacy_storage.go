@@ -87,7 +87,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		if err != nil {
 			return nil, err
 		}
-		list.Items = append(list.Items, *convertToK8sResource(p))
+		list.Items = append(list.Items, *convertToK8sResource(p, orgNamespaceMapper))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -112,5 +112,5 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, fmt.Errorf("not found?")
 	}
 
-	return convertToK8sResource(dto), nil
+	return convertToK8sResource(dto, orgNamespaceMapper), nil
 }
