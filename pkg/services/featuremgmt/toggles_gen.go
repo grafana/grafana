@@ -495,7 +495,11 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
-	// FlagPluginsInstrumentationStatusSource
-	// Include a status source label for plugin request metrics and logs
-	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+	// FlagNavAdminSubsections
+	// Splits the administration section of the nav tree into subsections
+	FlagNavAdminSubsections = "navAdminSubsections"
+
+	// FlagRecoveryThreshold
+	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
+	FlagRecoveryThreshold = "recoveryThreshold"
 )

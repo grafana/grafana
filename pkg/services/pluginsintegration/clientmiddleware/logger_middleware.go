@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,12 +37,11 @@ type LoggerMiddleware struct {
 	features featuremgmt.FeatureToggles
 }
 
-func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
+func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	ctx = instrumentContext(ctx, endpoint, pluginCtx)
 	err := fn(ctx)
 	if err != nil {
 		status = statusError
@@ -63,7 +61,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 		params = append(params, "traceID", traceID)
 	}
 	if status == statusError {
-		params = append(params, "error", err)
+		logParams = append(logParams, "error", err)
 	}
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		statusSrc := statusSourcePlugin
@@ -71,29 +69,10 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 		if errQueryDataDownstreamError.Is(err) && errors.As(err, &grErr) {
 			statusSrc = convertStatusSource(grErr.Source)
 		}
-		params = append(params, "status_source", statusSrc)
+		logParams = append(params, "status_source", statusSrc)
 	}
-	m.logger.Info("Plugin Request Completed", params...)
+	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
 	return err
-}
-
-// logParams returns the logger params for the provided plugin context.
-// (pluginId, dsName, dsUID, uname).
-func logParams(pCtx backend.PluginContext) []any {
-	p := []any{"pluginId", pCtx.PluginID}
-	if pCtx.DataSourceInstanceSettings != nil {
-		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
-		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
-	}
-	if pCtx.User != nil {
-		p = append(p, "uname", pCtx.User.Login)
-	}
-	return p
-}
-
-// instrumentContext adds a contextual logger with plugin and request details to the given context.
-func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	return log.WithContextualAttributes(ctx, append([]any{"endpoint", endpoint}, logParams(pCtx)...))
 }
 
 func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -102,7 +81,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.logRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
 		return innerErr
 	})
@@ -115,7 +94,7 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		innerErr = m.next.CallResource(ctx, req, sender)
 		return innerErr
 	})
@@ -129,7 +108,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return innerErr
 	})
@@ -143,7 +122,7 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := m.logRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
 		return innerErr
 	})

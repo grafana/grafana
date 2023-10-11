@@ -29,4 +29,10 @@ var (
 	ErrPluginDownstreamErrorBase = errutil.Internal("plugin.downstreamError",
 		errutil.WithPublicMessage("An error occurred within the plugin"),
 		errutil.WithDownstream())
+
+	// ErrPluginRequestCanceledErrorBase error returned when a plugin request
+	// is cancelled by the client (context is cancelled).
+	// Exposed as a base error to wrap it with plugin cancelled errors.
+	ErrPluginRequestCanceledErrorBase = errutil.ClientClosedRequest("plugin.requestCanceled",
+		errutil.WithPublicMessage("Plugin request canceled"))
 )

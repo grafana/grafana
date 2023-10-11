@@ -2,6 +2,7 @@ import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFilterSet,
   behaviors,
   CustomVariable,
   DataSourceVariable,
@@ -53,7 +54,6 @@ describe('transformSaveModelToScene', () => {
               name: 'constant',
               skipUrlSync: false,
               type: 'constant' as VariableType,
-              rootStateKey: 'N4XLmH5Vz',
               query: 'test',
               id: 'constant',
               global: false,
@@ -62,6 +62,19 @@ describe('transformSaveModelToScene', () => {
               error: null,
               description: '',
               datasource: null,
+            },
+            {
+              hide: 2,
+              name: 'CoolFilters',
+              type: 'adhoc' as VariableType,
+              datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+              id: 'adhoc',
+              global: false,
+              skipUrlSync: false,
+              index: 3,
+              state: LoadingState.Done,
+              error: null,
+              description: '',
             },
           ],
         },
@@ -78,6 +91,8 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
+      expect(scene.state.controls![2]).toBeInstanceOf(AdHocFilterSet);
+      expect((scene.state.controls![2] as AdHocFilterSet).state.name).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -622,7 +637,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it.each(['adhoc', 'interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it.each(['interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
