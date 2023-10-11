@@ -70,26 +70,51 @@ export function useFlameRender(options: RenderOptions) {
   const foundLabels = useFoundLabels(search, data);
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, depth);
   const theme = getTheme();
+  const getBarColor = useColorFunction(
+    totalColorTicks,
+    totalTicksRight,
+    colorScheme,
+    theme,
+    rangeMin,
+    rangeMax,
+    foundLabels,
+    focusedItemData ? focusedItemData.item.level : 0
+  );
+  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign);
 
   useEffect(() => {
     if (!ctx) {
       return;
     }
-    const getBarColor = createColorFunction(
-      totalColorTicks,
-      totalTicksRight,
-      colorScheme,
-      theme,
-      rangeMin,
-      rangeMax,
-      foundLabels,
-      focusedItemData ? focusedItemData.item.level : 0
-    );
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
+    walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, renderFunc);
+  }, [ctx, data, root, wrapperWidth, rangeMin, rangeMax, totalViewTicks, direction, renderFunc]);
+}
 
-    const renderBar: RenderFunc = (item, x, y, width, height, label, collapsed) => {
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  // Collapsed means the width is too small to show the label, and we group collapsed siblings together.
+  collapsed: boolean
+) => void;
+
+function useRenderFunc(
+  ctx: CanvasRenderingContext2D | undefined,
+  data: FlameGraphDataContainer,
+  getBarColor: (item: LevelItem, label: string, collapsed: boolean) => string,
+  textAlign: TextAlign,
+): RenderFunc {
+  return useMemo(() => {
+    if (!ctx) {
+      return () => {};
+    }
+
+    return (item, x, y, width, height, label, collapsed) => {
       ctx.beginPath();
       ctx.rect(x + (collapsed ? 0 : BAR_BORDER_WIDTH), y, width, height);
       ctx.fillStyle = getBarColor(item, label, collapsed);
@@ -106,50 +131,29 @@ export function useFlameRender(options: RenderOptions) {
         }
       }
     };
-
-    walkTree(root, direction, data, totalViewTicks, rangeMin, pixelsPerTick, renderBar);
-  }, [
-    ctx,
-    data,
-    root,
-    depth,
-    wrapperWidth,
-    rangeMin,
-    rangeMax,
-    search,
-    focusedItemData,
-    foundLabels,
-    textAlign,
-    totalViewTicks,
-    totalColorTicks,
-    totalTicksRight,
-    colorScheme,
-    theme,
-    direction,
-  ]);
+  }, [ctx, getBarColor, textAlign, data]);
 }
 
-type RenderFunc = (
-  item: LevelItem,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  label: string,
-  collapsed: boolean
-) => void;
-
-function walkTree(
+/**
+ * Exported for testing don't use directly
+ * Walks the tree and computes coordinates, dimensions and other data needed for rendering. For each item in the tree
+ * it defers the rendering to the renderFunc.
+ */
+export function walkTree(
   root: LevelItem,
+  // In sandwich view we use parents direction to show all callers.
   direction: 'children' | 'parents',
   data: FlameGraphDataContainer,
   totalViewTicks: number,
   rangeMin: number,
-  pixelsPerTick: number,
+  rangeMax: number,
+  wrapperWidth: number,
   renderFunc: RenderFunc
 ) {
   const stack: LevelItem[] = [];
   stack.push(root);
+
+  const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
 
   while (stack.length > 0) {
     const item = stack.shift()!;
@@ -178,6 +182,9 @@ function walkTree(
   }
 }
 
+/**
+ * Based on the search string it does a fuzzy search over all the unique labels so we can highlight them later.
+ */
 function useFoundLabels(search: string | undefined, data: FlameGraphDataContainer): Set<string> | undefined {
   return useMemo(() => {
     if (search) {
@@ -197,7 +204,7 @@ function useFoundLabels(search: string | undefined, data: FlameGraphDataContaine
   }, [search, data]);
 }
 
-function createColorFunction(
+function useColorFunction(
   totalTicks: number,
   totalTicksRight: number | undefined,
   colorScheme: ColorScheme | ColorSchemeDiff,
@@ -207,36 +214,38 @@ function createColorFunction(
   foundNames: Set<string> | undefined,
   topLevel: number
 ) {
-  // We use the same color for all muted bars so let's do it just once and reuse the result in the closure of the
-  // returned function.
-  const barMutedColor = color(theme.colors.background.secondary);
-  const barMutedColorHex = theme.isLight
-    ? barMutedColor.darken(10).toHexString()
-    : barMutedColor.lighten(10).toHexString();
+  return useMemo(() => {
+    // We use the same color for all muted bars so let's do it just once and reuse the result in the closure of the
+    // returned function.
+    const barMutedColor = color(theme.colors.background.secondary);
+    const barMutedColorHex = theme.isLight
+      ? barMutedColor.darken(10).toHexString()
+      : barMutedColor.lighten(10).toHexString();
 
-  return function getColor(item: LevelItem, label: string, collapsed: boolean) {
-    // If collapsed and no search we can quickly return the muted color
-    if (collapsed && !foundNames) {
-      // Collapsed are always grayed
-      return barMutedColorHex;
-    }
+    return function getColor(item: LevelItem, label: string, collapsed: boolean) {
+      // If collapsed and no search we can quickly return the muted color
+      if (collapsed && !foundNames) {
+        // Collapsed are always grayed
+        return barMutedColorHex;
+      }
 
-    const barColor =
-      item.valueRight !== undefined &&
-      (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
-        ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
-        : colorScheme === ColorScheme.ValueBased
-        ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
-        : getBarColorByPackage(label, theme);
+      const barColor =
+        item.valueRight !== undefined &&
+        (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+          ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
+          : colorScheme === ColorScheme.ValueBased
+          ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
+          : getBarColorByPackage(label, theme);
 
-    if (foundNames) {
-      // Means we are searching, we use color for matches and gray the rest
-      return foundNames.has(label) ? barColor.toHslString() : barMutedColorHex;
-    }
+      if (foundNames) {
+        // Means we are searching, we use color for matches and gray the rest
+        return foundNames.has(label) ? barColor.toHslString() : barMutedColorHex;
+      }
 
-    // Mute if we are above the focused symbol
-    return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
-  };
+      // Mute if we are above the focused symbol
+      return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
+    };
+  }, [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, foundNames, topLevel]);
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
