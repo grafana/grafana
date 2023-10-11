@@ -1,3 +1,4 @@
+import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 import React from 'react';
 
 import {
@@ -27,6 +28,7 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
 } from '@grafana/data';
+import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
@@ -245,6 +247,23 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
+    id: 'fieldMinMax',
+    path: 'fieldMinMax',
+    name: 'Field min/max',
+    description: 'Calculate min max per field',
+
+    editor: standardEditorsRegistry.get('boolean').editor as any,
+    override: standardEditorsRegistry.get('boolean').editor as any,
+    process: booleanOverrideProcessor,
+
+    shouldApply: (field) => field.type === FieldType.number,
+    showIf: (options: FieldConfig) => {
+      return options.min === undefined || options.max === undefined;
+    },
+    category,
+  };
+
   const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
@@ -397,5 +416,5 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
 };

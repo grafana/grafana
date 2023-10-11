@@ -6,7 +6,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"net/http"
 	"strings"
@@ -17,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -31,9 +35,11 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 	remoteCache remotecache.CacheStorage, routerRegister routing.RouteRegister,
 ) (*Service, error) {
 	s := &Service{
-		log:         log.New("auth.key_service"),
-		store:       signingkeystore.NewSigningKeyStore(dbStore, secretsService),
-		remoteCache: remoteCache,
+		log:            log.New("auth.key_service"),
+		store:          signingkeystore.NewSigningKeyStore(dbStore),
+		secretsService: secretsService,
+		remoteCache:    remoteCache,
+		localCache:     localcache.New(1*time.Hour, 1*time.Hour),
 	}
 
 	s.registerAPIEndpoints(routerRegister)
@@ -46,14 +52,17 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 //
 // The service is under active development and is not yet ready for production use.
 type Service struct {
-	log         log.Logger
-	store       signingkeystore.SigningStore
-	remoteCache remotecache.CacheStorage
+	log            log.Logger
+	store          signingkeystore.SigningStore
+	secretsService secrets.Service
+	remoteCache    remotecache.CacheStorage
+	localCache     *localcache.CacheService
 }
 
 const (
 	jwksCacheKey  = "signingkeys-jwks"
-	defaultExpiry = 12 * time.Hour
+	jwksTTL       = 12 * time.Hour
+	privateKeyTTL = 60 * time.Second
 )
 
 // GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
@@ -66,20 +75,43 @@ func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 		}
 	}
 
-	jwks, err := s.store.GetJWKS(ctx)
+	keys, err := s.store.List(ctx)
 	if err != nil {
 		return jose.JSONWebKeySet{}, err
+	}
+
+	jwks, err := s.buildJWKS(ctx, keys)
+	if err != nil {
+		return jwks, err
 	}
 
 	// cache jwks
 	jwksBytes, err := json.Marshal(jwks)
 	if err == nil {
-		if err := s.remoteCache.Set(ctx, jwksCacheKey, jwksBytes, defaultExpiry); err != nil {
+		if err := s.remoteCache.Set(ctx, jwksCacheKey, jwksBytes, jwksTTL); err != nil {
 			s.log.Warn("Failed to cache JWKS", "err", err)
 		}
 	}
 
 	return jwks, err
+}
+
+func (s *Service) buildJWKS(ctx context.Context, keys []signingkeys.SigningKey) (jose.JSONWebKeySet, error) {
+	var jwks jose.JSONWebKeySet
+	for _, key := range keys {
+		assertedKey, err := s.decodePrivateKey(ctx, key.PrivateKey)
+		if err != nil {
+			return jwks, err
+		}
+
+		jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
+			Key:       assertedKey.Public(),
+			Algorithm: string(key.Alg),
+			KeyID:     key.KeyID,
+			Use:       "sig",
+		})
+	}
+	return jwks, nil
 }
 
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
@@ -93,22 +125,77 @@ func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	}
 
 	keyID := keyMonthScopedID(keyPrefix, alg)
-	signer, err := s.store.GetPrivateKey(ctx, keyID)
+	signer, err := s.getPrivateKey(ctx, keyID)
 	if err == nil {
 		return keyID, signer, nil
 	}
+
+	// we only want to create a new signing key if none exits for keyID
+	if !errors.Is(err, signingkeys.ErrSigningKeyNotFound) {
+		return "", nil, err
+	}
+
 	s.log.Debug("Private key not found, generating new key", "keyID", keyID, "err", err)
 
+	signer, err = s.addPrivateKey(ctx, keyID, alg, false)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return keyID, signer, nil
+}
+
+func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
+	if key, ok := s.localCache.Get(keyID); ok {
+		return key.(crypto.Signer), nil
+	}
+
+	key, err := s.store.Get(ctx, keyID)
+	if err != nil {
+		return nil, err
+	}
+
+	singer, err := s.decodePrivateKey(ctx, key.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	s.localCache.Set(keyID, singer, privateKeyTTL)
+	return singer, nil
+}
+
+func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm, force bool) (crypto.Signer, error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		s.log.Error("Error generating private key", "err", err)
-		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
+		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
+	}
+
+	encoded, err := s.encodePrivateKey(ctx, privateKey)
+	if err != nil {
+		s.log.Error("Error encoding private key", "err", err)
+		return nil, err
 	}
 
 	expiry := time.Now().Add(30 * 24 * time.Hour)
-	if signer, err = s.store.AddPrivateKey(ctx, keyID, alg, privateKey, &expiry, false); err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {
-		return "", nil, err
+	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
+		KeyID:      keyID,
+		PrivateKey: encoded,
+		ExpiresAt:  &expiry,
+		Alg:        alg,
+	}, force)
+
+	if err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {
+		return nil, err
 	}
+
+	signer, err := s.decodePrivateKey(ctx, key.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// invalidate local cache
+	s.localCache.Delete(keyID)
 
 	// invalidate cache
 	if err := s.remoteCache.Delete(ctx, jwksCacheKey); err != nil {
@@ -116,7 +203,68 @@ func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 		s.log.Debug("Failed to invalidate JWKS cache", "err", err)
 	}
 
-	return keyID, signer, nil
+	return signer, nil
+}
+
+func (s *Service) encodePrivateKey(ctx context.Context, privateKey crypto.Signer) ([]byte, error) {
+	// Encode private key to binary format
+	pKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Encode private key to PEM format
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: pKeyBytes,
+	})
+
+	encrypted, err := s.secretsService.Encrypt(ctx, privateKeyPEM, secrets.WithoutScope())
+	if err != nil {
+		return nil, err
+	}
+
+	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(encrypted)))
+	base64.StdEncoding.Encode(encoded, encrypted)
+	return encoded, nil
+}
+
+func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (crypto.Signer, error) {
+	// Bail out if empty string since it'll cause a segfault in Decrypt
+	if len(privateKey) == 0 {
+		return nil, errors.New("private key is empty")
+	}
+
+	payload := make([]byte, base64.StdEncoding.DecodedLen(len(privateKey)))
+	_, err := base64.StdEncoding.Decode(payload, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	decrypted, err := s.secretsService.Decrypt(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(decrypted)
+	if block == nil {
+		return nil, errors.New("failed to decode private key PEM")
+	}
+
+	if block.Type != "PRIVATE KEY" {
+		return nil, errors.New("invalid block type")
+	}
+
+	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	assertedKey, ok := parsedKey.(crypto.Signer)
+	if !ok {
+		return nil, errors.New("failed to assert private key as crypto.Signer")
+	}
+	return assertedKey, nil
 }
 
 func keyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {

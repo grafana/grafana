@@ -15,11 +15,11 @@ import { hasChildMatch } from './utils';
 interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  onClose?: () => void;
+  onClick?: () => void;
   level?: number;
 }
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
+export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
@@ -29,13 +29,13 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const showExpandButton = linkHasChildren(link) || link.emptyMessage;
 
   return (
-    <li>
+    <li className={styles.listItem}>
       <div className={styles.collapsibleSectionWrapper}>
         <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
             link.onClick?.();
-            onClose?.();
+            onClick?.();
           }}
           target={link.target}
           url={link.url}
@@ -75,7 +75,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
                   key={`${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
-                  onClose={onClose}
+                  onClick={onClick}
                   level={level + 1}
                 />
               ))
@@ -120,6 +120,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  listItem: css({
+    flex: 1,
   }),
   isActive: css({
     color: theme.colors.text.primary,

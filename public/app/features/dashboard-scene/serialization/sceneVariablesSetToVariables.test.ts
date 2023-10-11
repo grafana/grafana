@@ -122,7 +122,6 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
-      "sort": 1,
     }
     `);
   });
