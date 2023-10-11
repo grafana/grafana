@@ -72,7 +72,7 @@ def swagger_gen_step(ver_mode):
             "cat Makefile",
             "make swagger-clean && make openapi3-gen",
             "for f in public/api-spec.json public/api-merged.json public/openapi3.json; do git add $f; done",
-            'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else return 1; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
+            'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else echo "please regenerate specification by running make swagger-clean && make openapi3-gen" return 1; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
         ],
         "depends_on": [
             "clone-enterprise",

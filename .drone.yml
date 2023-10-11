@@ -1196,13 +1196,14 @@ steps:
   - for f in public/api-spec.json public/api-merged.json public/openapi3.json; do
     git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else return 1; fi
+    date!"; else echo "please regenerate specification by running make swagger-clean
+    && make openapi3-gen" return 1; fi
   depends_on:
   - clone-enterprise
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: golang:1.20.8-alpine
+  image: golang:1.20.10-alpine
   name: swagger-gen
 trigger:
   event:
@@ -4724,6 +4725,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: efc8706531a40b72753d483d3d8a7ba4941b5f54e0b21a68bcf47556a97a9ede
+hmac: 61c25bea54914e3ead11a0a31e881acd555b28c5c38181b4f2621cbe7adf608d
 
 ...
