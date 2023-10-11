@@ -1,10 +1,8 @@
-import moment from 'moment-timezone';
 import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { getTimeZone, getTimeZoneInfo } from '../../datetime';
-import { Field, FieldType } from '../../types';
+import { Field } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { fieldToStringField } from './convertFieldType';
@@ -13,7 +11,6 @@ import { DataTransformerID } from './ids';
 export interface FormatTimeTransformerOptions {
   timeField: string;
   outputFormat: string;
-  useTimezone: boolean;
   timezone: TimeZone;
 }
 
@@ -46,19 +43,17 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
  */
 export const createTimeFormatter =
   (timeField: string, outputFormat: string, timezone: string) => (fields: Field[]) => {
-    // const tz = getTimeZone();
-
     return fields.map((field) => {
       // Find the configured field
       if (field.name === timeField) {
         // Update values to use the configured format
-          let formattedField = null;
-          if (timezone) {
-            formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone});
-          }
-          else {
-            formattedField = fieldToStringField(field, outputFormat);
-          }
+        let formattedField = null;
+        if (timezone) {
+          formattedField = fieldToStringField(field, outputFormat, { timeZone: timezone});
+        }
+        else {
+          formattedField = fieldToStringField(field, outputFormat);
+        }
 
         return formattedField;
       }
