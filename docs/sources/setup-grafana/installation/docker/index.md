@@ -64,7 +64,7 @@ docker stop grafana
 
 ### Save your Grafana data
 
-By default, Grafana uses an embedded sqlite3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exist. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+By default, Grafana uses an embedded sqlite3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exists. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
 > **Note:** Though both methods are similar, there is a slight difference. If you want your storage to be fully managed by Docker and accessed only through Docker containers and the Docker CLI, you should choose to use persistent storage. However, if you need full control of the storage and want to allow other processes besides Docker to access or modify the storage layer, then bind mounts is the right choice for your environment.
 
@@ -95,15 +95,15 @@ To use Docker volumes for persistent storage, complete the following steps:
 
 #### Use bind mounts
 
-If you plan to use directories on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the folder you map.
+If you plan to use directories on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the directory you map.
 
 To use bind mounts, run the following command:
 
 ```bash
-# create a folder for your data
+# create a directory for your data
 mkdir data
 
-# start grafana with your user id and using the data folder
+# start grafana with your user id and using the data directory
 docker run -d -p 3000:3000 --name=grafana \
   --user "$(id -u)" \
   --volume "$PWD/data:/var/lib/grafana" \
@@ -154,7 +154,7 @@ To install plugins in the Docker container, complete the following steps:
 
    > **Note:** If you do not specify a version number, the latest version is used.
 
-1. To install a plugin from a custom URL, use the following convention to specify the URL: `<url to plugin zip>;<plugin install folder name>`.
+1. To install a plugin from a custom URL, use the following convention to specify the URL: `<url to plugin zip>;<plugin install directory name>`.
 
    For example:
 
@@ -208,7 +208,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
@@ -256,7 +256,7 @@ docker compose down
 
 ### Save your Grafana data
 
-By default, Grafana uses an embedded sqlite3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exist. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+By default, Grafana uses an embedded sqlite3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exists. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
 #### Use Docker volumes (recommended)
 
@@ -268,7 +268,7 @@ To use Docker volumes for persistent storage, complete the following steps:
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
@@ -299,7 +299,7 @@ To use Docker volumes for persistent storage, complete the following steps:
 
 #### Use bind mounts
 
-If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the folder you map.
+If you plan to use directories on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the directory you map.
 
 To use bind mounts, complete the following steps:
 
@@ -307,13 +307,13 @@ To use bind mounts, complete the following steps:
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```
 
-1. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
+1. Create the directory where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
 
    ```bash
    mkdir $PWD/data
