@@ -95,6 +95,28 @@
       "text": "No results found for your query."
     }
   },
+  "cheat-sheet": {
+    "macros": {
+      "title": "Macros:",
+      "description": "<0>$__time(column) -&gt; column as &quot;time&quot;</0><1>$__timeEpoch -&gt; extract(epoch from column) as &quot;time&quot;</1><0>$__timeFilter(column) -&gt; column BETWEEN &apos;2017-04-21T05:01:17Z&apos; AND  &apos;2017-04-21T05:01:17Z&apos;</0><1>$__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877</1><0>$__unixEpochNanoFilter(column) -&gt; column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872</0><1>$__timeGroup(column,&apos;5m&apos;[, fillvalue]) -&gt; (extract(epoch from column)/300)::bigint*300 by settingfillvalue grafana will fill in missing values according to the interval fillvalue can be either a 1teralvalue, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet</1><0>$__timeGroupAlias(column,&apos;5m&apos;) -&gt; (extract(epoch from column)/300)::bigint*300 AS&quot;time&quot;</0><1>$__unixEpochGroup(column,&apos;5m&apos;) -&gt; floor(column/300)*300</1><0>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; floor(column/300)*300 AS &quot;time&quot;</0>",
+      "example-note": "Example of group by and order by with $__timeGroup:",
+      "conditionals-note": "Or build your own conditionals using these macros which just return the values:"
+    },
+    "optional": {
+      "title": "Optional:",
+      "description": "<0>return column named <1>metric</1> to represent the series name.</0><1>If multiple value columns are returned the metric column is used as prefix.</1><0>If no column named metric is found the column name of the value column is used as series name</0>"
+    },
+    "table": {
+      "title": "Table:",
+      "description": "<0>return any set of columns</0>"
+    },
+    "title": "PostgreSQL cheat sheet",
+    "time-series": {
+      "title": "Time series:",
+      "description": "<0>return column named <1>time</1> (UTC in seconds or timestamp)</0><1>return column(s) with numeric datatype as values</1>",
+      "note": "Resultsets of time series queries need to be sorted by time."
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
