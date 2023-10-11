@@ -517,6 +517,18 @@
     "config": {
       "title": "Administración"
     },
+    "config-access": {
+      "subtitle": "",
+      "title": "Usuarios y acceso"
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": "General"
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": "Complementos y datos"
+    },
     "connect-data": {
       "title": ""
     },
