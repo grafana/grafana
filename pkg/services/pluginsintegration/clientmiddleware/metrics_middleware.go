@@ -157,7 +157,7 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	// Setup plugin
+	// Setup plugin request metadata
 	ctx = pluginrequestmeta.WithMetaData(ctx, pluginrequestmeta.DefaultPluginRequestMetadata())
 
 	var requestSize float64
