@@ -16,6 +16,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,6 +25,7 @@ type ConfigSrv struct {
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
 	log                  log.Logger
+	plugins              pluginstore.Store
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *contextmodel.ReqContext) response.Response {

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,8 +63,13 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 			"implementation":             "prometheus",
 		}),
 	}
+	pStore := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: datasources.DS_ALERTMANAGER}},
+		},
+	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService())
+		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), pStore)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -132,8 +139,13 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		}),
 	}
 	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
+	pStore := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: datasources.DS_ALERTMANAGER}},
+		},
+	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		fakeDs, fake_secrets.NewFakeSecretsService())
+		fakeDs, fake_secrets.NewFakeSecretsService(), pStore)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -291,8 +303,14 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 			"implementation":             "prometheus",
 		}),
 	}
+	pStore := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: datasources.DS_ALERTMANAGER}},
+		},
+	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
-		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService())
+		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(),
+		pStore)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},

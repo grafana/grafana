@@ -381,7 +381,11 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		cfg,
 		store,
 		&mockSocial{},
-		&pluginstore.FakePluginStore{},
+		&pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: datasources.DS_PROMETHEUS}},
+			},
+		},
 		featuremgmt.WithFeatures("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(),

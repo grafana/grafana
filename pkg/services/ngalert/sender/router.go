@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -47,11 +48,12 @@ type AlertsRouter struct {
 
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
+	plugins           pluginstore.Store
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, plugins pluginstore.Store) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -70,6 +72,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 
 		datasourceService: datasourceService,
 		secretService:     secretService,
+		plugins:           plugins,
 	}
 	return d
 }
@@ -214,9 +217,14 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcf
 	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
+	p, found := d.plugins.Plugin(context.Background(), datasources.DS_ALERTMANAGER)
+	if !found {
+		return nil, fmt.Errorf("failed to find alertmanager plugin")
+	}
 	query := &datasources.GetDataSourcesByTypeQuery{
 		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
+		Alias: p.AliasIDs,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

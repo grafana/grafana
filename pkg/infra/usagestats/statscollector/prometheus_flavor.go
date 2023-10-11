@@ -3,6 +3,7 @@ package statscollector
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -37,7 +38,11 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		return s.promFlavorCache.variants, nil
 	}
 
-	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: "prometheus"}
+	plugin, found := s.plugins.Plugin(ctx, datasources.DS_PROMETHEUS)
+	if !found {
+		return nil, fmt.Errorf("failed to find Prometheus plugin")
+	}
+	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_PROMETHEUS, Alias: plugin.AliasIDs}
 	dataSources, err := s.datasources.GetDataSourcesByType(ctx, dsProm)
 	if err != nil {
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)

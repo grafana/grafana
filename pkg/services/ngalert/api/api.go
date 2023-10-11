@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -64,6 +65,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	PluginStore          pluginstore.Store
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -123,6 +125,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			store:                api.AdminConfigStore,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
+			plugins:              api.PluginStore,
 		},
 	), m)
 
