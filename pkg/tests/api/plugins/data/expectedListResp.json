@@ -1614,7 +1614,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "%VERSION%",
+      "version": "",
       "updated": ""
     },
     "dependencies": {
