@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 )
@@ -17,11 +18,13 @@ import (
 type Service struct {
 	im     instancemgmt.InstanceManager
 	logger log.Logger
+	tracer tracing.Tracer
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		logger: log.New("tsdb.tempo"),
+		tracer: tracer,
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 }
