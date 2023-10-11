@@ -61,14 +61,14 @@ func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dash
 	if err != nil {
 		return nil, err
 	}
-	l := log.New("dashboardTitle", dash.Title, "dashboardUID", dash.UID)
+	l := log.New("dashboardTitle", dash.Title, "dashboardUid", dash.UID)
 
 	dashFolder, err := om.getFolder(ctx, dash)
 	if err != nil {
 		l.Warn("Failed to find folder for dashboard", "missing_folder_id", dash.FolderID, "error", err)
 	}
 	if dashFolder != nil {
-		l = l.New("folderUID", dashFolder.UID, "folderName", dashFolder.Title)
+		l = l.New("folderUid", dashFolder.UID, "folderName", dashFolder.Title)
 	}
 
 	migratedFolder, err := om.getOrCreateMigratedFolder(ctx, l, dash, dashFolder)
@@ -90,6 +90,7 @@ func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dash
 // Any dashboard that has greater read/write permissions for an orgRole/team/user compared to its folder will necessitate creating a new folder with the same permissions as the dashboard.
 func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Logger, dash *dashboards.Dashboard, parentFolder *folder.Folder) (*folder.Folder, error) {
 	// If parentFolder does not exist then the dashboard is an orphan. We migrate the alert to the general alerting folder.
+	// The general alerting folder is only accessible to admins.
 	if parentFolder == nil {
 		l.Warn("Migrating alert to the general alerting folder: original folder not found")
 		f, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)

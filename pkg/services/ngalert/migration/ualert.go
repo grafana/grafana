@@ -12,9 +12,9 @@ import (
 
 func (om *OrgMigration) migrateAlerts(ctx context.Context, alerts []*migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) ([]*AlertPair, error) {
 	log := om.log.New(
-		"dashboardUID", info.DashboardUID,
+		"dashboardUid", info.DashboardUID,
 		"dashboardName", info.DashboardName,
-		"newFolderUID", info.NewFolderUID,
+		"newFolderUid", info.NewFolderUID,
 		"newFolderNane", info.NewFolderName,
 	)
 
