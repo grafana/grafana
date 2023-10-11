@@ -15,7 +15,7 @@ import (
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
-// log requests and add a contextual logger to the request context.
+// log requests.
 func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
@@ -47,19 +47,19 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 		}
 	}
 
-	params := []any{
+	logParams := []any{
 		"status", status,
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
 	}
 	if traceID := tracing.TraceIDFromContext(ctx, false); traceID != "" {
-		params = append(params, "traceID", traceID)
+		logParams = append(logParams, "traceID", traceID)
 	}
 	if status == statusError {
-		params = append(params, "error", err)
+		logParams = append(logParams, "error", err)
 	}
-	m.logger.FromContext(ctx).Info("Plugin Request Completed", params...)
+	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
 	return err
 }
 
