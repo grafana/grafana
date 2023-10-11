@@ -100,10 +100,10 @@ function FormatStringTransfomerEditor({
       {options.outputFormat === FormatStringOutput.Substring && (
         <InlineFieldRow>
           <InlineField label="Substring range" labelWidth={15}>
-            <NumberInput value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
+            <NumberInput min={0} value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
           </InlineField>
           <InlineField>
-            <NumberInput value={options.substringEnd ?? 0} onChange={onSubstringEndChange} width={7} />
+            <NumberInput min={0} value={options.substringEnd ?? 0} onChange={onSubstringEndChange} width={7} />
           </InlineField>
         </InlineFieldRow>
       )}
@@ -116,6 +116,6 @@ export const formatStringTransformerRegistryItem: TransformerRegistryItem<Format
   editor: FormatStringTransfomerEditor,
   transformation: standardTransformers.formatStringTransformer,
   name: standardTransformers.formatStringTransformer.name,
-  state: PluginState.alpha,
+  state: PluginState.beta,
   description: standardTransformers.formatStringTransformer.description,
 };

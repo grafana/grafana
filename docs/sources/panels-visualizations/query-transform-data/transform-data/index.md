@@ -1002,6 +1002,25 @@ This transformation is available in Grafana 10.1+ as an alpha feature.
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
+### Format string
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 10.2+ and can be enabled through the `formatString` feature toggle.
+{{% /admonition %}}
+
+Use this transformation to format the output of a string field. Output can be formatted using various ways:
+
+- Upper case - formats the string to have all characters in upper case
+- Lower case - formats the string to have all characters in lower case
+- Sentence case - formats the string to have the first character in upper case
+- Title case - formats the string to have the first character of each word in upper case
+- Pascal case - formats the string to have the first character of each word in upper case and no spaces
+- Camel case - formats the string to have no spaces and the first character of each word in upper case, except the first word
+- Snake case - formats the string to have all characters in lower case and underscores instead of spaces
+- Kebab case - formats the string to have all characters in lower case and dashes instead of spaces
+- Trim - removes all leading and trailing spaces from the string
+- Substring - returns a substring of the string, using the specified start and end positions
+
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"

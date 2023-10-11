@@ -61,7 +61,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
-    formatStringTransformerRegistryItem,
+    ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
     formatTimeTransformerRegistryItem,
     ...(config.featureToggles.timeSeriesTable ? [timeSeriesTableTransformRegistryItem] : []),
   ];

@@ -478,4 +478,8 @@ const (
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagFormatString
+	// Enable format string transformer
+	FlagFormatString = "formatString"
 )

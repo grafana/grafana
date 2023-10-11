@@ -823,5 +823,12 @@ var (
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
 		},
+		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )
