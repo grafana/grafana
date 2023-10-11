@@ -98,6 +98,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 	u, err := userService.Create(context.Background(), &user.CreateUserCommand{
 		Name:         "TestUser",
+		Login:        "TestUser",
 		SkipOrgSetup: true,
 	})
 	require.NoError(t, err)
