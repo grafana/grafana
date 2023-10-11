@@ -245,7 +245,8 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	if errID != nil {
 		hs.log.Error("failed to retrieve user ID", "error", errID)
 	}
-    oauthProviderSignoutRedirectUrl := ""
+
+	oauthProviderSignoutRedirectUrl := ""
 	getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
 	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery)
 	if err == nil {
