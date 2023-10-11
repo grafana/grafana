@@ -1,4 +1,4 @@
-package migration
+package ualert
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const (
@@ -26,10 +26,14 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (om *OrgMigration) addErrorSilence(rule *models.AlertRule) error {
+func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
+	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
+		return nil
+	}
+
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		return errors.New("create uuid for silence")
+		return errors.New("failed to create uuid for silence")
 	}
 
 	s := &pb.MeshSilence{
@@ -54,14 +58,21 @@ func (om *OrgMigration) addErrorSilence(rule *models.AlertRule) error {
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year
 	}
-	om.silences = append(om.silences, s)
+	if _, ok := m.silences[da.OrgId]; !ok {
+		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	}
+	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
 	return nil
 }
 
-func (om *OrgMigration) addNoDataSilence(rule *models.AlertRule) error {
+func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
+	if da.ParsedSettings.NoDataState != "keep_state" {
+		return nil
+	}
+
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		return errors.New("create uuid for silence")
+		return errors.New("failed to create uuid for silence")
 	}
 
 	s := &pb.MeshSilence{
@@ -86,20 +97,28 @@ func (om *OrgMigration) addNoDataSilence(rule *models.AlertRule) error {
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}
-	om.silences = append(om.silences, s)
+	_, ok := m.silences[da.OrgId]
+	if !ok {
+		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	}
+	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
 	return nil
 }
 
-func (om *OrgMigration) writeSilencesFile() error {
+func (m *migration) writeSilencesFile(orgID int64) error {
 	var buf bytes.Buffer
-	om.log.Debug("Writing silences file", "silences", len(om.silences))
-	for _, e := range om.silences {
+	orgSilences, ok := m.silences[orgID]
+	if !ok {
+		return nil
+	}
+
+	for _, e := range orgSilences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
 			return err
 		}
 	}
 
-	f, err := openReplace(silencesFileNameForOrg(om.cfg.DataPath, om.orgID))
+	f, err := openReplace(silencesFileNameForOrg(m.mg, orgID))
 	if err != nil {
 		return err
 	}
@@ -111,8 +130,12 @@ func (om *OrgMigration) writeSilencesFile() error {
 	return f.Close()
 }
 
-func silencesFileNameForOrg(dataPath string, orgID int64) string {
-	return filepath.Join(dataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
+func getSilenceFileNamesForAllOrgs(mg *migrator.Migrator) ([]string, error) {
+	return filepath.Glob(filepath.Join(mg.Cfg.DataPath, "alerting", "*", "silences"))
+}
+
+func silencesFileNameForOrg(mg *migrator.Migrator, orgID int64) string {
+	return filepath.Join(mg.Cfg.DataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
 }
 
 // replaceFile wraps a file that is moved to another filename on closing.

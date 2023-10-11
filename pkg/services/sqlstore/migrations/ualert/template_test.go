@@ -1,12 +1,11 @@
-package migration
+package ualert
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTokenString(t *testing.T) {
