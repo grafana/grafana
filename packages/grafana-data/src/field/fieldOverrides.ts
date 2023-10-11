@@ -238,7 +238,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 function calculateRange(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: FieldConfig<any>,
   field: Field,
   globalRange: NumericRange | undefined,

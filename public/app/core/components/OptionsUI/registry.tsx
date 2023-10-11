@@ -247,16 +247,13 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
     id: 'fieldMinMax',
     path: 'fieldMinMax',
     name: 'Field min/max',
     description: 'Calculate min max per field',
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     editor: standardEditorsRegistry.get('boolean').editor as any,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     override: standardEditorsRegistry.get('boolean').editor as any,
     process: booleanOverrideProcessor,
 
