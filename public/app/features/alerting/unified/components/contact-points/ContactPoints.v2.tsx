@@ -382,7 +382,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         >
           {canEdit ? 'Edit' : 'View'}
         </LinkButton>
-        {Boolean(menuActions.length) && (
+        {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
             <MoreButton />
           </Dropdown>
