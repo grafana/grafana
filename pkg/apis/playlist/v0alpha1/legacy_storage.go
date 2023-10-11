@@ -3,6 +3,7 @@ package v0alpha1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,12 +25,7 @@ var (
 
 type legacyStorage struct {
 	service playlist.Service
-}
-
-func newLegacyStorage(s playlist.Service) *legacyStorage {
-	return &legacyStorage{
-		service: s,
-	}
+	mapper  NamespaceMapper
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -87,7 +83,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 				APIVersion: APIVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
+				Name:              v.UID,
+				Namespace:         s.mapper(v.OrgId),
+				CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
+				ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
 			},
 			Spec: playlistkind.Spec{
 				Name:     v.Name,
@@ -126,7 +125,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 			APIVersion: APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
+			Name:      p.Uid,
+			Namespace: info.Value,
 		},
 		Spec: playlistkind.Spec{
 			Name:     p.Name,

@@ -13,6 +13,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GroupName is the group name for this API.
@@ -25,11 +26,16 @@ var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
 	service playlist.Service
+	mapper  NamespaceMapper
 }
 
-func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+func RegisterAPIService(p playlist.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
+) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service: p,
+		mapper:  GetNamespaceMapper(cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -55,7 +61,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	legacyStore := newLegacyStorage(b.service)
+	legacyStore := &legacyStorage{
+		service: b.service,
+		mapper:  b.mapper,
+	}
 	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
