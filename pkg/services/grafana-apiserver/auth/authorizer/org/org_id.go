@@ -52,6 +52,9 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		if info.OrgID != 1 {
 			return authorizer.DecisionDeny, "cloud instance requires org 1", nil
 		}
+		if signedInUser.OrgID != 1 {
+			return authorizer.DecisionDeny, "user must be in org 1", nil
+		}
 		return authorizer.DecisionAllow, "", nil
 	} else if info.StackID != "" {
 		return authorizer.DecisionDeny, "using a stack namespace requires deployment with a fixed stack id", nil

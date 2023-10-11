@@ -24,11 +24,17 @@ func TestParseNamespace(t *testing.T) {
 			name:      "incorrect number of parts",
 			namespace: "org-123-a",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "org id not a number",
 			namespace: "org-invalid",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "valid org id",
@@ -42,16 +48,25 @@ func TestParseNamespace(t *testing.T) {
 			name:      "org should not be 1 in the namespace",
 			namespace: "org-1",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "can not be negative",
 			namespace: "org--5",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "can not be zero",
 			namespace: "org-0",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "default is org 1",
@@ -74,6 +89,9 @@ func TestParseNamespace(t *testing.T) {
 			name:      "invalid stack id",
 			namespace: "stack-",
 			ok:        false,
+			expected: grafanarequest.NamespaceInfo{
+				OrgID: -1,
+			},
 		},
 		{
 			name:      "other namespace",
@@ -81,7 +99,7 @@ func TestParseNamespace(t *testing.T) {
 			ok:        true,
 			expected: grafanarequest.NamespaceInfo{
 				OrgID: -1,
-				Other: "anything",
+				Value: "anything",
 			},
 		},
 	}
@@ -99,8 +117,8 @@ func TestParseNamespace(t *testing.T) {
 			if info.StackID != tt.expected.StackID {
 				t.Errorf("ParseNamespace() [StackID] returned %s, expected %s", info.StackID, tt.expected.StackID)
 			}
-			if info.Other != tt.expected.Other {
-				t.Errorf("ParseNamespace() [Other] returned %s, expected %s", info.Other, tt.expected.Other)
+			if info.Value != tt.namespace {
+				t.Errorf("ParseNamespace() [Value] returned %s, expected %s", info.Value, tt.namespace)
 			}
 		})
 	}

@@ -16,8 +16,8 @@ type NamespaceInfo struct {
 	// The cloud stack ID (must match the value in cfg.Settings)
 	StackID string
 
-	// For namespaces that are not org-{id} or stack-{id}
-	Other string
+	// The original namespace string regardless the input
+	Value string
 }
 
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, error) {
@@ -29,39 +29,31 @@ func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, e
 }
 
 func ParseNamespace(ns string) (NamespaceInfo, error) {
+	info := NamespaceInfo{Value: ns, OrgID: -1}
 	if ns == "default" {
-		return NamespaceInfo{
-			OrgID: 1,
-		}, nil
+		info.OrgID = 1
+		return info, nil
 	}
 
 	if strings.HasPrefix(ns, "org-") {
 		id, err := strconv.Atoi(ns[4:])
 		if id < 1 {
-			return NamespaceInfo{}, fmt.Errorf("invalid org id")
+			return info, fmt.Errorf("invalid org id")
 		}
 		if id == 1 {
-			return NamespaceInfo{}, fmt.Errorf("use default rather than org-1")
+			return info, fmt.Errorf("use default rather than org-1")
 		}
-		return NamespaceInfo{
-			OrgID: int64(id),
-		}, err
+		info.OrgID = int64(id)
+		return info, err
 	}
 
 	if strings.HasPrefix(ns, "stack-") {
-		id := ns[6:]
-		if len(id) < 3 {
-			return NamespaceInfo{}, fmt.Errorf("invalid stack id")
+		info.StackID = ns[6:]
+		if len(info.StackID) < 3 {
+			return info, fmt.Errorf("invalid stack id")
 		}
-		return NamespaceInfo{
-			OrgID:   1,
-			StackID: id,
-		}, nil
+		info.OrgID = -1
+		return info, nil
 	}
-
-	// For non grafana scoped namespaces
-	return NamespaceInfo{
-		OrgID: -1,
-		Other: ns,
-	}, nil
+	return info, nil
 }
