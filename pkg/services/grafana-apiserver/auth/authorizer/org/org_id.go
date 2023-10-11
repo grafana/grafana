@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &OrgIDAuthorizer{}
@@ -35,17 +34,24 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
-	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
+	ns := a.GetNamespace()
+	if ns == "" {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	info, err := grafanarequest.ParseNamespace(ns)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
 	}
 
+	// Single tenant deployment is tied to an explicit stack ID
 	if auth.stackID != "" {
 		if info.StackID != auth.stackID {
 			return authorizer.DecisionDeny, "wrong stack id is selected", nil
 		}
-		// TODO: does the signedInUser knows its stackID?
-		return authorizer.DecisionDeny, "Cloud stack validation is not yet implemented", nil
+		return authorizer.DecisionAllow, "", nil
+	} else if info.StackID != "" {
+		return authorizer.DecisionDeny, "using a stack namespace requires deployment with a fixed stack id", nil
 	}
 
 	// Quick check that the same org is used
@@ -53,6 +59,7 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionAllow, "", nil
 	}
 
+	// Check if the user has access to the specified org
 	query := org.GetUserOrgListQuery{UserID: signedInUser.UserID}
 	result, err := auth.org.GetUserOrgList(ctx, &query)
 	if err != nil {

@@ -37,7 +37,7 @@ func ParseNamespace(ns string) (NamespaceInfo, error) {
 
 	if strings.HasPrefix(ns, "stack-") {
 		id := ns[6:]
-		if len(id) < 4 {
+		if len(id) < 3 {
 			return NamespaceInfo{}, fmt.Errorf("invalid stack id")
 		}
 		return NamespaceInfo{
