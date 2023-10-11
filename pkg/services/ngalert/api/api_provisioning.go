@@ -16,7 +16,6 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,7 +31,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user *user.SignedInUser) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error

@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -489,7 +488,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
-func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user *user.SignedInUser) error {
+func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user identity.Requester) error {
 	if len(groupChanges.New) > 0 {
 		for _, rule := range groupChanges.New {
 			err := validator.Validate(eval.NewContext(ctx, user), rule.GetEvalCondition())

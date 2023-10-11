@@ -14,11 +14,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -51,7 +51,7 @@ type ContactPointQuery struct {
 	Decrypt bool
 }
 
-func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u *user.SignedInUser) bool {
+func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u identity.Requester) bool {
 	if u == nil {
 		return false
 	}
@@ -64,7 +64,7 @@ func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u *user.S
 }
 
 // GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u *user.SignedInUser) ([]apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u identity.Requester) ([]apimodels.EmbeddedContactPoint, error) {
 	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
 		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
 	}
