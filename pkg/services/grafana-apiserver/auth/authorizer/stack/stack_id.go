@@ -21,7 +21,7 @@ type StackIDAuthorizer struct {
 
 func ProvideStackIDAuthorizer(cfg *setting.Cfg) *StackIDAuthorizer {
 	return &StackIDAuthorizer{
-		log:     log.New("grafana-apiserver.authorizer.orgid"),
+		log:     log.New("grafana-apiserver.authorizer.stackid"),
 		stackID: cfg.StackID, // this lets a single tenant grafana validate stack id (rather than orgs)
 	}
 }
