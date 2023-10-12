@@ -84,7 +84,7 @@ _Generally available in Grafana_
 Service accounts allow you to create a token that can be used to authenticate with Grafana.
 You can use this token to access Grafana's API, as well as, data sources and dashboards that the service account has access to.
 
-In this release, we've added the ability to assign dashboard and data source permissions to service accounts.
+In this release, we've added the ability to assign dashboard, folder and data source permissions to service accounts.
 This means that you can now create a service account that can be used to access a specific dashboard or data source and nothing else.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Datasource permissions in 10.2" > }}
