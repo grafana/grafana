@@ -45,16 +45,16 @@
       "new-folder-name-required-phrase": "Folder name is required."
     },
     "counts": {
-      "alertRule__one": "{{count}} alert rule",
-      "alertRule__other": "{{count}} alert rules",
-      "dashboard__one": "{{count}} dashboard",
-      "dashboard__other": "{{count}} dashboards",
-      "folder__one": "{{count}} folder",
-      "folder__other": "{{count}} folders",
-      "libraryPanel__one": "{{count}} library panel",
-      "libraryPanel__other": "{{count}} library panels",
-      "total__one": "{{count}} item",
-      "total__other": "{{count}} items"
+      "alertRule_one": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
+      "dashboard_one": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
+      "folder_one": "{{count}} folder",
+      "folder_other": "{{count}} folders",
+      "libraryPanel_one": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
+      "total_one": "{{count}} item",
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -374,6 +374,14 @@
       "placeholder": "Choose"
     }
   },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all {{length}}",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
+      "title": "Graph"
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Dashboard",
@@ -429,8 +437,8 @@
   },
   "library-panels": {
     "modal": {
-      "body__one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body__other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "<0>Cancel</0>",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -516,6 +524,18 @@
     },
     "config": {
       "title": "Administration"
+    },
+    "config-access": {
+      "subtitle": "Configure access for individual users, teams, and service accounts",
+      "title": "Users and access"
+    },
+    "config-general": {
+      "subtitle": "Manage default preferences and settings across Grafana",
+      "title": "General"
+    },
+    "config-plugins": {
+      "subtitle": "Install plugins and define the relationships between data",
+      "title": "Plugins and data"
     },
     "connect-data": {
       "title": "Connect data"
@@ -721,6 +741,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
+    },
+    "megamenu": {
+      "close": "Close menu",
+      "dock": "Dock menu",
+      "undock": "Undock menu"
     },
     "toolbar": {
       "enable-kiosk": "Enable kiosk mode",

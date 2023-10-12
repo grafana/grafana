@@ -15,7 +15,7 @@ import { PanelModel } from '../state/PanelModel';
 import {
   createAnnotationJSONFixture,
   createDashboardModelFixture,
-  createPanelJSONFixture,
+  createPanelSaveModel,
   createVariableJSONFixture,
 } from './__fixtures__/dashboardFixtures';
 
@@ -77,7 +77,7 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = createDashboardModelFixture({
-        panels: [createPanelJSONFixture({ id: 5 })],
+        panels: [createPanelSaveModel({ id: 5 })],
       });
     });
 
@@ -92,10 +92,10 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 6 }),
-          createPanelJSONFixture({ id: 2 }),
-          createPanelJSONFixture({}), // undefined
-          createPanelJSONFixture({ id: 2 }),
+          createPanelSaveModel({ id: 6 }),
+          createPanelSaveModel({ id: 2 }),
+          createPanelSaveModel({}), // undefined
+          createPanelSaveModel({ id: 2 }),
         ],
       });
     });
@@ -217,7 +217,7 @@ describe('DashboardModel', () => {
       model = createDashboardModelFixture({
         schemaVersion: 1,
         panels: [
-          createPanelJSONFixture({
+          createPanelSaveModel({
             type: 'graph',
             targets: [
               {
@@ -418,11 +418,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       dashboard = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
