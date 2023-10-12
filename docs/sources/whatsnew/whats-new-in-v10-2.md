@@ -91,7 +91,6 @@ _Generally available in Grafana_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
-Access this feature by enabling the `window.localStorage.setItem('grafana.featureToggles', 'alertingInsights=true')` feature toggle.
 
 ## Alerting: Edit file-provisioned and Terraform-provisioned alerting resources
 
