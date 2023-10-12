@@ -12,7 +12,7 @@ interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
   className?: string;
 }
 
-function ContentOutlineItem({ title, icon, children, className }: ContentOutlineItemProps) {
+export function ContentOutlineItem({ title, icon, children, className }: ContentOutlineItemProps) {
   const { register, unregister } = useContentOutlineContext();
   const ref = useRef(null);
 
@@ -30,5 +30,3 @@ function ContentOutlineItem({ title, icon, children, className }: ContentOutline
     </div>
   );
 }
-
-export default ContentOutlineItem;

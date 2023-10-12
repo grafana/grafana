@@ -37,7 +37,7 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
-import ContentOutlineItem from './ContentOutline/ContentOutlineItem';
+import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
