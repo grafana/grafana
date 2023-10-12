@@ -75,7 +75,7 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
-## Add Dashboard and Datasource permissions to Service accounts
+## Add dashboard and data source permissions to service accounts
 
 <!-- Jo Guerreiro -->
 
