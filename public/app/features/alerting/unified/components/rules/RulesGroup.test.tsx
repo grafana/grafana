@@ -8,12 +8,13 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages } from '../../Analytics';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockFolderApi, mockProvisioningApi, setupMswServer } from '../../mockApi';
-import { disableRBAC, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
+import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -46,6 +47,8 @@ function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
 
 beforeEach(() => {
   mocks.useHasRuler.mockReset();
+  // FIXME: scope down
+  grantUserPermissions(Object.values(AccessControlAction));
 });
 
 const ui = {
@@ -164,8 +167,6 @@ describe('Rules group tests', () => {
       groups: [group],
     };
 
-    disableRBAC();
-
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange
       mockUseHasRuler(true, true);
@@ -222,8 +223,6 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
-
-    disableRBAC();
 
     it('Should log info when closing the edit group rule modal without saving', async () => {
       mockUseHasRuler(true, true);

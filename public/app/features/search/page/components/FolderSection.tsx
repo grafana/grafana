@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, toIconName } from '@grafana/data';
@@ -59,7 +59,7 @@ export const FolderSection = ({
   const uid = section.uid;
   const editable = selectionToggle != null;
 
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getSectionHeaderStyles(theme, editable), [editable]));
+  const styles = useStyles2(getSectionHeaderStyles, editable);
   const [sectionExpanded, setSectionExpanded] = useState(() => {
     const lastExpandedFolder = window.localStorage.getItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY);
     return lastExpandedFolder === uid;
