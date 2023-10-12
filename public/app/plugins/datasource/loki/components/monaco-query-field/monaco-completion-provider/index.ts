@@ -1,5 +1,3 @@
-import { languages } from 'monaco-editor';
-
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
