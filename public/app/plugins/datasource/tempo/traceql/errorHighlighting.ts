@@ -89,11 +89,6 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
     return [];
   }
 
-  // Queries with template variables are not supported yet. Just assume they are correct.
-  if (query.includes('$')) {
-    return [];
-  }
-
   const tree = parser.parse(query);
 
   // Find all error nodes and compute the associated erro boundaries
