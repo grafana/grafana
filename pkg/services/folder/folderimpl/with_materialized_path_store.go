@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+const MATERIALIZED_PATH_MIGRATION_ID = "folder fullpath migration"
+
 type materializedPathStore struct {
 	sqlStore
 	log log.Logger
@@ -31,10 +33,10 @@ func ProvideMaterializedPathStore(db db.DB) (*materializedPathStore, error) {
 
 func (mps *materializedPathStore) migrate() error {
 	ctx := context.Background()
-	return mps.db.InTransaction(ctx, func(ctx context.Context) error {
+	return mps.db.RunAndRegisterCodeMigration(ctx, MIGRATION_ID, func(sess *db.Session) error {
 		if err := mps.db.WithDbSession(ctx, func(sess *db.Session) error {
 			var folders []*folder.Folder
-			if err := sess.SQL("SELECT org_id, uid FROM folder WHERE fullpath IS NULL").Find(&folders); err != nil {
+			if err := sess.SQL("SELECT org_id, uid FROM folder WHERE fullpath").Find(&folders); err != nil {
 				return err
 			}
 
@@ -68,6 +70,7 @@ func (mps *materializedPathStore) Create(ctx context.Context, cmd folder.CreateF
 }
 
 func (mps *materializedPathStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+	// TODO: update subfolders fullpath
 	if cmd.NewParentUID == nil {
 		return mps.sqlStore.Update(ctx, cmd)
 	}
