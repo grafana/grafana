@@ -50,11 +50,6 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	t, ok := object.(*metav1.Table)
-	if ok {
-		return t, nil
-	}
-
 	p, ok := object.(*PlaylistList)
 	if ok {
 		t := &metav1.Table{
@@ -95,6 +90,12 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 				},
 			})
 		}
+		return t, nil
+	}
+
+	// It may already be a table
+	t, ok := object.(*metav1.Table)
+	if ok {
 		return t, nil
 	}
 
