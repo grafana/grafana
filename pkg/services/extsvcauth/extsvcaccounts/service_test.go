@@ -32,7 +32,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 	env := &TestEnv{
 		AcStore:  &actest.MockStore{},
