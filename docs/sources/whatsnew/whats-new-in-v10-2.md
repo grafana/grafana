@@ -63,7 +63,7 @@ The add field from calculation transformation has received two new modes.
 
 **Row index** adds a field that represents the row index of the row.
 
-Learn more about the add field from calculation transformation [here]({{< relref="../panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation" >}})
+Learn more about the add field from calculation transformation [here]({{< relref "../panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation" >}})
 
 ### New transformation: Format string
 
