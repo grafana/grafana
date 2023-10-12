@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType, TransformationApplicabilityLevels } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 import { reduceField, ReducerID } from '../fieldReducer';
 
@@ -29,7 +29,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   defaultOptions: {
     fields: {},
   },
-  applicator: (data) => {
+  isApplicable: (data) => {
     let maxFields = 0;
 
     // Group by needs at least two fields
@@ -42,7 +42,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
       }
     }
 
-    return maxFields >= 2;
+    return maxFields >= 2 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
   },
   /**
    * Return a modified copy of the series. If the transform is not or should not

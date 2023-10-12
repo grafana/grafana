@@ -14,6 +14,7 @@ import {
   TransformerRegistryItem,
   TransformerCategory,
   DataTransformerID,
+  TransformationApplicabilityLevels
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
@@ -692,10 +693,11 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
       {transformations.map((transform) => {
         // Check to see if the transform 
         // is applicable to the given data
-        let applicable = true;
-        if (transform.transformation.applicator !== undefined) {
-          applicable = transform.transformation.applicator(data);
+        let applicabilityScore = TransformationApplicabilityLevels.Applicable;
+        if (transform.transformation.isApplicable !== undefined) {
+          applicabilityScore = transform.transformation.isApplicable(data);
         }
+        const isApplicable = applicabilityScore > 0;
 
         return (
           <Card
@@ -703,7 +705,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
             className={styles.newCard}
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
-            disabled={!applicable}
+            disabled={!isApplicable}
           >
             <Card.Heading className={styles.heading}>
               <>

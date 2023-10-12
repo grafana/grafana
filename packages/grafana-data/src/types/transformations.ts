@@ -18,6 +18,20 @@ export interface DataTransformContext {
 }
 
 /**
+ * We score for how applicable a given transformation is.
+ * Currently :
+ *  0 is considered as not-applicable
+ *  1 is considered applicable
+ *  2 is considered as highly applicable (i.e. should be highlighted)
+ */
+export type TransformationApplicabilityScore = number;
+export enum TransformationApplicabilityLevels {
+  NotApplicable = 0,
+  Applicable = 1,
+  HighlyApplicable = 2,
+}
+
+/**
  * Function that transform data frames (AKA transformer)
  *
  * @public
@@ -33,7 +47,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * given the current data.
    * @param options
    */
-  applicator?: (data: DataFrame[]) => boolean;
+  isApplicable?: (data: DataFrame[]) => TransformationApplicabilityScore;
+  /**
+   * A description of the applicator. Can either simply be a string
+   * or function which when given the current dataset returns a string.
+   * This way descriptions can be tailored relative to the underlying data.
+   */
+  isApplicableDescription?: string | ((data: DataFrame[]) => string);
 }
 
 /**

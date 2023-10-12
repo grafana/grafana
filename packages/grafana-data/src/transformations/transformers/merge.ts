@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -19,8 +19,8 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  applicator: (data) => {
-    return data.length > 1;
+  isApplicable: (data) => {
+    return data.length > 1 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
   },
   operator: (options) => (source) =>
     source.pipe(

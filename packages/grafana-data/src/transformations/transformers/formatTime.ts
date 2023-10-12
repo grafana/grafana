@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 import { map } from 'rxjs/operators';
 
 import { getTimeZone, getTimeZoneInfo } from '../../datetime';
-import { Field, FieldType } from '../../types';
+import { DataFrame, Field, FieldType, TransformationApplicabilityLevels } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -18,18 +18,18 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
   name: 'Format Time',
   description: 'Set the output format of a time field',
   defaultOptions: { timeField: '', outputFormat: '', useTimezone: true },
-  applicator: (data) => {
+  isApplicable: (data: DataFrame[]) => {
     // Search for a time field
     // if there is one then we can use this transformation
     for (const frame of data) {
       for (const field of frame.fields) {
         if (field.type === 'time') {
-          return true;
+          return TransformationApplicabilityLevels.Applicable;
         }
       }
     }
 
-    return false;
+    return TransformationApplicabilityLevels.NotApplicable;
   },
   operator: (options) => (source) =>
     source.pipe(

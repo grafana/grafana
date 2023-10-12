@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, TransformationApplicabilityLevels } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -36,14 +36,14 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
   /**
    * Grouping to matrix requires at least 3 fields to work.
    */
-  applicator: (data) => {
+  isApplicable: (data) => {
     let numFields = 0;
 
     for (const frame of data) {
       numFields += frame.fields.length;
     }
 
-    return numFields >= 3;
+    return numFields >= 3 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
   },
   operator: (options) => (source) =>
     source.pipe(
