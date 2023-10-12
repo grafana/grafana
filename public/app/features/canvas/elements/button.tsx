@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
-import { Button, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { Button, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -40,26 +39,23 @@ export const defaultStyleConfig: ButtonStyleConfig = {
   variant: 'primary',
 };
 
-class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
+  const styles = useStyles2(getStyles, data);
 
-    const onClick = () => {
-      if (data?.api && data?.api?.endpoint) {
-        callApi(data.api);
-      }
-    };
+  const onClick = () => {
+    if (data?.api && data?.api?.endpoint) {
+      callApi(data.api);
+    }
+  };
 
-    return (
-      <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
-        {data?.text}
-      </Button>
-    );
-  }
-}
+  return (
+    <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
+      {data?.text}
+    </Button>
+  );
+};
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined) => ({
   button: css({
     height: '100%',
     width: '100%',
@@ -72,7 +68,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefi
       color: data?.color,
     },
   }),
-}));
+});
 
 export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
