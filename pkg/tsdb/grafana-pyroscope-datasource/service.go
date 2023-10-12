@@ -43,7 +43,7 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	}
 
 	in := i.(*PyroscopeDatasource)
-	logger.Debug("getInstance succeded")
+	logger.Debug("getInstance succeeded")
 	return in, nil
 }
 
@@ -97,7 +97,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	check, err := i.CheckHealth(ctx, req)
-	logger.Debug("CheckHealth succeded")
+	logger.Debug("CheckHealth succeeded")
 	return check, err
 }
 

@@ -41,7 +41,7 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	}
 
 	in := i.(*ParcaDatasource)
-	logger.Debug("getInstance succeded")
+	logger.Debug("getInstance succeeded")
 	return in, nil
 }
 

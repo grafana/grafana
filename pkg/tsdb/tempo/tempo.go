@@ -76,7 +76,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}
 
-	s.logger.Debug("QueryData succeded")
+	s.logger.Debug("QueryData succeeded")
 	return response, nil
 }
 
@@ -85,7 +85,7 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 
 	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
 		trace, err := s.getTrace(ctx, pCtx, query)
-		s.logger.Debug("query succeded")
+		s.logger.Debug("query succeeded")
 		return trace, err
 	}
 
@@ -110,6 +110,6 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 		return nil, err
 	}
 
-	s.logger.Debug("getDSInfo succeded", "url", instance.URL)
+	s.logger.Debug("getDSInfo succeeded", "url", instance.URL)
 	return instance, nil
 }
