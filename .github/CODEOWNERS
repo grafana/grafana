@@ -187,6 +187,7 @@
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
+/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend-product
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_arm64/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_tests/ @grafana/grafana-bi-squad
