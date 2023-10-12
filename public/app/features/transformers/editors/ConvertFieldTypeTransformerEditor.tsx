@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { ChangeEvent, useCallback } from 'react';
 
 import {
@@ -10,16 +11,27 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
   ConvertFieldTypeTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import {
+  Button,
+  ColorPicker,
+  InlineField,
+  InlineFieldRow,
+  Input,
+  Select,
+  useStyles2,
+  VerticalGroup,
+} from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
 import { hasAlphaPanels } from 'app/core/config';
-import { findField } from 'app/features/dimensions';
+import { findField, MediaType, ResourceFolderName, ResourcePickerSize } from 'app/features/dimensions';
+import { ResourcePicker } from 'app/features/dimensions/editors/ResourcePicker';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
@@ -30,6 +42,8 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
+  const styles = useStyles2(getStyles);
+
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
 
   const onSelectField = useCallback(
@@ -90,6 +104,13 @@ export const ConvertFieldTypeTransformerEditor = ({
     [onChange, options]
   );
 
+  // TODO: this shouldn't be hardcoded to first index
+  const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
+
+  // create set of values for enum without any duplicate values (from targetField.values)
+  // TODO: this shouldn't be hardcoded and should only run on first time / via a button (to initialize / reset?)
+  const enumValues = new Set(targetField?.values);
+
   return (
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
@@ -147,9 +168,45 @@ export const ConvertFieldTypeTransformerEditor = ({
             </InlineFieldRow>
             {c.destinationType === FieldType.enum && hasAlphaPanels && (
               <InlineFieldRow>
-                <InlineField label={''} labelWidth={6}>
+                {/* Create a drag and drop table with the following columns: Text, Color, Icon, Description */}
+                {/* TODO: break this out into separate component? */}
+                <VerticalGroup>
+                  <table className={styles.compactTable}>
+                    {[...enumValues].map((value: string, idx: number) => (
+                      <tr key={idx}>
+                        <td>{value}</td>
+                        <td>
+                          <ColorPicker
+                            color={c.enumConfig?.color![idx] ?? '#fff'}
+                            onChange={(color) => console.log(color)}
+                            enableNamedColors={true}
+                          />
+                        </td>
+                        <td data-testid="iconPicker">
+                          <ResourcePicker
+                            onChange={(icon) => console.log(icon)}
+                            value={c.enumConfig?.icon![idx] ?? ''}
+                            size={ResourcePickerSize.SMALL}
+                            folderName={ResourceFolderName.Icon}
+                            mediaType={MediaType.Icon}
+                            color={c.enumConfig?.color![idx] ?? '#fff'}
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            value={c.enumConfig?.description![idx] ?? ''}
+                            placeholder={'Description'}
+                            onChange={(e) => console.log(e)}
+                            width={24}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </table>
+                </VerticalGroup>
+                {/* <InlineField label={''} labelWidth={6}>
                   <div>TODO... show options here (alpha panels enabled)</div>
-                </InlineField>
+                </InlineField> */}
               </InlineFieldRow>
             )}
           </div>
@@ -176,3 +233,14 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  compactTable: css({
+    width: '100%',
+    'tbody td': {
+      padding: theme.spacing(0.5),
+    },
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+  }),
+});
