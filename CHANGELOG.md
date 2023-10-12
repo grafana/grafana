@@ -1,3 +1,18 @@
+<!-- 9.5.13 START -->
+
+# 9.5.13 (2023-10-11)
+
+### Features and enhancements
+
+- **Licensing:** Updated grpc plugin factory newPlugin signature. (Enterprise)
+
+### Bug fixes
+
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74817](https://github.com/grafana/grafana/issues/74817), [@joshhunt](https://github.com/joshhunt)
+- **Licensing:** Pass func to update env variables when starting plugin. [#74681](https://github.com/grafana/grafana/issues/74681), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+
+<!-- 9.5.13 END -->
 <!-- 9.5.12 START -->
 
 # 9.5.12 (2023-09-29)
