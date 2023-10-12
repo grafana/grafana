@@ -117,6 +117,11 @@ If you have a use case that you'd like to share, feel free to contribute to this
 1. Add dashboards to each folder.
 1. Use folder permissions to add US-based users as Editors to the `US` folder and assign EU-based users as Editors to the `EU` folder.
 
+### Assign a user specific set of roles
+
+1. Create a user with the `No Basic Role` selected under organization roles.
+1. Assign the user a set of fixed roles that meet your requirements.
+
 ### Create a custom role to access alerts in a specific folder
 
 To see an alert rule in Grafana, the user must have read access to the folder that stores the alert rule, permission to read alerts in the folder, and permission to query all data sources that the rule uses.

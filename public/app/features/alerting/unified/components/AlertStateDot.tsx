@@ -6,7 +6,7 @@ import { ComponentSize, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 const AlertStateDot = (props: DotStylesProps) => {
-  const styles = useStyles2((theme) => getDotStyles(theme, props));
+  const styles = useStyles2(getDotStyles, props);
 
   return (
     <Tooltip content={String(props.state)} placement="top">

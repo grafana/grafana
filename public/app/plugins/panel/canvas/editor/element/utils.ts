@@ -9,6 +9,11 @@ import { APIEditorConfig } from './APIEditor';
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api && api.endpoint) {
+    // If API endpoint origin matches Grafana origin, don't call it.
+    if (requestMatchesGrafanaOrigin(api.endpoint)) {
+      appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
+      return;
+    }
     const request = getRequest(api);
 
     getBackendSrv()
@@ -76,4 +81,10 @@ const getData = (api: APIEditorConfig) => {
   }
 
   return data;
+};
+
+const requestMatchesGrafanaOrigin = (requestEndpoint: string) => {
+  const requestURL = new URL(requestEndpoint);
+  const grafanaURL = new URL(window.location.origin);
+  return requestURL.origin === grafanaURL.origin;
 };

@@ -90,7 +90,6 @@ describe('SearchField', () => {
     });
     const filter: TraceqlFilter = {
       id: 'test1',
-      value: 'old',
       valueType: 'string',
       tag: 'test-tag',
     };
