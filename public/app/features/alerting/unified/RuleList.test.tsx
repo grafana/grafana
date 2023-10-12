@@ -685,8 +685,6 @@ describe('RuleList', () => {
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
       it('Export button should be visible when the user has alert read permissions', async () => {
-        enableRBAC();
-
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
