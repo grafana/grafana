@@ -10,6 +10,9 @@ import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
 
+let x        =       42;
+x += 15;
+
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
