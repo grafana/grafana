@@ -26,6 +26,7 @@ export interface DataTransformContext {
  */
 export type TransformationApplicabilityScore = number;
 export enum TransformationApplicabilityLevels {
+  NotPossible = -1,
   NotApplicable = 0,
   Applicable = 1,
   HighlyApplicable = 2,
