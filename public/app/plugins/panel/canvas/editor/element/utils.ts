@@ -85,6 +85,6 @@ const getData = (api: APIEditorConfig) => {
 
 const requestMatchesGrafanaOrigin = (requestEndpoint: string) => {
   const requestURL = new URL(requestEndpoint);
-  const grafanaURL = new URL(window.location.href);
+  const grafanaURL = new URL(window.location.origin);
   return requestURL.origin === grafanaURL.origin;
 };
