@@ -204,13 +204,12 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "B",
           ],
         },
-        "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "server",
         "options": [],
         "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
-        "skipUrlSync": false,
+        "type": "custom",
       },
       {
         "current": {
@@ -223,13 +222,12 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "2",
           ],
         },
-        "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "pod",
         "options": [],
         "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
-        "skipUrlSync": false,
+        "type": "custom",
       },
     ],
   },
@@ -448,7 +446,16 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "schemaVersion": 36,
   "tags": [],
   "templating": {
-    "list": [],
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "name": "Filters",
+        "type": "adhoc",
+      },
+    ],
   },
   "time": {
     "from": "now-5m",

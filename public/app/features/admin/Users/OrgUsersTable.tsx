@@ -72,6 +72,7 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -187,10 +188,17 @@ export const OrgUsersTable = ({
 
   return (
     <VerticalGroup spacing="md" data-testid={selectors.container}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
-      <HorizontalGroup justify="flex-end">
-        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-      </HorizontalGroup>
+      <div className={styles.wrapper}>
+        <InteractiveTable
+          columns={columns}
+          data={users}
+          getRowId={(user) => String(user.userId)}
+          fetchData={fetchData}
+        />
+        <HorizontalGroup justify="flex-end">
+          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+        </HorizontalGroup>
+      </div>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
