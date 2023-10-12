@@ -3,6 +3,7 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -130,9 +131,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
 	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		prmd := pluginrequestmeta.FromContext(ctx)
-		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(prmd.StatusSource))
-		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(prmd.StatusSource))
+		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
+		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
+		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
 	}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
@@ -157,8 +158,8 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	// Setup plugin request metadata
-	ctx = pluginrequestmeta.WithMetaData(ctx, pluginrequestmeta.DefaultPluginRequestMetadata())
+	// Setup plugin request status source
+	ctx = pluginrequestmeta.WithStatusSource(ctx, pluginrequestmeta.StatusSourcePlugin)
 
 	var requestSize float64
 	for _, v := range req.Queries {
@@ -188,7 +189,9 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		// A plugin error has higher priority than a downstream error,
 		// so set to downstream only if there's no plugin error
 		if hasDownstreamError && !hasPluginError {
-			pluginrequestmeta.WithDownstreamStatusSource(ctx)
+			if err := pluginrequestmeta.WithDownstreamStatusSource(ctx); err != nil {
+				return fmt.Errorf("failed to set downstream status source: %w", err)
+			}
 		}
 
 		return innerErr
