@@ -11,6 +11,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -19,6 +20,7 @@ import (
 func Test_query(t *testing.T) {
 	ds := &ParcaDatasource{
 		client: &FakeClient{},
+		tracer: tracing.InitializeTracerForTest(),
 	}
 
 	dataQuery := backend.DataQuery{

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,6 +16,7 @@ func Test_query(t *testing.T) {
 	client := &FakeClient{}
 	ds := &PyroscopeDatasource{
 		client: client,
+		tracer: tracing.InitializeTracerForTest(),
 	}
 
 	pCtx := backend.PluginContext{

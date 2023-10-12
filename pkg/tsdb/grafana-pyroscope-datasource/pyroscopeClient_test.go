@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
@@ -15,6 +16,7 @@ func Test_PyroscopeClient(t *testing.T) {
 	connectClient := &FakePyroscopeConnectClient{}
 	client := &PyroscopeClient{
 		connectClient: connectClient,
+		tracer:        tracing.InitializeTracerForTest(),
 	}
 
 	t.Run("GetSeries", func(t *testing.T) {
