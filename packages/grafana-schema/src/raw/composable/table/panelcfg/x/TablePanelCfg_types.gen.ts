@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.0.9";
+export const pluginVersion = "10.0.10";
 
 export interface Options {
   /**
