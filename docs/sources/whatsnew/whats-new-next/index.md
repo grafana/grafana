@@ -97,7 +97,7 @@ To learn more, refer to the following video demo.
 <!-- Eric Leijonmarck -->
 <!-- OSS, Enterprise -->
 
-Generally available in all editions of Grafana.
+_Generally available in Grafana Cloud_
 
 We're excited to introduce the "No Basic Role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
 
