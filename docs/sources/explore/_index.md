@@ -67,7 +67,7 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 To close the newly created query, click on the Close Split button.
 
-## Content Outline
+## Content outline
 
 The content outline is a side navigation bar that keeps track of the queries and visualization panels you created in Explore. It allows you to navigate between them quickly.
 
