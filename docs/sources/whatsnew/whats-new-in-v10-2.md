@@ -82,10 +82,10 @@ The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3
 _Generally available in Grafana_
 
 Service accounts allow you to create a token that can be used to authenticate with Grafana.
-This token can be used to access Grafana's API, and can be used to access data sources and dashboards that the service account has access to.
+You can use this token to access Grafana's API, as well as, data sources and dashboards that the service account has access to.
 
-In this release, we have added the ability to assign dashboard and datasource permissions to service accounts.
-This means that you can now create a service account that can be used to access a specific dashboard or datasource and nothing else.
+In this release, we've added the ability to assign dashboard and data source permissions to service accounts.
+This means that you can now create a service account that can be used to access a specific dashboard or data source and nothing else.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Datasource permissions in 10.2" > }}
 
@@ -100,6 +100,6 @@ _Generally available in Grafana_
 You can now map Google groups to Grafana organizational roles when using Google OIDC.
 This is useful if you want to limit the access users have to your Grafana instance.
 
-Support has also been added for controlling allowed groups when using Google OIDC.
+We've also added support for controlling allowed groups when using Google OIDC.
 
 Refer to the [Google Authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/index.md">}} to learn how to use these new options.
