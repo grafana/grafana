@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// ContactPointFromContactPointExport parses the database model of the contact point (group of integrations) where settings are represented in JSON,
+// to strongly typed ContactPoint.
 func ContactPointFromContactPointExport(rawContactPoint definitions.ContactPointExport) (definitions.ContactPoint, error) {
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
 	j.RegisterExtension(&contactPointsExtension{})
@@ -197,6 +199,8 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 	return contactPoint, nil
 }
 
+// marshallIntegration converts the API model integration to the storage model that contains settings in the JSON format.
+// The secret fields are not encrypted.
 func marshallIntegration(json jsoniter.API, integrationType string, integration interface{}, disableResolveMessage *bool) (*notify.GrafanaIntegrationConfig, error) {
 	data, err := json.Marshal(integration)
 	if err != nil {
@@ -321,7 +325,7 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 			result.Webex = append(result.Webex, integration)
 		}
 	default:
-		err = fmt.Errorf("notifier %s is not supported", receiverType)
+		err = fmt.Errorf("integration %s is not supported", receiverType)
 	}
 	return err
 }
