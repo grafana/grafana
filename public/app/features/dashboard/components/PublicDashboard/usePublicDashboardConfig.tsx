@@ -7,6 +7,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 const FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=public-dashboards';
 const GRAFANA_LOGO_LIGHT_URL = 'public/img/grafana_text_logo_light.svg';
 const GRAFANA_LOGO_DARK_URL = 'public/img/grafana_text_logo_dark.svg';
+const GRAFANA_LOGO_DEFAULT_VALUE = 'grafana-logo';
 
 export interface PublicDashboardCfg {
   footerHide: boolean;
@@ -22,7 +23,7 @@ const useGetConfig = (cfg?: PublicDashboardCfg) => {
   const { footerHide, footerText, footerLink, footerLogo, headerLogoHide } = cfg || {
     footerHide: false,
     footerText: 'Powered by',
-    footerLogo: theme.isDark ? 'public/img/grafana_text_logo_light.svg' : 'public/img/grafana_text_logo_dark.svg',
+    footerLogo: GRAFANA_LOGO_DEFAULT_VALUE,
     footerLink: FOOTER_URL,
     headerLogoHide: false,
   };
@@ -30,11 +31,12 @@ const useGetConfig = (cfg?: PublicDashboardCfg) => {
   return {
     footerHide,
     footerText: <span className={styles.text}>{footerText}</span>,
-    footerLogo: [GRAFANA_LOGO_LIGHT_URL, GRAFANA_LOGO_DARK_URL].includes(footerLogo)
-      ? theme.isDark
-        ? GRAFANA_LOGO_LIGHT_URL
-        : GRAFANA_LOGO_DARK_URL
-      : footerLogo,
+    footerLogo:
+      footerLogo === GRAFANA_LOGO_DEFAULT_VALUE
+        ? theme.isDark
+          ? GRAFANA_LOGO_LIGHT_URL
+          : GRAFANA_LOGO_DARK_URL
+        : footerLogo,
     footerLink,
     headerLogoHide,
   };
