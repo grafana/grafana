@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
@@ -19,19 +19,32 @@ export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panel
     ],
   });
 
+  const transformation = new SceneDataTransformer({
+    $data: query,
+    transformations: [
+      {
+        id: 'renameByRegex',
+        options: {
+          regex: 'alerting',
+          renamePattern: 'firing',
+        },
+      },
+    ],
+  });
+
   return new SceneFlexItem({
     ...PANEL_STYLES,
     height: '400px',
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
-      .setData(query)
+      .setDescription('A breakdown of all of your alert rule instances based on state')
+      .setData(transformation)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) =>
         b
-          .matchFieldsWithName('alerting')
-          .overrideColor(overrideToFixedColor('alerting'))
+          .matchFieldsWithName('firing')
+          .overrideColor(overrideToFixedColor('firing'))
           .matchFieldsWithName('normal')
           .overrideColor(overrideToFixedColor('normal'))
           .matchFieldsWithName('pending')

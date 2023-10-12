@@ -91,7 +91,9 @@ describe('PrometheusMetricFindQuery', () => {
         url: `/api/datasources/uid/ABCDEF/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'X-Grafana-Cache': 'private, max-age=60',
+        },
       });
     });
 

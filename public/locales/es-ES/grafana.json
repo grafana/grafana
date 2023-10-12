@@ -45,21 +45,21 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule__one": "",
-      "alertRule__many": "",
-      "alertRule__other": "",
-      "dashboard__one": "",
-      "dashboard__many": "",
-      "dashboard__other": "",
-      "folder__one": "",
-      "folder__many": "",
-      "folder__other": "",
-      "libraryPanel__one": "",
-      "libraryPanel__many": "",
-      "libraryPanel__other": "",
-      "total__one": "",
-      "total__many": "",
-      "total__other": ""
+      "alertRule_one": "",
+      "alertRule_many": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_many": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_many": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_many": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_many": "",
+      "total_other": ""
     },
     "dashboards-tree": {
       "collapse-folder-button": "",
@@ -379,6 +379,14 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",
@@ -434,9 +442,9 @@
   },
   "library-panels": {
     "modal": {
-      "body__one": "",
-      "body__many": "",
-      "body__other": "",
+      "body_one": "",
+      "body_many": "",
+      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
@@ -522,6 +530,18 @@
     },
     "config": {
       "title": "Administración"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""
@@ -727,6 +747,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
     },
     "toolbar": {
       "enable-kiosk": "Activar el modo de quiosco",

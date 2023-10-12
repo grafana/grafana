@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
-	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -205,7 +207,7 @@ func getUnits(profileTypeID string) string {
 func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 	ctx, span := c.tracer.Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
+	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{}))
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -225,7 +227,7 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	ctx, span := c.tracer.Start(ctx, "datasource.pyroscope.LabelValues")
 	defer span.End()
-	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&querierv1.LabelValuesRequest{Name: label}))
+	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{Name: label}))
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

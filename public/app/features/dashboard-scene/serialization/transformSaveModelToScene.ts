@@ -46,6 +46,8 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { getAngularPanelMigrationHandler } from './angularMigration';
+
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
   isLoading?: boolean;
@@ -55,7 +57,7 @@ export interface DashboardLoaderState {
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: true,
+    autoMigrateOldPanels: false,
   });
 
   // Setting for built-in annotations query to run
@@ -338,6 +340,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
   if (panel.timeFrom || panel.timeShift) {

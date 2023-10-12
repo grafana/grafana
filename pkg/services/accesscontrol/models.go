@@ -321,6 +321,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 const (
 	GlobalOrgID                  = 0
 	FixedRolePrefix              = "fixed:"
+	FixedRoleUIDPrefix           = "fixed_"
 	ManagedRolePrefix            = "managed:"
 	BasicRolePrefix              = "basic:"
 	PluginRolePrefix             = "plugins:"
@@ -467,6 +468,12 @@ const (
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
+
+	// Library Panel actions
+	ActionLibraryPanelsCreate = "library.panels:create"
+	ActionLibraryPanelsRead   = "library.panels:read"
+	ActionLibraryPanelsWrite  = "library.panels:write"
+	ActionLibraryPanelsDelete = "library.panels:delete"
 )
 
 var (
