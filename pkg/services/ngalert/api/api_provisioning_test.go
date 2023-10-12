@@ -592,8 +592,7 @@ func TestProvisioningApi(t *testing.T) {
     condition = "A"
 
     data {
-      ref_id     = "A"
-      query_type = ""
+      ref_id = "A"
 
       relative_time_range {
         from = 0
@@ -620,8 +619,7 @@ func TestProvisioningApi(t *testing.T) {
     condition = "A"
 
     data {
-      ref_id     = "A"
-      query_type = ""
+      ref_id = "A"
 
       relative_time_range {
         from = 0
@@ -635,8 +633,6 @@ func TestProvisioningApi(t *testing.T) {
     no_data_state  = "OK"
     exec_err_state = "OK"
     for            = 0
-    annotations    = null
-    labels         = null
     is_paused      = false
   }
 }
