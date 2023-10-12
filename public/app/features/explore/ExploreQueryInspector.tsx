@@ -3,6 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, LoadingState, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
+import { defaultTimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -39,7 +40,7 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Stats',
     value: 'stats',
     icon: 'chart-line',
-    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone as TimeZone} />,
+    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
   };
 
   const jsonTab: TabConfig = {

@@ -136,7 +136,7 @@ You can stop annotations from being fetched and drawn by taking the following st
 1. Find and click the **Annotations & Alerts (Built-in)** query to open it.
 1. Click the **Enabled** toggle to turn it off.
 
-When you copy a dashboard using the **Save As** feature it will get a new dashboard id, so annotations created on source dashboard will no longer be visible on the copy. You can still show them if you add a new **Annotation Query** and filter by tags. However, this only works if the annotations on the source dashboard had tags to filter by.
+When you copy a dashboard using the **Save As** feature it will get a new dashboard id, so annotations created on the source dashboard will no longer be visible on the copy. You can still show them if you add a new **Annotation Query** and filter by tags. However, this only works if the annotations on the source dashboard had tags to filter by.
 
 Following are some query options specific to the built-in annotation query.
 

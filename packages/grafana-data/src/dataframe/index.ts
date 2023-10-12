@@ -8,4 +8,4 @@ export * from './ArrayDataFrame';
 export * from './DataFrameJSON';
 export * from './frameComparisons';
 export { anySeriesWithTimeField, isTimeSeriesFrame, isTimeSeriesFrames } from './utils';
-export { StreamingDataFrame, StreamingFrameAction, type StreamingFrameOptions } from './StreamingDataFrame';
+export { StreamingDataFrame, StreamingFrameAction, type StreamingFrameOptions, closestIdx } from './StreamingDataFrame';
