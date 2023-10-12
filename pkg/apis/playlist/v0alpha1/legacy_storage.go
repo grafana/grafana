@@ -127,25 +127,17 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected playlist?")
 	}
-	spec := p.Spec
-	cmd := &playlist.CreatePlaylistCommand{
-		Name:     spec.Title,
-		Interval: spec.Interval,
-		OrgId:    info.OrgID,
+	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
+	if err != nil {
+		return nil, err
 	}
-	if p.Name != "" {
-		cmd.UID = p.Name
-	}
-	for _, item := range spec.Items {
-		if item.Type == ItemTypeDashboardById {
-			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
-		}
-		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
-			Type:  string(item.Type),
-			Value: item.Value,
-		})
-	}
-	out, err := s.service.Create(ctx, cmd)
+	out, err := s.service.Create(ctx, &playlist.CreatePlaylistCommand{
+		UID:      p.Name,
+		Name:     cmd.Name,
+		Interval: cmd.Interval,
+		Items:    cmd.Items,
+		OrgId:    cmd.OrgId,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -171,38 +163,19 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, created, err
 	}
 
-	fmt.Printf("Update OLD: %+v\n", old)
-
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return old, created, err
 	}
 	p, ok := obj.(*Playlist)
 	if !ok {
-		fmt.Printf("Expected playlist: %+v\n", obj)
-
 		return nil, created, fmt.Errorf("expected playlist after update")
 	}
 
-	fmt.Printf("NEW: %+v\n", obj)
-
-	spec := p.Spec
-	cmd := &playlist.UpdatePlaylistCommand{
-		UID:      name,
-		Name:     spec.Title,
-		Interval: spec.Interval,
-		OrgId:    info.OrgID,
+	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
+	if err != nil {
+		return old, created, err
 	}
-	for _, item := range spec.Items {
-		if item.Type == ItemTypeDashboardById {
-			return nil, false, fmt.Errorf("unsupported item type: %s", item.Type)
-		}
-		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
-			Type:  string(item.Type),
-			Value: item.Value,
-		})
-	}
-
 	_, err = s.service.Update(ctx, cmd)
 	if err != nil {
 		return nil, false, err

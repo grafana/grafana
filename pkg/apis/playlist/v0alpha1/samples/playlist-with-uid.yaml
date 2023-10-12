@@ -1,9 +1,9 @@
 apiVersion: playlist.x.grafana.com/v0alpha1
 kind: Playlist
 metadata:
-  name: abcdefg
+  name: abcdefgh
 spec:
-  title: sample playlist
+  title: Playlist with UID set from k8s
   interval: 5m
   items:
   - type: dashboard_by_tag

@@ -3,7 +3,7 @@ kind: Playlist
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean
 spec:
-  title: sample playlist
+  title: Playlist with auto generated UID
   interval: 5m
   items:
   - type: dashboard_by_tag
