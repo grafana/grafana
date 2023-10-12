@@ -56,6 +56,9 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
+	mt, ok := grafanarequest.OutputMediaTypeFrom(ctx)
+	fmt.Printf("LIST: (%v) %+v\n", ok, mt)
+
 	limit := 100
 	if options.Limit > 0 {
 		limit = int(options.Limit)

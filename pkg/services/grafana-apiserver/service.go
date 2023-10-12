@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"path"
-	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -305,13 +304,15 @@ func (s *service) start(ctx context.Context) error {
 		ctx := req.Context()
 		signedInUser := appcontext.MustUser(ctx)
 
-		grafanarequest.WithOutputMediaType(ctx, req, Codecs, negotiation.DefaultEndpointRestrictions)
+		// Set the media type to support more efficient list options
+		ctx = grafanarequest.WithOutputMediaType(ctx, req, Codecs,
+			negotiation.DefaultEndpointRestrictions)
 
-		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+		req.Header.Set("X-Remote-User", signedInUser.Login)
 		req.Header.Set("X-Remote-Group", "grafana")
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
+		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req.WithContext(ctx))
 	}
 
 	go func() {
