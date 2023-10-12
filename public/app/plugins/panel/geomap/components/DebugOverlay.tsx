@@ -7,7 +7,6 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors/src';
-import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 interface Props {

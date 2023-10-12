@@ -3,7 +3,7 @@ import Map from 'ol/Map';
 import React, { useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, IconButton, RadioButtonGroup, Select, stylesFactory } from '@grafana/ui';
+import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';
