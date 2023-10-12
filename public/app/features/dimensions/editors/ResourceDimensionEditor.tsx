@@ -106,6 +106,7 @@ export const ResourceDimensionEditor = (
           mediaType={mediaType}
           folderName={folderName}
           size={ResourcePickerSize.NORMAL}
+          maxFiles={2000}
         />
       )}
       {mode === ResourceDimensionMode.Mapping && (
