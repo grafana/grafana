@@ -147,7 +147,7 @@ func TestOutputMediaType(t *testing.T) {
 		ok       bool
 	}{
 		{
-			name: "valid output media type",
+			name: "request for table conversion",
 			ctx:  context.Background(),
 			req: &http.Request{
 				Header: http.Header{
@@ -162,7 +162,7 @@ func TestOutputMediaType(t *testing.T) {
 			ok: true,
 		},
 		{
-			name: "invalid output media type",
+			name: "application/json",
 			req: &http.Request{
 				Header: http.Header{
 					"Accept": []string{"application/bson"},
@@ -182,7 +182,6 @@ func TestOutputMediaType(t *testing.T) {
 			})
 			actual, ok := grafanarequest.OutputMediaTypeFrom(ctx)
 			require.Equal(t, tt.ok, ok)
-
 			require.Equal(t, tt.expected, actual.Convert)
 		})
 	}
