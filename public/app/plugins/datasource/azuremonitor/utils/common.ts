@@ -43,7 +43,6 @@ export const routeNames = {
   logAnalytics: 'loganalytics',
   appInsights: 'appinsights',
   resourceGraph: 'resourcegraph',
-  logsCheatSheet: 'logscheatsheet',
 };
 
 export function interpolateVariable(

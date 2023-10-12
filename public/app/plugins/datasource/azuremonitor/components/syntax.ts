@@ -344,9 +344,9 @@ const tokenizer: Grammar = {
     pattern: new RegExp(`(\\s+)(${KEYWORDS.join('|')})(?=\\s+)`, 'i'),
     lookbehind: true,
   },
-  // 'log-group-name': {
-  //   pattern: /[\.\-_/#A-Za-z0-9]+/,
-  // },
+  'log-group-name': {
+    pattern: /[\.\-_/#A-Za-z0-9]+/,
+  },
   'field-name': {
     pattern: /(@?[_a-zA-Z]+[_.0-9a-zA-Z]*)|(`((\\`)|([^`]))*?`)/,
     greedy: true,
