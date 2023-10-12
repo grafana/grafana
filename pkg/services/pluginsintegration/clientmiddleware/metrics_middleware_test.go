@@ -183,7 +183,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 			require.Equal(t, 1.0, testutil.ToFloat64(counter))
 
 			// error_source should not be defined at all
-			counter, err = metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
+			_, err = metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
 				queryDataCounterLabels,
 				prometheus.Labels{
 					labelStatusSource: string(backend.ErrorSourceDownstream),
@@ -278,7 +278,6 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 			})
 		}
 	})
-
 }
 
 // checkHistogram is a utility function that checks if a histogram with the given name and label values exists
