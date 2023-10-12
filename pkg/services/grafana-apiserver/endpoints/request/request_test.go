@@ -1,7 +1,18 @@
 package request_test
 
 import (
+	"context"
+	"mime"
+	"net/http"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/handlers"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -126,3 +137,104 @@ func TestParseNamespace(t *testing.T) {
 		})
 	}
 }
+
+func TestOutputMediaType(t *testing.T) {
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		req      *http.Request
+		expected *schema.GroupVersionKind
+		ok       bool
+	}{
+		{
+			name: "valid output media type",
+			ctx:  context.Background(),
+			req: &http.Request{
+				Header: http.Header{
+					"Accept": []string{"application/json;as=Table;g=meta.k8s.io;v=v1"},
+				},
+			},
+			expected: &schema.GroupVersionKind{
+				Group:   "meta.k8s.io",
+				Version: "v1",
+				Kind:    "Table",
+			},
+			ok: true,
+		},
+		{
+			name: "invalid output media type",
+			req: &http.Request{
+				Header: http.Header{
+					"Accept": []string{"application/bson"},
+				},
+			},
+			ctx:      context.Background(),
+			expected: nil,
+			ok:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := grafanarequest.WithOutputMediaType(tt.ctx, tt.req, &handlers.RequestScope{
+				Serializer:     &fakeNegotiater{serializer: fakeCodec, types: []string{"application/json;as=Table;v=v1;g=meta.k8s.io"}},
+				TableConvertor: rest.NewDefaultTableConvertor(schema.GroupResource{Group: "test", Resource: "test"}),
+			})
+			actual, ok := grafanarequest.OutputMediaTypeFrom(ctx)
+			require.Equal(t, tt.ok, ok)
+
+			require.Equal(t, tt.expected, actual.Convert)
+		})
+	}
+}
+
+type fakeNegotiater struct {
+	serializer, streamSerializer runtime.Serializer
+	framer                       runtime.Framer
+	types, streamTypes           []string
+}
+
+func (n *fakeNegotiater) SupportedMediaTypes() []runtime.SerializerInfo {
+	var out []runtime.SerializerInfo
+	for _, s := range n.types {
+		mediaType, _, err := mime.ParseMediaType(s)
+		if err != nil {
+			panic(err)
+		}
+		parts := strings.SplitN(mediaType, "/", 2)
+		if len(parts) == 1 {
+			// this is an error on the server side
+			parts = append(parts, "")
+		}
+
+		info := runtime.SerializerInfo{
+			Serializer:       n.serializer,
+			PrettySerializer: n.serializer,
+			MediaType:        s,
+			MediaTypeType:    parts[0],
+			MediaTypeSubType: parts[1],
+			EncodesAsText:    true,
+		}
+		for _, t := range n.streamTypes {
+			if t == s {
+				info.StreamSerializer = &runtime.StreamSerializerInfo{
+					EncodesAsText: true,
+					Framer:        n.framer,
+					Serializer:    n.streamSerializer,
+				}
+			}
+		}
+		out = append(out, info)
+	}
+	return out
+}
+
+func (n *fakeNegotiater) EncoderForVersion(serializer runtime.Encoder, gv runtime.GroupVersioner) runtime.Encoder {
+	return n.serializer
+}
+
+func (n *fakeNegotiater) DecoderToVersion(serializer runtime.Decoder, gv runtime.GroupVersioner) runtime.Decoder {
+	return n.serializer
+}
+
+var fakeCodec = unstructured.UnstructuredJSONScheme
