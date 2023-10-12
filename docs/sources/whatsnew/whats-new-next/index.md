@@ -23,6 +23,8 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- Mihaly Gyongyosi -->
 <!-- already in on-prem -->
 
+October 24, 2023
+
 _Generally available in Grafana Cloud_
 
 With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
