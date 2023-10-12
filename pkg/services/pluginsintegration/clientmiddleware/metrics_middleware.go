@@ -171,6 +171,9 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var resp *backend.QueryDataResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
+		if resp == nil || resp.Responses == nil || !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+			return innerErr
+		}
 
 		// Set downstream status source in the context if there's at least one response with downstream status source,
 		// and if there's no plugin error
