@@ -6,9 +6,8 @@ import {
   DataSourceSettings,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginResetOption,
 } from '@grafana/data/src';
-import { Alert, DataSourceHttpSettings, InlineField, LegacyForms, Select } from '@grafana/ui/src';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui/src';
 import { config } from 'app/core/config';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
@@ -18,29 +17,33 @@ import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';
 import { InfluxSqlConfig } from './InfluxSQLConfig';
 
-const { Input } = LegacyForms;
-
-const versions: Array<SelectableValue<InfluxVersion>> = [
-  {
+const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
+  [InfluxVersion.InfluxQL]: {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
     description: 'The InfluxDB SQL-like query language.',
   },
-  {
-    label: 'Flux',
-    value: InfluxVersion.Flux,
-    description: 'Supported in InfluxDB 2.x and 1.8+',
-  },
-];
-
-const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
-  { ...versions[0] },
-  {
+  [InfluxVersion.SQL]: {
     label: 'SQL',
     value: InfluxVersion.SQL,
     description: 'Native SQL language. Supported in InfluxDB 3.0',
   },
-  { ...versions[1] },
+  [InfluxVersion.Flux]: {
+    label: 'Flux',
+    value: InfluxVersion.Flux,
+    description: 'Supported in InfluxDB 2.x and 1.8+',
+  },
+};
+
+const versions: Array<SelectableValue<InfluxVersion>> = [
+  versionMap[InfluxVersion.InfluxQL],
+  versionMap[InfluxVersion.Flux],
+];
+
+const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
+  versionMap[InfluxVersion.InfluxQL],
+  versionMap[InfluxVersion.SQL],
+  versionMap[InfluxVersion.Flux],
 ];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -64,16 +67,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   versionNotice = {
     Flux: 'Support for Flux in Grafana is currently in beta',
     SQL: 'Support for SQL in Grafana is currently in alpha',
-  };
-
-  // 1x
-  onResetPassword = () => {
-    updateDatasourcePluginResetOption(this.props, 'password');
-  };
-
-  // 2x
-  onResetToken = () => {
-    updateDatasourcePluginResetOption(this.props, 'token');
   };
 
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
@@ -100,19 +93,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  getQueryLanguageDropdownValue = (v?: InfluxVersion) => {
-    switch (v) {
-      case InfluxVersion.InfluxQL:
-        return versionsWithSQL[0];
-      case InfluxVersion.Flux:
-        return versionsWithSQL[1];
-      case InfluxVersion.SQL:
-        return versionsWithSQL[2];
-      default:
-        return versionsWithSQL[0];
-    }
-  };
-
   renderJsonDataOptions() {
     switch (this.props.options.jsonData.version) {
       case InfluxVersion.InfluxQL:
@@ -132,21 +112,19 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <h3 className="page-heading">Query Language</h3>
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <Select
-                aria-label="Query language"
-                className="width-30"
-                value={this.getQueryLanguageDropdownValue(options.jsonData.version)}
-                options={config.featureToggles.influxdbSqlSupport ? versionsWithSQL : versions}
-                defaultValue={versions[0]}
-                onChange={this.onVersionChanged}
-              />
-            </div>
-          </div>
-        </div>
+        <FieldSet>
+          <h3 className="page-heading">Query language</h3>
+          <Field>
+            <Select
+              aria-label="Query language"
+              className="width-30"
+              value={versionMap[options.jsonData.version ?? InfluxVersion.InfluxQL]}
+              options={config.featureToggles.influxdbSqlSupport ? versionsWithSQL : versions}
+              defaultValue={versionMap[InfluxVersion.InfluxQL]}
+              onChange={this.onVersionChanged}
+            />
+          </Field>
+        </FieldSet>
 
         {options.jsonData.version !== InfluxVersion.InfluxQL && (
           <Alert severity="info" title={this.versionNotice[options.jsonData.version!]}>
@@ -172,34 +150,29 @@ export class ConfigEditor extends PureComponent<Props, State> {
           onChange={onOptionsChange}
           secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
         />
-
-        <div className="gf-form-group">
-          <div>
-            <h3 className="page-heading">InfluxDB Details</h3>
-          </div>
+        <FieldSet>
+          <h3 className="page-heading">InfluxDB Details</h3>
           {this.renderJsonDataOptions()}
-          <div className="gf-form-inline">
-            <InlineField
-              labelWidth={20}
-              label="Max series"
-              tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
-            >
-              <Input
-                placeholder="1000"
-                type="number"
-                className="width-20"
-                value={this.state.maxSeries}
-                onChange={(event) => {
-                  // We duplicate this state so that we allow to write freely inside the input. We don't have
-                  // any influence over saving so this seems to be only way to do this.
-                  this.setState({ maxSeries: event.currentTarget.value });
-                  const val = parseInt(event.currentTarget.value, 10);
-                  updateDatasourcePluginJsonDataOption(this.props, 'maxSeries', Number.isFinite(val) ? val : undefined);
-                }}
-              />
-            </InlineField>
-          </div>
-        </div>
+          <InlineField
+            labelWidth={20}
+            label="Max series"
+            tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+          >
+            <Input
+              placeholder="1000"
+              type="number"
+              className="width-20"
+              value={this.state.maxSeries}
+              onChange={(event: { currentTarget: { value: string } }) => {
+                // We duplicate this state so that we allow to write freely inside the input. We don't have
+                // any influence over saving so this seems to be only way to do this.
+                this.setState({ maxSeries: event.currentTarget.value });
+                const val = parseInt(event.currentTarget.value, 10);
+                updateDatasourcePluginJsonDataOption(this.props, 'maxSeries', Number.isFinite(val) ? val : undefined);
+              }}
+            />
+          </InlineField>
+        </FieldSet>
       </>
     );
   }
