@@ -160,7 +160,7 @@ export const TransformationOperationRow = ({
     <QueryOperationRow
       id={id}
       index={index}
-      title={uiConfig.name}
+      title={`${index + 1} - ${uiConfig.name}`}
       draggable
       actions={renderActions}
       disabled={disabled}

@@ -46,10 +46,10 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
   );
 
   useEffect(() => {
-    if (state.megaMenuOpen) {
+    if (state.megaMenu === 'open') {
       setIsOpen(true);
     }
-  }, [state.megaMenuOpen]);
+  }, [state.megaMenu]);
 
   return (
     <OverlayContainer>
