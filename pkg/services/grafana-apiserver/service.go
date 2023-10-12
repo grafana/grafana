@@ -20,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -302,6 +304,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 		ctx := req.Context()
 		signedInUser := appcontext.MustUser(ctx)
+
+		grafanarequest.WithOutputMediaType(ctx, req, Codecs, negotiation.DefaultEndpointRestrictions)
 
 		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
 		req.Header.Set("X-Remote-Group", "grafana")

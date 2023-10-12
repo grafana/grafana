@@ -11,8 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/handlers"
-	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -176,10 +175,12 @@ func TestOutputMediaType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := grafanarequest.WithOutputMediaType(tt.ctx, tt.req, &handlers.RequestScope{
-				Serializer:     &fakeNegotiater{serializer: fakeCodec, types: []string{"application/json;as=Table;v=v1;g=meta.k8s.io"}},
-				TableConvertor: rest.NewDefaultTableConvertor(schema.GroupResource{Group: "test", Resource: "test"}),
-			})
+			ctx := grafanarequest.WithOutputMediaType(
+				tt.ctx,
+				tt.req,
+				&fakeNegotiater{serializer: fakeCodec, types: []string{"application/json;as=Table;v=v1;g=meta.k8s.io"}},
+				negotiation.DefaultEndpointRestrictions,
+			)
 			actual, ok := grafanarequest.OutputMediaTypeFrom(ctx)
 			require.Equal(t, tt.ok, ok)
 			require.Equal(t, tt.expected, actual.Convert)
