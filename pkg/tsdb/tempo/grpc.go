@@ -29,7 +29,7 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
-		logger.Debug("newGrpcClient error", "error", err)
+		logger.Debug("newGrpcClient errored", "error", err)
 		return nil, err
 	}
 
@@ -54,12 +54,12 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	clientConn, err := grpc.Dial(onlyHost, dialOps...)
 	if err != nil {
-		logger.Debug("newGrpcClient error", "error", err)
+		logger.Debug("newGrpcClient errored", "error", err)
 		return nil, err
 	}
 
 	client := tempopb.NewStreamingQuerierClient(clientConn)
-	logger.Debug("newGrpcClient completed")
+	logger.Debug("newGrpcClient succeeded")
 	return client, nil
 }
 

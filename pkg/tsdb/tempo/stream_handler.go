@@ -10,6 +10,7 @@ import (
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	s.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
+
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if strings.HasPrefix(req.Path, SearchPathPrefix) {
 		status = backend.SubscribeStreamStatusOK
@@ -30,19 +31,24 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 }
 
 func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	s.logger.Debug("New stream call", "path", request.Path)
+	s.logger.Debug("RunStream called", "path", request.Path)
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		tempoDatasource, err := s.getDSInfo(ctx, request.PluginContext)
 		if err != nil {
+			s.logger.Debug("RunStream errored", "error", err)
 			return err
 		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
+			s.logger.Debug("RunStream errored", "error", err)
 			return sendError(err, sender)
 		} else {
+			s.logger.Debug("RunStream succeeded")
 			return nil
 		}
 	}
 
-	return fmt.Errorf("unknown path %s", request.Path)
+	err := fmt.Errorf("unknown path %s", request.Path)
+	s.logger.Debug("RunStream errored", "error", err)
+	return err
 }

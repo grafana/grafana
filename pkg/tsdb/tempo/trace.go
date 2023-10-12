@@ -107,6 +107,6 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID
 
 	req.Header.Set("Accept", "application/protobuf")
 
-	s.logger.FromContext(ctx).Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	s.logger.FromContext(ctx).Debug("createRequest succeeded", "url", req.URL.String(), "headers", req.Header)
 	return req, nil
 }
