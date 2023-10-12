@@ -33,4 +33,18 @@ func TestStatusSource(t *testing.T) {
 			require.Equal(t, StatusSourceDownstream, StatusSourceFromContext(ctx))
 		})
 	})
+
+	t.Run("StatusSourceFromContext", func(t *testing.T) {
+		t.Run("Background returns StatusSourceNone", func(t *testing.T) {
+			ctx := context.Background()
+			ss := StatusSourceFromContext(ctx)
+			require.Equal(t, StatusSourceNone, ss)
+		})
+
+		t.Run("Context with status source returns the set status source", func(t *testing.T) {
+			ctx := WithStatusSource(context.Background(), StatusSourcePlugin)
+			ss := StatusSourceFromContext(ctx)
+			require.Equal(t, StatusSourcePlugin, ss)
+		})
+	})
 }
