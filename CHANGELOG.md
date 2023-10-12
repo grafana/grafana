@@ -1,3 +1,31 @@
+<!-- 10.1.5 START -->
+
+# 10.1.5 (2023-10-11)
+
+### Features and enhancements
+
+- **Cloudwatch:** Backport 73524 Bring Back Legacy Log Group Picker. [#75031](https://github.com/grafana/grafana/issues/75031), [@sarahzinger](https://github.com/sarahzinger)
+
+### Bug fixes
+
+- **Cloudwatch:** Prevent log group requests with ARNs if feature flag is off. [#75691](https://github.com/grafana/grafana/issues/75691), [@sarahzinger](https://github.com/sarahzinger)
+- **Alerting:** Add support for `keep_firing_for` field from external rulers. [#75257](https://github.com/grafana/grafana/issues/75257), [@rwwiv](https://github.com/rwwiv)
+- **Canvas:** Avoid conflicting stylesheets when loading SVG icons. [#75032](https://github.com/grafana/grafana/issues/75032), [@adela-almasan](https://github.com/adela-almasan)
+- **Alerting:** Prevent showing "Permissions denied" alert when not accurate. [#74925](https://github.com/grafana/grafana/issues/74925), [@VikaCep](https://github.com/VikaCep)
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74809](https://github.com/grafana/grafana/issues/74809), [@joshhunt](https://github.com/joshhunt)
+- **Tempo Service Map:** Fix context menu links in service map when namespace is present. [#74796](https://github.com/grafana/grafana/issues/74796), [@javiruiz01](https://github.com/javiruiz01)
+- **Logs Panel:** Performance issue while scrolling within panel in safari. [#74747](https://github.com/grafana/grafana/issues/74747), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Bug:** Allow to uninstall a deprecated plugin. [#74704](https://github.com/grafana/grafana/issues/74704), [@andresmgot](https://github.com/andresmgot)
+- **Licensing:** Pass func to update env variables when starting plugin. [#74678](https://github.com/grafana/grafana/issues/74678), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Nested folders:** Fix folder hierarchy in folder responses. [#74580](https://github.com/grafana/grafana/issues/74580), [@papagian](https://github.com/papagian)
+- **Share link:** Use panel relative time for direct link rendered image. [#74518](https://github.com/grafana/grafana/issues/74518), [@Clarity-89](https://github.com/Clarity-89)
+- **Alerting:** Do not exit if Redis ping fails when using redis-based Alertmanager clustering. [#74399](https://github.com/grafana/grafana/issues/74399), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Refactor AlertRuleForm and fix annotations step description for cloud rules. [#74193](https://github.com/grafana/grafana/issues/74193), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+- **Licensing:** Updated grpc plugin factory newPlugin signature. (Enterprise)
+- **Reporting:** Add support for old dashboard schema. (Enterprise)
+
+<!-- 10.1.5 END -->
 <!-- 10.1.4 START -->
 
 # 10.1.4 (2023-09-29)
