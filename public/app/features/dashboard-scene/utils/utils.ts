@@ -167,8 +167,8 @@ export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel
     // Remove surrounding quotes from the interval value.
     const intervalValue = text.replace(/["']+/g, '');
 
-    // Skip intervals that start with "$auto_interval",scenes will handle them.
-    if (intervalValue.startsWith('$auto_interval')) {
+    // Skip intervals that start with "$__auto_interval_",scenes will handle them.
+    if (intervalValue.startsWith('$__auto_interval_')) {
       return uniqueIntervals;
     }
 

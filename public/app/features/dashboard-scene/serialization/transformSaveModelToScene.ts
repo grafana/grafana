@@ -298,7 +298,8 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
     });
   } else if (isIntervalVariable(variable)) {
     const intervals = getIntervalsFromOldIntervalModel(variable);
-    const currentInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : '';
+    const currentInterval = Array.isArray(variable.current.text) ? variable.current.text[0] : '';
+
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
