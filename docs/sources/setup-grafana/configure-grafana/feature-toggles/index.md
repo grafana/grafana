@@ -49,6 +49,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
 | `newBrowseDashboards`                            | New browse/manage dashboards UI                                                                                                                                                                     | Yes                |
+| `alertingInsights`                               | Show the new alerting insights landing page                                                                                                                                                         | Yes                |
 | `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
 ## Preview feature toggles
@@ -137,7 +138,6 @@ Experimental features might be changed or removed without prior notice.
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `libraryPanelRBAC`                          | Enables RBAC support for library panels                                                                      |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
-| `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
