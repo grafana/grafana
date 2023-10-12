@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -81,21 +80,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		},
 	}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
-			},
-			Spec: playlistkind.Spec{
-				Name:     v.Name,
-				Uid:      v.UID,
-				Interval: v.Interval,
-			},
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: orgId, // required
+		})
+		if err != nil {
+			return nil, err
 		}
-		list.Items = append(list.Items, p)
+		list.Items = append(list.Items, *convertToK8sResource(p, orgNamespaceMapper))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -109,30 +101,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1 // TODO: default org ID 1 for now
 	}
 
-	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+	dto, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
+	if dto == nil {
 		return nil, fmt.Errorf("not found?")
 	}
 
-	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
-		},
-		Spec: playlistkind.Spec{
-			Name:     p.Name,
-			Uid:      p.Uid,
-			Interval: p.Interval,
-			Items:    p.Items,
-		},
-	}, nil
+	return convertToK8sResource(dto, orgNamespaceMapper), nil
 }
