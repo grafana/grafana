@@ -2,7 +2,7 @@ import { PanelModel } from '@grafana/data';
 import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 
 import { DashboardModel } from '../state/DashboardModel';
-import { createDashboardModelFixture, createPanelJSONFixture } from '../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from '../state/__fixtures__/dashboardFixtures';
 
 describe('Merge dashboard panels', () => {
   describe('simple changes', () => {
@@ -13,15 +13,15 @@ describe('Merge dashboard panels', () => {
       dashboard = createDashboardModelFixture({
         title: 'simple title',
         panels: [
-          createPanelJSONFixture({
+          createPanelSaveModel({
             id: 1,
             type: 'timeseries',
           }),
-          createPanelJSONFixture({
+          createPanelSaveModel({
             id: 2,
             type: 'timeseries',
           }),
-          createPanelJSONFixture({
+          createPanelSaveModel({
             id: 3,
             type: 'table',
             fieldConfig: {

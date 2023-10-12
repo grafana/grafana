@@ -46,8 +46,6 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import config from '../../../core/config';
-
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
@@ -1227,9 +1225,6 @@ export class PrometheusDatasource
    * Returns the adjusted "snapped" interval parameters
    */
   getAdjustedInterval(): { start: string; end: string } {
-    if (!config.featureToggles.prometheusResourceBrowserCache) {
-      return this.getTimeRangeParams();
-    }
     const range = this.timeSrv.timeRange();
     return getRangeSnapInterval(this.cacheLevel, range);
   }

@@ -6,10 +6,11 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
@@ -105,10 +106,11 @@ describe('Mute timings', () => {
   beforeEach(() => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     resetMocks();
+    // FIXME: scope down
+    grantUserPermissions(Object.values(AccessControlAction));
   });
 
   it('creates a new mute timing', async () => {
-    disableRBAC();
     renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());

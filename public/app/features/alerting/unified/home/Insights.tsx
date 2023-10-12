@@ -1,9 +1,12 @@
 import React from 'react';
 
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,
   NestedScene,
   QueryVariable,
+  SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
   SceneReactObject,
@@ -14,6 +17,8 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 
+import { SectionFooter } from '../insights/SectionFooter';
+import { SectionSubheader } from '../insights/SectionSubheader';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
 import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
@@ -23,7 +28,7 @@ import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstanc
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
 import { getGrafanaRulesByEvaluationScene } from '../insights/grafana/RulesByEvaluation';
 import { getGrafanaRulesByEvaluationPercentageScene } from '../insights/grafana/RulesByEvaluationPercentage';
-import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getAlertsByStateScene as getGrafanaAlertsByStateScene } from '../insights/grafana/alertmanager/AlertsByState';
 import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
@@ -42,19 +47,27 @@ import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIteratio
 import { getMostFiredRulesScene } from '../insights/mimir/rules/MostFiredRules';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
 
-const ashDs = {
+export interface DataSourceInformation {
+  type: string;
+  uid: string;
+  settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+}
+const ashDs: DataSourceInformation = {
   type: 'loki',
   uid: 'grafanacloud-alert-state-history',
+  settings: undefined,
 };
 
-const cloudUsageDs = {
+const cloudUsageDs: DataSourceInformation = {
   type: 'prometheus',
   uid: 'grafanacloud-usage',
+  settings: undefined,
 };
 
-const grafanaCloudPromDs = {
+const grafanaCloudPromDs: DataSourceInformation = {
   type: 'prometheus',
   uid: 'grafanacloud-prom',
+  settings: undefined,
 };
 
 const SERIES_COLORS = {
@@ -82,38 +95,80 @@ export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
-export function SectionSubheader({ children }: React.PropsWithChildren) {
-  return <div>{children}</div>;
-}
-
 export function getInsightsScenes() {
+  const dataSourceSrv = getDataSourceSrv();
+
+  [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
+    ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
+  });
+
+  const categories = [];
+
+  const showGrafanaManaged = ashDs.settings && cloudUsageDs.settings;
+  const showGrafanaAlertmanager = Boolean(cloudUsageDs.settings);
+  const showMimirAlertmanager = Boolean(cloudUsageDs.settings);
+  const showMimirManaged = cloudUsageDs.settings && grafanaCloudPromDs.settings;
+  const showMimirManagedPerGroup = Boolean(cloudUsageDs.settings);
+
+  if (showGrafanaManaged) {
+    categories.push(
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: getGrafanaManagedScenes(),
+      })
+    );
+  }
+
+  if (showGrafanaAlertmanager) {
+    categories.push(
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: getGrafanaAlertmanagerScenes(),
+      })
+    );
+  }
+
+  if (showMimirManaged) {
+    categories.push(
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: getMimirManagedRulesScenes(),
+      })
+    );
+  }
+
+  if (showMimirManagedPerGroup) {
+    categories.push(
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: getMimirManagedRulesPerGroupScenes(),
+      })
+    );
+  }
+
+  if (showMimirAlertmanager) {
+    categories.push(
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: getCloudScenes(),
+      })
+    );
+  }
+
   return new EmbeddedScene({
     $timeRange: THIS_WEEK_TIME_RANGE,
-    controls: [new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [
+      new SceneReactObject({
+        component: SectionSubheader,
+        props: { children: <div>Monitor the status of your system.</div> },
+      }),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
     body: new SceneFlexLayout({
       direction: 'column',
-      children: [
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getGrafanaManagedScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getGrafanaAlertmanagerScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getCloudScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getMimirManagedRulesScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getMimirManagedRulesPerGroupScenes(),
-        }),
-      ],
+      children: categories,
     }),
   });
 }
@@ -126,18 +181,12 @@ function getGrafanaManagedScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new SceneFlexItem({
-          body: new SceneReactObject({
-            component: SectionSubheader,
-            props: { children: <div>Grafana-managed rules</div> },
-          }),
-        }),
         new SceneFlexLayout({
           direction: 'column',
           children: [
             new SceneFlexLayout({
               children: [
-                getMostFiredInstancesScene(ashDs, 'Top 10 firing instances this week'),
+                getMostFiredInstancesScene(ashDs, 'Top 10 firing instances'),
                 getFiringGrafanaAlertsScene(cloudUsageDs, 'Firing rules'),
                 getPausedGrafanaAlertsScene(cloudUsageDs, 'Paused rules'),
               ],
@@ -152,14 +201,34 @@ function getGrafanaManagedScenes() {
                     new SceneFlexLayout({
                       height: '400px',
                       children: [
-                        getInstanceStatByStatusScene(cloudUsageDs, 'Alerting instances', 'alerting'),
-                        getInstanceStatByStatusScene(cloudUsageDs, 'Pending instances', 'pending'),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Firing instances',
+                          'The number of currently firing alert rule instances',
+                          'alerting'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Pending instances',
+                          'The number of currently pending alert rule instances',
+                          'pending'
+                        ),
                       ],
                     }),
                     new SceneFlexLayout({
                       children: [
-                        getInstanceStatByStatusScene(cloudUsageDs, 'No data instances', 'nodata'),
-                        getInstanceStatByStatusScene(cloudUsageDs, 'Error instances', 'error'),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'No data instances',
+                          'The current number of alert rule instances in No data state',
+                          'nodata'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Error instances',
+                          'The current number of alert rule instances in Error state',
+                          'error'
+                        ),
                       ],
                     }),
                   ],
@@ -180,6 +249,9 @@ function getGrafanaManagedScenes() {
             }),
           ],
         }),
+        new SceneReactObject({
+          component: SectionFooter,
+        }),
       ],
     }),
   });
@@ -193,17 +265,15 @@ function getGrafanaAlertmanagerScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new SceneFlexItem({
-          body: new SceneReactObject({
-            component: SectionSubheader,
-            props: { children: <div>Grafana Alertmanager</div> },
-          }),
-        }),
         new SceneFlexLayout({
           children: [
-            getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notifications'),
+            getGrafanaAlertsByStateScene(cloudUsageDs, 'Firing alerts by state'),
+            // getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notification delivery'),
             getGrafanaAlertmanagerSilencesScene(cloudUsageDs, 'Silences'),
           ],
+        }),
+        new SceneReactObject({
+          component: SectionFooter,
         }),
       ],
     }),
@@ -221,13 +291,13 @@ function getCloudScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Mimir Alertmanager</div> },
+            props: { datasources: [cloudUsageDs] },
           }),
         }),
         new SceneFlexLayout({
           children: [
-            getAlertsByStateScene(cloudUsageDs, 'Alerts by state'),
-            getNotificationsScene(cloudUsageDs, 'Notifications'),
+            getAlertsByStateScene(cloudUsageDs, 'Firing alerts by state'),
+            getNotificationsScene(cloudUsageDs, 'Notification delivery'),
           ],
         }),
         new SceneFlexLayout({
@@ -235,6 +305,9 @@ function getCloudScenes() {
             getSilencesScene(cloudUsageDs, 'Silences'),
             getInvalidConfigScene(cloudUsageDs, 'Invalid configuration'),
           ],
+        }),
+        new SceneReactObject({
+          component: SectionFooter,
         }),
       ],
     }),
@@ -252,27 +325,30 @@ function getMimirManagedRulesScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Mimir-managed rules</div> },
+            props: { datasources: [grafanaCloudPromDs, cloudUsageDs] },
           }),
         }),
         new SceneFlexLayout({
           children: [
-            getMostFiredRulesScene(grafanaCloudPromDs, 'Top 10 firing rules this week'),
+            getMostFiredRulesScene(grafanaCloudPromDs, 'Top 10 firing rules'),
             getFiringCloudAlertsScene(grafanaCloudPromDs, 'Firing instances'),
             getPendingCloudAlertsScene(grafanaCloudPromDs, 'Pending instances'),
           ],
         }),
         new SceneFlexLayout({
           children: [
-            getInstancesByStateScene(grafanaCloudPromDs, 'Count of alert instances by state'),
-            getInstancesPercentageByStateScene(grafanaCloudPromDs, '% of alert instances by State'),
+            getInstancesByStateScene(grafanaCloudPromDs, 'Firing and pending alert instances'),
+            getInstancesPercentageByStateScene(grafanaCloudPromDs, '% of alert instances by state'),
           ],
         }),
         new SceneFlexLayout({
           children: [
             getEvalSuccessVsFailuresScene(cloudUsageDs, 'Evaluation success vs failures'),
-            getMissedIterationsScene(cloudUsageDs, 'Iterations missed'),
+            getMissedIterationsScene(cloudUsageDs, 'Missed evaluations'),
           ],
+        }),
+        new SceneReactObject({
+          component: SectionFooter,
         }),
       ],
     }),
@@ -297,7 +373,7 @@ function getMimirManagedRulesPerGroupScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Mimir-managed Rules - Per Rule Group</div> },
+            props: { datasources: [cloudUsageDs] },
           }),
         }),
         new SceneFlexLayout({
@@ -312,6 +388,9 @@ function getMimirManagedRulesPerGroupScenes() {
             getRulesPerGroupScene(cloudUsageDs, 'Rules per group'),
             getRuleGroupEvaluationDurationIntervalRatioScene(cloudUsageDs, 'Evaluation duration / interval ratio'),
           ],
+        }),
+        new SceneReactObject({
+          component: SectionFooter,
         }),
       ],
     }),

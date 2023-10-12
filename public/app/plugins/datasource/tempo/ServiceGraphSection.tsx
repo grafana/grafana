@@ -53,15 +53,18 @@ export function ServiceGraphSection({
   const ds = dsState.value as PrometheusDatasource;
 
   if (!graphDatasourceUid) {
-    return <div className="text-warning">Please set up a service graph datasource in the datasource settings.</div>;
+    return getWarning(
+      'No service graph datasource selected',
+      'Please set up a service graph datasource in the datasource settings',
+      styles
+    );
   }
 
   if (graphDatasourceUid && !ds) {
-    return (
-      <div className="text-warning">
-        Service graph datasource is configured but the data source no longer exists. Please configure existing data
-        source to use the service graph functionality.
-      </div>
+    return getWarning(
+      'No service graph data found',
+      'Service graph datasource is configured but the data source no longer exists. Please configure existing data source to use the service graph functionality',
+      styles
     );
   }
 
@@ -101,21 +104,31 @@ export function ServiceGraphSection({
           />
         </InlineField>
       </InlineFieldRow>
-      {hasKeys === false ? (
-        <Alert title="No service graph data found" severity="info" className={styles.alert}>
-          Please ensure that service graph metrics are set up correctly according to the{' '}
-          <a
-            target="_blank"
-            rel="noreferrer noopener"
-            href="https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph"
-            className={styles.link}
-          >
-            Tempo documentation
-          </a>
-          .
-        </Alert>
-      ) : null}
+      {hasKeys === false
+        ? getWarning(
+            'No service graph data found',
+            'Please ensure that service graph metrics are set up correctly',
+            styles
+          )
+        : null}
     </div>
+  );
+}
+
+function getWarning(title: string, description: string, styles: { alert: string; link: string }) {
+  return (
+    <Alert title={title} severity="info" className={styles.alert}>
+      {description} according to the{' '}
+      <a
+        target="_blank"
+        rel="noreferrer noopener"
+        href="https://grafana.com/docs/grafana/latest/datasources/tempo/service-graph/"
+        className={styles.link}
+      >
+        Tempo documentation
+      </a>
+      .
+    </Alert>
   );
 }
 
