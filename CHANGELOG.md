@@ -4,6 +4,7 @@
 
 ### Features and enhancements
 
+- **Chore:** Upgrade Go to 1.20.10. [#76367](https://github.com/grafana/grafana/issues/76367), [@zerok](https://github.com/zerok)
 - **Licensing:** Updated grpc plugin factory newPlugin signature. (Enterprise)
 
 ### Bug fixes
