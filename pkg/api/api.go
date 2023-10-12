@@ -270,25 +270,6 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Post("/:id/using/:orgId", authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUserActiveOrg))
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 
-		// team (admin permission required)
-		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", authorize(ac.EvalPermission(ac.ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
-			teamsRoute.Put("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeam))
-			teamsRoute.Delete("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsDelete, ac.ScopeTeamsID)), routing.Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.AddTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.RemoveTeamMember))
-			teamsRoute.Get("/:teamId/preferences", authorize(ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", authorize(ac.EvalPermission(ac.ActionTeamsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeamPreferences))
-		}, requestmeta.SetOwner(requestmeta.TeamAuth))
-
-		// team without requirement of user to be org admin
-		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamByID))
-			teamsRoute.Get("/search", authorize(ac.EvalPermission(ac.ActionTeamsRead)), routing.Wrap(hs.SearchTeams))
-		}, requestmeta.SetOwner(requestmeta.TeamAuth))
-
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/", authorize(ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetCurrentOrg))
