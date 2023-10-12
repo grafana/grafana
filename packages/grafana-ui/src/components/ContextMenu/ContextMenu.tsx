@@ -39,7 +39,7 @@ export const ContextMenu = React.memo(
         setPositionStyles({
           position: 'fixed',
           left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-          top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
+          top: collisions.bottom ? Math.max(y - rect.height - OFFSET, 0) : y + OFFSET,
         });
       }
     }, [x, y]);
