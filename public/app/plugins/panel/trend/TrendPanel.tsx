@@ -137,15 +137,6 @@ export const TrendPanel = ({
                 timeZone={timeZone}
               />
             )}
-
-            <ContextMenuPlugin
-              data={alignedDataFrame}
-              frames={info.frames!}
-              config={config}
-              timeZone={timeZone}
-              replaceVariables={replaceVariables}
-              defaultItems={[]}
-            />
           </>
         );
       }}
