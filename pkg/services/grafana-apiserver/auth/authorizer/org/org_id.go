@@ -4,27 +4,25 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &OrgIDAuthorizer{}
 
 type OrgIDAuthorizer struct {
-	log     log.Logger
-	org     org.Service
-	stackID string
+	log log.Logger
+	org org.Service
 }
 
-func ProvideOrgIDAuthorizer(orgService org.Service, cfg *setting.Cfg) *OrgIDAuthorizer {
+func ProvideOrgIDAuthorizer(orgService org.Service) *OrgIDAuthorizer {
 	return &OrgIDAuthorizer{
-		log:     log.New("grafana-apiserver.authorizer.orgid"),
-		org:     orgService,
-		stackID: cfg.StackID, // this lets a single tenant grafana validate stack id (rather than orgs)
+		log: log.New("grafana-apiserver.authorizer.orgid"),
+		org: orgService,
 	}
 }
 
@@ -44,19 +42,7 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	// Single tenant deployment is tied to an explicit stack ID
-	if auth.stackID != "" {
-		if info.StackID != auth.stackID {
-			return authorizer.DecisionDeny, "wrong stack id is selected", nil
-		}
-		if info.OrgID != 1 {
-			return authorizer.DecisionDeny, "cloud instance requires org 1", nil
-		}
-		if signedInUser.OrgID != 1 {
-			return authorizer.DecisionDeny, "user must be in org 1", nil
-		}
-		return authorizer.DecisionAllow, "", nil
-	} else if info.StackID != "" {
+	if info.StackID != "" {
 		return authorizer.DecisionDeny, "using a stack namespace requires deployment with a fixed stack id", nil
 	}
 
