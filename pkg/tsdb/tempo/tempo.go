@@ -67,7 +67,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
 		if res, err := s.query(ctx, req.PluginContext, q); err != nil {
-			s.logger.Debug("Error in processing query", "query", q, "error", err)
+			s.logger.Debug("QueryData errored", "query", q, "error", err)
 			return response, err
 		} else {
 			if res != nil {
@@ -76,7 +76,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}
 
-	s.logger.Debug("Successfully processed query request")
+	s.logger.Debug("QueryData succeded")
 	return response, nil
 }
 
@@ -84,30 +84,32 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	s.logger.Debug("query called")
 
 	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
-		return s.getTrace(ctx, pCtx, query)
+		trace, err := s.getTrace(ctx, pCtx, query)
+		s.logger.Debug("query succeded")
+		return trace, err
 	}
 
 	err := fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
-	s.logger.Debug("query error", "error", err)
+	s.logger.Debug("query errored", "error", err)
 	return nil, err
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {
-	s.logger.Debug("Getting datasource information")
+	s.logger.Debug("getDSInfo called")
 
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		s.logger.Debug("Failure in getting datasource information", "error", err)
+		s.logger.Debug("getDSInfo errored", "error", err)
 		return nil, err
 	}
 
 	instance, ok := i.(*Datasource)
 	if !ok {
 		err := fmt.Errorf("failed to cast datsource info")
-		s.logger.Debug("Failure in getting datasource information", "url", instance.URL, "error", err)
+		s.logger.Debug("getDSInfo errored", "error", err)
 		return nil, err
 	}
 
-	s.logger.Debug("Successfully got datasource information", "url", instance.URL)
+	s.logger.Debug("getDSInfo succeded", "url", instance.URL)
 	return instance, nil
 }

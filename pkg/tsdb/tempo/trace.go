@@ -22,31 +22,31 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(query.JSON, model)
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return result, err
 	}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return nil, err
 	}
 
 	if model.Query == nil || *model.Query == "" {
 		err := fmt.Errorf("trace id is required")
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return result, err
 	}
 
 	request, err := s.createRequest(ctx, dsInfo, *model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return result, err
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return result, fmt.Errorf("failed get to tempo: %w", err)
 	}
 
@@ -58,13 +58,13 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", err)
+		s.logger.Debug("getTrace errored", "error", err)
 		return &backend.DataResponse{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		result.Error = fmt.Errorf("failed to get trace with id: %v Status: %s Body: %s", model.Query, resp.Status, string(body))
-		s.logger.Debug("getTrace error", "error", result.Error)
+		s.logger.Debug("getTrace errored", "error", result.Error)
 		return result, nil
 	}
 
@@ -72,20 +72,20 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	otTrace, err := pbUnmarshaler.UnmarshalTraces(body)
 
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", result.Error)
+		s.logger.Debug("getTrace errored", "error", result.Error)
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
 	}
 
 	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		s.logger.Debug("getTrace error", "error", result.Error)
+		s.logger.Debug("getTrace errored", "error", result.Error)
 		return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 	}
 
 	frame.RefID = refID
 	frames := []*data.Frame{frame}
 	result.Frames = frames
-	s.logger.Debug("getTrace completed")
+	s.logger.Debug("getTrace succeeded")
 	return result, nil
 }
 
@@ -101,7 +101,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID
 
 	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
 	if err != nil {
-		s.logger.Debug("createRequest error", "error", err)
+		s.logger.Debug("createRequest errored", "error", err)
 		return nil, err
 	}
 
