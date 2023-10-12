@@ -40,6 +40,8 @@ func ContactPointFromContactPointExport(rawContactPoint definitions.ContactPoint
 //nolint:gocyclo
 func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIReceiver, error) {
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
+	// use json iterator with custom extension that has special codec for some field.
+	// This is needed to keep the API models clean and convert from database model
 	j.RegisterExtension(&contactPointsExtension{})
 
 	var integration []*notify.GrafanaIntegrationConfig
