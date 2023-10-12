@@ -92,7 +92,7 @@ To learn more, refer to the following video demo.
 
 ## Authentication and authorization
 
-### No Basic Role
+### No basic role
 
 <!-- Eric Leijonmarck -->
 <!-- OSS, Enterprise -->
