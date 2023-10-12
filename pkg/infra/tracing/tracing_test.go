@@ -176,23 +176,22 @@ func TestTracingConfig(t *testing.T) {
 			tracer, err := ProvideService(cfg)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
-			otel := tracer.(*Opentelemetry)
-			assert.Equal(t, test.ExpectedExporter, otel.enabled)
-			assert.Equal(t, test.ExpectedAddress, otel.Address)
-			assert.Equal(t, test.ExpectedPropagator, otel.Propagation)
-			assert.Equal(t, test.ExpectedAttrs, otel.customAttribs)
+			assert.Equal(t, test.ExpectedExporter, tracer.enabled)
+			assert.Equal(t, test.ExpectedAddress, tracer.Address)
+			assert.Equal(t, test.ExpectedPropagator, tracer.Propagation)
+			assert.Equal(t, test.ExpectedAttrs, tracer.customAttribs)
 
 			if test.ExpectedSampler != "" {
-				assert.Equal(t, test.ExpectedSampler, otel.sampler)
-				assert.Equal(t, test.ExpectedSamplerParam, otel.samplerParam)
-				assert.Equal(t, test.ExpectedSamplingServerURL, otel.samplerRemoteURL)
+				assert.Equal(t, test.ExpectedSampler, tracer.sampler)
+				assert.Equal(t, test.ExpectedSamplerParam, tracer.samplerParam)
+				assert.Equal(t, test.ExpectedSamplingServerURL, tracer.samplerRemoteURL)
 			}
 		})
 	}
 }
 
 func TestInitSampler(t *testing.T) {
-	otel := &Opentelemetry{}
+	otel := &TracingService{}
 	sampler, err := otel.initSampler()
 	require.NoError(t, err)
 	assert.Equal(t, "AlwaysOffSampler", sampler.Description())

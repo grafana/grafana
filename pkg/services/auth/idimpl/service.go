@@ -3,7 +3,6 @@ package idimpl
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -26,9 +26,9 @@ var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
-	features featuremgmt.FeatureToggles, authnService authn.Service,
+	features featuremgmt.FeatureToggles, authnService authn.Service, reg prometheus.Registerer,
 ) *Service {
-	s := &Service{cfg, log.New("id-service"), signer, cache}
+	s := &Service{cfg, log.New("id-service"), signer, cache, newMetrics(reg)}
 
 	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
 		authnService.RegisterPostAuthHook(s.hook, 140)
@@ -38,42 +38,49 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg    *setting.Cfg
-	logger log.Logger
-	signer auth.IDSigner
-	cache  remotecache.CacheStorage
+	cfg     *setting.Cfg
+	logger  log.Logger
+	signer  auth.IDSigner
+	cache   remotecache.CacheStorage
+	metrics *metrics
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
+	defer func(t time.Time) {
+		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	namespace, identifier := id.GetNamespacedID()
 
 	cacheKey := prefixCacheKey(id.GetCacheKey())
 	cachedToken, err := s.cache.Get(ctx, cacheKey)
 	if err == nil {
+		s.metrics.tokenSigningFromCacheCounter.Inc()
 		s.logger.Debug("Cached token found", "namespace", namespace, "id", identifier)
 		return string(cachedToken), nil
 	}
 
+	s.metrics.tokenSigningCounter.Inc()
 	s.logger.Debug("Sign new id token", "namespace", namespace, "id", identifier)
 
 	now := time.Now()
 	token, err := s.signer.SignIDToken(ctx, &auth.IDClaims{
 		Claims: jwt.Claims{
-			ID:       identifier,
 			Issuer:   s.cfg.AppURL,
-			Audience: jwt.Audience{strconv.FormatInt(id.GetOrgID(), 10)},
-			Subject:  fmt.Sprintf("%s:%s", namespace, identifier),
+			Audience: getAudience(id.GetOrgID()),
+			Subject:  getSubject(namespace, identifier),
 			Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 			IssuedAt: jwt.NewNumericDate(now),
 		},
 	})
 
 	if err != nil {
+		s.metrics.failedTokenSigningCounter.Inc()
 		return "", err
 	}
 
 	if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
-		s.logger.Error("failed to set cache", "error", err)
+		s.logger.Error("Failed to add id token to cache", "error", err)
 	}
 
 	return token, nil
@@ -91,6 +98,14 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 
 	identity.IDToken = token
 	return nil
+}
+
+func getAudience(orgID int64) jwt.Audience {
+	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
+}
+
+func getSubject(namespace, identifier string) string {
+	return fmt.Sprintf("%s:%s", namespace, identifier)
 }
 
 func prefixCacheKey(key string) string {

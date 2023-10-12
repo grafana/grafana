@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -134,8 +135,9 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource")
-	span.SetAttributes("url", lokiURL, attribute.Key("url").String(lokiURL))
+	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
+		attribute.String("url", lokiURL),
+	))
 	defer span.End()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
@@ -192,11 +194,12 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
-	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries")
-	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(runInParallel))
-	span.SetAttributes("queriesLength", len(queries), attribute.Key("queriesLength").Int((len(queries))))
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.Int("queriesLength", len(queries)),
+	))
 	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-		span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
 	}
 	defer span.End()
 	start = time.Now()
@@ -224,13 +227,14 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 }
 
 func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
-	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery")
-	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(runInParallel))
-	span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-	span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-	span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery", trace.WithAttributes(
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.String("expr", query.Expr),
+		attribute.Int64("start_unixnano", query.Start.UnixNano()),
+		attribute.Int64("stop_unixnano", query.End.UnixNano()),
+	))
 	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-		span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
 	}
 
 	defer span.End()

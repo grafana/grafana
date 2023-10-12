@@ -109,7 +109,7 @@ type TempoQuery struct {
 	MinDuration *string `json:"minDuration,omitempty"`
 
 	// TraceQL query or trace ID
-	Query string `json:"query"`
+	Query *string `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default

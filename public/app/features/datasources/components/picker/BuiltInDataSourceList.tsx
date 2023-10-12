@@ -2,6 +2,7 @@ import React from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
+import { t } from 'app/core/internationalization';
 
 import { useDatasources } from '../../hooks';
 
@@ -9,9 +10,12 @@ import { DataSourceCard } from './DataSourceCard';
 import { isDataSourceMatch } from './utils';
 
 const CUSTOM_DESCRIPTIONS_BY_UID: Record<string, string> = {
-  grafana: 'Discover visualizations using mock data',
-  '-- Mixed --': 'Use multiple data sources',
-  '-- Dashboard --': 'Reuse query results from other visualizations',
+  grafana: t('data-source-picker.built-in-list.description-grafana', 'Discover visualizations using mock data'),
+  '-- Mixed --': t('data-source-picker.built-in-list.description-mixed', 'Use multiple data sources'),
+  '-- Dashboard --': t(
+    'data-source-picker.built-in-list.description-dashboard',
+    'Reuse query results from other visualizations'
+  ),
 };
 
 interface BuiltInDataSourceListProps {

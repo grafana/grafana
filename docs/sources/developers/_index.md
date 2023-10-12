@@ -14,7 +14,7 @@ weight: 190
 Go to the [Grafana developer portal](/developers) to access the following documentation:
 
 - [Grafana plugin development](/developers/plugin-tools)
-- [Grafana UI component library](https://developers.grafana.com)
+- [Grafana design system](https://developers.grafana.com)
 - [Grafana Scenes](/developers/scenes)
 - [Grafana data plane](/developers/dataplane)
 

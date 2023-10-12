@@ -539,7 +539,9 @@ export class BackendSrv implements BackendService {
       queryParams.set('accesscontrol', 'true');
     }
 
-    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`, undefined, undefined, {
+      showErrorAlert: false,
+    });
   }
 }
 

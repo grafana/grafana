@@ -246,7 +246,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         </FieldSet>
       ) : null}
 
-      <ConnectionLimits labelWidth={labelWidthShort} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="PostgreSQL details">
         <InlineField

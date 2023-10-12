@@ -9,7 +9,6 @@ export const initialState: UsersState = {
   page: 0,
   perPage: 30,
   totalPages: 1,
-  canInvite: !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,

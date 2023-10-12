@@ -95,6 +95,8 @@ const dummyProps: Props = {
   showLogsSample: false,
   logsSample: { enabled: false },
   setSupplementaryQueryEnabled: jest.fn(),
+  correlationEditorDetails: undefined,
+  correlationEditorHelperData: undefined,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -109,7 +111,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: () => true,
+    hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));

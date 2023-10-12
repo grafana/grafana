@@ -50,7 +50,7 @@ export function getVariablesDefinitions() {
       new QueryVariable({
         name: 'instance',
         datasource: { uid: 'gdev-prometheus' },
-        query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
+        query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)', refId: 'A' },
       }),
     ],
   });

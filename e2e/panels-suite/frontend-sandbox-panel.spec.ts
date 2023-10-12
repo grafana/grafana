@@ -57,7 +57,7 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.get('[data-sandbox-test="panel-editor"]').should('exist');
     });
   });
@@ -114,7 +114,7 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.wait(100); // small delay to prevent false positives from too fast tests
       cy.get('[data-sandbox-test="panel-editor"]').should('not.exist');
     });

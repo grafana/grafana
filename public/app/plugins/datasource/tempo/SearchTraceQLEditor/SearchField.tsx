@@ -3,8 +3,9 @@ import { uniq } from 'lodash';
 import React, { useState, useEffect, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -80,6 +81,9 @@ const SearchField = ({
     setError,
     query,
   ]);
+  if (filter.value && options && !options.find((o) => o === filter.value)) {
+    options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
+  }
 
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
@@ -112,13 +116,24 @@ const SearchField = ({
       operatorList = numberOperators;
   }
 
+  /**
+   * Add to a list of options the current template variables.
+   *
+   * @param options a list of options
+   * @returns the list of given options plus the template variables
+   */
+  const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
+    const templateVariables = getTemplateSrv().getVariables();
+    return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
+  };
+
   return (
     <HorizontalGroup spacing={'none'} width={'auto'}>
       {!hideScope && (
         <Select
           className={styles.dropdown}
           inputId={`${filter.id}-scope`}
-          options={scopeOptions}
+          options={withTemplateVariableOptions(scopeOptions)}
           value={filter.scope}
           onChange={(v) => {
             updateFilter({ ...filter, scope: v?.value });
@@ -133,10 +148,12 @@ const SearchField = ({
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-          options={(filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-            label: t,
-            value: t,
-          }))}
+          options={withTemplateVariableOptions(
+            (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+              label: t,
+              value: t,
+            }))
+          )}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
@@ -150,7 +167,7 @@ const SearchField = ({
       <Select
         className={styles.dropdown}
         inputId={`${filter.id}-operator`}
-        options={operatorList.map(operatorSelectableValue)}
+        options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
@@ -165,7 +182,7 @@ const SearchField = ({
           className={styles.dropdown}
           inputId={`${filter.id}-value`}
           isLoading={isLoadingValues}
-          options={options}
+          options={withTemplateVariableOptions(options)}
           value={filter.value}
           onChange={(val) => {
             if (Array.isArray(val)) {
