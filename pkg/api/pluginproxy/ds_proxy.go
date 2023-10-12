@@ -275,7 +275,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	if proxy.features.IsEnabled(featuremgmt.FlagTeamHeaders) {
 		proxyutil.ApplyTeamHeaders(req, proxy.ds, proxy.ctx.Teams)
-
 	}
 }
 
