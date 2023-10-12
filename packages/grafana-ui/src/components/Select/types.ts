@@ -99,6 +99,8 @@ export interface SelectCommonProps<T> {
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
+  /** Disables wrapping of multi value values when closed */
+  noMultiValueWrap?: boolean;
 }
 
 export interface SelectAsyncProps<T> {
