@@ -4,6 +4,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   DataSourceSelectItem,
+  EventBusSrv,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -23,6 +24,7 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { PanelDataSourceIsMultiVar } from 'app/types/events';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -252,13 +254,7 @@ export class DatasourceSrv implements DataSourceService {
         let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
         if (Array.isArray(dsValue)) {
           // Support for multi-value variables with only one selected datasource
-          if (dsValue.length === 1) {
-            dsValue = dsValue[0]
-          } else {
-            if (variable.name === filters.dsRepeatedVariable) {
               dsValue = dsValue[0]
-            } 
-          }
         }
         const dsSettings =
           !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
@@ -362,7 +358,10 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
 }
 
 export function variableInterpolation(value: any[]) {
+  const events = new EventBusSrv();
+
   if (Array.isArray(value)) {
+    events.publish(new PanelDataSourceIsMultiVar())
     return value[0];
   }
   return value;

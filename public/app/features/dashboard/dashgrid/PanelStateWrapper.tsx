@@ -5,6 +5,7 @@ import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
   AnnotationEventUIModel,
+  BusEvent,
   CoreApp,
   DashboardCursorSync,
   DataFrame,
@@ -37,7 +38,7 @@ import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
-import { RenderEvent } from 'app/types/events';
+import { PanelDataSourceIsMultiVar, RenderEvent } from 'app/types/events';
 
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
@@ -196,6 +197,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Subscribe to panel events
     this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
     this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
+    this.subs.add(panel.events.subscribe(PanelDataSourceIsMultiVar, this.onPanelWarning));
 
     dashboard.panelInitialized(this.props.panel);
 
@@ -372,6 +374,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onFieldConfigChange = (config: FieldConfigSource) => {
     this.props.panel.updateFieldConfig(config);
   };
+
+  onPanelWarning = (event: BusEvent) => {
+    console.log('The data source of this ' + this.props.panel.id + ' panel is multi-choice var. You are only seeing the first (in visible order) data source selected for the variable.');
+  }
 
   onPanelError = (error: Error) => {
     const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;

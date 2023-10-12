@@ -133,6 +133,10 @@ export class DashboardMetaChangedEvent extends BusEventBase {
   static type = 'dashboard-meta-changed';
 }
 
+export class PanelDataSourceIsMultiVar extends BusEventBase {
+  static type = 'panel-datasource-multi-variable'
+}
+
 export class PanelDirectiveReadyEvent extends BusEventBase {
   static type = 'panel-directive-ready';
 }
