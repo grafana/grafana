@@ -40,7 +40,7 @@ describe('getDashboardChanges', () => {
       '===================================================================\n' +
         '--- Before migration changes\t\n' +
         '+++ After migration changes\t\n' +
-        '@@ -1,25 +1,21 @@\n' +
+        '@@ -1,9 +1,9 @@\n' +
         ' {\n' +
         '   "editable": true,\n' +
         '   "graphTooltip": 0,\n' +
@@ -49,43 +49,31 @@ describe('getDashboardChanges', () => {
         '   "timezone": "",\n' +
         '   "panels": [\n' +
         '     {\n' +
-        '-      "fieldConfig": {\n' +
-        '-        "defaults": {},\n' +
-        '-        "overrides": []\n' +
-        '-      },\n' +
+        '       "type": "timeseries",\n' +
+        '       "title": "Panel 1",\n'
+    );
+    expect(result.userChanges).toEqual(
+      '===================================================================\n' +
+        '--- Before user changes\t\n' +
+        '+++ After user changes\t\n' +
+        '@@ -3,16 +3,17 @@\n' +
+        '   "graphTooltip": 0,\n' +
+        '   "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "title": "Panel 1",\n' +
         '+      "id": 1,\n' +
         '       "options": {\n' +
         '         "legend": {\n' +
         '           "displayMode": "hidden",\n' +
         '           "showLegend": false\n' +
         '         }\n' +
-        '       },\n' +
-        '       "repeatDirection": "h",\n' +
-        '+      "title": "Panel 1",\n' +
-        '       "transformations": [],\n' +
-        '-      "transparent": false,\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "title": "Panel 1"\n' +
-        '+      "type": "timeseries"\n' +
-        '     }\n' +
-        '   ]\n' +
-        ' }\n' +
-        '\\ No newline at end of file\n'
-    );
-    expect(result.userChanges).toEqual(
-      '===================================================================\n' +
-        '--- Before user changes\t\n' +
-        '+++ After user changes\t\n' +
-        '@@ -11,11 +11,11 @@\n' +
-        '           "displayMode": "hidden",\n' +
-        '           "showLegend": false\n' +
-        '         }\n' +
-        '       },\n' +
-        '       "repeatDirection": "h",\n' +
-        '-      "title": "Panel 1",\n' +
+        '-      }\n' +
+        '+      },\n' +
         '+      "title": "New title",\n' +
-        '       "transformations": [],\n' +
-        '       "type": "timeseries"\n' +
+        '+      "type": "timeseries"\n' +
         '     }\n' +
         '   ]\n' +
         ' }\n' +

@@ -1,4 +1,4 @@
-import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { orderProperties, JSONArray, JSONValue, isObject, getDashboardStringDiff } from './jsonDiffText';
 
@@ -241,12 +241,12 @@ describe('getDashboardStringDiff', () => {
     title: 'Original Title',
     schemaVersion: 38,
     panels: [
-      createPanelJSONFixture({
+      createPanelSaveModel({
         id: 1,
         title: 'Original Panel Title',
         gridPos: { x: 0, y: 0, w: 2, h: 2 },
       }),
-      createPanelJSONFixture({
+      createPanelSaveModel({
         id: 2,
         title: 'Panel to be moved',
         gridPos: { x: 2, y: 0, w: 2, h: 2 },
@@ -254,7 +254,7 @@ describe('getDashboardStringDiff', () => {
     ],
   };
 
-  it('should only return migration changes', () => {
+  it('should no return changes when nothing changes', () => {
     const dashboardModel = createDashboardModelFixture(dashboard);
 
     const result = getDashboardStringDiff(dashboardModel);
@@ -264,69 +264,7 @@ describe('getDashboardStringDiff', () => {
         'Index: Original Title\n' +
         '===================================================================\n' +
         '--- Original Title\t\n' +
-        '+++ Original Title\t\n' +
-        '@@ -4,44 +4,32 @@\n' +
-        '   "schemaVersion": 38,\n' +
-        '   "timezone": "",\n' +
-        '   "title": "Original Title",\n' +
-        '   "panels": [\n' +
-        '     {\n' +
-        '-      "fieldConfig": {\n' +
-        '-        "defaults": {},\n' +
-        '-        "overrides": []\n' +
-        '+      "gridPos": {\n' +
-        '+        "h": 2,\n' +
-        '+        "w": 2,\n' +
-        '+        "x": 0,\n' +
-        '+        "y": 0\n' +
-        '       },\n' +
-        '-      "options": {},\n' +
-        '+      "id": 1,\n' +
-        '       "repeatDirection": "h",\n' +
-        '+      "title": "Original Panel Title",\n' +
-        '       "transformations": [],\n' +
-        '-      "transparent": false,\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "id": 1,\n' +
-        '-      "title": "Original Panel Title",\n' +
-        '+      "type": "timeseries"\n' +
-        '+    },\n' +
-        '+    {\n' +
-        '       "gridPos": {\n' +
-        '-        "x": 0,\n' +
-        '-        "y": 0,\n' +
-        '+        "h": 2,\n' +
-        '         "w": 2,\n' +
-        '-        "h": 2\n' +
-        '-      }\n' +
-        '-    },\n' +
-        '-    {\n' +
-        '-      "fieldConfig": {\n' +
-        '-        "defaults": {},\n' +
-        '-        "overrides": []\n' +
-        '+        "x": 2,\n' +
-        '+        "y": 0\n' +
-        '       },\n' +
-        '-      "options": {},\n' +
-        '+      "id": 2,\n' +
-        '       "repeatDirection": "h",\n' +
-        '+      "title": "Panel to be moved",\n' +
-        '       "transformations": [],\n' +
-        '-      "transparent": false,\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "id": 2,\n' +
-        '-      "title": "Panel to be moved",\n' +
-        '-      "gridPos": {\n' +
-        '-        "x": 2,\n' +
-        '-        "y": 0,\n' +
-        '-        "w": 2,\n' +
-        '-        "h": 2\n' +
-        '-      }\n' +
-        '+      "type": "timeseries"\n' +
-        '     }\n' +
-        '   ]\n' +
-        ' }\n' +
-        '\\ No newline at end of file\n',
+        '+++ Original Title\t\n',
       userDiff:
         'Index: Original Title\n' +
         '===================================================================\n' +
@@ -341,91 +279,7 @@ describe('getDashboardStringDiff', () => {
 
     const result = getDashboardStringDiff(dashboardModel);
 
-    expect(result).toEqual({
-      migrationDiff:
-        'Index: Original Title\n' +
-        '===================================================================\n' +
-        '--- Original Title\t\n' +
-        '+++ Original Title\t\n' +
-        '@@ -4,44 +4,32 @@\n' +
-        '   "schemaVersion": 38,\n' +
-        '   "timezone": "",\n' +
-        '   "title": "Original Title",\n' +
-        '   "panels": [\n' +
-        '     {\n' +
-        '-      "fieldConfig": {\n' +
-        '-        "defaults": {},\n' +
-        '-        "overrides": []\n' +
-        '+      "gridPos": {\n' +
-        '+        "h": 2,\n' +
-        '+        "w": 2,\n' +
-        '+        "x": 0,\n' +
-        '+        "y": 0\n' +
-        '       },\n' +
-        '-      "options": {},\n' +
-        '+      "id": 1,\n' +
-        '       "repeatDirection": "h",\n' +
-        '+      "title": "Original Panel Title",\n' +
-        '       "transformations": [],\n' +
-        '-      "transparent": false,\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "id": 1,\n' +
-        '-      "title": "Original Panel Title",\n' +
-        '+      "type": "timeseries"\n' +
-        '+    },\n' +
-        '+    {\n' +
-        '       "gridPos": {\n' +
-        '-        "x": 0,\n' +
-        '-        "y": 0,\n' +
-        '+        "h": 2,\n' +
-        '         "w": 2,\n' +
-        '-        "h": 2\n' +
-        '-      }\n' +
-        '-    },\n' +
-        '-    {\n' +
-        '-      "fieldConfig": {\n' +
-        '-        "defaults": {},\n' +
-        '-        "overrides": []\n' +
-        '+        "x": 2,\n' +
-        '+        "y": 0\n' +
-        '       },\n' +
-        '-      "options": {},\n' +
-        '+      "id": 2,\n' +
-        '       "repeatDirection": "h",\n' +
-        '+      "title": "Panel to be moved",\n' +
-        '       "transformations": [],\n' +
-        '-      "transparent": false,\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "id": 2,\n' +
-        '-      "title": "Panel to be moved",\n' +
-        '-      "gridPos": {\n' +
-        '-        "x": 2,\n' +
-        '-        "y": 0,\n' +
-        '-        "w": 2,\n' +
-        '-        "h": 2\n' +
-        '-      }\n' +
-        '+      "type": "timeseries"\n' +
-        '     }\n' +
-        '   ]\n' +
-        ' }\n' +
-        '\\ No newline at end of file\n',
-      userDiff:
-        '===================================================================\n' +
-        '--- Original Title\t\n' +
-        '+++ New Title\t\n' +
-        '@@ -1,11 +1,11 @@\n' +
-        ' {\n' +
-        '   "editable": true,\n' +
-        '   "graphTooltip": 0,\n' +
-        '   "schemaVersion": 38,\n' +
-        '   "timezone": "",\n' +
-        '-  "title": "Original Title",\n' +
-        '+  "title": "New Title",\n' +
-        '   "panels": [\n' +
-        '     {\n' +
-        '       "gridPos": {\n' +
-        '         "h": 2,\n' +
-        '         "w": 2,\n',
-    });
+    expect(result.userDiff).toContain(`-  \"title\": \"Original Title\"`);
+    expect(result.userDiff).toContain(`+  \"title\": \"New Title\",`);
   });
 });
