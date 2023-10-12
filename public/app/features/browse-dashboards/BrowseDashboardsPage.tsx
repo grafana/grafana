@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -103,6 +103,13 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     }
   };
 
+  const onSearchQueryChange = useCallback(
+    (query: string) => {
+      stateManager.onQueryChange(query, true);
+    },
+    [stateManager]
+  );
+
   return (
     <Page
       navId="dashboards/browse"
@@ -126,7 +133,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           placeholder={getSearchPlaceholder(searchState.includePanels)}
           value={searchState.query}
           escapeRegex={false}
-          onChange={(e) => stateManager.onQueryChange(e)}
+          onChange={onSearchQueryChange}
         />
 
         {hasSelection ? <BrowseActions /> : <BrowseFilters />}

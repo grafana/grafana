@@ -37,7 +37,7 @@ export const defaultQueryParams: SearchQueryParams = {
 
 export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
-  doSearchWithDebounce = debounce(() => this.doSearch(), 300);
+  doSearchWithDebounce = debounce((reportInteraction: boolean) => this.doSearch(reportInteraction), 300);
   lastQuery?: SearchQuery;
 
   lastSearchTimestamp = 0;
@@ -58,14 +58,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     });
 
     if (doInitialSearch) {
-      this.doSearch();
+      this.doSearch(false);
     }
   }
 
   /**
    * Updates internal and url state, then triggers a new search
    */
-  setStateAndDoSearch(state: Partial<SearchState>) {
+  setStateAndDoSearch(state: Partial<SearchState>, reportInteraction = false) {
     const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
 
     // Set internal state
@@ -82,7 +82,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     });
 
     // issue new search query
-    this.doSearchWithDebounce();
+    this.doSearchWithDebounce(reportInteraction);
   }
 
   onCloseSearch = () => {
@@ -104,8 +104,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     });
   };
 
-  onQueryChange = (query: string) => {
-    this.setStateAndDoSearch({ query });
+  onQueryChange = (query: string, reportInteraction = false) => {
+    this.setStateAndDoSearch({ query }, reportInteraction);
   };
 
   onRemoveTag = (tagToRemove: string) => {
@@ -210,7 +210,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     return q;
   }
 
-  private doSearch() {
+  private doSearch(reportInteraction: boolean) {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -220,7 +220,9 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       includePanels: this.state.includePanels,
     };
 
-    reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);
+    if (reportInteraction) {
+      reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);
+    }
 
     this.lastQuery = this.getSearchQuery();
 

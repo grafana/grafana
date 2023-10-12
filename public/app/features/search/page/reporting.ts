@@ -21,7 +21,7 @@ export const reportSearchResultInteraction = (eventTrackingNamespace: EventTrack
 };
 
 export const reportSearchQueryInteraction = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
-  reportInteraction(`${eventTrackingNamespace}_query_submitted`, getQuerySearchContext(query));
+  reportInteraction(`${eventTrackingNamespace}_search_submitted`, getQuerySearchContext(query));
 };
 
 export const reportSearchFailedQueryInteraction = (
