@@ -352,14 +352,15 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   if (isSnapshot) {
     if (gridRow.state.$variables) {
       const localVariable = gridRow.state.$variables;
-      const scopedVars: ScopedVars[] = (localVariable.state.variables as LocalValueVariable[]).map((variable) => {
+      const scopedVars: ScopedVars = (localVariable.state.variables as LocalValueVariable[]).reduce((acc, variable) => {
         return {
+          ...acc,
           [variable.state.name]: {
             text: variable.state.text,
             value: variable.state.value,
           },
         };
-      });
+      }, {});
       // @ts-expect-error
       rowPanel.scopedVars = scopedVars;
     }
