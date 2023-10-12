@@ -50,23 +50,24 @@ As our work on improving the user experience of transforming data continues, we'
 
 _Experimental in all editions of Grafana_
 
-Previously the only transformation that supported <!-- link to dashboard variable docs? -->dashboard variables was the **add field from calculation transformation**. We have now extended the support for variables to **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name** and **Join by field**. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support variables, either in the dropdown or as a suggestion when you type **$** or press **<ctrl+space>** <!-- insert image of variable completion -->
+Previously the only transformation that supported [dashboard variables]({{< relref "../dashboards/variables/" >}}) was the **add field from calculation transformation**. We have now extended the support for variables to **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name** and **Join by field**. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support variables, either in the dropdown or as a suggestion when you type **$** or press `<ctrl+space>` {{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
 
 ### New modes for the add field from calculation transformation
 
-<!-- Victor marin -->
+<!-- Victor Marin -->
 
 The add field from calculation transformation has received two new modes.
 
-**Unuary operations** let you apply mathematical operations to a field. The currently supported operations are - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number. - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression. - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression. - **Floor (floor)** - Returns the largest integer less than or equal to a given expression. - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+**Unary operations** let you apply mathematical operations to a field. The currently supported operations are - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number. - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression. - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression. - **Floor (floor)** - Returns the largest integer less than or equal to a given expression. - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+{{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
 
 **Row index** adds a field that represents the row index of the row.
 
-<!-- link to add field by calculation transformation -->
+Learn more about the add field from calculation transformation [here]({{< relref="../panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation" >}})
 
 ### New transformation: Format string
 
-<!-- Solomon Dubock, BI Squad-->
+<!-- Solomon Dubock, BI Squad -->
 
 With the new format string transformation you can manipulate string fields to look nicer! The currently supported operations are.
 
@@ -74,4 +75,4 @@ With the new format string transformation you can manipulate string fields to lo
 - **Trim** removes white space characters at the start and end of your string.
 - **Substring** selects a part of your string field.
 
-<!-- link to format string transformation docs -->
+Learn more about the string format transformation [here]({{< relref="./panels-visualizations/query-transform-data/transform-data/#format-string" >}})
