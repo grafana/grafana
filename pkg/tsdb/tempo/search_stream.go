@@ -104,6 +104,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 		}
 	}
 
+	s.logger.Debug("processStream completed")
 	return nil
 }
 
