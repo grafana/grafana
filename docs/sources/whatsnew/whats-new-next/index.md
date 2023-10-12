@@ -30,7 +30,7 @@ This is useful if you want to limit the access users have to your Grafana instan
 
 We've also added support for controlling allowed groups when using Google OIDC.
 
-Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/index.md) to learn how to use these new options.
+Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
 
 ## Distributed tracing in Grafana Cloud k6
 
