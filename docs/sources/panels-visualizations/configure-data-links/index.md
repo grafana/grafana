@@ -75,7 +75,7 @@ Value-specific variables are available under `__value` namespace:
 
 Data-specific variables are available under `__data` namespace:
 
-- `__data.fields[i]` - value of data field, `i` is an index starting from 0 
+- `__data.fields[i]` - value of data field, `i` is an index starting from 0
 
 ## Template variables
 
