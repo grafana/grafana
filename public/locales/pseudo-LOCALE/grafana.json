@@ -361,10 +361,8 @@
   "graph": {
     "container": {
       "content": "Ŗęŉđęřįŉģ ŧőő mäŉy şęřįęş įŉ ä şįŉģľę päŉęľ mäy įmpäčŧ pęřƒőřmäŉčę äŉđ mäĸę đäŧä ĥäřđęř ŧő řęäđ. Cőŉşįđęř řęƒįŉįŉģ yőūř qūęřįęş.",
-      "show-all-series__one": "Ŝĥőŵ äľľ {{count}}",
-      "show-all-series__other": "Ŝĥőŵ äľľ {{count}}",
-      "show-only-series__one": "Ŝĥőŵįŉģ őŉľy {{count}} şęřįęş",
-      "show-only-series__other": "Ŝĥőŵįŉģ őŉľy {{count}} şęřįęş",
+      "show-all-series": "Ŝĥőŵ äľľ {{length}}",
+      "show-only-series": "Ŝĥőŵįŉģ őŉľy {{MAX_NUMBER_OF_TIME_SERIES}} şęřįęş",
       "title": "Ğřäpĥ"
     }
   },

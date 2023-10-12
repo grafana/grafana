@@ -83,8 +83,8 @@ export const GraphContainer = ({
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
             <span className={styles.warningMessage}>
               <Icon name="exclamation-triangle" aria-hidden="true" />
-              <Trans i18nKey={'graph.container.show-only-series'} count={MAX_NUMBER_OF_TIME_SERIES}>
-                Showing only {{ count: MAX_NUMBER_OF_TIME_SERIES }} series
+              <Trans i18nKey={'graph.container.show-only-series'}>
+                Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
               </Trans>
             </span>
             <Tooltip
@@ -94,9 +94,7 @@ export const GraphContainer = ({
               )}
             >
               <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
-                <Trans i18nKey={'graph.container.show-all-series'} count={data.length}>
-                  Show all {{ count: data.length }}
-                </Trans>
+                <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
               </Button>
             </Tooltip>
           </div>

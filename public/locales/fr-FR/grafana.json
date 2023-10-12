@@ -366,12 +366,8 @@
   "graph": {
     "container": {
       "content": "",
-      "show-all-series__one": "",
-      "show-all-series__many": "",
-      "show-all-series__other": "",
-      "show-only-series__one": "",
-      "show-only-series__many": "",
-      "show-only-series__other": "",
+      "show-all-series": "",
+      "show-only-series": "",
       "title": ""
     }
   },
