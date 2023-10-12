@@ -23,8 +23,11 @@ type ProfileType struct {
 }
 
 func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger.Debug("callProfileTypes called")
+
 	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&v1alpha1.ProfileTypesRequest{}))
 	if err != nil {
+		logger.Debug("callProfileTypes errored", "error", err)
 		return err
 	}
 
@@ -50,52 +53,72 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 
 	data, err := json.Marshal(types)
 	if err != nil {
+		logger.Debug("callProfileTypes errored", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Debug("callProfileTypes errored", "error", err)
 		return err
 	}
+
+	logger.Debug("callProfileTypes succeeded")
 	return nil
 }
 
 func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger.Debug("callLabelNames called")
+
 	res, err := d.client.Labels(ctx, connect.NewRequest(&v1alpha1.LabelsRequest{}))
 	if err != nil {
+		logger.Debug("callLabelNames errored", "error", err)
 		return err
 	}
 
 	data, err := json.Marshal(res.Msg.LabelNames)
 	if err != nil {
+		logger.Debug("callLabelNames errored", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Debug("callLabelNames errored", "error", err)
 		return err
 	}
+
+	logger.Debug("callLabelNames succeeded")
 	return nil
 }
 
 func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger.Debug("callLabelValues called")
+
 	parsedUrl, err := url.Parse(req.URL)
 	if err != nil {
+		logger.Debug("callLabelValues errored", "error", err)
 		return err
 	}
 	label, ok := parsedUrl.Query()["label"]
 	if !ok {
+		logger.Debug("call to parsedUrl.Query not ok")
 		label = []string{""}
 	}
 	res, err := d.client.Values(ctx, connect.NewRequest(&v1alpha1.ValuesRequest{LabelName: label[0]}))
 	if err != nil {
+		logger.Debug("callLabelValues errored", "error", err)
 		return err
 	}
 	data, err := json.Marshal(res.Msg.LabelValues)
 	if err != nil {
+		logger.Debug("callLabelValues errored", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Debug("callLabelValues errored", "error", err)
 		return err
 	}
+
+	logger.Debug("callLabelValues succeeded")
 	return nil
 }
