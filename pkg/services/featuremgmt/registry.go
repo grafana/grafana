@@ -841,7 +841,7 @@ var (
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
 			Description:  "If enabled, the caching backend will gradually serialize query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes, which can help prevent Grafana from running out of memory while attempting to cache very large query responses",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
 		},
