@@ -1,6 +1,12 @@
-import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { type Unsubscribable } from 'rxjs';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, getReadOnlyProxy } from './utils';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import appEvents from 'app/core/app_events';
+import { ShowModalReactEvent } from 'app/types/events';
+
+import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, getReadOnlyProxy, getEventHelpers } from './utils';
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -305,6 +311,90 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       expect(proxy.a()).toBe('testing');
+    });
+  });
+
+  describe('getEventHelpers', () => {
+    describe('openModal', () => {
+      let renderModalSubscription: Unsubscribable | undefined;
+
+      beforeAll(() => {
+        renderModalSubscription = appEvents.subscribe(ShowModalReactEvent, (event) => {
+          const { payload } = event;
+          const Modal = payload.component;
+          render(<Modal />);
+        });
+      });
+
+      afterAll(() => {
+        renderModalSubscription?.unsubscribe();
+      });
+
+      it('should open modal with provided title and body', async () => {
+        const { openModal } = getEventHelpers();
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+        });
+
+        expect(screen.getByRole('dialog')).toBeVisible();
+        expect(screen.getByRole('heading')).toHaveTextContent('Title in modal');
+        expect(screen.getByText('Text in body')).toBeVisible();
+      });
+
+      it('should open modal with default width if not specified', async () => {
+        const { openModal } = getEventHelpers();
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+        });
+
+        const modal = screen.getByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.width).toBe('750px');
+        expect(style.height).toBe('');
+      });
+
+      it('should open modal with specified width', async () => {
+        const { openModal } = getEventHelpers();
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+          width: '70%',
+        });
+
+        const modal = screen.getByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.width).toBe('70%');
+      });
+
+      it('should open modal with specified height', async () => {
+        const { openModal } = getEventHelpers();
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+          height: 600,
+        });
+
+        const modal = screen.getByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.height).toBe('600px');
+      });
+    });
+
+    describe('context', () => {
+      it('should return same object as passed to getEventHelpers', () => {
+        const source = {};
+        const { context } = getEventHelpers(source);
+        expect(context).toBe(source);
+      });
     });
   });
 });
