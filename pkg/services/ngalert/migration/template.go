@@ -1,7 +1,7 @@
 // This file contains code that parses templates from old alerting into a sequence
 // of tokens. Each token can be either a string literal or a variable.
 
-package ualert
+package migration
 
 import (
 	"bytes"
