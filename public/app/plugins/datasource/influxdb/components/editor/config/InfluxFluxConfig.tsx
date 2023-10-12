@@ -7,11 +7,11 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Field, InlineFormLabel, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
-const { Input, SecretFormField } = LegacyForms;
+const WIDTH_LONG = 40;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
 
@@ -38,20 +38,17 @@ export const InfluxFluxConfig = (props: Props) => {
           </div>
         </div>
       </div>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <SecretFormField
-            isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            value={secureJsonData?.token || ''}
-            label="Token"
-            aria-label="Token"
-            labelWidth={10}
-            inputWidth={20}
-            onReset={() => updateDatasourcePluginResetOption(props, 'token')}
-            onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
-          />
-        </div>
-      </div>
+      <Field label="Token">
+        <SecretInput
+          isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
+          value={secureJsonData?.token || ''}
+          label="Token"
+          aria-label="Token"
+          width={WIDTH_LONG}
+          onReset={() => updateDatasourcePluginResetOption(props, 'token')}
+          onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
+        />
+      </Field>
       <div className="gf-form-inline">
         <div className="gf-form">
           <InlineFormLabel className="width-10">Default Bucket</InlineFormLabel>
