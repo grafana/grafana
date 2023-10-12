@@ -69,6 +69,10 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
+{{% admonition type="note" %}}
+Alerts cannot be placed in folders with slashes (\ /) in the name. If you wish to place Alerts in the folder, do not use slashes in the folder name.
+{{% /admonition %}}
+
 **To edit the name of a folder:**
 
 1. Click **Dashboards** in the main menu.
