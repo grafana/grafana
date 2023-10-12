@@ -31,7 +31,7 @@ def clone_pr_branch(ver_mode):
     if ver_mode != "pr":
         return None
 
-    committish = "${DRONE_SOURCE_BRANCH}"
+    source = "${DRONE_SOURCE_BRANCH}"
     return {
         "name": "clone-pr-branch",
         "image": images["go"],
@@ -48,7 +48,7 @@ def clone_pr_branch(ver_mode):
             "ls -l",
             "pwd",
             "cat Makefile",
-            "git checkout {}".format(committish),
+            "git checkout {}".format(source),
         ],
     }
 
@@ -56,7 +56,6 @@ def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
         return None
 
-    committish = "${DRONE_SOURCE_BRANCH}"
     return {
         "name": "swagger-gen",
         "image": images["go"],
