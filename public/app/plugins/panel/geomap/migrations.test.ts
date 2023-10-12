@@ -79,6 +79,10 @@ describe('Worldmap Migrations', () => {
                     "fixed": "img/icons/marker/circle.svg",
                     "mode": "fixed",
                   },
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
+                  },
                   "textConfig": {
                     "fontSize": 12,
                     "offsetX": 0,
@@ -221,6 +225,10 @@ describe('geomap migrations', () => {
                   "symbol": {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
+                  },
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
                   },
                   "textConfig": {
                     "fontSize": 12,
