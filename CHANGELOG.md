@@ -1,3 +1,18 @@
+<!-- 9.4.17 START -->
+
+# 9.4.17 (2023-10-11)
+
+### Features and enhancements
+
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData). [#74615](https://github.com/grafana/grafana/issues/74615), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+### Bug fixes
+
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74812](https://github.com/grafana/grafana/issues/74812), [@joshhunt](https://github.com/joshhunt)
+- **SQL Datasources:** Fix variable throwing error if query returns no data. [#74609](https://github.com/grafana/grafana/issues/74609), [@mdvictor](https://github.com/mdvictor)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+
+<!-- 9.4.17 END -->
 <!-- 9.4.15 START -->
 
 # 9.4.15 (2023-09-18)
