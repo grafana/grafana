@@ -2,7 +2,6 @@ package ualert
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -31,13 +30,11 @@ func (c migrationLogToKVStore) SQL(migrator.Dialect) string {
 }
 
 func (c migrationLogToKVStore) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	logs, err := mg.GetMigrationLog()
+	migrationRun, err := sess.Table("migration_log").Get(&migrator.MigrationLog{MigrationID: migTitle})
 	if err != nil {
 		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
-		os.Exit(1)
+		return err
 	}
-
-	_, migrationRun := logs[migTitle]
 
 	var anyOrg int64 = 0
 	now := time.Now()
