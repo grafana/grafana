@@ -98,6 +98,15 @@ func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.M
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	if len(cmd.Login) == 0 {
+		cmd.Login = cmd.Email
+	}
+
+	// if login is still empty both email and login field is missing
+	if len(cmd.Login) == 0 {
+		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
+	}
+
 	cmdOrg := org.GetOrgIDForNewUserCommand{
 		Email:        cmd.Email,
 		Login:        cmd.Login,
@@ -215,10 +224,20 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if len(cmd.Login) == 0 {
+		cmd.Login = cmd.Email
+	}
+
+	// if login is still empty both email and login field is missing
+	if len(cmd.Login) == 0 {
+		return user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
+	}
+
 	if s.cfg.CaseInsensitiveLogin {
 		cmd.Login = strings.ToLower(cmd.Login)
 		cmd.Email = strings.ToLower(cmd.Email)
 	}
+
 	return s.store.Update(ctx, cmd)
 }
 

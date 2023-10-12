@@ -129,6 +129,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	input := strings.NewReader(testPatchUserPreferencesCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			UserID:  1,
 			OrgID:   1,
 			OrgRole: org.RoleAdmin,
 		})
@@ -141,6 +142,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	input = strings.NewReader(testPatchUserPreferencesCmdBad)
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			UserID:  1,
 			OrgID:   1,
 			OrgRole: org.RoleAdmin,
 		})
@@ -153,6 +155,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			UserID:  1,
 			OrgID:   1,
 			OrgRole: org.RoleAdmin,
 		})
@@ -174,6 +177,7 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	input := strings.NewReader(testPatchOrgPreferencesCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
+			UserID:      1,
 			OrgID:       1,
 			OrgRole:     org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgsPreferencesWrite: {}}},
@@ -187,6 +191,7 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	input = strings.NewReader(testPatchOrgPreferencesCmdBad)
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
+			UserID:      1,
 			OrgID:       1,
 			OrgRole:     org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgsPreferencesWrite: {}}},

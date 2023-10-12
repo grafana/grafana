@@ -18,7 +18,7 @@ import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -79,9 +79,21 @@ describe('RuleEditor grafana managed rules', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
-  });
 
-  disableRBAC();
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersWrite,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
+  });
 
   it('can edit grafana managed rule', async () => {
     const uid = 'FOOBAR123';

@@ -1,6 +1,6 @@
 import { computeErrorMessage, getErrorNodes } from './errorHighlighting';
 
-describe('computeErrorMarkers', () => {
+describe('Check for syntax errors in query', () => {
   it.each([
     ['{span.http.status_code = }', 'Invalid value after comparison or aritmetic operator.'],
     ['{span.http.status_code 200}', 'Invalid comparison operator after field expression.'],
@@ -59,8 +59,20 @@ describe('computeErrorMarkers', () => {
     ['{.foo=300} && {.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
     ['{.foo=300} | max(duration) > 1hs', 'Invalid value after comparison operator.'],
     ['{ span.http.status_code', 'Invalid comparison operator after field expression.'],
+    ['abcxyz', 'Invalid query.'],
   ])('error message for invalid query - %s, %s', (query: string, expectedErrorMessage: string) => {
     const errorNode = getErrorNodes(query)[0];
     expect(computeErrorMessage(errorNode)).toBe(expectedErrorMessage);
+  });
+
+  it.each([
+    ['123'],
+    ['abc'],
+    ['1a2b3c'],
+    ['{span.status = $code}'],
+    ['{span.${attribute} = "GET"}'],
+    ['{span.${attribute:format} = ${value:format} }'],
+  ])('valid query - %s', (query: string) => {
+    expect(getErrorNodes(query)).toStrictEqual([]);
   });
 });

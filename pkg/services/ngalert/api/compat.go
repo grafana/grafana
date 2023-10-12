@@ -55,10 +55,10 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 }
 
 // ProvisionedAlertRuleFromAlertRules converts a collection of models.AlertRule to definitions.ProvisionedAlertRules with provenance status models.ProvenanceNone
-func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.ProvisionedAlertRules {
+func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule, provenances map[string]models.Provenance) definitions.ProvisionedAlertRules {
 	result := make([]definitions.ProvisionedAlertRule, 0, len(rules))
 	for _, r := range rules {
-		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, models.ProvenanceNone))
+		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, provenances[r.UID]))
 	}
 	return result
 }

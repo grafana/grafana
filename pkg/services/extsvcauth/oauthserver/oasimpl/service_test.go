@@ -2,7 +2,6 @@ package oasimpl
 
 import (
 	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -18,16 +17,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcmocks"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
-	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -52,7 +50,7 @@ type TestEnv struct {
 	OAuthStore  *oastest.MockStore
 	UserService *usertest.FakeUserService
 	TeamService *teamtest.FakeService
-	SAService   *satests.MockServiceAccountService
+	SAService   *extsvcmocks.MockExtSvcAccountsService
 }
 
 func setupTestEnv(t *testing.T) *TestEnv {
@@ -77,7 +75,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		OAuthStore:  &oastest.MockStore{},
 		UserService: usertest.NewUserServiceFake(),
 		TeamService: teamtest.NewFakeService(),
-		SAService:   &satests.MockServiceAccountService{},
+		SAService:   extsvcmocks.NewMockExtSvcAccountsService(t),
 	}
 	env.S = &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
@@ -94,10 +92,9 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 
 	env.S.oauthProvider = newProvider(config, env.S, &signingkeystest.FakeSigningKeysService{
-		ExpectedKeys: map[string]crypto.Signer{
-			"default": pk,
-		},
-		ExpectedError: nil,
+		ExpectedSinger: pk,
+		ExpectedKeyID:  "default",
+		ExpectedError:  nil,
 	})
 
 	return env
@@ -105,22 +102,6 @@ func setupTestEnv(t *testing.T) *TestEnv {
 
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
-
-	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
-	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "None"}
-	prevSaID := int64(3)
-	// Using a function to prevent modifying the same object in the tests
-	client1 := func() *oauthserver.OAuthExternalService {
-		return &oauthserver.OAuthExternalService{
-			Name:             serviceName,
-			ClientID:         "RANDOMID",
-			Secret:           "RANDOMSECRET",
-			GrantTypes:       "client_credentials",
-			PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
-			ServiceAccountID: prevSaID,
-			SelfPermissions:  []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
-		}
-	}
 
 	tests := []struct {
 		name       string
@@ -135,6 +116,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				// No client at the beginning
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
+
+				// Return a service account ID
+				env.SAService.On("ManageExtSvcAccount", mock.Anything, mock.Anything).Return(int64(0), nil)
 			},
 			cmd: &extsvcauth.ExternalServiceRegistration{
 				Name:             serviceName,
@@ -152,99 +136,38 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 		},
 		{
-			name: "should create a service account",
+			name: "should allow client credentials grant with correct permissions",
 			init: func(env *TestEnv) {
 				// No client at the beginning
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
-				// Service account and permission creation
-				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
-				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
+
+				// Return a service account ID
+				env.SAService.On("ManageExtSvcAccount", mock.Anything, mock.Anything).Return(int64(10), nil)
 			},
 			cmd: &extsvcauth.ExternalServiceRegistration{
-				Name:             serviceName,
-				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
+				Name: serviceName,
 				Self: extsvcauth.SelfCfg{
 					Enabled:     true,
-					Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
+					Permissions: []ac.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}},
 				},
-			},
-			mockChecks: func(t *testing.T, env *TestEnv) {
-				// Check that the client has a service account and the correct grant type
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
-					return client.Name == serviceName &&
-						client.GrantTypes == "client_credentials" && client.ServiceAccountID == sa1.Id
-				}))
-				// Check that the service account is created in the correct org with the correct role
-				env.SAService.AssertCalled(t, "CreateServiceAccount", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
-					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == serviceName && *cmd.Role == roletype.RoleNone
-					}),
-				)
-			},
-		},
-		{
-			name: "should delete the service account",
-			init: func(env *TestEnv) {
-				// Existing client (with a service account hence a role)
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(client1(), nil)
-				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
-				// No permission anymore will trigger deletion of the service account and its role
-				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
-			},
-			cmd: &extsvcauth.ExternalServiceRegistration{
-				Name:             serviceName,
 				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
-				Self: extsvcauth.SelfCfg{
-					Enabled: false,
-				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
-				// Check that the service has no service account anymore
-				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
-					return client.Name == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
+				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
+					return name == serviceName
 				}))
-				// Check that the service account is retrieved with the correct ID
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
-					mock.MatchedBy(func(saID int64) bool { return saID == prevSaID }))
-				// Check that the service account is deleted in the correct org
-				env.SAService.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
-					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
-					mock.MatchedBy(func(saID int64) bool { return saID == sa1.Id }))
-				// Check that the associated role is deleted
-				env.AcStore.AssertCalled(t, "DeleteExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(extSvcName string) bool { return extSvcName == serviceName }))
-			},
-		},
-		{
-			name: "should update the service account",
-			init: func(env *TestEnv) {
-				// Existing client (with a service account hence a role)
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(client1(), nil)
-				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
-				// Update the service account permissions
-				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
-			},
-			cmd: &extsvcauth.ExternalServiceRegistration{
-				Name:             serviceName,
-				OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
-				Self: extsvcauth.SelfCfg{
-					Enabled:     true,
-					Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
-				},
-			},
-			mockChecks: func(t *testing.T, env *TestEnv) {
-				// Ensure new permissions are in place
-				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
-						return cmd.ServiceAccountID == sa1.Id && cmd.ExternalServiceID == client1().Name &&
-							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
-							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"}
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.OAuthExternalService) bool {
+					return client.Name == serviceName && len(client.ClientID) > 0 && len(client.Secret) > 0 &&
+						client.GrantTypes == string(fosite.GrantTypeClientCredentials) &&
+						len(client.PublicPem) > 0 && client.ServiceAccountID == 10 &&
+						len(client.ImpersonatePermissions) == 0 &&
+						len(client.SelfPermissions) > 0
+				}))
+				// Check that despite no credential_grants the service account still has a permission to impersonate users
+				env.SAService.AssertCalled(t, "ManageExtSvcAccount", mock.Anything,
+					mock.MatchedBy(func(cmd *extsvcauth.ManageExtSvcAccountCmd) bool {
+						return len(cmd.Permissions) == 1 && cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}
 					}))
 			},
 		},
@@ -255,8 +178,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				// The service account needs to be created with a permission to impersonate users
-				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
-				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
+				env.SAService.On("ManageExtSvcAccount", mock.Anything, mock.Anything).Return(int64(10), nil)
 			},
 			cmd: &extsvcauth.ExternalServiceRegistration{
 				Name:             serviceName,
@@ -277,8 +199,8 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
 				}))
 				// Check that despite no credential_grants the service account still has a permission to impersonate users
-				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
+				env.SAService.AssertCalled(t, "ManageExtSvcAccount", mock.Anything,
+					mock.MatchedBy(func(cmd *extsvcauth.ManageExtSvcAccountCmd) bool {
 						return len(cmd.Permissions) == 1 && cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}
 					}))
 			},
@@ -396,11 +318,11 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account was not found",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{}, sa.ErrServiceAccountNotFound)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, sa.ErrServiceAccountNotFound)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, 1, 1)
 			},
 			wantErr: true,
 		},
@@ -408,12 +330,12 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account has no permissions",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{}, nil)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{}, nil)
 				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, 1, 1)
 			},
 			wantErr: true,
 		},
@@ -421,12 +343,12 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return correctly",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{Id: 1}, nil)
+				env.SAService.On("RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1)).Return(&extsvcauth.ExtSvcAccount{ID: 1}, nil)
 				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return([]ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}, nil)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
-				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, int64(1), int64(1))
+				env.SAService.AssertCalled(t, "RetrieveExtSvcAccount", mock.Anything, int64(1), int64(1))
 			},
 			wantPerm: []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		},
