@@ -2,9 +2,12 @@ package routing
 
 import (
 	"net/http"
+	"runtime"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -51,8 +54,12 @@ type RouteRegister interface {
 
 type RegisterNamedMiddleware func(name string) web.Handler
 
-func ProvideRegister() *RouteRegisterImpl {
-	return NewRouteRegister(middleware.ProvideRouteOperationName)
+func ProvideRegister(cfg *setting.Cfg) *RouteRegisterImpl {
+	rr := NewRouteRegister(middleware.ProvideRouteOperationName)
+	if cfg.Env == setting.Dev {
+		rr.debug = true
+	}
+	return rr
 }
 
 // NewRouteRegister creates a new RouteRegister with all middlewares sent as params
@@ -62,6 +69,8 @@ func NewRouteRegister(namedMiddlewares ...RegisterNamedMiddleware) *RouteRegiste
 		routes:           []route{},
 		subfixHandlers:   []web.Handler{},
 		namedMiddlewares: namedMiddlewares,
+		debug:            false,
+		log:              log.New("route.register"),
 	}
 }
 
@@ -77,6 +86,8 @@ type RouteRegisterImpl struct {
 	namedMiddlewares []RegisterNamedMiddleware
 	routes           []route
 	groups           []*RouteRegisterImpl
+	debug            bool
+	log              log.Logger
 }
 
 func (rr *RouteRegisterImpl) Reset() {
@@ -111,6 +122,8 @@ func (rr *RouteRegisterImpl) Group(pattern string, fn func(rr RouteRegister), ha
 		subfixHandlers:   append(rr.subfixHandlers, handlers...),
 		routes:           []route{},
 		namedMiddlewares: rr.namedMiddlewares,
+		debug:            rr.debug,
+		log:              rr.log,
 	}
 
 	fn(group)
@@ -154,6 +167,12 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handl
 		if r.pattern == fullPattern && r.method == method {
 			panic("cannot add duplicate route")
 		}
+	}
+
+	if rr.debug && rr.log != nil {
+		// Look twice up the stack as this is a private method called by public methods outside of this package.
+		_, file, line, _ := runtime.Caller(2)
+		rr.log.Debug("register route", "method", method, "pattern", fullPattern, "file", file, "line", line)
 	}
 
 	rr.routes = append(rr.routes, route{

@@ -66,7 +66,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
-	routing := routing.ProvideRegister()
+	routing := routing.ProvideRegister(cfg)
 	featMgmt, err := featuremgmt.ProvideManagerService(cfg, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
