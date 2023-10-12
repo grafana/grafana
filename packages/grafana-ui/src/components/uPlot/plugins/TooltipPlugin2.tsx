@@ -126,10 +126,11 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
       }
     };
 
-    const mousedownOutside = (e: MouseEvent) => {
-      let clickedOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
+    // in some ways this is similar to ClickOutsideWrapper.tsx
+    const downEventOutside = (e: Event) => {
+      let isOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
 
-      if (clickedOutside) {
+      if (isOutside) {
         dismiss();
       }
     };
@@ -146,9 +147,11 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         _plot!.cursor._lock = _isPinned;
 
         if (_isPinned) {
-          document.addEventListener('mousedown', mousedownOutside, true);
+          document.addEventListener('mousedown', downEventOutside, true);
+          document.addEventListener('keydown', downEventOutside, true);
         } else {
-          document.removeEventListener('mousedown', mousedownOutside, true);
+          document.removeEventListener('mousedown', downEventOutside, true);
+          document.removeEventListener('keydown', downEventOutside, true);
         }
 
         pendingPinned = false;
