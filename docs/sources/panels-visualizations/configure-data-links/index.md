@@ -50,7 +50,7 @@ These variables allow you to include the current time range in the data link URL
 
 ## Series variables
 
-Series specific variables are available under `__series` namespace:
+Series-specific variables are available under `__series` namespace:
 
 - `__series.name` - series name to the URL
 
@@ -70,6 +70,12 @@ Value-specific variables are available under `__value` namespace:
 - `__value.numeric` - numeric representation of a value
 - `__value.text` - text representation of a value
 - `__value.calc` - calculation name if the value is result of calculation
+
+## Data variables
+
+Data-specific variables are available under `__data` namespace:
+
+- `__data.fields[i]` - value of data field, `i` is an index starting from 0 
 
 ## Template variables
 
