@@ -1,4 +1,4 @@
-package api
+package teamapi
 
 import (
 	"errors"
@@ -7,9 +7,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,13 +28,13 @@ import (
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	cmd := team.CreateTeamCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	t, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
+	t, err := tapi.teamService.CreateTeam(cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusConflict, "Team name taken", err)
@@ -42,7 +44,7 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 
 	// Clear permission cache for the user who's created the team, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	tapi.ac.ClearUserPermissionCache(c.SignedInUser)
 
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
@@ -55,7 +57,7 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)
 			break
 		}
-		if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
+		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
 			t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
@@ -80,7 +82,7 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 	cmd := team.UpdateTeamCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -92,7 +94,7 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if err := hs.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
+	if err := tapi.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusBadRequest, "Team name taken", err)
 		}
@@ -112,14 +114,14 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Response {
 	orgID := c.SignedInUser.GetOrgID()
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if err := hs.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
+	if err := tapi.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete Team. ID not found", nil)
 		}
@@ -137,7 +139,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Respon
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -159,11 +161,11 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
-		HiddenUsers:  hs.Cfg.HiddenUsers,
+		HiddenUsers:  tapi.cfg.HiddenUsers,
 		SortOpts:     sortOpts,
 	}
 
-	queryResult, err := hs.teamService.SearchTeams(c.Req.Context(), &query)
+	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
 	}
@@ -174,7 +176,7 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
+	metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
 	if len(metadata) > 0 {
 		for _, team := range queryResult.Teams {
 			team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
@@ -197,7 +199,7 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -207,10 +209,10 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 		OrgID:        c.SignedInUser.GetOrgID(),
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
-		HiddenUsers:  hs.Cfg.HiddenUsers,
+		HiddenUsers:  tapi.cfg.HiddenUsers,
 	}
 
-	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
+	queryResult, err := tapi.teamService.GetTeamByID(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, "Team not found", err)
@@ -220,7 +222,7 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 	}
 
 	// Add accesscontrol metadata
-	queryResult.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
+	queryResult.AccessControl = tapi.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
 	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
@@ -234,13 +236,13 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 // 200: getPreferencesResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamPreferences(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.getPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId)
+	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -252,7 +254,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *contextmodel.ReqContext) response.Re
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -263,7 +265,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences
@@ -354,4 +356,27 @@ type CreateTeamResponse struct {
 		TeamId  int64  `json:"teamId"`
 		Message string `json:"message"`
 	} `json:"body"`
+}
+
+// getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
+// Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
+func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
+	prefix string, resourceIDs map[string]bool) map[string]accesscontrol.Metadata {
+	if !c.QueryBool("accesscontrol") {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	if len(c.SignedInUser.GetPermissions()) == 0 {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
+}
+
+// Metadata helpers
+// getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
+func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
+	orgID int64, prefix string, resourceID string) accesscontrol.Metadata {
+	ids := map[string]bool{resourceID: true}
+	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }

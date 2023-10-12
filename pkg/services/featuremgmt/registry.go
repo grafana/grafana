@@ -688,14 +688,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:            "noBasicRole",
-			Description:     "Enables a new role that has no permissions by default",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    true,
-			Owner:           grafanaAuthnzSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
 			Stage:           FeatureStagePrivatePreview,
@@ -747,6 +739,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:            "libraryPanelRBAC",
+			Description:     "Enables RBAC support for library panels",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -764,8 +764,9 @@ var (
 			Name:         "alertingInsights",
 			Description:  "Show the new alerting insights landing page",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -858,6 +859,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "awsDatasourcesNewFormStyling",
+			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "pluginsInstrumentationStatusSource",
