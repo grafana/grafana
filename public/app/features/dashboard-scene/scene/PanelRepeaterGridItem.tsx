@@ -148,7 +148,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     }
   }
 
-  private getMaxPerRow(): number {
+  public getMaxPerRow(): number {
     return this.state.maxPerRow ?? 4;
   }
 
