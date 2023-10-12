@@ -130,8 +130,9 @@ describe('GrafanaModifyExport', () => {
     const drawer = await ui.exportDrawer.dialog.find();
     expect(drawer).toBeInTheDocument();
 
-    await waitFor(() => expect(ui.exportDrawer.loadingSpinner.query(drawer)).not.toBeInTheDocument());
-
-    expect(ui.exportDrawer.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
+    expect(ui.exportDrawer.yamlTab.get(drawer)).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => {
+      expect(ui.exportDrawer.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
+    });
   });
 });
