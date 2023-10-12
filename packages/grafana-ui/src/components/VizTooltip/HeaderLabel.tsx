@@ -3,71 +3,48 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { Tooltip, VerticalGroup } from '..';
+import { HorizontalGroup, Tooltip } from '..';
 import { useStyles2 } from '../../themes';
 
 import { LabelValue } from './types';
 
 interface Props {
-  headerLabel: LabelValue[];
+  headerLabel: LabelValue;
 }
 
 export const HeaderLabel = ({ headerLabel }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <VerticalGroup justify-content="space-between" spacing="lg">
+    <HorizontalGroup justify-content="space-between" spacing="lg" wrap>
       <div className={styles.wrapper}>
-        {headerLabel.map((label, index) => {
-          const { color } = label;
-          return (
-            <div key={index} className={styles.header}>
-              <span className={styles.label}>
-                {color ? <span className={styles.labelColor} style={{ backgroundColor: color }}></span> : null}
-                {label.label}
-              </span>
-              <Tooltip content={label.value ? label.value.toString() : ''}>
-                <span className={styles.value}>{label.value}</span>
-              </Tooltip>
-            </div>
-          );
-        })}
+        <span className={styles.label}>{headerLabel.label}</span>
+        <Tooltip content={headerLabel.value ? headerLabel.value.toString() : ''}>
+          <span className={styles.value}>{headerLabel.value}</span>
+        </Tooltip>
       </div>
-    </VerticalGroup>
+    </HorizontalGroup>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
-    display: 'flex',
-    alignItems: 'center',
     color: theme.colors.text.secondary,
     paddingRight: theme.spacing(0.5),
     fontWeight: 400,
-  }),
-  labelColor: css({
-    width: '12px',
-    height: '12px',
-    display: 'inline-block',
-    borderRadius: theme.shape.radius.default,
-    marginRight: '4px',
   }),
   value: css({
     fontWeight: 500,
     lineHeight: '18px',
     alignSelf: 'center',
   }),
-  header: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-    // maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
-  }),
   wrapper: css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
+    flexDirection: 'row',
+    textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     width: '250px',
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
   }),
 });

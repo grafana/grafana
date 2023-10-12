@@ -41,33 +41,40 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const xField = series.x(frame);
   const yField = series.y(frame);
 
-  const getHeaderLabel = (): LabelValue[] => {
-    const header: LabelValue[] = [
+  const getHeaderLabel = (): LabelValue => {
+    return {
+      label: getFieldDisplayName(xField, frame),
+      value: fmt(xField, xField.values[rowIndex]),
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      color: series.pointColor(frame) as string,
+    };
+  };
+
+  const getLabelValue = (): LabelValue[] => {
+    return [
       {
-        label: getFieldDisplayName(xField, frame),
-        value: fmt(xField, xField.values[rowIndex]),
+        label: getFieldDisplayName(yField, frame),
+        value: fmt(yField, yField.values[rowIndex]),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         color: series.pointColor(frame) as string,
       },
     ];
-
-    return header;
   };
 
   const getContentLabel = (): LabelValue[] => {
-    const yValue: YValue = {
-      name: getFieldDisplayName(yField, frame),
-      val: yField.values[rowIndex],
-      field: yField,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: series.pointColor(frame) as string,
-    };
+    // const yValue: YValue = {
+    //   name: getFieldDisplayName(yField, frame),
+    //   val: yField.values[rowIndex],
+    //   field: yField,
+    //   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    //   color: series.pointColor(frame) as string,
+    // };
 
     const content: LabelValue[] = [
-      {
-        label: yValue.name,
-        value: fmt(yValue.field, yValue.val),
-      },
+      // {
+      //   label: yValue.name,
+      //   value: fmt(yValue.field, yValue.val),
+      // },
     ];
 
     // add extra fields
@@ -102,7 +109,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} />
+      <VizTooltipHeader headerLabel={getHeaderLabel()} keyValuePairs={getLabelValue()} />
       <VizTooltipContent contentLabelValue={getContentLabel()} />
       {isPinned && <VizTooltipFooter dataLinks={getLinks()} canAnnotate={false} />}
     </div>
