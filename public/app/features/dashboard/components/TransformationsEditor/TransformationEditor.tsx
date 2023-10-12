@@ -9,8 +9,10 @@ import {
   transformDataFrame,
   TransformerRegistryItem,
   getFrameMatchers,
+  DataTransformContext,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
 
 import { TransformationsEditorTransformation } from './types';
@@ -44,14 +46,19 @@ export const TransformationEditor = ({
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
     const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
-    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe((v) => {
+
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v),
+    };
+
+    const inputSubscription = transformDataFrame(inputTransforms, data, ctx).subscribe((v) => {
       if (matcher) {
         v = data.filter((v) => matcher(v));
       }
       setInput(v);
     });
-    const outputSubscription = transformDataFrame(inputTransforms, data)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before)))
+    const outputSubscription = transformDataFrame(inputTransforms, data, ctx)
+      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
 
     return function unsubscribe() {

@@ -124,8 +124,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// will be connected over Redis PUB/SUB. Presence will work
 		// globally since kept inside Redis.
 		redisAddress := g.Cfg.LiveHAEngineAddress
+		redisPassword := g.Cfg.LiveHAEnginePassword
 		redisShardConfigs := []centrifuge.RedisShardConfig{
-			{Address: redisAddress},
+			{Address: redisAddress, Password: redisPassword},
 		}
 		var redisShards []*centrifuge.RedisShard
 		for _, redisConf := range redisShardConfigs {
@@ -160,7 +161,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
-			Addr: g.Cfg.LiveHAEngineAddress,
+			Addr:     g.Cfg.LiveHAEngineAddress,
+			Password: g.Cfg.LiveHAEnginePassword,
 		})
 		cmd := redisClient.Ping(context.Background())
 		if _, err := cmd.Result(); err != nil {
