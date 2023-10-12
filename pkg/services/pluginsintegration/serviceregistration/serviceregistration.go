@@ -47,13 +47,20 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		}
 	}
 
-	extSvc, err := s.os.SaveExternalService(ctx, &extsvcauth.ExternalServiceRegistration{
-		Name:             svcName,
-		Impersonation:    impersonation,
-		Self:             self,
-		AuthProvider:     extsvcauth.OAuth2Server,
-		OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
-	})
+	registration := &extsvcauth.ExternalServiceRegistration{
+		Name:          svcName,
+		Impersonation: impersonation,
+		Self:          self,
+	}
+
+	// Default authProvider now is ServiceAccounts
+	registration.AuthProvider = extsvcauth.ServiceAccounts
+	if svc.AuthProvider != nil && *svc.AuthProvider == plugindef.AuthProviderOAuth2Server {
+		registration.AuthProvider = extsvcauth.OAuth2Server
+		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
+	}
+
+	extSvc, err := s.os.SaveExternalService(ctx, registration)
 	if err != nil {
 		return nil, err
 	}
