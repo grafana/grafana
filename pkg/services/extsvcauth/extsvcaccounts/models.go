@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	KVStoreType = "extsvc-token"
+	kvStoreType = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"
 )
