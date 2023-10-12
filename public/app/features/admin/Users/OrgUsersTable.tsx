@@ -15,9 +15,8 @@ import {
   Column,
   FetchDataFunc,
   Pagination,
-  HorizontalGroup,
-  VerticalGroup,
 } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -187,7 +186,7 @@ export const OrgUsersTable = ({
   );
 
   return (
-    <VerticalGroup spacing="md" data-testid={selectors.container}>
+    <Flex direction={'column'} gap={2} data-testid={selectors.container}>
       <div className={styles.wrapper}>
         <InteractiveTable
           columns={columns}
@@ -195,9 +194,9 @@ export const OrgUsersTable = ({
           getRowId={(user) => String(user.userId)}
           fetchData={fetchData}
         />
-        <HorizontalGroup justify="flex-end">
+        <Flex justifyContent="flex-end">
           <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-        </HorizontalGroup>
+        </Flex>
       </div>
       {Boolean(userToRemove) && (
         <ConfirmModal
@@ -217,7 +216,7 @@ export const OrgUsersTable = ({
           }}
         />
       )}
-    </VerticalGroup>
+    </Flex>
   );
 };
 
@@ -226,20 +225,16 @@ const InfoCell = ({ row: { original } }: Cell) => {
   const basicRoleDisabled = getBasicRoleDisabled(original);
   return (
     basicRoleDisabled && (
-      <div className={styles.row}>
+      <Flex alignItems={'center'}>
         <Tooltip content={disabledRoleMessage}>
           <Icon name="question-circle" className={styles.icon} />
         </Tooltip>
-      </div>
+      </Flex>
     )
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    alignItems: 'center',
-  }),
   icon: css({
     marginLeft: theme.spacing(1),
   }),
