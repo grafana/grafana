@@ -23,6 +23,7 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO } from '../../../types';
+import { DashboardSearchHit } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
 import { AlertingQueryResponse } from './state/AlertingQueryRunner';
@@ -376,6 +377,13 @@ export function mockExportApi(server: SetupServer) {
         })
       );
     },
+    modifiedExport: (namespace: string, response: Record<string, string>) => {
+      server.use(
+        rest.post(`/api/ruler/grafana/api/v1/rules/${namespace}/export`, (req, res, ctx) => {
+          return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
+        })
+      );
+    },
   };
 }
 
@@ -383,6 +391,14 @@ export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
       server.use(rest.get(`/api/folders/${folderUid}`, (_, res, ctx) => res(ctx.status(200), ctx.json(response))));
+    },
+  };
+}
+
+export function mockSearchApi(server: SetupServer) {
+  return {
+    search: (results: DashboardSearchHit[]) => {
+      server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
     },
   };
 }
