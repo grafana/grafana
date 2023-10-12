@@ -16,21 +16,21 @@ Make sure you have permission to add new correlations. Only users with write per
 ## Create a correlation in Explore's Correlations Editor
 
 1. Go to Explore page.
-1. Click "Add to..." button in the top toolbar and select "Add Correlation" (you can also select "Correlations Editor" in [Command Palette]({{< relref "/docs/grafana/latest/search/#command-palette" >}}).
+1. Select a data source that you would like to be [the source data source]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration#source-data-source-and-result-field" >}}) for a new correlation.
+1. Run a query producing data in [a supported visualization]({{< relref "/docs/grafana/latest/administration/correlations/#correlations" >}}).
+1. Click "+ Add" button in the top toolbar and select "Add correlation" (you can also select "Correlations Editor" from the [Command Palette]({{< relref "/docs/grafana/latest/search/#command-palette" >}})).
 1. Explore is now in Correlations Editor mode indicated by a blue border.
-1. Select a data source that you would like to be [the source data source]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration/#source-data-source-and-result-field" >}} for a new correlation.
-1. Run a query producing data in [a supported visualization]({{< relref "/docs/grafana/latest/administration/correlations/#correlations" >}}.
-1. The visualization is enriched with links. 
-1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/#correlations" >}}
-   - Logs panel: open log details and click on a link next to a field
-   - Table: click on any cell 
-1. Explore opens in split view. 
-1. Use the right pane to setup [target query source of the correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration/#target-query" >}}.
-1. In the target query use variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
-1. Provided optional label and description.
+1. The visualization is enriched with links allowing to create new correlations. Links are displayed on the data the can be used to build a new query:
+   - Logs: links are displayed next to fields values inside log details
+   - Table: every cell is a link
+1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration" >}}).
+1. Explore opens in split view. The right pane is used to setup [the target query source of the correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration#target-query" >}}).
+1. Build target query using [variables syntax]({{< relref "/docs/grafana/latest/dashboards/variables/variable-syntax/" >}}) with variables from the list provided at the top of the pane. The list contains sample values from the selected data row displayed next to the variable name.
+1. Provide optional label and description. Label is used as the name of the link inside the visualization. I can contain variables.
 1. Click "Save" button in the blue bar to save the correlation and exit Correlations Editor mode.
+1. The link used to create the correlation will be replaced with a data link in each row. The variables will be dynamically replaced with values from a selected row.
 
-Please check and example how to create a test correlation.
+Please check [an example]({{< relref "/docs/grafana/latest/administration/correlations/use-correlations-editor-in-explore/" >}}) to see how to create a test correlation.
 
 ## Create a correlation in Administration page
 

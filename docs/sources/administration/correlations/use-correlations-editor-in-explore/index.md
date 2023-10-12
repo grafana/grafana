@@ -11,44 +11,47 @@ weight: 70
 
 ## Before you begin
 
-This example walks through creating a correlation in a test data source in Explore's Correlations Editor. 
+This example walks through creating a correlation using Explore's Correlations Editor. 
 
-Please make sure you have setu up [a test data source]({{< relref "/docs/grafana/latest/datasources/testdata/#testdata-data-source" >}}. 
+Correlations allow you to use results of one query to run a new query in any data source. In this example you will run a query that renders tabular data. The data will be used to run a different query that yields a graph result. 
 
+Please make sure you have setup up [a test data source]({{< relref "/docs/grafana/latest/datasources/testdata/#testdata-data-source" >}}).
 
 ## Create a new correlation
 
 1. Go to Explore.
-1. Click on "Add to..." dropdown and select "Add correlation" button.
-1. Explore is now in Correlations Editor mode indicated by blue border.
 1. Select test data source.
-1. Select scenario: Logs.
-1. Expand log details on a row.
-1. Click "correlate with hostname" button.
-1. On the right pane select the same data source.
-1. Select scenario: CSV Content.
-1. Provide following content:
+1. Click on "+ Add" dropdown and select "Add correlation" button.
+1. Explore is now in Correlations Editor mode indicated by a blue border.
+1. Select scenario: CSV File.
+1. Select file: population_by_state.csv.
+1. Note that each cell is a link that you can use to create a new correlation. 
 
-```csv
-Scenario,Values
-Flat,"10,10,10,10,10,10,10,10"
-Spike,"10,10,10,10,10,10,10,10,10,100,10,10,10,10,10,10,10,10,10,10"
-Zig-Zag,"10,100,10,100,10,100,10,100,10,100,10,100,10,100,10,100,10,100,10,100,10,100"
-```
+   {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-source-10.2.png" max-width="600px" caption="Selecting the source of a correlation" >}}
 
-1. Run the query.
-1. Click on one of the scenario names, e.g. "Zig-Zag"
-1. Note that the same data source is selected.
-1. Select scenario: CSV Metric Values
-1. Replace **string input** with variable ${Values}
-1. Note how the graph is updated with values from provided variable
-1. Replace **alias** with ${Scenario}
-1. Note how legend is updated with the name of selected Scenario
-1. Provide label: "Run ${Scenario}"
-1. Save correlation.
-1. Click on any scenario name to see how values in the query are added to the query editor.
-1. Note how tooltip contains scenario name.
+1. Click on any cell in "State" column, e.g. "California". 
+1. Explore opens in split view. Select the same data source as on the left.
+1. The helper above the query contains all available data from the selected row.
+1. Select Scenario: "CSV Metric Values".
+1. In Query Editor's "String Input" field provide variables with population values for each year: `${1980},${2000},${2020}`
+1. In Query Editor's "Alias" field provide variable containing state name: `${State}`
 
-You can apply the same steps to any data source. Correlations allow you to create links on visualizations to run dynamic queries based on selected data. 
+   {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-target-10.2.png" max-width="600px" caption="Setting up the target of a correlation" >}}
 
-## Test newly created correlations
+1. Run a query to see that it produces a graph using sample values from the variables.
+1. Save the correlation using "Save" button in the top.
+
+## Test a newly created correlations
+
+1. Once the correlation is saved Explore will exit Correlations Editor automatically and re-rerun the query in the left pane.
+1. Click on a state name. Note how values from the row are inserted into the query and the graph changes using the values for each row.
+
+   {{< figure src="/static/img/docs/correlations/screenshot-correlations-example-link-10.2.png" max-width="600px" caption="Result of clicking on a data link" >}}
+
+You can apply the same steps to any data source. Correlations allow you to create links in visualizations to run dynamic queries based on selected data. 
+
+## Create a new correlations in logs panel
+
+You can create links not only from a table view but also logs panel. Once you enter Correlations Editor mode you will see available links inside details view of each row:
+
+   {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-logs-10.2.png" max-width="600px" caption="Logs panel in the Correlations Editor" >}}
