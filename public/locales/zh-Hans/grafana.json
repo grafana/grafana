@@ -413,6 +413,7 @@
     "query": {
       "collapse-all": "",
       "copy-to-clipboard": "",
+      "description": "",
       "expand-all": "",
       "no-data": "",
       "refresh": ""
@@ -818,9 +819,6 @@
       "old-password-required": "",
       "passwords-must-match": ""
     }
-  },
-  "query-inspector": {
-    "description": ""
   },
   "refresh-picker": {
     "aria-label": {

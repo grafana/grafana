@@ -222,7 +222,7 @@ export class QueryInspector extends PureComponent<Props, State> {
         <div aria-label={selectors.components.PanelInspector.Query.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
-            <Trans i18nKey="query-inspector.description">
+            <Trans i18nKey="inspector.query.description">
               Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
               new query. Click refresh button below to trigger a new query.
             </Trans>
