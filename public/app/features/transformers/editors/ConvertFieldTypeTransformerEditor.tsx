@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { ChangeEvent, useCallback } from 'react';
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
   DataTransformerID,
@@ -20,6 +21,7 @@ import {
 import {
   Button,
   ColorPicker,
+  Icon,
   InlineField,
   InlineFieldRow,
   Input,
@@ -104,12 +106,31 @@ export const ConvertFieldTypeTransformerEditor = ({
     [onChange, options]
   );
 
-  // TODO: this shouldn't be hardcoded to first index
-  const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
+  const [enumRows, updateEnumRows] = React.useState<string[]>([]);
 
-  // create set of values for enum without any duplicate values (from targetField.values)
-  // TODO: this shouldn't be hardcoded and should only run on first time / via a button (to initialize / reset?)
-  const enumValues = new Set(targetField?.values);
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const copy = [...enumRows];
+    const element = copy[result.source.index];
+    copy.splice(result.source.index, 1);
+    copy.splice(result.destination.index, 0, element);
+    updateEnumRows(copy);
+  };
+
+  console.log(enumRows);
+
+  const generateEnumValues = () => {
+    const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
+
+    // create set of values for enum without any duplicate values (from targetField.values)
+    // TODO: this shouldn't be hardcoded and should only run on first time / via a button (to initialize / reset?)
+    const enumValues = new Set(targetField?.values);
+
+    updateEnumRows([...enumValues]);
+  };
 
   return (
     <>
@@ -168,40 +189,75 @@ export const ConvertFieldTypeTransformerEditor = ({
             </InlineFieldRow>
             {c.destinationType === FieldType.enum && hasAlphaPanels && (
               <InlineFieldRow>
+                <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.generateButton}>
+                  Generate enum values from data
+                </Button>
                 {/* Create a drag and drop table with the following columns: Text, Color, Icon, Description */}
                 {/* TODO: break this out into separate component? */}
                 <VerticalGroup>
                   <table className={styles.compactTable}>
-                    {[...enumValues].map((value: string, idx: number) => (
-                      <tr key={idx}>
-                        <td>{value}</td>
-                        <td>
-                          <ColorPicker
-                            color={c.enumConfig?.color![idx] ?? '#fff'}
-                            onChange={(color) => console.log(color)}
-                            enableNamedColors={true}
-                          />
-                        </td>
-                        <td data-testid="iconPicker">
-                          <ResourcePicker
-                            onChange={(icon) => console.log(icon)}
-                            value={c.enumConfig?.icon![idx] ?? ''}
-                            size={ResourcePickerSize.SMALL}
-                            folderName={ResourceFolderName.Icon}
-                            mediaType={MediaType.Icon}
-                            color={c.enumConfig?.color![idx] ?? '#fff'}
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            value={c.enumConfig?.description![idx] ?? ''}
-                            placeholder={'Description'}
-                            onChange={(e) => console.log(e)}
-                            width={24}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    <thead>
+                      {/* 
+                        TODO: Figure out table headings, if needed
+                      <tr>
+                        <th style={{ width: '1%' }}></th>
+                        <th style={{ width: '5%', textAlign: 'left' }} colSpan={2}>
+                          Text
+                        </th>
+                        <th style={{ width: '5%' }}>Icon</th>
+                        <th style={{ width: '5%' }}>Color</th>
+                        <th style={{ textAlign: 'left' }}>Description</th>
+                        <th style={{ width: '1%' }}></th>
+                      </tr> */}
+                    </thead>
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
+                        {(provided) => (
+                          <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                            {enumRows.map((value: string, index: number) => (
+                              <Draggable key={value} draggableId={value} index={index}>
+                                {(provided) => (
+                                  <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
+                                    <td>
+                                      <div className={styles.dragHandle} {...provided.dragHandleProps}>
+                                        <Icon name="draggabledots" size="lg" />
+                                      </div>
+                                    </td>
+                                    <td>{value}</td>
+                                    <td>
+                                      <ColorPicker
+                                        color={c.enumConfig?.color![idx] ?? '#fff'}
+                                        onChange={(color) => console.log(color)}
+                                        enableNamedColors={true}
+                                      />
+                                    </td>
+                                    <td data-testid="iconPicker">
+                                      <ResourcePicker
+                                        onChange={(icon) => console.log(icon)}
+                                        value={c.enumConfig?.icon![idx] ?? ''}
+                                        size={ResourcePickerSize.SMALL}
+                                        folderName={ResourceFolderName.Icon}
+                                        mediaType={MediaType.Icon}
+                                        color={c.enumConfig?.color![idx] ?? '#fff'}
+                                      />
+                                    </td>
+                                    <td>
+                                      <Input
+                                        value={c.enumConfig?.description![idx] ?? ''}
+                                        placeholder={'Description'}
+                                        onChange={(e) => console.log(e)}
+                                        width={24}
+                                      />
+                                    </td>
+                                  </tr>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </tbody>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </table>
                 </VerticalGroup>
                 {/* <InlineField label={''} labelWidth={6}>
@@ -242,5 +298,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     marginTop: theme.spacing(1),
     marginBottom: theme.spacing(2),
+  }),
+  dragHandle: css({
+    cursor: 'grab',
+    // create focus ring around the whole row when the drag handle is tab-focused
+    // needs position: relative on the drag row to work correctly
+    '&:focus-visible&:after': {
+      bottom: 0,
+      content: '""',
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+    },
+  }),
+  generateButton: css({
+    marginTop: theme.spacing(1),
   }),
 });
