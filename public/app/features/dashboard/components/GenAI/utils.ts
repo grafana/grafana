@@ -45,6 +45,7 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   migrationChanges: string;
 } {
   const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
+
   return {
     userChanges: userDiff,
     migrationChanges: migrationDiff,

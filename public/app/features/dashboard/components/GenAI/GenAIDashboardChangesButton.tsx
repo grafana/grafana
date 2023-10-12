@@ -69,11 +69,7 @@ function getMessages(dashboard: DashboardModel): Message[] {
       role: Role.system,
     },
     {
-      content: `If the following migrations diff has substantial changes add the following sentence on a new separate line "Dashboard migration changes". Ignore any threshold step changes and any diff less than 10 lines long.\n This is the migrations diff:\n${migrationChanges}`,
-      role: Role.system,
-    },
-    {
-      content: `As a fallback, if there are no detected user changes, respond only with "Dashboard migration changes" and nothing else.`,
+      content: `If the following migrations diff has substantial changes add the following sentence at the end "It includes some changes made by Grafana toupdate the dashboard to the latest valid schema version." otherwise add "". Ignore any threshold step changes, templating list changes, and any diff less than 10 lines long. \n This is the migrations diff:\n${migrationChanges}`,
       role: Role.system,
     },
   ];

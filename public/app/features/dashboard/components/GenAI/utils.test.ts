@@ -35,6 +35,7 @@ describe('getDashboardChanges', () => {
 
     // Call the function to test
     const result = getDashboardChanges(dashboard);
+
     // Assertions
     expect(result.migrationChanges).toEqual(
       '===================================================================\n' +
