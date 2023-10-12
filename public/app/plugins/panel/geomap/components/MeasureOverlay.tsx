@@ -109,32 +109,33 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  button: css`
-    margin-left: auto;
-  `,
-  icon: css`
-    background-color: ${theme.colors.secondary.main};
-    display: inline-block;
-    height: 19.25px;
-    margin: 1px;
-    width: 19.25px;
-  `,
-  infoWrap: css`
-    color: ${theme.colors.text};
-    background-color: ${theme.colors.background.secondary};
-    border-radius: 4px;
-    padding: 2px;
-  `,
-  infoWrapClosed: css`
-    height: 25.25px;
-    width: 25.25px;
-  `,
-  rowGroup: css`
-    display: flex;
-    justify-content: flex-end;
-  `,
-  unitSelect: css`
-    min-width: 200px;
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    marginLeft: 'auto',
+  }),
+  icon: css({
+    backgroundColor: theme.colors.secondary.main,
+    display: 'inline-block',
+    height: '19.25px',
+    margin: '1px',
+    width: '19.25px',
+  }),
+  infoWrap: css({
+    color: `${theme.colors.text}`,
+    backgroundColor: theme.colors.background.secondary,
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '4px',
+    padding: '2px',
+  }),
+  infoWrapClosed: css({
+    height: '25.25px',
+    width: '25.25px',
+  }),
+  rowGroup: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+  }),
+  unitSelect: css({
+    minWidth: '200px',
+  }),
+});

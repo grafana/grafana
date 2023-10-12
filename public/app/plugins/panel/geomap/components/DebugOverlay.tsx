@@ -64,11 +64,11 @@ export class DebugOverlay extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  infoWrap: css`
-    color: ${theme.colors.text.primary};
-    background: ${tinycolor(theme.components.panel.background).setAlpha(0.7).toString()};
-    border-radius: 2px;
-    padding: 8px;
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => ({
+  infoWrap: css({
+    color: theme.colors.text.primary,
+    background: tinycolor(theme.components.panel.background).setAlpha(0.7).toString(),
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(1),
+  }),
+});
