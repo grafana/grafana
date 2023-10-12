@@ -284,7 +284,8 @@ func TestMakeAlertRule(t *testing.T) {
 			NewFolderName: "newfoldername",
 		}
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		_, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		require.NoError(t, err)
 
 		da = createTestDashAlert()
 		da.PanelID = 42
@@ -295,7 +296,7 @@ func TestMakeAlertRule(t *testing.T) {
 			NewFolderName: "newfoldername",
 		}
 
-		ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 
 		require.NoError(t, err)
 		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
