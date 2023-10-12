@@ -38,7 +38,7 @@ Release 1.3.1. To provide quicker identification and troubleshooting, you can vi
 
 ### Navigate with tabs
 
-Release 1.3.0. Quickly switch between the Cluster, namespace, workload, and Node views on the [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data/) by using tabs.
+Release 1.3.0. Quickly switch between the Cluster, namespace, workload, and Node views on the [**Cluster Navigation** page](docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#drill-down-into-data) by using tabs.
 
 ![Tabs on Cluster navigation page](/media/docs/grafana-cloud/k8s/k8smon-clusternav-tabs.png)
 
