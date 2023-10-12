@@ -119,7 +119,7 @@ If you have a use case that you'd like to share, feel free to contribute to this
 
 ### Assign a user specific set of roles
 
-1. Create a user with the `No Basic Role` role.
+1. Create a user with the `No Basic Role` selected under organization roles.
 1. Assign the user a set of fixed roles that meet your requirements.
 
 ### Create a custom role to access alerts in a specific folder
