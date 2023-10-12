@@ -379,6 +379,14 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",
