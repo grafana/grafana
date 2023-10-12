@@ -138,6 +138,6 @@ To learn more, refer to the [CloudWatch authentication documentation](/docs/graf
 
 _Generally available in Grafana Cloud_
 
-You can manage the permissions for library panels with [RBAC](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/) which provides a way to extend the permissions avaiable with basic roles and enables you more granular control of users' actions.
+You can manage the permissions for library panels with [RBAC](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/), which provides a way to extend the permissions available with basic roles and gives you more granular control of users' actions.
 
 
