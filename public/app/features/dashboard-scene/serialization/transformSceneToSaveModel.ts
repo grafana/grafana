@@ -10,6 +10,7 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   AdHocFilterSet,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -295,6 +296,8 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
 
         const gridPos = { x, y, w, h };
 
+        const localVariable = panel.state.$variables!.getByName(repeater.state.variableName!) as LocalValueVariable;
+
         const result: Panel = {
           id: getPanelIdForVizPanel(panel),
           type: panel.state.pluginId,
@@ -304,6 +307,13 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
           fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
           transformations: [],
           transparent: panel.state.displayMode === 'transparent',
+          // @ts-expect-error scopedVars are runtime only properties, not part of the persisted model
+          scopedVars: {
+            [repeater.state.variableName!]: {
+              text: localVariable?.state.text,
+              value: localVariable?.state.value,
+            },
+          },
           ...vizPanelDataToPanel(panel, isSnapshot),
         };
         return result;
