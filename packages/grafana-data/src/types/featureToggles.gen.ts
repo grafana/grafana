@@ -143,4 +143,5 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
 }

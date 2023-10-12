@@ -124,3 +124,4 @@ kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
+awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
