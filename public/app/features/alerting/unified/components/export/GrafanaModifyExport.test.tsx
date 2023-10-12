@@ -1,4 +1,4 @@
-import { render, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -130,7 +130,7 @@ describe('GrafanaModifyExport', () => {
     const drawer = await ui.exportDrawer.dialog.find();
     expect(drawer).toBeInTheDocument();
 
-    await waitForElementToBeRemoved(() => ui.exportDrawer.loadingSpinner.query(drawer));
+    await waitFor(() => expect(ui.exportDrawer.loadingSpinner.query(drawer)).not.toBeInTheDocument());
 
     expect(ui.exportDrawer.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
   });
