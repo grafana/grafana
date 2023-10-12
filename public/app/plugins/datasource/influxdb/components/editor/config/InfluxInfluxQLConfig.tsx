@@ -10,16 +10,16 @@ import {
   SelectableValue,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+import { Alert, InlineField, InlineFieldRow, Input, SecretInput, Select } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
-
-const { Input, SecretFormField } = LegacyForms;
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
 ];
+
+const WIDTH_SHORT = 20;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
 
@@ -41,70 +41,59 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
         </p>
       </Alert>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel htmlFor={`${htmlPrefix}-db`} className="width-10">
-            Database
-          </InlineFormLabel>
-          <div className="width-20">
-            <Input
-              id={`${htmlPrefix}-db`}
-              className="width-20"
-              value={jsonData.dbName ?? database}
-              onChange={(event) => {
-                onOptionsChange({
-                  ...options,
-                  database: '',
-                  jsonData: {
-                    ...jsonData,
-                    dbName: event.target.value,
-                  },
-                });
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel htmlFor={`${htmlPrefix}-user`} className="width-10">
-            User
-          </InlineFormLabel>
-          <div className="width-10">
-            <Input
-              id={`${htmlPrefix}-user`}
-              className="width-20"
-              value={options.user || ''}
-              onChange={onUpdateDatasourceOption(props, 'user')}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <SecretFormField
+
+      <InlineFieldRow>
+        <InlineField labelWidth={WIDTH_SHORT} label="Database" htmlFor={`${htmlPrefix}-db`}>
+          <Input
+            id={`${htmlPrefix}-db`}
+            className="width-20"
+            value={jsonData.dbName ?? database}
+            onChange={(event) => {
+              console.log({ omo: event.currentTarget.value });
+              onOptionsChange({
+                ...options,
+                database: '',
+                jsonData: {
+                  ...jsonData,
+                  dbName: event.currentTarget.value,
+                },
+              });
+            }}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField labelWidth={WIDTH_SHORT} label="User" htmlFor={`${htmlPrefix}-user`}>
+          <Input
+            id={`${htmlPrefix}-user`}
+            className="width-20"
+            value={options.user || ''}
+            onChange={onUpdateDatasourceOption(props, 'user')}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField labelWidth={WIDTH_SHORT} label="Password">
+          <SecretInput
             isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
             value={secureJsonData?.password || ''}
             label="Password"
             aria-label="Password"
-            labelWidth={10}
-            inputWidth={20}
+            className="width-20"
             onReset={() => updateDatasourcePluginResetOption(props, 'password')}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
           />
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel
-            htmlFor={`${htmlPrefix}-http-method`}
-            className="width-10"
-            tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
-          method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
-          will restrict you and return an error if the query is too large."
-          >
-            HTTP Method
-          </InlineFormLabel>
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField
+          labelWidth={WIDTH_SHORT}
+          label="HTTP Method"
+          htmlFor={`${htmlPrefix}-http-method`}
+          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+      method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+      will restrict you and return an error if the query is too large."
+        >
           <Select
             inputId={`${htmlPrefix}-http-method`}
             className="width-20"
@@ -113,28 +102,24 @@ export const InfluxInfluxQLConfig = (props: Props) => {
             defaultValue={options.jsonData.httpMode}
             onChange={onUpdateDatasourceJsonDataOptionSelect(props, 'httpMode')}
           />
-        </div>
-      </div>
+        </InlineField>
+      </InlineFieldRow>
 
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel
-            className="width-10"
-            tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+      <InlineFieldRow>
+        <InlineField
+          labelWidth={WIDTH_SHORT}
+          label="Min time interval"
+          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example 1m if your data is written every minute."
-          >
-            Min time interval
-          </InlineFormLabel>
-          <div className="width-10">
-            <Input
-              className="width-20"
-              placeholder="10s"
-              value={options.jsonData.timeInterval || ''}
-              onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
-            />
-          </div>
-        </div>
-      </div>
+        >
+          <Input
+            className="width-20"
+            placeholder="10s"
+            value={options.jsonData.timeInterval || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+          />
+        </InlineField>
+      </InlineFieldRow>
     </>
   );
 };
