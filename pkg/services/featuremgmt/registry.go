@@ -332,14 +332,6 @@ var (
 			Owner:        appO11ySquad,
 		},
 		{
-			Name:         "prometheusResourceBrowserCache",
-			Description:  "Displays browser caching options in Prometheus data source configuration",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // turned on by default
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStagePublicPreview,
@@ -755,6 +747,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:            "libraryPanelRBAC",
+			Description:     "Enables RBAC support for library panels",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -858,6 +858,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:            "recoveryThreshold",
+			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 	}
 )

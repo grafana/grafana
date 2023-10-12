@@ -3,6 +3,7 @@ package playlistimpl
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,7 @@ type getStore func(db.DB) store
 func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	t.Helper()
 
+	start := time.Now().UnixMilli()
 	ss := db.InitTestDB(t)
 	playlistStore := fn(ss)
 
@@ -33,6 +35,8 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			pl, err := playlistStore.Get(context.Background(), get)
 			require.NoError(t, err)
 			require.Equal(t, p.Id, pl.Id)
+			require.GreaterOrEqual(t, pl.CreatedAt, start)
+			require.GreaterOrEqual(t, pl.UpdatedAt, start)
 		})
 
 		t.Run("Can get playlist items", func(t *testing.T) {
@@ -43,6 +47,7 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 		})
 
 		t.Run("Can update playlist", func(t *testing.T) {
+			time.Sleep(time.Millisecond * 2)
 			items := []playlist.PlaylistItem{
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
 				{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
@@ -50,6 +55,14 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			query := playlist.UpdatePlaylistCommand{Name: "NYC office ", OrgId: 1, UID: uid, Interval: "10s", Items: items}
 			_, err = playlistStore.Update(context.Background(), &query)
 			require.NoError(t, err)
+
+			// Now check that UpdatedAt has increased
+			pl, err := playlistStore.Get(context.Background(), &playlist.GetPlaylistByUidQuery{UID: uid, OrgId: 1})
+			require.NoError(t, err)
+			require.Equal(t, p.Id, pl.Id)
+			require.Equal(t, p.CreatedAt, pl.CreatedAt)
+			require.Greater(t, pl.UpdatedAt, p.UpdatedAt)
+			require.Greater(t, pl.UpdatedAt, pl.CreatedAt)
 		})
 
 		t.Run("Can remove playlist", func(t *testing.T) {
@@ -62,6 +75,32 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			require.Error(t, err)
 			require.ErrorIs(t, err, playlist.ErrPlaylistNotFound)
 		})
+	})
+
+	t.Run("Can create playlist with known UID", func(t *testing.T) {
+		items := []playlist.PlaylistItem{
+			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
+			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
+		}
+		cmd := playlist.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1,
+			Items: items,
+			UID:   "abcd",
+		}
+		p, err := playlistStore.Insert(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Equal(t, "abcd", p.UID)
+
+		// Should get an error with an invalid UID
+		cmd.UID = "invalid uid"
+		_, err = playlistStore.Insert(context.Background(), &cmd)
+		require.Error(t, err)
+
+		// cleanup
+		err = playlistStore.Delete(context.Background(), &playlist.DeletePlaylistCommand{
+			OrgId: 1,
+			UID:   "abcd",
+		})
+		require.NoError(t, err)
 	})
 
 	t.Run("Search playlist", func(t *testing.T) {
