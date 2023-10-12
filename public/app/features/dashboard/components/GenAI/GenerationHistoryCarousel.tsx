@@ -62,6 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexBasis: '100%',
     flexGrow: 3,
+    whiteSpace: 'pre-wrap',
     marginTop: 20,
   }),
 });

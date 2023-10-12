@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
@@ -34,8 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -57,14 +54,14 @@ type OAuth2ServiceImpl struct {
 	logger        log.Logger
 	accessControl ac.AccessControl
 	acService     ac.Service
-	saService     serviceaccounts.Service
+	saService     extsvcauth.ExtSvcAccountsService
 	userService   user.Service
 	teamService   team.Service
 	publicKey     any
 }
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
-	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
+	extSvcAccSvc extsvcauth.ExtSvcAccountsService, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
 	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		return nil, nil
@@ -86,7 +83,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 		sqlstore:      store.NewStore(db),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
-		saService:     svcAccSvc,
+		saService:     extSvcAccSvc,
 		teamService:   teamSvc,
 	}
 
@@ -152,15 +149,15 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 
 	// Retrieve self permissions and generate a signed in user
 	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
+	sa, err := s.saService.RetrieveExtSvcAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
 	if err != nil {
 		s.logger.Error("GetExternalService: error fetching service account", "id", id, "error", err)
 		return nil, err
 	}
 	client.SignedInUser = &user.SignedInUser{
-		UserID:      sa.Id,
+		UserID:      sa.ID,
 		OrgID:       oauthserver.TmpOrgID,
-		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
+		OrgRole:     sa.Role, // Need this to compute the permissions in OSS
 		Login:       sa.Login,
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
@@ -225,13 +222,6 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, errGenCred
 	}
 
-	s.logger.Debug("Save service account")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, client.SelfPermissions)
-	if errSaveServiceAccount != nil {
-		return nil, errSaveServiceAccount
-	}
-	client.ServiceAccountID = saID
-
 	grantTypes := s.computeGrantTypes(registration.Self.Enabled, registration.Impersonation.Enabled)
 	client.GrantTypes = strings.Join(grantTypes, ",")
 
@@ -253,6 +243,18 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, err
 	}
 	client.Secret = string(hashedSecret)
+
+	s.logger.Debug("Save service account")
+	saID, errSaveServiceAccount := s.saService.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
+		ExtSvcSlug:  slugify.Slugify(client.Name),
+		Enabled:     registration.Self.Enabled,
+		OrgID:       oauthserver.TmpOrgID,
+		Permissions: client.SelfPermissions,
+	})
+	if errSaveServiceAccount != nil {
+		return nil, errSaveServiceAccount
+	}
+	client.ServiceAccountID = saID
 
 	err = s.sqlstore.SaveExternalService(ctx, client)
 	if err != nil {
@@ -378,95 +380,6 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *ext
 	}
 
 	return nil, fmt.Errorf("at least one key option must be specified")
-}
-
-// saveServiceAccount creates a service account if the service account ID is NoServiceAccountID, otherwise it updates the service account's permissions
-func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, permissions []ac.Permission) (int64, error) {
-	if saID == oauthserver.NoServiceAccountID {
-		// Create a service account
-		s.logger.Debug("Create service account", "external service name", extSvcName)
-		return s.createServiceAccount(ctx, extSvcName, permissions)
-	}
-
-	// check if the service account exists
-	s.logger.Debug("Update service account", "external service name", extSvcName)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, saID)
-	if err != nil {
-		s.logger.Error("Error retrieving service account", "external service name", extSvcName, "error", err)
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	// update the service account's permissions
-	if len(permissions) > 0 {
-		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
-		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-			OrgID:             ac.GlobalOrgID,
-			Global:            true,
-			ExternalServiceID: extSvcName,
-			ServiceAccountID:  sa.Id,
-			Permissions:       permissions,
-		}); err != nil {
-			return oauthserver.NoServiceAccountID, err
-		}
-		return saID, nil
-	}
-
-	// remove the service account
-	errDelete := s.deleteServiceAccount(ctx, extSvcName, sa.Id)
-	return oauthserver.NoServiceAccountID, errDelete
-}
-
-// deleteServiceAccount deletes a service account by ID and removes its associated role
-func (s *OAuth2ServiceImpl) deleteServiceAccount(ctx context.Context, extSvcName string, saID int64) error {
-	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, saID); err != nil {
-		return err
-	}
-	return s.acService.DeleteExternalServiceRole(ctx, extSvcName)
-}
-
-// createServiceAccount creates a service account with the given permissions and returns the ID of the service account
-// When no permission is given, the account isn't created and NoServiceAccountID is returned
-// This first design does not use a single transaction for the whole service account creation process => database consistency is not guaranteed.
-// Consider changing this in the future.
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
-	if len(permissions) == 0 {
-		// No permission, no service account
-		s.logger.Debug("No permission, no service account", "external service name", extSvcName)
-		return oauthserver.NoServiceAccountID, nil
-	}
-
-	newRole := func(r roletype.RoleType) *roletype.RoleType {
-		return &r
-	}
-	newBool := func(b bool) *bool {
-		return &b
-	}
-
-	slug := slugify.Slugify(extSvcName)
-
-	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
-	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
-		Name:       slug,
-		Role:       newRole(roletype.RoleNone),
-		IsDisabled: newBool(false),
-	})
-	if err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
-	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-		OrgID:             ac.GlobalOrgID,
-		Global:            true,
-		ExternalServiceID: slug,
-		ServiceAccountID:  sa.Id,
-		Permissions:       permissions,
-	}); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	return sa.Id, nil
 }
 
 // handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default

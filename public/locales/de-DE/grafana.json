@@ -45,16 +45,16 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule__one": "",
-      "alertRule__other": "",
-      "dashboard__one": "",
-      "dashboard__other": "",
-      "folder__one": "",
-      "folder__other": "",
-      "libraryPanel__one": "",
-      "libraryPanel__other": "",
-      "total__one": "",
-      "total__other": ""
+      "alertRule_one": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_other": ""
     },
     "dashboards-tree": {
       "collapse-folder-button": "",
@@ -374,6 +374,14 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",
@@ -429,8 +437,8 @@
   },
   "library-panels": {
     "modal": {
-      "body__one": "",
-      "body__other": "",
+      "body_one": "",
+      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
@@ -516,6 +524,18 @@
     },
     "config": {
       "title": "Verwaltung"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""
@@ -721,6 +741,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
+    },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
     },
     "toolbar": {
       "enable-kiosk": "Kiosk-Modus aktivieren",
