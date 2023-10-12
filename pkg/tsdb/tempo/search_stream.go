@@ -8,6 +8,7 @@ import (
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
@@ -29,7 +30,7 @@ type StreamSender interface {
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
-	ctx, span := s.tracer.Start(ctx, "datasource.tempo.runSearchStream")
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
 	defer span.End()
 
 	response := &backend.DataResponse{}
@@ -71,7 +72,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 }
 
 func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
-	ctx, span := s.tracer.Start(ctx, "datasource.tempo.processStream")
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.processStream")
 	defer span.End()
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
@@ -123,7 +124,7 @@ func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQue
 }
 
 func (s *Service) sendResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {
-	_, span := s.tracer.Start(ctx, "datasource.tempo.sendResponse")
+	_, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.sendResponse")
 	defer span.End()
 	frame := createResponseDataFrame()
 

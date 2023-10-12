@@ -9,6 +9,7 @@ import (
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -24,7 +25,7 @@ type ProfileType struct {
 }
 
 func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx, span := d.tracer.Start(ctx, "datasource.parca.callProfileTypes")
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callProfileTypes")
 	defer span.End()
 	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&v1alpha1.ProfileTypesRequest{}))
 	if err != nil {
@@ -69,7 +70,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 }
 
 func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx, span := d.tracer.Start(ctx, "datasource.parca.callLabelNames")
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelNames")
 	defer span.End()
 	res, err := d.client.Labels(ctx, connect.NewRequest(&v1alpha1.LabelsRequest{}))
 	if err != nil {
@@ -94,7 +95,7 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 }
 
 func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx, span := d.tracer.Start(ctx, "datasource.parca.callLabelValues")
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelValues")
 	defer span.End()
 	parsedUrl, err := url.Parse(req.URL)
 	if err != nil {

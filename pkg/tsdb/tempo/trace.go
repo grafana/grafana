@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -20,7 +21,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	result := &backend.DataResponse{}
 	refID := query.RefID
 
-	ctx, span := s.tracer.Start(ctx, "datasource.tempo.getTrace", trace.WithAttributes(
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.getTrace", trace.WithAttributes(
 		attribute.String("queryType", query.QueryType),
 	))
 	defer span.End()

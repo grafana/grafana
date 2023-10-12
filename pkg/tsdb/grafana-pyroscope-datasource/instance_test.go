@@ -5,15 +5,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 )
 
 // This is where the tests for the datasource backend live.
 func Test_QueryData(t *testing.T) {
-	ds := PyroscopeDatasource{
-		tracer: tracing.InitializeTracerForTest(),
-	}
+	ds := PyroscopeDatasource{}
 
 	resp, err := ds.QueryData(
 		context.Background(),
@@ -35,7 +32,6 @@ func Test_QueryData(t *testing.T) {
 func Test_CallResource(t *testing.T) {
 	ds := &PyroscopeDatasource{
 		client: &FakeClient{},
-		tracer: tracing.InitializeTracerForTest(),
 	}
 
 	t.Run("series resource", func(t *testing.T) {

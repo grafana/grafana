@@ -12,16 +12,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc/metadata"
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
-	service := &Service{
-		tracer: tracing.InitializeTracerForTest(),
-	}
+	service := &Service{}
 	searchClient := &mockStreamer{}
 	streamSender := &mockSender{}
 	err := service.processStream(context.Background(), searchClient, streamSender)
@@ -33,7 +30,6 @@ func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
 	logger := log.New("tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
-		tracer: tracing.InitializeTracerForTest(),
 	}
 	searchClient := &mockStreamer{err: errors.New("invalid input")}
 	streamSender := &mockSender{}
@@ -48,7 +44,6 @@ func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
 	logger := log.New("tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
-		tracer: tracing.InitializeTracerForTest(),
 	}
 	searchClient := &mockStreamer{
 		tracingMetadata: []*tempopb.TraceSearchMetadata{

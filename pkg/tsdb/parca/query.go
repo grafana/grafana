@@ -10,6 +10,7 @@ import (
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/parca/kinds/dataquery"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,7 +31,7 @@ const (
 
 // query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	ctx, span := d.tracer.Start(ctx, "datasource.parca.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
 	defer span.End()
 
 	var qm queryModel

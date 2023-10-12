@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Make sure ParcaDatasource implements required interfaces. This is important to do
@@ -29,8 +28,7 @@ var (
 var logger = log.New("tsdb.parca")
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	tracer tracing.Tracer
+	im instancemgmt.InstanceManager
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*ParcaDatasource, error) {
@@ -42,16 +40,15 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	return in, nil
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, tracer)),
-		tracer: tracer,
+		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewParcaDatasource(httpClientProvider, settings, tracer)
+		return NewParcaDatasource(httpClientProvider, settings)
 	}
 }
 
