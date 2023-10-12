@@ -46,6 +46,7 @@ export interface ExploreTracePanelState {
 
 export interface ExploreLogsPanelState {
   id?: string;
+  columns?: string[];
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

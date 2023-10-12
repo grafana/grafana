@@ -27,6 +27,9 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
+  labelCardinalityState: Record<string, number>;
+  // 0 - 100
+  sparsityThreshold: number;
 }
 
 const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
@@ -38,7 +41,7 @@ const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
 });
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, labelCardinalityState } = props;
 
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
@@ -141,6 +144,20 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           },
         });
       });
+
+      Object.keys(labelCardinalityState).forEach((key) => {
+        if (labelCardinalityState[key] < props.sparsityThreshold) {
+          transformations.push({
+            id: 'organize',
+            options: {
+              excludeByName: {
+                [key]: true,
+              },
+            },
+          });
+        }
+      });
+
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
         setTableFrame(prepareTableFrame(transformedDataFrame));
@@ -149,7 +166,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
     };
     prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder]);
+  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState, props.sparsityThreshold]);
 
   if (!tableFrame) {
     return null;

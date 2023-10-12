@@ -1,61 +1,62 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, createRef } from 'react';
+import React, { createRef, PureComponent } from 'react';
 
 import {
-  rangeUtil,
-  RawTimeRange,
-  LogLevel,
-  TimeZone,
   AbsoluteTimeRange,
-  LogsDedupStrategy,
+  CoreApp,
+  DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataQueryResponse,
+  EventBus,
+  ExplorePanelsState,
+  Field,
+  GrafanaTheme2,
+  LinkModel,
+  LoadingState,
+  LogLevel,
+  LogRowContextOptions,
   LogRowModel,
   LogsDedupDescription,
+  LogsDedupStrategy,
   LogsMetaItem,
   LogsSortOrder,
-  LinkModel,
-  Field,
-  DataFrame,
-  GrafanaTheme2,
-  LoadingState,
-  SplitOpen,
-  DataQueryResponse,
-  CoreApp,
-  DataHoverEvent,
-  DataHoverClearEvent,
-  EventBus,
-  LogRowContextOptions,
-  ExplorePanelsState,
+  rangeUtil,
+  RawTimeRange,
   serializeStateToUrlParam,
-  urlUtil,
+  SplitOpen,
   TimeRange,
+  TimeZone,
+  urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
-  RadioButtonGroup,
   Button,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
-  withTheme2,
-  Themeable2,
   PanelChrome,
+  RadioButtonGroup,
+  Themeable2,
+  withTheme2,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { getState, dispatch } from 'app/store/store';
+import { dispatch, getState } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
+import { setPaneState } from '../state/main';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTable } from './LogsTable';
+import { LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
@@ -169,6 +170,25 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
+  componentDidMount() {
+    // Example setting field columns state
+    const newPanelState = {
+      ...this.props.panelState?.logs,
+      columns: ['1', '2', 'uniqyekljahsdkjhas'],
+    };
+    dispatch(
+      setPaneState({
+        [this.props.exploreId]: {
+          panelsState: {
+            ...this.props.panelState,
+            logs: newPanelState,
+          },
+        },
+      })
+    );
+  }
+
+  //
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
@@ -182,6 +202,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
   }
 
   onLogRowHover = (row?: LogRowModel) => {
+    console.log('state', getState().explore.panes[this.props.exploreId]);
+    console.log('urlFromState', getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!));
     if (!row) {
       this.props.eventBus.publish(new DataHoverClearEvent());
     } else {
@@ -681,14 +703,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
           <div className={styles.logsSection}>
             {this.state.visualisationType === 'table' && hasData && (
               <div className={styles.logRows} data-testid="logRowsTable">
-                {/* Width should be full width minus logsnavigation and padding */}
-                <LogsTable
-                  logsSortOrder={this.state.logsSortOrder}
-                  range={this.props.range}
-                  splitOpen={this.props.splitOpen}
-                  timeZone={timeZone}
-                  width={width - 80}
-                  logsFrames={this.props.logsFrames}
+                {/* Width should be full width minus logs navigation and padding */}
+                <LogsTableWrap
+                  logsTableProps={{
+                    logsSortOrder: this.state.logsSortOrder,
+                    range: this.props.range,
+                    splitOpen: this.props.splitOpen,
+                    timeZone: timeZone,
+                    width: width - 80,
+                    logsFrames: this.props.logsFrames,
+                  }}
+                  theme={theme}
                 />
               </div>
             )}

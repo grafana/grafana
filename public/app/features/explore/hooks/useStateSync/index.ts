@@ -11,7 +11,7 @@ import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSele
 
 import { changeDatasource } from '../../state/datasource';
 import { initializeExplore } from '../../state/explorePane';
-import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
+import { clearPanes, setPaneState, splitClose, splitOpen, syncTimesAction } from '../../state/main';
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
@@ -49,9 +49,13 @@ export function useStateSync(params: ExploreQueryParams) {
           // - a pane is opened or closed
           // - a query is run
           // - range is changed
-          [splitClose.type, splitOpen.fulfilled.type, runQueries.pending.type, changeRangeAction.type].includes(
-            action.type
-          ),
+          [
+            splitClose.type,
+            splitOpen.fulfilled.type,
+            runQueries.pending.type,
+            changeRangeAction.type,
+            setPaneState.type,
+          ].includes(action.type),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
           // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
           // are committed to the store.
@@ -90,6 +94,9 @@ export function useStateSync(params: ExploreQueryParams) {
 
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
+    if (isURLOutOfSync) {
+      console.log('url out of sunc', params.panes);
+    }
 
     const urlState = parseURL(params);
 
