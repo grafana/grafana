@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-### Quickly troubleshoot with issues snapshot
+### Quickly troubleshoot with snapshot of issues
 
 Release 1.3.1. To provide quicker identification and troubleshooting, you can view a snapshot of issues on the home page that reach these specific thresholds:
 
