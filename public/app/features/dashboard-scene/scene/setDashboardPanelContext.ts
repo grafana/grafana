@@ -31,8 +31,18 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.canEditAnnotations = (dashboardUID?: string) => {
-    // TODO
-    return false;
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    if (!dashboard.canEditDashboard()) {
+      return false;
+    }
+
+    // dashboardUID is falsy when it is an organizational annotation
+    if (!dashboardUID) {
+      return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canEdit);
+    }
+
+    return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
   };
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {

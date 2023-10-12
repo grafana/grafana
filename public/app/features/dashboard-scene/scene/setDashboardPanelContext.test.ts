@@ -22,14 +22,37 @@ describe('setDashboardPanelContext', () => {
       expect(context.canAddAnnotations!()).toBe(false);
     });
   });
+
+  describe('canEditAnnotations', () => {
+    it('Can edit global event when user has org permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: true });
+      expect(context.canEditAnnotations!()).toBe(true);
+    });
+
+    it('Can not edit global event when has no org permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: false });
+      expect(context.canEditAnnotations!()).toBe(false);
+    });
+
+    it('Can edit dashboard event when has dashboard permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: true });
+      expect(context.canEditAnnotations!('dash-uid')).toBe(true);
+    });
+
+    it('Can not edit dashboard event when has no dashboard permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: false });
+      expect(context.canEditAnnotations!('dash-uid')).toBe(false);
+    });
+  });
 });
 
 interface SceneOptions {
-  builtInAnnotationsEnabled: boolean;
-  dashboardCanEdit: boolean;
+  builtInAnnotationsEnabled?: boolean;
+  dashboardCanEdit?: boolean;
   canAdd?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  orgCanEdit?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -46,7 +69,7 @@ function buildTestScene(options: SceneOptions) {
               type: 'grafana',
               uid: '-- Grafana --',
             },
-            enable: options.builtInAnnotationsEnabled,
+            enable: options.builtInAnnotationsEnabled ?? false,
             hide: true,
             iconColor: 'rgba(0, 211, 255, 1)',
             name: 'Annotations & Alerts',
@@ -72,7 +95,7 @@ function buildTestScene(options: SceneOptions) {
         },
         organization: {
           canAdd: false,
-          canEdit: false,
+          canEdit: options.orgCanEdit ?? false,
           canDelete: false,
         },
       },
