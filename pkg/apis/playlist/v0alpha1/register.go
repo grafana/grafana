@@ -16,17 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
-
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service playlist.Service
-	mapper  namespaceMapper
+	service    playlist.Service
+	namespacer namespaceMapper
 }
 
 func RegisterAPIService(p playlist.Service,
@@ -34,8 +29,8 @@ func RegisterAPIService(p playlist.Service,
 	cfg *setting.Cfg,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
-		service: p,
-		mapper:  getNamespaceMapper(cfg),
+		service:    p,
+		namespacer: getNamespaceMapper(cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -62,8 +57,8 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
-		service: b.service,
-		mapper:  b.mapper,
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 	storage["playlists"] = legacyStore
 
