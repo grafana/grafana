@@ -17,6 +17,7 @@ import {
   Pagination,
   HorizontalGroup,
   VerticalGroup,
+  Avatar,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -26,8 +27,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
-
-import { Avatar } from './Avatar';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -95,7 +94,7 @@ export const OrgUsersTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value!} alt="User avatar" />,
       },
       {
         id: 'login',
