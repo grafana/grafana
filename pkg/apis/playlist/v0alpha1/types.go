@@ -5,7 +5,7 @@ import (
 )
 
 // GroupName is the group name for this API.
-const GroupName = "playlists.grafana.com"
+const GroupName = "playlist.x.grafana.com"
 const VersionID = "v0alpha1" //
 const APIVersion = GroupName + "/" + VersionID
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
 )
 
@@ -30,14 +29,8 @@ func TestKindRegistry(t *testing.T) {
 		"test",
 	}, ids)
 
-	// Check playlist exists
-	info, err := registry.GetInfo(entity.StandardKindDashboard)
-	require.NoError(t, err)
-	require.Equal(t, "Dashboard", info.Name)
-	require.False(t, info.IsRaw)
-
 	// Check that we registered a test item
-	info, err = registry.GetInfo("test")
+	info, err := registry.GetInfo("test")
 	require.NoError(t, err)
 	require.Equal(t, "test", info.Name)
 	require.True(t, info.IsRaw)

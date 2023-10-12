@@ -58,7 +58,7 @@ class K8sAPI implements PlaylistAPI {
 
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/playlists.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
+    this.url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
 
     // When undefined, this will use k8s for all CRUD features
     if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
@@ -125,10 +125,12 @@ class K8sAPI implements PlaylistAPI {
 // the main difference is that k8s uses metdata.name as the uid
 // to avoid future confusion, the display name is now called "title"
 function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
+  const { spec, metadata } = r;
   return {
-    ...r.spec,
-    uid: r.metadata.name, // replace the uid from the k8s name
-    name: r.spec.title,
+    uid: metadata.name, // use the k8s name as uid
+    name: spec.title,
+    interval: spec.interval,
+    items: spec.items,
   };
 }
 

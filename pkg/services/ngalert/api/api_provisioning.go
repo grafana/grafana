@@ -557,13 +557,14 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	// 		Body: &cp,
 	// 	})
 	// }
-	// for idx, cp := range ex.Policies {
-	// 	resources = append(resources, resourceBlock{
-	// 		Type: "grafana_notification_policy",
-	// 		Name: fmt.Sprintf("notification_policy_%d", idx),
-	// 		Body: &cp,
-	// 	})
-	//
+	for idx, cp := range body.Policies {
+		policy := cp.Policy
+		resources = append(resources, hcl.Resource{
+			Type: "grafana_notification_policy",
+			Name: fmt.Sprintf("notification_policy_%d", idx+1),
+			Body: policy,
+		})
+	}
 
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {

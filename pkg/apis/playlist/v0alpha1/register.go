@@ -1,9 +1,6 @@
 package v0alpha1
 
 import (
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,18 +9,28 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service playlist.Service
+	service    playlist.Service
+	namespacer namespaceMapper
 }
 
-func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+func RegisterAPIService(p playlist.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
+) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
-		service: p,
+		service:    p,
+		namespacer: getNamespaceMapper(cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -50,7 +57,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	legacyStore := newLegacyStorage(b.service)
+	legacyStore := &legacyStorage{
+		service:    b.service,
+		namespacer: b.namespacer,
+	}
 	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
