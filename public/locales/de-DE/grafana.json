@@ -374,6 +374,14 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",
@@ -516,6 +524,18 @@
     },
     "config": {
       "title": "Verwaltung"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""

@@ -2991,11 +2991,11 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
-    "@rollup/plugin-node-resolve": 15.1.0
-    "@testing-library/dom": 9.3.1
+    "@rollup/plugin-node-resolve": 15.2.3
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/d3-interpolate": ^3.0.0
     "@types/dompurify": ^2
     "@types/history": 4.7.11
@@ -3003,7 +3003,7 @@ __metadata:
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/marked": 5.0.1
-    "@types/node": 18.16.19
+    "@types/node": 18.18.4
     "@types/papaparse": 5.3.7
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
@@ -3053,8 +3053,8 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
-    "@rollup/plugin-node-resolve": 15.1.0
-    "@types/node": 18.16.19
+    "@rollup/plugin-node-resolve": 15.2.3
+    "@types/node": 18.18.4
     esbuild: 0.18.12
     rimraf: 5.0.1
     rollup: 2.79.1
@@ -3088,14 +3088,14 @@ __metadata:
     "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@types/chrome-remote-interface": 0.31.10
     "@types/lodash": 4.14.195
-    "@types/node": 18.16.19
+    "@types/node": 18.18.4
     "@types/uuid": 9.0.2
     babel-loader: 9.1.3
     blink-diff: 1.0.13
-    chrome-remote-interface: 0.32.2
+    chrome-remote-interface: 0.33.0
     commander: 8.3.0
     cypress: 9.5.1
     cypress-file-upload: 5.0.8
@@ -3227,10 +3227,10 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@leeoniya/ufuzzy": 1.0.8
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@testing-library/jest-dom": ^6.1.2
     "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/d3": ^7
     "@types/jest": ^29.5.4
     "@types/lodash": 4.14.195
@@ -3281,12 +3281,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.6":
-  version: 0.0.6
-  resolution: "@grafana/lezer-traceql@npm:0.0.6"
+"@grafana/lezer-traceql@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@grafana/lezer-traceql@npm:0.0.7"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 166a30c38f4f78e1768e80f724176b71becf3fa51414bc8bea4c2c5288a92d1f8b7872280a06c0d3f7f7608b174e5fc930e1af39339b2c2fdf627fb7ac14c6b4
+  checksum: 920f8116d61907e12ca1dd51949242abf435e675105699c7b2fcd8c024999ed0ddfd3500b1802111f3ed9ad37e16f40826790658bdf94224cd5b615e20360ab9
   languageName: node
   linkType: hard
 
@@ -3309,10 +3309,10 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
-    "@rollup/plugin-node-resolve": 15.1.0
-    "@testing-library/dom": 9.3.1
+    "@rollup/plugin-node-resolve": 15.2.3
+    "@testing-library/dom": 9.3.3
     "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/angular": 1.8.5
     "@types/history": 4.7.11
     "@types/jest": 29.5.4
@@ -3344,8 +3344,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^1.15.0":
-  version: 1.15.0
-  resolution: "@grafana/scenes@npm:1.15.0"
+  version: 1.17.0
+  resolution: "@grafana/scenes@npm:1.17.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3357,7 +3357,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 8416327ad9a0e3be35d5a106788248d5886f6aa220777cf0772ef73a3f64ecac889f58a8e804beea0de339acd571d6e49a10278180cf1c50a2a51f44e03bf93e
+  checksum: 0bd8603ae59c199c595a45a7bc31e318a1928b18307469bcd5ee5f83c3aaee89c5c27a1341a479440d928505681ab6a2479809a5cac56e8e93ba7acf06adff93
   languageName: node
   linkType: hard
 
@@ -3368,7 +3368,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     esbuild: 0.18.12
     glob: ^10.2.7
     rimraf: 5.0.1
@@ -3418,7 +3418,7 @@ __metadata:
     "@react-aria/overlays": 3.15.0
     "@react-aria/utils": 3.18.0
     "@react-stately/menu": 3.5.3
-    "@rollup/plugin-node-resolve": 15.1.0
+    "@rollup/plugin-node-resolve": 15.2.3
     "@storybook/addon-a11y": 7.4.5
     "@storybook/addon-actions": 7.4.5
     "@storybook/addon-docs": 7.4.5
@@ -3434,10 +3434,10 @@ __metadata:
     "@storybook/react": 7.4.5
     "@storybook/react-webpack5": 7.4.5
     "@storybook/theming": 7.4.5
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/hoist-non-react-statics": 3.3.1
@@ -3446,7 +3446,7 @@ __metadata:
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/mock-raf": 1.0.3
-    "@types/node": 18.16.19
+    "@types/node": 18.18.4
     "@types/prismjs": 1.26.0
     "@types/react": 18.2.15
     "@types/react-beautiful-dnd": 13.1.4
@@ -3469,7 +3469,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.2
     common-tags: 1.8.2
-    core-js: 3.31.1
+    core-js: 3.33.0
     css-loader: 6.8.1
     csstype: 3.1.2
     d3: 7.8.5
@@ -6893,9 +6893,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:15.1.0":
-  version: 15.1.0
-  resolution: "@rollup/plugin-node-resolve@npm:15.1.0"
+"@rollup/plugin-node-resolve@npm:15.2.3":
+  version: 15.2.3
+  resolution: "@rollup/plugin-node-resolve@npm:15.2.3"
   dependencies:
     "@rollup/pluginutils": ^5.0.1
     "@types/resolve": 1.20.2
@@ -6904,11 +6904,11 @@ __metadata:
     is-module: ^1.0.0
     resolve: ^1.22.1
   peerDependencies:
-    rollup: ^2.78.0||^3.0.0
+    rollup: ^2.78.0||^3.0.0||^4.0.0
   peerDependenciesMeta:
     rollup:
       optional: true
-  checksum: 83617cdbb90cb780251e8b16dc1671e35bde90b8d4d30e008aefe706b5b643057f6299bdd3226b2a30bf5e4f807a880169de3faa47b9f2ba38d39f294f85f951
+  checksum: 730f32c2f8fdddff07cf0fca86a5dac7c475605fb96930197a868c066e62eb6388c557545e4f7d99b7a283411754c9fbf98944ab086b6074e04fc1292e234aa8
   languageName: node
   linkType: hard
 
@@ -8385,9 +8385,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:9.3.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
-  version: 9.3.1
-  resolution: "@testing-library/dom@npm:9.3.1"
+"@testing-library/dom@npm:9.3.3, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
+  version: 9.3.3
+  resolution: "@testing-library/dom@npm:9.3.3"
   dependencies:
     "@babel/code-frame": ^7.10.4
     "@babel/runtime": ^7.12.5
@@ -8397,7 +8397,7 @@ __metadata:
     dom-accessibility-api: ^0.5.9
     lz-string: ^1.5.0
     pretty-format: ^27.0.2
-  checksum: 8ee3136451644e39990edea93709c38cf1e8ce5306f3c66273ca00935963faa51ca74e8d92b02eb442ccb842cfa28ca62833e393e075eb269cf9bef6f5600663
+  checksum: 34e0a564da7beb92aa9cc44a9080221e2412b1a132eb37be3d513fe6c58027674868deb9f86195756d98d15ba969a30fe00632a4e26e25df2a5a4f6ac0686e37
   languageName: node
   linkType: hard
 
@@ -8484,12 +8484,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:14.4.3":
-  version: 14.4.3
-  resolution: "@testing-library/user-event@npm:14.4.3"
+"@testing-library/user-event@npm:14.5.1":
+  version: 14.5.1
+  resolution: "@testing-library/user-event@npm:14.5.1"
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: 852c48ea6db1c9471b18276617c84fec4320771e466cd58339a732ca3fd73ad35e5a43ae14f51af51a8d0a150dcf60fcaab049ef367871207bea8f92c4b8195e
+  checksum: 3e6bc9fd53dfe2f3648190193ed2fd4bca2a1bfb47f68810df3b33f05412526e5fd5c4ef9dc5375635e0f4cdf1859916867b597eed22bda1321e04242ea6c519
   languageName: node
   linkType: hard
 
@@ -9433,17 +9433,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:18.16.19, @types/node@npm:>=13.7.0":
-  version: 18.16.19
-  resolution: "@types/node@npm:18.16.19"
-  checksum: 63c31f09616508aa7135380a4c79470a897b75f9ff3a70eb069e534dfabdec3f32fb0f9df5939127f1086614d980ddea0fa5e8cc29a49103c4f74cd687618aaf
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:18.16.16":
-  version: 18.16.16
-  resolution: "@types/node@npm:18.16.16"
-  checksum: 0efad726dd1e0bef71c392c708fc5d78c5b39c46b0ac5186fee74de4ccb1b2e847b3fa468da67d62812f56569da721b15bf31bdc795e6c69b56c73a45079ed2d
+"@types/node@npm:*, @types/node@npm:18.18.4, @types/node@npm:>=13.7.0":
+  version: 18.18.4
+  resolution: "@types/node@npm:18.18.4"
+  checksum: 4901e91c4cc479bb58acbcd79236a97a0ad6db4a53cb1f4ba4cf32af15324c61b16faa6e31c1b09bf538a20feb5f5274239157ce5237f5741db0b9ab71e69c52
   languageName: node
   linkType: hard
 
@@ -12642,15 +12635,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-remote-interface@npm:0.32.2":
-  version: 0.32.2
-  resolution: "chrome-remote-interface@npm:0.32.2"
+"chrome-remote-interface@npm:0.33.0":
+  version: 0.33.0
+  resolution: "chrome-remote-interface@npm:0.33.0"
   dependencies:
     commander: 2.11.x
     ws: ^7.2.0
   bin:
     chrome-remote-interface: bin/client.js
-  checksum: 8a9fab249675eb1301b50ed99258aba8a844c07b03b5b4481d395ed72086aab80a492da81108e191a95da82a5930464c9d3ea359f331de56cd75f8e303f3a120
+  checksum: 8e874759fe0c2343b9363f3f79aa2f9073668ea7a0c964178887055e3bf9742251060c7d92c07ffa4a5371a0498ec9c120d4899f256cd74bebd67fc1c3383c3f
   languageName: node
   linkType: hard
 
@@ -13396,10 +13389,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.31.1, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
-  version: 3.31.1
-  resolution: "core-js@npm:3.31.1"
-  checksum: 14519213a63c55cf188bdd2f4dece54583feaf6b90e75d6c65e07f509cd487055bf64898aeda7c97c36029ac1ea2f2ed8e4b02281553f6a257e7143a32a14015
+"core-js@npm:3.33.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
+  version: 3.33.0
+  resolution: "core-js@npm:3.33.0"
+  checksum: dd62217935ac281faf6f833bb306fb891162919fcf9c1f0c975b1b91e82ac09a940f5deb5950bbb582739ceef716e8bd7e4f9eab8328932fb029d3bc2ecb2881
   languageName: node
   linkType: hard
 
@@ -17642,7 +17635,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.2.0
-    "@grafana/lezer-traceql": 0.0.6
+    "@grafana/lezer-traceql": 0.0.7
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": ^1.15.0
@@ -17684,11 +17677,11 @@ __metadata:
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@swc/core": 1.3.38
     "@swc/helpers": 0.4.14
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/react-hooks": ^8.0.1
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/angular": 1.8.5
     "@types/angular-route": 1.7.3
     "@types/chance": ^1.1.3
@@ -17713,7 +17706,7 @@ __metadata:
     "@types/lucene": ^2
     "@types/marked": 5.0.1
     "@types/mousetrap": 1.6.11
-    "@types/node": 18.16.16
+    "@types/node": 18.18.4
     "@types/node-forge": ^1
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
     "@types/papaparse": 5.3.7
@@ -17773,14 +17766,14 @@ __metadata:
     calculate-size: 1.1.1
     centrifuge: 4.0.1
     chance: ^1.0.10
-    chrome-remote-interface: 0.32.2
+    chrome-remote-interface: 0.33.0
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
     comlink: 4.4.1
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
-    core-js: 3.31.1
+    core-js: 3.33.0
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 5.0.1
     cypress: 13.1.0
