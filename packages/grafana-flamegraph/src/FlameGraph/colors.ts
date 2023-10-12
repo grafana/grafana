@@ -128,8 +128,10 @@ const matchers = [
   ['unknown', /^(?<packageName>.+)$/],
 ];
 
-// Get the package name from the symbol. Try matchers from the list and return first one that matches.
-function getPackageName(name: string): string | undefined {
+/**
+ * Get the package name from the symbol. Try matchers from the list and return first one that matches.
+ */
+export function getPackageName(name: string): string | undefined {
   for (const [_, matcher] of matchers) {
     const match = name.match(matcher);
     if (match) {
