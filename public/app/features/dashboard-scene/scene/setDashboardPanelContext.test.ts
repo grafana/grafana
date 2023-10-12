@@ -1,9 +1,21 @@
+import { EventBusSrv } from '@grafana/data';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { PanelContext } from '@grafana/ui';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../utils/utils';
 
-import { setDashboardPanelContext } from './setDashboardPanelContext';
+import { getAdHocFilterSetFor, setDashboardPanelContext } from './setDashboardPanelContext';
+
+const postFn = jest.fn();
+const putFn = jest.fn();
+const deleteFn = jest.fn();
+
+setBackendSrv({
+  post: postFn,
+  put: putFn,
+  delete: deleteFn,
+} as any as BackendSrv);
 
 describe('setDashboardPanelContext', () => {
   describe('canAddAnnotations', () => {
@@ -44,6 +56,104 @@ describe('setDashboardPanelContext', () => {
       expect(context.canEditAnnotations!('dash-uid')).toBe(false);
     });
   });
+
+  describe('canDeleteAnnotations', () => {
+    it('Can delete global event when user has org permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: true });
+      expect(context.canDeleteAnnotations!()).toBe(true);
+    });
+
+    it('Can not delete global event when has no org permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: false });
+      expect(context.canDeleteAnnotations!()).toBe(false);
+    });
+
+    it('Can delete dashboard event when has dashboard permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: true });
+      expect(context.canDeleteAnnotations!('dash-uid')).toBe(true);
+    });
+
+    it('Can not delete dashboard event when has no dashboard permission', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: false });
+      expect(context.canDeleteAnnotations!('dash-uid')).toBe(false);
+    });
+  });
+
+  describe('onAnnotationCreate', () => {
+    it('should create annotation', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
+
+      expect(postFn).toHaveBeenCalledWith('/api/annotations', {
+        dashboardUID: 'dash-1',
+        isRegion: true,
+        panelId: 4,
+        tags: [],
+        text: 'save it',
+        time: 100,
+        timeEnd: 200,
+      });
+    });
+  });
+
+  describe('onAnnotationUpdate', () => {
+    it('should update annotation', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+
+      expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
+        id: 'event-id-123',
+        dashboardUID: 'dash-1',
+        isRegion: true,
+        panelId: 4,
+        tags: [],
+        text: 'updated',
+        time: 100,
+        timeEnd: 200,
+      });
+    });
+  });
+
+  describe('onAnnotationDelete', () => {
+    it('should update annotation', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+      context.onAnnotationDelete!('I-do-not-want-you');
+
+      expect(deleteFn).toHaveBeenCalledWith('/api/annotations/I-do-not-want-you');
+    });
+  });
+
+  describe('onAddAdHocFilter', () => {
+    it('Should add new filter set', () => {
+      const { scene, context } = buildTestScene({});
+
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+
+      const set = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
+
+      expect(set.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
+    });
+
+    it('Should update and add filter to existing set', () => {
+      const { scene, context } = buildTestScene({ existingFilterSet: true });
+
+      const set = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
+
+      set.setState({ filters: [{ key: 'existing', value: 'world', operator: '=' }] });
+
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+
+      expect(set.state.filters.length).toBe(2);
+
+      // Can update existing filter value without adding a new filter
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '=' });
+      // Verify existing filter value updated
+      expect(set.state.filters[1].value).toBe('world2');
+    });
+  });
 });
 
 interface SceneOptions {
@@ -53,6 +163,7 @@ interface SceneOptions {
   canEdit?: boolean;
   canDelete?: boolean;
   orgCanEdit?: boolean;
+  existingFilterSet?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -82,8 +193,21 @@ function buildTestScene(options: SceneOptions) {
         {
           type: 'timeseries',
           id: 4,
+          datasource: { uid: 'my-ds-uid', type: 'prometheus' },
+          targets: [],
         },
       ],
+      templating: {
+        list: options.existingFilterSet
+          ? [
+              {
+                type: 'adhoc',
+                name: 'Filters',
+                datasource: { uid: 'my-ds-uid' },
+              },
+            ]
+          : [],
+      },
     },
     meta: {
       canEdit: options.dashboardCanEdit,
@@ -96,14 +220,17 @@ function buildTestScene(options: SceneOptions) {
         organization: {
           canAdd: false,
           canEdit: options.orgCanEdit ?? false,
-          canDelete: false,
+          canDelete: options.canDelete ?? false,
         },
       },
     },
   });
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
-  const context: PanelContext = {} as PanelContext;
+  const context: PanelContext = {
+    eventBus: new EventBusSrv(),
+    eventsScope: 'global',
+  };
 
   setDashboardPanelContext(vizPanel, context);
 

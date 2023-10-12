@@ -201,9 +201,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   const controls: SceneObject[] = [
-    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     ...filtersSets,
+    new SceneDataLayerControls(),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({
