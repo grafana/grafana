@@ -14,7 +14,6 @@ import {
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import { findFieldIndex } from 'app/features/dimensions';
 
-import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
