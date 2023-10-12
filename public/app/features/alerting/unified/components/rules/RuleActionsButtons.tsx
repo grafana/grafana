@@ -150,7 +150,9 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
           icon="edit"
           onClick={() =>
             locationService.push(
-              `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
+              createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
+                returnTo: location.pathname + location.search,
+              })
             )
           }
         />

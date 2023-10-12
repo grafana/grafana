@@ -6,7 +6,10 @@ import {
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
+  PostableRuleGrafanaRuleDTO,
   PromRulesResponse,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -69,6 +72,13 @@ interface ExportRulesParams {
   folderUid?: string;
   group?: string;
   ruleUid?: string;
+}
+
+export interface ModifyExportPayload {
+  rules: Array<RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO>;
+  name: string;
+  interval?: string | undefined;
+  source_tenants?: string[] | undefined;
 }
 
 export const alertRuleApi = alertingApi.injectEndpoints({
@@ -211,6 +221,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         url: `/api/v1/provisioning/policies/export/`,
         params: { format: format },
         responseType: 'text',
+      }),
+    }),
+    exportModifiedRuleGroup: build.mutation<
+      string,
+      { payload: ModifyExportPayload; format: ExportFormats; nameSpace: string }
+    >({
+      query: ({ payload, format, nameSpace }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpace}/export/`,
+        params: { format: format },
+        responseType: 'text',
+        data: payload,
+        method: 'POST',
       }),
     }),
   }),

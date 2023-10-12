@@ -103,7 +103,6 @@ def rgm_env_secrets(env):
     env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
     env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
-    env["PACKAGES_DESTINATION"] = "gs://grafana-packages-testing"
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
     env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
@@ -114,7 +113,7 @@ def rgm_env_secrets(env):
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
     env["NPM_TOKEN"] = from_secret(npm_token)
-    env["GCOM_API_KEY"] = from_secret("grafana_api_key_dev")
+    env["GCOM_API_KEY"] = from_secret("grafana_api_key")
     return env
 
 def rgm_run(name, script):
@@ -282,7 +281,7 @@ def rgm_nightly_publish():
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
-    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
+    package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
 
     return pipeline(
         name = "rgm-nightly-publish",

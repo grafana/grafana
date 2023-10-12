@@ -66,7 +66,6 @@ export interface FeatureToggles {
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -109,6 +108,7 @@ export interface FeatureToggles {
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -125,6 +125,7 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
@@ -135,7 +136,10 @@ export interface FeatureToggles {
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
   alertingModifiedExport?: boolean;
+  panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
 }

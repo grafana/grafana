@@ -36,10 +36,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
     // Note that canvas editor writes things to the scene!
     values: (parent: NestedValueAccess) => ({
-      getValue: (path: string) => {
+      getValue: (path) => {
         return lodashGet(opts.element.options, path);
       },
-      onChange: (path: string, value: any) => {
+      onChange: (path, value) => {
         let options = opts.element.options;
         if (path === 'type' && value) {
           const layer = canvasElementRegistry.getIfExists(value);
