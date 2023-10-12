@@ -22,6 +22,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 <!-- Jo Guerreiro -->
 <!-- already in on-prem -->
+
 _ Generally available in Grafana Cloud_
 
 You can now map Google groups to Grafana organizational roles when using Google OIDC.
