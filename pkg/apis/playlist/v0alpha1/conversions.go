@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type namespaceMapper = func(orgId int64) string
@@ -19,7 +20,15 @@ func orgNamespaceMapper(orgId int64) string {
 	return fmt.Sprintf("org-%d", orgId)
 }
 
-func convertToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) *Playlist {
+func getNamespaceMapper(cfg *setting.Cfg) namespaceMapper {
+	if cfg.StackID != "" {
+		return func(orgId int64) string { return "stack-" + cfg.StackID }
+	}
+	return orgNamespaceMapper
+}
+
+// DTO includes items
+func dtoToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) Playlist {
 	spec := Spec{
 		Title:    v.Name,
 		Interval: v.Interval,
@@ -30,7 +39,7 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) *
 			Value: item.Value,
 		})
 	}
-	return &Playlist{
+	return Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
 			APIVersion: APIVersion,
@@ -46,18 +55,19 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) *
 	}
 }
 
-func convertPlaylistToK8sResource(v *playlist.Playlist, namespacer namespaceMapper) *Playlist {
-	return &Playlist{
+// the non-dto object does not include items (useful for table response)
+func playlistToK8sResource(v *playlist.Playlist, namespacer namespaceMapper) Playlist {
+	return Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
 			APIVersion: APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.Uid,
-			UID:               types.UID(v.Uid),
+			Name:              v.UID,
+			UID:               types.UID(v.UID),
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
-			Namespace:         namespacer(v.OrgID),
+			Namespace:         namespacer(v.OrgId),
 		},
 		Spec: Spec{
 			Title:    v.Name,
