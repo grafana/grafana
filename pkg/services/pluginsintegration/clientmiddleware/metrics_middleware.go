@@ -62,7 +62,7 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
-	}, []string{"source", "plugin_id", "endpoint", "status", "target"})
+	}, append([]string{"source", "plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	promRegisterer.MustRegister(
 		pluginRequestCounter,
 		pluginRequestDuration,
@@ -130,15 +130,17 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
 	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
+	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status, target}
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
 		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
 		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
+		pluginRequestDurationSecondsLabels = append(pluginRequestDurationSecondsLabels, string(statusSource))
 	}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
 	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, target)
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues(pluginRequestDurationSecondsLabels...)
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
