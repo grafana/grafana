@@ -56,7 +56,7 @@ Previously the only transformation that supported <!-- link to dashboard variabl
 
 <!-- Victor marin -->
 
-The add field from calculation transformation has recieved two new modes.
+The add field from calculation transformation has received two new modes.
 
 **Unuary operations** let you apply mathematical operations to a field. The currently supported operations are - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number. - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression. - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression. - **Floor (floor)** - Returns the largest integer less than or equal to a given expression. - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
 
