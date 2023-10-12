@@ -111,8 +111,8 @@ export function AdminFeatureTogglesTable({ featureToggles, onUpdateSuccess }: Pr
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
-        <Button disabled={!hasModifications() || isSaving } onClick={handleSaveChanges}>
-          { isSaving ? 'Saving...' : 'Save Changes' }
+        <Button disabled={!hasModifications() || isSaving} onClick={handleSaveChanges}>
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
       <InteractiveTable columns={columns} data={localToggles} getRowId={(featureToggle) => featureToggle.name} />

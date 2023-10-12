@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
@@ -21,7 +21,7 @@ export default function AdminFeatureTogglesPage() {
 
   const handleUpdateSuccess = () => {
     setUpdateSuccessful(true);
-  }
+  };
 
   const AlertMessage = () => {
     return (
@@ -30,9 +30,13 @@ export default function AdminFeatureTogglesPage() {
           <Icon name="exclamation-triangle" />
         </div>
         {featureMgmtState?.restartRequired || updateSuccessful ? (
-          <span className={styles.message}>A restart is pending for your Grafana instance to apply the latest feature toggle changes</span>
+          <span className={styles.message}>
+            A restart is pending for your Grafana instance to apply the latest feature toggle changes
+          </span>
         ) : (
-          <span className={styles.message}>Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes</span>
+          <span className={styles.message}>
+            Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes
+          </span>
         )}
       </div>
     );
@@ -45,7 +49,9 @@ export default function AdminFeatureTogglesPage() {
           {isError && getErrorMessage()}
           {isLoading && 'Fetching feature toggles'}
           <AlertMessage />
-          {featureToggles && <AdminFeatureTogglesTable featureToggles={featureToggles} onUpdateSuccess={handleUpdateSuccess}/>}
+          {featureToggles && (
+            <AdminFeatureTogglesTable featureToggles={featureToggles} onUpdateSuccess={handleUpdateSuccess} />
+          )}
         </>
       </Page.Contents>
     </Page>
@@ -54,17 +60,17 @@ export default function AdminFeatureTogglesPage() {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    warning: css`
-      display: flex;
-      margin-top: ${theme.spacing(3)};
-    `,
-    icon: css`
-      color: ${theme.colors.warning.main};
-      padding-right: ${theme.spacing()};
-  `,
-    message: css`
-    color: ${theme.colors.text.secondary};
-    margin-top: ${theme.spacing(0.25)};
-  `,
+    warning: css({
+      display: 'flex',
+      marginTop: theme.spacing(3),
+    }),
+    icon: css({
+      color: theme.colors.warning.main,
+      paddingRight: theme.spacing(),
+    }),
+    message: css({
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing(0.25),
+    })
   };
 }
