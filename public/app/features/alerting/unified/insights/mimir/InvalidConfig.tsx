@@ -23,7 +23,7 @@ export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: str
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The current state of your alertmanager configuration')
       .setData(query)
       .setUnit('bool_yes_no')
       .setOption('graphMode', BigValueGraphMode.None)

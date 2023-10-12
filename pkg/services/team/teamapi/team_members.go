@@ -1,4 +1,4 @@
-package api
+package teamapi
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) getTeamMembers(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -36,21 +36,21 @@ func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Respon
 
 	query := team.GetTeamMembersQuery{OrgID: c.SignedInUser.GetOrgID(), TeamID: teamId, SignedInUser: c.SignedInUser}
 
-	queryResult, err := hs.teamService.GetTeamMembers(c.Req.Context(), &query)
+	queryResult, err := tapi.teamService.GetTeamMembers(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, "Failed to get Team Members", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get Team Members", err)
 	}
 
 	filteredMembers := make([]*team.TeamMemberDTO, 0, len(queryResult))
 	for _, member := range queryResult {
-		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, tapi.cfg) {
 			continue
 		}
 
 		member.AvatarURL = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
-		if hs.License.FeatureEnabled("teamgroupsync") && member.External {
+		if tapi.license.FeatureEnabled("teamgroupsync") && member.External {
 			authProvider := login.GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
@@ -71,7 +71,7 @@ func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response {
 	cmd := team.AddTeamMemberCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -83,17 +83,17 @@ func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	isTeamMember, err := hs.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), cmd.TeamID, cmd.UserID)
+	isTeamMember, err := tapi.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), cmd.TeamID, cmd.UserID)
 	if err != nil {
-		return response.Error(500, "Failed to add team member.", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add team member.", err)
 	}
 	if isTeamMember {
-		return response.Error(400, "User is already added to this team", nil)
+		return response.Error(http.StatusBadRequest, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, cmd.UserID, cmd.OrgID, cmd.TeamID, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, cmd.UserID, cmd.OrgID, cmd.TeamID, getPermissionName(cmd.Permission))
 	if err != nil {
-		return response.Error(500, "Failed to add Member to Team", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add Member to Team", err)
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{
@@ -111,7 +111,7 @@ func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Respons
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Response {
 	cmd := team.UpdateTeamMemberCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -126,17 +126,17 @@ func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Resp
 	}
 	orgId := c.SignedInUser.GetOrgID()
 
-	isTeamMember, err := hs.teamService.IsTeamMember(orgId, teamId, userId)
+	isTeamMember, err := tapi.teamService.IsTeamMember(orgId, teamId, userId)
 	if err != nil {
-		return response.Error(500, "Failed to update team member.", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update team member.", err)
 	}
 	if !isTeamMember {
-		return response.Error(404, "Team member not found.", nil)
+		return response.Error(http.StatusNotFound, "Team member not found.", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, userId, orgId, teamId, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userId, orgId, teamId, getPermissionName(cmd.Permission))
 	if err != nil {
-		return response.Error(500, "Failed to update team member.", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update team member.", err)
 	}
 	return response.Success("Team member updated")
 }
@@ -161,7 +161,7 @@ func getPermissionName(permission dashboards.PermissionType) string {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Response {
+func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Response {
 	orgId := c.SignedInUser.GetOrgID()
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
@@ -173,16 +173,16 @@ func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Resp
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
+	if _, err := tapi.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
-			return response.Error(404, "Team not found", nil)
+			return response.Error(http.StatusNotFound, "Team not found", nil)
 		}
 
 		if errors.Is(err, team.ErrTeamMemberNotFound) {
-			return response.Error(404, "Team member not found", nil)
+			return response.Error(http.StatusNotFound, "Team member not found", nil)
 		}
 
-		return response.Error(500, "Failed to remove Member from Team", err)
+		return response.Error(http.StatusInternalServerError, "Failed to remove Member from Team", err)
 	}
 	return response.Success("Team Member removed")
 }
