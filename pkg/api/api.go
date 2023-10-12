@@ -124,18 +124,19 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
-	r.Get("/plugins", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
-	r.Get("/plugins/:id/", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
-	r.Get("/plugins/:id/edit", middleware.CanAdminPlugins(hs.Cfg), hs.Index) // deprecated
-	r.Get("/plugins/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	r.Get("/plugins", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
+	r.Get("/plugins/:id/", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
+	r.Get("/plugins/:id/edit", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index) // deprecated
+	r.Get("/plugins/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
 
 	r.Get("/connections/datasources", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/new", authorize(datasources.NewPageAccess), hs.Index)
 	r.Get("/connections/datasources/edit/*", authorize(datasources.EditPageAccess), hs.Index)
 	r.Get("/connections", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/add-new-connection", authorize(datasources.ConfigurationPageAccess), hs.Index)
-	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
-	r.Get("/connections/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	// Plugin details pages
+	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
+	r.Get("/connections/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
 
 	// App Root Page
 	appPluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
@@ -268,25 +269,6 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/lookup", authorize(ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.GetUserByLoginOrEmail))
 			usersRoute.Put("/:id", authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUser))
 			usersRoute.Post("/:id/using/:orgId", authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUserActiveOrg))
-		}, requestmeta.SetOwner(requestmeta.TeamAuth))
-
-		// team (admin permission required)
-		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", authorize(ac.EvalPermission(ac.ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
-			teamsRoute.Put("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeam))
-			teamsRoute.Delete("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsDelete, ac.ScopeTeamsID)), routing.Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.AddTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", authorize(ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.RemoveTeamMember))
-			teamsRoute.Get("/:teamId/preferences", authorize(ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", authorize(ac.EvalPermission(ac.ActionTeamsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeamPreferences))
-		}, requestmeta.SetOwner(requestmeta.TeamAuth))
-
-		// team without requirement of user to be org admin
-		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", authorize(ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamByID))
-			teamsRoute.Get("/search", authorize(ac.EvalPermission(ac.ActionTeamsRead)), routing.Wrap(hs.SearchTeams))
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 
 		// org information available to all users.

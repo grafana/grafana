@@ -199,10 +199,6 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
-	// FlagPrometheusResourceBrowserCache
-	// Displays browser caching options in Prometheus data source configuration
-	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
-
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -439,6 +435,10 @@ const (
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
 
+	// FlagLibraryPanelRBAC
+	// Enables RBAC support for library panels
+	FlagLibraryPanelRBAC = "libraryPanelRBAC"
+
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
@@ -506,4 +506,8 @@ const (
 	// FlagTeamHeaders
 	// Enables datasources to apply team headers to the client requests
 	FlagTeamHeaders = "teamHeaders"
+
+	// FlagAwsDatasourcesNewFormStyling
+	// Applies new form styling for configuration and query editors in AWS plugins
+	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
 )

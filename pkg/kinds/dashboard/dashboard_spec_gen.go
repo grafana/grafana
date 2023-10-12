@@ -529,7 +529,7 @@ type Panel struct {
 	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
 	// Each column within this structure is called a field. A field can represent a single time series or table column.
 	// Field options allow you to change how the data is displayed in your visualizations.
-	FieldConfig FieldConfigSource `json:"fieldConfig"`
+	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
 
 	// Position and dimensions of a panel in the grid
 	GridPos *GridPos `json:"gridPos,omitempty"`
@@ -562,7 +562,7 @@ type Panel struct {
 	MaxPerRow *float32 `json:"maxPerRow,omitempty"`
 
 	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-	Options map[string]any `json:"options"`
+	Options map[string]any `json:"options,omitempty"`
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
@@ -602,10 +602,10 @@ type Panel struct {
 	// List of transformations that are applied to the panel data before rendering.
 	// When there are multiple transformations, Grafana applies them in the order they are listed.
 	// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
-	Transformations []DataTransformerConfig `json:"transformations"`
+	Transformations []DataTransformerConfig `json:"transformations,omitempty"`
 
 	// Whether to display the panel without a background.
-	Transparent bool `json:"transparent"`
+	Transparent *bool `json:"transparent,omitempty"`
 
 	// The panel plugin type id. This is used to find the plugin to display the panel.
 	Type string `json:"type"`
@@ -734,7 +734,7 @@ type Spec struct {
 	Description *string `json:"description,omitempty"`
 
 	// Whether a dashboard is editable or not.
-	Editable bool `json:"editable"`
+	Editable *bool `json:"editable,omitempty"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
@@ -745,7 +745,7 @@ type Spec struct {
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
 	// 2 for shared crosshair AND shared tooltip.
-	GraphTooltip CursorSync `json:"graphTooltip"`
+	GraphTooltip *CursorSync `json:"graphTooltip,omitempty"`
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.

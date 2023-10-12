@@ -101,6 +101,9 @@ export interface FieldConfig<TOptions = any> {
 
   // Panel Specific Values
   custom?: TOptions;
+
+  // Calculate min max per field
+  fieldMinMax?: boolean;
 }
 
 export interface FieldTypeConfig {

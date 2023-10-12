@@ -1,4 +1,4 @@
-package api
+package teamapi
 
 import (
 	"fmt"
@@ -10,14 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -31,17 +28,14 @@ const (
 )
 
 func TestTeamAPIEndpoint_CreateTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.teamService = teamtest.NewFakeService()
-		hs.AccessControl = acimpl.ProvideAccessControl(setting.NewCfg())
-		hs.accesscontrolService = actest.FakeService{}
 	})
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
 		req := server.NewPostRequest(createTeamURL, input)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}))
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}))
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -51,7 +45,7 @@ func TestTeamAPIEndpoint_CreateTeam(t *testing.T) {
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Access control prevents creating teams with the incorrect permissions", func(t *testing.T) {
 		req := server.NewPostRequest(createTeamURL, input)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{}))
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -60,14 +54,13 @@ func TestTeamAPIEndpoint_CreateTeam(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.teamService = teamtest.NewFakeService()
 	})
 
 	t.Run("Access control prevents searching for teams with the incorrect permissions", func(t *testing.T) {
 		req := server.NewGetRequest(searchTeamsURL)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{}))
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -76,7 +69,7 @@ func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
 
 	t.Run("Access control allows searching for teams with the correct permissions", func(t *testing.T) {
 		req := server.NewGetRequest(searchTeamsURL)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
 		}))
 		res, err := server.Send(req)
@@ -87,8 +80,7 @@ func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
@@ -96,7 +88,7 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 
 	t.Run("Access control prevents getting a team when missing permissions", func(t *testing.T) {
 		req := server.NewGetRequest(url)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{}))
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -105,7 +97,7 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 
 	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
 		req := server.NewGetRequest(url)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
 		}))
 		res, err := server.Send(req)
@@ -116,7 +108,7 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 
 	t.Run("Access control allows getting a team with wildcard scope", func(t *testing.T) {
 		req := server.NewGetRequest(url)
-		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"},
 		}))
 		res, err := server.Send(req)
@@ -130,8 +122,7 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
@@ -142,7 +133,7 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 	}
 
 	t.Run("Access control allows updating team with the correct permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -151,7 +142,7 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 	})
 
 	t.Run("Access control allows updating teams with the wildcard scope", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
 		}))
 		require.NoError(t, err)
@@ -160,7 +151,7 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 	})
 
 	t.Run("Access control prevent updating a team with wrong scope", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"},
 		}))
 		require.NoError(t, err)
@@ -173,8 +164,7 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
@@ -185,7 +175,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	}
 
 	t.Run("Access control prevents deleting teams with the incorrect permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:2"},
 		}))
 		require.NoError(t, err)
@@ -194,7 +184,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -207,8 +197,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
 	})
 
@@ -219,7 +208,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 	}
 
 	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -228,7 +217,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 	})
 
 	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"},
 		}))
 		require.NoError(t, err)
@@ -241,8 +230,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
+	server := SetupAPITestServer(t, func(hs *TeamAPI) {
 		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
 	})
 
@@ -253,7 +241,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
 	}
 
 	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -262,7 +250,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
 	})
 
 	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
-		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"},
 		}))
 		require.NoError(t, err)

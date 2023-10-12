@@ -35,7 +35,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `logsContextDatasourceUi`                        | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
 | `gcomOnlyExternalOrgRoleSync`                    | Prohibits a user from changing organization roles synced with Grafana Cloud auth provider                                                                                                           |                    |
 | `prometheusMetricEncyclopedia`                   | Adds the metrics explorer component to the Prometheus query builder as an option in metric select                                                                                                   | Yes                |
-| `prometheusResourceBrowserCache`                 | Displays browser caching options in Prometheus data source configuration                                                                                                                            | Yes                |
 | `prometheusDataplane`                            | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
 | `lokiMetricDataplane`                            | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
@@ -137,6 +136,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
+| `libraryPanelRBAC`                          | Enables RBAC support for library panels                                                                      |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
@@ -150,6 +150,7 @@ Experimental features might be changed or removed without prior notice.
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
 | `teamHeaders`                               | Enables datasources to apply team headers to the client requests                                             |
+| `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                  |
 
 ## Development feature toggles
 
