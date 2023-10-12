@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -86,9 +87,10 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
-		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) {
+		hasAccess := ac.HasAccess(accessControl, c)
+		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 			accessForbidden(c)
 			return
 		}

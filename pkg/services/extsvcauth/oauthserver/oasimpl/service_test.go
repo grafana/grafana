@@ -2,7 +2,6 @@ package oasimpl
 
 import (
 	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -93,10 +92,9 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 
 	env.S.oauthProvider = newProvider(config, env.S, &signingkeystest.FakeSigningKeysService{
-		ExpectedKeys: map[string]crypto.Signer{
-			"default": pk,
-		},
-		ExpectedError: nil,
+		ExpectedSinger: pk,
+		ExpectedKeyID:  "default",
+		ExpectedError:  nil,
 	})
 
 	return env
