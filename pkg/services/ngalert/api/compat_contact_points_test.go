@@ -79,7 +79,6 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			require.NoError(t, err)
 
 			diff := cmp.Diff(expected, actual, cmp.FilterPath(func(path cmp.Path) bool {
-				t.Log(path.String())
 				return strings.Contains(path.String(), "Metadata.UID") ||
 					strings.Contains(path.String(), "Metadata.Name") ||
 					strings.Contains(path.String(), "WecomConfigs.Settings.EndpointURL") // This field is not exposed to user
