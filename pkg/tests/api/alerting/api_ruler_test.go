@@ -134,11 +134,11 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			require.Empty(t, diff)
 
-			for _, rule := range allRules["folder1"][0].Rules {
+			for _, rule := range allRules["/folder1"][0].Rules {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
 			}
-			for _, rule := range allRules["folder2"][0].Rules {
+			for _, rule := range allRules["/folder2"][0].Rules {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
 			}
@@ -147,14 +147,14 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
 			rules, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "folder1")
 			require.Equal(t, http.StatusAccepted, status)
-			require.Contains(t, rules, "folder1")
-			require.Len(t, rules["folder1"], 1)
-			require.Equal(t, allRules["folder1"], rules["folder1"])
+			require.Contains(t, rules, "/folder1")
+			require.Len(t, rules["/folder1"], 1)
+			require.Equal(t, allRules["/folder1"], rules["/folder1"])
 		})
 
 		t.Run("Get group returns a single group", func(t *testing.T) {
-			rules := apiClient.GetRulesGroup(t, "folder2", allRules["folder2"][0].Name)
-			cmp.Diff(allRules["folder2"][0], rules.GettableRuleGroupConfig)
+			rules := apiClient.GetRulesGroup(t, "folder2", allRules["/folder2"][0].Name)
+			cmp.Diff(allRules["/folder2"][0], rules.GettableRuleGroupConfig)
 		})
 
 		t.Run("Export returns all rules", func(t *testing.T) {
@@ -247,8 +247,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		t.Run("Get all returns all rules", func(t *testing.T) {
 			newAll, status, _ := apiClient.GetAllRulesWithStatus(t)
 			require.Equal(t, http.StatusOK, status)
-			require.NotContains(t, newAll, "folder2")
-			require.Contains(t, newAll, "folder1")
+			require.NotContains(t, newAll, "/folder2")
+			require.Contains(t, newAll, "/folder1")
 		})
 
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
@@ -298,7 +298,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		})
 
 		t.Run("Export single rule", func(t *testing.T) {
-			uid := allRules["folder2"][0].Rules[0].GrafanaManagedAlert.UID
+			uid := allRules["/folder2"][0].Rules[0].GrafanaManagedAlert.UID
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
 				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
 				RuleUID:           uid,
@@ -1250,7 +1250,7 @@ func TestIntegrationRulePause(t *testing.T) {
 		resp, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		require.Len(t, resp.Created, 1)
-		getGroup := client.GetRulesGroup(t, folder1TifolderUIDtle, group.Name)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
 		require.False(t, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
 	})
