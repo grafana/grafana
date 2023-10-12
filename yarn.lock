@@ -2992,7 +2992,7 @@ __metadata:
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
     "@rollup/plugin-node-resolve": 15.2.3
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
@@ -3310,7 +3310,7 @@ __metadata:
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-node-resolve": 15.2.3
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
     "@types/angular": 1.8.5
@@ -3434,7 +3434,7 @@ __metadata:
     "@storybook/react": 7.4.5
     "@storybook/react-webpack5": 7.4.5
     "@storybook/theming": 7.4.5
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
@@ -8385,9 +8385,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:9.3.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
-  version: 9.3.1
-  resolution: "@testing-library/dom@npm:9.3.1"
+"@testing-library/dom@npm:9.3.3, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
+  version: 9.3.3
+  resolution: "@testing-library/dom@npm:9.3.3"
   dependencies:
     "@babel/code-frame": ^7.10.4
     "@babel/runtime": ^7.12.5
@@ -8397,7 +8397,7 @@ __metadata:
     dom-accessibility-api: ^0.5.9
     lz-string: ^1.5.0
     pretty-format: ^27.0.2
-  checksum: 8ee3136451644e39990edea93709c38cf1e8ce5306f3c66273ca00935963faa51ca74e8d92b02eb442ccb842cfa28ca62833e393e075eb269cf9bef6f5600663
+  checksum: 34e0a564da7beb92aa9cc44a9080221e2412b1a132eb37be3d513fe6c58027674868deb9f86195756d98d15ba969a30fe00632a4e26e25df2a5a4f6ac0686e37
   languageName: node
   linkType: hard
 
@@ -17677,7 +17677,7 @@ __metadata:
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@swc/core": 1.3.38
     "@swc/helpers": 0.4.14
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/react-hooks": ^8.0.1
