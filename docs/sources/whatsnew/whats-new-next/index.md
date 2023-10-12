@@ -23,6 +23,8 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- Oscar Kilhed, Victor Marin -->
 <!-- already in on-prem -->
 
+October 24, 2023
+
 _Experimental in Grafana Cloud_
 
 Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. 
