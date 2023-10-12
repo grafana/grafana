@@ -1425,6 +1425,7 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 
 ### Features and enhancements
 
+- **Chore:** Upgrade Go to 1.20.10. [#76370](https://github.com/grafana/grafana/issues/76370), [@zerok](https://github.com/zerok)
 - **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData). [#74615](https://github.com/grafana/grafana/issues/74615), [@yuri-tceretian](https://github.com/yuri-tceretian)
 
 ### Bug fixes
