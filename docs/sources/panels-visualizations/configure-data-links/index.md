@@ -73,9 +73,12 @@ Value-specific variables are available under `__value` namespace:
 
 ## Data variables
 
-Data-specific variables are available under `__data` namespace:
+To access values and labels from other fields use 
 
-- `__data.fields[i]` - value of data field, `i` is an index starting from 0
+- `${__data.fields[i]}` - value of field i (on the same row)
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields[1].labels.cluster}` - Access labels of another field 
 
 ## Template variables
 
