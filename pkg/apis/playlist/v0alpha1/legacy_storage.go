@@ -50,7 +50,57 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	t, ok := object.(*metav1.Table)
+	if ok {
+		return t, nil
+	}
+
+	p, ok := object.(*PlaylistList)
+	if ok {
+		t := &metav1.Table{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Table",
+				APIVersion: "meta.k8s.io/v1",
+			},
+			ColumnDefinitions: []metav1.TableColumnDefinition{{
+				Name:        "Name",
+				Type:        "string",
+				Format:      "name",
+				Description: "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+				Priority:    0,
+			}, {
+				Name:        "Title",
+				Type:        "string",
+				Format:      "string",
+				Description: "The playlist display name",
+				Priority:    0,
+			}, {
+				Name:        "Interval",
+				Type:        "string",
+				Format:      "string",
+				Description: "Refresh interval",
+				Priority:    0,
+			}},
+		}
+
+		for _, v := range p.Items {
+			t.Rows = append(t.Rows, metav1.TableRow{
+				Cells: []interface{}{
+					v.Name,
+					v.Spec.Title,
+					v.Spec.Interval,
+				},
+				Object: runtime.RawExtension{
+					Object: &v,
+				},
+			})
+		}
+		return t, nil
+	}
+
+	// Fallback to the default converter
+	return rest.NewDefaultTableConvertor(Resource("playlists")).
+		ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -79,16 +129,28 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			APIVersion: APIVersion,
 		},
 	}
-	for _, v := range res {
-		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
-			UID:   v.UID,
-			OrgId: orgId, // required
-		})
-		if err != nil {
-			return nil, err
+	if true { // table can skip query for each item
+		for _, v := range res {
+			list.Items = append(list.Items,
+				*convertPlaylistToK8sResource(v, orgNamespaceMapper),
+			)
 		}
-		list.Items = append(list.Items, *convertToK8sResource(p, orgNamespaceMapper))
+	} else {
+		// We must query for all nested items
+		for _, v := range res {
+			p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+				UID:   v.UID,
+				OrgId: orgId, // required
+			})
+			if err != nil {
+				return nil, err
+			}
+			list.Items = append(list.Items,
+				*convertPlaylistToK8sResource(p, orgNamespaceMapper),
+			)
+		}
 	}
+
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
 	}

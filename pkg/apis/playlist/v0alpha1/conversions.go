@@ -45,3 +45,23 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) *
 		Spec: spec,
 	}
 }
+
+func convertPlaylistToK8sResource(v *playlist.Playlist, namespacer namespaceMapper) *Playlist {
+	return &Playlist{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Playlist",
+			APIVersion: APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              v.Uid,
+			UID:               types.UID(v.Uid),
+			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
+			Namespace:         namespacer(v.OrgID),
+		},
+		Spec: Spec{
+			Title:    v.Name,
+			Interval: v.Interval,
+		},
+	}
+}
