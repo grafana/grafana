@@ -6,7 +6,10 @@ import {
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
+  PostableRuleGrafanaRuleDTO,
   PromRulesResponse,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -40,10 +43,6 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
-function getProvisioningExportUrl(ruleUid: string, format: 'yaml' | 'json' | 'hcl' = 'yaml') {
-  return `/api/v1/provisioning/alert-rules/${ruleUid}/export?format=${format}`;
-}
-
 export interface Data {
   refId: string;
   relativeTimeRange: RelativeTimeRange;
@@ -67,6 +66,20 @@ export interface Rule {
 }
 
 export type AlertInstances = Record<string, string>;
+
+interface ExportRulesParams {
+  format: ExportFormats;
+  folderUid?: string;
+  group?: string;
+  ruleUid?: string;
+}
+
+export interface ModifyExportPayload {
+  rules: Array<RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO>;
+  name: string;
+  interval?: string | undefined;
+  source_tenants?: string[] | undefined;
+}
 
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -182,20 +195,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
     }),
 
-    exportRule: build.query<string, { uid: string; format: ExportFormats }>({
-      query: ({ uid, format }) => ({ url: getProvisioningExportUrl(uid, format), responseType: 'text' }),
-    }),
-    exportRuleGroup: build.query<string, { folderUid: string; groupName: string; format: ExportFormats }>({
-      query: ({ folderUid, groupName, format }) => ({
-        url: `/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`,
-        params: { format: format },
-        responseType: 'text',
-      }),
-    }),
-    exportRules: build.query<string, { format: ExportFormats }>({
-      query: ({ format }) => ({
-        url: `/api/v1/provisioning/alert-rules/export`,
-        params: { format: format },
+    exportRules: build.query<string, ExportRulesParams>({
+      query: ({ format, folderUid, group, ruleUid }) => ({
+        url: `/api/ruler/grafana/api/v1/export/rules`,
+        params: { format: format, folderUid: folderUid, group: group, ruleUid: ruleUid },
         responseType: 'text',
       }),
     }),
@@ -218,6 +221,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         url: `/api/v1/provisioning/policies/export/`,
         params: { format: format },
         responseType: 'text',
+      }),
+    }),
+    exportModifiedRuleGroup: build.mutation<
+      string,
+      { payload: ModifyExportPayload; format: ExportFormats; nameSpace: string }
+    >({
+      query: ({ payload, format, nameSpace }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpace}/export/`,
+        params: { format: format },
+        responseType: 'text',
+        data: payload,
+        method: 'POST',
       }),
     }),
   }),

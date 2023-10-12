@@ -2992,7 +2992,7 @@ __metadata:
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-json": 6.0.0
     "@rollup/plugin-node-resolve": 15.2.3
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
@@ -3281,12 +3281,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.6":
-  version: 0.0.6
-  resolution: "@grafana/lezer-traceql@npm:0.0.6"
+"@grafana/lezer-traceql@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@grafana/lezer-traceql@npm:0.0.7"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 166a30c38f4f78e1768e80f724176b71becf3fa51414bc8bea4c2c5288a92d1f8b7872280a06c0d3f7f7608b174e5fc930e1af39339b2c2fdf627fb7ac14c6b4
+  checksum: 920f8116d61907e12ca1dd51949242abf435e675105699c7b2fcd8c024999ed0ddfd3500b1802111f3ed9ad37e16f40826790658bdf94224cd5b615e20360ab9
   languageName: node
   linkType: hard
 
@@ -3310,7 +3310,7 @@ __metadata:
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
     "@rollup/plugin-node-resolve": 15.2.3
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
     "@types/angular": 1.8.5
@@ -3344,8 +3344,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^1.15.0":
-  version: 1.15.0
-  resolution: "@grafana/scenes@npm:1.15.0"
+  version: 1.17.0
+  resolution: "@grafana/scenes@npm:1.17.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3357,7 +3357,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 8416327ad9a0e3be35d5a106788248d5886f6aa220777cf0772ef73a3f64ecac889f58a8e804beea0de339acd571d6e49a10278180cf1c50a2a51f44e03bf93e
+  checksum: 0bd8603ae59c199c595a45a7bc31e318a1928b18307469bcd5ee5f83c3aaee89c5c27a1341a479440d928505681ab6a2479809a5cac56e8e93ba7acf06adff93
   languageName: node
   linkType: hard
 
@@ -3434,7 +3434,7 @@ __metadata:
     "@storybook/react": 7.4.5
     "@storybook/react-webpack5": 7.4.5
     "@storybook/theming": 7.4.5
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
@@ -8385,9 +8385,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:9.3.1, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
-  version: 9.3.1
-  resolution: "@testing-library/dom@npm:9.3.1"
+"@testing-library/dom@npm:9.3.3, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
+  version: 9.3.3
+  resolution: "@testing-library/dom@npm:9.3.3"
   dependencies:
     "@babel/code-frame": ^7.10.4
     "@babel/runtime": ^7.12.5
@@ -8397,7 +8397,7 @@ __metadata:
     dom-accessibility-api: ^0.5.9
     lz-string: ^1.5.0
     pretty-format: ^27.0.2
-  checksum: 8ee3136451644e39990edea93709c38cf1e8ce5306f3c66273ca00935963faa51ca74e8d92b02eb442ccb842cfa28ca62833e393e075eb269cf9bef6f5600663
+  checksum: 34e0a564da7beb92aa9cc44a9080221e2412b1a132eb37be3d513fe6c58027674868deb9f86195756d98d15ba969a30fe00632a4e26e25df2a5a4f6ac0686e37
   languageName: node
   linkType: hard
 
@@ -17649,7 +17649,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.2.0
-    "@grafana/lezer-traceql": 0.0.6
+    "@grafana/lezer-traceql": 0.0.7
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": ^1.15.0
@@ -17691,7 +17691,7 @@ __metadata:
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@swc/core": 1.3.38
     "@swc/helpers": 0.4.14
-    "@testing-library/dom": 9.3.1
+    "@testing-library/dom": 9.3.3
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
     "@testing-library/react-hooks": ^8.0.1
