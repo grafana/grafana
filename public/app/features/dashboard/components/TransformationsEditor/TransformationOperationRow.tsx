@@ -101,7 +101,7 @@ export const TransformationOperationRow = ({
     [configs, index]
   );
 
-  const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
+  const renderActions = () => {
     return (
       <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
