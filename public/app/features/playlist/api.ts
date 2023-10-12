@@ -54,15 +54,14 @@ interface K8sPlaylist {
   };
 }
 
-const apiVersion = 'playlist.x.grafana.com/v0alpha1';
-
 class K8sAPI implements PlaylistAPI {
+  readonly apiVersion = 'playlist.x.grafana.com/v0alpha1';
   readonly url: string;
   readonly legacy: PlaylistAPI | undefined;
 
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/${apiVersion}/namespaces/${ns}/playlists`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/playlists`;
 
     // When undefined, this will use k8s for all CRUD features
     if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
@@ -86,7 +85,7 @@ class K8sAPI implements PlaylistAPI {
     if (this.legacy) {
       return this.legacy.createPlaylist(playlist);
     }
-    const body = playlistAsK8sResource(playlist);
+    const body = this.playlistAsK8sResource(playlist);
     await withErrorHandling(() => getBackendSrv().post(this.url, body));
   }
 
@@ -94,7 +93,7 @@ class K8sAPI implements PlaylistAPI {
     if (this.legacy) {
       return this.legacy.updatePlaylist(playlist);
     }
-    const body = playlistAsK8sResource(playlist);
+    const body = this.playlistAsK8sResource(playlist);
     await withErrorHandling(() => getBackendSrv().put(`${this.url}/${playlist.uid}`, body));
   }
 
@@ -104,6 +103,21 @@ class K8sAPI implements PlaylistAPI {
     }
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
+
+  playlistAsK8sResource = (playlist: Playlist): K8sPlaylist => {
+    return {
+      apiVersion: this.apiVersion,
+      kind: 'Playlist',
+      metadata: {
+        name: playlist.uid, // uid as k8s name
+      },
+      spec: {
+        title: playlist.name, // name becomes title
+        interval: playlist.interval,
+        items: playlist.items ?? [],
+      },
+    };
+  };
 }
 
 // This converts a saved k8s resource into a playlist object
@@ -116,21 +130,6 @@ function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
     name: spec.title,
     interval: spec.interval,
     items: spec.items,
-  };
-}
-
-function playlistAsK8sResource(playlist: Playlist): K8sPlaylist {
-  return {
-    apiVersion: apiVersion,
-    kind: 'Playlist',
-    metadata: {
-      name: playlist.uid, // uid as k8s name
-    },
-    spec: {
-      title: playlist.name, // name becomes title
-      interval: playlist.interval,
-      items: playlist.items ?? [],
-    },
   };
 }
 
