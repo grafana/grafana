@@ -9,16 +9,12 @@ import {
   FieldType,
   MutableDataFrame,
   isTimeSeriesFrame,
+  ReducerID,
+  reduceField,
 } from '@grafana/data';
 
-export enum ValueType {
-  Last = 'last',
-  Average = 'average',
-  Median = 'median',
-}
-
 export interface TimeSeriesTableTransformerOptions {
-  refIdToValueType?: Record<string, ValueType>;
+  refIdToStat?: Record<string, ReducerID>;
 }
 
 export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
@@ -92,9 +88,12 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       const labelValue = labels?.[labelKey] ?? null;
       labelFields[labelKey].values.push(labelValue!);
     }
+    const reducerId = options.refIdToStat?.[refId] ?? ReducerID.lastNotNull;
+    const valueField = frame.fields.find((f) => f.type === FieldType.number);
+    const value = (valueField && reduceField({ field: valueField, reducers: [reducerId] })[reducerId]) || null;
     frameField.values.push({
       ...frame,
-      value: calculateFrameValue(frame, options.refIdToValueType?.[refId] ?? ValueType.Last),
+      value,
     });
   }
   return result;
@@ -135,36 +134,4 @@ function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Fiel
   }
 
   return labelFields;
-}
-
-function calculateFrameValue(frame: DataFrame, valueType: ValueType): number | null {
-  const valueField = frame.fields.find((field) => field.type === FieldType.number);
-  if (!valueField) {
-    return null;
-  }
-  switch (valueType) {
-    case ValueType.Last:
-      return valueField.values[valueField.values.length - 1] ?? null;
-    case ValueType.Average:
-      const [sum, count] = valueField.values.reduce(
-        ([sum, count], value) => {
-          if (!Number.isNaN(value)) {
-            return [sum + value, count + 1];
-          }
-          return [sum, count];
-        },
-        [0, 0]
-      );
-      return sum / count;
-    case ValueType.Median:
-      const sortedValues = valueField.values.filter((value) => !Number.isNaN(value)).sort((a, b) => a - b);
-      if (sortedValues.length > 0) {
-        if (sortedValues.length % 2 === 0) {
-          return (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2;
-        }
-        const middleIndex = Math.floor(sortedValues.length / 2);
-        return sortedValues[middleIndex];
-      }
-      return null;
-  }
 }

@@ -1,6 +1,6 @@
-import { toDataFrame, FieldType, Labels, DataFrame, Field } from '@grafana/data';
+import { toDataFrame, FieldType, Labels, DataFrame, Field, ReducerID } from '@grafana/data';
 
-import { timeSeriesToTableTransform, ValueType } from './timeSeriesTableTransformer';
+import { timeSeriesToTableTransform } from './timeSeriesTableTransformer';
 
 describe('timeSeriesTableTransformer', () => {
   it('Will transform a single query', () => {
@@ -81,50 +81,14 @@ describe('timeSeriesTableTransformer', () => {
 
     const results = timeSeriesToTableTransform(
       {
-        refIdToValueType: {
-          B: ValueType.Average,
-        },
-      },
-      series
-    );
-    expect(results[0].fields[2].values[0].value).toEqual(3);
-    expect(results[1].fields[2].values[0].value).toEqual((3 + 4 + 5) / 3);
-  });
-
-  it('Will calculate median value if configured (odd number of values)', () => {
-    const series = [
-      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
-      getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
-    ];
-
-    const results = timeSeriesToTableTransform(
-      {
-        refIdToValueType: {
-          B: ValueType.Median,
+        refIdToStat: {
+          B: ReducerID.mean,
         },
       },
       series
     );
     expect(results[0].fields[2].values[0].value).toEqual(3);
     expect(results[1].fields[2].values[0].value).toEqual(4);
-  });
-
-  it('Will calculate median value if configured (even number of values)', () => {
-    const series = [
-      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
-      getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5, 6]),
-    ];
-
-    const results = timeSeriesToTableTransform(
-      {
-        refIdToValueType: {
-          B: ValueType.Median,
-        },
-      },
-      series
-    );
-    expect(results[0].fields[2].values[0].value).toEqual(3);
-    expect(results[1].fields[2].values[0].value).toEqual((4 + 5) / 2);
   });
 });
 

@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
 
-import { PluginState, TransformerRegistryItem, TransformerUIProps, SelectableValue } from '@grafana/data';
-import { InlineFieldRow, InlineField, Select } from '@grafana/ui';
+import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID } from '@grafana/data';
+import { InlineFieldRow, InlineField, StatsPicker } from '@grafana/ui';
 
-import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions, ValueType } from './timeSeriesTableTransformer';
+import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -17,13 +17,13 @@ export function TimeSeriesTableTransformEditor({
     return acc;
   }, []);
 
-  const onSelectValueType = useCallback(
-    (refId: string, value: SelectableValue<ValueType>) => {
-      if (value.value) {
+  const onSelectStat = useCallback(
+    (refId: string, stats: string[]) => {
+      if (stats.length) {
         onChange({
-          refIdToValueType: {
-            ...options.refIdToValueType,
-            [refId]: value.value,
+          refIdToStat: {
+            ...options.refIdToStat,
+            [refId]: stats[0] as ReducerID,
           },
         });
       }
@@ -38,10 +38,9 @@ export function TimeSeriesTableTransformEditor({
           <div key={refId}>
             <InlineFieldRow>
               <InlineField label={`Trend ${refIds.length > 1 ? ` #${refId}` : ''} value`}>
-                <Select
-                  options={valueTypeOptions}
-                  value={options.refIdToValueType?.[refId] ?? ValueType.Last}
-                  onChange={onSelectValueType.bind(undefined, refId)}
+                <StatsPicker
+                  stats={[options.refIdToStat?.[refId] ?? ReducerID.lastNotNull]}
+                  onChange={onSelectStat.bind(null, refId)}
                 />
               </InlineField>
             </InlineFieldRow>
@@ -51,12 +50,6 @@ export function TimeSeriesTableTransformEditor({
     </>
   );
 }
-
-const valueTypeOptions: Array<SelectableValue<ValueType>> = [
-  { value: ValueType.Last, label: 'Last' },
-  { value: ValueType.Average, label: 'Average' },
-  { value: ValueType.Median, label: 'Median' },
-];
 
 export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
   id: timeSeriesTableTransformer.id,
