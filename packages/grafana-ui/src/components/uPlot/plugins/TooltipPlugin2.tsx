@@ -305,5 +305,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    userSelect: 'text',
   }),
 });
