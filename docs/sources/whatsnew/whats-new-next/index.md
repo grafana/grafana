@@ -90,9 +90,7 @@ To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
 
-## Authentication and authorization
-
-### No basic role
+## No basic role
 
 <!-- Eric Leijonmarck -->
 <!-- OSS, Enterprise -->
