@@ -21,6 +21,7 @@ func ProvideAuthorizer(
 		authorizerfactory.NewPrivilegedGroups(user.SystemPrivilegedGroup),
 	}
 
+	// In Hosted grafana, the StackID replaces the orgID as a valid namespace
 	if cfg.StackID != "" {
 		authorizers = append(authorizers, stackIDAuthorizer)
 	} else {
