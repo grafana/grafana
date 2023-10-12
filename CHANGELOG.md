@@ -479,6 +479,10 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 
 # 10.0.9 (2023-10-11)
 
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.10. [#76365](https://github.com/grafana/grafana/issues/76365), [@zerok](https://github.com/zerok)
+
 ### Bug fixes
 
 - **BrowseDashboards:** Only remember the most recent expanded folder. [#74819](https://github.com/grafana/grafana/issues/74819), [@joshhunt](https://github.com/joshhunt)
