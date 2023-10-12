@@ -6,7 +6,6 @@ import {
   DataSourceSettings,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginResetOption,
 } from '@grafana/data/src';
 import { Alert, DataSourceHttpSettings, InlineField, LegacyForms, Select } from '@grafana/ui/src';
 import { config } from 'app/core/config';
@@ -20,27 +19,33 @@ import { InfluxSqlConfig } from './InfluxSQLConfig';
 
 const { Input } = LegacyForms;
 
-const versions: Array<SelectableValue<InfluxVersion>> = [
-  {
+const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
+  [InfluxVersion.InfluxQL]: {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
     description: 'The InfluxDB SQL-like query language.',
   },
-  {
-    label: 'Flux',
-    value: InfluxVersion.Flux,
-    description: 'Supported in InfluxDB 2.x and 1.8+',
-  },
-];
-
-const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
-  { ...versions[0] },
-  {
+  [InfluxVersion.SQL]: {
     label: 'SQL',
     value: InfluxVersion.SQL,
     description: 'Native SQL language. Supported in InfluxDB 3.0',
   },
-  { ...versions[1] },
+  [InfluxVersion.Flux]: {
+    label: 'Flux',
+    value: InfluxVersion.Flux,
+    description: 'Supported in InfluxDB 2.x and 1.8+',
+  },
+};
+
+const versions: Array<SelectableValue<InfluxVersion>> = [
+  versionMap[InfluxVersion.InfluxQL],
+  versionMap[InfluxVersion.Flux],
+];
+
+const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
+  versionMap[InfluxVersion.InfluxQL],
+  versionMap[InfluxVersion.SQL],
+  versionMap[InfluxVersion.Flux],
 ];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -66,16 +71,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     SQL: 'Support for SQL in Grafana is currently in alpha',
   };
 
-  // 1x
-  onResetPassword = () => {
-    updateDatasourcePluginResetOption(this.props, 'password');
-  };
-
-  // 2x
-  onResetToken = () => {
-    updateDatasourcePluginResetOption(this.props, 'token');
-  };
-
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
 
@@ -97,19 +92,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       onOptionsChange(rest as DataSourceSettings<InfluxOptions, {}>);
     } else {
       onOptionsChange(copy);
-    }
-  };
-
-  getQueryLanguageDropdownValue = (v?: InfluxVersion) => {
-    switch (v) {
-      case InfluxVersion.InfluxQL:
-        return versionsWithSQL[0];
-      case InfluxVersion.Flux:
-        return versionsWithSQL[1];
-      case InfluxVersion.SQL:
-        return versionsWithSQL[2];
-      default:
-        return versionsWithSQL[0];
     }
   };
 
@@ -139,9 +121,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Select
                 aria-label="Query language"
                 className="width-30"
-                value={this.getQueryLanguageDropdownValue(options.jsonData.version)}
+                value={versionMap[options.jsonData.version ?? InfluxVersion.InfluxQL]}
                 options={config.featureToggles.influxdbSqlSupport ? versionsWithSQL : versions}
-                defaultValue={versions[0]}
+                defaultValue={versionMap[InfluxVersion.InfluxQL]}
                 onChange={this.onVersionChanged}
               />
             </div>
