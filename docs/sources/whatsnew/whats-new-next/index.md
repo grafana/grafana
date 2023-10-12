@@ -134,7 +134,7 @@ To learn more, refer to the [CloudWatch authentication documentation](/docs/graf
 <!-- Kay Delaney, Natalia Bernarte  -->
 <!-- Enterprise public preview -->
 
-<Date>
+October 24, 2023
 
 _Generally available in Grafana Cloud_
 
