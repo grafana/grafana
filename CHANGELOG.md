@@ -4,6 +4,7 @@
 
 ### Features and enhancements
 
+- **Chore:** Upgrade Go to 1.20.10. [#76355](https://github.com/grafana/grafana/issues/76355), [@zerok](https://github.com/zerok)
 - **Cloudwatch:** Backport 73524 Bring Back Legacy Log Group Picker. [#75031](https://github.com/grafana/grafana/issues/75031), [@sarahzinger](https://github.com/sarahzinger)
 
 ### Bug fixes
