@@ -3,26 +3,26 @@ import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { TextDimensionMode } from '@grafana/schema';
 import { Button, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultLightTextColor } from '../element';
+import { Align, TextConfig, TextData } from '../types';
 
-interface ButtonData {
-  text?: string;
+interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }
 
-interface ButtonConfig {
-  text?: TextDimensionConfig;
+interface ButtonConfig extends Omit<TextConfig, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }
@@ -61,9 +61,16 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefined) => ({
   button: css({
-    position: 'absolute',
     height: '100%',
     width: '100%',
+    display: 'grid',
+
+    '> span': {
+      display: 'inline-grid',
+      textAlign: data?.align,
+      fontSize: `${data?.size}px`,
+      color: data?.color,
+    },
   }),
 }));
 
@@ -80,8 +87,8 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   display: ButtonDisplay,
 
   defaultSize: {
-    width: 78,
-    height: 32,
+    width: 150,
+    height: 45,
   },
 
   getNewOptions: (options) => ({
@@ -91,6 +98,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         mode: TextDimensionMode.Fixed,
         fixed: 'Button',
       },
+      align: Align.Center,
+      color: {
+        fixed: defaultLightTextColor,
+      },
+      size: 14,
       api: defaultApiConfig,
       style: defaultStyleConfig,
     },
@@ -124,9 +136,15 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
+      align: cfg.align ?? Align.Center,
+      size: cfg.size,
       api: getCfgApi(),
       style: cfg?.style ?? defaultStyleConfig,
     };
+
+    if (cfg.color) {
+      data.color = ctx.getColor(cfg.color).value();
+    }
 
     return data;
   },
@@ -137,6 +155,13 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     builder
       .addCustomEditor({
         category,
+        id: 'styleSelector',
+        path: 'config.style',
+        name: 'Style',
+        editor: ButtonStyleEditor,
+      })
+      .addCustomEditor({
+        category,
         id: 'textSelector',
         path: 'config.text',
         name: 'Text',
@@ -144,10 +169,33 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       })
       .addCustomEditor({
         category,
-        id: 'styleSelector',
-        path: 'config.style',
-        name: 'Style',
-        editor: ButtonStyleEditor,
+        id: 'config.color',
+        path: 'config.color',
+        name: 'Text color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {},
+      })
+      .addRadio({
+        category,
+        path: 'config.align',
+        name: 'Align text',
+        settings: {
+          options: [
+            { value: Align.Left, label: 'Left' },
+            { value: Align.Center, label: 'Center' },
+            { value: Align.Right, label: 'Right' },
+          ],
+        },
+        defaultValue: Align.Left,
+      })
+      .addNumberInput({
+        category,
+        path: 'config.size',
+        name: 'Text size',
+        settings: {
+          placeholder: 'Auto',
+        },
       })
       .addCustomEditor({
         category,
