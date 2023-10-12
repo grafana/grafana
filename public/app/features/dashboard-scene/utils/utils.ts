@@ -180,6 +180,13 @@ export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel
   return Array.from(intervals);
 }
 
+// Transform new interval scene model to old interval core model
+
+export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
+  const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
+  return variableQuery;
+}
+
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
   if (!sceneObject) {
     return undefined;

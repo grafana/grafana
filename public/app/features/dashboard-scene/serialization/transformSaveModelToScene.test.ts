@@ -686,7 +686,7 @@ describe('transformSaveModelToScene', () => {
         value: '1m',
       });
     });
-    it.each(['interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
