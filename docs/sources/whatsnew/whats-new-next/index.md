@@ -127,7 +127,7 @@ October 24, 2023
 
 _Generally available in Grafana Cloud_
 
-The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spansets per trace in TraceQL queries. For example, when the following `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
+The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the following `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
 {{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
