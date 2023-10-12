@@ -238,19 +238,17 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     }
 
     if (isGrafanaRulerRule(rulerRule)) {
-      if (config.featureToggles.alertingModifiedExport) {
-        moreActionsButtons.push(
-          <Menu.Item
-            label="Modify export"
-            icon="edit"
-            onClick={() =>
-              locationService.push(
-                createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`)
-              )
-            }
-          />
-        );
-      }
+      moreActionsButtons.push(
+        <Menu.Item
+          label="Modify export"
+          icon="edit"
+          onClick={() =>
+            locationService.push(
+              createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`)
+            )
+          }
+        />
+      );
     }
 
     if (hasCreateRulePermission && !isFederated) {

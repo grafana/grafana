@@ -142,7 +142,6 @@ Experimental features might be changed or removed without prior notice.
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
-| `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
 | `panelMonitoring`                           | Enables panel monitoring through logs and measurements                                                       |
 | `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 | `transformationsVariableSupport`            | Allows using variables in transformations                                                                    |

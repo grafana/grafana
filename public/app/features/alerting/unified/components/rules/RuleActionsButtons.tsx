@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -143,7 +143,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
       );
     }
 
-    if (isGrafanaRulerRule(rulerRule) && config.featureToggles.alertingModifiedExport) {
+    if (isGrafanaRulerRule(rulerRule)) {
       moreActions.push(
         <Menu.Item
           label="Modify export"

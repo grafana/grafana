@@ -291,10 +291,11 @@ describe('RuleDetails RBAC', () => {
 
       const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
       grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+      const user = userEvent.setup();
 
       await renderRuleViewer();
+      await user.click(ui.moreButton.get());
 
-      expect(ui.moreButton.query()).not.toBeInTheDocument();
       expect(ui.moreButtons.duplicate.query()).not.toBeInTheDocument();
     });
   });
