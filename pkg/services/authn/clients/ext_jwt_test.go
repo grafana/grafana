@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -516,8 +515,9 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	signingKeysSvc := &signingkeystest.FakeSigningKeysService{ExpectedKeys: map[string]crypto.Signer{
-		signingkeys.ServerPrivateKeyID: pk},
+	signingKeysSvc := &signingkeystest.FakeSigningKeysService{
+		ExpectedSinger: pk,
+		ExpectedKeyID:  signingkeys.ServerPrivateKeyID,
 	}
 
 	userSvc := &usertest.FakeUserService{}

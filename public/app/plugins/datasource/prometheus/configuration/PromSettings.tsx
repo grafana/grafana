@@ -12,7 +12,6 @@ import { ConfigSubSection } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
-import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
@@ -197,7 +196,12 @@ export const PromSettings = (props: Props) => {
                     spellCheck={false}
                     placeholder="15s"
                     onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
-                    onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
+                    onBlur={(e) =>
+                      updateValidDuration({
+                        ...validDuration,
+                        timeInterval: e.currentTarget.value,
+                      })
+                    }
                   />
                   {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
                 </>
@@ -221,7 +225,12 @@ export const PromSettings = (props: Props) => {
                     onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
                     spellCheck={false}
                     placeholder="60s"
-                    onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
+                    onBlur={(e) =>
+                      updateValidDuration({
+                        ...validDuration,
+                        queryTimeout: e.currentTarget.value,
+                      })
+                    }
                   />
                   {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
                 </>
@@ -361,33 +370,32 @@ export const PromSettings = (props: Props) => {
               </div>
             )}
           </div>
-          {config.featureToggles.prometheusResourceBrowserCache && (
-            <div className="gf-form-inline">
-              <div className="gf-form max-width-30">
-                <InlineField
-                  label="Cache level"
-                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                  tooltip={
-                    <>
-                      Sets the browser caching level for editor queries. Higher cache settings are recommended for high
-                      cardinality data sources.
-                    </>
+
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <InlineField
+                label="Cache level"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>
+                    Sets the browser caching level for editor queries. Higher cache settings are recommended for high
+                    cardinality data sources.
+                  </>
+                }
+                interactive={true}
+                disabled={options.readOnly}
+              >
+                <Select
+                  width={40}
+                  onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                  options={cacheValueOptions}
+                  value={
+                    cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
                   }
-                  interactive={true}
-                  disabled={options.readOnly}
-                >
-                  <Select
-                    width={40}
-                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
-                    options={cacheValueOptions}
-                    value={
-                      cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
-                    }
-                  />
-                </InlineField>
-              </div>
+                />
+              </InlineField>
             </div>
-          )}
+          </div>
 
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
