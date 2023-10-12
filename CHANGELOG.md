@@ -1,3 +1,16 @@
+<!-- 10.0.9 START -->
+
+# 10.0.9 (2023-10-11)
+
+### Bug fixes
+
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74819](https://github.com/grafana/grafana/issues/74819), [@joshhunt](https://github.com/joshhunt)
+- **Licensing:** Pass func to update env variables when starting plugin. [#74679](https://github.com/grafana/grafana/issues/74679), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Nested folders:** Fix folder hierarchy in folder responses. [#74581](https://github.com/grafana/grafana/issues/74581), [@papagian](https://github.com/papagian)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+- **Licensing:** Updated grpc plugin factory newPlugin signature. (Enterprise)
+
+<!-- 10.0.9 END -->
 <!-- 10.0.8 START -->
 
 # 10.0.8 (2023-09-29)
