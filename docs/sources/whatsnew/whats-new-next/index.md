@@ -118,6 +118,17 @@ To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
 
+## Multiple spansets per trace
+
+<!-- Joey Tawadrous -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spansets per trace in TraceQL queries. For example, when the following `by(resource.service.name)` is added to your TraceQL query it will group the spans in each trace by `resource.service.name`.
+
+{{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
+
 ## Temporary credentials in CloudWatch data source
 
 <!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
