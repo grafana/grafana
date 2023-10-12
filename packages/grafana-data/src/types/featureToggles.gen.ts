@@ -143,4 +143,5 @@ export interface FeatureToggles {
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
+  cachingOptimizeSerializationMemoryUsage?: boolean;
 }

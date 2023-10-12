@@ -144,7 +144,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -208,7 +208,7 @@ const (
 	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
@@ -260,7 +260,7 @@ const (
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
 	// FlagUseCachingService
-	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	// When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.
 	FlagUseCachingService = "useCachingService"
 
 	// FlagEnableElasticsearchBackendQuerying
@@ -506,4 +506,8 @@ const (
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins
 	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
+
+	// FlagCachingOptimizeSerializationMemoryUsage
+	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
+	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 )
