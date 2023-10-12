@@ -1,4 +1,4 @@
-import { isEmptyObject, TimeRange } from '@grafana/data';
+import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   SceneDataLayers,
   SceneGridItem,
@@ -61,8 +61,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       }
 
       if (child instanceof SceneGridRow) {
-        // Skip repeat clones
-        if (child.state.key!.indexOf('-clone-') > 0) {
+        // Skip repeat clones or when generating a snapshot
+        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
           continue;
         }
         gridRowToSaveModel(child, panels, isSnapshot);
@@ -307,7 +307,7 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
           fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
           transformations: [],
           transparent: panel.state.displayMode === 'transparent',
-          // @ts-expect-error scopedVars are runtime only properties, not part of the persisted model
+          // @ts-expect-error scopedVars are runtime only properties, not part of the persisted Dashboardmodel
           scopedVars: {
             [repeater.state.variableName!]: {
               text: localVariable?.state.text,
@@ -321,6 +321,8 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
 
       return panels;
     }
+
+    return [];
   }
 }
 
@@ -347,9 +349,37 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
     }
   }
 
+  if (isSnapshot) {
+    if (gridRow.state.$variables) {
+      const localVariable = gridRow.state.$variables;
+      const scopedVars: ScopedVars[] = (localVariable.state.variables as LocalValueVariable[]).map((variable) => {
+        return {
+          [variable.state.name]: {
+            text: variable.state.text,
+            value: variable.state.value,
+          },
+        };
+      });
+      // @ts-expect-error
+      rowPanel.scopedVars = scopedVars;
+    }
+  }
+
   panelsArray.push(rowPanel);
 
-  const panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c, isSnapshot));
+  let panelsInsideRow: Panel[] = [];
+
+  if (isSnapshot) {
+    gridRow.state.children.forEach((c) => {
+      if (c instanceof PanelRepeaterGridItem) {
+        panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(c, isSnapshot));
+      } else {
+        panelsInsideRow.push(gridItemToPanel(c, isSnapshot));
+      }
+    });
+  } else {
+    panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c, isSnapshot));
+  }
 
   if (gridRow.state.isCollapsed) {
     rowPanel.panels = panelsInsideRow;
