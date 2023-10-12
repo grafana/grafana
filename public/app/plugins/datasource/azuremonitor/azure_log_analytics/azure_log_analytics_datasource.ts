@@ -254,6 +254,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getAzureLogAnalyticsCheatsheetQueries() {
-    return await this.getResource(`${routeNames.logAnalytics}/v1/metadata`);
+    return await this.getResource(`${this.resourcePath}/v1/metadata`);
   }
 }
