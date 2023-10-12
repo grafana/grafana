@@ -32,14 +32,16 @@ type Service struct {
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*ParcaDatasource, error) {
-	logger.Debug("Get instance")
+	logger.Debug("getInstance called")
+
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		logger.Debug("Error in getting instance", "error", err)
+		logger.Debug("getInstance erorred", "error", err)
 		return nil, err
 	}
+
 	in := i.(*ParcaDatasource)
-	logger.Debug("Get instance")
+	logger.Debug("getInstance succeded")
 	return in, nil
 }
 
@@ -56,34 +58,43 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("Successfully processed query request")
+	logger.Debug("QueryData called")
+
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("Successfully processed query request")
+		logger.Debug("QueryData errored", "error", err)
 		return nil, err
 	}
-	logger.Debug("Successfully processed query request")
-	return i.QueryData(ctx, req)
+
+	data, err := i.QueryData(ctx, req)
+	logger.Debug("QueryData succeeded")
+	return data, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("Calling resource")
+	logger.Debug("CallResource called")
+
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("Error in calling resource", "error", err)
+		logger.Debug("CallResource errored", "error", err)
 		return err
 	}
-	logger.Debug("Successfully called resource")
-	return i.CallResource(ctx, req, sender)
+
+	err = i.CallResource(ctx, req, sender)
+	logger.Debug("CallResource succeeded")
+	return err
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("Check health")
+	logger.Debug("CheckHealth called")
+
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("Error in checking health", "error", err)
+		logger.Debug("CheckHealth errored", "error", err)
 		return nil, err
 	}
-	logger.Debug("Successfully checked health")
-	return i.CheckHealth(ctx, req)
+
+	check, err := i.CheckHealth(ctx, req)
+	logger.Debug("CheckHealth succeeded")
+	return check, err
 }
