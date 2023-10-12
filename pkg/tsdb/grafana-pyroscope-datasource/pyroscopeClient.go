@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
+
 	"github.com/bufbuild/connect-go"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
-	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
 
 type ProfileType struct {
@@ -185,7 +187,7 @@ func getUnits(profileTypeID string) string {
 }
 
 func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
+	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{}))
 	if err != nil {
 		return nil, fmt.Errorf("error seding LabelNames request %v", err)
 	}
@@ -201,7 +203,7 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 }
 
 func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
-	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&querierv1.LabelValuesRequest{Name: label}))
+	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{Name: label}))
 	if err != nil {
 		return nil, err
 	}

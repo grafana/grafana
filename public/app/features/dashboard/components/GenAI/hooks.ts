@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
@@ -17,6 +17,8 @@ export enum StreamStatus {
   GENERATING = 'generating',
   COMPLETED = 'completed',
 }
+
+export const TIMEOUT = 10000;
 
 // TODO: Add tests
 export function useOpenAIStream(
@@ -45,6 +47,21 @@ export function useOpenAIStream(
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
+
+  const onError = useCallback(
+    (e: Error) => {
+      setStreamStatus(StreamStatus.IDLE);
+      setMessages([]);
+      setError(e);
+      notifyError(
+        'Failed to generate content using OpenAI',
+        `Please try again or if the problem persists, contact your organization admin.`
+      );
+      console.error(e);
+      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+    },
+    [messages, model, temperature, notifyError]
+  );
 
   const { error: enabledError, value: enabled } = useAsync(
     async () => await isLLMPluginEnabled(),
@@ -80,13 +97,7 @@ export function useOpenAIStream(
       enabled,
       stream: stream.subscribe({
         next: setReply,
-        error: (e: Error) => {
-          setStreamStatus(StreamStatus.IDLE);
-          setMessages([]);
-          setError(e);
-          notifyError('OpenAI Error', `${e.message}`);
-          logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
-        },
+        error: onError,
         complete: () => {
           setStreamStatus(StreamStatus.COMPLETED);
           setTimeout(() => {
@@ -98,6 +109,28 @@ export function useOpenAIStream(
       }),
     };
   }, [messages, enabled]);
+
+  // Unsubscribe from the stream when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (value?.stream) {
+        value.stream.unsubscribe();
+      }
+    };
+  }, [value]);
+
+  // If the stream is generating and we haven't received a reply, it times out.
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+    if (streamStatus === StreamStatus.GENERATING && reply === '') {
+      timeout = setTimeout(() => {
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+      }, TIMEOUT);
+    }
+    return () => {
+      timeout && clearTimeout(timeout);
+    };
+  }, [streamStatus, reply, onError]);
 
   if (asyncError || enabledError) {
     setError(asyncError || enabledError);

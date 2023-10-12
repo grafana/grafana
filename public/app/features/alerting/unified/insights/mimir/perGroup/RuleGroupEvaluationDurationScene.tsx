@@ -23,7 +23,7 @@ export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, p
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('How long it took to evaluate the rule group')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
