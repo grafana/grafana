@@ -511,6 +511,18 @@
     "config": {
       "title": "管理"
     },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
+    },
     "connect-data": {
       "title": ""
     },

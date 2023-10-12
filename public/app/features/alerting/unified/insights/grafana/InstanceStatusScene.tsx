@@ -8,6 +8,7 @@ import { InsightsRatingModal } from '../RatingModal';
 export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
   panelTitle: string,
+  panelDescription: string,
   status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
 ) {
   const query = new SceneQueryRunner({
@@ -26,7 +27,7 @@ export function getInstanceStatByStatusScene(
     height: '100%',
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription(panelDescription)
       .setData(query)
       .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')

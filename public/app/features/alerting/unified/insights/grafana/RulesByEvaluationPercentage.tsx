@@ -23,7 +23,7 @@ export function getGrafanaRulesByEvaluationPercentageScene(datasource: DataSourc
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('See what percentage of your alert rules are paused or active')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setCustomFieldConfig('fillOpacity', 45)
