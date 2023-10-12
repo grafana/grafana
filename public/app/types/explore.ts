@@ -32,7 +32,8 @@ export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
 
 export interface CorrelationEditorDetails {
   editorMode: boolean;
-  dirty: boolean;
+  correlationDirty: boolean;
+  queryEditorDirty: boolean;
   isExiting: boolean;
   postConfirmAction?: {
     // perform an action after a confirmation modal instead of exiting editor mode

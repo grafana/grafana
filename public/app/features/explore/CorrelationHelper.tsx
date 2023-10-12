@@ -59,15 +59,17 @@ export const CorrelationHelper = ({ correlations }: Props) => {
     const subscription = watch((value) => {
       let dirty = false;
 
-      if (!correlationDetails?.dirty && (value.label !== '' || value.description !== '')) {
+      if (!correlationDetails?.correlationDirty && (value.label !== '' || value.description !== '')) {
         dirty = true;
-      } else if (correlationDetails?.dirty && value.label.trim() === '' && value.description.trim() === '') {
+      } else if (correlationDetails?.correlationDirty && value.label.trim() === '' && value.description.trim() === '') {
         dirty = false;
       }
-      dispatch(changeCorrelationEditorDetails({ label: value.label, description: value.description, dirty: dirty }));
+      dispatch(
+        changeCorrelationEditorDetails({ label: value.label, description: value.description, correlationDirty: dirty })
+      );
     });
     return () => subscription.unsubscribe();
-  }, [correlationDetails?.dirty, dispatch, watch]);
+  }, [correlationDetails?.correlationDirty, dispatch, watch]);
 
   // only fire once on mount to allow save button to enable / disable when unmounted
   useEffect(() => {
@@ -79,8 +81,9 @@ export const CorrelationHelper = ({ correlations }: Props) => {
   }, [dispatch]);
 
   useEffect(() => {
-    const dirty = !correlationDetails?.dirty && transformations.length > 0 ? true : correlationDetails?.dirty;
-    dispatch(changeCorrelationEditorDetails({ transformations: transformations, dirty: dirty }));
+    const dirty =
+      !correlationDetails?.correlationDirty && transformations.length > 0 ? true : correlationDetails?.correlationDirty;
+    dispatch(changeCorrelationEditorDetails({ transformations: transformations, correlationDirty: dirty }));
     let transVarRecords: Record<string, string> = {};
     transformations.forEach((transformation) => {
       const transformationVars = getTransformationVars(

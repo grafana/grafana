@@ -148,7 +148,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
-  correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
+  correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -262,8 +262,17 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (changeCorrelationEditorDetails.match(action)) {
-    const { editorMode, label, description, canSave, dirty, isExiting, postConfirmAction, transformations } =
-      action.payload;
+    const {
+      editorMode,
+      label,
+      description,
+      canSave,
+      correlationDirty,
+      queryEditorDirty,
+      isExiting,
+      postConfirmAction,
+      transformations,
+    } = action.payload;
     return {
       ...state,
       correlationEditorDetails: {
@@ -272,7 +281,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         label: label ?? state.correlationEditorDetails?.label,
         description: description ?? state.correlationEditorDetails?.description,
         transformations: transformations ?? state.correlationEditorDetails?.transformations,
-        dirty: Boolean(dirty ?? state.correlationEditorDetails?.dirty),
+        correlationDirty: Boolean(correlationDirty ?? state.correlationEditorDetails?.correlationDirty),
+        queryEditorDirty: Boolean(queryEditorDirty ?? state.correlationEditorDetails?.queryEditorDirty),
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
       },

@@ -101,7 +101,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (!isCorrelationsEditorMode) {
       dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
     } else {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // prompt will handle datasource change if needed
         dispatch(
           changeCorrelationEditorDetails({
@@ -148,7 +148,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
   const onCloseSplitView = () => {
     if (isCorrelationsEditorMode) {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // if dirty, prompt
         dispatch(
           changeCorrelationEditorDetails({

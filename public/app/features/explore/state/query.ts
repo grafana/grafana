@@ -324,8 +324,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
     const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
 
-    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.dirty) {
-      dispatch(changeCorrelationEditorDetails({ dirty: true }));
+    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.queryEditorDirty) {
+      dispatch(changeCorrelationEditorDetails({ queryEditorDirty: true }));
     }
 
     for (const newQuery of queries) {
