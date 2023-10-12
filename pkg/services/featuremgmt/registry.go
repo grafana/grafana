@@ -868,7 +868,7 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "teamHeaders",
+			Name:         "teamHttpHeaders",
 			Description:  "Enables datasources to apply team headers to the client requests",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,

@@ -503,9 +503,9 @@ const (
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
 
-	// FlagTeamHeaders
+	// FlagTeamHttpHeaders
 	// Enables datasources to apply team headers to the client requests
-	FlagTeamHeaders = "teamHeaders"
+	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins

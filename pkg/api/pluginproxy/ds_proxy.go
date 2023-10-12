@@ -273,7 +273,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 
-	if proxy.features.IsEnabled(featuremgmt.FlagTeamHeaders) {
+	if proxy.features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
 		proxyutil.ApplyTeamHeaders(req, proxy.ds, proxy.ctx.Teams)
 	}
 }
