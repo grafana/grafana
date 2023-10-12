@@ -343,6 +343,21 @@ describe('Plugin Extensions / Utils', () => {
         expect(screen.getByText('Text in body')).toBeVisible();
       });
 
+      it('should open modal with default width if not specified', async () => {
+        const { openModal } = getEventHelpers();
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+        });
+
+        const modal = screen.getByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.width).toBe('750px');
+        expect(style.height).toBe('');
+      });
+
       it('should open modal with specified width', async () => {
         const { openModal } = getEventHelpers();
 
