@@ -18,6 +18,19 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+
+_ Generally available in Grafana Cloud_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/google/index.md) to learn how to use these new options.
+
 ## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->
