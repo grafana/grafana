@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
+export type PyroscopeQueryType = ('metrics' | 'profile' | 'spanProfile' | 'both');
 
 export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
@@ -31,9 +31,14 @@ export interface GrafanaPyroscope extends common.DataQuery {
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
+  /**
+   * Specifies the query span selectors.
+   */
+  spanSelector?: Array<string>;
 }
 
 export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
   groupBy: [],
   labelSelector: '{}',
+  spanSelector: [],
 };

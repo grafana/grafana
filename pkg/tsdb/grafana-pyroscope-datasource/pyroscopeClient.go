@@ -174,6 +174,41 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 	}, nil
 }
 
+func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+	req := &connect.Request[querierv1.SelectMergeSpanProfileRequest]{
+		Msg: &querierv1.SelectMergeSpanProfileRequest{
+			ProfileTypeID: profileTypeID,
+			LabelSelector: labelSelector,
+			SpanSelector:  spanSelector,
+			Start:         start,
+			End:           end,
+			MaxNodes:      maxNodes,
+		},
+	}
+
+	resp, err := c.connectClient.SelectMergeSpanProfile(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	levels := make([]*Level, len(resp.Msg.Flamegraph.Levels))
+	for i, level := range resp.Msg.Flamegraph.Levels {
+		levels[i] = &Level{
+			Values: level.Values,
+		}
+	}
+
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names:   resp.Msg.Flamegraph.Names,
+			Levels:  levels,
+			Total:   resp.Msg.Flamegraph.Total,
+			MaxSelf: resp.Msg.Flamegraph.MaxSelf,
+		},
+		Units: getUnits(profileTypeID),
+	}, nil
+}
+
 func getUnits(profileTypeID string) string {
 	parts := strings.Split(profileTypeID, ":")
 	unit := parts[2]
