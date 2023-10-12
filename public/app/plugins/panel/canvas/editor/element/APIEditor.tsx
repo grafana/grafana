@@ -132,7 +132,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api, true)} title="Test API">
+        <Button onClick={() => callApi(api)} title="Test API">
           Test API
         </Button>
       );

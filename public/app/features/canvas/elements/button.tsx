@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -42,15 +42,31 @@ export const defaultStyleConfig: ButtonStyleConfig = {
 const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
   const styles = useStyles2(getStyles, data);
 
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const updateLoadingState = (loading: boolean) => {
+    setIsLoading(loading);
+  };
+
   const onClick = () => {
     if (data?.api && data?.api?.endpoint) {
-      callApi(data.api);
+      setIsLoading(true);
+      callApi(data.api, updateLoadingState);
     }
   };
 
   return (
-    <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
-      {data?.text}
+    <Button
+      type="submit"
+      variant={data?.style?.variant}
+      onClick={onClick}
+      className={styles.button}
+      disabled={!data?.api?.endpoint}
+    >
+      <span>
+        {isLoading && <Spinner inline={true} className={styles.buttonSpinner} />}
+        {data?.text}
+      </span>
     </Button>
   );
 };
@@ -63,10 +79,14 @@ const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined) => ({
 
     '> span': {
       display: 'inline-grid',
+      gridAutoFlow: 'column',
       textAlign: data?.align,
       fontSize: `${data?.size}px`,
       color: data?.color,
     },
+  }),
+  buttonSpinner: css({
+    marginRight: theme.spacing(0.5),
   }),
 });
 
