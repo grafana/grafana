@@ -71,6 +71,6 @@ function getStyles(theme: GrafanaTheme2) {
     message: css({
       color: theme.colors.text.secondary,
       marginTop: theme.spacing(0.25),
-    })
+    }),
   };
 }
