@@ -10,6 +10,8 @@ Use the following template, replace any `<VARIABLE>` with the appropriate text (
 <!-- <CONTRIBUTOR> -->
 <!-- <ON-PREMISE OFFERING> -->
 
+<DATE>
+
 _Available in <CLOUD AVAILABILITY> in Grafana <CLOUD OFFERING>_
 
 <DESCRIPTION>
@@ -30,6 +32,10 @@ One or both of:
 Intended availability of the feature when released outside of Grafana Cloud.
 The information is intentionally commented out so that it isn't displayed in the published page.
 If the feature is not going to be released outside of Grafana Cloud, omit the HTML comment entirely.
+
+## _`DATE`_
+
+The release date of the feature, fully written out. For example: September 12, 2023.
 
 ## _`CLOUD AVAILABILITY`_
 
@@ -71,6 +77,8 @@ For example, using the partial URL `/docs/grafana/next/explore/` to link to the 
 
 <!-- Jack Baldry -->
 <!-- OSS, Enterprise -->
+
+September 12, 2023
 
 _Available in public preview in Grafana Cloud Pro and Advanced_
 
