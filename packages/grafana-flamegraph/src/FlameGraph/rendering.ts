@@ -106,7 +106,7 @@ function useRenderFunc(
   ctx: CanvasRenderingContext2D | undefined,
   data: FlameGraphDataContainer,
   getBarColor: (item: LevelItem, label: string, collapsed: boolean) => string,
-  textAlign: TextAlign,
+  textAlign: TextAlign
 ): RenderFunc {
   return useMemo(() => {
     if (!ctx) {

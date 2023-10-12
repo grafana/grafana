@@ -11,12 +11,7 @@ type Props = {
   onSandwich: () => void;
 };
 
-const FlameGraphContextMenu = ({
-  itemData,
-  onMenuItemClick,
-  onItemFocus,
-  onSandwich,
-}: Props) => {
+const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandwich }: Props) => {
   function renderItems() {
     return (
       <>

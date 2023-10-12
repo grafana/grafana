@@ -165,12 +165,7 @@ const FlameGraphCanvas = ({
           onMouseLeave={onGraphMouseLeave}
         />
       </div>
-      <FlameGraphTooltip
-        position={mousePosition}
-        item={tooltipItem}
-        data={data}
-        totalTicks={totalViewTicks}
-      />
+      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}

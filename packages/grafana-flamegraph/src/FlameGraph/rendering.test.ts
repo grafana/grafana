@@ -106,8 +106,6 @@ describe('walkTree', () => {
     walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {
       renderData.push({ item, x, y, width, height, label, collapsed });
     });
-    expect(renderData).toEqual([
-      { item: root, width: 99, height: 22, x: 0, y: 0, collapsed: false, label: '1' },
-    ]);
+    expect(renderData).toEqual([{ item: root, width: 99, height: 22, x: 0, y: 0, collapsed: false, label: '1' }]);
   });
 });

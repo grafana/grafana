@@ -121,10 +121,10 @@ export function mergeSubtrees(
   if (direction === 'parents') {
     levels.reverse();
     levels.forEach((level, index) => {
-      level.forEach(item => {
+      level.forEach((item) => {
         item.level = index;
-      })
-    })
+      });
+    });
   }
 
   return levels;

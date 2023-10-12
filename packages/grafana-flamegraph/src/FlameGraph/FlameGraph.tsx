@@ -117,21 +117,11 @@ const FlameGraph = ({
           <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
           Callees
         </div>
-        <FlameGraphCanvas
-          {...commonCanvasProps}
-          root={levels[0][0]}
-          depth={levels.length}
-          direction={'children'}
-        />
+        <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
       </div>
     </>
   ) : (
-    <FlameGraphCanvas
-      {...commonCanvasProps}
-      root={levels[0][0]}
-      depth={levels.length}
-      direction={'children'}
-    />
+    <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
   );
 
   return (
