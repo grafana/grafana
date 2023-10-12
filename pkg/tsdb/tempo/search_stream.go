@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const SearchPathPrefix = "search/"
@@ -124,11 +123,13 @@ func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQue
 }
 
 func (s *Service) sendResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {
-	ctx, span := s.tracer.Start(ctx, "datasource.tempo.sendResponse", trace.WithAttributes(attribute.Int("trace_count", len(response.Traces)), attribute.String("state", string(response.State))))
+	_, span := s.tracer.Start(ctx, "datasource.tempo.sendResponse")
 	defer span.End()
 	frame := createResponseDataFrame()
 
 	if response != nil {
+		span.SetAttributes(attribute.Int("trace_count", len(response.Traces)), attribute.String("state", string(response.State)))
+
 		tracesAsJson, err := json.Marshal(response.Traces)
 		if err != nil {
 			return err
