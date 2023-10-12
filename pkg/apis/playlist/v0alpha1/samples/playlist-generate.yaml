@@ -1,4 +1,4 @@
-apiVersion: playlists.grafana.com/v0alpha1
+apiVersion: playlist.x.grafana.com/v0alpha1
 kind: Playlist
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean
