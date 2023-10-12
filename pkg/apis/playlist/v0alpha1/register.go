@@ -15,11 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
-
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return

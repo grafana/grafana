@@ -46,7 +46,7 @@ interface K8sPlaylist {
     name: string;
   };
   spec: {
-    name: string;
+    title: string;
     interval: string;
     items: PlaylistItem[];
   };
@@ -58,10 +58,7 @@ class K8sAPI implements PlaylistAPI {
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
-    console.log('getAllPlaylist', result);
-    const v = result.playlists.map(k8sResourceAsPlaylist);
-    console.log('after', v);
-    return v;
+    return result.playlists.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {
@@ -118,9 +115,12 @@ class K8sAPI implements PlaylistAPI {
 // the main difference is that k8s uses metdata.name as the uid
 // to avoid future confusion, the display name is now called "title"
 function k8sResourceAsPlaylist(r: K8sPlaylist): Playlist {
+  const { spec, metadata } = r;
   return {
-    ...r.spec,
-    uid: r.metadata.name, // replace the uid from the k8s name
+    uid: metadata.name, // use the k8s name as uid
+    name: spec.title,
+    interval: spec.interval,
+    items: spec.items,
   };
 }
 
