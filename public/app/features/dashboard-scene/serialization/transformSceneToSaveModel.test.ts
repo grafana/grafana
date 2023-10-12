@@ -36,7 +36,6 @@ import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
-import dashboard_with_variables from './testfiles/dashboard_with_variables.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
@@ -139,7 +138,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 describe('transformSceneToSaveModel', () => {
-  describe('Given a simple scene', () => {
+  describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
@@ -148,17 +147,8 @@ describe('transformSceneToSaveModel', () => {
     });
   });
 
-  describe('Given a scene with variables', () => {
-    it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_with_variables as any, meta: {} });
-      const saveModel = transformSceneToSaveModel(scene);
-
-      expect(saveModel).toMatchSnapshot();
-    });
-  });
-
   describe('Given a scene with rows', () => {
-    it('Should transform back to peristed model', () => {
+    it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
       const row2: RowPanel = saveModel.panels![2] as RowPanel;
