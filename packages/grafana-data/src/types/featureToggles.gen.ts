@@ -134,7 +134,6 @@ export interface FeatureToggles {
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
-  alertingModifiedExport?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
   transformationsVariableSupport?: boolean;
