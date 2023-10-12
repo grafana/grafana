@@ -36,7 +36,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
   /**
    * Grouping to matrix requires at least 3 fields to work.
    */
-  isApplicable: (data) => {
+  isApplicable: (data: DataFrame[]) => {
     let numFields = 0;
 
     for (const frame of data) {
@@ -44,6 +44,15 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     }
 
     return numFields >= 3 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    let numFields = 0;
+
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
+
+    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
   operator: (options) => (source) =>
     source.pipe(

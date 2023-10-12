@@ -31,6 +31,7 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
 
     return TransformationApplicabilityLevels.NotApplicable;
   },
+  isApplicableDescription: "The Format time transformation requires a time field to work. No time field could be found.",
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {

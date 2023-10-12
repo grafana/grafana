@@ -675,6 +675,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     pluginStateInfoWrapper: css`
       margin-left: 5px;
     `,
+    cardApplicableInfo: css`
+      position: absolute;
+      bottom: ${theme.spacing(1)};
+      right: ${theme.spacing(1)};
+    `,
   };
 };
 
@@ -699,17 +704,26 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
         }
         const isApplicable = applicabilityScore > 0;
 
+        let applicabilityDescription = null;
+        if (transform.transformation.isApplicableDescription !== undefined) {
+          if (typeof transform.transformation.isApplicableDescription === 'function') {
+            applicabilityDescription = transform.transformation.isApplicableDescription(data);
+          }
+          else {
+            applicabilityDescription = transform.transformation.isApplicableDescription;
+          }
+        }
+
         return (
           <Card
-            key={transform.id}
             className={styles.newCard}
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
-            disabled={!isApplicable}
+            key={transform.id}
           >
             <Card.Heading className={styles.heading}>
               <>
-                <span>{transform.name}</span>
+                <span>{transform.name}{`${isApplicable ? '' : ' (disabled)'}`}</span>
                 <span className={styles.pluginStateInfoWrapper}>
                   <PluginStateInfo state={transform.state} />
                 </span>
@@ -720,9 +734,15 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
                 <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
                 {showIllustrations && (
                   <span>
-                    <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
+                    <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
                   </span>
                 )}
+                {!isApplicable && applicabilityDescription !== null && 
+                  <IconButton
+                    className={styles.cardApplicableInfo}
+                    name="info-circle"
+                    tooltip={applicabilityDescription}
+                />}
               </>
             </Card.Description>
           </Card>
@@ -731,8 +751,14 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
   );
 }
 
-const getImagePath = (id: string) => {
-  const folder = config.theme2.isDark ? 'dark' : 'light';
+const getImagePath = (id: string, disabled: boolean) => {
+  let folder = null;
+  if (!disabled) {
+    folder = config.theme2.isDark ? 'dark' : 'light';
+  }
+  else {
+    folder = 'disabled';
+  }
 
   return `public/img/transformations/${folder}/${id}.svg`;
 };

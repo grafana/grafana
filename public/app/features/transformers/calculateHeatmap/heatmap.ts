@@ -50,6 +50,7 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
 
     return TransformationApplicabilityLevels.Applicable;
   },
+  isApplicableDescription: "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.",
   operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {

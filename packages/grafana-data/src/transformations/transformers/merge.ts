@@ -19,8 +19,11 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  isApplicable: (data) => {
+  isApplicable: (data: DataFrame[]) => {
     return data.length > 1 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    return `The merge transformation requires at least 2 data series to work. There is currently ${data.length} data series.`
   },
   operator: (options) => (source) =>
     source.pipe(
