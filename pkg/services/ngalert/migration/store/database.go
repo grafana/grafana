@@ -3,10 +3,12 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -239,7 +241,8 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 		}
 		for _, o := range orgs {
 			if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
-				return err
+				ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
+				continue
 			}
 		}
 
@@ -292,6 +295,8 @@ func (ms *migrationStore) DeleteMigratedFolders(ctx context.Context, orgID int64
 	return ms.DeleteFolders(ctx, orgID, summary.CreatedFolders...)
 }
 
+var ErrFolderNotDeleted = fmt.Errorf("folder not deleted")
+
 // DeleteFolders deletes the folders from the given orgs with the given UIDs. This includes all folder permissions.
 // If the folder is not empty of all descendants the operation will fail and return an error.
 func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids ...string) error {
@@ -299,17 +304,55 @@ func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids .
 		return nil
 	}
 
+	var errs error
 	usr := accesscontrol.BackgroundUser("ngalert_migration_revert", orgID, org.RoleAdmin, revertPermissions)
 	for _, folderUID := range uids {
-		cmd := folder.DeleteFolderCommand{
-			UID:          folderUID,
+		// Check if folder is empty. If not, we should not delete it.
+		uid := folderUID
+		countCmd := folder.GetDescendantCountsQuery{
+			UID:          &uid,
 			OrgID:        orgID,
 			SignedInUser: usr.(*user.SignedInUser),
 		}
-		err := ms.folderService.Delete(ctx, &cmd) // Also handles permissions and other related entities.
+		count, err := ms.folderService.GetDescendantCounts(ctx, &countCmd)
 		if err != nil {
-			return err
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, err))
+			continue
 		}
+		var descendantCounts []string
+		var cntErr error
+		for kind, cnt := range count {
+			if cnt > 0 {
+				descendantCounts = append(descendantCounts, fmt.Sprintf("%d %s", cnt, kind))
+				if err != nil {
+					cntErr = errors.Join(cntErr, err)
+					continue
+				}
+			}
+		}
+		if cntErr != nil {
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, cntErr))
+			continue
+		}
+
+		if len(descendantCounts) > 0 {
+			errs = errors.Join(errs, fmt.Errorf("folder %s contains descendants: %s", folderUID, strings.Join(descendantCounts, ", ")))
+			continue
+		}
+
+		cmd := folder.DeleteFolderCommand{
+			UID:          uid,
+			OrgID:        orgID,
+			SignedInUser: usr.(*user.SignedInUser),
+		}
+		err = ms.folderService.Delete(ctx, &cmd) // Also handles permissions and other related entities.
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, err))
+			continue
+		}
+	}
+	if errs != nil {
+		return fmt.Errorf("%w: %w", ErrFolderNotDeleted, errs)
 	}
 	return nil
 }

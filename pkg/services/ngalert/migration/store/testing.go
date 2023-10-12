@@ -15,19 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	legacyalerting "github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	datasourceGuardian "github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,8 +48,6 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	}
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
-	folderService := testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, bus)
 
 	cache := localcache.ProvideService()
 	quotaService := &quotatest.FakeQuotaService{}
@@ -63,12 +64,24 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
 	require.NoError(t, err)
 
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
+
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
+
+	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, nil,
+		features, folderPermissions, dashboardPermissions, ac,
+		folderService,
+	)
+	require.NoError(t, err)
+	guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashboardService)
 
 	err = acSvc.RegisterFixedRoles(context.Background())
 	require.NoError(t, err)
@@ -81,7 +94,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		alertingStore:                  &alertingStore,
 		dashboardService:               dashboardService,
 		folderService:                  folderService,
-		dataSourceCache:                datasourceService.ProvideCacheService(cache, sqlStore, guardian.ProvideGuardian()),
+		dataSourceCache:                datasourceService.ProvideCacheService(cache, sqlStore, datasourceGuardian.ProvideGuardian()),
 		folderPermissions:              folderPermissions,
 		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
