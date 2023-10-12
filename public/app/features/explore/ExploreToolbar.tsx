@@ -54,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfViewRef: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
 export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {

@@ -51,7 +51,7 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: Ack
+//       202: UpdateRuleGroupResponse
 //
 
 // swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
@@ -485,4 +485,12 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
+}
+
+// swagger:model
+type UpdateRuleGroupResponse struct {
+	Message string   `json:"message"`
+	Created []string `json:"created,omitempty"`
+	Updated []string `json:"updated,omitempty"`
+	Deleted []string `json:"deleted,omitempty"`
 }

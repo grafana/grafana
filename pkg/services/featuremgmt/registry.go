@@ -164,7 +164,7 @@ var (
 		{
 			Name:         "dockedMegaMenu",
 			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
@@ -236,7 +236,7 @@ var (
 		},
 		{
 			Name:         "nestedFolderPicker",
-			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -332,14 +332,6 @@ var (
 			Owner:        appO11ySquad,
 		},
 		{
-			Name:         "prometheusResourceBrowserCache",
-			Description:  "Displays browser caching options in Prometheus data source configuration",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // turned on by default
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStagePublicPreview,
@@ -354,7 +346,7 @@ var (
 		},
 		{
 			Name:        "prometheusDataplane",
-			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
 			Expression:  "true",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityMetricsSquad,
@@ -439,7 +431,7 @@ var (
 		},
 		{
 			Name:            "useCachingService",
-			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
@@ -630,6 +622,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:         "grafanaAPIServerWithExperimentalAPIs",
+			Description:  "Register experimental APIs with the k8s API server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "featureToggleAdminPage",
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
 			Stage:           FeatureStageExperimental,
@@ -689,14 +688,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:            "noBasicRole",
-			Description:     "Enables a new role that has no permissions by default",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    true,
-			Owner:           grafanaAuthnzSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
 			Stage:           FeatureStagePrivatePreview,
@@ -748,6 +739,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:            "libraryPanelRBAC",
+			Description:     "Enables RBAC support for library panels",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -765,8 +764,9 @@ var (
 			Name:         "alertingInsights",
 			Description:  "Show the new alerting insights landing page",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -811,11 +811,11 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
-			Name:         "alertingModifiedExport",
-			Description:  "Enables using UI for provisioned rules modification and export",
+			Name:         "panelMonitoring",
+			Description:  "Enables panel monitoring through logs and measurements",
 			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "enableNativeHTTPHistogram",
@@ -830,6 +830,42 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "kubernetesPlaylists",
+			Description:  "Use the kubernetes API in the frontend for playlists",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:         "navAdminSubsections",
+			Description:  "Splits the administration section of the nav tree into subsections",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:            "recoveryThreshold",
+			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "awsDatasourcesNewFormStyling",
+			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsDatasourcesSquad,
+		},
+		{
+			Name:         "cachingOptimizeSerializationMemoryUsage",
+			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			FrontendOnly: false,
 		},
 	}
 )

@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -31,8 +30,6 @@ const ui = {
   },
 };
 
-jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-
 function renderRulesTable(rule: CombinedRule) {
   const store = configureStore();
 
@@ -56,9 +53,12 @@ describe('RulesTable RBAC', () => {
 
     it('Should not render Delete button for users without the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+      const user = userEvent.setup();
 
       renderRulesTable(grafanaRule);
-      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
+      await user.click(ui.actionButtons.more.get());
+
+      expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {

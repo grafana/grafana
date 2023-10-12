@@ -234,25 +234,25 @@ type AlertRuleGroupExport struct {
 
 // AlertRuleExport is the provisioned file export of models.AlertRule.
 type AlertRuleExport struct {
-	UID          string              `json:"uid" yaml:"uid"`
+	UID          string              `json:"uid,omitempty" yaml:"uid,omitempty"`
 	Title        string              `json:"title" yaml:"title" hcl:"name"`
 	Condition    string              `json:"condition" yaml:"condition" hcl:"condition"`
 	Data         []AlertQueryExport  `json:"data" yaml:"data" hcl:"data,block"`
-	DashboardUID string              `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
-	PanelID      int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
+	DashboardUID *string             `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	PanelID      *int64              `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
 	For          model.Duration      `json:"for" yaml:"for"`
-	ForSeconds   int64               `json:"-" yaml:"-" hcl:"for"`
-	Annotations  map[string]string   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
-	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
+	ForSeconds   *int64              `json:"-" yaml:"-" hcl:"for"`
+	Annotations  *map[string]string  `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
+	Labels       *map[string]string  `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
 	IsPaused     bool                `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
 type AlertQueryExport struct {
 	RefID             string                  `json:"refId" yaml:"refId" hcl:"ref_id"`
-	QueryType         string                  `json:"queryType,omitempty" yaml:"queryType,omitempty" hcl:"query_type"`
+	QueryType         *string                 `json:"queryType,omitempty" yaml:"queryType,omitempty" hcl:"query_type"`
 	RelativeTimeRange RelativeTimeRangeExport `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty" hcl:"relative_time_range,block"`
 	DatasourceUID     string                  `json:"datasourceUid" yaml:"datasourceUid" hcl:"datasource_uid"`
 	Model             map[string]any          `json:"model" yaml:"model"`

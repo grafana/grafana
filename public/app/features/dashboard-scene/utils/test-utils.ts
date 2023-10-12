@@ -52,6 +52,12 @@ export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHand
   const deactivationHandlers: SceneDeactivationHandler[] = [];
 
   scene.forEachChild((child) => {
+    // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
+    // In real life this is done by the React component when VizPanel is rendered.
+    if ('setContainerWidth' in child) {
+      // @ts-expect-error
+      child.setContainerWidth(500);
+    }
     deactivationHandlers.push(activateFullSceneTree(child));
   });
 

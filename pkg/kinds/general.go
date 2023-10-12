@@ -53,10 +53,10 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/origin/name"
-const annoKeyOriginPath = "grafana.com/origin/path"
-const annoKeyOriginKey = "grafana.com/origin/key"
-const annoKeyOriginTime = "grafana.com/origin/time"
+const annoKeyOriginName = "grafana.com/originName"
+const annoKeyOriginPath = "grafana.com/originPath"
+const annoKeyOriginKey = "grafana.com/originKey"
+const annoKeyOriginTime = "grafana.com/originTime"
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]

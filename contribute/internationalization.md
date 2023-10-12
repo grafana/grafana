@@ -183,8 +183,8 @@ Once extracted with `yarn i18n:extract` you will need to manually edit the [Engl
 ```json
 {
   "inbox": {
-    "heading__one": "You got {{count}} message",
-    "heading__other": "You got {{count}} messages"
+    "heading_one": "You got {{count}} message",
+    "heading_other": "You got {{count}} messages"
   }
 }
 ```
