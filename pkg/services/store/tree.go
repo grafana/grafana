@@ -165,7 +165,7 @@ func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
 	return storages
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, maxFiles int, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
@@ -224,7 +224,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		)
 	}
 
-	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
+	listResponse, err := store.List(ctx, path, &filestorage.Paging{First: maxFiles}, &filestorage.ListOptions{
 		Recursive:   false,
 		WithFolders: true,
 		WithFiles:   true,

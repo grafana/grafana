@@ -179,6 +179,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           path,
         },
       ],
+      maxDataPoints: 2000,
     } as any).pipe(
       map((v) => {
         const frame = v.data[0] ?? new MutableDataFrame();
