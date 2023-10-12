@@ -435,6 +435,10 @@ const (
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
 
+	// FlagLibraryPanelRBAC
+	// Enables RBAC support for library panels
+	FlagLibraryPanelRBAC = "libraryPanelRBAC"
+
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
@@ -498,4 +502,8 @@ const (
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagAwsDatasourcesNewFormStyling
+	// Applies new form styling for configuration and query editors in AWS plugins
+	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
 )

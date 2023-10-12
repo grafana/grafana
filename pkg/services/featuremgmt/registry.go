@@ -747,6 +747,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:            "libraryPanelRBAC",
+			Description:     "Enables RBAC support for library panels",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -858,6 +866,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "awsDatasourcesNewFormStyling",
+			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsDatasourcesSquad,
 		},
 	}
 )

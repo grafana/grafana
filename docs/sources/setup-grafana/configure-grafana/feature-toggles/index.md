@@ -136,6 +136,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
+| `libraryPanelRBAC`                          | Enables RBAC support for library panels                                                                      |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
@@ -148,6 +149,7 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesPlaylists`                       | Use the kubernetes API in the frontend for playlists                                                         |
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
+| `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                  |
 
 ## Development feature toggles
 

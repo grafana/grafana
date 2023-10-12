@@ -125,6 +125,7 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
@@ -141,4 +142,5 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
 }
