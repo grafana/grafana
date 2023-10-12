@@ -7,7 +7,7 @@ import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   ScaleDistribution,
   TooltipPlugin2,
-  ZoomXPlugin,
+  ZoomPlugin,
   UPlotChart,
   usePanelContext,
   useStyles2,
@@ -169,9 +169,9 @@ export const HeatmapPanel = ({
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
-            <ZoomXPlugin
-              builder={builder}
-              onZoom={(from, to) => {
+            <ZoomPlugin
+              config={builder}
+              onZoom={({from, to}) => {
                 onChangeTimeRange({ from, to });
               }}
             />
