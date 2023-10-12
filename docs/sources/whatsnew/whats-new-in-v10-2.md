@@ -46,7 +46,7 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 
 <!-- Mihaly Gyongyosi -->
 
-_Available in public preview in all editions of Grafana_
+_Available in public preview in all Grafana Open Source and Enterprise_
 
 With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
 
