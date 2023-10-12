@@ -1,33 +1,32 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { Badge } from '@grafana/ui';
+import { Avatar } from '@grafana/ui';
 
-import { iconOptions } from '../../utils/storybook/icons';
+import mdx from './Avatar.mdx';
 
-import mdx from './Badge.mdx';
-
-const meta: Meta<typeof Badge> = {
-  title: 'Data Display/Badge',
-  component: Badge,
+const meta: Meta<typeof Avatar> = {
+  title: 'General/UsersIndicator/Avatar',
+  component: Avatar,
   parameters: {
     docs: { page: mdx },
+    controls: { exclude: ['alt'] },
   },
   argTypes: {
-    icon: { options: iconOptions, control: { type: 'select' } },
-    color: { control: 'select' },
-    text: { control: 'text' },
+    width: { control: 'number' },
+    height: { control: 'number' },
   },
 };
 
-const Template: StoryFn<typeof Badge> = (args) => <Badge {...args} />;
+const Template: StoryFn<typeof Avatar> = (args) => <Avatar {...args} />;
 
 export const Basic = Template.bind({});
 
 Basic.args = {
-  text: 'Badge label',
-  color: 'blue',
-  icon: 'rocket',
+  src: 'https://secure.gravatar.com/avatar',
+  alt: 'User avatar',
+  width: 3,
+  height: 3,
 };
 
 export default meta;
