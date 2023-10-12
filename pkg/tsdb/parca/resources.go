@@ -28,6 +28,8 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 	defer span.End()
 	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&v1alpha1.ProfileTypesRequest{}))
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 

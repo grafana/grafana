@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -36,10 +39,11 @@ type PyroscopeDatasource struct {
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
 	ac         accesscontrol.AccessControl
+	tracer     tracing.Tracer
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl, tracer tracing.Tracer) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -51,13 +55,16 @@ func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings bac
 
 	return &PyroscopeDatasource{
 		httpClient: httpClient,
-		client:     NewPyroscopeClient(httpClient, settings.URL),
+		client:     NewPyroscopeClient(httpClient, settings.URL, tracer),
 		settings:   settings,
 		ac:         ac,
+		tracer:     tracer,
 	}, nil
 }
 
 func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx, span := d.tracer.Start(ctx, "datasource.pyroscope.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
+	defer span.End()
 	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.profileTypes(ctx, req, sender)

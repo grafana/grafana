@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -34,11 +37,16 @@ const (
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
 func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctx, span := d.tracer.Start(ctx, "datasource.pyroscope.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
+	defer span.End()
+
 	var qm queryModel
 	response := backend.DataResponse{}
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
 		return response
 	}
@@ -50,6 +58,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			var dsJson dsJsonModel
 			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
 
@@ -72,6 +82,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
 			)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				logger.Error("Querying SelectSeries()", "err", err)
 				return err
 			}
@@ -88,6 +100,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			logger.Debug("Calling GetProfile", "queryModel", qm)
 			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				logger.Error("Error GetProfile()", "err", err)
 				return err
 			}
@@ -120,6 +134,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	}
 
 	if err := g.Wait(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = g.Wait()
 	}
 
