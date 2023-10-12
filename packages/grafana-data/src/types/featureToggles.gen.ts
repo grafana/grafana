@@ -142,4 +142,5 @@ export interface FeatureToggles {
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
 }

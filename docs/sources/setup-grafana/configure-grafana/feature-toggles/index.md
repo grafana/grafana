@@ -149,6 +149,7 @@ Experimental features might be changed or removed without prior notice.
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
 | `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                  |
+| `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                            |
 
 ## Development feature toggles
 
