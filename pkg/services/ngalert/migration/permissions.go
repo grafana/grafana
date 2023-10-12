@@ -383,6 +383,19 @@ func (om *OrgMigration) createFolder(ctx context.Context, orgID int64, title str
 		SignedInUser: getMigrationUser(orgID).(*user.SignedInUser),
 	})
 	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderSameNameExists) {
+			// If the folder already exists, we return the existing folder.
+			// This isn't perfect since permissions might have been manually modified,
+			// but the only folders we should be creating here are ones with permission
+			// hash suffix or general alerting. Neither of which is likely to spuriously
+			// conflict with an existing folder.
+			om.log.Warn("Folder already exists, using existing folder", "title", title)
+			f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &title, SignedInUser: getMigrationUser(orgID)})
+			if err != nil {
+				return nil, err
+			}
+			return f, nil
+		}
 		return nil, err
 	}
 
