@@ -2,51 +2,56 @@ import React, { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 
+import { FolderDTO } from '../../../../../types';
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { allGrafanaExportProviders, ExportFormats } from './providers';
 
-interface GrafanaRulesExporterProps {
+interface GrafanaRuleFolderExporterProps {
+  folder: FolderDTO;
   onClose: () => void;
 }
 
-export function GrafanaRulesExporter({ onClose }: GrafanaRulesExporterProps) {
+export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolderExporterProps) {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
     <GrafanaExportDrawer
+      title={`Export ${folder.title} rules`}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
-      <GrafanaRulesExportPreview exportFormat={activeTab} onClose={onClose} />
+      <GrafanaRuleFolderExportPreview folder={folder} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
 }
 
-interface GrafanaRulesExportPreviewProps {
+interface GrafanaRuleFolderExportPreviewProps {
+  folder: FolderDTO;
   exportFormat: ExportFormats;
   onClose: () => void;
 }
 
-function GrafanaRulesExportPreview({ exportFormat, onClose }: GrafanaRulesExportPreviewProps) {
-  const { currentData: rulesDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
+function GrafanaRuleFolderExportPreview({ folder, exportFormat, onClose }: GrafanaRuleFolderExportPreviewProps) {
+  const { currentData: exportFolderDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
+    folderUid: folder.uid,
     format: exportFormat,
   });
-
-  const downloadFileName = `alert-rules-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
   }
 
+  const downloadFileName = `${folder.title}-${folder.uid}`;
+
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={rulesDefinition}
+      textDefinition={exportFolderDefinition}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
