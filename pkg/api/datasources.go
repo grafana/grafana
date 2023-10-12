@@ -349,14 +349,13 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 	}
 
 	for key, value := range jsonData.Get("teamHeaders").MustMap() {
-		if strings.HasPrefix(key, datasources.CustomHeaderName) {
-			header := fmt.Sprint(value)
-			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
-				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+		v := value.([]map[string]string)
+		for _, header := range v {
+			if header["header"] == cfg.AuthProxyHeaderName {
+				datasourcesLogger.Error("Forbidden to add a data source team header with a name equal to auth proxy header name", "headerName", key)
 				return errors.New("validation error, invalid header name specified")
 			}
 		}
-		// TODO: more validation
 	}
 
 	return nil
