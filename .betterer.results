@@ -784,12 +784,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Drawer/Drawer.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -846,9 +840,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "packages/grafana-ui/src/components/Layout/Layout.story.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -892,9 +883,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
