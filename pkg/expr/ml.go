@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/ml"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 var (
@@ -64,7 +64,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	// get the plugin configuration that will be used by client (auth, host, etc)
 	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			return result, errMLPluginDoesNotExist
 		}
 		return result, fmt.Errorf("failed to get plugin settings: %w", err)

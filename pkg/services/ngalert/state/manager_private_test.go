@@ -28,8 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics()
-
 // Not for parallel tests.
 type CountingImageService struct {
 	Called int
@@ -311,6 +309,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	executeTest := func(t *testing.T, alertRule *ngmodels.AlertRule, resultsAtTime map[time.Time]eval.Results, expectedTransitionsAtTime map[time.Time][]StateTransition, applyNoDataErrorToAllStates bool) {
 		clk := clock.NewMock()
 
+		testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics()
 		cfg := ManagerCfg{
 			Metrics:                 testMetrics,
 			Tracer:                  tracing.InitializeTracerForTest(),

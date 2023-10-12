@@ -82,19 +82,19 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   e2e.pages.DataSource.saveAndTest().click();
 
   if (awaitHealth) {
-    cy.wait('@health', { timeout: timeout ?? e2e.config().defaultCommandTimeout });
+    cy.wait('@health', { timeout: timeout ?? Cypress.config().defaultCommandTimeout });
   }
 
   // use the timeout passed in if it exists, otherwise, continue to use the default
   e2e.pages.DataSource.alert()
     .should('exist')
     .contains(expectedAlertMessage, {
-      timeout: timeout ?? e2e.config().defaultCommandTimeout,
+      timeout: timeout ?? Cypress.config().defaultCommandTimeout,
     });
   cy.logToConsole('Added data source with name:', name);
 
   return cy.url().then(() => {
-    e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+    e2e.getScenarioContext().then(({ addedDataSources }) => {
       e2e.setScenarioContext({
         addedDataSources: [...addedDataSources, { name } as DeleteDataSourceConfig],
       });

@@ -3,11 +3,12 @@ import React, { useMemo } from 'react';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
+import { EventTrackingSrc } from './tracking';
 import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
-  onGenerate: (title: string, isDone: boolean) => void;
+  onGenerate: (title: string) => void;
 }
 
 const CHANGES_GENERATION_STANDARD_PROMPT = [
@@ -28,7 +29,14 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
   return (
-    <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating changes summary'} temperature={0} />
+    <GenAIButton
+      messages={messages}
+      onGenerate={onGenerate}
+      loadingText={'Generating changes summary'}
+      temperature={0}
+      eventTrackingSrc={EventTrackingSrc.dashboardChanges}
+      toggleTipTitle={'Improve your dashboard changes summary'}
+    />
   );
 };
 

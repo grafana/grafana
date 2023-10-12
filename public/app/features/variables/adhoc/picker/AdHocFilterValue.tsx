@@ -2,6 +2,7 @@ import React from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, MetricFindValue, SelectableValue } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
@@ -51,8 +52,9 @@ const fetchFilterValues = async (
     return [];
   }
 
+  const timeRange = getTimeSrv().timeRange();
   // Filter out the current filter key from the list of all filters
   const otherFilters = allFilters.filter((f) => f.key !== key);
-  const metrics = await ds.getTagValues({ key, filters: otherFilters });
+  const metrics = await ds.getTagValues({ key, filters: otherFilters, timeRange });
   return metrics.map((m: MetricFindValue) => ({ label: m.text, value: m.text }));
 };

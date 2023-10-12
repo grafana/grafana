@@ -45,18 +45,6 @@ func TestMacros(t *testing.T) {
 			out: `select * from x where time >= '2023-01-01T00:00:00Z' AND time <= '2023-01-01T00:10:00Z'`,
 		},
 		{
-			in:  `select * from x where $__timeRangeFrom(time)`,
-			out: `select * from x where time >= '2023-01-01T00:00:00Z'`,
-		},
-		{
-			in:  `select * from x where $__timeRangeTo(time)`,
-			out: `select * from x where time <= '2023-01-01T00:10:00Z'`,
-		},
-		{
-			in:  `select * from x where $__timeRange(time)`,
-			out: `select * from x where time >= '2023-01-01T00:00:00Z' AND time <= '2023-01-01T00:10:00Z'`,
-		},
-		{
 			in:  `select * from x where time >= $__timeFrom`,
 			out: `select * from x where time >= cast('2023-01-01T00:00:00Z' as timestamp)`,
 		},

@@ -63,11 +63,12 @@ var (
 	InstanceName     string
 
 	// build
-	BuildVersion string
-	BuildCommit  string
-	BuildBranch  string
-	BuildStamp   int64
-	IsEnterprise bool
+	BuildVersion          string
+	BuildCommit           string
+	EnterpriseBuildCommit string
+	BuildBranch           string
+	BuildStamp            int64
+	IsEnterprise          bool
 
 	// packaging
 	Packaging = "unknown"
@@ -176,11 +177,12 @@ type Cfg struct {
 	EmailCodeValidMinutes int
 
 	// build
-	BuildVersion string
-	BuildCommit  string
-	BuildBranch  string
-	BuildStamp   int64
-	IsEnterprise bool
+	BuildVersion          string
+	BuildCommit           string
+	EnterpriseBuildCommit string
+	BuildBranch           string
+	BuildStamp            int64
+	IsEnterprise          bool
 
 	// packaging
 	Packaging string
@@ -285,8 +287,6 @@ type Cfg struct {
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
-	// TO REMOVE: Not documented & not supported. Remove in 10.3
-	TagAuthedDevices bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -482,7 +482,8 @@ type Cfg struct {
 	// Zero value means in-memory single node setup.
 	LiveHAEngine string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
-	LiveHAEngineAddress string
+	LiveHAEngineAddress  string
+	LiveHAEnginePassword string
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
@@ -1024,6 +1025,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.BuildVersion = BuildVersion
 	cfg.BuildCommit = BuildCommit
+	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
 	cfg.BuildStamp = BuildStamp
 	cfg.BuildBranch = BuildBranch
 	cfg.IsEnterprise = IsEnterprise
@@ -1496,9 +1498,7 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	// FIXME: for now we skip org role sync for google auth
-	// as we do not sync organization roles from Google
-	cfg.GoogleSkipOrgRoleSync = true
+	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(true)
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
@@ -1548,7 +1548,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
@@ -1991,6 +1990,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 
 	var originPatterns []string
 	allowedOrigins := section.Key("allowed_origins").MustString("")

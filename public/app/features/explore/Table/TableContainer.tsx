@@ -5,6 +5,7 @@ import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, Fiel
 import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -51,11 +52,12 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
-    let title = data.name ? `Table - ${data.name}` : 'Table';
-    if (dataFrames && dataFrames.length > 1) {
-      title = `Table - ${data.name || data.refId || i}`;
+    let name = data.name;
+    if (!name && (dataFrames?.length ?? 0) > 1) {
+      name = data.refId || `${i}`;
     }
-    return title;
+
+    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
   }
 
   render() {
@@ -87,8 +89,8 @@ export class TableContainer extends PureComponent<Props> {
     return (
       <>
         {frames && frames.length === 0 && (
-          <PanelChrome title={'Table'} width={width} height={200}>
-            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
         {frames &&

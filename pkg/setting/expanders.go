@@ -57,7 +57,7 @@ func expandConfig(file *ini.File) error {
 	for _, expander := range expanders {
 		err := expander.expander.SetupExpander(file)
 		if err != nil {
-			return fmt.Errorf("got error during initilazation of expander '%s': %w", expander.name, err)
+			return fmt.Errorf("got error during initialization of expander '%s': %w", expander.name, err)
 		}
 
 		for _, section := range file.Sections() {

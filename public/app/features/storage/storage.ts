@@ -2,13 +2,13 @@ import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
+import { UploadResponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
   get: <T = any>(path: string) => Promise<T>;
   list: (path: string) => Promise<DataFrame | undefined>;
-  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadReponse>;
+  upload: (folder: string, file: File, overwriteExistingFile: boolean) => Promise<UploadResponse>;
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 
@@ -92,7 +92,7 @@ class SimpleStorage implements GrafanaStorage {
     return req.isFolder ? this.deleteFolder({ path: req.path, force: true }) : this.deleteFile({ path: req.path });
   }
 
-  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadReponse> {
+  async upload(folder: string, file: File, overwriteExistingFile: boolean): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('folder', folder);
     formData.append('file', file);
@@ -102,7 +102,7 @@ class SimpleStorage implements GrafanaStorage {
       body: formData,
     });
 
-    let body = (await res.json()) as UploadReponse;
+    let body: UploadResponse = await res.json();
     if (!body) {
       body = {} as any;
     }

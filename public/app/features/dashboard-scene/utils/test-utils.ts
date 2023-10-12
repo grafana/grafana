@@ -6,6 +6,8 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
   const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
+    // disabling type checks since this is a test util
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
@@ -27,6 +29,8 @@ export function mockResizeObserver() {
                 left: 100,
                 right: 0,
               },
+              // disabling type checks since this is a test util
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as ResizeObserverEntry,
           ],
           this
@@ -48,6 +52,12 @@ export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHand
   const deactivationHandlers: SceneDeactivationHandler[] = [];
 
   scene.forEachChild((child) => {
+    // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
+    // In real life this is done by the React component when VizPanel is rendered.
+    if ('setContainerWidth' in child) {
+      // @ts-expect-error
+      child.setContainerWidth(500);
+    }
     deactivationHandlers.push(activateFullSceneTree(child));
   });
 

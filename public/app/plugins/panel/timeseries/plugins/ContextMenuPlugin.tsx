@@ -1,4 +1,3 @@
-import { css as cssCore, Global } from '@emotion/react';
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 
@@ -167,13 +166,6 @@ export const ContextMenuPlugin = ({
 
   return (
     <>
-      <Global
-        styles={cssCore`
-        .uplot .u-cursor-pt {
-          pointer-events: auto !important;
-        }
-      `}
-      />
       {isOpen && coords && (
         <ContextMenuView
           data={data}

@@ -1,10 +1,15 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,8 +47,8 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Error(http.StatusForbidden, "feature toggles are read-only", fmt.Errorf("feature toggles are configured to be read-only"))
 	}
 
-	if featureMgmtCfg.UpdateControllerUrl == "" {
-		return response.Error(http.StatusInternalServerError, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_controller_url is not set"))
+	if featureMgmtCfg.UpdateWebhook == "" {
+		return response.Error(http.StatusInternalServerError, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_webhook is not set"))
 	}
 
 	cmd := featuremgmt.UpdateFeatureTogglesCommand{}
@@ -51,21 +56,29 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	payload := UpdatePayload{
+		FeatureToggles: make(map[string]string, len(cmd.FeatureToggles)),
+		User:           ctx.SignedInUser.Email,
+	}
+
 	for _, t := range cmd.FeatureToggles {
 		// make sure flag exists, and only continue if flag is writeable
 		if f, ok := hs.Features.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
 			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
-			// TODO build payload
+			payload.FeatureToggles[t.Name] = strconv.FormatBool(t.Enabled)
 		} else {
 			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
 			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in: %s", t.Name))
 		}
 	}
 
-	// TODO: post to featureMgmtCfg.UpdateControllerUrl and return response status
-	hs.log.Warn("UpdateFeatureToggle: function is unimplemented")
+	err := sendWebhookUpdate(featureMgmtCfg, payload, hs.log)
+	if err != nil {
+		hs.log.Error("UpdateFeatureToggle: Failed to perform webhook request", "error", err)
+		return response.Respond(http.StatusBadRequest, "Failed to perform webhook request")
+	}
 
-	return response.Error(http.StatusNotImplemented, "UpdateFeatureToggle is unimplemented", fmt.Errorf("UpdateFeatureToggle is unimplemented"))
+	return response.Respond(http.StatusOK, "feature toggles updated successfully")
 }
 
 // isFeatureHidden returns whether a toggle should be hidden from the admin page.
@@ -91,5 +104,46 @@ func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]str
 
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
 func isFeatureEditingAllowed(cfg setting.Cfg) bool {
-	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateControllerUrl != ""
+	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != ""
+}
+
+type UpdatePayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
+}
+
+func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload, logger log.Logger) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, cfg.UpdateWebhook, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfg.UpdateWebhookToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		if body, err := io.ReadAll(resp.Body); err != nil {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %s", resp.StatusCode, string(body))
+		} else {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %w", resp.StatusCode, err)
+		}
+	}
+
+	return nil
 }

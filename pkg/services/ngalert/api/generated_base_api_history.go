@@ -30,6 +30,7 @@ func (api *API) RegisterHistoryApiEndpoints(srv HistoryApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/v1/rules/history"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/rules/history"),
 			metrics.Instrument(
 				http.MethodGet,

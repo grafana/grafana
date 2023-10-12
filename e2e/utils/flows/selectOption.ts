@@ -2,13 +2,12 @@ import { e2e } from '../index';
 
 export interface SelectOptionConfig {
   clickToOpen?: boolean;
-  container: any;
+  container: Cypress.Chainable<JQuery<HTMLElement>>;
   forceClickOption?: boolean;
   optionText: string | RegExp;
 }
 
-// @todo this actually returns type `Cypress.Chainable`
-export const selectOption = (config: SelectOptionConfig): any => {
+export const selectOption = (config: SelectOptionConfig) => {
   const fullConfig: SelectOptionConfig = {
     clickToOpen: true,
     forceClickOption: false,

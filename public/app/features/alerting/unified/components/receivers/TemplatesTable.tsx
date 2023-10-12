@@ -5,7 +5,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { deleteTemplateAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
 import { makeAMLink } from '../../utils/misc';
@@ -14,7 +14,6 @@ import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
-import { ReceiversSection } from './ReceiversSection';
 import { TemplateEditor } from './TemplateEditor';
 
 interface Props {
@@ -26,9 +25,6 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
-  const [createNotificationTemplateSupported, createNotificationTemplateAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationTemplate
-  );
 
   const templateRows = useMemo(() => {
     const templates = Object.entries(config.template_files);
@@ -49,13 +45,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   };
 
   return (
-    <ReceiversSection
-      title="Notification templates"
-      description="Create notification templates to customize your notifications."
-      addButtonLabel="Add template"
-      addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={createNotificationTemplateSupported && createNotificationTemplateAllowed}
-    >
+    <>
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
@@ -177,6 +167,6 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
           onDismiss={() => setTemplateToDelete(undefined)}
         />
       )}
-    </ReceiversSection>
+    </>
   );
 };

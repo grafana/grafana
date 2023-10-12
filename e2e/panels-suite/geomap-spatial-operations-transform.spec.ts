@@ -4,12 +4,12 @@ const DASHBOARD_ID = 'P2jR04WVk';
 
 describe('Geomap spatial operations', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests location auto option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform').should('be.visible').click();
+    e2e.components.Tab.title('Transform data').should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
@@ -26,7 +26,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests location coords option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform').should('be.visible').click();
+    e2e.components.Tab.title('Transform data').should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
@@ -49,7 +49,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests geoshash field column appears in table view', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform').should('be.visible').click();
+    e2e.components.Tab.title('Transform data').should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
@@ -71,7 +71,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests location lookup option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform').should('be.visible').click();
+    e2e.components.Tab.title('Transform data').should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');

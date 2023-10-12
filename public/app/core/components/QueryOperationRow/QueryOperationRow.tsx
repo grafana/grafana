@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
-import { QueryOperationRowHeader } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, ExpanderMessages } from './QueryOperationRowHeader';
 
 export interface QueryOperationRowProps {
   index: number;
@@ -22,6 +22,7 @@ export interface QueryOperationRowProps {
   draggable?: boolean;
   collapsable?: boolean;
   disabled?: boolean;
+  expanderMessages?: ExpanderMessages;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -45,6 +46,7 @@ export function QueryOperationRow({
   collapsable,
   index,
   id,
+  expanderMessages,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const styles = useStyles2(getQueryOperationRowStyles);
@@ -123,6 +125,7 @@ export function QueryOperationRow({
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
                     title={title}
+                    expanderMessages={expanderMessages}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -147,6 +150,7 @@ export function QueryOperationRow({
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
         title={title}
+        expanderMessages={expanderMessages}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

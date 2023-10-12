@@ -1,5 +1,13 @@
-import { SceneObject, SceneObjectState } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 
-export interface SceneShareTab<T extends SceneObjectState = SceneObjectState> extends SceneObject<T> {
+export interface ModalSceneObjectLike {
+  onDismiss: () => void;
+}
+
+export interface SceneShareTabState extends SceneObjectState {
+  modalRef?: SceneObjectRef<ModalSceneObjectLike>;
+}
+
+export interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState> extends SceneObject<T> {
   getTabLabel(): string;
 }

@@ -46,7 +46,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
-export { InteractiveTable } from './InteractiveTable/InteractiveTable';
+export { InteractiveTable, type FetchDataArgs, type FetchDataFunc } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { AutoSaveField } from './AutoSaveField/AutoSaveField';
 export { Pagination } from './Pagination/Pagination';
@@ -265,6 +265,7 @@ export { type UserView } from './UsersIndicator/types';
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 
+/** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
   FormField,

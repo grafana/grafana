@@ -13,42 +13,46 @@ declare global {
 
 // JS original sin
 // this if condition is because Jest will re-exec this block multiple times (in a browser this only runs once)
-if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
-  Object.defineProperties(Array.prototype, {
-    get: {
-      value: function (idx: number): any {
-        return (this as any)[idx];
+export function patchArrayVectorProrotypeMethods() {
+  if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
+    Object.defineProperties(Array.prototype, {
+      get: {
+        value: function (idx: number) {
+          return this[idx];
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
       },
-      writable: true,
-      enumerable: false,
-      configurable: true,
-    },
-    set: {
-      value: function (idx: number, value: any) {
-        (this as any)[idx] = value;
+      set: {
+        value: function (idx: number, value: unknown) {
+          this[idx] = value;
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
       },
-      writable: true,
-      enumerable: false,
-      configurable: true,
-    },
-    add: {
-      value: function (value: any) {
-        (this as any).push(value);
+      add: {
+        value: function (value: unknown) {
+          this.push(value);
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
       },
-      writable: true,
-      enumerable: false,
-      configurable: true,
-    },
-    toArray: {
-      value: function () {
-        return this;
+      toArray: {
+        value: function () {
+          return this;
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
       },
-      writable: true,
-      enumerable: false,
-      configurable: true,
-    },
-  });
+    });
+  }
 }
+//this function call is intentional
+patchArrayVectorProrotypeMethods();
 
 /** @deprecated use a simple Array<T> */
 export interface Vector<T = any> extends Array<T> {
@@ -106,7 +110,7 @@ export interface MutableVector<T = any> extends ReadWriteVector<T> {}
  * @deprecated
  */
 export function makeArrayIndexableVector<T extends Vector>(v: T): T {
-  return new Proxy(v, {
+  return new Proxy<T>(v, {
     get(target: Vector, property: string, receiver: Vector) {
       if (typeof property !== 'symbol') {
         const idx = +property;
@@ -116,7 +120,7 @@ export function makeArrayIndexableVector<T extends Vector>(v: T): T {
       }
       return Reflect.get(target, property, receiver);
     },
-    set(target: Vector, property: string, value: any, receiver: Vector) {
+    set(target: Vector, property: string, value: unknown, receiver: Vector) {
       if (typeof property !== 'symbol') {
         const idx = +property;
         if (String(idx) === property) {
@@ -126,5 +130,5 @@ export function makeArrayIndexableVector<T extends Vector>(v: T): T {
       }
       return Reflect.set(target, property, value, receiver);
     },
-  }) as T;
+  });
 }

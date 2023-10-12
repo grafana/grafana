@@ -12,6 +12,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
@@ -71,7 +72,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     ...restProps
   } = props;
 
-  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
+  const styles = useStyles2(getStylesDropdown, props);
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
@@ -198,6 +199,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
           aria-label="Select a data source"
+          autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
@@ -406,7 +408,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
             ref={props.footerRef}
             onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
           >
-            Open advanced data source picker
+            <Trans i18nKey="data-source-picker.open-advanced-button">Open advanced data source picker</Trans>
             <Icon name="arrow-right" />
           </Button>
         )}

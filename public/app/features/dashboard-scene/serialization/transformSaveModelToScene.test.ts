@@ -1,6 +1,8 @@
+import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFilterSet,
   behaviors,
   CustomVariable,
   DataSourceVariable,
@@ -11,12 +13,11 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
-  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardCursorSync, defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
+import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -24,6 +25,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
@@ -42,6 +44,9 @@ describe('transformSaveModelToScene', () => {
         title: 'test',
         uid: 'test-uid',
         time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
         templating: {
           list: [
             {
@@ -49,7 +54,6 @@ describe('transformSaveModelToScene', () => {
               name: 'constant',
               skipUrlSync: false,
               type: 'constant' as VariableType,
-              rootStateKey: 'N4XLmH5Vz',
               query: 'test',
               id: 'constant',
               global: false,
@@ -58,6 +62,19 @@ describe('transformSaveModelToScene', () => {
               error: null,
               description: '',
               datasource: null,
+            },
+            {
+              hide: 2,
+              name: 'CoolFilters',
+              type: 'adhoc' as VariableType,
+              datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+              id: 'adhoc',
+              global: false,
+              skipUrlSync: false,
+              index: 3,
+              state: LoadingState.Done,
+              error: null,
+              description: '',
             },
           ],
         },
@@ -69,8 +86,13 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
+      expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
+      expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
+      expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
+      expect(scene.state.controls![2]).toBeInstanceOf(AdHocFilterSet);
+      expect((scene.state.controls![2] as AdHocFilterSet).state.name).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -90,12 +112,12 @@ describe('transformSaveModelToScene', () => {
 
   describe('when organizing panels as scene children', () => {
     it('should create panels within collapsed rows', () => {
-      const panel = createPanelJSONFixture({
+      const panel = createPanelSaveModel({
         title: 'test',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
       }) as Panel;
 
-      const row = createPanelJSONFixture({
+      const row = createPanelSaveModel({
         title: 'test',
         type: 'row',
         gridPos: { x: 0, y: 0, w: 12, h: 1 },
@@ -124,7 +146,7 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should create panels within expanded row', () => {
-      const panelOutOfRow = createPanelJSONFixture({
+      const panelOutOfRow = createPanelSaveModel({
         title: 'Out of a row',
         gridPos: {
           h: 8,
@@ -133,7 +155,7 @@ describe('transformSaveModelToScene', () => {
           y: 0,
         },
       });
-      const rowWithPanel = createPanelJSONFixture({
+      const rowWithPanel = createPanelSaveModel({
         title: 'Row with panel',
         type: 'row',
         id: 10,
@@ -147,7 +169,7 @@ describe('transformSaveModelToScene', () => {
         // This panels array is not used if the row is not collapsed
         panels: [],
       });
-      const panelInRow = createPanelJSONFixture({
+      const panelInRow = createPanelSaveModel({
         gridPos: {
           h: 8,
           w: 12,
@@ -156,7 +178,7 @@ describe('transformSaveModelToScene', () => {
         },
         title: 'In row 1',
       });
-      const emptyRow = createPanelJSONFixture({
+      const emptyRow = createPanelSaveModel({
         collapsed: false,
         gridPos: {
           h: 1,
@@ -258,12 +280,12 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.options).toEqual(panel.options);
       expect(vizPanel.state.fieldConfig).toEqual(panel.fieldConfig);
       expect(vizPanel.state.pluginVersion).toBe('1.0.0');
-      expect(((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries).toEqual(
-        panel.targets
-      );
-      expect(
-        ((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
-      ).toEqual(100);
+
+      const queryRunner = getQueryRunnerFor(vizPanel)!;
+      expect(queryRunner.state.queries).toEqual(panel.targets);
+      expect(queryRunner.state.maxDataPoints).toEqual(100);
+      expect(queryRunner.state.maxDataPointsFromWidth).toEqual(true);
+
       expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
     });
 
@@ -615,7 +637,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it.each(['adhoc', 'interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it.each(['interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,

@@ -43,6 +43,10 @@ export interface MssqlOptions extends SQLOptions {
   azureCredentials?: AzureCredentialsType;
 }
 
+export interface MssqlSecureOptions {
+  password?: string;
+}
+
 export type AzureAuthJSONDataType = DataSourceJsonData & {
   azureCredentials: AzureCredentialsType;
 };

@@ -5,6 +5,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { UnaryOperationID, unaryOperators } from '../../utils/unaryOperators';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -16,6 +17,7 @@ import { noopTransformer } from './noop';
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperation = 'binary',
+  UnaryOperation = 'unary',
   Index = 'index',
 }
 
@@ -25,10 +27,19 @@ export interface ReduceOptions {
   nullValueMode?: NullValueMode;
 }
 
+export interface UnaryOptions {
+  operator: UnaryOperationID;
+  fieldName: string;
+}
+
 export interface BinaryOptions {
   left: string;
   operator: BinaryOperationID;
   right: string;
+}
+
+export interface IndexOptions {
+  asPercentile: boolean;
 }
 
 const defaultReduceOptions: ReduceOptions = {
@@ -41,6 +52,11 @@ const defaultBinaryOptions: BinaryOptions = {
   right: '',
 };
 
+const defaultUnaryOptions: UnaryOptions = {
+  operator: UnaryOperationID.Abs,
+  fieldName: '',
+};
+
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
@@ -49,6 +65,8 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  unary?: UnaryOptions;
+  index?: IndexOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -58,7 +76,7 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-type ValuesCreator = (data: DataFrame) => any[];
+type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -88,6 +106,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+        } else if (mode === CalculateFieldMode.UnaryOperation) {
+          creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
           const binaryOptions = {
             ...options.binary,
@@ -98,11 +118,19 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         } else if (mode === CalculateFieldMode.Index) {
           return data.map((frame) => {
+            const indexArr = [...Array(frame.length).keys()];
+
+            if (options.index?.asPercentile) {
+              for (let i = 0; i < indexArr.length; i++) {
+                indexArr[i] = indexArr[i] / indexArr.length;
+              }
+            }
+
             const f = {
               name: options.alias ?? 'Row',
               type: FieldType.number,
-              values: [...Array(frame.length).keys()],
-              config: {},
+              values: indexArr,
+              config: options.index?.asPercentile ? { unit: 'percentunit' } : {},
             };
             return {
               ...frame,
@@ -178,7 +206,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns: any[] = [];
+    const columns = [];
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
@@ -239,7 +267,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return undefined as unknown as any[];
+      return undefined;
     }
 
     const arr = new Array(left.length);
@@ -250,15 +278,48 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
   };
 }
 
+function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesCreator {
+  const operator = unaryOperators.getIfExists(options.operator);
+
+  return (frame: DataFrame) => {
+    let value: number[] = [];
+
+    for (const f of frame.fields) {
+      if (options.fieldName === getFieldDisplayName(f, frame, allFrames) && f.type === FieldType.number) {
+        value = f.values;
+      }
+    }
+
+    if (!value.length || !operator) {
+      return undefined;
+    }
+
+    const arr = new Array(value.length);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = operator.operation(value[i]);
+    }
+
+    return arr;
+  };
+}
+
 export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   if (options.alias?.length) {
     return options.alias;
   }
 
   switch (options.mode) {
+    case CalculateFieldMode.UnaryOperation: {
+      const { unary } = options;
+      return `${unary?.operator ?? ''}${unary?.fieldName ? `(${unary.fieldName})` : ''}`;
+    }
     case CalculateFieldMode.BinaryOperation: {
       const { binary } = options;
-      return `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+      const alias = `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+
+      //Remove $ signs as they will be interpolated and cause issues. Variables can still be used
+      //in alias but shouldn't in the autogenerated name
+      return alias.replace(/\$/g, '');
     }
     case CalculateFieldMode.ReduceRow:
       {

@@ -58,7 +58,6 @@ export function getRepeatingPanelsDemo(): DashboardScene {
           width: 24,
           height: 8,
           itemHeight: 8,
-          //@ts-expect-error
           source: PanelBuilders.timeseries()
             .setTitle('server = $server')
             .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
@@ -80,7 +79,7 @@ export function getRepeatingPanelsDemo(): DashboardScene {
 function changeVariable(variable: TestVariable) {
   const sub = variable.subscribeToState((state, old) => {
     if (!state.loading && old.loading) {
-      if (variable.state.optionsToReturn.length === 2) {
+      if (variable.state.optionsToReturn?.length === 2) {
         variable.setState({
           query: 'ABC',
           optionsToReturn: [
@@ -167,7 +166,6 @@ export function getRepeatingRowsDemo(): DashboardScene {
                   width: 24,
                   height: 5,
                   itemHeight: 5,
-                  //@ts-expect-error
                   source: PanelBuilders.timeseries()
                     .setTitle('server = $server, pod = $pod')
                     .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server, pod = $pod' }))

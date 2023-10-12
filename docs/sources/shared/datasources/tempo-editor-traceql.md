@@ -21,7 +21,7 @@ Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting
 TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
 Query results are returned faster because the queries limit what is searched.
 
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/latest/traceql/).
 
 The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
 
@@ -31,7 +31,7 @@ The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafan
 
 This feature is automatically available in Grafana 10 (and newer) and Grafana Cloud.
 
-To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
 
 ## Write TraceQL queries using the query editor
 
@@ -42,8 +42,8 @@ To access the query editor, follow these steps:
 1. Sign into Grafana or Grafana Cloud.
 1. Select your Tempo data source.
 1. From the menu, choose **Explore** and select the **TraceQL** tab.
-1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation]({{< relref "./_index.md" >}}).
-1. Optional: Use the Time picker drop-down to change the time and range for the query (refer to the [documentation for instructions](/docs/grafana/latest/dashboards/use-dashboards#set-dashboard-time-range)).
+1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation](https://grafana.com/docs/tempo/latest/traceql/#construct-a-traceql-query).
+1. Optional: Use the Time picker drop-down to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
 1. Once you have finished your query, select **Run query**.
 
 ## Query by TraceID
