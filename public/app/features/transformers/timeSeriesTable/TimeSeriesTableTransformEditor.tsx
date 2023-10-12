@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID } from '@grafana/data';
+import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID, isReducerID } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker } from '@grafana/ui';
 
 import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
@@ -19,11 +19,12 @@ export function TimeSeriesTableTransformEditor({
 
   const onSelectStat = useCallback(
     (refId: string, stats: string[]) => {
-      if (stats.length) {
+      const reducerID = stats[0];
+      if (reducerID && isReducerID(reducerID)) {
         onChange({
           refIdToStat: {
             ...options.refIdToStat,
-            [refId]: stats[0] as ReducerID,
+            [refId]: reducerID,
           },
         });
       }
