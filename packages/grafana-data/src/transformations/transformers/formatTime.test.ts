@@ -13,10 +13,10 @@ describe('Format Time Transformer', () => {
     const options = {
       timeField: 'time',
       outputFormat: 'YYYY-MM',
-      useTimezone: false,
+      timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.useTimezone);
+    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
@@ -35,10 +35,10 @@ describe('Format Time Transformer', () => {
     const options = {
       timeField: 'time',
       outputFormat: 'YYYY-MM h:mm:ss a',
-      useTimezone: false,
+      timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.useTimezone);
+    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
@@ -63,10 +63,10 @@ describe('Format Time Transformer', () => {
     const options = {
       timeField: 'time',
       outputFormat: 'YYYY-MM h:mm:ss a',
-      useTimezone: false,
+      timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.useTimezone);
+    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
