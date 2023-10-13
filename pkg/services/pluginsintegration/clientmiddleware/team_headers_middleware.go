@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -112,10 +113,12 @@ func (m *TeamHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend.Plu
 		Updated:  settings.Updated,
 	}
 
-	// TODO: add teams to User struct in grafana-plugin-sdk-go@v0.179.0/backend/common.go
-	// teams := pCtx.User.Teams
-	teams := []int64{}
-	teamHeaders, err := getTeamHeaders(ds, teams)
+	signedInUser, err := appcontext.User(ctx)
+	if err != nil {
+		return nil // no user
+	}
+
+	teamHeaders, err := getTeamHeaders(ds, signedInUser.GetTeams())
 	if err != nil {
 		return err
 	}
