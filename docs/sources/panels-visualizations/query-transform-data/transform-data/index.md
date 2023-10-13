@@ -1009,7 +1009,7 @@ Use this transformation to format the output of a time field. Output can be form
 
 ### Format string
 
-{{< docs/experimental product="transformation" featureFlag="`formatString`" >}}
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `formatString` in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 Use this transformation to format the output of a string field. You can format output in the following ways:
 
