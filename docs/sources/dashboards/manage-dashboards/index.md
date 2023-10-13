@@ -49,7 +49,7 @@ On the **Dashboards** page, you can browse and manage folders and dashboards. Th
 - Move dashboards between folders
 - Delete multiple dashboards and folders
 - Navigate to a folder
-- Manage folder permissions. For more information, refer to [Dashboard permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#dashboard-permissions).
+- Manage folder permissions. For more information, refer to [Dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/#dashboard-permissions).
 
 {{% admonition type="note" %}}
 As of Grafana 10.2, there is no longer a special **General** folder. Dashboards without a folder are now shown at the top level alongside folders.
@@ -70,7 +70,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
 {{% admonition type="note" %}}
-Alerts cannot be placed in folders with slashes (\ /) in the name. If you wish to place Alerts in the folder, do not use slashes in the folder name.
+Alerts cannot be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, do not use slashes in the folder name.
 {{% /admonition %}}
 
 **To edit the name of a folder:**
