@@ -13,8 +13,7 @@ interface Props {
   width?: number | 'auto';
 }
 
-const basicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
-const options = basicRoles.map((r) => ({ label: r, value: r }));
+const options = Object.keys(OrgRole).map((key) => ({ label: key, value: key }));
 
 export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputId, autoFocus, ...restProps }: Props) {
   return (

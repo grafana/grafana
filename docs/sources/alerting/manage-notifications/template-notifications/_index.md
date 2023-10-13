@@ -41,7 +41,7 @@ Learn how to write the content of your notification templates in Go’s templati
 
 Create reusable notification templates for your contact points.
 
-[Use notification templates][use-notication-templates]
+[Use notification templates][use-notification-templates]
 
 Use notification templates to send notifications to your contact points.
 
