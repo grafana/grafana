@@ -186,4 +186,12 @@ With the new **Format string** transformation, you can manipulate string fields 
 
 Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
 
-> > > > > > > docs/whats-new-v10.2
+## Alerting
+
+### Additional contact points for External Alertmanager
+
+<!-- Alexander Weaver -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+We've added support for the Microsoft Teams contact points when using an external Alertmanager.
