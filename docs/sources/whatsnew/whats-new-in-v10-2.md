@@ -58,16 +58,18 @@ Previously, the only transformation that supported [dashboard variables](https:/
 
 <!-- Victor Marin -->
 
+_Generally available in Grafana Open Source and Enterprise_
+
 The **Add field from calculation** transformation has two new modes.
 
 **Unary operations** let you apply mathematical operations to a field. The currently supported operations are:
 
- - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number. 
- - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression. 
- - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression. 
- - **Floor (floor)** - Returns the largest integer less than or equal to a given expression. 
- - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
- 
+- **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+- **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+- **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+- **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+- **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+
 {{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
 
 **Row index** adds a field that represents the row index of the row.
@@ -77,6 +79,8 @@ Learn more in the [Add field from calculation documentation](https://grafana.com
 ### New transformation: Format string
 
 <!-- Solomon Dubock, BI Squad -->
+
+_Generally available in Grafana Open Source and Enterprise_
 
 With the new **Format string** transformation, you can manipulate string fields to improve how they're displayed. The currently supported operations are:
 
