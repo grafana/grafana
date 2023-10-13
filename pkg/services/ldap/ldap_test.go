@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -324,12 +325,12 @@ func TestServer_Users(t *testing.T) {
 						GroupDN:        creaturesDN,
 						OrgId:          2,
 						IsGrafanaAdmin: &isGrafanaAdmin,
-						OrgRole:        "Admin",
+						OrgRole:        org.RoleAdmin,
 					},
 					{
 						GroupDN: babyCreaturesDN,
 						OrgId:   2,
-						OrgRole: "Editor",
+						OrgRole: org.RoleNone,
 					},
 				},
 			},
@@ -381,7 +382,7 @@ func TestServer_Users(t *testing.T) {
 			require.Len(t, res[0].OrgRoles, 1)
 			role, mappingExist := res[0].OrgRoles[2]
 			require.True(t, mappingExist)
-			require.Equal(t, roletype.RoleEditor, role)
+			require.Equal(t, roletype.RoleNone, role)
 			require.False(t, res[0].IsDisabled)
 			require.NotNil(t, res[0].IsGrafanaAdmin)
 			assert.False(t, *res[0].IsGrafanaAdmin)
