@@ -3,11 +3,12 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -44,8 +45,11 @@ type Store interface {
 
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*DashAlert, int, error)
 
-	GetACL(ctx context.Context, orgID int64, dashID int64) ([]*DashboardACL, error)
-	SetACL(ctx context.Context, orgID int64, dashboardID int64, items []*DashboardACL) error
+	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
+	GetFolderPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
+	SetDashboardPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
+	SetFolderPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
+	MapActions(permission accesscontrol.ResourcePermission) string
 
 	GetDashboard(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error)
 	GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error)
@@ -62,15 +66,18 @@ type Store interface {
 }
 
 type migrationStore struct {
-	store                          db.DB
-	cfg                            *setting.Cfg
-	log                            log.Logger
-	kv                             kvstore.KVStore
-	alertingStore                  *store.DBstore
-	dashboardService               dashboards.DashboardService
-	folderService                  folder.Service
-	dataSourceCache                datasources.CacheService
-	orgService                     org.Service
+	store                db.DB
+	cfg                  *setting.Cfg
+	log                  log.Logger
+	kv                   kvstore.KVStore
+	alertingStore        *store.DBstore
+	dashboardService     dashboards.DashboardService
+	folderService        folder.Service
+	dataSourceCache      datasources.CacheService
+	folderPermissions    accesscontrol.FolderPermissionsService
+	dashboardPermissions accesscontrol.DashboardPermissionsService
+	orgService           org.Service
+
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService
 }
 
@@ -85,6 +92,8 @@ func ProvideMigrationStore(
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
 	dataSourceCache datasources.CacheService,
+	folderPermissions accesscontrol.FolderPermissionsService,
+	dashboardPermissions accesscontrol.DashboardPermissionsService,
 	orgService org.Service,
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService,
 ) (Store, error) {
@@ -97,6 +106,8 @@ func ProvideMigrationStore(
 		dashboardService:               dashboardService,
 		folderService:                  folderService,
 		dataSourceCache:                dataSourceCache,
+		folderPermissions:              folderPermissions,
+		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
 		legacyAlertNotificationService: legacyAlertNotificationService,
 	}, nil
@@ -230,7 +241,8 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 		}
 		for _, o := range orgs {
 			if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
-				return err
+				ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
+				continue
 			}
 		}
 
@@ -283,6 +295,8 @@ func (ms *migrationStore) DeleteMigratedFolders(ctx context.Context, orgID int64
 	return ms.DeleteFolders(ctx, orgID, summary.CreatedFolders...)
 }
 
+var ErrFolderNotDeleted = fmt.Errorf("folder not deleted")
+
 // DeleteFolders deletes the folders from the given orgs with the given UIDs. This includes all folder permissions.
 // If the folder is not empty of all descendants the operation will fail and return an error.
 func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids ...string) error {
@@ -290,17 +304,55 @@ func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids .
 		return nil
 	}
 
+	var errs error
 	usr := accesscontrol.BackgroundUser("ngalert_migration_revert", orgID, org.RoleAdmin, revertPermissions)
 	for _, folderUID := range uids {
-		cmd := folder.DeleteFolderCommand{
-			UID:          folderUID,
+		// Check if folder is empty. If not, we should not delete it.
+		uid := folderUID
+		countCmd := folder.GetDescendantCountsQuery{
+			UID:          &uid,
 			OrgID:        orgID,
 			SignedInUser: usr.(*user.SignedInUser),
 		}
-		err := ms.folderService.Delete(ctx, &cmd) // Also handles permissions and other related entities.
+		count, err := ms.folderService.GetDescendantCounts(ctx, &countCmd)
 		if err != nil {
-			return err
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, err))
+			continue
 		}
+		var descendantCounts []string
+		var cntErr error
+		for kind, cnt := range count {
+			if cnt > 0 {
+				descendantCounts = append(descendantCounts, fmt.Sprintf("%d %s", cnt, kind))
+				if err != nil {
+					cntErr = errors.Join(cntErr, err)
+					continue
+				}
+			}
+		}
+		if cntErr != nil {
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, cntErr))
+			continue
+		}
+
+		if len(descendantCounts) > 0 {
+			errs = errors.Join(errs, fmt.Errorf("folder %s contains descendants: %s", folderUID, strings.Join(descendantCounts, ", ")))
+			continue
+		}
+
+		cmd := folder.DeleteFolderCommand{
+			UID:          uid,
+			OrgID:        orgID,
+			SignedInUser: usr.(*user.SignedInUser),
+		}
+		err = ms.folderService.Delete(ctx, &cmd) // Also handles permissions and other related entities.
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("folder %s: %w", folderUID, err))
+			continue
+		}
+	}
+	if errs != nil {
+		return fmt.Errorf("%w: %w", ErrFolderNotDeleted, errs)
 	}
 	return nil
 }
@@ -322,155 +374,6 @@ func (ms *migrationStore) GetDatasource(ctx context.Context, datasourceID int64,
 func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error) {
 	return ms.legacyAlertNotificationService.GetAllAlertNotifications(ctx, &legacymodels.GetAllAlertNotificationsQuery{
 		OrgID: orgID,
-	})
-}
-
-func (ms *migrationStore) GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	return ms.folderService.Get(ctx, cmd)
-}
-
-func (ms *migrationStore) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	return ms.folderService.Create(ctx, cmd)
-}
-
-// based on SQLStore.GetDashboardACLInfoList()
-func (ms *migrationStore) GetACL(ctx context.Context, orgID, dashboardID int64) ([]*DashboardACL, error) {
-	var err error
-
-	falseStr := ms.store.GetDialect().BooleanStr(false)
-
-	result := make([]*DashboardACL, 0)
-	rawSQL := `
-			-- get distinct permissions for the dashboard and its parent folder
-			SELECT DISTINCT
-				da.id,
-				da.user_id,
-				da.team_id,
-				da.permission,
-				da.role
-			FROM dashboard as d
-				LEFT JOIN dashboard folder on folder.id = d.folder_id
-				LEFT JOIN dashboard_acl AS da ON
-				da.dashboard_id = d.id OR
-				da.dashboard_id = d.folder_id  OR
-				(
-					-- include default permissions --
-					da.org_id = -1 AND (
-					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-					)
-				)
-			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY da.id ASC
-			`
-	err = ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// based on SQLStore.UpdateDashboardACL()
-// it should be called from inside a transaction
-func (ms *migrationStore) SetACL(ctx context.Context, orgID int64, dashboardID int64, items []*DashboardACL) error {
-	if dashboardID <= 0 {
-		return fmt.Errorf("folder id must be greater than zero for a folder permission")
-	}
-	return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		// userPermissionsMap is a map keeping the highest permission per user
-		// for handling conficting inherited (folder) and non-inherited (dashboard) user permissions
-		userPermissionsMap := make(map[int64]*DashboardACL, len(items))
-		// teamPermissionsMap is a map keeping the highest permission per team
-		// for handling conficting inherited (folder) and non-inherited (dashboard) team permissions
-		teamPermissionsMap := make(map[int64]*DashboardACL, len(items))
-		for _, item := range items {
-			if item.UserID != 0 {
-				acl, ok := userPermissionsMap[item.UserID]
-				if !ok {
-					userPermissionsMap[item.UserID] = item
-				} else {
-					if item.Permission > acl.Permission {
-						// the higher permission wins
-						userPermissionsMap[item.UserID] = item
-					}
-				}
-			}
-
-			if item.TeamID != 0 {
-				acl, ok := teamPermissionsMap[item.TeamID]
-				if !ok {
-					teamPermissionsMap[item.TeamID] = item
-				} else {
-					if item.Permission > acl.Permission {
-						// the higher permission wins
-						teamPermissionsMap[item.TeamID] = item
-					}
-				}
-			}
-		}
-
-		type keyType struct {
-			UserID     int64 `xorm:"user_id"`
-			TeamID     int64 `xorm:"team_id"`
-			Role       RoleType
-			Permission permissionType
-		}
-		// seen keeps track of inserted perrmissions to avoid duplicates (due to inheritance)
-		seen := make(map[keyType]struct{}, len(items))
-		for _, item := range items {
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return dashboards.ErrDashboardACLInfoMissing
-			}
-
-			// ignore duplicate user permissions
-			if item.UserID != 0 {
-				acl, ok := userPermissionsMap[item.UserID]
-				if ok {
-					if acl.Id != item.Id {
-						continue
-					}
-				}
-			}
-
-			// ignore duplicate team permissions
-			if item.TeamID != 0 {
-				acl, ok := teamPermissionsMap[item.TeamID]
-				if ok {
-					if acl.Id != item.Id {
-						continue
-					}
-				}
-			}
-
-			key := keyType{UserID: item.UserID, TeamID: item.TeamID, Role: "", Permission: item.Permission}
-			if item.Role != nil {
-				key.Role = *item.Role
-			}
-			if _, ok := seen[key]; ok {
-				continue
-			}
-
-			// unset Id so that the new record will get a different one
-			item.Id = 0
-			item.OrgID = orgID
-			item.DashboardID = dashboardID
-			item.Created = time.Now()
-			item.Updated = time.Now()
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-			seen[key] = struct{}{}
-		}
-
-		// Update dashboard HasACL flag
-		dashboard := dashboards.Dashboard{HasACL: true}
-		_, err := sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-
-		return err
 	})
 }
 
@@ -504,6 +407,34 @@ func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64
 		})
 	}
 	return mappedAlerts, len(alerts), nil
+}
+
+func (ms *migrationStore) GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return ms.dashboardPermissions.GetPermissions(ctx, user, resourceID)
+}
+
+func (ms *migrationStore) GetFolderPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return ms.folderPermissions.GetPermissions(ctx, user, resourceID)
+}
+
+func (ms *migrationStore) GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	return ms.folderService.Get(ctx, cmd)
+}
+
+func (ms *migrationStore) CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	return ms.folderService.Create(ctx, cmd)
+}
+
+func (ms *migrationStore) SetDashboardPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return ms.dashboardPermissions.SetPermissions(ctx, orgID, resourceID, commands...)
+}
+
+func (ms *migrationStore) SetFolderPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return ms.folderPermissions.SetPermissions(ctx, orgID, resourceID, commands...)
+}
+
+func (ms *migrationStore) MapActions(permission accesscontrol.ResourcePermission) string {
+	return ms.dashboardPermissions.MapActions(permission)
 }
 
 func (ms *migrationStore) CaseInsensitive() bool {
