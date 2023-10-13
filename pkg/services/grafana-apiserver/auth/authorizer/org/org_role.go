@@ -4,22 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &OrgIDAuthorizer{}
 
 type OrgRoleAuthorizer struct {
 	log log.Logger
-	org org.Service
 }
 
 func ProvideOrgRoleAuthorizer(orgService org.Service) *OrgRoleAuthorizer {
-	return &OrgRoleAuthorizer{log: log.New("grafana-apiserver.authorizer.orgrole"), org: orgService}
+	return &OrgRoleAuthorizer{log: log.New("grafana-apiserver.authorizer.orgrole")}
 }
 
 func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {

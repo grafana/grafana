@@ -5,7 +5,24 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type saveExtSvcAccountCmd struct {
+const (
+	kvStoreType = "extsvc-token"
+	// #nosec G101 - this is not a hardcoded secret
+	tokenNamePrefix = "extsvc-token"
+)
+
+// Credentials represents the credentials associated to an external service
+type Credentials struct {
+	Secret string
+}
+
+type SaveCredentialsCmd struct {
+	ExtSvcSlug string
+	OrgID      int64
+	Secret     string
+}
+
+type saveCmd struct {
 	ExtSvcSlug  string
 	OrgID       int64
 	Permissions []ac.Permission
