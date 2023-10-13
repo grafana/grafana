@@ -18,6 +18,34 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Correlations editor in Explore
+
+<!-- Kristina Durivage -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem -->
+
+<Date>
+
+_Available in public preview in Grafana Cloud_
+
+Creating correlations has just become easier. Try out our new correlations editor in **Explore** by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+
+To enable this feature, contact Grafana Support.
+
+## Create correlations for provisioned data sources
+
+<!-- Piotr Jamróz -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem -->
+
+<Date>
+
+_Available in public preview in Grafana Cloud_
+
+You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
+
+To enable this feature, contact Grafana Support.
+
 ## Support for dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
