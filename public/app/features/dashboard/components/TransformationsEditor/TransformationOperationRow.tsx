@@ -11,7 +11,6 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
-  QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
