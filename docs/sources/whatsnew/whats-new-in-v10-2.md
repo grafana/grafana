@@ -58,11 +58,13 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
-## Calculate visualization min/max individually per field
+## Dashboards and visualizations
+
+### Calculate visualization min/max individually per field
 
 <!-- Oscar Kilhed -->
 
-_Generally available in Grafana_
+_Generally available in all editions of Grafana_
 
 When visualizing multiple fields with a wide spread of values, calculating the min/max value of the visualization based on all fields can hide useful details.
 {{< figure src="/media/docs/grafana/panels-visualizations/globalminmax.png" caption="Stat panel visualization with min/max calculated from all fields" >}}
