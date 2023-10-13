@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { ChangeEvent, useCallback } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
@@ -20,8 +21,9 @@ import {
 } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import {
   Button,
-  ColorPicker,
+  HorizontalGroup,
   Icon,
+  IconButton,
   InlineField,
   InlineFieldRow,
   Input,
@@ -32,8 +34,7 @@ import {
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
 import { hasAlphaPanels } from 'app/core/config';
-import { findField, MediaType, ResourceFolderName, ResourcePickerSize } from 'app/features/dimensions';
-import { ResourcePicker } from 'app/features/dimensions/editors/ResourcePicker';
+import { findField } from 'app/features/dimensions';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
@@ -120,8 +121,6 @@ export const ConvertFieldTypeTransformerEditor = ({
     updateEnumRows(copy);
   };
 
-  console.log(enumRows);
-
   const generateEnumValues = () => {
     const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
 
@@ -129,7 +128,36 @@ export const ConvertFieldTypeTransformerEditor = ({
     // TODO: this shouldn't be hardcoded and should only run on first time / via a button (to initialize / reset?)
     const enumValues = new Set(targetField?.values);
 
+    if (enumRows.length > 0 && !isEqual(enumRows, Array.from(enumValues))) {
+      const confirmed = window.confirm(
+        'This action will overwrite the existing configuration. Are you sure you want to continue?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     updateEnumRows([...enumValues]);
+  };
+
+  const onChangeEnumMapping = (index: number, enumRow: string) => {
+    const newList = [...enumRows];
+    newList.splice(index, 1, enumRow);
+    updateEnumRows(newList);
+  };
+
+  const onRemoveEnumRow = (index: number) => {
+    const newList = [...enumRows];
+    newList.splice(index, 1);
+    updateEnumRows(newList);
+  };
+
+  const onAddEnumRow = () => {
+    updateEnumRows([...enumRows, '']);
+  };
+
+  const onChangeEnumValue = (index: number, event: React.FormEvent<HTMLInputElement>) => {
+    onChangeEnumMapping(index, event.currentTarget.value);
   };
 
   return (
@@ -189,9 +217,15 @@ export const ConvertFieldTypeTransformerEditor = ({
             </InlineFieldRow>
             {c.destinationType === FieldType.enum && hasAlphaPanels && (
               <InlineFieldRow>
-                <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.generateButton}>
-                  Generate enum values from data
-                </Button>
+                <HorizontalGroup>
+                  <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
+                    Generate enum values from data
+                  </Button>
+                  <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
+                    Add enum value
+                  </Button>
+                </HorizontalGroup>
+
                 {/* TODO: break this out into separate component?  */}
                 <VerticalGroup>
                   <table className={styles.compactTable}>
@@ -208,7 +242,18 @@ export const ConvertFieldTypeTransformerEditor = ({
                                         <Icon name="draggabledots" size="lg" />
                                       </div>
                                     </td>
-                                    <td>{value}</td>
+                                    <td>
+                                      <Input type="text" value={value} onChange={(e) => onChangeEnumValue(index, e)} />
+                                    </td>
+                                    <td className={styles.textAlignCenter}>
+                                      <IconButton
+                                        name="trash-alt"
+                                        onClick={() => onRemoveEnumRow(index)}
+                                        data-testid="remove-value-mapping"
+                                        aria-label="Delete value mapping"
+                                        tooltip="Delete"
+                                      />
+                                    </td>
                                   </tr>
                                 )}
                               </Draggable>
@@ -270,7 +315,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       outlineOffset: '-2px',
     },
   }),
-  generateButton: css({
+  button: css({
     marginTop: theme.spacing(1),
+  }),
+  textAlignCenter: css({
+    textAlign: 'center',
   }),
 });
