@@ -28,14 +28,13 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		ts := time.Now().UnixMilli()
 		p = playlist.Playlist{
 			Name:      cmd.Name,
 			Interval:  cmd.Interval,
 			OrgId:     cmd.OrgId,
 			UID:       cmd.UID,
-			CreatedAt: ts,
-			UpdatedAt: ts,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 
 		_, err := sess.Insert(&p)
@@ -78,7 +77,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		}
 		p.Id = existingPlaylist.Id
 		p.CreatedAt = existingPlaylist.CreatedAt
-		p.UpdatedAt = time.Now().UnixMilli()
+		p.UpdatedAt = time.Now()
 
 		dto = playlist.PlaylistDTO{
 			Uid:      p.UID,

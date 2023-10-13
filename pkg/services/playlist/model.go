@@ -2,6 +2,7 @@ package playlist
 
 import (
 	"errors"
+	"time"
 )
 
 // Typed errors
@@ -21,8 +22,8 @@ type Playlist struct {
 	// Added for kubernetes migration + synchronization
 	// Hidden from json because this is used for openapi generation
 	// Using int64 rather than time.Time to avoid database issues with time support
-	CreatedAt int64 `json:"-" db:"created_at"`
-	UpdatedAt int64 `json:"-" db:"updated_at"`
+	CreatedAt time.Time `json:"-" db:"created_at"`
+	UpdatedAt time.Time `json:"-" db:"updated_at"`
 }
 
 type PlaylistDTO struct {

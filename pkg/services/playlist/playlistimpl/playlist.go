@@ -59,8 +59,8 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 		Name:      v.Name,
 		Interval:  v.Interval,
 		Items:     items,
-		CreatedAt: v.CreatedAt,
-		UpdatedAt: v.UpdatedAt,
+		CreatedAt: v.CreatedAt.UnixMilli(),
+		UpdatedAt: v.UpdatedAt.UnixMilli(),
 		OrgID:     v.OrgId,
 	}, nil
 }
