@@ -22,6 +22,8 @@ import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/F
 import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
+import { getTimezoneOptions } from '../utils';
+
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
@@ -32,14 +34,14 @@ export const ConvertFieldTypeTransformerEditor = ({
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
-  const timeZoneOptions: Array<SelectableValue<string>> = [];
+  const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
   // Format timezone options
-  const tzs = getTimeZones(true);
+  const tzs = getTimeZones();
+  timeZoneOptions.push({ label: 'Browser', value: 'browser' });
+  timeZoneOptions.push({ label: 'UTC', value: 'utc' });
   for (const tz of tzs) {
-    if (tz.length > 0) {
-      timeZoneOptions.push({ label: tz, value: tz });
-    }
+    timeZoneOptions.push({ label: tz, value: tz });
   }
 
   const onSelectField = useCallback(

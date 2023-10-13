@@ -8,10 +8,11 @@ import {
   TransformerUIProps,
   getFieldDisplayName,
   PluginState,
-  getTimeZones,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
+
+import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
   input,
@@ -19,7 +20,7 @@ export function FormatTimeTransfomerEditor({
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
   const timeFields: Array<SelectableValue<string>> = [];
-  const timeZoneOptions: Array<SelectableValue<string>> = [];
+  const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
   // Get time fields
   for (const frame of input) {
@@ -28,15 +29,6 @@ export function FormatTimeTransfomerEditor({
         const name = getFieldDisplayName(field, frame, input);
         timeFields.push({ label: name, value: name });
       }
-    }
-  }
-
-  // Format timezone options
-  const tzs = getTimeZones(true);
-
-  for (const tz of tzs) {
-    if (tz.length > 0) {
-      timeZoneOptions.push({ label: tz, value: tz });
     }
   }
 
