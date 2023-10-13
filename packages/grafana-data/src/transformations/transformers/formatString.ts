@@ -67,7 +67,7 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
 export const formatStringTransformer: DataTransformerInfo<FormatStringTransformerOptions> = {
   id: DataTransformerID.formatString,
   name: 'Format string',
-  description: 'Manipulate format of string field',
+  description: 'Manipulate string fields formatting',
   defaultOptions: { stringField: '', outputFormat: FormatStringOutput.UpperCase },
   operator: (options) => (source) =>
     source.pipe(
