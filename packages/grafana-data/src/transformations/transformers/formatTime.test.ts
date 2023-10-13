@@ -51,11 +51,11 @@ describe('Format Time Transformer', () => {
 
     const newFrame = formatter(frame.fields);
     expect(newFrame[0].values).toEqual([
-      '2021-02 1:46:40 am',
-      '2023-07 2:00:00 pm',
-      '2023-04 3:20:00 pm',
-      '2023-07 5:34:49 pm',
-      '2023-08 3:20:00 pm',
+      '2021-02 6:46:40 am',
+      '2023-07 8:00:00 pm',
+      '2023-04 9:20:00 pm',
+      '2023-07 11:34:49 pm',
+      '2023-08 9:20:00 pm',
     ]);
   });
 
@@ -79,10 +79,10 @@ describe('Format Time Transformer', () => {
 
     const newFrame = formatter(frame.fields);
     expect(newFrame[0].values).toEqual([
-      '2021-02 1:46:40 am',
-      '2023-07 2:00:00 pm',
-      '2023-04 3:20:00 pm',
-      '2023-07 5:34:49 pm',
+      '2021-02 6:46:40 am',
+      '2023-07 8:00:00 pm',
+      '2023-04 9:20:00 pm',
+      '2023-07 11:34:49 pm',
       'Invalid date',
     ]);
   });
