@@ -69,6 +69,7 @@ func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
 func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return nil, err
 	}
 	if res.Msg.ProfileTypes == nil {
@@ -98,6 +99,7 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return nil, err
 	}
 
@@ -148,6 +150,7 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 
 	resp, err := c.connectClient.SelectMergeStacktraces(ctx, req)
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return nil, err
 	}
 
@@ -189,7 +192,8 @@ func getUnits(profileTypeID string) string {
 func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{}))
 	if err != nil {
-		return nil, fmt.Errorf("error seding LabelNames request %v", err)
+		logger.Error("Received error from client", "error", err)
+		return nil, fmt.Errorf("error sneding LabelNames request %v", err)
 	}
 
 	var filtered []string
@@ -205,6 +209,7 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{Name: label}))
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return nil, err
 	}
 	return resp.Msg.Names, nil

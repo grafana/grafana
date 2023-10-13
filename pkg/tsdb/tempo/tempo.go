@@ -65,7 +65,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := s.logger.FromContext(ctx)
-	logger.Debug("Processing queries", "queryCount", len(req.Queries))
+	logger.Debug("Processing queries", "queryLenght", len(req.Queries))
 
 	// create response struct
 	response := backend.NewQueryDataResponse()

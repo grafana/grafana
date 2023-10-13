@@ -58,7 +58,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
 				}
 			}
 			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)

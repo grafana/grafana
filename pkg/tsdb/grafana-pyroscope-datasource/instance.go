@@ -42,10 +42,12 @@ type PyroscopeDatasource struct {
 func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
+		logger.Error("Failed to get HTTP client options", "error", err)
 		return nil, err
 	}
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
+		logger.Error("Failed to create HTTP client", "error", err)
 		return nil, err
 	}
 
@@ -76,14 +78,17 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	types, err := d.client.ProfileTypes(ctx)
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return err
 	}
 	bodyData, err := json.Marshal(types)
 	if err != nil {
+		logger.Error("Failed to marshal response", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Error("Failed to send response", "error", err)
 		return err
 	}
 	return nil
@@ -92,14 +97,17 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	res, err := d.client.LabelNames(ctx)
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
 	data, err := json.Marshal(res)
 	if err != nil {
+		logger.Error("Failed to marshal response", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Error("Failed to send response", "error", err)
 		return err
 	}
 	return nil
@@ -115,20 +123,24 @@ type LabelValuesPayload struct {
 func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	u, err := url.Parse(req.URL)
 	if err != nil {
+		logger.Error("Failed to parse URL", "error", err)
 		return err
 	}
 	query := u.Query()
 
 	res, err := d.client.LabelValues(ctx, query["label"][0])
 	if err != nil {
+		logger.Error("Received error from client", "error", err)
 		return fmt.Errorf("error calling LabelValues: %v", err)
 	}
 	data, err := json.Marshal(res)
 	if err != nil {
+		logger.Error("Failed to marshal response", "error", err)
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		logger.Error("Failed to send response", "error", err)
 		return err
 	}
 	return nil
@@ -139,13 +151,15 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "Queries", req.Queries)
+	logger := logger.FromContext(ctx)
+	logger.Debug("Processing queries", "queryLenght", len(req.Queries))
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
 	// loop over queries and execute them individually.
-	for _, q := range req.Queries {
+	for i, q := range req.Queries {
+		logger.Debug("Processing query", "query", q, "counter", i)
 		res := d.query(ctx, req.PluginContext, q)
 
 		// save the response in a hashmap
@@ -153,7 +167,7 @@ func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryD
 		response.Responses[q.RefID] = res
 	}
 
-	logger.Debug("QueryData succeeded")
+	logger.Debug("All queries processed")
 	return response, nil
 }
 
