@@ -35,10 +35,12 @@ type ParcaDatasource struct {
 func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
+		logger.Error("Failed to get HTTP options", "error", err)
 		return nil, err
 	}
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
+		logger.Error("Failed to create HTTP client", "error", err)
 		return nil, err
 	}
 
@@ -51,26 +53,21 @@ func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *ParcaDatasource) Dispose() {
-	logger.Debug("Dispose called and completed")
 	// Clean up datasource instance resources.
 }
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Debug("CallResource called", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
-		logger.Debug("CallResource completed")
 		return d.callProfileTypes(ctx, req, sender)
 	}
 	if req.Path == "labelNames" {
-		logger.Debug("CallResource completed")
 		return d.callLabelNames(ctx, req, sender)
 	}
 	if req.Path == "labelValues" {
 		logger.Debug("CallResource completed")
 		return d.callLabelValues(ctx, req, sender)
 	}
-
-	logger.Debug("CallResource errored: Path not supported")
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
@@ -81,8 +78,6 @@ func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallRes
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "queries", req.Queries)
-
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -95,7 +90,6 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 		response.Responses[q.RefID] = res
 	}
 
-	logger.Debug("QueryData completed")
 	return response, nil
 }
 
@@ -104,8 +98,6 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called")
-
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 

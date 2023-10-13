@@ -25,29 +25,27 @@ var (
 	_ backend.CheckHealthHandler  = (*Service)(nil)
 )
 
-var logger = log.New("tsdb.parca")
-
 type Service struct {
-	im instancemgmt.InstanceManager
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
-func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*ParcaDatasource, error) {
-	logger.Debug("getInstance called")
+var logger = log.New("tsdb.parca")
 
+func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*ParcaDatasource, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		logger.Debug("getInstance erorred", "error", err)
+		logger.Error("Failed to get instance", "error", err, "pluginID", pluginCtx.PluginID)
 		return nil, err
 	}
-
 	in := i.(*ParcaDatasource)
-	logger.Debug("getInstance succeeded")
 	return in, nil
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		logger: logger,
 	}
 }
 
@@ -58,43 +56,55 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called")
+	loggerWithContext := s.logger.FromContext(ctx)
+	loggerWithContext.Debug("Processing queries", "queryLength", len(req.Queries))
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("QueryData errored", "error", err)
 		return nil, err
 	}
 
 	data, err := i.QueryData(ctx, req)
-	logger.Debug("QueryData succeeded")
+	if err != nil {
+		loggerWithContext.Error("Received error from Parca", "error", err)
+	} else {
+		loggerWithContext.Debug("All queries processed")
+	}
 	return data, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource called")
+	loggerWithContext := s.logger.FromContext(ctx)
+	loggerWithContext.Debug("Calling resource", "path", req.Path)
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("CallResource errored", "error", err)
 		return err
 	}
 
 	err = i.CallResource(ctx, req, sender)
-	logger.Debug("CallResource succeeded")
+	if err != nil {
+		loggerWithContext.Error("Failed to call resource", "error", err)
+	} else {
+		loggerWithContext.Debug("Resource called")
+	}
 	return err
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called")
+	loggerWithContext := s.logger.FromContext(ctx)
+	loggerWithContext.Debug("Checking health")
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		logger.Debug("CheckHealth errored", "error", err)
 		return nil, err
 	}
 
 	check, err := i.CheckHealth(ctx, req)
-	logger.Debug("CheckHealth succeeded")
+	if err != nil {
+		loggerWithContext.Error("Health check failed", "error", err)
+	} else {
+		loggerWithContext.Debug("Health check succeeded")
+	}
 	return check, err
 }
