@@ -214,7 +214,6 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 			if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
 				costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
 			}
-
 		} else {
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
