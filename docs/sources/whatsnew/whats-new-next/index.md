@@ -18,6 +18,50 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Public dashboards
+
+<!-- Thanos Karachalios -->
+<!-- Enterprise -->
+
+October 12, 2023
+
+_Generally Available in Grafana Cloud_
+
+Public dashboards allow you to share your visualizations and insights to a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
+
+{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+
+## Support for dashboard variables in transformations
+
+<!-- Oscar Kilhed, Victor Marin -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Experimental in Grafana Cloud_
+
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations.
+
+We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+
+{{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
+
+## Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
+
 ## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->
@@ -129,13 +173,15 @@ The Grafana Assume Role authentication provider lets Grafana Cloud users of the 
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
 
-## RBAC for library panels
+## Permission validation on custom role creation and update
 
-<!-- Kay Delaney, Natalia Bernarte  -->
-<!-- Enterprise public preview -->
+<!-- Mihaly Gyongyosi -->
+<!-- Cloud -->
 
-October 24, 2023
+<!-- already in on-prem -->
+
+August 25, 2023
 
 _Generally available in Grafana Cloud_
 
-You can manage the permissions for library panels with [RBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/), which provides a way to extend the permissions available with basic roles and gives you more granular control of users' actions.
+With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.

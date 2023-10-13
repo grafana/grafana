@@ -92,6 +92,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     ...defaultDashboard,
     title: state.title,
     uid: state.uid,
+    id: state.id,
     time: {
       from: timeRange.from,
       to: timeRange.to,
