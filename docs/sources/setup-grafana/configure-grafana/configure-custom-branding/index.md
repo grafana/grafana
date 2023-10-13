@@ -128,7 +128,7 @@ To customize the footer of a public dashboard, add the following section to the 
 ;footer_text =
 
 # Set to complete url to override public dashboard footer logo. Default is `grafana-logo` and will display the Grafana logo.
-# An empty value will hide the footer logo. 
+# An empty value will hide the footer logo.
 ;footer_logo =
 
 # Set to link for the footer
