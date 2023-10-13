@@ -671,6 +671,9 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
+    "alert-list-legacy": {
+      "title": "Alert rules"
+    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
