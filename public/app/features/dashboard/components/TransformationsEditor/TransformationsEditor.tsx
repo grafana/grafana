@@ -733,9 +733,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           >
             <Card.Heading className={styles.heading}>
               <>
-                <span>
-                  {transform.name}
-                </span>
+                <span>{transform.name}</span>
                 <span className={styles.pluginStateInfoWrapper}>
                   <PluginStateInfo state={transform.state} />
                 </span>
