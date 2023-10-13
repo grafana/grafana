@@ -188,10 +188,10 @@ Learn more in the [Format string documentation](https://grafana.com/docs/grafana
 
 ## Alerting
 
+### Additional contact points for External Alertmanager
+
 <!-- Alexander Weaver -->
 
 <Availability note>
-
-### Additional contact points for External Alertmanager
 
 We've added support for the Microsoft Teams contact points when using an external Alertmanager.
