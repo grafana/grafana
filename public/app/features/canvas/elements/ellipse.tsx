@@ -32,7 +32,8 @@ const getStyles = (theme: GrafanaTheme2, data: any) => ({
     height: '100%',
     backgroundColor: data?.backgroundColor,
     border: `${data?.width}px solid ${data?.borderColor}`,
-    borderRadius: theme.shape.radius.circle,
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '50%',
   }),
   span: css({
     display: 'table-cell',
