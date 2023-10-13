@@ -18,6 +18,14 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Alerting insights
+
+<!-- George Robinson -->
+
+_Generally available in Grafana Cloud_
+
+Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
 ## Support for dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
