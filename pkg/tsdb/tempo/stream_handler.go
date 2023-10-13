@@ -36,19 +36,15 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		tempoDatasource, err := s.getDSInfo(ctx, request.PluginContext)
 		if err != nil {
-			s.logger.Debug("RunStream errored", "error", err)
 			return err
 		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
-			s.logger.Debug("RunStream errored", "error", err)
 			return sendError(err, sender)
 		} else {
-			s.logger.Debug("RunStream succeeded")
 			return nil
 		}
 	}
 
 	err := fmt.Errorf("unknown path %s", request.Path)
-	s.logger.Debug("RunStream errored", "error", err)
 	return err
 }

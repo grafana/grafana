@@ -27,15 +27,12 @@ type StreamSender interface {
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
-	s.logger.Debug("runSearchStream called")
-
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
 	err := json.Unmarshal(req.Data, &backendQuery)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
-		s.logger.Debug("runSearchStream errored", "err", err)
 		return err
 	}
 
@@ -43,13 +40,11 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	err = json.Unmarshal(req.Data, &sr)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
-		s.logger.Debug("runSearchStream errored", "err", response.Error)
 		return err
 	}
 
 	if sr.GetQuery() == "" {
 		err = fmt.Errorf("query is empty")
-		s.logger.Debug("runSearchStream errored", "err", err)
 		return err
 	}
 
@@ -58,18 +53,14 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
-		s.logger.Error("Error Search()", "err", err)
 		return err
 	}
 
 	processedStream := s.processStream(stream, sender)
-	s.logger.Debug("runSearchStream succeeded")
 	return processedStream
 }
 
 func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
-	s.logger.Debug("processStream called")
-
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
 	for {
@@ -82,13 +73,11 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 					Traces:  traceList,
 				},
 			}, sender); err != nil {
-				s.logger.Debug("processStream errored", "error", err)
 				return err
 			}
 			break
 		}
 		if err != nil {
-			s.logger.Error("Error receiving message", "err", err)
 			return err
 		}
 
@@ -103,12 +92,10 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 				Traces:  traceList,
 			},
 		}, sender); err != nil {
-			s.logger.Debug("processStream errored", "error", err)
 			return err
 		}
 	}
 
-	s.logger.Debug("processStream succeeded")
 	return nil
 }
 
