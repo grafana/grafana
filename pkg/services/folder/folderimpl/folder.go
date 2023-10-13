@@ -76,7 +76,11 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1 ON CONFLICT DO UPDATE")
+			_, err = sess.Exec(`
+				INSERT INTO folder (id, uid, org_id, title, created, updated)
+				SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+				`)
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
 			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO UPDATE")
 		} else {
@@ -85,7 +89,7 @@ func (s *Service) DBMigration(db db.DB) {
 		return err
 	})
 	if err != nil {
-		s.log.Error("DB migration on folder service start failed.")
+		s.log.Error("DB migration on folder service start failed.", "err", err)
 	}
 }
 
