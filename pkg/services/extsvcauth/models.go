@@ -9,6 +9,9 @@ import (
 
 const (
 	OAuth2Server AuthProvider = "OAuth2Server"
+
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgID int64 = 1
 )
 
 type AuthProvider string
