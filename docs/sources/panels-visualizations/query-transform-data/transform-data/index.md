@@ -1010,7 +1010,7 @@ Use this transformation to format the output of a time field. Output can be form
 ### Format string
 
 {{% admonition type="note" %}}
-This transformation is available in Grafana 10.2+ and can be enabled using the `formatString` feature toggle.
+This transformation can be enabled using the `formatString` feature toggle.
 {{% /admonition %}}
 
 Use this transformation to format the output of a string field. You can format output in the following ways:
@@ -1020,7 +1020,7 @@ Use this transformation to format the output of a string field. You can format o
 - Sentence case - Formats the the first character of the string in upper case.
 - Title case - Formats the first character of each word in the string in upper case.
 - Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
-- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't includes spaces between words.
+- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
 - Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
 - Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
 - Trim - Removes all leading and trailing spaces from the string.
