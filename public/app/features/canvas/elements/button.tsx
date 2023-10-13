@@ -153,7 +153,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
-      size: cfg.size,
+      size: cfg.size ?? 14,
       api: getCfgApi(),
       style: cfg?.style ?? defaultStyleConfig,
     };
