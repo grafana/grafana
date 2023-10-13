@@ -91,8 +91,8 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
-      expect(scene.state.controls![2]).toBeInstanceOf(AdHocFilterSet);
-      expect((scene.state.controls![2] as AdHocFilterSet).state.name).toBe('CoolFilters');
+      expect(scene.state.controls![1]).toBeInstanceOf(AdHocFilterSet);
+      expect((scene.state.controls![1] as AdHocFilterSet).state.name).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -668,7 +668,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![0]).toBeInstanceOf(SceneDataLayerControls);
+      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(4);
