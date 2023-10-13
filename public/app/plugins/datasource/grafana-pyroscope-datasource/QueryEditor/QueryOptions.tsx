@@ -20,7 +20,6 @@ export interface Props {
 const typeOptions: Array<{ value: Query['queryType']; label: string; description: string }> = [
   { value: 'metrics', label: 'Metric', description: 'Return aggregated metrics' },
   { value: 'profile', label: 'Profile', description: 'Return profile' },
-  { value: 'spanProfile', label: 'Span Profile', description: 'Return profile' },
   { value: 'both', label: 'Both', description: 'Return both metric and profile data' },
 ];
 
@@ -99,7 +98,10 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               type="string"
               placeholder="64f170a96d5f537095"
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                onQueryChange({ ...query, spanSelector: [event.currentTarget.value] });
+                onQueryChange({
+                  ...query,
+                  spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
+                });
               }}
             />
           </EditorField>

@@ -125,25 +125,6 @@ const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 
   value: k.includes('.') ? k.replace('.', '_') : undefined,
 }));
 
-function getQueryForPyroscope(
-  tags: string,
-  spanID: string,
-  customQuery?: string,
-  profileTypeId?: string
-): GrafanaPyroscope | undefined {
-  if (!tags) {
-    return undefined;
-  }
-  return {
-    labelSelector: customQuery ? customQuery : '{${__tags}}',
-    groupBy: [],
-    profileTypeId: profileTypeId ?? '',
-    queryType: 'spanProfile',
-    spanSelector: [spanID],
-    refId: '',
-  };
-}
-
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
@@ -179,7 +160,11 @@ function legacyCreateSpanLinkFactory(
     let tags = '';
 
     // Get profiles links
-    if (profilesDataSourceSettings && traceToProfilesOptions && span.tags.find(tag => tag.key && tag.key === 'pyroscope.profile.id')) {
+    if (
+      profilesDataSourceSettings &&
+      traceToProfilesOptions &&
+      span.tags.find((tag) => tag.key && tag.key === 'pyroscope.profile.id')
+    ) {
       const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
       const tagsToUse =
         traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
@@ -414,6 +399,25 @@ function legacyCreateSpanLinkFactory(
     }
 
     return links;
+  };
+}
+
+function getQueryForPyroscope(
+  tags: string,
+  spanID: string,
+  customQuery?: string,
+  profileTypeId?: string
+): GrafanaPyroscope | undefined {
+  if (!tags) {
+    return undefined;
+  }
+  return {
+    labelSelector: customQuery ? customQuery : '{${__tags}}',
+    groupBy: [],
+    profileTypeId: profileTypeId ?? '',
+    queryType: 'profile',
+    spanSelector: [spanID],
+    refId: '',
   };
 }
 

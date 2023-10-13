@@ -85,67 +85,55 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		g.Go(func() error {
-			logger.Debug("Calling GetProfile", "queryModel", qm)
-			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
-			if err != nil {
-				logger.Error("Error GetProfile()", "err", err)
-				return err
-			}
+		if len(qm.SpanSelector) > 0 {
+			g.Go(func() error {
+				logger.Debug("Calling GetSpanProfile", "queryModel", qm)
+				prof, err := d.client.GetSpanProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					logger.Error("Error GetSpanProfile()", "err", err)
+					return err
+				}
+				frame := responseToDataFrames(prof)
+				responseMutex.Lock()
+				response.Frames = append(response.Frames, frame)
+				responseMutex.Unlock()
+				return nil
+			})
+		} else {
+			g.Go(func() error {
+				logger.Debug("Calling GetProfile", "queryModel", qm)
+				prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					logger.Error("Error GetProfile()", "err", err)
+					return err
+				}
 
-			var frame *data.Frame
-			if prof != nil {
-				frame = responseToDataFrames(prof)
+				var frame *data.Frame
+				if prof != nil {
+					frame = responseToDataFrames(prof)
 
-				// If query called with streaming on then return a channel
-				// to subscribe on a client-side and consume updates from a plugin.
-				// Feel free to remove this if you don't need streaming for your datasource.
-				if qm.WithStreaming {
-					channel := live.Channel{
-						Scope:     live.ScopeDatasource,
-						Namespace: pCtx.DataSourceInstanceSettings.UID,
-						Path:      "stream",
+					// If query called with streaming on then return a channel
+					// to subscribe on a client-side and consume updates from a plugin.
+					// Feel free to remove this if you don't need streaming for your datasource.
+					if qm.WithStreaming {
+						channel := live.Channel{
+							Scope:     live.ScopeDatasource,
+							Namespace: pCtx.DataSourceInstanceSettings.UID,
+							Path:      "stream",
+						}
+						frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
 					}
-					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				} else {
+					// We still send empty data frame to give feedback that query really run, just didn't return any data.
+					frame = getEmptyDataFrame()
 				}
-			} else {
-				// We still send empty data frame to give feedback that query really run, just didn't return any data.
-				frame = getEmptyDataFrame()
-			}
-			responseMutex.Lock()
-			response.Frames = append(response.Frames, frame)
-			responseMutex.Unlock()
+				responseMutex.Lock()
+				response.Frames = append(response.Frames, frame)
+				responseMutex.Unlock()
 
-			return nil
-		})
-	}
-
-	if query.QueryType == queryTypeSpanProfile {
-		g.Go(func() error {
-			logger.Debug("Calling GetSpanProfile", "queryModel", qm)
-			prof, err := d.client.GetSpanProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
-			if err != nil {
-				logger.Error("Error GetSpanProfile()", "err", err)
-				return err
-			}
-			frame := responseToDataFrames(prof)
-			responseMutex.Lock()
-			response.Frames = append(response.Frames, frame)
-			responseMutex.Unlock()
-
-			// If query called with streaming on then return a channel
-			// to subscribe on a client-side and consume updates from a plugin.
-			// Feel free to remove this if you don't need streaming for your datasource.
-			if qm.WithStreaming {
-				channel := live.Channel{
-					Scope:     live.ScopeDatasource,
-					Namespace: pCtx.DataSourceInstanceSettings.UID,
-					Path:      "stream",
-				}
-				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-			}
-			return nil
-		})
+				return nil
+			})
+		}
 	}
 
 	if err := g.Wait(); err != nil {
