@@ -46,7 +46,6 @@ lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,fa
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
 gcomOnlyExternalOrgRoleSync,GA,@grafana/grafana-authnz-team,false,false,false,false
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,false,true
-timeSeriesTable,experimental,@grafana/app-o11y,false,false,false,true
 influxdbBackendMigration,preview,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,experimental,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,GA,@grafana/observability-metrics,false,false,false,false
@@ -108,14 +107,13 @@ requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,false
-alertingInsights,experimental,@grafana/alerting-squad,false,false,false,true
+alertingInsights,GA,@grafana/alerting-squad,false,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,false,true
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
 externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
-alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
@@ -123,3 +121,4 @@ kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
+cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
