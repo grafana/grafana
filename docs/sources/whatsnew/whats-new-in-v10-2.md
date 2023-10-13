@@ -78,7 +78,7 @@ As our work on improving the user experience of transforming data continues, we'
 
 _Experimental in Grafana Open Source and Enterprise_
 
-Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
 
 {{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
 
@@ -102,7 +102,7 @@ The **Add field from calculation** transformation has a couple updates.
 
 **Row index** can now show the index as a percentage.
 
-Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
 ### New transformation: Format string
 
@@ -116,4 +116,4 @@ With the new **Format string** transformation, you can manipulate string fields 
 - **Trim** removes white space characters at the start and end of your string.
 - **Substring** selects a part of your string field.
 
-Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string)
+Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string)
