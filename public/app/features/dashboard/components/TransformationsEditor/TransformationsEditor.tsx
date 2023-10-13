@@ -590,6 +590,8 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const disabledOpacity = theme.isDark ? 0.45 : 0.8;
+
   return {
     hide: css`
       display: none;
@@ -607,6 +609,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     newCard: css`
       grid-template-rows: min-content 0 1fr 0;
+    `,
+    cardDisabled: css`
+      opacity: ${disabledOpacity};
     `,
     heading: css`
       font-weight: 400;
@@ -713,9 +718,15 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           }
         }
 
+        // Add disabled styles to disabled card
+        let cardClasses = styles.newCard;
+        if (!isApplicable) {
+          cardClasses = cx(styles.newCard, styles.cardDisabled);
+        }
+
         return (
           <Card
-            className={styles.newCard}
+            className={cardClasses}
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
             key={transform.id}
@@ -724,7 +735,6 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               <>
                 <span>
                   {transform.name}
-                  {`${isApplicable ? '' : ' (disabled)'}`}
                 </span>
                 <span className={styles.pluginStateInfoWrapper}>
                   <PluginStateInfo state={transform.state} />
