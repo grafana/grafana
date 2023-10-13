@@ -35,8 +35,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   const collapsedInfoList = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
-    `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
   ];
+  if (query.tableType === SearchTableType.Traces) {
+    collapsedInfoList.push(`Spans Limit: ${query.spss || DEFAULT_SPSS}`);
+  }
 
   return (
     <>
@@ -63,7 +65,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               onChange={onTableTypeChange}
             />
           </EditorField>
-          {(!query.tableType || query.tableType === SearchTableType.Traces) && (
+          {query.tableType === SearchTableType.Traces && (
             <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
               <AutoSizeInput
                 className="width-4"
