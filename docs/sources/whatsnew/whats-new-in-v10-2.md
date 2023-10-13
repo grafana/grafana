@@ -78,7 +78,7 @@ _Available in public preview in Grafana_
 
 Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar, or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
-To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, contact Grafana Support.
 
 ## Create correlations for provisioned data sources
 
