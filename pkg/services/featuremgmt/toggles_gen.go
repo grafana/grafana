@@ -195,10 +195,6 @@ const (
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
-	// FlagTimeSeriesTable
-	// Enable time series table transformer &amp; sparkline cell type
-	FlagTimeSeriesTable = "timeSeriesTable"
-
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
