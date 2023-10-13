@@ -108,6 +108,16 @@ describe('PanelRepeaterGridItem', () => {
     // given 5 rows with total height 25 gives new itemHeight of 5
     expect(repeater.state.itemHeight).toBe(5);
   });
+
+  it('When updating variable should update repeats', async () => {
+    const { scene, repeater, variable } = buildScene({ variableQueryTime: 0 });
+
+    activateFullSceneTree(scene);
+
+    variable.changeValueTo(['1', '3'], ['A', 'C']);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(2);
+  });
 });
 
 interface SceneOptions {
@@ -130,27 +140,27 @@ function buildScene(options: SceneOptions) {
     }),
   });
 
+  const variable = new TestVariable({
+    name: 'server',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'A', value: '1' },
+      { label: 'B', value: '2' },
+      { label: 'C', value: '3' },
+      { label: 'D', value: '4' },
+      { label: 'E', value: '5' },
+    ],
+  });
+
   const scene = new EmbeddedScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     $variables: new SceneVariableSet({
-      variables: [
-        new TestVariable({
-          name: 'server',
-          query: 'A.*',
-          value: ALL_VARIABLE_VALUE,
-          text: ALL_VARIABLE_TEXT,
-          isMulti: true,
-          includeAll: true,
-          delayMs: options.variableQueryTime,
-          optionsToReturn: [
-            { label: 'A', value: '1' },
-            { label: 'B', value: '2' },
-            { label: 'C', value: '3' },
-            { label: 'D', value: '4' },
-            { label: 'E', value: '5' },
-          ],
-        }),
-      ],
+      variables: [variable],
     }),
     body: new SceneGridLayout({
       children: [
@@ -161,5 +171,5 @@ function buildScene(options: SceneOptions) {
     }),
   });
 
-  return { scene, repeater };
+  return { scene, repeater, variable };
 }
