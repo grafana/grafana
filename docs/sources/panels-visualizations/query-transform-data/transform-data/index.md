@@ -1009,7 +1009,7 @@ Use this transformation to format the output of a time field. Output can be form
 
 ### Format string
 
-{{< docs/experimental product="transformation" featureFlag="formatString" >}}
+{{< docs/experimental product="transformation" featureFlag="`formatString`" >}}
 
 Use this transformation to format the output of a string field. You can format output in the following ways:
 
