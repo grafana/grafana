@@ -153,6 +153,7 @@ func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryD
 		response.Responses[q.RefID] = res
 	}
 
+	logger.Debug("QueryData succeeded")
 	return response, nil
 }
 
@@ -195,7 +196,7 @@ func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.Su
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
 func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	logger.Debug("RunStream called")
+	logger.Debug("RunStream called", "path", req.Path)
 
 	// Create the same data frame as for query data.
 	frame := data.NewFrame("response")
