@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
+import { useTheme2, WithContextMenu } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 import { unwrap } from '../utils/unwrap';
@@ -27,12 +27,8 @@ type Props = {
   onAddNewPart: (type: string) => void;
 };
 
-const renderRemovableNameMenuItems = (onClick: () => void) => {
-  return (
-    <MenuGroup label="">
-      <MenuItem label="remove" onClick={onClick} />
-    </MenuGroup>
-  );
+const renderRemovableNameMenuItems = () => {
+  return null;
 };
 
 const noRightMarginPaddingClass = css({
