@@ -139,5 +139,3 @@ October 24, 2023
 _Generally available in Grafana Cloud_
 
 You can manage the permissions for library panels with [RBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/), which provides a way to extend the permissions available with basic roles and gives you more granular control of users' actions.
-
-
