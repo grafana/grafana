@@ -18,15 +18,15 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## User experience updates in Kubernetes Monitoring
+## Quickly identify issues in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
+<09/29/2023>
 
 _Generally available in Grafana Cloud_
 
-### Quickly troubleshoot with snapshot of issues
-
-Release 1.3.1. To provide quicker identification and troubleshooting, you can view a snapshot of issues on the home page that reach these specific thresholds:
+Release 1.3.1
+To provide quicker identification and troubleshooting, from the home page, you can view a snapshot of issues that reach these specific thresholds:
 
   - Pods that have been in a non-running state for more than 15 minutes
   - Nodes with CPU usage above 90% for more than five minutes
@@ -36,41 +36,70 @@ Release 1.3.1. To provide quicker identification and troubleshooting, you can vi
 
 ![Kubernetes Monitoring home page](/media/docs/grafana-cloud/k8s/K8smon-snapshotview.png)
 
-### Navigate with tabs
-
-Release 1.3.0. Quickly switch between the Cluster, namespace, workload, and Node views on the **Cluster Navigation** page using tabs.
-
-![Tabs on Cluster navigation page](/media/docs/grafana-cloud/k8s/k8smon-clusternav-tabs.png)
-
-### Change data source on Cost and Efficiency views
-
-Release 1.2.1. You can change the data source you are viewing on the Cost and Efficiency views. 
-
-### Predict namespace memory usage
-
-Release 1.2.1. Click **Predict Memory usage** to predict namespace memory usage on the namespace detail page.
-
-![Predict Memory usage button](/media/docs/grafana-cloud/k8s/k8smon-predict-memusage-namespace.png)
-
-## Configuration updates in Kubernetes Monitoring
+## Navigate with tabs in Kubernetes Monitoring
 
 <!-- Beverly Buchanan --> 
+<09/14/2023>
 
 _Generally available in Grafana Cloud_
 
-### Configure with streamlined process
+Release 1.3.0. 
+Quickly switch between the Cluster, namespace, workload, and Node views on the **Cluster Navigation** page using tabs.
 
-Release 1.2.0. Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you select with switches to gather metrics, logs, events, traces, and cost metrics.
+![Tabs on Cluster navigation page](/media/docs/grafana-cloud/k8s/k8smon-clusternav-tabs.png)
+
+## Change data source on Cost and Efficiency views in Kubernetes Monitoring
+
+<!-- Beverly Buchanan --> 
+<09/14/2023>
+
+_Generally available in Grafana Cloud_
+
+Release 1.2.1. 
+You can change the data source you are viewing on the **Cost** and **Efficiency** views. 
+
+## Predict namespace memory usage in Kubernetes Monitoring
+
+<!-- Beverly Buchanan --> 
+<09/14/2023>
+
+_Generally available in Grafana Cloud_
+
+Release 1.2.1
+Click **Predict Memory usage** to predict namespace memory usage on the namespace detail page.
+
+![Predict Memory usage button](/media/docs/grafana-cloud/k8s/k8smon-predict-memusage-namespace.png)
+
+## Configure Kubernetes Monitoring with streamlined process
+
+<!-- Beverly Buchanan --> 
+<07/15/2023>
+
+_Generally available in Grafana Cloud_
+
+Release 1.2.0. 
+Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you select with switches to gather metrics, logs, events, traces, and cost metrics.
 
 ![Streamlined configuration wizard](/media/docs/grafana-cloud/k8s/k8smon-config-wizard.png)
 
-### Collect traces
+## Collect traces with Kubernetes Monitoring
 
-Release 1.3.0. Collect traces when you configure Kubernetes Monitoring, and then use Tempo to create search queries. Refer to [Navigate to traces](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#navigate-to-traces) for more information.
+<!-- Beverly Buchanan --> 
+<09/14/2023>
 
-## Use Kafka integration
+_Generally available in Grafana Cloud_
 
-Release 1.3.6. The Kafka integration is available for use in Kubernetes Monitoring.
+Release 1.3.0
+Collect traces when you configure Kubernetes Monitoring, and then use Tempo to create search queries. Refer to [Navigate to traces](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#navigate-to-traces) for more information.
+
+## Use Kafka integration with Kubernetes Monitoring
+
+<!-- Beverly Buchanan --> 
+
+<09/14/2023>
+
+Release 1.3.6. 
+The Kafka integration is available for use in Kubernetes Monitoring.
 
 ## Distributed tracing in Grafana Cloud k6
 
