@@ -307,6 +307,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 }
 
 func TestInitializer_oauthEnvVars(t *testing.T) {
+	// TODO (gamab) add test
 	t.Run("backend datasource with oauth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
