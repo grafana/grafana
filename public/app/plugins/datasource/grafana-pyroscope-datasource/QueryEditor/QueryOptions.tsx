@@ -96,7 +96,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
             <Input
               value={query.spanSelector || ['']}
               type="string"
-              placeholder="64f170a96d5f537095"
+              placeholder="64f170a95f537095"
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
                 onQueryChange({
                   ...query,
