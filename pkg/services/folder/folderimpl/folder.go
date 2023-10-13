@@ -94,6 +94,13 @@ func (s *Service) DBMigration(db db.DB) {
 				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
 			`)
 		}
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = 1)
+		`)
 		return err
 	})
 	if err != nil {
