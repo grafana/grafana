@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       padding: theme.spacing(0, 0.5),
     },
     level === 1 && {
-      marginLeft: theme.spacing(5.5),
+      marginLeft: theme.spacing(5),
     },
   ]),
   collapsibleSectionWrapper: css([
@@ -124,13 +124,13 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       !showExpandButton && {
         marginLeft: theme.spacing(6.25),
       },
-    level !== 0 &&
+    level === 1 &&
       showExpandButton && {
-        marginLeft: theme.spacing(1.5),
+        marginLeft: theme.spacing(1),
       },
-    !showExpandButton &&
-      level === 1 && {
-        marginLeft: theme.spacing(11.5),
+    level === 1 &&
+      !showExpandButton && {
+        marginLeft: theme.spacing(10.5),
       },
     level === 2 && {
       marginLeft: theme.spacing(6),
