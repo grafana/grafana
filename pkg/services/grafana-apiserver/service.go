@@ -83,9 +83,6 @@ type service struct {
 	config     *config
 	restConfig *clientrest.Config
 
-	stopCh    chan struct{}
-	stoppedCh chan error
-
 	rr       routing.RouteRegister
 	handler  web.Handler
 	builders []APIGroupBuilder
@@ -101,7 +98,6 @@ func ProvideService(
 	s := &service{
 		config:     newConfig(cfg),
 		rr:         rr,
-		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
 		authorizer: authz,
 	}
