@@ -295,7 +295,7 @@ describe('getPanelMenu()', () => {
       expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
-    it('should pass context with defaul time zone values when configuring extension', () => {
+    it('should pass context with default time zone values when configuring extension', () => {
       const data: PanelData = {
         series: [
           toDataFrame({
