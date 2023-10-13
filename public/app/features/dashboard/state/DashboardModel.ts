@@ -577,6 +577,9 @@ export class DashboardModel implements TimeModel {
       this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
       this.panelInEdit.configRev = 0;
     }
+
+    // @ts-expect-error
+    this.originalDashboard = this.getSaveModelClone();
   }
 
   hasUnsavedChanges() {
