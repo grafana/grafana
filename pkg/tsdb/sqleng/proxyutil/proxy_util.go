@@ -23,6 +23,5 @@ func GetSQLProxyOptions(cfg setting.SecureSocksDSProxySettings, dsInfo sqleng.Da
 	if dsInfo.JsonData.SecureDSProxyUsername != "" {
 		opts.Auth.Username = dsInfo.JsonData.SecureDSProxyUsername
 	}
-
 	return opts
 }

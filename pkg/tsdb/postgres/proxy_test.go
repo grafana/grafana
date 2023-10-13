@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/lib/pq"

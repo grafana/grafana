@@ -16,7 +16,6 @@ import (
 func TestMSSQLProxyDriver(t *testing.T) {
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
 	proxySettings := setting.SecureSocksDSProxySettings{
-		Enabled:      true,
 		ClientCert:   settings.ClientCert,
 		ClientKey:    settings.ClientKey,
 		RootCA:       settings.RootCA,
