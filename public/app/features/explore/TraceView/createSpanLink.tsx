@@ -14,7 +14,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -160,73 +160,75 @@ function legacyCreateSpanLinkFactory(
     let tags = '';
 
     // Get profiles links
-    if (
-      profilesDataSourceSettings &&
-      traceToProfilesOptions &&
-      span.tags.find((tag) => tag.key && tag.key === 'pyroscope.profile.id')
-    ) {
-      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
-      const tagsToUse =
-        traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
-          ? traceToProfilesOptions.tags
-          : defaultKeys;
+    if (config.featureToggles.traceToProfiles) {
+      if (
+        profilesDataSourceSettings &&
+        traceToProfilesOptions &&
+        span.tags.find((tag) => tag.key && tag.key === 'pyroscope.profile.id')
+      ) {
+        const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+        const tagsToUse =
+          traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
+            ? traceToProfilesOptions.tags
+            : defaultKeys;
 
-      tags = getFormattedTags(span, tagsToUse);
-      query = getQueryForPyroscope(tags, span.spanID, customQuery, traceToProfilesOptions.profileTypeId);
+        tags = getFormattedTags(span, tagsToUse);
+        query = getQueryForPyroscope(tags, span.spanID, customQuery, traceToProfilesOptions.profileTypeId);
 
-      // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
-      // For custom query, this is always defined and we check if the interpolation matched all variables later on.
-      if (query) {
-        const dataLink: DataLink = {
-          title: profilesDataSourceSettings.name,
-          url: '',
-          internal: {
-            datasourceUid: profilesDataSourceSettings.uid,
-            datasourceName: profilesDataSourceSettings.name,
-            query,
-          },
-        };
+        // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
+        // For custom query, this is always defined and we check if the interpolation matched all variables later on.
+        if (query) {
+          const dataLink: DataLink = {
+            title: profilesDataSourceSettings.name,
+            url: '',
+            internal: {
+              datasourceUid: profilesDataSourceSettings.uid,
+              datasourceName: profilesDataSourceSettings.name,
+              query,
+            },
+          };
 
-        scopedVars = {
-          ...scopedVars,
-          __tags: {
-            text: 'Tags',
-            value: tags,
-          },
-        };
+          scopedVars = {
+            ...scopedVars,
+            __tags: {
+              text: 'Tags',
+              value: tags,
+            },
+          };
 
-        // Check if all variables are defined and don't show if they aren't. This is usually handled by the
-        // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
-          const link = mapInternalLinkToExplore({
-            link: dataLink,
-            internalLink: dataLink.internal!,
-            scopedVars: scopedVars,
-            range: getTimeRangeFromSpan(
-              span,
-              {
-                startMs: traceToProfilesOptions.spanStartTimeShift
-                  ? rangeUtil.intervalToMs(traceToProfilesOptions.spanStartTimeShift)
-                  : 0,
-                endMs: traceToProfilesOptions.spanEndTimeShift
-                  ? rangeUtil.intervalToMs(traceToProfilesOptions.spanEndTimeShift)
-                  : 0,
-              },
-              isSplunkDS
-            ),
-            field: {} as Field,
-            onClickFn: splitOpenFn,
-            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-          });
+          // Check if all variables are defined and don't show if they aren't. This is usually handled by the
+          // getQueryFor* functions but this is for case of custom query supplied by the user.
+          if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
+            const link = mapInternalLinkToExplore({
+              link: dataLink,
+              internalLink: dataLink.internal!,
+              scopedVars: scopedVars,
+              range: getTimeRangeFromSpan(
+                span,
+                {
+                  startMs: traceToProfilesOptions.spanStartTimeShift
+                    ? rangeUtil.intervalToMs(traceToProfilesOptions.spanStartTimeShift)
+                    : 0,
+                  endMs: traceToProfilesOptions.spanEndTimeShift
+                    ? rangeUtil.intervalToMs(traceToProfilesOptions.spanEndTimeShift)
+                    : 0,
+                },
+                isSplunkDS
+              ),
+              field: {} as Field,
+              onClickFn: splitOpenFn,
+              replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+            });
 
-          links.push({
-            href: link.href,
-            title: 'Related profiles',
-            onClick: link.onClick,
-            content: <Icon name="gf-logs" title="Explore the profiles for this in split view" />,
-            field,
-            type: SpanLinkType.Logs,
-          });
+            links.push({
+              href: link.href,
+              title: 'Related profiles',
+              onClick: link.onClick,
+              content: <Icon name="gf-logs" title="Explore the profiles for this in split view" />,
+              field,
+              type: SpanLinkType.Logs,
+            });
+          }
         }
       }
     }
