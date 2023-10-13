@@ -11,10 +11,9 @@ import {
   Icon,
   Tooltip,
   Column,
-  HorizontalGroup,
   Pagination,
-  VerticalGroup,
 } from '@grafana/ui';
+import { Stack, Flex } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -162,7 +161,7 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <VerticalGroup spacing={'md'}>
+            <Stack gap={2}>
               <TableWrapper>
                 <InteractiveTable
                   columns={columns}
@@ -170,16 +169,16 @@ export const TeamList = ({
                   getRowId={(team) => String(team.id)}
                   fetchData={changeSort}
                 />
-                <HorizontalGroup justify="flex-end">
+                <Flex justifyContent="flex-end">
                   <Pagination
                     hideWhenSinglePage
                     currentPage={page}
                     numberOfPages={totalPages}
                     onNavigate={changePage}
                   />
-                </HorizontalGroup>
+                </Flex>
               </TableWrapper>
-            </VerticalGroup>
+            </Stack>
           </>
         )}
       </Page.Contents>
