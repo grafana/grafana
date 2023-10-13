@@ -113,3 +113,53 @@ Refer to the [Google Authentication documentation](http://grafana.com/docs/grafa
 _Generally available in Grafana Enterprise_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
+
+## Transformations
+
+As our work on improving the user experience of transforming data continues, we've also been adding new capabilities to transformations.
+
+### Support for dashboard variables in transformations
+
+<!-- Oscar Kilhed, Victor Marin -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+
+{{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
+
+### New modes for the Add field from calculation transformation
+
+<!-- Victor Marin -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+The **Add field from calculation** transformation has a couple updates.
+
+**Unary operations** is a new mode that lets you apply mathematical operations to a field. The currently supported operations are:
+
+- **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+- **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+- **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+- **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+- **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+
+{{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
+
+**Row index** can now show the index as a percentage.
+
+Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
+
+### New transformation: Format string
+
+<!-- Solomon Dubock, BI Squad -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+With the new **Format string** transformation, you can manipulate string fields to improve how they're displayed. The currently supported operations are:
+
+- **Change case** changes the case of your string to upper case, lower case, sentence case, title case, pascal case, camel case, or snake case.
+- **Trim** removes white space characters at the start and end of your string.
+- **Substring** selects a part of your string field.
+
+Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
