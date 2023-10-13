@@ -620,11 +620,6 @@ describe('DashboardModel', () => {
       expect(saveModel.time!.to).toBe('now-1h');
     });
 
-    it('hasTimeChanged should be false when reset original time', () => {
-      model.resetOriginalTime();
-      expect(model.hasTimeChanged()).toBeFalsy();
-    });
-
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
       const saveModel = model.getSaveModelClone(options);
@@ -760,6 +755,9 @@ describe('DashboardModel', () => {
             {
               name: 'Server',
               type: 'query',
+              datasource: null,
+              refresh: 1,
+              options: [],
               current: {
                 selected: true,
                 text: 'server_001',
@@ -770,10 +768,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Server2',
         type: 'query',
@@ -783,17 +781,17 @@ describe('DashboardModel', () => {
           value: 'server_002',
         },
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of template variable', () => {
+    it('hasVariablesChanged should be true when changing value of template variable', () => {
       model.templating.list[0].current.text = 'server_002';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
@@ -825,6 +823,8 @@ describe('DashboardModel', () => {
             {
               name: 'Filter',
               type: 'adhoc',
+              datasource: null,
+              refresh: 0,
               filters: [
                 {
                   key: '@hostname',
@@ -837,10 +837,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Filter',
         type: 'adhoc',
@@ -852,27 +852,27 @@ describe('DashboardModel', () => {
           },
         ],
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of filter', () => {
+    it('hasVariablesChanged should be true when changing value of filter', () => {
       model.templating.list[0].filters[0].value = 'server 1';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
-    it('hasVariableValuesChanged should be true when adding an additional condition', () => {
+    it('hasVariablesChanged should be true when adding an additional condition', () => {
       model.templating.list[0].filters[0].condition = 'AND';
       model.templating.list[0].filters[1] = {
         key: '@metric',
         operator: '=',
         value: 'logins.count',
       };
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {

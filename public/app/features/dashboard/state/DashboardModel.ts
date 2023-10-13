@@ -175,11 +175,11 @@ export class DashboardModel implements TimeModel {
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
+    this.originalTemplating = cloneDeep(this.templating);
+    this.originalTime = cloneDeep(this.time);
+
     this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
-
-    this.resetOriginalVariables(true);
-    this.resetOriginalTime();
 
     this.initMeta(meta);
     this.updateSchema(data);
@@ -252,7 +252,7 @@ export class DashboardModel implements TimeModel {
    * @deprecated Returns the wrong type please do not use
    */
   getSaveModelCloneOld(options?: CloneOptions): DashboardModel {
-    const defaults = _defaults(options || {}, {
+    const optionsWithDefaults = _defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
     });
@@ -267,9 +267,9 @@ export class DashboardModel implements TimeModel {
       copy[property] = cloneDeep(this[property]);
     }
 
-    this.updateTemplatingSaveModelClone(copy, defaults);
+    copy.templating = this.getTemplatingSaveModel(optionsWithDefaults);
 
-    if (!defaults.saveTimerange) {
+    if (!optionsWithDefaults.saveTimerange) {
       copy.time = this.originalTime;
     }
 
@@ -368,36 +368,34 @@ export class DashboardModel implements TimeModel {
       });
   }
 
-  private updateTemplatingSaveModelClone(
-    copy: any,
-    defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
-  ) {
-    const originalVariables = this.originalTemplating;
+  private getTemplatingSaveModel(options: CloneOptions) {
+    const originalVariables = this.originalTemplating?.list ?? [];
     const currentVariables = this.getVariablesFromState(this.uid);
 
-    copy.templating = {
-      list: currentVariables.map((variable) =>
-        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
-      ),
+    return {
+      list: currentVariables.map((variable) => {
+        const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);
+
+        if (!options.saveVariables) {
+          const original = originalVariables.find(
+            ({ name, type }: any) => name === variable.name && type === variable.type
+          );
+
+          if (!original) {
+            return variableSaveModel;
+          }
+
+          if (variable.type === 'adhoc') {
+            variableSaveModel.filters = original.filters;
+          } else {
+            variableSaveModel.current = original.current;
+            variableSaveModel.options = original.options;
+          }
+        }
+
+        return variableSaveModel;
+      }),
     };
-
-    if (!defaults.saveVariables) {
-      for (const current of copy.templating.list) {
-        const original = originalVariables.find(
-          ({ name, type }: any) => name === current.name && type === current.type
-        );
-
-        if (!original) {
-          continue;
-        }
-
-        if (current.type === 'adhoc') {
-          current.filters = original.filters;
-        } else {
-          current.current = original.current;
-        }
-      }
-    }
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
@@ -582,7 +580,7 @@ export class DashboardModel implements TimeModel {
     });
   }
 
-  clearUnsavedChanges(savedModel: Dashboard) {
+  clearUnsavedChanges(savedModel: Dashboard, options: CloneOptions) {
     for (const panel of this.panels) {
       panel.configRev = 0;
     }
@@ -594,6 +592,11 @@ export class DashboardModel implements TimeModel {
     }
 
     this.originalDashboard = savedModel;
+    this.originalTemplating = this.getTemplatingSaveModel(options);
+
+    if (options.saveTimerange) {
+      this.originalTime = deepFreeze(this.time);
+    }
   }
 
   hasUnsavedChanges() {
@@ -1099,10 +1102,6 @@ export class DashboardModel implements TimeModel {
     migrator.updateSchema(old);
   }
 
-  resetOriginalTime() {
-    this.originalTime = deepFreeze(this.time);
-  }
-
   hasTimeChanged() {
     const { time, originalTime } = this;
 
@@ -1112,19 +1111,6 @@ export class DashboardModel implements TimeModel {
       (isEqual(dateTime(time?.from), dateTime(originalTime?.from)) &&
         isEqual(dateTime(time?.to), dateTime(originalTime?.to)))
     );
-  }
-
-  resetOriginalVariables(initial = false) {
-    if (initial) {
-      this.originalTemplating = this.cloneVariablesFrom(this.templating.list);
-      return;
-    }
-
-    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState(this.uid));
-  }
-
-  hasVariableValuesChanged() {
-    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState(this.uid));
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -1262,28 +1248,15 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid).length > 0;
   }
 
-  private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {
+  public hasVariablesChanged(): boolean {
+    const originalVariables = this.originalTemplating?.list ?? [];
+    const currentVariables = this.getTemplatingSaveModel({ saveVariables: true }).list;
+
     if (originalVariables.length !== currentVariables.length) {
       return false;
     }
 
-    const updated = currentVariables.map((variable: any) => ({
-      name: variable.name,
-      type: variable.type,
-      current: cloneDeep(variable.current),
-      filters: cloneDeep(variable.filters),
-    }));
-
-    return !isEqual(updated, originalVariables);
-  }
-
-  private cloneVariablesFrom(variables: any[]) {
-    return variables.map((variable) => ({
-      name: variable.name,
-      type: variable.type,
-      current: deepFreeze(variable.current),
-      filters: deepFreeze(variable.filters),
-    }));
+    return !isEqual(currentVariables, originalVariables);
   }
 
   private variablesTimeRangeProcessDoneHandler(event: VariablesTimeRangeProcessDone) {

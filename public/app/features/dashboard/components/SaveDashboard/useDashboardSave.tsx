@@ -59,7 +59,9 @@ export const useDashboardSave = (isCopy = false) => {
       try {
         const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
-        dashboard.clearUnsavedChanges();
+
+        clone.version = result.version;
+        dashboard.clearUnsavedChanges(clone, options);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());

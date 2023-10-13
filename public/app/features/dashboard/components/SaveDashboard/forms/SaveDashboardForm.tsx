@@ -38,7 +38,7 @@ export const SaveDashboardForm = ({
   onOptionsChange,
 }: SaveProps) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
-  const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
+  const hasVariableChanged = useMemo(() => dashboard.hasVariablesChanged(), [dashboard]);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(options.message);
@@ -54,12 +54,6 @@ export const SaveDashboardForm = ({
         options = { ...options, message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
-          if (options.saveVariables) {
-            dashboard.resetOriginalVariables();
-          }
-          if (options.saveTimerange) {
-            dashboard.resetOriginalTime();
-          }
           onSuccess();
         } else {
           setSaving(false);
