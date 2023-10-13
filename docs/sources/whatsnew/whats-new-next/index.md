@@ -20,25 +20,28 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 ## Issues snapshot in Kubernetes Monitoring
 
-<!-- Beverly Buchanan --> 
-2023/09/29
+<!-- Beverly Buchanan -->
+
+September 29, 2023
 
 _Generally available in Grafana Cloud_
 
 To provide quicker identification and troubleshooting, the home page contains a snapshot of issues that reach the following thresholds:
 
-  - Pods that have been in a non-running state for more than 15 minutes
-  - Nodes with CPU usage above 90% for more than five minutes
-  - Nodes using more than 90% of memory for more than five minutes
-  - Persistent Volumes with capacity above 90%
-  - Node disks with capacity above 90%
+- Pods that have been in a non-running state for more than 15 minutes
+- Nodes with CPU usage above 90% for more than five minutes
+- Nodes using more than 90% of memory for more than five minutes
+- Persistent Volumes with capacity above 90%
+- Node disks with capacity above 90%
 
 (Release 1.3.1)
 {{< figure max-width="80%" src="/media/docs/grafana-cloud/k8s/K8smon-snapshotview.png" caption="Home page snapshot view" >}}
 
 ## Tabs navigation in Kubernetes Monitoring
-<!-- Beverly Buchanan --> 
-2023/09/14
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -47,8 +50,10 @@ Quickly switch between the Cluster, namespace, workload, and Node views on the *
 {{< figure max-width="40%" src="/media/docs/grafana-cloud/k8s/k8smon-clusternav-tabs.png" caption="Tabs on **Cluster Navigation** page" >}}
 
 ## Data source menu on Cost and Efficiency views in Kubernetes Monitoring
-<!-- Beverly Buchanan --> 
-2023/09/14
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -56,8 +61,9 @@ You can change the data source you are viewing on the **Cost** and **Efficiency*
 
 ## Predict namespace memory usage in Kubernetes Monitoring
 
-<!-- Beverly Buchanan --> 
-2023/09/14
+<!-- Beverly Buchanan -->
+
+September 14, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -66,19 +72,22 @@ Click **Predict Memory usage** to predict namespace memory usage on the namespac
 {{< figure max-width="50%" src="/media/docs/grafana-cloud/k8s/k8smon-predict-memusage-namespace.png" caption="**Predict Memory usage** button" >}}
 
 ## Streamlined configuration of Kubernetes Monitoring
-<!-- Beverly Buchanan --> 
-2023/07/15
+
+<!-- Beverly Buchanan -->
+
+September 15, 2023
 
 _Generally available in Grafana Cloud_
 
-Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you can set on/off toggles to gather metrics, logs, events, traces, and cost metrics. (Release 1.2.0)
+Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you can set on/off switches to gather metrics, logs, events, traces, and cost metrics. (Release 1.2.0)
 
 {{< figure max-width="60%" src="/media/docs/grafana-cloud/k8s/k8smon-config-wizard.png" caption="Configuration wizard" >}}
 
 ## Traces collection with Kubernetes Monitoring
 
-<!-- Beverly Buchanan --> 
-2023/09/14
+<!-- Beverly Buchanan -->
+
+September 14, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -86,8 +95,9 @@ Collect traces when you configure Kubernetes Monitoring, and then use Tempo to c
 
 ## Kafka integration in Kubernetes Monitoring
 
-<!-- Beverly Buchanan --> 
-2023/09/14
+<!-- Beverly Buchanan -->
+
+September 14, 2023
 
 _Generally available in Grafana Cloud_
 
