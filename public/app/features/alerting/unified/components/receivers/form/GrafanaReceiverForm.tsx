@@ -12,7 +12,7 @@ import { useDispatch } from 'app/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction, updateAlertManagerConfigAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -126,12 +126,8 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, 
     ? (existing.grafana_managed_receiver_configs ?? []).some((item) => Boolean(item.provenance))
     : false;
 
-  // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
-  // or a Mimir-based AlertManager
-  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-
-  const isEditable = !readOnly && isManageableAlertManagerDataSource && !hasProvisionedItems;
-  const isTestable = !readOnly && (isManageableAlertManagerDataSource || hasProvisionedItems);
+  const isEditable = !readOnly && !hasProvisionedItems;
+  const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
