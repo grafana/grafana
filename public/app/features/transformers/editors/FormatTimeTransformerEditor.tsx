@@ -33,7 +33,7 @@ export function FormatTimeTransfomerEditor({
 
   // Format timezone options
   const tzs = getTimeZones(false);
-  
+
   for (const tz of tzs) {
     if (tz.length > 0) {
       timeZoneOptions.push({ label: tz, value: tz });
