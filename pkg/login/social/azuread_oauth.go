@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -254,11 +255,26 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 	}
 
 	// Fallback to the Graph API
-	endpoint, errBuildGraphURI := s.groupsGraphAPIURL(claims, token)
+	endpoints, errBuildGraphURI := s.groupsGraphAPIURL(claims, token)
 	if errBuildGraphURI != nil {
 		return nil, errBuildGraphURI
 	}
 
+	var err error
+	for _, endpoint := range endpoints {
+		var groups []string
+		s.log.Debug("AzureAD OAuth: fetching groups", "endpoint", endpoint)
+		groups, err = s.fetchGroups(ctx, client, endpoint)
+		if err != nil {
+			s.log.Debug("AzureAD OAuth: failed to fetch groups", "endpoint", endpoint, "err", err)
+			continue
+		}
+		return groups, nil
+	}
+	return []string{}, err
+}
+
+func (s *SocialAzureAD) fetchGroups(ctx context.Context, client *http.Client, endpoint string) ([]string, error) {
 	data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
 	if err != nil {
 		return nil, err
@@ -277,61 +293,71 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.log.Warn("AzureAD OAuth: failed to close response body", "err", err)
+			s.log.Warn("AzureAD OAuth: failed to close response body", "err", err, "endpoint", endpoint)
 		}
 	}()
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			s.log.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
+			if strings.Contains(endpoint, "graph.windows.net") {
+				s.log.Warn("AzureAD OAuh: Token need Directory.Read.All Or Directory.ReadWrite.All permission to fetch all groups", "endpoint", endpoint)
+			} else {
+				s.log.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups", "endpoint", endpoint)
+			}
 		} else {
 			body, _ := io.ReadAll(res.Body)
-			s.log.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
+			s.log.Warn("AzureAD OAuh: could not fetch user groups", "endpoint", endpoint, "code", res.StatusCode, "body", string(body))
 		}
-		return []string{}, nil
+		return nil, errors.New(fmt.Sprintf("could not fetch user groups; endpoint: %s code: %d", endpoint, res.StatusCode))
 	}
 
 	var body getAzureGroupResponse
-	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+	if err = json.NewDecoder(res.Body).Decode(&body); err != nil {
+		s.log.Debug("failed to decode response body", "err", err, "endpoint", endpoint)
 		return nil, err
 	}
 
 	return body.Value, nil
 }
 
-// groupsGraphAPIURL retrieves the Microsoft Graph API URL to fetch user groups from the _claim_sources if present
-// otherwise it generates an handcrafted URL.
-func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Token) (string, error) {
-	var endpoint string
+// groupsGraphAPIURL returns a list of possible graph endpoints:
+// it returns the Microsoft Graph API URL to fetch user groups from the _claim_sources if present,
+// otherwise it generates a handcrafted URL.
+// If the URL from claims is the deprecated "graph.windows.net" api URL, return that as well as the handcrafted URL.
+func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Token) ([]string, error) {
+	var endpoints []string
 	// First check if an endpoint was specified in the claims
 	if claims.ClaimNames.Groups != "" {
-		endpoint = claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
-		s.log.Debug(fmt.Sprintf("endpoint to fetch groups specified in the claims: %s", endpoint))
+		endpointFromClaims := claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
+		endpoints = append(endpoints, endpointFromClaims)
+		s.log.Debug(fmt.Sprintf("endpoint to fetch groups specified in the claims: %s", endpointFromClaims))
 	}
 
 	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
-	// "graph.windows.net" api, use an handcrafted url to graph.microsoft.com
+	// "graph.windows.net" api, use a handcrafted url to graph.microsoft.com
 	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
-	if endpoint == "" || strings.Contains(endpoint, "graph.windows.net") {
+	if len(endpoints) == 0 || strings.Contains(endpoints[0], "graph.windows.net") {
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
 		if tenantID == "" {
 			parsedToken, err := jwt.ParseSigned(token.AccessToken)
 			if err != nil {
-				return "", fmt.Errorf("error parsing access token: %w", err)
+				return []string{}, fmt.Errorf("error parsing access token: %w", err)
 			}
 
 			var accessClaims azureAccessClaims
 			if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-				return "", fmt.Errorf("error getting claims from access token: %w", err)
+				return []string{}, fmt.Errorf("error getting claims from access token: %w", err)
 			}
 			tenantID = accessClaims.TenantID
 		}
 
-		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", tenantID, claims.ID)
-		s.log.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", endpoint))
+		craftedEndpoint := fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", tenantID, claims.ID)
+		s.log.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", craftedEndpoint))
+		// Insert the handcrafted endpoint at the beginning of the slice so that we try it first
+		endpoints = append([]string{craftedEndpoint}, endpoints...)
 	}
-	return endpoint, nil
+	return endpoints, nil
 }
 
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
