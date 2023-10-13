@@ -14,6 +14,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
   GrafanaTheme2,
+  EnumFieldConfig,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
@@ -153,7 +154,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   };
 
   const onAddEnumRow = () => {
-    updateEnumRows([...enumRows, '']);
+    updateEnumRows([...enumRows, 'value']);
   };
 
   const onChangeEnumValue = (index: number, value: string) => {
@@ -167,6 +168,19 @@ export const ConvertFieldTypeTransformerEditor = ({
   const setEditRow = (index: number, value: string) => {
     setEditingIndex(index);
     setEditingValue(value);
+  };
+
+  const applyEnumConfig = (index: number) => {
+    // Reverse the order of the enum values to match the order of the enum values in the table
+    const textValues = enumRows.map((value) => value).reverse();
+
+    const conversions = options.conversions;
+    const enumConfig: EnumFieldConfig = { text: textValues };
+    conversions[index] = { ...conversions[index], enumConfig };
+    onChange({
+      ...options,
+      conversions: conversions,
+    });
   };
 
   return (
@@ -232,6 +246,9 @@ export const ConvertFieldTypeTransformerEditor = ({
                   </Button>
                   <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
                     Add enum value
+                  </Button>
+                  <Button size="sm" icon="save" onClick={() => applyEnumConfig(idx)} className={styles.button}>
+                    Apply
                   </Button>
                 </HorizontalGroup>
 
