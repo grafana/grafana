@@ -306,9 +306,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	}
 }
 
-func TestInitializer_oauthEnvVars(t *testing.T) {
-	// TODO (gamab) add test
-	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+func TestInitializer_authEnvVars(t *testing.T) {
+	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:                          "test",
@@ -323,7 +322,7 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
-			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+			// Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth, featuremgmt.FlagExternalServiceAccounts),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
