@@ -25,11 +25,9 @@ var logger = log.New("tsdb.tempo")
 // If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
 // Otherwise, it uses insecure credentials.
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
-	logger.Debug("newGrpcClient called")
-
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
-		logger.Debug("newGrpcClient errored", "error", err)
+		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL)
 		return nil, err
 	}
 
@@ -54,12 +52,11 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	clientConn, err := grpc.Dial(onlyHost, dialOps...)
 	if err != nil {
-		logger.Debug("newGrpcClient errored", "error", err)
+		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL)
 		return nil, err
 	}
 
 	client := tempopb.NewStreamingQuerierClient(clientConn)
-	logger.Debug("newGrpcClient succeeded")
 	return client, nil
 }
 

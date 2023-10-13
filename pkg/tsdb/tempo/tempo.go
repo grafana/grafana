@@ -34,18 +34,23 @@ type Datasource struct {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		logger := log.New("tsdb.tempo")
+
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
+			logger.Error("Failed to get HTTP client options", "error", err)
 			return nil, err
 		}
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
+			logger.Error("Failed to get HTTP client provider", "error", err)
 			return nil, err
 		}
 
 		streamingClient, err := newGrpcClient(settings, opts)
 		if err != nil {
+			logger.Error("Failed to get gRPC client", "error", err)
 			return nil, err
 		}
 
@@ -59,57 +64,51 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	s.logger.Debug("QueryData called", "queries", req.Queries)
+	logger := s.logger.FromContext(ctx)
+	logger.Debug("Processing queries", "queryCount", len(req.Queries))
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
 	// loop over queries and execute them individually.
-	for _, q := range req.Queries {
+	for i, q := range req.Queries {
+		logger.Debug("Processing query", "query", q, "counter", i)
 		if res, err := s.query(ctx, req.PluginContext, q); err != nil {
-			s.logger.Debug("QueryData errored", "query", q, "error", err)
+			logger.Error("Error processing query", "query", q, "error", err)
 			return response, err
 		} else {
 			if res != nil {
+				logger.Debug("Query processed", "query", q)
 				response.Responses[q.RefID] = *res
+			} else {
+				logger.Debug("Query resulted in empty response", "query", q)
 			}
 		}
 	}
 
-	s.logger.Debug("QueryData succeeded")
+	logger.Debug("All queries processed")
 	return response, nil
 }
 
 func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	s.logger.Debug("query called")
-
 	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
 		trace, err := s.getTrace(ctx, pCtx, query)
-		s.logger.Debug("query succeeded")
 		return trace, err
 	}
-
 	err := fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
-	s.logger.Debug("query errored", "error", err)
 	return nil, err
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {
-	s.logger.Debug("getDSInfo called")
-
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		s.logger.Debug("getDSInfo errored", "error", err)
 		return nil, err
 	}
 
 	instance, ok := i.(*Datasource)
 	if !ok {
-		err := fmt.Errorf("failed to cast datsource info")
-		s.logger.Debug("getDSInfo errored", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to cast datsource info")
 	}
 
-	s.logger.Debug("getDSInfo succeeded", "url", instance.URL)
 	return instance, nil
 }
