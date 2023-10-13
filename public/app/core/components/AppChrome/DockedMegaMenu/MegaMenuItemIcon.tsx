@@ -18,7 +18,7 @@ export function MegaMenuItemIcon({ link }: NavBarItemIconProps) {
     return <Branding.MenuLogo className={styles.img} />;
   } else if (link.icon) {
     const iconName = toIconName(link.icon);
-    return <Icon name={iconName ?? 'link'} size="xl" />;
+    return <Icon name={iconName ?? 'link'} size="lg" />;
   } else {
     // consumer of NavBarItemIcon gives enclosing element an appropriate label
     return <img className={cx(styles.img, link.roundIcon && styles.round)} src={link.img} alt="" />;

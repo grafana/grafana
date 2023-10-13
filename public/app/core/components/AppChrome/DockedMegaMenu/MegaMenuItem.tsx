@@ -102,11 +102,15 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       marginRight: theme.spacing(4),
     },
   ]),
-  children: css({
-    display: 'flex',
-    listStyleType: 'none',
-    flexDirection: 'column',
-  }),
+  collapseButton: css([
+    {
+      color: theme.colors.text.disabled,
+      padding: theme.spacing(0, 0.5),
+    },
+    level === 1 && {
+      marginLeft: theme.spacing(5.5),
+    },
+  ]),
   collapsibleSectionWrapper: css([
     {
       alignItems: 'center',
@@ -128,23 +132,6 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       marginLeft: theme.spacing(6),
     },
   ]),
-  collapseButton: css([
-    {
-      color: theme.colors.text.disabled,
-      padding: theme.spacing(0, 0.5),
-    },
-    level === 1 && {
-      marginLeft: theme.spacing(5.5),
-    },
-  ]),
-  spacer: css({
-    marginRight: theme.spacing(4),
-  }),
-  emptyMessage: css({
-    color: theme.colors.text.secondary,
-    fontStyle: 'italic',
-    padding: theme.spacing(1, 1.5, 1, 7),
-  }),
   labelWrapper: css([
     {
       display: 'grid',
@@ -189,6 +176,16 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,
+  }),
+  children: css({
+    display: 'flex',
+    listStyleType: 'none',
+    flexDirection: 'column',
+  }),
+  emptyMessage: css({
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+    padding: theme.spacing(1, 1.5, 1, 7),
   }),
 });
 
