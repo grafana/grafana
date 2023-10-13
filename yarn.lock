@@ -2921,7 +2921,7 @@ __metadata:
     string-hash: ^1.1.3
     tinycolor2: 1.6.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
     uplot: 1.6.26
     xss: ^1.0.14
   peerDependencies:
@@ -2945,7 +2945,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
   languageName: unknown
   linkType: soft
 
@@ -2996,7 +2996,7 @@ __metadata:
     tracelib: 1.0.1
     ts-loader: 8.4.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
     uuid: 9.0.0
     webpack: 5.88.1
     yaml: ^2.0.0
@@ -3136,7 +3136,7 @@ __metadata:
     ts-jest: 29.1.1
     ts-node: 10.9.1
     tslib: 2.6.0
-    typescript: 4.8.4
+    typescript: 5.2.2
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
@@ -3219,7 +3219,7 @@ __metadata:
     systemjs: 6.14.2
     systemjs-cjs-extra: 0.2.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
@@ -3260,7 +3260,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
   languageName: unknown
   linkType: soft
 
@@ -3417,7 +3417,7 @@ __metadata:
     style-loader: 3.3.3
     tinycolor2: 1.6.0
     tslib: 2.6.0
-    typescript: 5.0.4
+    typescript: 5.2.2
     uplot: 1.6.26
     uuid: 9.0.0
     webpack: 5.88.1
@@ -17818,7 +17818,7 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.6.0
     tween-functions: ^1.2.0
-    typescript: 5.0.4
+    typescript: 5.2.2
     uplot: 1.6.26
     uuid: 9.0.0
     vendor: "link:./public/vendor"
@@ -28910,13 +28910,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.0.4":
-  version: 5.0.4
-  resolution: "typescript@npm:5.0.4"
+"typescript@npm:5.2.2":
+  version: 5.2.2
+  resolution: "typescript@npm:5.2.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 82b94da3f4604a8946da585f7d6c3025fff8410779e5bde2855ab130d05e4fd08938b9e593b6ebed165bda6ad9292b230984f10952cf82f0a0ca07bbeaa08172
+  checksum: 7912821dac4d962d315c36800fe387cdc0a6298dba7ec171b350b4a6e988b51d7b8f051317786db1094bd7431d526b648aba7da8236607febb26cf5b871d2d3c
   languageName: node
   linkType: hard
 
@@ -28950,13 +28950,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@5.0.4#~builtin<compat/typescript>":
-  version: 5.0.4
-  resolution: "typescript@patch:typescript@npm%3A5.0.4#~builtin<compat/typescript>::version=5.0.4&hash=b5f058"
+"typescript@patch:typescript@5.2.2#~builtin<compat/typescript>":
+  version: 5.2.2
+  resolution: "typescript@patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=f3b441"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: d26b6ba97b6d163c55dbdffd9bbb4c211667ebebc743accfeb2c8c0154aace7afd097b51165a72a5bad2cf65a4612259344ff60f8e642362aa1695c760d303ac
+  checksum: 0f4da2f15e6f1245e49db15801dbee52f2bbfb267e1c39225afdab5afee1a72839cd86000e65ee9d7e4dfaff12239d28beaf5ee431357fcced15fb08583d72ca
   languageName: node
   linkType: hard
 
