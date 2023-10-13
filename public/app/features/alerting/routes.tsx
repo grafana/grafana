@@ -74,13 +74,19 @@ const legacyRoutes: RouteDescriptor[] = [
   {
     path: '/alerting-legacy/notification/new',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "NewNotificationChannelLegacy" */ 'app/features/alerting/NewNotificationChannelPage'
+        )
     ),
   },
   {
     path: '/alerting-legacy/notification/:id/edit',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage')
+      () =>
+        import(
+          /* webpackChunkName: "EditNotificationChannelLegacy"*/ 'app/features/alerting/EditNotificationChannelPage'
+        )
     ),
   },
 ];
