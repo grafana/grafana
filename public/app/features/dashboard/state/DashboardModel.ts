@@ -248,8 +248,10 @@ export class DashboardModel implements TimeModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non persistent state
-  getSaveModelClone(options?: CloneOptions): DashboardModel {
+  /**
+   * @deprecated Returns the wrong type please do not use
+   */
+  getSaveModelCloneOld(options?: CloneOptions): DashboardModel {
     const defaults = _defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
@@ -282,11 +284,10 @@ export class DashboardModel implements TimeModel {
   }
 
   /**
-   * The above function is returns the wrong type and needs change
-   * But need to fix an important bug in save drawer first
+   * Returns the persisted save model (schema) of the dashboard
    */
-  getSaveModelCloneTempV2(options?: CloneOptions): Dashboard {
-    const clone = this.getSaveModelClone(options);
+  getSaveModelClone(options?: CloneOptions): Dashboard {
+    const clone = this.getSaveModelCloneOld(options);
 
     // This is a bit messy / hacky but it's how we clean the model of any nulls / undefined / infinity
     const cloneJSON = JSON.stringify(clone, null);
@@ -592,7 +593,7 @@ export class DashboardModel implements TimeModel {
       this.panelInEdit.configRev = 0;
     }
 
-    this.originalDashboard = this.getSaveModelCloneTempV2();
+    this.originalDashboard = this.getSaveModelClone();
   }
 
   hasUnsavedChanges() {

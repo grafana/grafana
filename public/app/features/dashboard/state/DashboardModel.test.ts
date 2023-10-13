@@ -109,7 +109,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = createDashboardModelFixture();
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
@@ -127,7 +127,7 @@ describe('DashboardModel', () => {
       model.addPanel({
         type: 'add-panel',
       });
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       const panels = saveModel.panels;
 
       expect(panels.length).toBe(1);
@@ -140,7 +140,7 @@ describe('DashboardModel', () => {
       const panel = model.initEditPanel(model.panels[0]);
       panel.title = 'updated';
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       const savedPanel = saveModel.panels[0];
 
       expect(savedPanel.title).toBe('updated');
@@ -204,7 +204,7 @@ describe('DashboardModel', () => {
     });
 
     it('getSaveModelClone should remove meta', () => {
-      const clone = model.getSaveModelClone();
+      const clone = model.getSaveModelCloneOld();
       expect(clone.meta).toBe(undefined);
     });
   });
@@ -606,7 +606,7 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
@@ -614,7 +614,7 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -627,7 +627,7 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
@@ -635,7 +635,7 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -684,13 +684,13 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.length).toBe(2);
       expect(saveModel.panels[0].scopedVars).toBe(undefined);
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
@@ -738,14 +738,14 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
@@ -800,7 +800,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
     });
@@ -809,7 +809,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
     });
@@ -879,7 +879,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
     });
@@ -888,7 +888,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });

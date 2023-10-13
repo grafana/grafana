@@ -21,7 +21,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const isNew = dashboard.version === 0;
 
   const data = useMemo<SaveDashboardData>(() => {
-    const clone = dashboard.getSaveModelCloneTempV2({
+    const clone = dashboard.getSaveModelClone({
       saveTimerange: Boolean(options.saveTimerange),
       saveVariables: Boolean(options.saveVariables),
     });

@@ -21,7 +21,7 @@ type SaveDashboardDrawerProps = {
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, dashboardJson, onSave }: SaveDashboardDrawerProps) => {
   const data = useMemo<SaveDashboardData>(() => {
-    const clone = dashboard.getSaveModelCloneTempV2();
+    const clone = dashboard.getSaveModelClone();
 
     const diff = jsonDiff(JSON.parse(JSON.stringify(dashboardJson, null, 2)), clone);
     let diffCount = 0;

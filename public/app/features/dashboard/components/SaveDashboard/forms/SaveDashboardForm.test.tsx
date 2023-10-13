@@ -45,7 +45,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
         return { status: 'success' };
       }}
       saveModel={{
-        clone: dashboard.getSaveModelCloneTempV2(),
+        clone: dashboard.getSaveModelClone(),
         diff: {},
         diffCount: 0,
         hasChanges: true,
@@ -136,7 +136,7 @@ describe('SaveDashboardAsForm', () => {
             return {};
           }}
           saveModel={{
-            clone: createDashboardModelFixture().getSaveModelCloneTempV2(),
+            clone: createDashboardModelFixture().getSaveModelClone(),
             diff: {},
             diffCount: 0,
             hasChanges: true,

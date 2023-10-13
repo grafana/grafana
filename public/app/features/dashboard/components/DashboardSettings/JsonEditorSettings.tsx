@@ -13,7 +13,7 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { SettingsPageProps } from './types';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
-  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
+  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelCloneOld(), null, 2));
   const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
 
   const onClick = async () => {

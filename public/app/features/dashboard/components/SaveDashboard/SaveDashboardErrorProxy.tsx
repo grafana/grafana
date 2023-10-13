@@ -100,7 +100,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
         <Button
           variant="destructive"
           onClick={async () => {
-            await onDashboardSave(dashboard.getSaveModelCloneTempV2(), { overwrite: true }, dashboard);
+            await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
             onDismiss();
           }}
         >
