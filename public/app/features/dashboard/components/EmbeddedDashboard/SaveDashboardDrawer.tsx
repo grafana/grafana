@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 
 import { DashboardModel } from '../../state';
@@ -15,16 +16,14 @@ type SaveDashboardDrawerProps = {
   dashboard: DashboardModel;
   onDismiss: () => void;
   dashboardJson: string;
-  onSave: (clone: DashboardModel) => Promise<unknown>;
+  onSave: (clone: Dashboard) => Promise<unknown>;
 };
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, dashboardJson, onSave }: SaveDashboardDrawerProps) => {
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone();
-    const cloneJSON = JSON.stringify(clone, null, 2);
-    const cloneSafe = JSON.parse(cloneJSON); // avoids undefined issues
 
-    const diff = jsonDiff(JSON.parse(JSON.stringify(dashboardJson, null, 2)), cloneSafe);
+    const diff = jsonDiff(JSON.parse(JSON.stringify(dashboardJson, null, 2)), clone);
     let diffCount = 0;
     for (const d of Object.values(diff)) {
       diffCount += d.length;

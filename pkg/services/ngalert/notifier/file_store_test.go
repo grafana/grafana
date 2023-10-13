@@ -7,10 +7,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
 func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
-	store := NewFakeKVStore(t)
+	store := fakes.NewFakeKVStore(t)
 	workingDir := filepath.Join(t.TempDir(), "notexistdir")
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
@@ -31,7 +33,7 @@ func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
 	}
 }
 func TestFileStore_FilepathFor(t *testing.T) {
-	store := NewFakeKVStore(t)
+	store := fakes.NewFakeKVStore(t)
 	workingDir := t.TempDir()
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
@@ -73,7 +75,7 @@ func TestFileStore_FilepathFor(t *testing.T) {
 }
 
 func TestFileStore_Persist(t *testing.T) {
-	store := NewFakeKVStore(t)
+	store := fakes.NewFakeKVStore(t)
 	state := &fakeState{data: "something to marshal"}
 	workingDir := t.TempDir()
 	fs := NewFileStore(1, store, workingDir)
@@ -82,9 +84,9 @@ func TestFileStore_Persist(t *testing.T) {
 	size, err := fs.Persist(context.Background(), filekey, state)
 	require.NoError(t, err)
 	require.Equal(t, int64(20), size)
-	store.mtx.Lock()
-	require.Len(t, store.store, 1)
-	store.mtx.Unlock()
+	store.Mtx.Lock()
+	require.Len(t, store.Store, 1)
+	store.Mtx.Unlock()
 	v, ok, err := store.Get(context.Background(), 1, KVNamespace, filekey)
 	require.NoError(t, err)
 	require.True(t, ok)

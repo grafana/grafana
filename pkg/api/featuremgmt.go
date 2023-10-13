@@ -78,7 +78,14 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Respond(http.StatusBadRequest, "Failed to perform webhook request")
 	}
 
+	hs.Features.SetRestartRequired()
+
 	return response.Respond(http.StatusOK, "feature toggles updated successfully")
+}
+
+func (hs *HTTPServer) GetFeatureMgmtState(ctx *contextmodel.ReqContext) response.Response {
+	fmState := hs.Features.GetState()
+	return response.Respond(http.StatusOK, fmState)
 }
 
 // isFeatureHidden returns whether a toggle should be hidden from the admin page.
