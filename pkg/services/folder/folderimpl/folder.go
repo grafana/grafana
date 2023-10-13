@@ -101,6 +101,10 @@ func (s *Service) DBMigration(db db.DB) {
 			s.log.Error("Failed to migrate dashboard folder_uid for dashboards", "error", err)
 			return err
 		}
+		dashboardRowsAffected, dashboardRowsAffectedErr := r.RowsAffected()
+		if dashboardRowsAffectedErr != nil {
+			s.log.Error("Failed to get dashboard rows affected", "error", dashboardRowsAffectedErr)
+		}
 
 		q = `UPDATE dashboard SET folder_uid = (SELECT f.parent_uid FROM folder f WHERE f.org_id = dashboard.org_id AND f.uid = dashboard.uid) WHERE is_folder = ?`
 		r, err = sess.Exec(q, s.db.GetDialect().BooleanStr(true))
@@ -108,9 +112,12 @@ func (s *Service) DBMigration(db db.DB) {
 			s.log.Error("Failed to migrate dashboard folder_uid for folders", "error", err)
 			return err
 		}
+		folderRowsAffected, folderRowsAffectedErr := r.RowsAffected()
+		if folderRowsAffectedErr != nil {
+			s.log.Error("Failed to get folder rows affected", "error", folderRowsAffectedErr)
+		}
 
-		rowsAffected, rowsAffectedErr := r.RowsAffected()
-		s.log.Debug("Migrating dashboard data", "rows", rowsAffected, "rowsAffectedErr", rowsAffectedErr)
+		s.log.Debug("Migrating dashboard data", "dashboards rows", dashboardRowsAffected, "folder rows", folderRowsAffected)
 		return nil
 	}); err != nil {
 		s.log.Error("Failed to run folder_uid migration", "error", err)
