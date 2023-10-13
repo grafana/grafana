@@ -60,21 +60,21 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
-## Add dashboard and folder permissions to service accounts
+### Add dashboard and folder permissions to service accounts
 
 <!-- Jo Guerreiro -->
 
 _Generally available in Grafana Open Source and Enterprise_
 
 Service accounts allow you to create a token that can be used to authenticate with Grafana.
-You can use this token to access Grafana's API, as well as, dashboards that the service account has access to.
+You can use this token to access Grafana's API, as well as dashboards that the service account has access to.
 
 In this release, we've added the ability to assign dashboard and folder permissions to service accounts.
 This means that you can now create a service account that can be used to access a specific dashboard and nothing else.
 
 This is useful if you want to limit the access service accounts have to your Grafana instance.
 
-## Add data source permissions to service accounts
+### Add data source permissions to service accounts
 
 <!-- Jo Guerreiro -->
 
@@ -91,9 +91,9 @@ For example, imagine you have a team of developers who need to access a specific
 Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
 This way, you can limit the potential damage that could be caused by a compromised service account.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Data source permissions in 10.2" > }}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Data source permissions in 10.2" >}}
 
-## Role mapping support for Google OIDC
+### Role mapping support for Google OIDC
 
 <!-- Jo Guerreiro -->
 
@@ -104,7 +104,7 @@ This is useful if you want to limit the access users have to your Grafana instan
 
 We've also added support for controlling allowed groups when using Google OIDC.
 
-Refer to the [Google Authentication documentation](http://grafana.com/docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/google/index.md) to learn how to use these new options.
+Refer to the [Google Authentication documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
 
 ### Permission validation on custom role creation and update
 
