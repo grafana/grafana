@@ -14,7 +14,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps {
+interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;

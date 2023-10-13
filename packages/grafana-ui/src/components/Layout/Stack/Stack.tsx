@@ -4,7 +4,7 @@ import { ThemeSpacingTokens } from '@grafana/data';
 
 import { Flex } from '../Flex/Flex';
 import { ResponsiveProp } from '../utils/responsiveness';
-interface StackProps {
+interface StackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   direction?: ResponsiveProp<'column' | 'row'>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
 }
