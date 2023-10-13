@@ -32,9 +32,12 @@ export function FormatTimeTransfomerEditor({
   }
 
   // Format timezone options
-  const tzs = getTimeZones();
+  const tzs = getTimeZones(false);
+  
   for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz });
+    if (tz.length > 0) {
+      timeZoneOptions.push({ label: tz, value: tz });
+    }
   }
 
   const onSelectField = useCallback(

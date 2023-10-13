@@ -35,9 +35,11 @@ export const ConvertFieldTypeTransformerEditor = ({
   const timeZoneOptions: Array<SelectableValue<string>> = [];
 
   // Format timezone options
-  const tzs = getTimeZones();
+  const tzs = getTimeZones(true);
   for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz });
+    if (tz.length > 0) {
+      timeZoneOptions.push({ label: tz, value: tz });
+    }
   }
 
   const onSelectField = useCallback(
