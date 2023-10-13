@@ -133,7 +133,7 @@ Now, you can automatically calculate the min or max of each visualized field bas
 {{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated per field" >}}
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
-# This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
 
 ## Transformations
 
