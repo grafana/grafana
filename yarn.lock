@@ -9433,6 +9433,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-gzip@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@types/node-gzip@npm:1.1.1"
+  dependencies:
+    "@types/node": "*"
+  checksum: f99e7863c2f84a7b89cbf3c297c7fdb2c3bf8ecfabd5be0b430e0075e7ccee466e78cf0598490a91f58502ef3d3879a4c4f640632cc9f5a816c98505e99c029a
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:18.16.19, @types/node@npm:>=13.7.0":
   version: 18.16.19
   resolution: "@types/node@npm:18.16.19"
@@ -17715,6 +17724,7 @@ __metadata:
     "@types/mousetrap": 1.6.11
     "@types/node": 18.16.16
     "@types/node-forge": ^1
+    "@types/node-gzip": ^1.1.1
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
     "@types/papaparse": 5.3.7
     "@types/pluralize": ^0.0.30

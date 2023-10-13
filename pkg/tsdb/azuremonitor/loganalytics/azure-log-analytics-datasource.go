@@ -378,9 +378,9 @@ func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl stri
 		return nil
 	}
 
-	if query.ResultFormat == dataquery.ResultFormatLogs {
-		return nil
-	}
+	// if query.ResultFormat == dataquery.ResultFormatLogs {
+	// 	return nil
+	// }
 
 	AddConfigLinks(*frame, queryUrl, nil)
 
