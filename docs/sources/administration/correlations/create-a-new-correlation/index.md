@@ -23,7 +23,7 @@ Make sure you have permission to add new correlations. Only users with write per
 1. The visualization is enriched with links allowing to create new correlations. Links are attached to the data that you can use to build a new query:
    - Logs: links are displayed next to field values inside log details for each log row
    - Table: every table cell is a link
-1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration" >}}).
+1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration" >}}). This means the correlation link will be created on the link you select once the correlation is saved.
 1. Explore opens a split view. Use the right pane to setup [the target query source of the correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration#target-query" >}}).
 1. Build target query using [variables syntax]({{< relref "/docs/grafana/latest/dashboards/variables/variable-syntax" >}}) with variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
 1. Provide optional label and description. Label is used as the name of the link inside the visualization. It can contain variables.
