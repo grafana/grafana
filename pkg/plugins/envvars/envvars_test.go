@@ -322,7 +322,6 @@ func TestInitializer_authEnvVars(t *testing.T) {
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
-			// Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth, featuremgmt.FlagExternalServiceAccounts),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
