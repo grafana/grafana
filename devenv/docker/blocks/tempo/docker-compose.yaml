@@ -120,4 +120,4 @@
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
-    #     labels: namespace
+        labels: namespace
