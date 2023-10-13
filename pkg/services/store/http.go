@@ -260,7 +260,7 @@ func (s *standardStorageService) doCreateFolder(c *contextmodel.ReqContext) resp
 func (s *standardStorageService) list(c *contextmodel.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
-	// maxFiles of 0 will result in default from wrapper
+	// maxFiles of 0 will result in default behaviour from wrapper
 	frame, err := s.List(c.Req.Context(), c.SignedInUser, path, 0)
 	if err != nil {
 		return response.Error(400, "error reading path", err)
