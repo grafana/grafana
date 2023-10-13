@@ -31,7 +31,7 @@ export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: st
           },
           indexByName: {},
           renameByName: {
-            Value: 'Fires this week',
+            Value: 'Number of fires',
             alertname: 'Alert Rule Name',
           },
         },

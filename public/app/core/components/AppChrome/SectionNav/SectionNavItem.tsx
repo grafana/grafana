@@ -9,9 +9,13 @@ import { useStyles2, Icon } from '@grafana/ui';
 export interface Props {
   item: NavModelItem;
   isSectionRoot?: boolean;
+  level?: number;
 }
 
-export function SectionNavItem({ item, isSectionRoot = false }: Props) {
+// max level depth to render
+const MAX_DEPTH = 2;
+
+export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
@@ -22,7 +26,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length) || item.isSection,
+    [styles.isSection]: level < MAX_DEPTH && (Boolean(children?.length) || item.isSection),
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
   });
@@ -56,7 +60,8 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
-      {children?.map((child, index) => <SectionNavItem item={child} key={index} />)}
+      {level < MAX_DEPTH &&
+        children?.map((child, index) => <SectionNavItem item={child} key={index} level={level + 1} />)}
     </>
   );
 }
