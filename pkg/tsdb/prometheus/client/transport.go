@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -18,8 +17,8 @@ import (
 
 // CreateTransportOptions creates options for the http client. Probably should be shared and should not live in the
 // buffered package.
-func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
-	opts, err := settings.HTTPClientOptions(ctx)
+func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
+	opts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
