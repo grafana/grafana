@@ -33,10 +33,9 @@ type Datasource struct {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger := log.New("tsdb.tempo")
-
-		opts, err := settings.HTTPClientOptions()
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			logger.Error("Failed to get HTTP client options", "error", err)
 			return nil, err
