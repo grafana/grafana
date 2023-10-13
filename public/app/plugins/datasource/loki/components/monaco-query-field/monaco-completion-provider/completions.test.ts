@@ -842,7 +842,7 @@ describe('IN_LOGFMT completions', () => {
         startLineNumber: 1,
         endLineNumber: 1,
         startColumn: 17,
-        endColumn: 17,
+        endColumn: 32,
       });
     });
     it('tests inserting new label within existing label value', () => {
