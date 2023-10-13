@@ -141,4 +141,5 @@ export interface FeatureToggles {
   recoveryThreshold?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
+  panelTitleSearchInV1?: boolean;
 }

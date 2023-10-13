@@ -37,7 +37,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
         // @ts-ignore
         panel: fakePanel,
         // @ts-ignore
-        dashboard: new DashboardModelCompatibilityWrapper(),
+        dashboard: getDashboardSrv().getCurrent(),
         size: { width: props.width, height: props.height },
         queryRunner: queryRunner,
       };

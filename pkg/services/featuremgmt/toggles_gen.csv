@@ -4,7 +4,7 @@ disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false,false
 live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,preview,@grafana/grafana-app-platform-squad,false,false,false,false
-publicDashboards,preview,@grafana/sharing-squad,false,false,false,false
+publicDashboards,GA,@grafana/sharing-squad,false,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,true,false,false
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false,false
@@ -122,3 +122,4 @@ navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
+panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,false

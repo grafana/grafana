@@ -308,6 +308,7 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "editable": true,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
+  "id": 1351,
   "links": [],
   "panels": [
     {
