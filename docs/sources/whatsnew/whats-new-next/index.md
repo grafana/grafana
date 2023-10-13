@@ -60,7 +60,7 @@ _Generally available in Grafana Cloud_
 
 ### Configure with streamlined process
 
-Release 1.2.0. Configure with [Grafana Kubernetes Monitoring Helm chart]({{< relref "/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow" >}}) using a streamlined process. With this method, you select with toggle buttons to gather metrics, logs, events, traces, and cost metrics.
+Release 1.2.0. Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you select with switches to gather metrics, logs, events, traces, and cost metrics.
 
 ![Streamlined configuration wizard](/media/docs/grafana-cloud/k8s/k8smon-config-wizard.png)
 
