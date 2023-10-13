@@ -92,8 +92,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
-		trace, err := s.getTrace(ctx, pCtx, query)
-		return trace, err
+		return s.getTrace(ctx, pCtx, query)
 	}
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
 }

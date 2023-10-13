@@ -10,7 +10,6 @@ import (
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	s.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
-
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if strings.HasPrefix(req.Path, SearchPathPrefix) {
 		status = backend.SubscribeStreamStatusOK
