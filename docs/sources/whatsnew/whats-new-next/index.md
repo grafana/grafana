@@ -132,10 +132,9 @@ To learn more, refer to the [CloudWatch authentication documentation](/docs/graf
 ## Permission validation on custom role creation and update
 
 <!-- Mihaly Gyongyosi -->
-<!-- Enterprise -->
 <!-- already in on-prem -->
 
-<Date>
+August 25, 2023
 
 _Generally available in Grafana Cloud_
 
