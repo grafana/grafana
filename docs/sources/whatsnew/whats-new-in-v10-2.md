@@ -74,7 +74,7 @@ With the current release, we enabled RBAC permission validation (`rbac.permissio
 
 <!-- Oscar Kilhed -->
 
-_Generally available in all editions of Grafana_
+_Generally available in Grafana Open Source and Enterprise_
 
 When visualizing multiple fields with a wide spread of values, calculating the min or max value of the visualization based on all fields can hide useful details.
 {{< figure src="/media/docs/grafana/panels-visualizations/globalminmax.png" caption="Stat panel visualization with min/max calculated from all fields" >}}
