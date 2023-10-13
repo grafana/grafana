@@ -20,6 +20,8 @@ import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
+import { normalizedLabelCardinalityValue } from './LogsTableWrap';
+
 interface Props {
   logsFrames?: DataFrame[];
   width: number;
@@ -27,7 +29,7 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-  labelCardinalityState: Record<string, number>;
+  labelCardinalityState: Record<string, normalizedLabelCardinalityValue>;
   // 0 - 100
   sparsityThreshold: number;
 }
@@ -131,6 +133,8 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           ];
         });
 
+      console.log('transformations', transformations);
+
       // remove fields that should not be displayed
 
       const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
@@ -146,7 +150,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       });
 
       Object.keys(labelCardinalityState).forEach((key) => {
-        if (labelCardinalityState[key] < props.sparsityThreshold) {
+        if (!labelCardinalityState[key].active) {
           transformations.push({
             id: 'organize',
             options: {
@@ -157,6 +161,8 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           });
         }
       });
+
+      console.log('transformations', transformations);
 
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));

@@ -11,6 +11,7 @@ import {
   DataHoverEvent,
   DataQueryResponse,
   EventBus,
+  ExploreLogsPanelState,
   ExplorePanelsState,
   Field,
   GrafanaTheme2,
@@ -47,6 +48,7 @@ import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { dispatch, getState } from 'app/store/store';
 
+import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
@@ -170,23 +172,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidMount() {
-    // Example setting field columns state
-    const newPanelState = {
-      ...this.props.panelState?.logs,
-      columns: ['1', '2', 'uniqyekljahsdkjhas'],
-    };
-    dispatch(
-      setPaneState({
-        [this.props.exploreId]: {
-          panelsState: {
-            ...this.props.panelState,
-            logs: newPanelState,
-          },
-        },
-      })
-    );
-  }
+  updatePanelState = (logsPanelState: ExploreLogsPanelState) => {
+    const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
+    if (state?.panelsState) {
+      console.log('payload', state);
+      dispatch(
+        changePanelState(this.props.exploreId, 'logs', {
+          ...state.panelsState.logs,
+          columns: logsPanelState.columns,
+        })
+      );
+    }
+  };
 
   //
   componentDidUpdate(prevProps: Readonly<Props>): void {
@@ -713,7 +710,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     width: width - 80,
                     logsFrames: this.props.logsFrames,
                   }}
+                  panelState={this.props.panelState?.logs}
                   theme={theme}
+                  updatePanelState={this.updatePanelState}
                 />
               </div>
             )}
