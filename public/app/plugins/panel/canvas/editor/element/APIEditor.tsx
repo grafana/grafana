@@ -132,7 +132,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api, true)} title="Test API">
+        <Button onClick={() => callApi(api)} title="Test API">
           Test API
         </Button>
       );
@@ -158,36 +158,36 @@ export function APIEditor({ value, context, onChange }: Props) {
           <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
+      {value?.method === HttpRequestMethod.POST && (
+        <InlineFieldRow>
+          <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+            <Select
+              options={contentTypeOptions}
+              allowCustomValue={true}
+              formatCreateLabel={formatCreateLabel}
+              value={value?.contentType}
+              onChange={onContentTypeChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
+      <br />
       <Field label="Query parameters">
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
       </Field>
       <Field label="Header parameters">
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
-      {value?.method === HttpRequestMethod.POST && (
-        <>
-          <InlineFieldRow>
-            <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
-              <Select
-                options={contentTypeOptions}
-                allowCustomValue={true}
-                formatCreateLabel={formatCreateLabel}
-                value={value?.contentType}
-                onChange={onContentTypeChange}
-              />
-            </InlineField>
-          </InlineFieldRow>
-          {value?.contentType && (
-            <Field label="Payload">
-              <StringValueEditor
-                context={context}
-                value={value?.data ?? '{}'}
-                onChange={onDataChange}
-                item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
-              />
-            </Field>
-          )}
-        </>
+      {value?.method === HttpRequestMethod.POST && value?.contentType && (
+        <Field label="Payload">
+          <StringValueEditor
+            context={context}
+            value={value?.data ?? '{}'}
+            onChange={onDataChange}
+            item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
+          />
+        </Field>
       )}
       {renderTestAPIButton(value)}
       <br />
