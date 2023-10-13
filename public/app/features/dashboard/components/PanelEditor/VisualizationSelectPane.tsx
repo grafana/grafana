@@ -32,7 +32,8 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
 
   // Add support to show widgets in the visualization picker
   const isWidget = !!plugin.meta.skipDataQuery;
-  const isWidgetEnabled = Boolean(isWidget && config.featureToggles.vizAndWidgetSplit);
+  const isWidgetFeatureFlagEnabled = Boolean(config.featureToggles.vizAndWidgetSplit);
+  const isWidgetEnabled = Boolean(isWidget && isWidgetFeatureFlagEnabled);
 
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
@@ -74,7 +75,9 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   ];
 
   const radioOptionsWidgetFlow: Array<SelectableValue<VisualizationSelectPaneTab>> = [
+    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
     { label: 'Widgets', value: VisualizationSelectPaneTab.Widgets },
+    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
     {
       label: 'Library panels',
       value: VisualizationSelectPaneTab.LibraryPanels,
@@ -104,7 +107,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
         </div>
         <Field className={styles.customFieldMargin}>
           <RadioButtonGroup
-            options={isWidgetEnabled ? radioOptionsWidgetFlow : radioOptions}
+            options={isWidgetFeatureFlagEnabled ? radioOptionsWidgetFlow : radioOptions}
             value={listMode}
             onChange={setListMode}
             fullWidth
@@ -118,6 +121,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               <VizTypePicker
                 current={plugin.meta}
                 onChange={onVizChange}
+                onTabChange={setListMode}
                 searchQuery={searchQuery}
                 data={data}
                 onClose={() => {}}
@@ -127,6 +131,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               <VizTypePicker
                 current={plugin.meta}
                 onChange={onVizChange}
+                onTabChange={setListMode}
                 searchQuery={searchQuery}
                 data={data}
                 onClose={() => {}}
