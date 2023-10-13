@@ -29,13 +29,7 @@ _Generally Available in Grafana Cloud_
 
 Public dashboards allow you to share your visualizations and insights to a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
 
-original
-
-<div style="position: relative; padding-bottom: 104.34782608695652%; height: 0;"><iframe src="https://www.loom.com/embed/861c0fe0f43047309f19a6412dfecf23?sid=c0b565be-fdab-4d78-9596-cc43bcd8b469" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
-
-new
-
-<div style="position: relative; padding-bottom: 67.28971962616822%; height: 0;"><iframe src="https://www.loom.com/embed/91e3454ecdba4739ac9a7fc00201ec34?sid=59a54699-62c5-4402-a297-73967a483cf3" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+![Public dashboards demo](/media/docs/grafana/dashboards/public-dashboards-demo.mp4)
 
 ## Distributed tracing in Grafana Cloud k6
 
