@@ -74,7 +74,7 @@ With the current release, we enabled RBAC permission validation (`rbac.permissio
 
 <!-- Kristina Durivage -->
 
-_Available in public preview in Grafana Open Source, Enterprise and Cloud_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar, or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
