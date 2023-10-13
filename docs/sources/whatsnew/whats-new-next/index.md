@@ -18,7 +18,6 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-
 ## Issues snapshot in Kubernetes Monitoring
 
 <!-- Beverly Buchanan -->
