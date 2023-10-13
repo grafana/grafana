@@ -127,6 +127,7 @@ const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 
 
 function getQueryForPyroscope(
   tags: string,
+  spanID: string,
   customQuery?: string,
   profileTypeId?: string
 ): GrafanaPyroscope | undefined {
@@ -137,7 +138,8 @@ function getQueryForPyroscope(
     labelSelector: customQuery ? customQuery : '{${__tags}}',
     groupBy: [],
     profileTypeId: profileTypeId ?? '',
-    queryType: 'both',
+    queryType: 'spanProfile',
+    spanSelector: [spanID],
     refId: '',
   };
 }
@@ -185,7 +187,7 @@ function legacyCreateSpanLinkFactory(
           : defaultKeys;
 
       tags = getFormattedTags(span, tagsToUse);
-      query = getQueryForPyroscope(tags, customQuery, traceToProfilesOptions.profileTypeId);
+      query = getQueryForPyroscope(tags, span.spanID, customQuery, traceToProfilesOptions.profileTypeId);
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
       // For custom query, this is always defined and we check if the interpolation matched all variables later on.
