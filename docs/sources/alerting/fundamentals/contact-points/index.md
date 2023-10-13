@@ -47,7 +47,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Google Chat](https://chat.google.com/)          | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
-| [Microsoft Teams](https://teams.microsoft.com/)  | `teams`                   | Supported            | N/A                                                                                                      |
+| [Microsoft Teams](https://teams.microsoft.com/)  | `teams`                   | Supported            | Supported                                                                                                |
 | [Opsgenie](https://atlassian.com/opsgenie/)      | `opsgenie`                | Supported            | Supported                                                                                                |
 | [Pagerduty](https://www.pagerduty.com/)          | `pagerduty`               | Supported            | Supported                                                                                                |
 | [Prometheus Alertmanager](https://prometheus.io) | `prometheus-alertmanager` | Supported            | N/A                                                                                                      |

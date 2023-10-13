@@ -46,6 +46,20 @@ You can now create correlations using either the **Administration** page or prov
 
 To enable this feature, contact Grafana Support.
 
+## Public dashboards
+
+<!-- Thanos Karachalios -->
+<!-- Enterprise -->
+
+October 12, 2023
+
+_Generally Available in Grafana Cloud_
+
+Public dashboards allow you to share your visualizations and insights to a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
+
+{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+
+
 ## Support for dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
@@ -187,3 +201,16 @@ _Available in private preview in Grafana Cloud_
 The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
+
+## Permission validation on custom role creation and update
+
+<!-- Mihaly Gyongyosi -->
+<!-- Cloud -->
+
+<!-- already in on-prem -->
+
+August 25, 2023
+
+_Generally available in Grafana Cloud_
+
+With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
