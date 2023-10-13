@@ -487,7 +487,7 @@ type Route struct {
 
 // Self defines model for Self.
 type Self struct {
-	// Enabled allows the service to get a Bearer token if the AuthProvider is 'ServiceAccounts'
+	// Enabled allows the service to get a service account token if the AuthProvider is 'ServiceAccounts'
 	// or to use the client_credentials grant if the AuthProvider is 'OAuth2Server'
 	// Defaults to true.
 	Enabled *bool `json:"enabled,omitempty"`

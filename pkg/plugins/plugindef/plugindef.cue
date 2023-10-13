@@ -441,7 +441,7 @@ schemas: [{
 		#AuthProvider: "ServiceAccounts" | "OAuth2Server"
 
 		#Self: {
-			// Enabled allows the service to get a Bearer token if the AuthProvider is 'ServiceAccounts'
+			// Enabled allows the service to get a service account token if the AuthProvider is 'ServiceAccounts'
 			// or to use the client_credentials grant if the AuthProvider is 'OAuth2Server'
 			// Defaults to true.
 			enabled?: bool
