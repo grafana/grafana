@@ -28,8 +28,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public get id(): number | null {
-    console.error('dashboard.id property is deprecated');
-    return null;
+    return this._scene.state.id ?? null;
   }
 
   public get uid() {

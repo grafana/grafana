@@ -159,9 +159,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     if (!promRulesRequests.loading) {
       fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
     }
-
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
-      console.log('TimeRangeUpdatedEvent');
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
       }
@@ -170,7 +168,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
       }
     });
-
     return () => {
       sub?.unsubscribe();
     };
@@ -295,7 +292,6 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
       Object.entries(annotations).some(([key, value]) => key === Annotation.dashboardUID && value === dashboardUid)
     );
   }
-
   if (options.alertName) {
     const replacedName = replaceVariables(options.alertName);
     filteredRules = filteredRules.filter(({ name }) =>
