@@ -50,8 +50,8 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 
 You can apply the same steps to any data source. Correlations allow you to create links in visualizations to run dynamic queries based on selected data. In this example we used data returned by a query to build a new query generating different visualization using the same data source. However, you can create correlations between any data sources to create custom exploration flows.
 
-## Create a new correlations in logs panel
+## Correlations in the logs panel
 
-You can create links not only from a table view but also logs panel. Once you enter Correlations Editor mode you will see available links inside details view of each row:
+Correlations links in the logs panel show slightly differently than the table panel. When you enter the Correlation Editor mode when looking at logs, you will need to expand a log line to see the button that serves as the correlation link.
 
 {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-logs-10.2.png" max-width="600px" caption="Logs panel in the Correlations Editor" >}}
