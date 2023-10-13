@@ -1256,8 +1256,6 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
-    console.log('current', JSON.stringify(currentVariables, null, 2));
-    console.log('original', JSON.stringify(originalVariables, null, 2));
     return !isEqual(currentVariables, originalVariables);
   }
 
