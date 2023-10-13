@@ -160,17 +160,6 @@ The Grafana Assume Role authentication provider lets Grafana Cloud users of the 
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
 
-## RBAC for library panels
-
-<!-- Kay Delaney, Natalia Bernarte  -->
-<!-- Enterprise public preview -->
-
-October 24, 2023
-
-_Generally available in Grafana Cloud_
-
-You can manage the permissions for library panels with [RBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/), which provides a way to extend the permissions available with basic roles and gives you more granular control of users' actions.
-
 ## Permission validation on custom role creation and update
 
 <!-- Mihaly Gyongyosi -->
