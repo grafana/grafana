@@ -1009,9 +1009,7 @@ Use this transformation to format the output of a time field. Output can be form
 
 ### Format string
 
-{{% admonition type="note" %}}
-This transformation can be enabled using the `formatString` feature toggle.
-{{% /admonition %}}
+{{< docs/experimental product="transformation" featureFlag="formatString" >}}
 
 Use this transformation to format the output of a string field. You can format output in the following ways:
 
