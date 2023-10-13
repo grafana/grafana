@@ -600,6 +600,7 @@ func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID
 	}
 
 	if hasRun && existingRecord.Success {
+		ss.log.Info("Code migration has already run", "migration_id", migrationID)
 		return nil
 	}
 
@@ -610,6 +611,7 @@ func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID
 	}
 
 	if err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		ss.log.Info("Executing code migration", "migration_id", migrationID)
 		migrationErr := migrationFunc(sess)
 
 		if migrationErr != nil {
@@ -617,8 +619,10 @@ func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID
 		}
 		record.Success = true
 		registrationErr := ss.registerMigrationExecution(sess, record)
-		return errors.Join(migrationErr, registrationErr)
+		err := errors.Join(migrationErr, registrationErr)
+		return err
 	}); err != nil {
+		ss.log.Error("Failed to execute code migration", "migration_id", migrationID, "err", err)
 		return err
 	}
 	return nil
