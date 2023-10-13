@@ -42,26 +42,14 @@ export const sanitizeReply = (reply: string) => {
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  // userChanges: string;
-  // migrationChanges: string;
-  userChanges: Diffs;
-  migrationChanges: Diffs;
+  userChanges: string;
+  migrationChanges: string;
 } {
-  // const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = dashboard.getSaveModelClone();
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-
-  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
-
-  // return {
-  //   userChanges: userDiff,
-  //   migrationChanges: migrationDiff,
-  // };
+  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
 
   return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+    userChanges: userDiff,
+    migrationChanges: migrationDiff,
   };
 }
 
