@@ -576,7 +576,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			name:       "should ignore fixed roles even if they would affect access",
 			enterprise: true,
 			roles: map[accesscontrol.Role][]accesscontrol.Permission{
-				accesscontrol.Role{Name: "fixed:dashboards:writer"}: {
+				{Name: "fixed:dashboards:writer"}: {
 					{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
 					{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
@@ -602,7 +602,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			name:       "should ignore custom roles even if they would affect access",
 			enterprise: true,
 			roles: map[accesscontrol.Role][]accesscontrol.Permission{
-				accesscontrol.Role{Name: "custom role"}: {
+				{Name: "custom role"}: {
 					{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
 					{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
