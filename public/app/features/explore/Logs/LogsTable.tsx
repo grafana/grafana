@@ -1,4 +1,3 @@
-import memoizeOne from 'memoize-one';
 import React, { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
@@ -20,7 +19,7 @@ import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { normalizedLabelCardinalityValue } from './LogsTableWrap';
+import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   logsFrames?: DataFrame[];
@@ -29,18 +28,11 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-  labelCardinalityState: Record<string, normalizedLabelCardinalityValue>;
+  labelCardinalityState: Record<string, fieldNameMeta>;
   // 0 - 100
   sparsityThreshold: number;
+  height: number;
 }
-
-const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-  const largestFrameLength = dataFrames?.reduce((length, frame) => {
-    return frame.length > length ? frame.length : length;
-  }, 0);
-  // from TableContainer.tsx
-  return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
-});
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, labelCardinalityState } = props;
@@ -93,10 +85,13 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
 
   useEffect(() => {
     const prepare = async () => {
+      console.log('prepare()');
       if (!logsFrames || !logsFrames.length) {
+        console.log('no log frames?');
         setTableFrame(undefined);
         return;
       }
+
       // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
       let dataFrame = logsFrames[0];
 
@@ -133,10 +128,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           ];
         });
 
-      console.log('transformations', transformations);
-
       // remove fields that should not be displayed
-
       const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
       hiddenFields.forEach((field: Field, index: number) => {
         transformations.push({
@@ -162,11 +154,10 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         }
       });
 
-      console.log('transformations', transformations);
-
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-        setTableFrame(prepareTableFrame(transformedDataFrame));
+        const tableFrame = prepareTableFrame(transformedDataFrame);
+        setTableFrame(tableFrame);
       } else {
         setTableFrame(prepareTableFrame(dataFrame));
       }
@@ -182,7 +173,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
     <Table
       data={tableFrame}
       width={width}
-      height={getTableHeight(props.logsFrames)}
+      height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
   );

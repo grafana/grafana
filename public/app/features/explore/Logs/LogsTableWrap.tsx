@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import memoizeOne from 'memoize-one';
 import React, { useEffect } from 'react';
 
 import {
@@ -26,32 +27,41 @@ interface LogsTableProps {
 interface Props extends Themeable2 {
   logsTableProps: LogsTableProps;
   panelState: ExploreLogsPanelState | undefined;
-  updatePanelState: (panelState: ExploreLogsPanelState) => void;
+  updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, height: number) {
   return {
     wrapper: css({
       display: 'flex',
     }),
     sidebar: css({
+      height: height,
       fontSize: theme.typography.pxToRem(10),
+      overflowY: 'scroll',
     }),
   };
 }
 
-export type normalizedLabelCardinalityValue = { count: number; active: boolean | undefined };
+export type fieldNameMeta = { count: number; active: boolean | undefined };
 type fieldName = string;
 type labelName = string;
 type labelValue = string;
 
+const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
+  const largestFrameLength = dataFrames?.reduce((length, frame) => {
+    return frame.length > length ? frame.length : length;
+  }, 0);
+  // from TableContainer.tsx
+  return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
+});
+
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
-  const styles = getStyles(props.theme);
   const { logsFrames } = props.logsTableProps;
   // Save the normalized cardinality of each label
-  const [labelCardinalityState, setLabelCardinality] = React.useState<
-    Record<fieldName, normalizedLabelCardinalityValue>
-  >({});
+  const [labelCardinalityState, setLabelCardinality] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     // @todo cleanup
@@ -71,8 +81,8 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       : [];
 
     //@todo this map doesn't need the active state and it should be removed
-    const labelCardinality = new Map<fieldName, normalizedLabelCardinalityValue>();
-    let normalizeLabelCardinality: Record<fieldName, normalizedLabelCardinalityValue> = {};
+    const labelCardinality = new Map<fieldName, fieldNameMeta>();
+    let pendingLabelState: Record<fieldName, fieldNameMeta> = {};
 
     if (labelsField?.values.length && numberOfLogLines) {
       labelsField?.values.forEach((labels: Array<Record<labelName, labelValue>>) => {
@@ -91,27 +101,43 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       });
 
       // Converting the Map to an Object will be expensive, hoping the savings from deduping with set/map above will make up for it
-      normalizeLabelCardinality = Object.fromEntries(labelCardinality);
+      pendingLabelState = Object.fromEntries(labelCardinality);
 
-      Object.keys(normalizeLabelCardinality).forEach((key) => {
-        normalizeLabelCardinality[key].count = Math.round(
-          (100 * normalizeLabelCardinality[key].count) / numberOfLogLines
-        );
-      });
+      // Don't normalize, we want count
+      // Object.keys(normalizeLabelCardinality).forEach((key) => {
+      //   normalizeLabelCardinality[key].count = Math.round(
+      //     (100 * normalizeLabelCardinality[key].count) / numberOfLogLines
+      //   );
+      // });
     }
 
+    //
     otherFields.forEach((field) => {
-      normalizeLabelCardinality[field.name] = {
-        count: (field.values.filter((value) => value).length / numberOfLogLines) * 100,
-        active: normalizeLabelCardinality[field.name]?.active,
+      pendingLabelState[field.name] = {
+        count: field.values.filter((value) => value).length,
+        active: pendingLabelState[field.name]?.active,
       };
     });
 
-    setLabelCardinality(normalizeLabelCardinality);
-  }, [logsFrames]);
+    // get existing labels from url
+    const previouslySelected = props.panelState?.columns;
+    if (previouslySelected) {
+      Object.values(previouslySelected).forEach((key) => {
+        if (pendingLabelState[key]) {
+          pendingLabelState[key].active = true;
+        }
+      });
+    }
+
+    setLabelCardinality(pendingLabelState);
+    // We don't want to update the state if the url changes, we want to update the active state when the data is changed.
+  }, [logsFrames, props.panelState?.columns]);
 
   const toggleColumn = (columnName: fieldName) => {
-    console.log('columnName', columnName);
+    if (!labelCardinalityState || !(columnName in labelCardinalityState)) {
+      console.warn('failed to get column', labelCardinalityState);
+      return;
+    }
     const pendingLabelCardinality = {
       ...labelCardinalityState,
       [columnName]: { ...labelCardinalityState[columnName], active: !labelCardinalityState[columnName]?.active },
@@ -119,16 +145,26 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
 
     // Set local state
     setLabelCardinality(pendingLabelCardinality);
-    const newPanelState = {
+
+    const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
-      columns: Object.keys(pendingLabelCardinality).filter((key) => pendingLabelCardinality[key]?.active),
+      // URL format requires our array of values be an object, so we convert it using object.assign
+      columns: Object.assign(
+        {},
+        // Get the keys of the object as an array
+        Object.keys(pendingLabelCardinality)
+          // Only include active filters
+          .filter((key) => pendingLabelCardinality[key]?.active)
+      ),
+      visualisationType: 'table',
     };
 
+    // Update url state
     props.updatePanelState(newPanelState);
   };
 
   const Columns = (props: {
-    labels: Record<fieldName, normalizedLabelCardinalityValue>;
+    labels: Record<fieldName, fieldNameMeta>;
     valueFilter: (value: number) => boolean;
   }): JSX.Element => {
     const { labels, valueFilter } = props;
@@ -156,8 +192,14 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     return <div></div>;
   };
 
-  console.info('RENDER, frames', logsFrames);
-  console.info('labelCardinalityState', labelCardinalityState);
+  console.info('RENDER', labelCardinalityState);
+
+  if (!labelCardinalityState) {
+    return null;
+  }
+
+  const height = getTableHeight(logsFrames);
+  const styles = getStyles(props.theme, height);
 
   return (
     <div className={styles.wrapper}>
@@ -168,18 +210,17 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
         <div>Empty</div>
         <Columns labels={labelCardinalityState} valueFilter={(value) => !value} />
       </section>
-      {labelCardinalityState && (
-        <LogsTable
-          logsSortOrder={props.logsTableProps.logsSortOrder}
-          range={props.logsTableProps.range}
-          splitOpen={props.logsTableProps.splitOpen}
-          timeZone={props.logsTableProps.timeZone}
-          width={props.logsTableProps.width}
-          logsFrames={logsFrames}
-          labelCardinalityState={labelCardinalityState}
-          sparsityThreshold={80}
-        />
-      )}
+      <LogsTable
+        logsSortOrder={props.logsTableProps.logsSortOrder}
+        range={props.logsTableProps.range}
+        splitOpen={props.logsTableProps.splitOpen}
+        timeZone={props.logsTableProps.timeZone}
+        width={props.logsTableProps.width}
+        logsFrames={logsFrames}
+        labelCardinalityState={labelCardinalityState}
+        sparsityThreshold={80}
+        height={height}
+      />
     </div>
   );
 };

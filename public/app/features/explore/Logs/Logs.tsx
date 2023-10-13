@@ -54,7 +54,6 @@ import { LogRowContextModal } from '../../logs/components/log-context/LogRowCont
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { setPaneState } from '../state/main';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -103,7 +102,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
 }
 
-type VisualisationType = 'table' | 'logs';
+export type LogsVisualisationType = 'table' | 'logs';
 
 interface State {
   showLabels: boolean;
@@ -119,7 +118,7 @@ interface State {
   contextOpen: boolean;
   contextRow?: LogRowModel;
   tableFrame?: DataFrame;
-  visualisationType?: VisualisationType;
+  visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
 }
 
@@ -153,7 +152,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextOpen: false,
     contextRow: undefined,
     tableFrame: undefined,
-    visualisationType: 'logs',
+    visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
     logsContainer: undefined,
   };
 
@@ -172,16 +171,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
-  updatePanelState = (logsPanelState: ExploreLogsPanelState) => {
+  updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
-      console.log('payload', state);
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...state.panelsState.logs,
-          columns: logsPanelState.columns,
+          columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
+          visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
         })
       );
+    } else {
+      console.warn('Not updating, no panels state');
     }
   };
 
@@ -238,10 +239,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }));
   };
 
-  onChangeVisualisation = (visualisation: VisualisationType) => {
+  onChangeVisualisation = (visualisation: LogsVisualisationType) => {
     this.setState(() => ({
       visualisationType: visualisation,
     }));
+    console.log('setting viz type', visualisation);
+    const payload = {
+      ...this.props.panelState?.logs,
+      visualisationType: visualisation,
+    };
+    console.log('payload', payload);
+    this.updatePanelState(payload);
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
@@ -399,7 +407,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     // get explore state, add log-row-id and make timerange absolute
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
-    urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
+    urlState.panelsState = {
+      ...this.props.panelState,
+      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? 'logs' },
+    };
     urlState.range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
       to: new Date(this.props.absoluteRange.to).toISOString(),

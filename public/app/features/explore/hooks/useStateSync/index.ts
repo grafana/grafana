@@ -11,7 +11,7 @@ import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSele
 
 import { changeDatasource } from '../../state/datasource';
 import { changePanelsStateAction, initializeExplore } from '../../state/explorePane';
-import { clearPanes, setPaneState, splitClose, splitOpen, syncTimesAction } from '../../state/main';
+import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
