@@ -17,6 +17,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
+import { validateInterval, validateIntervalRegex } from 'app/core/components/IntervalInput/validation';
 import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -208,12 +209,14 @@ function legacyCreateSpanLinkFactory(
             range: getTimeRangeFromSpan(
               span,
               {
-                startMs: traceToLogsOptions.spanStartTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                  : 0,
-                endMs: traceToLogsOptions.spanEndTimeShift
-                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                  : 0,
+                startMs:
+                  traceToLogsOptions.spanStartTimeShift && isValidTimeRange(traceToLogsOptions.spanStartTimeShift)
+                    ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+                    : 0,
+                endMs:
+                  traceToLogsOptions.spanEndTimeShift && isValidTimeRange(traceToLogsOptions.spanEndTimeShift)
+                    ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+                    : 0,
               },
               isSplunkDS
             ),
@@ -256,12 +259,14 @@ function legacyCreateSpanLinkFactory(
           internalLink: dataLink.internal!,
           scopedVars: {},
           range: getTimeRangeFromSpan(span, {
-            startMs: traceToMetricsOptions.spanStartTimeShift
-              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
-              : -120000,
-            endMs: traceToMetricsOptions.spanEndTimeShift
-              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
-              : 120000,
+            startMs:
+              traceToMetricsOptions.spanStartTimeShift && isValidTimeRange(traceToMetricsOptions.spanStartTimeShift)
+                ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
+                : -120000,
+            endMs:
+              traceToMetricsOptions.spanEndTimeShift && isValidTimeRange(traceToMetricsOptions.spanEndTimeShift)
+                ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
+                : 120000,
           }),
           field: {} as Field,
           onClickFn: splitOpenFn,
@@ -541,6 +546,10 @@ function getTimeRangeFromSpan(
       to,
     },
   };
+}
+
+function isValidTimeRange(timeRange: string) {
+  return timeRange !== '0' && !validateInterval(timeRange, validateIntervalRegex);
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query
