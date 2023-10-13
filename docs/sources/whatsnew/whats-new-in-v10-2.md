@@ -75,21 +75,38 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
-## Add dashboard and data source permissions to service accounts
+## Add dashboard and folder permissions to service accounts
 
 <!-- Jo Guerreiro -->
 
-_Generally available in Grafana_
+_Generally available in Grafana Open Source and Enterprise_
 
 Service accounts allow you to create a token that can be used to authenticate with Grafana.
-You can use this token to access Grafana's API, as well as, data sources and dashboards that the service account has access to.
+You can use this token to access Grafana's API, as well as, dashboards that the service account has access to.
 
-In this release, we've added the ability to assign dashboard, folder, and data source permissions to service accounts.
-This means that you can now create a service account that can be used to access a specific dashboard or data source and nothing else.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Datasource permissions in 10.2" > }}
+In this release, we've added the ability to assign dashboard and folder permissions to service accounts.
+This means that you can now create a service account that can be used to access a specific dashboard and nothing else.
 
 This is useful if you want to limit the access service accounts have to your Grafana instance.
+
+## Add data source permissions to service accounts
+
+<!-- Jo Guerreiro -->
+
+_Available in Grafana Enterprise_
+
+Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources.
+However, without proper access controls, service accounts can pose a security risk to your Grafana instance.
+
+To address this issue, Grafana 10.2 introduces the ability to assign data source permissions to service accounts.
+With this feature, you can create a service account that has access to a specific data source and nothing else.
+This is useful in scenarios where you want to limit the access service accounts have to your Grafana instance.
+
+For example, imagine you have a team of developers who need to access a specific data source to develop a new feature.
+Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
+This way, you can limit the potential damage that could be caused by a compromised service account.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Data source permissions in 10.2" > }}
 
 ## Role mapping support for Google OIDC
 
