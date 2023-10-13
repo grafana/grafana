@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       padding: theme.spacing(0, 0.5),
     },
     level === 1 && {
-      marginLeft: theme.spacing(5),
+      marginLeft: theme.spacing(5.5),
     },
   ]),
   collapsibleSectionWrapper: css([
@@ -118,22 +118,22 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
     },
     level === 0 &&
       showExpandButton && {
-        marginLeft: theme.spacing(2),
+        marginLeft: theme.spacing(2.5),
       },
     level === 0 &&
       !showExpandButton && {
-        marginLeft: theme.spacing(6.25),
+        marginLeft: theme.spacing(6.75),
       },
     level === 1 &&
       showExpandButton && {
-        marginLeft: theme.spacing(1),
+        marginLeft: theme.spacing(1.5),
       },
     level === 1 &&
       !showExpandButton && {
-        marginLeft: theme.spacing(10.5),
+        marginLeft: theme.spacing(11),
       },
     level === 2 && {
-      marginLeft: theme.spacing(6),
+      marginLeft: theme.spacing(8.5),
     },
   ]),
   labelWrapper: css([
@@ -141,12 +141,12 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       display: 'grid',
       fontSize: theme.typography.pxToRem(14),
       gridAutoFlow: 'column',
-      gridTemplateColumns: `${theme.spacing(4)} auto`,
+      gridTemplateColumns: `${theme.spacing(5)} auto`,
       alignItems: 'center',
       fontWeight: theme.typography.fontWeightMedium,
     },
     level === 1 && {
-      gridTemplateColumns: `auto auto`,
+      gridTemplateColumns: `${theme.spacing(0.5)} auto`,
     },
     level === 2 && {
       gridTemplateColumns: `${theme.spacing(5)} auto`,
@@ -168,13 +168,13 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
         backgroundImage: theme.colors.gradients.brandVertical,
       },
       level === 0 && {
-        left: theme.spacing(1),
+        left: theme.spacing(-1.25),
       },
       level === 1 && {
-        left: theme.spacing(-1),
+        left: theme.spacing(-1.25),
       },
       level === 2 && {
-        left: theme.spacing(6),
+        left: theme.spacing(3.5),
       },
     ],
   }),
