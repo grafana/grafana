@@ -2,8 +2,6 @@ package playlist
 
 import (
 	"errors"
-
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
@@ -27,9 +25,47 @@ type Playlist struct {
 	UpdatedAt int64 `json:"-" db:"updated_at"`
 }
 
-type PlaylistDTO = playlist.Spec
-type PlaylistItemDTO = playlist.Item
-type PlaylistItemType = playlist.ItemType
+type PlaylistDTO struct {
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
+	// Interval sets the time between switching views in a playlist.
+	Interval string `json:"interval"`
+
+	// The ordered list of items that the playlist will iterate over.
+	Items []PlaylistItemDTO `json:"items,omitempty"`
+
+	// Returned for k8s
+	CreatedAt int64 `json:"-"`
+
+	// Returned for k8s
+	UpdatedAt int64 `json:"-"`
+
+	// Returned for k8s
+	OrgID int64 `json:"-"`
+}
+
+type PlaylistItemDTO struct {
+	// Title is an unused property -- it will be removed in the future
+	Title *string `json:"title,omitempty"`
+
+	// Type of the item.
+	Type string `json:"type"`
+
+	// Value depends on type and describes the playlist item.
+	//
+	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+	//  is not portable as the numerical identifier is non-deterministic between different instances.
+	//  Will be replaced by dashboard_by_uid in the future. (deprecated)
+	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+	//  dashboards behind the tag will be added to the playlist.
+	//  - dashboard_by_uid: The value is the dashboard UID
+	Value string `json:"value"`
+}
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`
@@ -87,11 +123,4 @@ type GetPlaylistByUidQuery struct {
 type GetPlaylistItemsByUidQuery struct {
 	PlaylistUID string
 	OrgId       int64
-}
-
-func PlaylistToResource(p PlaylistDTO) playlist.K8sResource {
-	copy := p
-	r := playlist.NewK8sResource(p.Uid, &copy)
-	copy.Uid = "" // remove it from the payload
-	return r
 }

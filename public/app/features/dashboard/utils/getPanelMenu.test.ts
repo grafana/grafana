@@ -295,6 +295,97 @@ describe('getPanelMenu()', () => {
       expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
+    it('should pass context with default time zone values when configuring extension', () => {
+      const data: PanelData = {
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'time', type: FieldType.time },
+              { name: 'score', type: FieldType.number },
+            ],
+          }),
+        ],
+        timeRange: {
+          from: dateTime(),
+          to: dateTime(),
+          raw: {
+            from: 'now',
+            to: 'now-1h',
+          },
+        },
+        state: LoadingState.Done,
+      };
+
+      const panel = new PanelModel({
+        type: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        queryRunner: {
+          getLastResult: jest.fn(() => data),
+        },
+      });
+
+      const dashboard = createDashboardModelFixture({
+        timezone: '',
+        time: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        tags: ['database', 'panel'],
+        uid: '123',
+        title: 'My dashboard',
+      });
+
+      getPanelMenu(dashboard, panel);
+
+      const context: PluginExtensionPanelContext = {
+        pluginId: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        timeZone: 'browser',
+        timeRange: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+        dashboard: {
+          tags: ['database', 'panel'],
+          uid: '123',
+          title: 'My dashboard',
+        },
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        data,
+      };
+
+      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+    });
+
     it('should contain menu item with category', () => {
       getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
