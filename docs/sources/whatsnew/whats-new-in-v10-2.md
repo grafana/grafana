@@ -198,7 +198,7 @@ We've added initial support to detect situations in which various transformation
 
 For users with the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. For everyone who would like to try it, this feature flag can be enabled in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 
-### Extended time zone supprt in Format time and Convert field type transformations
+### Extended time zone support in Format time and Convert field type transformations
 
 <!-- Kyle Cunningham -->
 
