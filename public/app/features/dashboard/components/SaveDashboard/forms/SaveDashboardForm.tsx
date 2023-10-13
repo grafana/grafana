@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Button, Checkbox, Form, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -21,7 +22,7 @@ export type SaveProps = {
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (saveModel: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
   options: SaveDashboardOptions;
   onOptionsChange: (opts: SaveDashboardOptions) => void;
 };

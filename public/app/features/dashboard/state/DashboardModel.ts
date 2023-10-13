@@ -282,6 +282,20 @@ export class DashboardModel implements TimeModel {
   }
 
   /**
+   * The above function is returns the wrong type and needs change
+   * But need to fix an important bug in save drawer first
+   */
+  getSaveModelCloneTempV2(options?: CloneOptions): Dashboard {
+    const clone = this.getSaveModelClone(options);
+
+    // This is a bit messy / hacky but it's how we clean the model of any nulls / undefined / infinity
+    const cloneJSON = JSON.stringify(clone, null);
+    const cloneSafe = JSON.parse(cloneJSON);
+
+    return cloneSafe;
+  }
+
+  /**
    * This will load a new dashboard, but keep existing panels unchanged
    *
    * This function can be used to implement:
@@ -578,8 +592,7 @@ export class DashboardModel implements TimeModel {
       this.panelInEdit.configRev = 0;
     }
 
-    // @ts-expect-error
-    this.originalDashboard = this.getSaveModelClone();
+    this.originalDashboard = this.getSaveModelCloneTempV2();
   }
 
   hasUnsavedChanges() {
