@@ -44,8 +44,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	}
 
 	if sr.GetQuery() == "" {
-		err = fmt.Errorf("query is empty")
-		return err
+		return fmt.Errorf("query is empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
@@ -53,11 +52,11 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
+		s.logger.Error("Error Search()", "err", err)
 		return err
 	}
 
-	processedStream := s.processStream(stream, sender)
-	return processedStream
+	return s.processStream(stream, sender)
 }
 
 func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
@@ -78,6 +77,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 			break
 		}
 		if err != nil {
+			s.logger.Error("Error receiving message", "err", err)
 			return err
 		}
 

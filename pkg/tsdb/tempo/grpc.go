@@ -56,8 +56,7 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 		return nil, err
 	}
 
-	client := tempopb.NewStreamingQuerierClient(clientConn)
-	return client, nil
+	return tempopb.NewStreamingQuerierClient(clientConn), nil
 }
 
 type basicAuth struct {
