@@ -11,9 +11,9 @@ weight: 70
 
 ## Before you begin
 
-This example shows how to create a correlation using Correlations Editor in Explore. 
+This example shows how to create a correlation using Correlations Editor in Explore.
 
-Correlations allow you to use results of one query to run a new query in any data source. In this example you will run a query that renders tabular data. The data will be used to run a different query that yields a graph result. 
+Correlations allow you to use results of one query to run a new query in any data source. In this example you will run a query that renders tabular data. The data will be used to run a different query that yields a graph result.
 
 Please make sure you have setup up [a test data source]({{< relref "/docs/grafana/latest/datasources/testdata/#testdata-data-source" >}}).
 
@@ -25,11 +25,11 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 1. Explore is now in Correlations Editor mode indicated by a blue border.
 1. Select scenario: CSV File.
 1. Select file: population_by_state.csv.
-1. Note that each cell is a link that you can use to create a new correlation. 
+1. Note that each cell is a link that you can use to create a new correlation.
 
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-source-10.2.png" max-width="600px" caption="Selecting the source of a correlation" >}}
 
-1. Create new correlation that attaches a data link in State column: click on any cell in "State" column, e.g. "California". 
+1. Create new correlation that attaches a data link in State column: click on any cell in "State" column, e.g. "California".
 1. Explore opens in split view. Select the same data source as on the left.
 1. The helper above the query editor contains all available variables you can use the target query. Variables contain all data fields (table columns) from the selected row.
 1. Select Scenario: "CSV Metric Values".
@@ -54,4 +54,4 @@ You can apply the same steps to any data source. Correlations allow you to creat
 
 You can create links not only from a table view but also logs panel. Once you enter Correlations Editor mode you will see available links inside details view of each row:
 
-   {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-logs-10.2.png" max-width="600px" caption="Logs panel in the Correlations Editor" >}}
+{{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-logs-10.2.png" max-width="600px" caption="Logs panel in the Correlations Editor" >}}
