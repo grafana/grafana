@@ -134,6 +134,15 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       },
     level === 2 && {
       marginLeft: theme.spacing(8.5),
+
+      '&::before': {
+        content: '""',
+        height: theme.spacing(4.75),
+        position: 'absolute',
+        width: 1,
+        left: 61,
+        borderLeft: `1px solid ${theme.colors.text.secondary}`,
+      },
     },
   ]),
   labelWrapper: css([
