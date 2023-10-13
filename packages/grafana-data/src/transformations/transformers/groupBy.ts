@@ -42,7 +42,9 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
       }
     }
 
-    return maxFields >= 2 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
+    return maxFields >= 2
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
   },
   isApplicableDescription: (data: DataFrame[]) => {
     let maxFields = 0;

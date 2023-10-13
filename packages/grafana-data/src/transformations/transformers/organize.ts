@@ -21,8 +21,8 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     renameByName: {},
   },
   isApplicable: (data: DataFrame[]) => {
-    return data.length > 1 
-      ? TransformationApplicabilityLevels.NotPossible 
+    return data.length > 1
+      ? TransformationApplicabilityLevels.NotPossible
       : TransformationApplicabilityLevels.Applicable;
   },
   /**

@@ -1,7 +1,14 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, TransformationApplicabilityLevels } from '../../types';
+import {
+  DataFrame,
+  DataTransformerInfo,
+  Field,
+  FieldType,
+  SpecialValue,
+  TransformationApplicabilityLevels,
+} from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -43,7 +50,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       numFields += frame.fields.length;
     }
 
-    return numFields >= 3 ? TransformationApplicabilityLevels.Applicable : TransformationApplicabilityLevels.NotApplicable;
+    return numFields >= 3
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
   },
   isApplicableDescription: (data: DataFrame[]) => {
     let numFields = 0;

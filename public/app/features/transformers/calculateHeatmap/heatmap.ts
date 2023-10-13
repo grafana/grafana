@@ -14,7 +14,7 @@ import {
   formattedValueToString,
   durationToMilliseconds,
   parseDuration,
-  TransformationApplicabilityLevels
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config } from '@grafana/runtime';
@@ -38,7 +38,7 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   description: 'Generate heatmap data from source data.',
   defaultOptions: {},
   isApplicable: (data) => {
-    const {xField, yField, xs, ys} = findHeatmapFields(data);
+    const { xField, yField, xs, ys } = findHeatmapFields(data);
 
     if (xField || yField) {
       return TransformationApplicabilityLevels.NotPossible;
@@ -50,7 +50,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
 
     return TransformationApplicabilityLevels.Applicable;
   },
-  isApplicableDescription: "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.",
+  isApplicableDescription:
+    'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.',
   operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
@@ -293,9 +294,9 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
   // Find fields in the heatmap
-  const {xField, yField, xs, ys} = findHeatmapFields(frames);
+  const { xField, yField, xs, ys } = findHeatmapFields(frames);
 
-   if (!xField || !yField) {
+  if (!xField || !yField) {
     throw 'no heatmap fields found';
   }
 
@@ -369,7 +370,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
 /**
  * Find fields that can be used within a heatmap
- * 
+ *
  * @param frames
  *  An array of DataFrames
  */

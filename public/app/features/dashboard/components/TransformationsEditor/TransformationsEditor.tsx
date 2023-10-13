@@ -14,7 +14,7 @@ import {
   TransformerRegistryItem,
   TransformerCategory,
   DataTransformerID,
-  TransformationApplicabilityLevels
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
@@ -696,7 +696,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
   return (
     <div className={styles.grid}>
       {transformations.map((transform) => {
-        // Check to see if the transform 
+        // Check to see if the transform
         // is applicable to the given data
         let applicabilityScore = TransformationApplicabilityLevels.Applicable;
         if (transform.transformation.isApplicable !== undefined) {
@@ -708,8 +708,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
         if (transform.transformation.isApplicableDescription !== undefined) {
           if (typeof transform.transformation.isApplicableDescription === 'function') {
             applicabilityDescription = transform.transformation.isApplicableDescription(data);
-          }
-          else {
+          } else {
             applicabilityDescription = transform.transformation.isApplicableDescription;
           }
         }
@@ -723,7 +722,10 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           >
             <Card.Heading className={styles.heading}>
               <>
-                <span>{transform.name}{`${isApplicable ? '' : ' (disabled)'}`}</span>
+                <span>
+                  {transform.name}
+                  {`${isApplicable ? '' : ' (disabled)'}`}
+                </span>
                 <span className={styles.pluginStateInfoWrapper}>
                   <PluginStateInfo state={transform.state} />
                 </span>
@@ -734,19 +736,25 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
                 <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
                 {showIllustrations && (
                   <span>
-                    <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
+                    <img
+                      className={styles.image}
+                      src={getImagePath(transform.id, !isApplicable)}
+                      alt={transform.name}
+                    />
                   </span>
                 )}
-                {!isApplicable && applicabilityDescription !== null && 
+                {!isApplicable && applicabilityDescription !== null && (
                   <IconButton
                     className={styles.cardApplicableInfo}
                     name="info-circle"
                     tooltip={applicabilityDescription}
-                />}
+                  />
+                )}
               </>
             </Card.Description>
           </Card>
-        )})}
+        );
+      })}
     </div>
   );
 }
@@ -755,8 +763,7 @@ const getImagePath = (id: string, disabled: boolean) => {
   let folder = null;
   if (!disabled) {
     folder = config.theme2.isDark ? 'dark' : 'light';
-  }
-  else {
+  } else {
     folder = 'disabled';
   }
 
