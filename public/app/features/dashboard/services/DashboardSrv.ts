@@ -83,7 +83,7 @@ export class DashboardSrv {
         method: 'POST',
         data: {
           ...data,
-          dashboard: data.dashboard.getSaveModelCloneOld(),
+          dashboard: data.dashboard.getSaveModelClone(),
         },
         ...requestOptions,
       })

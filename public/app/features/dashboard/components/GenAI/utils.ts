@@ -45,11 +45,10 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   migrationChanges: Diffs;
 } {
   // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelCloneOld()));
+  const currentDashboard = dashboard.getSaveModelClone();
   const originalDashboard = dashboard.getOriginalDashboard()!;
-  const dashboardAfterMigration = JSON.parse(
-    JSON.stringify(new DashboardModel(originalDashboard).getSaveModelCloneOld())
-  );
+
+  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
 
   return {
     userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),

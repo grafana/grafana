@@ -29,7 +29,7 @@ const prepareDashboardMock = (
     hasVariableValuesChanged: jest.fn().mockReturnValue(variableValuesChanged),
     resetOriginalTime: () => resetTimeSpy(),
     resetOriginalVariables: () => resetVarsSpy(),
-    getSaveModelCloneTempV2: () => json,
+    getSaveModelClone: () => json,
   } as unknown as DashboardModel;
 };
 

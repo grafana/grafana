@@ -109,7 +109,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = createDashboardModelFixture();
 
-      const saveModel = model.getSaveModelCloneOld();
+      const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
@@ -127,10 +127,10 @@ describe('DashboardModel', () => {
       model.addPanel({
         type: 'add-panel',
       });
-      const saveModel = model.getSaveModelCloneOld();
+      const saveModel = model.getSaveModelClone();
       const panels = saveModel.panels;
 
-      expect(panels.length).toBe(1);
+      expect(panels!.length).toBe(1);
     });
 
     it('should save model in edit mode', () => {
@@ -606,18 +606,18 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
-      const saveModel = model.getSaveModelCloneOld(options);
+      const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
-      const saveModel = model.getSaveModelCloneOld(options);
+      const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('hasTimeChanged should be false when reset original time', () => {
@@ -627,18 +627,18 @@ describe('DashboardModel', () => {
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
-      const saveModel = model.getSaveModelCloneOld(options);
+      const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
-      const saveModel = model.getSaveModelCloneOld(options);
+      const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('getSaveModelClone should remove repeated panels and scopedVars', () => {

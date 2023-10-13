@@ -66,12 +66,12 @@ export class ShareExport extends PureComponent<Props, State> {
     } else {
       if (trimDefaults) {
         getBackendSrv()
-          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelCloneOld() })
+          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp) => {
             this.openSaveAsDialog(resp.dashboard);
           });
       } else {
-        this.openSaveAsDialog(dashboard.getSaveModelCloneOld());
+        this.openSaveAsDialog(dashboard.getSaveModelClone());
       }
     }
   };
@@ -96,12 +96,12 @@ export class ShareExport extends PureComponent<Props, State> {
     } else {
       if (trimDefaults) {
         getBackendSrv()
-          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelCloneOld() })
+          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp) => {
             this.openJsonModal(resp.dashboard);
           });
       } else {
-        this.openJsonModal(dashboard.getSaveModelCloneOld());
+        this.openJsonModal(dashboard.getSaveModelClone());
       }
     }
   };

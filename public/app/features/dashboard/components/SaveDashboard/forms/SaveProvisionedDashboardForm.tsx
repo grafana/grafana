@@ -9,7 +9,7 @@ import { SaveDashboardFormProps } from '../types';
 
 export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveDashboardFormProps, 'isLoading'>) => {
   const [dashboardJSON, setDashboardJson] = useState(() => {
-    const clone = dashboard.getSaveModelCloneOld();
+    const clone = dashboard.getSaveModelClone();
     delete clone.id;
     return JSON.stringify(clone, null, 2);
   });

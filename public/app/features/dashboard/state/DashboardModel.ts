@@ -290,7 +290,7 @@ export class DashboardModel implements TimeModel {
     const clone = this.getSaveModelCloneOld(options);
 
     // This is a bit messy / hacky but it's how we clean the model of any nulls / undefined / infinity
-    const cloneJSON = JSON.stringify(clone, null);
+    const cloneJSON = JSON.stringify(clone);
     const cloneSafe = JSON.parse(cloneJSON);
 
     return cloneSafe;
