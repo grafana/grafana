@@ -23,6 +23,8 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- Joey Tawadrous, Jen Villa -->
 <!-- available in on-prem starting with Grafana 10.2, but also requires Tempo/GET v2.2 or greater -->
 
+October 24, 2023
+
 _Experimental in Grafana Cloud_
 
 We've added an "Aggregate By" option to the [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) to leverage Grafana Cloud Traces' [metrics summary API](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/). Users can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of kind=server received in the last hour that match your filter criteria, grouped by whatever attributes you specify. 
@@ -30,6 +32,11 @@ We've added an "Aggregate By" option to the [TraceQL query editor](https://grafa
 This feature is disabled by default. To enable it, file a Support Escalation.
 
 Read more [here](https://grafana.com/docs/grafana/next/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by). 
+
+## Support for dashboard variables in transformations
+
+<!-- Oscar Kilhed, Victor Marin -->
+<!-- already in on-prem -->
 
 October 24, 2023
 
