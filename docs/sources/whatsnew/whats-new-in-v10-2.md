@@ -102,7 +102,7 @@ The **Add field from calculation** transformation has a couple updates.
 
 **Row index** can now show the index as a percentage.
 
-Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
 
 ### New transformation: Format string
 
@@ -116,4 +116,4 @@ With the new **Format string** transformation, you can manipulate string fields 
 - **Trim** removes white space characters at the start and end of your string.
 - **Substring** selects a part of your string field.
 
-Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string)
+Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
