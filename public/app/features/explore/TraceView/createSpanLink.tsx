@@ -179,7 +179,7 @@ function legacyCreateSpanLinkFactory(
     let tags = '';
 
     // Get profiles links
-    if (profilesDataSourceSettings && traceToProfilesOptions) {
+    if (profilesDataSourceSettings && traceToProfilesOptions && span.tags.find(tag => tag.key && tag.key === 'pyroscope.profile.id')) {
       const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
       const tagsToUse =
         traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
