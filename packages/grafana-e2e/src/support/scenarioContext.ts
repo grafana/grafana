@@ -9,12 +9,14 @@ export interface ScenarioContext {
   lastAddedDashboardUid: string;
   lastAddedDataSource: string; // @todo rename to `lastAddedDataSourceName`
   lastAddedDataSourceId: string;
+  hasChangedUserPreferences: boolean;
   [key: string]: any;
 }
 
 const scenarioContext: ScenarioContext = {
   addedDashboards: [],
   addedDataSources: [],
+  hasChangedUserPreferences: false,
   get lastAddedDashboard() {
     return lastProperty(this.addedDashboards, 'title');
   },
@@ -34,8 +36,7 @@ const lastProperty = <T extends DeleteDashboardConfig | DeleteDataSourceConfig, 
   key: K
 ) => items[items.length - 1]?.[key] ?? '';
 
-// @todo this actually returns type `Cypress.Chainable`
-export const getScenarioContext = (): any =>
+export const getScenarioContext = (): Cypress.Chainable<ScenarioContext> =>
   e2e()
     .wrap(
       {
@@ -45,8 +46,7 @@ export const getScenarioContext = (): any =>
     )
     .invoke({ log: false }, 'getScenarioContext');
 
-// @todo this actually returns type `Cypress.Chainable`
-export const setScenarioContext = (newContext: Partial<ScenarioContext>): any =>
+export const setScenarioContext = (newContext: Partial<ScenarioContext>): Cypress.Chainable<ScenarioContext> =>
   e2e()
     .wrap(
       {

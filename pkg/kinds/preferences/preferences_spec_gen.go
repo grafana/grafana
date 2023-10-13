@@ -9,6 +9,13 @@
 
 package preferences
 
+// CookiePreferences defines model for CookiePreferences.
+type CookiePreferences struct {
+	Analytics   map[string]any `json:"analytics,omitempty"`
+	Functional  map[string]any `json:"functional,omitempty"`
+	Performance map[string]any `json:"performance,omitempty"`
+}
+
 // QueryHistoryPreference defines model for QueryHistoryPreference.
 type QueryHistoryPreference struct {
 	// HomeTab one of: '' | 'query' | 'starred';
@@ -17,6 +24,8 @@ type QueryHistoryPreference struct {
 
 // Spec defines model for Spec.
 type Spec struct {
+	CookiePreferences *CookiePreferences `json:"cookiePreferences,omitempty"`
+
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 

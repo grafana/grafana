@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": { "level": "error", "location": "moon"},
+        "value": [1645029699, "+Inf"]
+      },
+      {
+        "metric": { "level": "info", "location": "moon" },
+        "value": [1645029699, "-Inf"]
+      },
+      {
+        "metric": { "level": "debug", "location": "moon" },
+        "value": [1645029699, "NaN"]
+      }
+    ]
+  }
+}

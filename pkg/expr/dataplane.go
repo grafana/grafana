@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable bool) (dt data.FrameType, b bool, e error) {
+func shouldUseDataplane(frames data.Frames, logger log.Logger, disable bool) (dt data.FrameType, b bool, e error) {
 	if disable {
 		return
 	}
@@ -61,7 +61,7 @@ func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable 
 func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, t data.FrameType, frames data.Frames) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.HandleDataPlaneData")
 	defer span.End()
-	span.SetAttributes("dataplane.type", t, attribute.Key("dataplane.type").String(string(t)))
+	span.SetAttributes(attribute.String("dataplane.type", string(t)))
 
 	switch t.Kind() {
 	case data.KindUnknown:

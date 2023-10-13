@@ -8,9 +8,8 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		Credentials: &azcredentials.AzureManagedIdentityCredentials{},
 	}
 
-	jsonData, _ := json.Marshal(map[string]interface{}{
+	jsonData, _ := json.Marshal(map[string]any{
 		"httpHeaderName1": "GrafanaHeader",
 	})
 	settings := &backend.DataSourceInstanceSettings{
@@ -89,20 +88,20 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 
-	opts sdkhttpclient.Options
+	opts httpclient.Options
 }
 
-func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
+func (p *fakeHttpClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
 	p.opts = opts[0]
 	return nil, nil
 }
 
-func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
+func (p *fakeHttpClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
 	p.opts = opts[0]
 	return nil, nil
 }
 
-func (p *fakeHttpClientProvider) GetTLSConfig(opts ...sdkhttpclient.Options) (*tls.Config, error) {
+func (p *fakeHttpClientProvider) GetTLSConfig(opts ...httpclient.Options) (*tls.Config, error) {
 	p.opts = opts[0]
 	return nil, nil
 }

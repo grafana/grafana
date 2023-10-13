@@ -36,8 +36,13 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
-	case http.MethodGet + "/api/ruler/grafana/api/v1/rules":
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
+		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
+		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead, scope)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
@@ -184,6 +189,14 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
+	case http.MethodGet + "/api/v1/provisioning/policies/export",
+		http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),       // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),        // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets), // organization scope
+		)
+
 	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
 		http.MethodGet + "/api/v1/provisioning/templates",
@@ -196,7 +209,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export",
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
-		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingProvisioningRead), ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets)) // organization scope
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
 		http.MethodDelete + "/api/v1/provisioning/policies",

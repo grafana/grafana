@@ -61,11 +61,12 @@ export function getPanelPlugin(
       },
       screenshots: [],
       updated: '',
-      version: '',
+      version: '1',
     },
     hideFromList: options.hideFromList === true,
     module: options.module ?? '',
     baseUrl: '',
+    skipDataQuery: options.skipDataQuery,
   };
   return plugin;
 }

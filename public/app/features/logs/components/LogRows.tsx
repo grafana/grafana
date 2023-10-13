@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
@@ -13,6 +14,7 @@ import {
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
+import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows } from '../utils';
 
 //Components
@@ -37,8 +39,8 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -49,7 +51,14 @@ export interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
+  containerRendered?: boolean;
+  /**
+   * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
+   * Any overflowing content will be clipped at the table boundary.
+   */
+  overflowingContent?: boolean;
 }
 
 interface State {
@@ -122,13 +131,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
 
+    const keyMaker = new UniqueKeyMaker();
+
     return (
-      <table className={styles.logsRowsTable}>
+      <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
         <tbody>
           {hasData &&
             firstRows.map((row) => (
               <LogRow
-                key={row.uid}
+                key={keyMaker.getKey(row.uid)}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -141,6 +152,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onPinLine={this.props.onPinLine}
                 onUnpinLine={this.props.onUnpinLine}
                 pinned={this.props.pinnedRowId === row.uid}
+                isFilterLabelActive={this.props.isFilterLabelActive}
                 {...rest}
               />
             ))}
@@ -148,7 +160,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             renderAll &&
             lastRows.map((row) => (
               <LogRow
-                key={row.uid}
+                key={keyMaker.getKey(row.uid)}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -161,6 +173,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onPinLine={this.props.onPinLine}
                 onUnpinLine={this.props.onUnpinLine}
                 pinned={this.props.pinnedRowId === row.uid}
+                isFilterLabelActive={this.props.isFilterLabelActive}
                 {...rest}
               />
             ))}

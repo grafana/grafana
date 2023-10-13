@@ -18,7 +18,9 @@ export function findHighlightChunksInText({
 }) {
   const chunks: TextMatch[] = [];
   for (const term of searchWords) {
-    chunks.push(...findMatchesInText(textToHighlight, term as string));
+    if (typeof term === 'string') {
+      chunks.push(...findMatchesInText(textToHighlight, term));
+    }
   }
   return chunks;
 }

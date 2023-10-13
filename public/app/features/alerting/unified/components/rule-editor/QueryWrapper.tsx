@@ -6,7 +6,6 @@ import {
   CoreApp,
   DataSourceApi,
   DataSourceInstanceSettings,
-  getDefaultRelativeTimeRange,
   GrafanaTheme2,
   LoadingState,
   PanelData,
@@ -15,26 +14,22 @@ import {
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import {
-  GraphTresholdsStyleMode,
-  Icon,
-  InlineFormLabel,
-  Input,
-  RelativeTimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
+import { msToSingleUnitDuration } from '../../utils/time';
+import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
+import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
 export const DEFAULT_MAX_DATA_POINTS = 43200;
+export const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
+  minInterval?: string | undefined;
 }
 
 interface Props {
@@ -115,30 +110,31 @@ export const QueryWrapper = ({
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
-    const queryOptions: AlertQueryOptions = { maxDataPoints: query.model.maxDataPoints };
+    const queryOptions: AlertQueryOptions = {
+      maxDataPoints: query.model.maxDataPoints,
+      minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
+    };
     const alertQueryOptions: AlertQueryOptions = {
       maxDataPoints: queryOptions.maxDataPoints,
+      minInterval: queryOptions.minInterval,
     };
 
+    const isAlertCondition = condition === query.refId;
+
     return (
-      <Stack direction="row" alignItems="baseline" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
-        {onChangeTimeRange && (
-          <RelativeTimeRangePicker
-            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-            onChange={(range) => onChangeTimeRange(range, index)}
-          />
-        )}
-        <div className={styles.queryOptions}>
-          <MaxDataPointsOption
-            options={alertQueryOptions}
-            onChange={(options) => onChangeQueryOptions(options, index)}
-          />
-        </div>
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={condition === query.refId}
+        <QueryOptions
+          onChangeTimeRange={onChangeTimeRange}
+          query={query}
+          queryOptions={alertQueryOptions}
+          onChangeQueryOptions={onChangeQueryOptions}
+          index={index}
+        />
+        <ExpressionStatusIndicator
           error={error}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={isAlertCondition}
         />
       </Stack>
     );
@@ -187,7 +183,7 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-function MaxDataPointsOption({
+export function MaxDataPointsOption({
   options,
   onChange,
 }: {
@@ -210,27 +206,62 @@ function MaxDataPointsOption({
   };
 
   return (
-    <Stack direction="row" alignItems="baseline" gap={1}>
-      <InlineFormLabel
-        width={8}
-        tooltip={
-          <>
-            The maximum data points per series. Used directly by some data sources and used in calculation of auto
-            interval. With streaming data this value is used for the rolling buffer.
-          </>
-        }
-      >
-        Max data points
-      </InlineFormLabel>
+    <InlineField
+      labelWidth={24}
+      label="Max data points"
+      tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+    >
       <Input
         type="number"
-        className="width-6"
+        width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
       />
-    </Stack>
+    </InlineField>
+  );
+}
+
+export function MinIntervalOption({
+  options,
+  onChange,
+}: {
+  options: AlertQueryOptions;
+  onChange: (options: AlertQueryOptions) => void;
+}) {
+  const value = options.minInterval ?? '';
+
+  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const minInterval = event.target.value;
+    if (minInterval !== value) {
+      onChange({
+        ...options,
+        minInterval,
+      });
+    }
+  };
+
+  return (
+    <InlineField
+      label="Min interval"
+      labelWidth={24}
+      tooltip={
+        <>
+          A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
+          data is written every minute.
+        </>
+      }
+    >
+      <Input
+        type="text"
+        width={10}
+        placeholder={DEFAULT_MIN_INTERVAL}
+        spellCheck={false}
+        onBlur={onMinIntervalBlur}
+        defaultValue={value}
+      />
+    </InlineField>
   );
 }
 
@@ -239,10 +270,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
-  `,
-  queryOptions: css`
-    margin-bottom: -${theme.spacing(2)};
+    border-radius: ${theme.shape.radius.default};
+
+    button {
+      overflow: visible;
+    }
   `,
   dsTooltip: css`
     display: flex;

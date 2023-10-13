@@ -1,7 +1,9 @@
 package frontendlogging
 
-// TransformException will attempt to resolved all monified source locations in the stacktrace with original source locations
-func TransformException(ex *Exception, store *SourceMapStore) *Exception {
+import "context"
+
+// TransformException will attempt to resolve all modified source locations in the stacktrace with original source locations
+func TransformException(ctx context.Context, ex *Exception, store *SourceMapStore) *Exception {
 	if ex.Stacktrace == nil {
 		return ex
 	}
@@ -9,7 +11,7 @@ func TransformException(ex *Exception, store *SourceMapStore) *Exception {
 
 	for _, frame := range ex.Stacktrace.Frames {
 		frame := frame
-		mappedFrame, err := store.resolveSourceLocation(frame)
+		mappedFrame, err := store.resolveSourceLocation(ctx, frame)
 		if err != nil {
 			frames = append(frames, frame)
 		} else if mappedFrame != nil {

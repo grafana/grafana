@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -75,11 +77,17 @@ export const getDefaultFormValues = (): RuleFormValues => {
 };
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
-  const { name, expression, forTime, forTimeUnit, type } = values;
+  const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
   if (type === RuleFormType.cloudAlerting) {
+    let keepFiringFor: string | undefined;
+    if (keepFiringForTime && keepFiringForTimeUnit) {
+      keepFiringFor = `${keepFiringForTime}${keepFiringForTimeUnit}`;
+    }
+
     return {
       alert: name,
       for: `${forTime}${forTimeUnit}`,
+      keep_firing_for: keepFiringFor,
       annotations: arrayToRecord(values.annotations || []),
       labels: arrayToRecord(values.labels || []),
       expr: expression,
@@ -94,7 +102,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-function listifyLabelsOrAnnotations(
+export function listifyLabelsOrAnnotations(
   item: Labels | Annotations | undefined,
   addEmpty: boolean
 ): Array<{ key: string; value: string }> {
@@ -106,7 +114,7 @@ function listifyLabelsOrAnnotations(
 }
 
 //make sure default annotations are always shown in order even if empty
-function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
+export function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
   const orderedAnnotations = [...annotations];
   const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
 
@@ -174,11 +182,28 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
+      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+
+      const defaultQuery = {
+        refId: 'A',
+        datasourceUid,
+        queryType: '',
+        relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr: rule.expr,
+        model: {
+          refId: 'A',
+          hide: false,
+          expr: rule.expr,
+        },
+      };
+
       const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
 
       return {
         ...defaultFormValues,
         ...alertingRuleValues,
+        queries: [defaultQuery],
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
@@ -203,18 +228,34 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
 export function alertingRulerRuleToRuleForm(
   rule: RulerAlertingRuleDTO
-): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+): Pick<
+  RuleFormValues,
+  | 'name'
+  | 'forTime'
+  | 'forTimeUnit'
+  | 'keepFiringForTime'
+  | 'keepFiringForTimeUnit'
+  | 'expression'
+  | 'annotations'
+  | 'labels'
+> {
   const defaultFormValues = getDefaultFormValues();
 
   const [forTime, forTimeUnit] = rule.for
     ? parseInterval(rule.for)
     : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
 
+  const [keepFiringForTime, keepFiringForTimeUnit] = rule.keep_firing_for
+    ? parseInterval(rule.keep_firing_for)
+    : [defaultFormValues.keepFiringForTime, defaultFormValues.keepFiringForTimeUnit];
+
   return {
     name: rule.alert,
     expression: rule.expr,
     forTime,
     forTimeUnit,
+    keepFiringForTime,
+    keepFiringForTimeUnit,
     annotations: listifyLabelsOrAnnotations(rule.annotations, false),
     labels: listifyLabelsOrAnnotations(rule.labels, true),
   };
@@ -504,4 +545,19 @@ function isPromQuery(model: AlertDataQuery): model is PromQuery {
 
 export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
   return 'expr' in model;
+}
+
+// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
+// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
+// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
+// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
+export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
+  return {
+    ...ruleDefinition,
+    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
+  };
+};
+
+export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
+  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }

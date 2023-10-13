@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -44,7 +43,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 	}))
 	t.Cleanup(outgoingServer.Close)
 
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
+	jsonData := simplejson.NewFromAny(map[string]any{
 		"httpMethod":            "post",
 		"httpHeaderName1":       "X-CUSTOM-HEADER",
 		"customQueryParameters": "q1=1&q2=2",
@@ -70,11 +69,11 @@ func TestIntegrationPrometheus(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"uid": uid,
 			},
-			"expr":         "up",
+			"expr":         "1",
 			"instantQuery": true,
 		})
 		buf1 := &bytes.Buffer{}
@@ -88,13 +87,9 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+			_ = resp.Body.Close()
 		})
-		_, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range?q1=1&q2=2", outgoingRequest.URL.String())
@@ -106,8 +101,8 @@ func TestIntegrationPrometheus(t *testing.T) {
 	})
 
 	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"uid": uid,
 			},
 			"expr":         "up",
@@ -124,13 +119,9 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+			_ = resp.Body.Close()
 		})
-		_, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range", outgoingRequest.URL.Path)

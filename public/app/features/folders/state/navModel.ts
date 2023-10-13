@@ -2,6 +2,8 @@ import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 export const FOLDER_ID = 'manage-folder';
@@ -16,7 +18,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
   const model: NavModelItem = {
     icon: 'folder',
     id: FOLDER_ID,
-    subTitle: t('state.nav-models.manage-folder-subtitle', 'Manage folder dashboards and permissions'),
+    subTitle: getNavSubTitle('manage-folder'),
     url: folder.url,
     text: folder.title,
     children: [
@@ -24,7 +26,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         active: false,
         icon: 'apps',
         id: getDashboardsTabID(folder.uid),
-        text: t('state.nav-model.dashboards', 'Dashboards'),
+        text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
         url: folder.url,
       },
     ],
@@ -40,7 +42,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     active: false,
     icon: 'library-panel',
     id: getLibraryPanelsTabID(folder.uid),
-    text: t('state.nav-model.panels', 'Panels'),
+    text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
     url: `${folder.url}/library-panels`,
   });
 
@@ -49,18 +51,18 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       active: false,
       icon: 'bell',
       id: getAlertingTabID(folder.uid),
-      text: t('state.nav-models.alert-rules', 'Alert rules'),
+      text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
     });
   }
 
-  if (!config.featureToggles.nestedFolders) {
+  if (!newBrowseDashboardsEnabled()) {
     if (folder.canAdmin) {
       model.children!.push({
         active: false,
         icon: 'lock',
         id: getPermissionsTabID(folder.uid),
-        text: 'Permissions',
+        text: t('browse-dashboards.manage-folder-nav.permissions', 'Permissions'),
         url: `${folder.url}/permissions`,
       });
     }
@@ -70,7 +72,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         active: false,
         icon: 'cog',
         id: getSettingsTabID(folder.uid),
-        text: 'Settings',
+        text: t('browse-dashboards.manage-folder-nav.settings', 'Settings'),
         url: `${folder.url}/settings`,
       });
     }

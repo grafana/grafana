@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	errBadForm = errutil.NewBase(errutil.StatusBadRequest, "form-auth.invalid", errutil.WithPublicMessage("bad login data"))
+	errBadForm = errutil.BadRequest("form-auth.invalid", errutil.WithPublicMessage("bad login data"))
 )
 
 var _ authn.Client = new(Form)

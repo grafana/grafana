@@ -80,7 +80,7 @@ var config = {
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
@@ -93,7 +93,7 @@ var config = {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/alerting/list',

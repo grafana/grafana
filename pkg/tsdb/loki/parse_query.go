@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 	varRange      = "$__range"
 	varRangeS     = "$__range_s"
 	varRangeMs    = "$__range_ms"
+	varAuto       = "$__auto"
 )
 
 const (
@@ -26,10 +28,12 @@ const (
 	varRangeAlt      = "${__range}"
 	varRangeSAlt     = "${__range_s}"
 	varRangeMsAlt    = "${__range_ms}"
+	// $__auto is a new variable and we don't want to support this templating format
 )
 
-func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration) string {
+func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, queryType dataquery.LokiQueryType, step time.Duration) string {
 	intervalText := intervalv2.FormatDuration(interval)
+	stepText := intervalv2.FormatDuration(step)
 	intervalMsText := strconv.FormatInt(int64(interval/time.Millisecond), 10)
 
 	rangeMs := timeRange.Milliseconds()
@@ -42,6 +46,13 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeMs, rangeMsText)
 	expr = strings.ReplaceAll(expr, varRangeS, rangeSText)
 	expr = strings.ReplaceAll(expr, varRange, rangeSText+"s")
+	if queryType == dataquery.LokiQueryTypeInstant {
+		expr = strings.ReplaceAll(expr, varAuto, rangeSText+"s")
+	}
+
+	if queryType == dataquery.LokiQueryTypeRange {
+		expr = strings.ReplaceAll(expr, varAuto, stepText)
+	}
 
 	// this is duplicated code, hopefully this can be handled in a nicer way when
 	// https://github.com/grafana/grafana/issues/42928 is done.
@@ -131,12 +142,12 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
-		expr := interpolateVariables(model.Expr, interval, timeRange)
-
 		queryType, err := parseQueryType(model.QueryType)
 		if err != nil {
 			return nil, err
 		}
+
+		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {

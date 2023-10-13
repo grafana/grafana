@@ -165,7 +165,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 		}
 
 		// Publish data source deletion event
-		if cmd.DeletedDatasourcesCount > 0 {
+		if cmd.DeletedDatasourcesCount > 0 && !cmd.SkipPublish {
 			sess.PublishAfterCommit(&events.DataSourceDeleted{
 				Timestamp: time.Now(),
 				Name:      ds.Name,

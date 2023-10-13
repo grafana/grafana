@@ -53,10 +53,15 @@ aliases:
   - whats-new-in-v6-5/
   - whats-new-in-v6-6/
   - whats-new-in-v6-7/
+description: Learn about new and changed features in Grafana.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: What's new
 title: What's new in Grafana
 weight: 1
-description: Learn about new and changed features in Grafana.
 ---
 
 # What's new in Grafana
@@ -71,6 +76,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 10
 
+- [What's new in 10.1]({{< relref "whats-new-in-v10-1/" >}})
 - [What's new in 10.0]({{< relref "whats-new-in-v10-0/" >}})
 
 ## Grafana 9

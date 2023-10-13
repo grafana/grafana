@@ -335,7 +335,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	t.Run("Given an alert", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		cfg := setting.NewCfg()
-		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
+		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg), features: featuremgmt.WithFeatures()}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgID, testDash.ID, simplejson.New(), sqlStore)
@@ -435,13 +435,13 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 }
 
 func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+	folderId int64, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
 		FolderID: folderId,
 		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,

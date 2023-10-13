@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -8,8 +9,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fakeAlertInstanceManager struct {
@@ -103,3 +107,35 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 		f.states[orgID][alertRuleUID] = append(f.states[orgID][alertRuleUID], newState)
 	}
 }
+
+type recordingAccessControlFake struct {
+	Disabled           bool
+	EvaluateRecordings []struct {
+		User      *user.SignedInUser
+		Evaluator accesscontrol.Evaluator
+	}
+	Callback func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error)
+}
+
+func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	u := ur.(*user.SignedInUser)
+	a.EvaluateRecordings = append(a.EvaluateRecordings, struct {
+		User      *user.SignedInUser
+		Evaluator accesscontrol.Evaluator
+	}{User: u, Evaluator: evaluator})
+	if a.Callback == nil {
+		return false, nil
+	}
+	return a.Callback(u, evaluator)
+}
+
+func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (a *recordingAccessControlFake) IsDisabled() bool {
+	return a.Disabled
+}
+
+var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

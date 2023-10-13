@@ -10,6 +10,7 @@ import {
   Field,
   FieldMatcherID,
   fieldMatchers,
+  FieldType,
   LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
@@ -54,7 +55,7 @@ export interface GraphNGProps extends Themeable2 {
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
-  preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
+  preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 
   /**
@@ -120,7 +121,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       frames,
       fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+        y: fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum])),
       },
       props.timeRange
     );
@@ -204,7 +205,8 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           next: () => {
             const u = this.plotInstance?.current;
 
-            if (u) {
+            // @ts-ignore
+            if (u && !u.cursor._lock) {
               u.setCursor({
                 left: -10,
                 top: -10,

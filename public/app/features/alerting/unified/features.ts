@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 
 export enum AlertingFeature {
   NotificationPoliciesV2MatchingInstances = 'notification-policies.v2.matching-instances',
+  DetailsViewV2 = 'details-view.v2',
   ContactPointsV2 = 'contact-points.v2',
 }
 
@@ -14,6 +15,10 @@ const FEATURES: FeatureDescription[] = [
   },
   {
     name: AlertingFeature.ContactPointsV2,
+    defaultValue: false,
+  },
+  {
+    name: AlertingFeature.DetailsViewV2,
     defaultValue: false,
   },
 ];

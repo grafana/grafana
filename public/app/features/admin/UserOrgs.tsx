@@ -209,6 +209,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   roleOptions={this.state.roleOptions}
                   onBasicRoleChange={this.onBasicRoleChange}
                   basicRoleDisabled={rolePickerDisabled}
+                  basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
+                    Refer to the Grafana authentication docs for details."
                 />
               </div>
               {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
@@ -375,21 +377,17 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
         </Field>
         <Field label="Role" disabled={selectedOrg === null}>
-          {contextSrv.accessControlEnabled() ? (
-            <UserRolePicker
-              userId={user?.id || 0}
-              orgId={selectedOrg?.id}
-              basicRole={role}
-              onBasicRoleChange={this.onOrgRoleChange}
-              basicRoleDisabled={false}
-              roleOptions={roleOptions}
-              apply={true}
-              onApplyRoles={this.onRoleUpdate}
-              pendingRoles={this.state.pendingRoles}
-            />
-          ) : (
-            <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
-          )}
+          <UserRolePicker
+            userId={user?.id || 0}
+            orgId={selectedOrg?.id}
+            basicRole={role}
+            onBasicRoleChange={this.onOrgRoleChange}
+            basicRoleDisabled={false}
+            roleOptions={roleOptions}
+            apply={true}
+            onApplyRoles={this.onRoleUpdate}
+            pendingRoles={this.state.pendingRoles}
+          />
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">
@@ -486,7 +484,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (

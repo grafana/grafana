@@ -6,14 +6,12 @@ import React, { useState } from 'react';
 import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Modal.mdx';
 
 const meta: Meta = {
   title: 'Overlays/Modal',
   component: Modal,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -107,9 +105,9 @@ WithTabs.args = {
 
 export const UsingContentClassName: Story = ({ title, body, ...args }) => {
   const override = {
-    modalContent: css`
-      background-color: darkorange;
-    `,
+    modalContent: css({
+      backgroundColor: 'darkorange',
+    }),
   };
   return (
     <Modal title={title} {...args} contentClassName={cx(override.modalContent)}>

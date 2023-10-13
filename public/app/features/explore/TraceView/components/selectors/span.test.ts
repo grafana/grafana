@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { TraceResponse } from 'app/features/explore/TraceView/components/types';
-import { TraceSpan, TraceSpanData } from 'app/features/explore/TraceView/components/types/trace';
 
 import traceGenerator from '../demo/trace-generators';
 
@@ -25,24 +24,6 @@ it('getSpanId() should return the name of the span', () => {
   const span = generatedTrace.spans[0];
 
   expect(spanSelectors.getSpanId(span)).toBe(span.spanID);
-});
-
-it('getSpanName() should return the name of the span', () => {
-  const span = generatedTrace.spans[0];
-
-  expect(spanSelectors.getSpanName(span)).toBe(span.operationName);
-});
-
-it('getSpanDuration() should return the duration of the span', () => {
-  const span = generatedTrace.spans[0];
-
-  expect(spanSelectors.getSpanDuration(span)).toBe(span.duration);
-});
-
-it('getSpanTimestamp() should return the timestamp of the span', () => {
-  const span = generatedTrace.spans[0];
-
-  expect(spanSelectors.getSpanTimestamp(span)).toBe(span.startTime);
 });
 
 it('getSpanReferences() should return the span reference array', () => {
@@ -81,131 +62,4 @@ it('getSpanParentId() should return the spanID of the parent span', () => {
 
 it('getSpanParentId() should return null if no CHILD_OF reference exists', () => {
   expect(spanSelectors.getSpanParentId(generatedTrace.spans[0])).toBe(null);
-});
-
-it('getSpanProcessId() should return the processID of the span', () => {
-  const span = generatedTrace.spans[0];
-
-  expect(spanSelectors.getSpanProcessId(span)).toBe(span.processID);
-});
-
-it('getSpanProcess() should return the process of the span', () => {
-  const serviceName = 'bagel';
-  const span = {
-    ...generatedTrace.spans[0],
-    process: { serviceName },
-  } as TraceSpan;
-
-  expect(spanSelectors.getSpanProcess(span)).toBe(span.process);
-});
-
-it('getSpanProcess() should throw if no process exists', () => {
-  expect(() => spanSelectors.getSpanProcess(generatedTrace.spans[0] as TraceSpan)).toThrow();
-});
-
-it('getSpanServiceName() should return the service name of the span', () => {
-  const serviceName = 'bagel';
-  const span = {
-    ...generatedTrace.spans[0],
-    process: { serviceName },
-  } as TraceSpan;
-
-  expect(spanSelectors.getSpanServiceName(span)).toBe(serviceName);
-});
-
-it('filterSpansForTimestamps() should return a filtered list of spans between the times', () => {
-  const now = new Date().getTime() * 1000;
-  const spans = [
-    {
-      startTime: now - 1000,
-      spanID: 'start-time-1',
-    },
-    {
-      startTime: now,
-      spanID: 'start-time-2',
-    },
-    {
-      startTime: now + 1000,
-      spanID: 'start-time-3',
-    },
-  ] as TraceSpanData[];
-
-  expect(
-    spanSelectors.filterSpansForTimestamps({
-      spans,
-      leftBound: now - 500,
-      rightBound: now + 500,
-    })
-  ).toEqual([spans[1]]);
-
-  expect(
-    spanSelectors.filterSpansForTimestamps({
-      spans,
-      leftBound: now - 2000,
-      rightBound: now + 2000,
-    })
-  ).toEqual([...spans]);
-
-  expect(
-    spanSelectors.filterSpansForTimestamps({
-      spans,
-      leftBound: now - 1000,
-      rightBound: now,
-    })
-  ).toEqual([spans[0], spans[1]]);
-
-  expect(
-    spanSelectors.filterSpansForTimestamps({
-      spans,
-      leftBound: now,
-      rightBound: now + 1000,
-    })
-  ).toEqual([spans[1], spans[2]]);
-});
-
-it('filterSpansForText() should return a filtered list of spans between the times', () => {
-  const spans = [
-    {
-      operationName: 'GET /mything',
-      process: {
-        serviceName: 'alpha',
-      },
-      spanID: 'start-time-1',
-    },
-    {
-      operationName: 'GET /another',
-      process: {
-        serviceName: 'beta',
-      },
-      spanID: 'start-time-1',
-    },
-    {
-      operationName: 'POST /mything',
-      process: {
-        serviceName: 'alpha',
-      },
-      spanID: 'start-time-1',
-    },
-  ] as TraceSpan[];
-
-  expect(
-    spanSelectors.filterSpansForText({
-      spans,
-      text: '/mything',
-    })
-  ).toEqual([spans[0], spans[2]]);
-
-  expect(
-    spanSelectors.filterSpansForText({
-      spans,
-      text: 'GET',
-    })
-  ).toEqual([spans[0], spans[1]]);
-
-  expect(
-    spanSelectors.filterSpansForText({
-      spans,
-      text: 'alpha',
-    })
-  ).toEqual([spans[0], spans[2]]);
 });

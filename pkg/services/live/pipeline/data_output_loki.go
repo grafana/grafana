@@ -29,8 +29,8 @@ func (out *LokiDataOutput) OutputData(_ context.Context, vars Vars, data []byte)
 	}
 	err := out.lokiWriter.write(LokiStream{
 		Stream: map[string]string{"channel": vars.Channel},
-		Values: []interface{}{
-			[]interface{}{time.Now().UnixNano(), string(data)},
+		Values: []any{
+			[]any{time.Now().UnixNano(), string(data)},
 		},
 	})
 	return nil, err

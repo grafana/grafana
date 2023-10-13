@@ -92,7 +92,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
   id: DataTransformerID.configFromData,
   name: 'Config from query results',
-  description: 'Set unit, min, max and more from data',
+  description: 'Set unit, min, max and more from data.',
   defaultOptions: {
     configRefId: 'config',
     mappings: [],

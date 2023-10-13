@@ -180,6 +180,13 @@ export const Pages = {
     Annotations: {
       marker: 'data-testid annotation-marker',
     },
+    Rows: {
+      Repeated: {
+        ConfigSection: {
+          warningMessage: 'data-testid Repeated rows warning message',
+        },
+      },
+    },
   },
   Dashboards: {
     url: '/dashboards',
@@ -201,7 +208,7 @@ export const Pages = {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard or panel',
+    shareButton: 'Share dashboard',
     PublicDashboard: {
       Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
@@ -213,6 +220,7 @@ export const Pages = {
       DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
+      SettingsDropdown: 'data-testid public dashboard settings dropdown',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
       UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources alert',
       NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
@@ -267,12 +275,18 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemDelete: 'Delete playlist item',
+    itemDelete: 'data-testid playlist-form-delete-item',
   },
-  BrowseDashbards: {
+  BrowseDashboards: {
     table: {
-      row: (uid: string) => `data-testid ${uid} row`,
+      body: 'data-testid browse-dashboards-table',
+      row: (name: string) => `data-testid browse dashboards row ${name}`,
       checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+    NewFolderForm: {
+      form: 'data-testid new folder form',
+      nameInput: 'data-testid new-folder-name-input',
+      createButton: 'data-testid new-folder-create-button',
     },
   },
   Search: {
@@ -317,5 +331,8 @@ export const Pages = {
         listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
       },
     },
+  },
+  ProfilePage: {
+    url: '/profile',
   },
 };

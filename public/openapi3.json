@@ -17,6 +17,29 @@
       "SMTPNotEnabledError": {
         "description": "(empty)"
       },
+      "StateHistory": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Frame"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "TestGrafanaRuleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/postableAlert"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "acceptedResponse": {
         "content": {
           "application/json": {
@@ -1667,6 +1690,19 @@
         "content": {
           "application/json": {
             "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UserSearchHitDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchUsersWithPagingResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
               "$ref": "#/components/schemas/SearchUserQueryResult"
             }
           }
@@ -1841,6 +1877,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -1912,6 +1949,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -1931,6 +1969,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -2641,9 +2680,21 @@
             "format": "int64",
             "type": "integer"
           },
+          "contactPoints": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPointExport"
+            },
+            "type": "array"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/AlertRuleGroupExport"
+            },
+            "type": "array"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationPolicyExport"
             },
             "type": "array"
           }
@@ -2791,6 +2842,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3077,11 +3129,48 @@
         },
         "type": "object"
       },
+      "ContactPointExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "receivers": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiverExport"
+            },
+            "type": "array"
+          }
+        },
+        "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+        "type": "object"
+      },
       "ContactPoints": {
         "items": {
           "$ref": "#/components/schemas/EmbeddedContactPoint"
         },
         "type": "array"
+      },
+      "CookiePreferences": {
+        "properties": {
+          "analytics": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "functional": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "performance": {
+            "additionalProperties": false,
+            "type": "object"
+          }
+        },
+        "title": "CookiePreferences defines model for CookiePreferences.",
+        "type": "object"
       },
       "CookieType": {
         "type": "string"
@@ -3101,6 +3190,16 @@
             "description": "Label identifying the correlation",
             "example": "My Label",
             "type": "string"
+          },
+          "orgId": {
+            "description": "OrgID of the data source the correlation originates from",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "provisioned": {
+            "description": "Provisioned True if the correlation was created during provisioning",
+            "type": "boolean"
           },
           "sourceUID": {
             "description": "UID of the data source the correlation originates from",
@@ -3131,7 +3230,8 @@
             "additionalProperties": false,
             "description": "Target data query",
             "example": {
-              "expr": "job=app"
+              "prop1": "value1",
+              "prop2": "value"
             },
             "type": "object"
           },
@@ -3163,7 +3263,8 @@
             "additionalProperties": false,
             "description": "Target data query",
             "example": {
-              "expr": "job=app"
+              "prop1": "value1",
+              "prop2": "value"
             },
             "type": "object"
           },
@@ -3189,6 +3290,12 @@
           }
         },
         "type": "object"
+      },
+      "CounterResetHint": {
+        "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
+        "format": "uint8",
+        "title": "CounterResetHint contains the known information about a counter reset,",
+        "type": "integer"
       },
       "CreateAlertNotificationCommand": {
         "properties": {
@@ -3240,6 +3347,10 @@
             "description": "Optional label identifying the correlation",
             "example": "My label",
             "type": "string"
+          },
+          "provisioned": {
+            "description": "True if correlation was created with provisioning. This makes it read-only.",
+            "type": "boolean"
           },
           "targetUID": {
             "description": "Target data source UID to which the correlation is created. required if config.type = query",
@@ -3497,6 +3608,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3579,6 +3691,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "folderUid": {
+            "type": "string"
+          },
           "inherited": {
             "type": "boolean"
           },
@@ -3593,6 +3708,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3651,6 +3767,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3753,9 +3870,6 @@
             "type": "boolean"
           },
           "provisionedExternalId": {
-            "type": "string"
-          },
-          "publicDashboardAccessToken": {
             "type": "string"
           },
           "publicDashboardEnabled": {
@@ -4325,6 +4439,9 @@
           "uid": {
             "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
             "example": "my_external_reference",
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9\\-\\_]+$",
             "type": "string"
           }
         },
@@ -4536,7 +4653,7 @@
             "type": "string"
           },
           "displayNameFromDS": {
-            "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+            "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
             "type": "string"
           },
           "filterable": {
@@ -4609,6 +4726,56 @@
           }
         },
         "title": "FindTagsResult is the result of a tags search.",
+        "type": "object"
+      },
+      "FloatHistogram": {
+        "description": "A FloatHistogram is needed by PromQL to handle operations that might result\nin fractional counts. Since the counts in a histogram are unlikely to be too\nlarge to be represented precisely by a float64, a FloatHistogram can also be\nused to represent a histogram with integer counts and thus serves as a more\ngeneralized representation.",
+        "properties": {
+          "Count": {
+            "description": "Total number of observations. Must be zero or positive.",
+            "format": "double",
+            "type": "number"
+          },
+          "CounterResetHint": {
+            "$ref": "#/components/schemas/CounterResetHint"
+          },
+          "PositiveBuckets": {
+            "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "PositiveSpans": {
+            "description": "Spans for positive and negative buckets (see Span below).",
+            "items": {
+              "$ref": "#/components/schemas/Span"
+            },
+            "type": "array"
+          },
+          "Schema": {
+            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+            "format": "int32",
+            "type": "integer"
+          },
+          "Sum": {
+            "description": "Sum of observations. This is also used as the stale marker.",
+            "format": "double",
+            "type": "number"
+          },
+          "ZeroCount": {
+            "description": "Observations falling into the zero bucket. Must be zero or positive.",
+            "format": "double",
+            "type": "number"
+          },
+          "ZeroThreshold": {
+            "description": "Width of the zero bucket.",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
         "type": "object"
       },
       "Folder": {
@@ -4756,6 +4923,10 @@
           },
           "pathSeparator": {
             "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+            "type": "string"
+          },
+          "preferredVisualisationPluginId": {
+            "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
             "type": "string"
           },
           "preferredVisualisationType": {
@@ -4935,6 +5106,12 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
+            },
+            "type": "array"
+          },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -5328,11 +5505,19 @@
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
           },
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
           "oauth2": {
             "$ref": "#/components/schemas/OAuth2"
           },
           "proxy_connect_header": {
             "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
           },
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
@@ -6011,6 +6196,26 @@
         },
         "type": "object"
       },
+      "MSTeamsConfig": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          }
+        },
+        "type": "object"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -6080,9 +6285,6 @@
           "from": {
             "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
             "example": "now-1h",
-            "type": "string"
-          },
-          "publicDashboardAccessToken": {
             "type": "string"
           },
           "queries": {
@@ -6205,6 +6407,19 @@
         "title": "NoticeSeverity is a type for the Severity property of a Notice.",
         "type": "integer"
       },
+      "NotificationPolicyExport": {
+        "properties": {
+          "Policy": {
+            "$ref": "#/components/schemas/RouteExport"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+        "type": "object"
+      },
       "NotificationTemplate": {
         "properties": {
           "name": {
@@ -6294,6 +6509,17 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
           },
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
@@ -6821,7 +7047,11 @@
         "type": "array"
       },
       "Point": {
+        "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
         "properties": {
+          "H": {
+            "$ref": "#/components/schemas/FloatHistogram"
+          },
           "T": {
             "format": "int64",
             "type": "integer"
@@ -6979,6 +7209,12 @@
             },
             "type": "array"
           },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "telegram_configs": {
             "items": {
               "$ref": "#/components/schemas/TelegramConfig"
@@ -7042,6 +7278,29 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "PostableExtendedRuleNodeExtended": {
+        "properties": {
+          "folderTitle": {
+            "example": "project_x",
+            "type": "string"
+          },
+          "folderUid": {
+            "example": "okrd3I0Vz",
+            "type": "string"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/PostableExtendedRuleNode"
+          },
+          "ruleGroup": {
+            "example": "eval_group_1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule"
+        ],
         "type": "object"
       },
       "PostableGrafanaReceiver": {
@@ -7307,6 +7566,9 @@
             "type": "string"
           },
           "uid": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9-_]+$",
             "type": "string"
           },
           "updated": {
@@ -7334,8 +7596,30 @@
         },
         "type": "array"
       },
+      "ProxyConfig": {
+        "properties": {
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "$ref": "#/components/schemas/URL"
+          }
+        },
+        "type": "object"
+      },
       "PushoverConfig": {
         "properties": {
+          "device": {
+            "type": "string"
+          },
           "expire": {
             "type": "string"
           },
@@ -7509,7 +7793,7 @@
             "type": "string"
           },
           "displayNameFromDS": {
-            "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+            "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
             "type": "string"
           },
           "filterable": {
@@ -7642,6 +7926,12 @@
             },
             "type": "array"
           },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "telegram_configs": {
             "items": {
               "$ref": "#/components/schemas/TelegramConfig"
@@ -7674,6 +7964,24 @@
           }
         },
         "title": "Receiver configuration provides configuration on how to contact a receiver.",
+        "type": "object"
+      },
+      "ReceiverExport": {
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/RawMessage"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -7938,6 +8246,61 @@
         },
         "type": "object"
       },
+      "RouteExport": {
+        "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+        "properties": {
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteExport"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Rule": {
         "description": "adapted from cortex",
         "properties": {
@@ -8127,6 +8490,9 @@
       },
       "Sample": {
         "properties": {
+          "H": {
+            "$ref": "#/components/schemas/FloatHistogram"
+          },
           "Metric": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -8718,8 +9084,27 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "Span": {
+        "properties": {
+          "Length": {
+            "description": "Length of the span.",
+            "format": "uint32",
+            "type": "integer"
+          },
+          "Offset": {
+            "description": "Gap to previous span (always positive), or starting index for the 1st\nspan (which can be negative).",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "title": "A Span defines a continuous sequence of buckets.",
+        "type": "object"
+      },
       "Spec": {
         "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/CookiePreferences"
+          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -8803,8 +9188,16 @@
       },
       "TLSConfig": {
         "properties": {
+          "ca": {
+            "description": "Text of the CA cert to use for the targets.",
+            "type": "string"
+          },
           "ca_file": {
             "description": "The CA cert to use for the targets.",
+            "type": "string"
+          },
+          "cert": {
+            "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
@@ -8814,6 +9207,9 @@
           "insecure_skip_verify": {
             "description": "Disable target certificate validation.",
             "type": "boolean"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Secret"
           },
           "key_file": {
             "description": "The client key file for the targets.",
@@ -8982,6 +9378,9 @@
           },
           "token": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "token_file": {
+            "type": "string"
           }
         },
         "title": "TelegramConfig configures notifications via Telegram.",
@@ -9028,6 +9427,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -9749,10 +10149,6 @@
             "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
             "type": "string"
           },
-          "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
-            "type": "string"
-          },
           "version": {
             "description": "Version only used by the legacy folder implementation",
             "format": "int64",
@@ -9796,6 +10192,7 @@
         "properties": {
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -9924,6 +10321,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -10003,6 +10401,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -10050,6 +10449,9 @@
             "type": "boolean"
           },
           "isGrafanaAdmin": {
+            "type": "boolean"
+          },
+          "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
           "login": {
@@ -10275,7 +10677,10 @@
             "type": "boolean"
           },
           "url": {
-            "$ref": "#/components/schemas/URL"
+            "$ref": "#/components/schemas/SecretURL"
+          },
+          "url_file": {
+            "type": "string"
           }
         },
         "title": "WebhookConfig configures notifications via a generic webhook.",
@@ -10338,6 +10743,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10361,7 +10767,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -10529,6 +10934,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10577,7 +10983,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -10727,6 +11132,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10764,7 +11170,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13615,6 +14020,33 @@
               "default": "yaml",
               "type": "string"
             }
+          },
+          {
+            "description": "UIDs of folders from which to export rules",
+            "in": "query",
+            "name": "folderUid",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "in": "query",
+            "name": "group",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "in": "query",
+            "name": "ruleUid",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -13758,15 +14190,6 @@
         "operationId": "RouteGetAlertRuleExport",
         "parameters": [
           {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Whether to initiate a download of the file or not.",
             "in": "query",
             "name": "download",
@@ -13781,6 +14204,15 @@
             "name": "format",
             "schema": {
               "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
               "type": "string"
             }
           }
@@ -13881,6 +14313,74 @@
           }
         },
         "summary": "Create a contact point.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/contact-points/export": {
+      "get": {
+        "operationId": "RouteGetContactpointsExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+            "in": "query",
+            "name": "decrypt",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Filter by name",
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all contact points in provisioning file format.",
         "tags": [
           "provisioning"
         ]
@@ -14065,22 +14565,6 @@
         "operationId": "RouteGetAlertRuleGroupExport",
         "parameters": [
           {
-            "in": "path",
-            "name": "FolderUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "Group",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Whether to initiate a download of the file or not.",
             "in": "query",
             "name": "download",
@@ -14095,6 +14579,22 @@
             "name": "format",
             "schema": {
               "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
               "type": "string"
             }
           }
@@ -14373,6 +14873,37 @@
           }
         },
         "summary": "Sets the notification policy tree.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/policies/export": {
+      "get": {
+        "operationId": "RouteGetPolicyTreeExport",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Export the notification policy tree in provisioning file format.",
         "tags": [
           "provisioning"
         ]
@@ -15467,6 +15998,40 @@
     "/datasources/correlations": {
       "get": {
         "operationId": "getCorrelations",
+        "parameters": [
+          {
+            "description": "Limit the maximum number of correlations to return per page",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "maximum": 1000,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page index for starting fetching correlations",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Source datasource UID filter to be applied to correlations",
+            "in": "query",
+            "name": "sourceUID",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/getCorrelationsResponse"
@@ -16324,7 +16889,7 @@
     },
     "/datasources/{datasourceId}/disable-permissions": {
       "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "operationId": "disablePermissions",
         "parameters": [
           {
@@ -16365,7 +16930,7 @@
     },
     "/datasources/{datasourceId}/enable-permissions": {
       "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "operationId": "enablePermissions",
         "parameters": [
           {
@@ -16406,7 +16971,7 @@
     },
     "/datasources/{datasourceId}/permissions": {
       "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
         "operationId": "getAllPermissions",
         "parameters": [
           {
@@ -16442,7 +17007,7 @@
         ]
       },
       "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "operationId": "addPermission",
         "parameters": [
           {
@@ -16511,7 +17076,7 @@
     },
     "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "operationId": "deletePermissions",
         "parameters": [
           {
@@ -19102,42 +19667,6 @@
         ]
       }
     },
-    "/playlists/{uid}/dashboards": {
-      "get": {
-        "operationId": "getPlaylistDashboards",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getPlaylistDashboardsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get playlist dashboards.",
-        "tags": [
-          "playlists"
-        ]
-      }
-    },
     "/playlists/{uid}/items": {
       "get": {
         "operationId": "getPlaylistItems",
@@ -20213,7 +20742,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "It performs assertion Consumer Service (ACS).",
+        "summary": "It performs Assertion Consumer Service (ACS).",
         "tags": [
           "saml",
           "enterprise"
@@ -20335,7 +20864,7 @@
             }
           },
           {
-            "description": "List of dashboard id’s to search for",
+            "description": "List of dashboard id’s to search for\nThis is deprecated: users should use the `dashboardUIDs` query parameter instead",
             "in": "query",
             "name": "dashboardIds",
             "schema": {
@@ -20358,13 +20887,24 @@
             }
           },
           {
-            "description": "List of folder id’s to search in for dashboards",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
             "in": "query",
             "name": "folderIds",
             "schema": {
               "items": {
                 "format": "int64",
                 "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "List of folder UID’s to search in for dashboards\nIf it's an empty string then it will query for the top level folders",
+            "in": "query",
+            "name": "folderUIDs",
+            "schema": {
+              "items": {
+                "type": "string"
               },
               "type": "array"
             }
@@ -22290,7 +22830,7 @@
         "operationId": "searchUsersWithPaging",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/searchUsersResponse"
+            "$ref": "#/components/responses/searchUsersWithPagingResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -22492,7 +23032,7 @@
       "name": "datasources"
     },
     {
-      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.\n\nThe General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.",
+      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.",
       "name": "folders"
     },
     {

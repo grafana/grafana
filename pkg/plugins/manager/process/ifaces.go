@@ -1,10 +1,14 @@
 package process
 
-import "context"
+import (
+	"context"
 
-type Service interface {
+	"github.com/grafana/grafana/pkg/plugins"
+)
+
+type Manager interface {
 	// Start executes a backend plugin process.
-	Start(ctx context.Context, pluginID string) error
+	Start(ctx context.Context, p *plugins.Plugin) error
 	// Stop terminates a backend plugin process.
-	Stop(ctx context.Context, pluginID string) error
+	Stop(ctx context.Context, p *plugins.Plugin) error
 }

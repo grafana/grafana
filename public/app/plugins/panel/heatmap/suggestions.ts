@@ -2,6 +2,7 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { prepareHeatmapData } from './fields';
+import { quantizeScheme } from './palettes';
 import { Options, defaultOptions } from './types';
 
 export class HeatmapSuggestionsSupplier {
@@ -18,7 +19,8 @@ export class HeatmapSuggestionsSupplier {
       return;
     }
 
-    const info = prepareHeatmapData(builder.data.series, undefined, defaultOptions, config.theme2);
+    const palette = quantizeScheme(defaultOptions.color, config.theme2);
+    const info = prepareHeatmapData(builder.data.series, undefined, defaultOptions, palette, config.theme2);
     if (!info || info.warning) {
       return;
     }

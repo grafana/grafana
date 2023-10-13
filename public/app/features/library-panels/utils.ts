@@ -1,17 +1,7 @@
-import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
-import { AppNotification } from '../../types';
 import { PanelModel } from '../dashboard/state';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
 import { LibraryElementDTO } from './types';
-
-export function createPanelLibraryErrorNotification(message: string): AppNotification {
-  return createErrorNotification(message);
-}
-
-export function createPanelLibrarySuccessNotification(message: string): AppNotification {
-  return createSuccessNotification(message);
-}
 
 export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: string): Promise<LibraryElementDTO> {
   const panelSaveModel = toPanelSaveModel(panel);
@@ -20,7 +10,7 @@ export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: s
   return savedPanel;
 }
 
-function toPanelSaveModel(panel: PanelModel): any {
+function toPanelSaveModel(panel: PanelModel) {
   let { scopedVars, ...panelSaveModel } = panel.getSaveModel();
   panelSaveModel = {
     libraryPanel: {

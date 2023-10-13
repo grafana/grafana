@@ -24,6 +24,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -174,7 +175,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 12,
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -191,7 +192,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 1,
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -208,11 +209,43 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
 		require.Equal(t, 202, response.Status())
+	})
+
+	t.Run("assert config hash doesn't change when sending RouteGetAlertingConfig back to RoutePostAlertingConfig", func(t *testing.T) {
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		request := createAmConfigRequest(t, validConfigWithSecureSetting)
+
+		r := sut.RoutePostAlertingConfig(&rc, request)
+		require.Equal(t, 202, r.Status())
+
+		am, err := sut.mam.AlertmanagerFor(1)
+		require.NoError(t, err)
+		hash := am.ConfigHash()
+
+		getResponse := sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+		postable, err := notifier.Load(getResponse.Body())
+		require.NoError(t, err)
+
+		r = sut.RoutePostAlertingConfig(&rc, *postable)
+		require.Equal(t, 202, r.Status())
+
+		am, err = sut.mam.AlertmanagerFor(1)
+		require.NoError(t, err)
+		newHash := am.ConfigHash()
+		require.Equal(t, hash, newHash)
 	})
 
 	t.Run("when objects are not provisioned", func(t *testing.T) {
@@ -259,7 +292,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			request := createAmConfigRequest(t)
+			request := createAmConfigRequest(t, validConfig)
 
 			_ = sut.RoutePostAlertingConfig(rc, request)
 
@@ -585,7 +618,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
-				newID, err := alertmanagerFor.CreateSilence(&silence)
+				newID, err := alertmanagerFor.CreateSilence(context.Background(), &silence)
 				require.NoError(t, err)
 				silence.ID = newID
 			}
@@ -609,11 +642,11 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 }
 
-func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
+func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserConfig {
 	t.Helper()
 
 	request := apimodels.PostableUserConfig{}
-	err := request.UnmarshalJSON([]byte(validConfig))
+	err := request.UnmarshalJSON([]byte(config))
 	require.NoError(t, err)
 
 	return request
@@ -631,7 +664,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
 	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
-	kvStore := notifier.NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
@@ -669,6 +702,41 @@ var validConfig = `{
 				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithSecureSetting = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]},
+			{
+			"name": "slack",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "slack1",
+				"type": "slack",
+				"settings": {"text": "slack text"},
+				"secureSettings": {
+					"url": "secure url"
 				}
 			}]
 		}]

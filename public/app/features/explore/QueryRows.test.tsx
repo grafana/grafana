@@ -56,10 +56,11 @@ function setup(queries: DataQuery[]) {
         richHistory: [],
         datasourceInstance: datasources['someDs-uid'],
         queries,
+        correlations: [],
       },
     },
+    correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
     syncedTimes: false,
-    correlations: [],
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
   };

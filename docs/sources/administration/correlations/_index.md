@@ -1,9 +1,13 @@
 ---
-title: Correlations
-weight: 900
 keywords:
   - correlations
   - Explore
+labels:
+  products:
+    - enterprise
+    - oss
+title: Correlations
+weight: 900
 ---
 
 # Correlations

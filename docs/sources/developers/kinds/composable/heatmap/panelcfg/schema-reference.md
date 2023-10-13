@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: HeatmapPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -174,6 +179,7 @@ It extends [AxisConfig](#axisconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                             |
 |---------------------|-----------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
@@ -195,6 +201,7 @@ TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
 |---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         |                                                                                        |

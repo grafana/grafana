@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -451,6 +452,33 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
 	})
 
+	t.Run("Should be able to find a dashboard folder's children by UID", func(t *testing.T) {
+		setup()
+		query := dashboards.FindPersistedDashboardsQuery{
+			OrgId:      1,
+			FolderUIDs: []string{savedFolder.UID},
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
+		}
+
+		hits, err := testSearchDashboards(dashboardStore, &query)
+		require.NoError(t, err)
+
+		require.Equal(t, len(hits), 2)
+		hit := hits[0]
+		require.Equal(t, hit.ID, savedDash.ID)
+		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		require.Equal(t, hit.FolderID, savedFolder.ID)
+		require.Equal(t, hit.FolderUID, savedFolder.UID)
+		require.Equal(t, hit.FolderTitle, savedFolder.Title)
+		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
+	})
+
 	t.Run("Should be able to find dashboards by ids", func(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
@@ -672,6 +700,111 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		})
 		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
 	})
+}
+
+func TestIntegrationFindDashboardsByFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
+
+	orgID := int64(1)
+	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, false)
+
+	f0 := insertTestDashboard(t, dashboardStore, "f0", orgID, 0, true)
+	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, f0.ID, false)
+
+	f1 := insertTestDashboard(t, dashboardStore, "f1", orgID, 0, true)
+	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, f1.ID, false)
+
+	testCases := []struct {
+		desc           string
+		folderIDs      []int64
+		folderUIDs     []string
+		expectedResult []string
+	}{
+		{
+			desc:           "find dashboard under general using folder id",
+			folderIDs:      []int64{0},
+			expectedResult: []string{"dashboard under general"},
+		},
+		{
+			desc:           "find dashboard under f0 using folder id",
+			folderIDs:      []int64{f0.ID},
+			expectedResult: []string{"dashboard under f0"},
+		},
+		{
+			desc:           "find dashboard under f0 or f1 using folder id",
+			folderIDs:      []int64{f0.ID, f1.ID},
+			expectedResult: []string{"dashboard under f0", "dashboard under f1"},
+		},
+		{
+			desc:           "find dashboard under general using folder UID",
+			folderUIDs:     []string{folder.GeneralFolderUID},
+			expectedResult: []string{"dashboard under general"},
+		},
+		{
+			desc:           "find dashboard under f0 using folder UID",
+			folderUIDs:     []string{f0.UID},
+			expectedResult: []string{"dashboard under f0"},
+		},
+		{
+			desc:           "find dashboard under f0 or f1 using folder UID",
+			folderUIDs:     []string{f0.UID, f1.UID},
+			expectedResult: []string{"dashboard under f0", "dashboard under f1"},
+		},
+		{
+			desc:           "find dashboard under general or f0 using folder id",
+			folderIDs:      []int64{0, f0.ID},
+			expectedResult: []string{"dashboard under f0", "dashboard under general"},
+		},
+		{
+			desc:           "find dashboard under general or f0 or f1 using folder id",
+			folderIDs:      []int64{0, f0.ID, f1.ID},
+			expectedResult: []string{"dashboard under f0", "dashboard under f1", "dashboard under general"},
+		},
+		{
+			desc:           "find dashboard under general or f0 using folder UID",
+			folderUIDs:     []string{folder.GeneralFolderUID, f0.UID},
+			expectedResult: []string{"dashboard under f0", "dashboard under general"},
+		},
+		{
+			desc:           "find dashboard under general or f0 or f1 using folder UID",
+			folderUIDs:     []string{folder.GeneralFolderUID, f0.UID, f1.UID},
+			expectedResult: []string{"dashboard under f0", "dashboard under f1", "dashboard under general"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
+				SignedInUser: &user.SignedInUser{
+					OrgID: 1,
+					Permissions: map[int64]map[string][]string{
+						orgID: {
+							dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
+							dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
+						},
+					},
+				},
+				Type:       searchstore.TypeDashboard,
+				FolderIds:  tc.folderIDs,
+				FolderUIDs: tc.folderUIDs,
+			})
+			require.NoError(t, err)
+			require.Equal(t, len(tc.expectedResult), len(res))
+
+			for i, r := range tc.expectedResult {
+				assert.Equal(t, r, res[i].Title)
+			}
+		})
+	}
 }
 
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {

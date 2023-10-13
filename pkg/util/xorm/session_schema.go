@@ -23,7 +23,7 @@ func (session *Session) Ping() error {
 }
 
 // CreateTable create a table according a bean
-func (session *Session) CreateTable(bean interface{}) error {
+func (session *Session) CreateTable(bean any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -31,7 +31,7 @@ func (session *Session) CreateTable(bean interface{}) error {
 	return session.createTable(bean)
 }
 
-func (session *Session) createTable(bean interface{}) error {
+func (session *Session) createTable(bean any) error {
 	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (session *Session) createTable(bean interface{}) error {
 }
 
 // CreateIndexes create indexes
-func (session *Session) CreateIndexes(bean interface{}) error {
+func (session *Session) CreateIndexes(bean any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -50,7 +50,7 @@ func (session *Session) CreateIndexes(bean interface{}) error {
 	return session.createIndexes(bean)
 }
 
-func (session *Session) createIndexes(bean interface{}) error {
+func (session *Session) createIndexes(bean any) error {
 	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
@@ -66,14 +66,14 @@ func (session *Session) createIndexes(bean interface{}) error {
 }
 
 // CreateUniques create uniques
-func (session *Session) CreateUniques(bean interface{}) error {
+func (session *Session) CreateUniques(bean any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
 	return session.createUniques(bean)
 }
 
-func (session *Session) createUniques(bean interface{}) error {
+func (session *Session) createUniques(bean any) error {
 	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (session *Session) createUniques(bean interface{}) error {
 }
 
 // DropIndexes drop indexes
-func (session *Session) DropIndexes(bean interface{}) error {
+func (session *Session) DropIndexes(bean any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -97,7 +97,7 @@ func (session *Session) DropIndexes(bean interface{}) error {
 	return session.dropIndexes(bean)
 }
 
-func (session *Session) dropIndexes(bean interface{}) error {
+func (session *Session) dropIndexes(bean any) error {
 	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (session *Session) dropIndexes(bean interface{}) error {
 }
 
 // DropTable drop table will drop table if exist, if drop failed, it will return error
-func (session *Session) DropTable(beanOrTableName interface{}) error {
+func (session *Session) DropTable(beanOrTableName any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -121,7 +121,7 @@ func (session *Session) DropTable(beanOrTableName interface{}) error {
 	return session.dropTable(beanOrTableName)
 }
 
-func (session *Session) dropTable(beanOrTableName interface{}) error {
+func (session *Session) dropTable(beanOrTableName any) error {
 	tableName := session.engine.TableName(beanOrTableName)
 	var needDrop = true
 	if !session.engine.dialect.SupportDropIfExists() {
@@ -142,7 +142,7 @@ func (session *Session) dropTable(beanOrTableName interface{}) error {
 }
 
 // IsTableExist if a table is exist
-func (session *Session) IsTableExist(beanOrTableName interface{}) (bool, error) {
+func (session *Session) IsTableExist(beanOrTableName any) (bool, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -159,7 +159,7 @@ func (session *Session) isTableExist(tableName string) (bool, error) {
 }
 
 // IsTableEmpty if table have any records
-func (session *Session) IsTableEmpty(bean interface{}) (bool, error) {
+func (session *Session) IsTableEmpty(bean any) (bool, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -220,7 +220,7 @@ func (session *Session) addUnique(tableName, uqeName string) error {
 }
 
 // Sync2 synchronize structs to database tables
-func (session *Session) Sync2(beans ...interface{}) error {
+func (session *Session) Sync2(beans ...any) error {
 	engine := session.engine
 
 	if session.isAutoClose {

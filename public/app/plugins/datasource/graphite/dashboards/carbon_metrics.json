@@ -10,7 +10,6 @@
   "revision": "1.0",
   "title": "Graphite Carbon Metrics",
   "tags": ["graphite", "carbon"],
-  "style": "dark",
   "timezone": "browser",
   "editable": true,
   "gnetId": null,

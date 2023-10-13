@@ -1,6 +1,11 @@
 ---
 _build:
   list: false
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Release notes for Grafana 8.0.0-beta1
 ---
 

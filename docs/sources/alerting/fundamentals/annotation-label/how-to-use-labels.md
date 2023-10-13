@@ -1,10 +1,16 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/how-to-use-labels/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana
   - alerting
   - guide
   - fundamentals
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Labels in Grafana Alerting
 weight: 117
 ---
@@ -17,7 +23,7 @@ This topic explains why labels are a fundamental component of alerting.
 - The Alertmanager uses labels to match alerts for silences and alert groups in notification policies.
 - The alerting UI shows labels for every alert instance generated during evaluation of that rule.
 - Contact points can access labels to dynamically generate notifications that contain information specific to the alert that is resulting in a notification.
-- You can add labels to an [alerting rule]({{< relref "../../alerting-rules" >}}). Labels are manually configurable, use template functions, and can reference other labels. Labels added to an alerting rule take precedence in the event of a collision between labels (except in the case of [Grafana reserved labels](#grafana-reserved-labels)).
+- You can add labels to an [alerting rule][alerting-rules]. Labels are manually configurable, use template functions, and can reference other labels. Labels added to an alerting rule take precedence in the event of a collision between labels (except in the case of [Grafana reserved labels](#grafana-reserved-labels)).
 
 {{< figure src="/static/img/docs/alerting/unified/rule-edit-details-8-0.png" max-width="550px" caption="Alert details" >}}
 
@@ -39,7 +45,7 @@ Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514=
 
 {{% admonition type="note" %}}
 Labels prefixed with `grafana_` are reserved by Grafana for special use. If a manually configured label is added beginning with `grafana_` it may be overwritten in case of collision.
-To stop the Grafana Alerting engine from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels]({{< relref "../../../setup-grafana/configure-grafana#unified_alertingreserved_labels" >}}) configuration.
+To stop the Grafana Alerting engine from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels][unified-alerting-reserved-labels] configuration.
 {{% /admonition %}}
 
 Grafana reserved labels can be used in the same way as manually configured labels. The current list of available reserved labels are:
@@ -47,3 +53,11 @@ Grafana reserved labels can be used in the same way as manually configured label
 | Label          | Description                               |
 | -------------- | ----------------------------------------- |
 | grafana_folder | Title of the folder containing the alert. |
+
+{{% docs/reference %}}
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
+
+[unified-alerting-reserved-labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
+[unified-alerting-reserved-labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
+{{% /docs/reference %}}

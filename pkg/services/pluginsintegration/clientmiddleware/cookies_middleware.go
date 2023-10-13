@@ -30,7 +30,7 @@ type CookiesMiddleware struct {
 	skipCookiesNames []string
 }
 
-func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
+func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req any) error {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {

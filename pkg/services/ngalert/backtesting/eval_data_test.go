@@ -30,7 +30,7 @@ func GenerateWideSeriesFrame(size int, resolution time.Duration) *data.Frame {
 	tmili = tmili - tmili%resolution.Milliseconds()
 	current := time.UnixMilli(tmili).Add(-resolution * time.Duration(size))
 	for i := 0; i < size; i++ {
-		vals := make([]interface{}, 0, len(frame.Fields))
+		vals := make([]any, 0, len(frame.Fields))
 		vals = append(vals, current)
 		for i := 1; i < cap(vals); i++ {
 			vals = append(vals, rand.Int63n(2)-1) // random value [-1,1]
@@ -96,11 +96,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 	t.Run("should use data points when frame resolution matches evaluation interval", func(t *testing.T) {
 		r := make([]results, 0, frame.Rows())
 
-		invterval := time.Second
+		interval := time.Second
 
-		resultsCount := int(to.Sub(from).Seconds() / invterval.Seconds())
+		resultsCount := int(to.Sub(from).Seconds() / interval.Seconds())
 
-		err = evaluator.Eval(context.Background(), from, to, time.Second, func(now time.Time, res eval.Results) error {
+		err = evaluator.Eval(context.Background(), from, time.Second, resultsCount, func(idx int, now time.Time, res eval.Results) error {
 			r = append(r, results{
 				now, res,
 			})
@@ -164,7 +164,7 @@ func TestDataEvaluator_Eval(t *testing.T) {
 			size := to.Sub(from).Milliseconds() / interval.Milliseconds()
 			r := make([]results, 0, size)
 
-			err = evaluator.Eval(context.Background(), from, to, interval, func(now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, interval, int(size), func(idx int, now time.Time, res eval.Results) error {
 				r = append(r, results{
 					now, res,
 				})
@@ -195,7 +195,7 @@ func TestDataEvaluator_Eval(t *testing.T) {
 			size := int(to.Sub(from).Seconds() / interval.Seconds())
 			r := make([]results, 0, size)
 
-			err = evaluator.Eval(context.Background(), from, to, interval, func(now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, interval, size, func(idx int, now time.Time, res eval.Results) error {
 				r = append(r, results{
 					now, res,
 				})
@@ -230,7 +230,7 @@ func TestDataEvaluator_Eval(t *testing.T) {
 		t.Run("should be noData until the frame interval", func(t *testing.T) {
 			newFrom := from.Add(-10 * time.Second)
 			r := make([]results, 0, int(to.Sub(newFrom).Seconds()))
-			err = evaluator.Eval(context.Background(), newFrom, to, time.Second, func(now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), newFrom, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) error {
 				r = append(r, results{
 					now, res,
 				})
@@ -258,7 +258,7 @@ func TestDataEvaluator_Eval(t *testing.T) {
 		t.Run("should be the last value after the frame interval", func(t *testing.T) {
 			newTo := to.Add(10 * time.Second)
 			r := make([]results, 0, int(newTo.Sub(from).Seconds()))
-			err = evaluator.Eval(context.Background(), from, newTo, time.Second, func(now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) error {
 				r = append(r, results{
 					now, res,
 				})
@@ -282,12 +282,10 @@ func TestDataEvaluator_Eval(t *testing.T) {
 	})
 	t.Run("should stop if callback error", func(t *testing.T) {
 		expectedError := errors.New("error")
-		evals := 0
-		err = evaluator.Eval(context.Background(), from, to, time.Second, func(now time.Time, res eval.Results) error {
-			if evals > 5 {
+		err = evaluator.Eval(context.Background(), from, time.Second, 6, func(idx int, now time.Time, res eval.Results) error {
+			if idx == 5 {
 				return expectedError
 			}
-			evals++
 			return nil
 		})
 		require.ErrorIs(t, err, expectedError)

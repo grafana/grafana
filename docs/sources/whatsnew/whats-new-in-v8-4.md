@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '8.4'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v8.4
 weight: -33
 ---
@@ -79,7 +84,7 @@ Traditionally alerts in the Alert Panel were grouped by the alert rule that crea
 
 #### WeCom contact point
 
-Starting with Grafana 8.4, you can [configure a WeCom](/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
+Starting with Grafana 8.4, you can configure a [WeCom contact point](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/) , to send alert notifications to WeCom.
 
 ### New panel options
 

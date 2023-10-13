@@ -8,6 +8,11 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Elasticsearch template variables
 weight: 400
@@ -19,7 +24,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
 
 ## Choose a variable syntax
 
@@ -29,7 +34,7 @@ The Elasticsearch data source supports two variable syntaxes for use in the **Qu
 - `[[varname]]`, such as `hostname:[[hostname]]`
 
 When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a Lucene-compatible condition.
-For details, see the [Multi-value variables]({{< relref "../../../dashboards/variables/add-template-variables#multi-value-variables" >}}) documentation.
+For details, see the [Multi-value variables][add-template-variables-multi-value-variables] documentation.
 
 ## Use variables in queries
 
@@ -66,3 +71,29 @@ In the above example, a Lucene query filters documents based on the `hostname` p
 The example also uses a variable in the _Terms_ group by field input box, which you can use to quickly change how data is grouped.
 
 To view an example dashboard on Grafana Play, see the [Elasticsearch Templated Dashboard](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1).
+
+## Create a query
+
+Write the query using a custom JSON string, with the field mapped as a [keyword](https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html#keyword) in the Elasticsearch index mapping.
+
+If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
+
+| Query                                                               | Description                                                                                                                                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{"find": "fields", "type": "keyword"}`                             | Returns a list of field names with the index type `keyword`.                                                                                                                  |
+| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`      | Returns a list of values for a keyword using term aggregation. Query will use current dashboard time range as time range query.                                               |
+| `{"find": "terms", "field": "hostname", "query": '<Lucene query>'}` | Returns a list of values for a keyword field using term aggregation and a specified Lucene query filter. Query will use current dashboard time range as time range for query. |
+
+Queries of `terms` have a 500-result limit by default.
+To set a custom limit, set the `size` property in your query.
+
+{{% docs/reference %}}
+[add-template-variables-multi-value-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"
+[add-template-variables-multi-value-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"
+
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

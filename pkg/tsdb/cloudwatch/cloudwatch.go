@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/patrickmn/go-cache"
 )
+
+const tagValueCacheExpiration = time.Hour * 24
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
@@ -36,8 +40,9 @@ type DataQueryJson struct {
 }
 
 type DataSource struct {
-	Settings   models.CloudWatchSettings
-	HTTPClient *http.Client
+	Settings      models.CloudWatchSettings
+	HTTPClient    *http.Client
+	tagValueCache *cache.Cache
 }
 
 const (
@@ -84,7 +89,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		instanceSettings, err := models.LoadCloudWatchSettings(settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -101,8 +106,9 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		return DataSource{
-			Settings:   instanceSettings,
-			HTTPClient: httpClient,
+			Settings:      instanceSettings,
+			HTTPClient:    httpClient,
+			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
 		}, nil
 	}
 }
@@ -128,14 +134,21 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		r = instance.Settings.Region
 	}
 
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
 	sess, err := e.newSession(ctx, pluginCtx, r)
 	if err != nil {
 		return models.RequestContext{}, err
 	}
+
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 		LogsAPIProvider:       NewLogsAPI(sess),
+		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
 		Features:              e.features,
 	}, nil
@@ -147,13 +160,6 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
-	/*
-		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
-		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
-		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
-		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
-		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
-	*/
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -240,6 +246,9 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	}
 
 	if region == defaultRegion {
+		if len(instance.Settings.Region) == 0 {
+			return nil, models.ErrMissingRegion
+		}
 		region = instance.Settings.Region
 	}
 
@@ -307,7 +316,7 @@ func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend
 		return nil, err
 	}
 
-	return newEC2Client(sess), nil
+	return NewEC2Client(sess), nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,

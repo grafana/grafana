@@ -82,7 +82,7 @@ export function getStackingBands(group: StackingGroup) {
 export function getStackingGroups(frame: DataFrame) {
   let groups: Map<string, StackingGroup> = new Map();
 
-  frame.fields.forEach(({ config, values }, i) => {
+  frame.fields.forEach(({ config, values, type }, i) => {
     // skip x or time field
     if (i === 0) {
       return;
@@ -117,15 +117,18 @@ export function getStackingGroups(frame: DataFrame) {
     let transform = custom.transform;
     let stackDir = getStackDirection(transform, values);
 
-    let drawStyle = custom.drawStyle as GraphDrawStyle;
-    let drawStyle2 =
+    let drawStyle: GraphDrawStyle = custom.drawStyle;
+    let drawStyle2: BarAlignment | LineInterpolation | null =
       drawStyle === GraphDrawStyle.Bars
-        ? (custom.barAlignment as BarAlignment)
+        ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? (custom.lineInterpolation as LineInterpolation)
+        ? custom.lineInterpolation
         : null;
 
-    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(config)}|${drawStyle}|${drawStyle2}`;
+    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
+      config,
+      type
+    )}|${drawStyle}|${drawStyle2}`;
 
     let group = groups.get(stackKey);
 
@@ -150,7 +153,7 @@ export function preparePlotData2(
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
-  let data = Array(frame.fields.length) as AlignedData;
+  let data: AlignedData = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 

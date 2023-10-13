@@ -1,3 +1,4 @@
+@use 'sass:color';
 // Base classes
 .label,
 .badge {
@@ -16,7 +17,7 @@
 // Labels & Badges
 .label-tag {
   background-color: $purple;
-  color: darken($white, 5%);
+  color: color.adjust($white, $lightness: -5%);
   white-space: nowrap;
   border-radius: 3px;
   text-shadow: none;
@@ -37,13 +38,13 @@
 
   &.muted {
     opacity: 0.85;
-    background-color: darken($purple, 10%);
+    background-color: color.adjust($purple, $lightness: -10%);
     color: $text-muted;
   }
 
   &:hover {
     opacity: 0.85;
-    background-color: darken($purple, 10%);
+    background-color: color.adjust($purple, $lightness: -10%);
   }
 
   &--gray {

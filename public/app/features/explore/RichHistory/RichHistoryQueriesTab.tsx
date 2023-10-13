@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -32,8 +32,6 @@ export interface RichHistoryQueriesTabProps {
 }
 
 const getStyles = (theme: GrafanaTheme2, height: number) => {
-  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
-
   return {
     container: css`
       display: flex;
@@ -76,11 +74,6 @@ const getStyles = (theme: GrafanaTheme2, height: number) => {
     multiselect: css`
       width: 100%;
       margin-bottom: ${theme.spacing(1)};
-      .gf-form-select-box__multi-value {
-        background-color: ${bgColor};
-        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
-        border-radius: ${theme.shape.borderRadius(1)};
-      }
     `,
     sort: css`
       width: 170px;
@@ -133,7 +126,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     activeDatasourceInstance,
   } = props;
 
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, height), [height]));
+  const styles = useStyles2(getStyles, height);
 
   const listOfDatasources = createDatasourcesList();
 
@@ -193,7 +186,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
         </div>
       </div>
 
-      <div className={styles.containerContent}>
+      <div className={styles.containerContent} data-testid="query-history-queries-tab">
         <div className={styles.selectors}>
           {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect

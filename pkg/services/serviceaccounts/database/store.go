@@ -181,7 +181,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 			fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0, 3)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, orgId)
@@ -237,7 +237,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 				s.sqlStore.GetDialect().Quote("user"),
 				s.sqlStore.GetDialect().BooleanStr(true)),
 		}
-		whereParams := []interface{}{name, orgId}
+		whereParams := []any{name, orgId}
 
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 
@@ -274,7 +274,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
@@ -284,14 +284,12 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				s.sqlStore.GetDialect().Quote("user"),
 				s.sqlStore.GetDialect().BooleanStr(true)))
 
-		if !accesscontrol.IsDisabled(s.cfg) {
-			acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
-			if err != nil {
-				return err
-			}
-			whereConditions = append(whereConditions, acFilter.Where)
-			whereParams = append(whereParams, acFilter.Args...)
+		acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
+		if err != nil {
+			return err
 		}
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
 			queryWithWildcards := "%" + query.Query + "%"
@@ -315,7 +313,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
 		default:
-			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", query.Filter)
+			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
 
 		if len(whereConditions) > 0 {
@@ -382,7 +380,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
 			if err != nil {
-				s.log.Error("migating to service accounts failed with error", err.Error())
+				s.log.Error("Migating to service accounts failed with error", err.Error())
 				migrationResult.Failed++
 				migrationResult.FailedDetails = append(migrationResult.FailedDetails, fmt.Sprintf("API key name: %s - Error: %s", key.Name, err.Error()))
 				migrationResult.FailedApikeyIDs = append(migrationResult.FailedApikeyIDs, key.ID)
@@ -407,7 +405,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 		if keyId == key.ID {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
 			if err != nil {
-				s.log.Error("converting to service account failed with error", "keyId", keyId, "error", err)
+				s.log.Error("Converting to service account failed with error", "keyId", keyId, "error", err)
 				return err
 			}
 		}

@@ -12,12 +12,12 @@ interface XYCanvasProps {
  */
 export const XYCanvas = ({ children, left, top }: React.PropsWithChildren<XYCanvasProps>) => {
   const className = useMemo(() => {
-    return css`
-      position: absolute;
-      overflow: visible;
-      left: ${left}px;
-      top: ${top}px;
-    `;
+    return css({
+      position: 'absolute',
+      overflow: 'visible',
+      left: `${left}px`,
+      top: `${top}px`,
+    });
   }, [left, top]);
 
   return <div className={className}>{children}</div>;

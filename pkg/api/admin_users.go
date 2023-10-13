@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -56,13 +57,6 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 		OrgID:    form.OrgId,
 	}
 
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			return response.Error(400, "Validation error, need specify either username or email", nil)
-		}
-	}
-
 	if len(cmd.Password) < 4 {
 		return response.Error(400, "Password is missing or too short", nil)
 	}
@@ -77,7 +71,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "failed to create user", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
@@ -165,6 +159,17 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil && authInfo != nil {
+		oAuthAndAllowAssignGrafanaAdmin := false
+		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
+			oAuthAndAllowAssignGrafanaAdmin = oauthInfo.AllowAssignGrafanaAdmin
+		}
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthAndAllowAssignGrafanaAdmin) {
+			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
+		}
 	}
 
 	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
@@ -373,8 +378,15 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.UserID == userID {
-		return response.Error(400, "You cannot logout yourself", nil)
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace == identity.NamespaceUser {
+		activeUserID, err := identity.IntIdentifier(namespace, identifier)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
+		}
+		if activeUserID == userID {
+			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
+		}
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)

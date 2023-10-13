@@ -5,12 +5,18 @@ aliases:
   - ../alert-groups/filter-alerts/
   - ../alert-groups/view-alert-grouping/
   - ../unified-alerting/alert-groups/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
 description: Alert groups
 keywords:
   - grafana
   - alerting
   - alerts
   - groups
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: View and filter by alert groups
 weight: 800
 ---

@@ -33,20 +33,25 @@ DRONE := $(GOBIN)/drone-v1.5.0
 $(DRONE): $(BINGO_DIR)/drone.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/drone-v1.5.0"
-	@# Manual modification: CGo is disabled to make the Drone CLI build successfully on Darwin/arm64 machines.
-	@cd $(BINGO_DIR) && CGO_ENABLED=0 GOWORK=off $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
+	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=0 $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.52.2
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.53.3
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v1.52.2"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.52.2 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v1.53.3"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.53.3 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
 JB := $(GOBIN)/jb-v0.5.1
 $(JB): $(BINGO_DIR)/jb.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/jb-v0.5.1"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=jb.mod -o=$(GOBIN)/jb-v0.5.1 "github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb"
+
+LEFTHOOK := $(GOBIN)/lefthook-v1.4.8
+$(LEFTHOOK): $(BINGO_DIR)/lefthook.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/lefthook-v1.4.8"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=lefthook.mod -o=$(GOBIN)/lefthook-v1.4.8 "github.com/evilmartians/lefthook"
 
 SWAGGER := $(GOBIN)/swagger-v0.30.2
 $(SWAGGER): $(BINGO_DIR)/swagger.mod

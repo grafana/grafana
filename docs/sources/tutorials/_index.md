@@ -1,7 +1,11 @@
 ---
-title: 'Tutorials'
-menuTitle: 'Tutorials'
-description: 'Grafana tutorials'
+description: Grafana tutorials
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Tutorials
+title: Tutorials
 ---
 
 # Tutorials

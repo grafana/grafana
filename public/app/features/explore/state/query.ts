@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
+import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -34,10 +34,9 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { store } from 'app/store/store';
 import {
   createAsyncThunk,
   ExploreItemState,
@@ -59,9 +58,12 @@ import {
   supplementaryQueryTypes,
 } from '../utils/supplementaryQueries';
 
+import { getCorrelations } from './correlations';
+import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getResultsFromCache } from './utils';
+import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -247,26 +249,24 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: string, index: number): ThunkResult<void> {
+export function addQueryRow(exploreId: string, index: number): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
-    const queries = getState().explore.panes[exploreId]!.queries;
+    const pane = getState().explore.panes[exploreId]!;
     let datasourceOverride = undefined;
 
-    // if this is the first query being added, check for a root datasource
-    // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
-    if (queries.length === 0) {
-      const rootDatasource = getState().explore.panes[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
-        datasourceOverride = rootDatasource;
-      }
+    // if we are not in mixed mode, use root datasource
+    if (!pane.datasourceInstance?.meta.mixed) {
+      datasourceOverride = pane.datasourceInstance?.getRef();
+    } else {
+      // else try to get the datasource from the last query that defines one, falling back to the default datasource
+      datasourceOverride = findLast(pane.queries, (query) => !!query.datasource)?.datasource || undefined;
     }
 
-    const query = await generateEmptyQuery(queries, index, datasourceOverride?.getRef());
+    const query = await generateEmptyQuery(pane.queries, index, datasourceOverride);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
 }
-
 /**
  * Cancel running queries
  */
@@ -319,6 +319,14 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   async ({ queries, exploreId }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
+    const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
+    const correlationDetails = getState().explore.correlationEditorDetails;
+    const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
+    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
+
+    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.dirty) {
+      dispatch(changeCorrelationEditorDetails({ dirty: true }));
+    }
 
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
@@ -327,6 +335,16 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
           await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
           queriesImported = true;
+        }
+
+        if (
+          rootUID === MIXED_DATASOURCE_NAME &&
+          newQuery.refId === oldQuery.refId &&
+          newQuery.datasource?.uid !== oldQuery.datasource?.uid
+        ) {
+          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
+          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+          dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
     }
@@ -481,7 +499,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(updateTime({ exploreId }));
 
-    const correlations$ = getCorrelations();
+    const correlations$ = getCorrelations(exploreId);
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     if (preserveCache !== true) {
@@ -489,6 +507,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }
 
     const exploreItemState = getState().explore.panes[exploreId]!;
+
     const {
       datasourceInstance,
       containerWidth,
@@ -501,7 +520,14 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       absoluteRange,
       cache,
       supplementaryQueries,
+      correlationEditorHelperData,
     } = exploreItemState;
+    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
+    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
+    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+    const interpolateCorrelationHelperVars =
+      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -520,7 +546,16 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     if (cachedValue) {
       newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
         mergeMap(([data, correlations]) =>
-          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
+          decorateData(
+            data,
+            queryResponse,
+            absoluteRange,
+            refreshInterval,
+            queries,
+            correlations,
+            showCorrelationEditorLinks,
+            defaultCorrelationEditorDatasource
+          )
         )
       );
 
@@ -552,8 +587,23 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         liveStreaming: live,
       };
 
+      let scopedVars: ScopedVars = {};
+      if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+        Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+          scopedVars[variable[0]] = { value: variable[1] };
+        });
+      }
+
       const timeZone = getTimeZone(getState().user);
-      const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
+      const transaction = buildQueryTransaction(
+        exploreId,
+        queries,
+        queryOptions,
+        range,
+        scanning,
+        timeZone,
+        scopedVars
+      );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
@@ -566,13 +616,22 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         correlations$,
       ]).pipe(
         mergeMap(([data, correlations]) =>
-          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
+          decorateData(
+            data,
+            queryResponse,
+            absoluteRange,
+            refreshInterval,
+            queries,
+            correlations,
+            showCorrelationEditorLinks,
+            defaultCorrelationEditorDatasource
+          )
         )
       );
 
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
-          if (data.logsResult !== null) {
+          if (data.logsResult !== null && data.state === LoadingState.Done) {
             reportInteraction('grafana_explore_logs_result_displayed', {
               datasourceType: datasourceInstance.type,
             });
@@ -1131,27 +1190,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
-/**
- * Creates an observable that emits correlations once they are loaded
- */
-const getCorrelations = () => {
-  return new Observable<CorrelationData[]>((subscriber) => {
-    const existingCorrelations = store.getState().explore.correlations;
-    if (existingCorrelations) {
-      subscriber.next(existingCorrelations);
-      subscriber.complete();
-    } else {
-      const unsubscribe = store.subscribe(() => {
-        const { correlations } = store.getState().explore;
-        if (correlations) {
-          unsubscribe();
-          subscriber.next(correlations);
-          subscriber.complete();
-        }
-      });
-    }
-  });
-};
 export const processQueryResponse = (
   state: ExploreItemState,
   action: PayloadAction<QueryEndedPayload>
@@ -1169,6 +1207,7 @@ export const processQueryResponse = (
     nodeGraphFrames,
     flameGraphFrames,
     rawPrometheusFrames,
+    customFrames,
   } = response;
 
   if (error) {
@@ -1211,6 +1250,7 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    showCustom: !!customFrames?.length,
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };

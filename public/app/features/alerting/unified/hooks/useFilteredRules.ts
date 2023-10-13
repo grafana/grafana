@@ -1,5 +1,5 @@
 import uFuzzy from '@leeoniya/ufuzzy';
-import produce from 'immer';
+import { produce } from 'immer';
 import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 
@@ -136,7 +136,7 @@ export const filterRules = (
   }
 
   // If a namespace and group have rules that match the rules filters then keep them.
-  return filteredNamespaces.reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[]);
+  return filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
 };
 
 const reduceNamespaces = (filterState: RulesFilter) => {
@@ -154,7 +154,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       }
     }
 
-    filteredGroups = filteredGroups.reduce(reduceGroups(filterState), [] as CombinedRuleGroup[]);
+    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(reduceGroups(filterState), []);
 
     if (filteredGroups.length) {
       namespaceAcc.push({

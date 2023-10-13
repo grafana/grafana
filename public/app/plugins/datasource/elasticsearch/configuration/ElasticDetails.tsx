@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+import { ConfigSubSection } from '@grafana/experimental';
+import { InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { ElasticsearchOptions, Interval } from '../types';
 
@@ -20,92 +22,124 @@ type Props = {
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
-    <>
-      <FieldSet label="Elasticsearch details">
-        <InlineField label="Index name" htmlFor="es_config_indexName" labelWidth={26}>
-          <Input
-            id="es_config_indexName"
-            value={value.jsonData.index ?? (value.database || '')}
-            onChange={indexChangeHandler(value, onChange)}
-            width={24}
-            placeholder="es-index-name"
-            required
-          />
-        </InlineField>
+    <ConfigSubSection
+      title="Elasticsearch details"
+      description={
+        <ConfigDescriptionLink
+          description="Specific settings for the Elasticsearch data source."
+          suffix="elasticsearch/#index-settings"
+          feature="Elasticsearch details"
+        />
+      }
+    >
+      <InlineField
+        label="Index name"
+        htmlFor="es_config_indexName"
+        labelWidth={29}
+        tooltip="Name of your Elasticsearch index. You can use a time pattern, such as YYYY.MM.DD, or a wildcard for the index name."
+      >
+        <Input
+          id="es_config_indexName"
+          value={value.jsonData.index ?? (value.database || '')}
+          onChange={indexChangeHandler(value, onChange)}
+          width={24}
+          placeholder="es-index-name"
+          required
+        />
+      </InlineField>
 
-        <InlineField label="Pattern" htmlFor="es_config_indexPattern" labelWidth={26}>
-          <Select
-            inputId="es_config_indexPattern"
-            value={indexPatternTypes.find(
-              (pattern) => pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
-            )}
-            options={indexPatternTypes}
-            onChange={intervalHandler(value, onChange)}
-            width={24}
-          />
-        </InlineField>
+      <InlineField
+        label="Pattern"
+        htmlFor="es_config_indexPattern"
+        labelWidth={29}
+        tooltip="If you're using a pattern for your index, select the type, or no pattern."
+      >
+        <Select
+          inputId="es_config_indexPattern"
+          value={indexPatternTypes.find(
+            (pattern) => pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
+          )}
+          options={indexPatternTypes}
+          onChange={intervalHandler(value, onChange)}
+          width={24}
+        />
+      </InlineField>
 
-        <InlineField label="Time field name" htmlFor="es_config_timeField" labelWidth={26}>
-          <Input
-            id="es_config_timeField"
-            value={value.jsonData.timeField || ''}
-            onChange={jsonDataChangeHandler('timeField', value, onChange)}
-            width={24}
-            placeholder="@timestamp"
-            required
-          />
-        </InlineField>
+      <InlineField
+        label="Time field name"
+        htmlFor="es_config_timeField"
+        labelWidth={29}
+        tooltip="Name of your time field. Defaults to @timestamp."
+      >
+        <Input
+          id="es_config_timeField"
+          value={value.jsonData.timeField || ''}
+          onChange={jsonDataChangeHandler('timeField', value, onChange)}
+          width={24}
+          placeholder="@timestamp"
+          required
+        />
+      </InlineField>
 
-        <InlineField label="Max concurrent Shard Requests" htmlFor="es_config_shardRequests" labelWidth={26}>
-          <Input
-            id="es_config_shardRequests"
-            value={value.jsonData.maxConcurrentShardRequests || ''}
-            onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-            width={24}
-          />
-        </InlineField>
+      <InlineField
+        label="Max concurrent Shard Requests"
+        htmlFor="es_config_shardRequests"
+        labelWidth={29}
+        tooltip="Maximum number of concurrent shards a search request can hit per node. Defaults to 5."
+      >
+        <Input
+          id="es_config_shardRequests"
+          value={value.jsonData.maxConcurrentShardRequests || ''}
+          onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+          width={24}
+        />
+      </InlineField>
 
+      <InlineField
+        label="Min time interval"
+        htmlFor="es_config_minTimeInterval"
+        labelWidth={29}
+        tooltip={
+          <>
+            A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
+            <code>1m</code> if your data is written every minute.
+          </>
+        }
+        error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
+        invalid={!!value.jsonData.timeInterval && !/^\d+(ms|[Mwdhmsy])$/.test(value.jsonData.timeInterval)}
+      >
+        <Input
+          id="es_config_minTimeInterval"
+          value={value.jsonData.timeInterval || ''}
+          onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
+          width={24}
+          placeholder="10s"
+        />
+      </InlineField>
+
+      <InlineField label="X-Pack enabled" labelWidth={29} tooltip="Enable or disable X-Pack specific features">
+        <InlineSwitch
+          id="es_config_xpackEnabled"
+          value={value.jsonData.xpack || false}
+          onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+        />
+      </InlineField>
+
+      {value.jsonData.xpack && (
         <InlineField
-          label="Min time interval"
-          htmlFor="es_config_minTimeInterval"
-          labelWidth={26}
-          tooltip={
-            <>
-              A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
-              <code>1m</code> if your data is written every minute.
-            </>
-          }
-          error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
-          invalid={!!value.jsonData.timeInterval && !/^\d+(ms|[Mwdhmsy])$/.test(value.jsonData.timeInterval)}
+          label="Include Frozen Indices"
+          htmlFor="es_config_frozenIndices"
+          labelWidth={29}
+          tooltip="Include frozen indices in searches."
         >
-          <Input
-            id="es_config_minTimeInterval"
-            value={value.jsonData.timeInterval || ''}
-            onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
-            width={24}
-            placeholder="10s"
-          />
-        </InlineField>
-
-        <InlineField label="X-Pack enabled" labelWidth={26}>
           <InlineSwitch
-            id="es_config_xpackEnabled"
-            value={value.jsonData.xpack || false}
-            onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+            id="es_config_frozenIndices"
+            value={value.jsonData.includeFrozen ?? false}
+            onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
           />
         </InlineField>
-
-        {value.jsonData.xpack && (
-          <InlineField label="Include Frozen Indices" htmlFor="es_config_frozenIndices" labelWidth={26}>
-            <InlineSwitch
-              id="es_config_frozenIndices"
-              value={value.jsonData.includeFrozen ?? false}
-              onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
-            />
-          </InlineField>
-        )}
-      </FieldSet>
-    </>
+      )}
+    </ConfigSubSection>
   );
 };
 

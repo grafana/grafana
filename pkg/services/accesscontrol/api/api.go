@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,7 +42,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
-	})
+	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 
 // GET /api/access-control/user/actions
@@ -82,7 +83,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
@@ -114,7 +115,8 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
-	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(),
+		c.SignedInUser.GetOrgID(), searchOptions)
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}

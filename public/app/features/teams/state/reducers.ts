@@ -35,17 +35,20 @@ const teamsSlice = createSlice({
     pageChanged: (state, action: PayloadAction<number>): TeamsState => {
       return { ...state, page: action.payload };
     },
+    sortChanged: (state, action: PayloadAction<TeamsState['sort']>): TeamsState => {
+      return { ...state, sort: action.payload, page: 1 };
+    },
   },
 });
 
-export const { teamsLoaded, queryChanged, pageChanged } = teamsSlice.actions;
+export const { teamsLoaded, queryChanged, pageChanged, sortChanged } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 
 export const initialTeamState: TeamState = {
   team: {} as Team,
-  members: [] as TeamMember[],
-  groups: [] as TeamGroup[],
+  members: [],
+  groups: [],
   searchMemberQuery: '',
 };
 

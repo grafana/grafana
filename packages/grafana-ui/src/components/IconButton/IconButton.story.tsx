@@ -4,7 +4,6 @@ import React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
@@ -20,7 +19,6 @@ const additionalExcludes = ['size', 'name', 'variant', 'iconType'];
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -54,11 +52,11 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
   const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
-  const rowStyle = css`
-    display: flex;
-    gap: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(2)};
-  `;
+  const rowStyle = css({
+    display: 'flex',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+  });
 
   return (
     <HorizontalGroup justify="center">
@@ -66,9 +64,9 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
         return (
           <div
             key={variant}
-            className={css`
-              margin: auto ${theme.spacing(1)};
-            `}
+            className={css({
+              margin: `auto ${theme.spacing(1)}`,
+            })}
           >
             <p>{variant}</p>
             {icons.map((icon) => {
@@ -114,18 +112,18 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
 
     return (
       <div
-        className={css`
-          padding: 30px;
-          background: ${theme.colors.background[background]};
-        `}
+        className={css({
+          padding: '30px',
+          background: theme.colors.background[background],
+        })}
       >
         <VerticalGroup spacing="md">
           <div>{background}</div>
           <div
-            className={css`
-              display: flex;
-              gap: ${theme.spacing(2)};
-            `}
+            className={css({
+              display: 'flex',
+              gap: theme.spacing(2),
+            })}
           >
             {variants.map((variant) => {
               return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip={args.tooltip} />;

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps, useCallback } from 'react';
+import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -41,12 +41,7 @@ export const Layout = ({
   height = '100%',
   ...rest
 }: LayoutProps) => {
-  const styles = useStyles2(
-    useCallback(
-      (theme) => getStyles(theme, orientation, spacing, justify, align, wrap),
-      [align, justify, orientation, spacing, wrap]
-    )
-  );
+  const styles = useStyles2(getStyles, orientation, spacing, justify, align, wrap);
 
   return (
     <div className={styles.layout} style={{ width, height }} {...rest}>
@@ -105,20 +100,14 @@ export const VerticalGroup = ({
 );
 
 export const Container = ({ children, padding, margin, grow, shrink }: React.PropsWithChildren<ContainerProps>) => {
-  const styles = useStyles2(useCallback((theme) => getContainerStyles(theme, padding, margin), [padding, margin]));
+  const styles = useStyles2(getContainerStyles, padding, margin);
 
   return (
     <div
       className={cx(
         styles.wrapper,
-        grow !== undefined &&
-          css`
-            flex-grow: ${grow};
-          `,
-        shrink !== undefined &&
-          css`
-            flex-shrink: ${shrink};
-          `
+        grow !== undefined && css({ flexGrow: grow }),
+        shrink !== undefined && css({ flexShrink: shrink })
       )}
     >
       {children}
@@ -143,30 +132,30 @@ const getStyles = (
   const label = orientation === Orientation.Vertical ? 'vertical-group' : 'horizontal-group';
 
   return {
-    layout: css`
-      label: ${label};
-      display: flex;
-      flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
-      flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
-      justify-content: ${justify};
-      align-items: ${align};
-      height: 100%;
-      max-width: 100%;
+    layout: css({
+      label: label,
+      display: 'flex',
+      flexDirection: orientation === Orientation.Vertical ? 'column' : 'row',
+      flexWrap: wrap ? 'wrap' : 'nowrap',
+      justifyContent: justify,
+      alignItems: align,
+      height: '100%',
+      maxWidth: '100%',
       // compensate for last row margin when wrapped, horizontal layout
-      margin-bottom: ${marginCompensation};
-    `,
-    childWrapper: css`
-      label: layoutChildrenWrapper;
-      margin-bottom: ${orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing};
-      margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
-      display: flex;
-      align-items: ${align};
+      marginBottom: marginCompensation,
+    }),
+    childWrapper: css({
+      label: 'layoutChildrenWrapper',
+      marginBottom: orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing,
+      marginRight: orientation === Orientation.Horizontal ? finalSpacing : 0,
+      display: 'flex',
+      alignItems: align,
 
-      &:last-child {
-        margin-bottom: ${orientation === Orientation.Vertical && 0};
-        margin-right: ${orientation === Orientation.Horizontal && 0};
-      }
-    `,
+      '&:last-child': {
+        marginBottom: orientation === Orientation.Vertical ? 0 : undefined,
+        marginRight: orientation === Orientation.Horizontal ? 0 : undefined,
+      },
+    }),
   };
 };
 
@@ -182,10 +171,10 @@ const getContainerStyles = (theme: GrafanaTheme2, padding?: Spacing, margin?: Sp
   const paddingSize = (padding && padding !== 'none' && theme.spacing(spacingToNumber[padding])) || 0;
   const marginSize = (margin && margin !== 'none' && theme.spacing(spacingToNumber[margin])) || 0;
   return {
-    wrapper: css`
-      label: container;
-      margin: ${marginSize};
-      padding: ${paddingSize};
-    `,
+    wrapper: css({
+      label: 'container',
+      margin: marginSize,
+      padding: paddingSize,
+    }),
   };
 };

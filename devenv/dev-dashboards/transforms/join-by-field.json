@@ -610,7 +610,6 @@
     }
   ],
   "schemaVersion": 37,
-  "style": "dark",
   "tags": [
     "gdev",
     "transform"

@@ -4,6 +4,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   checkForPathSeparator,
+  findRenamedDataQueryReferences,
   getThresholdsForQueries,
   queriesWithUpdatedReferences,
   updateMathExpressionRefs,
@@ -404,3 +405,33 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   return [dataQuery, reduceExpression, thresholdExpression];
 }
+
+describe('findRenamedReferences', () => {
+  it('should find the renamed ids', () => {
+    const previous = [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }] as AlertQuery[];
+    const updated = [{ refId: 'FOO' }, { refId: 'B' }, { refId: 'C' }] as AlertQuery[];
+
+    expect(findRenamedDataQueryReferences(previous, updated)).toEqual(['A', 'FOO']);
+  });
+
+  it('should ignore expression queries', () => {
+    // @ts-expect-error
+    const previous = [
+      { refId: 'A' },
+      { refId: 'REDUCE', model: { datasource: '-100' } },
+      { refId: 'MATH', model: { datasource: '-100' } },
+      { refId: 'B' },
+      { refId: 'C' },
+    ] as AlertQuery[];
+
+    // @ts-expect-error
+    const updated = [
+      { refId: 'FOO' },
+      { refId: 'REDUCE', model: { datasource: '-100' } },
+      { refId: 'B' },
+      { refId: 'C' },
+    ] as AlertQuery[];
+
+    expect(findRenamedDataQueryReferences(previous, updated)).toEqual(['A', 'FOO']);
+  });
+});

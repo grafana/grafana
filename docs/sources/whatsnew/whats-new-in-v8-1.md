@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '8.1'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v8.1
 weight: -33
 ---
@@ -55,7 +60,7 @@ You can also create annotations in the new Time series panel bringing it closer 
 
 ### Transformations improvements
 
-Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visulizations.
+Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visualizations.
 
 #### Config from query (Beta)
 

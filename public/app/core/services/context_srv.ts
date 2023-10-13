@@ -2,6 +2,7 @@ import { extend } from 'lodash';
 
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
+import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
@@ -34,6 +35,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
+  authenticatedBy: string;
 
   constructor() {
     this.id = 0;
@@ -59,6 +61,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.analytics = {
       identifier: '',
     };
+    this.authenticatedBy = '';
 
     if (config.bootData.user) {
       extend(this, config.bootData.user);
@@ -89,18 +92,14 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (this.isSignedIn) {
-      this.scheduleTokenRotationJob();
-    }
+    this.scheduleTokenRotationJob();
   }
 
   async fetchUserPermissions() {
     try {
-      if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
-          reloadcache: true,
-        });
-      }
+      this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
+        reloadcache: true,
+      });
     } catch (e) {
       console.error(e);
     }
@@ -124,31 +123,17 @@ export class ContextSrv {
     }
   }
 
-  accessControlEnabled(): boolean {
-    return config.rbacEnabled;
-  }
-
   licensedAccessControlEnabled(): boolean {
-    return featureEnabled('accesscontrol') && config.rbacEnabled;
+    return featureEnabled('accesscontrol');
   }
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
-    // Fallback if access control disabled
-    if (!this.accessControlEnabled()) {
-      return true;
-    }
-
     return !!object.accessControl?.[action];
   }
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
-    // Fallback if access control disabled
-    if (!this.accessControlEnabled()) {
-      return true;
-    }
-
     return !!this.user.permissions?.[action];
   }
 
@@ -171,32 +156,19 @@ export class ContextSrv {
     return interval;
   }
 
+  getValidIntervals(intervals: string[]): string[] {
+    if (this.minRefreshInterval) {
+      return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
+    }
+    return intervals;
+  }
+
   hasAccessToExplore() {
-    if (this.accessControlEnabled()) {
-      return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
-    }
-    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+    return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean): boolean {
-    if (!this.accessControlEnabled()) {
-      return fallBack;
-    }
-    return this.hasPermission(action);
-  }
-
-  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean): boolean {
-    if (!this.accessControlEnabled()) {
-      return fallBack;
-    }
-    return this.hasPermissionInMetadata(action, object);
-  }
-
-  // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
-  evaluatePermission(fallback: () => string[], actions: string[]) {
-    if (!this.accessControlEnabled()) {
-      return fallback();
-    }
+  // evaluates access control permissions, granting access if the user has any of them
+  evaluatePermission(actions: string[]) {
     if (actions.some((action) => this.hasPermission(action))) {
       return [];
     }
@@ -206,20 +178,10 @@ export class ContextSrv {
 
   // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isRenderRequest = !!urlParams.get('render');
-    // only schedule job if feature toggle is enabled, user is signed in and it's not a render request
-    if (config.featureToggles.clientTokenRotation && this.isSignedIn && !isRenderRequest) {
+    // check if we can schedula the token rotation job
+    if (this.canScheduleRotation()) {
       // get the time token is going to expire
-      let expires = this.getSessionExpiry();
-
-      // if expires is 0 we run rotation now and reschedule the job
-      // this can happen if user was signed in before upgrade
-      // after a successful rotation the expiry cookie will be present
-      if (expires === 0) {
-        this.rotateToken().then();
-        return;
-      }
+      let expires = getSessionExpiry();
 
       // because this job is scheduled for every tab we have open that shares a session we try
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
@@ -232,13 +194,36 @@ export class ContextSrv {
       this.tokenRotationJobId = setTimeout(() => {
         // if we have a new expiry time from the expiry cookie another tab have already performed the rotation
         // so the only thing we need to do is reschedule the job and exit
-        if (this.getSessionExpiry() > expires) {
+        if (getSessionExpiry() > expires) {
           this.scheduleTokenRotationJob();
           return;
         }
         this.rotateToken().then();
       }, nextRun);
     }
+  }
+
+  private canScheduleRotation() {
+    // skip if user is not signed in, this happens on login page or when using anonymous auth
+    if (!this.isSignedIn) {
+      return false;
+    }
+
+    // skip if feature toggle is not enabled
+    if (!config.featureToggles.clientTokenRotation) {
+      return false;
+    }
+
+    // skip if there is no session to rotate
+    // if a user has a session but not yet a session expiry cookie, can happen during upgrade
+    // from an older version of grafana, we never schedule the job and the fallback logic
+    // in backend_srv will take care of rotations until first rotation has been made and
+    // page has been reloaded.
+    if (getSessionExpiry() === 0) {
+      return false;
+    }
+
+    return true;
   }
 
   private cancelTokenRotationJob() {
@@ -264,20 +249,6 @@ export class ContextSrv {
       .catch((e) => {
         console.error(e);
       });
-  }
-
-  private getSessionExpiry() {
-    const expiryCookie = document.cookie.split('; ').find((row) => row.startsWith('grafana_session_expiry='));
-    if (!expiryCookie) {
-      return 0;
-    }
-
-    let expiresStr = expiryCookie.split('=').at(1);
-    if (!expiresStr) {
-      return 0;
-    }
-
-    return parseInt(expiresStr, 10);
   }
 }
 

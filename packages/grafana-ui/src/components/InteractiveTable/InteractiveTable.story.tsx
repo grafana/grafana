@@ -1,19 +1,16 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
-import { InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
-const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
+const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 
 const meta: Meta<typeof InteractiveTable> = {
   title: 'Experimental/InteractiveTable',
   component: InteractiveTable,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -275,4 +272,37 @@ export const WithHeaderTooltips: StoryFn<typeof InteractiveTable> = (args) => {
   );
 };
 
+export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name', sortType: 'string' },
+    { id: 'lastName', header: 'Last name', sortType: 'string' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age' },
+  ];
+  const [data, setData] = useState(pageableData);
+
+  const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
+    if (!sortBy?.length) {
+      return setData(pageableData);
+    }
+
+    setTimeout(() => {
+      const newData = [...pageableData];
+      newData.sort((a, b) => {
+        const sort = sortBy[0];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        if (sort.desc) {
+          return bData.localeCompare(aData);
+        }
+        return aData.localeCompare(bData);
+      });
+      setData(newData);
+    }, 300);
+  }, []);
+
+  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.id} pageSize={15} fetchData={fetchData} />;
+};
 export default meta;

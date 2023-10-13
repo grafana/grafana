@@ -6,6 +6,10 @@ description: This section contains information about API keys in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: API keys
 title: API keys
 weight: 700
@@ -131,7 +135,7 @@ Complete the following steps to migrate from API keys to service accounts for AP
    This action generates a service account token.
 
 1. Store the ID and secret that the system returns to you.
-1. Pass the token in the `Authrorization` header, prefixed with `Bearer`.
+1. Pass the token in the `Authorization` header, prefixed with `Bearer`.
 
    This action authenticates API requests.
 

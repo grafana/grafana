@@ -7,11 +7,31 @@ Used for displaying tabular data
 
 ## Sub-tables
 
-Sub-tables are supported through the usage of the prop `subData` Dataframe array.
-The frames are linked to each row using the following custom properties under `dataframe.meta.custom`
+Sub-tables are supported by adding `FieldType.nestedFrames` to the field that contains the nested data in your dataframe.
 
-- **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component)
-- **noHeader**: boolean - Sets the noHeader of each sub-table
+This nested fields values can contain an array of one or more dataframes. Each of these dataframes will be rendered as one unique sub-table.
+
+For each dataframe and index in the nested field, the dataframe will be rendered as one or more sub-tables below the main dataframe row at that index.
+
+Each dataframe also supports using the following custom property under `dataframe.meta.custom`:
+
+- **noHeader**: boolean - Hides that sub-tables header.
+
+- @deprecated use `FieldType.nestedFrames` instead
+  - **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component).
+
+## Cell rendering
+
+Cell rendering is controlled by table specific field config in the DataFrame passed as `data` prop. Each field can set its `field.config.custom` to be type `TableFieldOptions`. `TableFieldOptions` contain generic options to control some aspects of the cell and column rendering. They also contain `cellOptions` property which can be further used to control type of cell renderer that will be used. `cellOptions` subtypes:
+
+- **TableAutoCellOptions**: Default cell renderer that does not have to be specified in the `field.config`. Just displays the value with appropriate formatting.
+- **TableSparklineCellOptions**: Shows a small, time series chart inside the cell. The field values have to be an array of numbers or a DataFrame.
+- **TableBarGaugeCellOptions**: Show a gauge inside the cell.
+- **TableColoredBackgroundCellOptions**: Show the cell with a colored background.
+- **TableColorTextCellOptions**: Make the text inside the cell colored.
+- **TableImageCellOptions**: Show an image inside the cell.
+- **TableJsonViewCellOptions**: Shows a formatted and indented JSON text.
+- **TableCustomCellOptions**: Allows to specify a custom cell renderer as React function component.
 
 ## Usage
 

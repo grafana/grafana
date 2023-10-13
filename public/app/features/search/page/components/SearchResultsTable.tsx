@@ -147,13 +147,23 @@ export const SearchResultsTable = React.memo(
                   columnIndex={index}
                   columnCount={row.cells.length}
                   userProps={{ href: url, onClick: onClickItem }}
+                  frame={response.view.dataFrame}
                 />
               );
             })}
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles, onClickItem]
+      [
+        rows,
+        prepareRow,
+        response.view.fields.url?.values,
+        highlightIndex,
+        styles,
+        tableStyles,
+        onClickItem,
+        response.view.dataFrame,
+      ]
     );
 
     if (!rows.length) {

@@ -7,6 +7,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   stringToJsRegex,
+  TransformerCategory,
 } from '@grafana/data';
 import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
 import { Field, Input } from '@grafana/ui';
@@ -129,4 +130,5 @@ export const renameByRegexTransformRegistryItem: TransformerRegistryItem<RenameB
   transformation: standardTransformers.renameByRegexTransformer,
   name: 'Rename by regex',
   description: 'Renames part of the query result by using regular expression with placeholders.',
+  categories: new Set([TransformerCategory.ReorderAndRename]),
 };

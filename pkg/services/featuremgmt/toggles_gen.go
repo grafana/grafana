@@ -27,10 +27,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPrometheusAzureOverrideAudience
-	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
-	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
@@ -55,14 +51,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagExploreMixedDatasource
-	// Enable mixed datasource in Explore
-	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -79,10 +67,6 @@ const (
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
 
-	// FlagValidateDashboardsOnSave
-	// Validate dashboard JSON POSTed to api/dashboards/db
-	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -90,10 +74,6 @@ const (
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
-
-	// FlagPrometheusWideSeries
-	// Enable wide series responses in the Prometheus datasource
-	FlagPrometheusWideSeries = "prometheusWideSeries"
 
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
@@ -116,8 +96,12 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagTopnav
-	// Enables new top navigation and page layouts
+	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
+
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
 
 	// FlagGrpcServer
 	// Run the GRPC server
@@ -139,9 +123,9 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagNewPanelChromeUI
-	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
-	FlagNewPanelChromeUI = "newPanelChromeUI"
+	// FlagCloudwatchNewRegionsHandler
+	// Refactor of /regions endpoint, no user-facing changes
+	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
 
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
@@ -160,16 +144,12 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the still in-development new folder picker to support nested folders
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
-	// FlagShowTraceId
-	// Show trace ids for requests
-	FlagShowTraceId = "showTraceId"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -191,10 +171,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagLogsSampleInExplore
-	// Enables access to the logs sample feature in Explore
-	FlagLogsSampleInExplore = "logsSampleInExplore"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -211,13 +187,9 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with external auth providers
-	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
-	// FlagTraceqlSearch
-	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
-	FlagTraceqlSearch = "traceqlSearch"
+	// FlagGcomOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
+	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
 
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
@@ -226,10 +198,6 @@ const (
 	// FlagTimeSeriesTable
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
-
-	// FlagPrometheusResourceBrowserCache
-	// Displays browser caching options in Prometheus data source configuration
-	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
 
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
@@ -240,12 +208,16 @@ const (
 	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagLokiLogsDataplane
+	// Changes logs responses from Loki to be compliant with the dataplane specification.
+	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
@@ -279,10 +251,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagPyroscopeFlameGraph
-	// Changes flame graph to pyroscope one
-	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
@@ -292,7 +260,7 @@ const (
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
 	// FlagUseCachingService
-	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	// When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.
 	FlagUseCachingService = "useCachingService"
 
 	// FlagEnableElasticsearchBackendQuerying
@@ -327,9 +295,21 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
+	// FlagFrontendSandboxMonitorOnly
+	// Enables monitor only in the plugin frontend sandbox (if enabled)
+	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
+
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
+
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
 
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
@@ -347,19 +327,179 @@ const (
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
-	// FlagAlertingLokiRangeToInstant
-	// Rewrites eligible loki range queries to instant queries
-	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
-
-	// FlagFlameGraphV2
-	// New version of flame graph with new features
-	FlagFlameGraphV2 = "flameGraphV2"
-
-	// FlagElasticToggleableFilters
-	// Enable support to toggle filters off from the query through the Logs Details component
-	FlagElasticToggleableFilters = "elasticToggleableFilters"
-
 	// FlagVizAndWidgetSplit
-	// Split panels between vizualizations and widgets
+	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
+
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
+	// FlagAwsDatasourcesTempCredentials
+	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
+	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
+
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagToggleLabelsInLogsUI
+	// Enable toggleable filters in log details view
+	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
+
+	// FlagMlExpressions
+	// Enable support for Machine Learning in server-side expressions
+	FlagMlExpressions = "mlExpressions"
+
+	// FlagTraceQLStreaming
+	// Enables response streaming of TraceQL queries of the Tempo data source
+	FlagTraceQLStreaming = "traceQLStreaming"
+
+	// FlagMetricsSummary
+	// Enables metrics summary queries in the Tempo data source
+	FlagMetricsSummary = "metricsSummary"
+
+	// FlagGrafanaAPIServer
+	// Enable Kubernetes API Server for Grafana resources
+	FlagGrafanaAPIServer = "grafanaAPIServer"
+
+	// FlagGrafanaAPIServerWithExperimentalAPIs
+	// Register experimental APIs with the k8s API server
+	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
+
+	// FlagFeatureToggleAdminPage
+	// Enable admin page for managing feature toggles from the Grafana front-end
+	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagAwsAsyncQueryCaching
+	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
+
+	// FlagAzureMonitorDataplane
+	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
+	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagPermissionsFilterRemoveSubquery
+	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
+	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
+
+	// FlagPrometheusConfigOverhaulAuth
+	// Update the Prometheus configuration page with the new auth component
+	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
+
+	// FlagConfigurableSchedulerTick
+	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
+	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
+
+	// FlagDashgpt
+	// Enable AI powered features in dashboards
+	FlagDashgpt = "dashgpt"
+
+	// FlagReportingRetries
+	// Enables rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
+
+	// FlagNewBrowseDashboards
+	// New browse/manage dashboards UI
+	FlagNewBrowseDashboards = "newBrowseDashboards"
+
+	// FlagSseGroupByDatasource
+	// Send query to the same datasource in a single request when using server side expressions
+	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagRequestInstrumentationStatusSource
+	// Include a status source label for request metrics and logs
+	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLibraryPanelRBAC
+	// Enables RBAC support for library panels
+	FlagLibraryPanelRBAC = "libraryPanelRBAC"
+
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
+
+	// FlagWargamesTesting
+	// Placeholder feature flag for internal testing
+	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagAlertingInsights
+	// Show the new alerting insights landing page
+	FlagAlertingInsights = "alertingInsights"
+
+	// FlagExternalCorePlugins
+	// Allow core plugins to be loaded as external
+	FlagExternalCorePlugins = "externalCorePlugins"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
+
+	// FlagHttpSLOLevels
+	// Adds SLO level to http request metrics
+	FlagHttpSLOLevels = "httpSLOLevels"
+
+	// FlagIdForwarding
+	// Generate signed id token for identity that can be forwarded to plugins and external services
+	FlagIdForwarding = "idForwarding"
+
+	// FlagCloudWatchWildCardDimensionValues
+	// Fetches dimension values from CloudWatch to correctly label wildcard dimensions
+	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
+
+	// FlagExternalServiceAccounts
+	// Automatic service account and token setup for plugins
+	FlagExternalServiceAccounts = "externalServiceAccounts"
+
+	// FlagPanelMonitoring
+	// Enables panel monitoring through logs and measurements
+	FlagPanelMonitoring = "panelMonitoring"
+
+	// FlagEnableNativeHTTPHistogram
+	// Enables native HTTP Histograms
+	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagTransformationsVariableSupport
+	// Allows using variables in transformations
+	FlagTransformationsVariableSupport = "transformationsVariableSupport"
+
+	// FlagKubernetesPlaylists
+	// Use the kubernetes API in the frontend for playlists
+	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagNavAdminSubsections
+	// Splits the administration section of the nav tree into subsections
+	FlagNavAdminSubsections = "navAdminSubsections"
+
+	// FlagRecoveryThreshold
+	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
+	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagAwsDatasourcesNewFormStyling
+	// Applies new form styling for configuration and query editors in AWS plugins
+	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
+
+	// FlagCachingOptimizeSerializationMemoryUsage
+	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
+	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 )

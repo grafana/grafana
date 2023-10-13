@@ -59,6 +59,11 @@ export interface LineConfig {
   width?: number;
 }
 
+export enum HttpRequestMethod {
+  GET = 'GET',
+  POST = 'POST',
+}
+
 export interface ConnectionCoordinates {
   x: number;
   y: number;

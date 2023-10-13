@@ -1,3 +1,5 @@
+import { t } from 'app/core/internationalization';
+
 export function buildBreakdownString(
   folderCount: number,
   dashboardCount: number,
@@ -7,18 +9,18 @@ export function buildBreakdownString(
   const total = folderCount + dashboardCount + libraryPanelCount + alertRuleCount;
   const parts = [];
   if (folderCount) {
-    parts.push(`${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`);
+    parts.push(t('browse-dashboards.counts.folder', '{{count}} folder', { count: folderCount }));
   }
   if (dashboardCount) {
-    parts.push(`${dashboardCount} ${dashboardCount === 1 ? 'dashboard' : 'dashboards'}`);
+    parts.push(t('browse-dashboards.counts.dashboard', '{{count}} dashboard', { count: dashboardCount }));
   }
   if (libraryPanelCount) {
-    parts.push(`${libraryPanelCount} ${libraryPanelCount === 1 ? 'library panel' : 'library panels'}`);
+    parts.push(t('browse-dashboards.counts.libraryPanel', '{{count}} library panel', { count: libraryPanelCount }));
   }
   if (alertRuleCount) {
-    parts.push(`${alertRuleCount} ${alertRuleCount === 1 ? 'alert rule' : 'alert rules'}`);
+    parts.push(t('browse-dashboards.counts.alertRule', '{{count}} alert rule', { count: alertRuleCount }));
   }
-  let breakdownString = `${total} ${total === 1 ? 'item' : 'items'}`;
+  let breakdownString = t('browse-dashboards.counts.total', '{{count}} item', { count: total });
   if (parts.length > 0) {
     breakdownString += `: ${parts.join(', ')}`;
   }

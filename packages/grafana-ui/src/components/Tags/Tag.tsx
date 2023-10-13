@@ -77,25 +77,25 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
     colors = getTagColor(colorIndex);
   }
   return {
-    wrapper: css`
-      appearance: none;
-      border-style: none;
-      font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.bodySmall.lineHeight};
-      vertical-align: baseline;
-      background-color: ${colors.color};
-      color: ${theme.v1.palette.gray98};
-      white-space: nowrap;
-      text-shadow: none;
-      padding: 3px 6px;
-      border-radius: ${theme.shape.radius.default};
-    `,
-    hover: css`
-      &:hover {
-        opacity: 0.85;
-        cursor: pointer;
-      }
-    `,
+    wrapper: css({
+      appearance: 'none',
+      borderStyle: 'none',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.sm,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      verticalAlign: 'baseline',
+      backgroundColor: colors.color,
+      color: theme.v1.palette.gray98,
+      whiteSpace: 'nowrap',
+      textShadow: 'none',
+      padding: '3px 6px',
+      borderRadius: theme.shape.radius.default,
+    }),
+    hover: css({
+      '&:hover': {
+        opacity: 0.85,
+        cursor: 'pointer',
+      },
+    }),
   };
 };

@@ -5,21 +5,21 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
-import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
+import {
+  grantUserPermissions,
+  mockAlertGroup,
+  mockAlertmanagerAlert,
+  mockDataSource,
+  MockDataSourceSrv,
+} from './mocks';
+import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    isEditor: true,
-    hasAccess: () => true,
-    hasPermission: () => true,
-  },
-}));
 const mocks = {
   api: {
     fetchAlertGroups: jest.mocked(fetchAlertGroups),
@@ -29,7 +29,9 @@ const mocks = {
 const renderAmNotifications = () => {
   return render(
     <TestProvider>
-      <AlertGroups />
+      <AlertmanagerProvider accessType={'instance'}>
+        <AlertGroups />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };
@@ -57,6 +59,13 @@ const ui = {
 
 describe('AlertGroups', () => {
   beforeAll(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstanceCreate,
+      AccessControlAction.AlertingInstancesExternalRead,
+      AccessControlAction.AlertingRuleRead,
+    ]);
+
     mocks.api.fetchAlertGroups.mockImplementation(() => {
       return Promise.resolve([
         mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
@@ -78,7 +87,7 @@ describe('AlertGroups', () => {
 
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('severity=warningregion=US-Central');
+    expect(groups[1]).toHaveTextContent('severitywarning regionUS-Central');
 
     await userEvent.click(ui.groupCollapseToggle.get(groups[0]));
     expect(ui.groupTable.get()).toBeDefined();
@@ -111,9 +120,9 @@ describe('AlertGroups', () => {
     const groupByWrapper = ui.groupByContainer.get();
 
     expect(groups).toHaveLength(3);
-    expect(groups[0]).toHaveTextContent('region=NASA');
-    expect(groups[1]).toHaveTextContent('region=EMEA');
-    expect(groups[2]).toHaveTextContent('region=APAC');
+    expect(groups[0]).toHaveTextContent('regionNASA');
+    expect(groups[1]).toHaveTextContent('regionEMEA');
+    expect(groups[2]).toHaveTextContent('regionAPAC');
 
     await userEvent.type(groupByInput, 'appName{enter}');
 
@@ -123,9 +132,9 @@ describe('AlertGroups', () => {
 
     await waitFor(() => expect(ui.clearButton.get()).toBeInTheDocument());
     expect(groups).toHaveLength(3);
-    expect(groups[0]).toHaveTextContent('appName=billing');
-    expect(groups[1]).toHaveTextContent('appName=auth');
-    expect(groups[2]).toHaveTextContent('appName=frontend');
+    expect(groups[0]).toHaveTextContent('appNamebilling');
+    expect(groups[1]).toHaveTextContent('appNameauth');
+    expect(groups[2]).toHaveTextContent('appNamefrontend');
 
     await userEvent.click(ui.clearButton.get());
     await waitFor(() => expect(groupByWrapper).not.toHaveTextContent('appName'));
@@ -136,8 +145,8 @@ describe('AlertGroups', () => {
     groups = await ui.group.findAll();
 
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toHaveTextContent('env=production');
-    expect(groups[1]).toHaveTextContent('env=staging');
+    expect(groups[0]).toHaveTextContent('envproduction');
+    expect(groups[1]).toHaveTextContent('envstaging');
 
     await userEvent.click(ui.clearButton.get());
     await waitFor(() => expect(groupByWrapper).not.toHaveTextContent('env'));
@@ -148,7 +157,7 @@ describe('AlertGroups', () => {
     groups = await ui.group.findAll();
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('uniqueLabel=true');
+    expect(groups[1]).toHaveTextContent('uniqueLabeltrue');
   });
 
   it('should combine multiple ungrouped groups', async () => {

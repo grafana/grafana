@@ -26,7 +26,7 @@ type HTTPClientMiddleware struct {
 	next plugins.Client
 }
 
-func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq interface{}) context.Context {
+func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) context.Context {
 	if pReq == nil {
 		return ctx
 	}

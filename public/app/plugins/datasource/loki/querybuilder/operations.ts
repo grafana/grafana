@@ -1,4 +1,3 @@
-import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -101,8 +100,33 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Logfmt,
       name: 'Logfmt',
-      params: [],
-      defaultParams: [],
+      params: [
+        {
+          name: 'Strict',
+          type: 'boolean',
+          optional: true,
+          description:
+            'With strict parsing enabled, the logfmt parser immediately stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
+        },
+        {
+          name: 'Keep empty',
+          type: 'boolean',
+          optional: true,
+          description:
+            'The logfmt parser retains standalone keys (keys without a value) as labels with its value set to empty string. ',
+        },
+        {
+          name: 'Expression',
+          type: 'string',
+          optional: true,
+          restParam: true,
+          minWidth: 18,
+          placeholder: 'field_name',
+          description:
+            'Using expressions with your logfmt parser will extract and rename (if provided) only the specified fields to labels. You can specify one or more expressions in this way.',
+        },
+      ],
+      defaultParams: [false, false],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Parsers,
@@ -488,25 +512,53 @@ Example: \`\`error_level=\`level\` \`\`
       explainHandler: () => `This will remove ANSI color codes from log lines.`,
     },
     {
-      id: LokiOperationId.Distinct,
-      name: 'Distinct',
+      id: LokiOperationId.Drop,
+      name: 'Drop',
       params: [
+        // As drop can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
+        // use input and not LabelParamEditor.
         {
           name: 'Label',
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
+          minWidth: 18,
+          placeholder: 'job="grafana"',
+          description: 'Specify labels or expressions to drop.',
         },
       ],
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Unwrap,
-      renderer: (op, def, innerExpr) => `${innerExpr} | distinct ${op.params.join(',')}`,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | drop ${op.params.join(',')}`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () => 'The drop expression will drop the given labels in the pipeline.',
+    },
+    {
+      id: LokiOperationId.Keep,
+      name: 'Keep',
+      params: [
+        // As keep can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
+        // use input and not LabelParamEditor.
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          minWidth: 18,
+          placeholder: 'job="grafana"',
+          description: 'Specify labels or expressions to keep.',
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | keep ${op.params.join(',')}`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        'Allows filtering log lines using their original and extracted labels to filter out duplicate label values. The first line occurrence of a distinct value is returned, and the others are dropped.',
+        'The keep expression will keep only the specified labels in the pipeline and drop all the other labels.',
     },
     ...binaryScalarOperations,
     {

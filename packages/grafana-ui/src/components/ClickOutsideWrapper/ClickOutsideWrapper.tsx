@@ -47,10 +47,10 @@ export class ClickOutsideWrapper extends PureComponent<React.PropsWithChildren<P
     }
   }
 
-  onOutsideClick = (event: any) => {
+  onOutsideClick: EventListener = (event) => {
     const domNode = this.myRef.current;
 
-    if (!domNode || !domNode.contains(event.target)) {
+    if (!domNode || (event.target instanceof Node && !domNode.contains(event.target))) {
       this.props.onClick();
     }
   };

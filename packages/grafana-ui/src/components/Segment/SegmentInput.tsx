@@ -7,8 +7,8 @@ import { measureText } from '../../utils/measureText';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { getSegmentStyles } from './styles';
-
-import { useExpandableLabel, SegmentProps } from '.';
+import { SegmentProps } from './types';
+import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentInputProps
   extends Omit<SegmentProps, 'allowCustomValue' | 'allowEmptyValue'>,
@@ -66,9 +66,9 @@ export function SegmentInput({
     );
   }
 
-  const inputWidthStyle = css`
-    width: ${Math.max(inputWidth + 20, 32)}px;
-  `;
+  const inputWidthStyle = css({
+    width: `${Math.max(inputWidth + 20, 32)}px`,
+  });
 
   return (
     <input

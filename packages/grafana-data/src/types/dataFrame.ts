@@ -19,6 +19,7 @@ export enum FieldType {
   enum = 'enum',
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
+  nestedFrames = 'nestedFrames', // @alpha Nested DataFrames
 }
 
 /**
@@ -100,6 +101,9 @@ export interface FieldConfig<TOptions = any> {
 
   // Panel Specific Values
   custom?: TOptions;
+
+  // Calculate min max per field
+  fieldMinMax?: boolean;
 }
 
 export interface FieldTypeConfig {
@@ -266,6 +270,7 @@ export interface DataFrameDTO extends QueryResultBase {
 
 export interface FieldCalcs extends Record<string, any> {}
 
+/** @deprecated check data plane docs: https://grafana.com/developers/dataplane/heatmap **/
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';

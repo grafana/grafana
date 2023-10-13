@@ -35,13 +35,13 @@ export const VizLegendStatsList = ({ stats }: Props) => {
 };
 
 const getStyles = () => ({
-  list: css`
-    flex-grow: 1;
-    text-align: right;
-  `,
-  item: css`
-    margin-left: 8px;
-  `,
+  list: css({
+    flexGrow: 1,
+    textAlign: 'right',
+  }),
+  item: css({
+    marginLeft: '8px',
+  }),
 });
 
 VizLegendStatsList.displayName = 'VizLegendStatsList';

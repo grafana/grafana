@@ -44,7 +44,7 @@ func TestIntegrationInflux(t *testing.T) {
 	}))
 	t.Cleanup(outgoingServer.Close)
 
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
+	jsonData := simplejson.NewFromAny(map[string]any{
 		"httpMethod":      "post",
 		"httpHeaderName1": "X-CUSTOM-HEADER",
 	})
@@ -69,8 +69,8 @@ func TestIntegrationInflux(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When calling query?db=mybucket&epoch=ms should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"uid": uid,
 			},
 			"expr":         "up",
@@ -87,7 +87,7 @@ func TestIntegrationInflux(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)

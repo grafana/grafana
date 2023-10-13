@@ -39,9 +39,11 @@ func ProvideSecretsMigrator(
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_id_token"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
+		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.StdEncoding},
 		alertingSecret{},
 	}
 

@@ -9,18 +9,17 @@ import (
 )
 
 var (
-	ErrSourceDataSourceReadOnly           = errors.New("source data source is read only")
-	ErrSourceDataSourceDoesNotExists      = errors.New("source data source does not exist")
-	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
-	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
-	ErrCorrelationNotFound                = errors.New("correlation not found")
-	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
-	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
-	ErrInvalidTransformationType          = errors.New("invalid transformation type")
-	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
-	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
-	ErrCorrelationsQuotaFailed            = errors.New("error getting correlations quota")
-	ErrCorrelationsQuotaReached           = errors.New("correlations quota reached")
+	ErrCorrelationReadOnly           = errors.New("correlation can only be edited via provisioning")
+	ErrSourceDataSourceDoesNotExists = errors.New("source data source does not exist")
+	ErrTargetDataSourceDoesNotExists = errors.New("target data source does not exist")
+	ErrCorrelationNotFound           = errors.New("correlation not found")
+	ErrUpdateCorrelationEmptyParams  = errors.New("not enough parameters to edit correlation")
+	ErrInvalidConfigType             = errors.New("invalid correlation config type")
+	ErrInvalidTransformationType     = errors.New("invalid transformation type")
+	ErrTransformationNotNested       = errors.New("transformations must be nested under config")
+	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
+	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
+	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
 )
 
 const (
@@ -73,11 +72,11 @@ type CorrelationConfig struct {
 	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
 	// required:true
-	// example: { "expr": "job=app" }
-	Target map[string]interface{} `json:"target" binding:"Required"`
+	// example: {"prop1":"value1","prop2":"value"}
+	Target map[string]any `json:"target" binding:"Required"`
 	// Source data transformations
 	// required:false
-	// example: [{"type": "logfmt"}]
+	// example: [{"type":"logfmt"}]
 	Transformations Transformations `json:"transformations,omitempty"`
 }
 
@@ -85,13 +84,13 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
 	transformations := c.Transformations
 	if target == nil {
-		target = map[string]interface{}{}
+		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Type            CorrelationConfigType  `json:"type"`
-		Field           string                 `json:"field"`
-		Target          map[string]interface{} `json:"target"`
-		Transformations Transformations        `json:"transformations,omitempty"`
+		Type            CorrelationConfigType `json:"type"`
+		Field           string                `json:"field"`
+		Target          map[string]any        `json:"target"`
+		Transformations Transformations       `json:"transformations,omitempty"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
@@ -107,10 +106,13 @@ type Correlation struct {
 	// example: 50xhMlg9k
 	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
-	// example:d0oxYRg4z
+	// example: d0oxYRg4z
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
+	// OrgID of the data source the correlation originates from
+	// Example: 1
+	OrgID int64 `json:"orgId" xorm:"pk 'org_id'"`
 	// UID of the data source the correlation points to
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
@@ -120,6 +122,15 @@ type Correlation struct {
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
+	// Provisioned True if the correlation was created during provisioning
+	Provisioned bool `json:"provisioned"`
+}
+
+type GetCorrelationsResponseBody struct {
+	Correlations []Correlation `json:"correlations"`
+	TotalCount   int64         `json:"totalCount"`
+	Page         int64         `json:"page"`
+	Limit        int64         `json:"limit"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -134,11 +145,10 @@ type CreateCorrelationResponseBody struct {
 // swagger:model
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
-	SourceUID         string `json:"-"`
-	OrgId             int64  `json:"-"`
-	SkipReadOnlyCheck bool   `json:"-"`
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
 	// Target data source UID to which the correlation is created. required if config.type = query
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
 	// example: My label
@@ -148,6 +158,8 @@ type CreateCorrelationCommand struct {
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
 	Config CorrelationConfig `json:"config" binding:"Required"`
+	// True if correlation was created with provisioning. This makes it read-only.
+	Provisioned bool `json:"provisioned"`
 }
 
 func (c CreateCorrelationCommand) Validate() error {
@@ -193,8 +205,8 @@ type CorrelationConfigUpdateDTO struct {
 	// Target type
 	Type *CorrelationConfigType `json:"type"`
 	// Target data query
-	// example: { "expr": "job=app" }
-	Target *map[string]interface{} `json:"target"`
+	// example: {"prop1":"value1","prop2":"value"}
+	Target *map[string]any `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
 	Transformations []Transformation `json:"transformations"`
@@ -260,12 +272,30 @@ type GetCorrelationsBySourceUIDQuery struct {
 // GetCorrelationsQuery is the query to retrieve all correlations
 type GetCorrelationsQuery struct {
 	OrgId int64 `json:"-"`
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// required:false
+	SourceUIDs []string `json:"sourceuid"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {
-	SourceUID string
+	SourceUID       string
+	OrgId           int64
+	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
 	TargetUID string
+	OrgId     int64
 }

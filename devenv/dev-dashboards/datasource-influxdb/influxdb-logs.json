@@ -172,7 +172,6 @@
     }
   ],
   "schemaVersion": 22,
-  "style": "dark",
   "tags": ["gdev", "influxdb", "datasource-test"],
   "templating": {
     "list": []

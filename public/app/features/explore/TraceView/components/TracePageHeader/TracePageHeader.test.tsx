@@ -12,19 +12,61 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { render, screen } from '@testing-library/react';
+import { getByText, render } from '@testing-library/react';
 import React from 'react';
 
-import { getTraceName } from '../model/trace-viewer';
+import { MutableDataFrame } from '@grafana/data';
 
-import TracePageHeader, { TracePageHeaderProps } from './TracePageHeader';
+import { defaultFilters } from '../../useSearch';
+
+import { TracePageHeader } from './TracePageHeader';
+
+const setup = () => {
+  const defaultProps = {
+    trace,
+    timeZone: '',
+    search: defaultFilters,
+    setSearch: jest.fn(),
+    showSpanFilters: true,
+    setShowSpanFilters: jest.fn(),
+    showSpanFilterMatchesOnly: false,
+    setShowSpanFilterMatchesOnly: jest.fn(),
+    spanFilterMatches: undefined,
+    setFocusedSpanIdForSearch: jest.fn(),
+    datasourceType: 'tempo',
+    setHeaderHeight: jest.fn(),
+    data: new MutableDataFrame(),
+  };
+
+  return render(<TracePageHeader {...defaultProps} />);
+};
+
+describe('TracePageHeader test', () => {
+  it('should render the new trace header', () => {
+    setup();
+
+    const header = document.querySelector('header');
+    const method = getByText(header!, 'POST');
+    const status = getByText(header!, '200');
+    const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
+    const duration = getByText(header!, '2.36s');
+    const timestampPart1 = getByText(header!, '2023-02-05 08:50');
+    const timestampPart2 = getByText(header!, ':56.289');
+    expect(method).toBeInTheDocument();
+    expect(status).toBeInTheDocument();
+    expect(url).toBeInTheDocument();
+    expect(duration).toBeInTheDocument();
+    expect(timestampPart1).toBeInTheDocument();
+    expect(timestampPart2).toBeInTheDocument();
+  });
+});
 
 export const trace = {
   services: [{ name: 'serviceA', numberOfSpans: 1 }],
   spans: [
     {
       traceID: '164afda25df92413',
-      spanID: '164afda25df92413',
+      spanID: '264afda25df92413',
       operationName: 'HTTP Client',
       serviceName: 'serviceA',
       subsidiarilyReferencedBy: [],
@@ -33,7 +75,7 @@ export const trace = {
       logs: [],
       references: [],
       tags: [],
-      processID: '164afda25df92413',
+      processID: '264afda25df92413',
       flags: 0,
       process: {
         serviceName: 'lb',
@@ -47,7 +89,7 @@ export const trace = {
     },
     {
       traceID: '164afda25df92413',
-      spanID: '164afda25df92413',
+      spanID: '364afda25df92413',
       operationName: 'HTTP Client',
       serviceName: 'serviceB',
       subsidiarilyReferencedBy: [],
@@ -72,7 +114,7 @@ export const trace = {
           value: `200`,
         },
       ],
-      processID: '164afda25df92413',
+      processID: '364afda25df92413',
       flags: 0,
       process: {
         serviceName: 'lb',
@@ -84,80 +126,63 @@ export const trace = {
       childSpanCount: 0,
       warnings: [],
     },
+    {
+      traceID: '164afda25df92413',
+      spanID: '464afda25df92413',
+      operationName: 'HTTP Server',
+      serviceName: 'serviceC',
+      subsidiarilyReferencedBy: [],
+      startTime: 1675602037286989,
+      duration: 5685,
+      logs: [],
+      references: [],
+      tags: [
+        {
+          key: 'http.url',
+          type: 'String',
+          value: `/v2/gamma/792edh2w897y2huehd2h89`,
+        },
+        {
+          key: 'http.method',
+          type: 'String',
+          value: `POST`,
+        },
+        {
+          key: 'http.status_code',
+          type: 'String',
+          value: `200`,
+        },
+      ],
+      processID: '464afda25df92413',
+      flags: 0,
+      process: {
+        serviceName: 'db',
+        tags: [],
+      },
+      relativeStartTime: 0,
+      depth: 0,
+      hasChildren: false,
+      childSpanCount: 0,
+      warnings: [],
+    },
   ],
   traceID: '8bb35a31-eb64-512d-aaed-ddd61887bb2b',
   traceName: 'serviceA: GET',
-  processes: {},
+  processes: {
+    '264afda25df92413': {
+      serviceName: 'serviceA',
+      tags: [],
+    },
+    '364afda25df92413': {
+      serviceName: 'serviceB',
+      tags: [],
+    },
+    '464afda25df92413': {
+      serviceName: 'serviceC',
+      tags: [],
+    },
+  },
   duration: 2355515,
   startTime: 1675605056289000,
   endTime: 1675605058644515,
 };
-
-const setup = (propOverrides?: TracePageHeaderProps) => {
-  const defaultProps = {
-    trace,
-    timeZone: '',
-    viewRange: { time: { current: [10, 20] as [number, number] } },
-    updateNextViewRangeTime: () => {},
-    updateViewRangeTime: () => {},
-    ...propOverrides,
-  };
-
-  return render(<TracePageHeader {...defaultProps} />);
-};
-
-describe('TracePageHeader test', () => {
-  it('should render a header ', () => {
-    setup();
-    expect(screen.getByRole('banner')).toBeInTheDocument();
-  });
-
-  it('should render nothing if a trace is not present', () => {
-    setup({ trace: null } as TracePageHeaderProps);
-    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-    expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
-  });
-
-  it('should render the trace title', () => {
-    setup();
-    expect(
-      screen.getByRole('heading', {
-        name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('should render the header items', () => {
-    setup();
-
-    const headerItems = screen.queryAllByRole('listitem');
-
-    expect(headerItems).toHaveLength(5);
-    //                                                        Year-month-day hour-minute-second
-    expect(headerItems[0].textContent?.match(/Trace Start:\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}/g)).toBeTruthy();
-    expect(headerItems[1].textContent?.match(/Duration:[\d|\.][\.|\d|s][\.|\d|s]?[\d]?/)).toBeTruthy();
-    expect(headerItems[2].textContent?.match(/Services:\d\d?/g)).toBeTruthy();
-    expect(headerItems[3].textContent?.match(/Depth:\d\d?/)).toBeTruthy();
-    expect(headerItems[4].textContent?.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
-  });
-
-  it('should render a <SpanGraph>', () => {
-    setup();
-    expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
-  });
-
-  it('shows the summary', () => {
-    const { rerender } = setup();
-
-    rerender(
-      <TracePageHeader
-        {...({
-          trace: trace,
-          viewRange: { time: { current: [10, 20] } },
-        } as unknown as TracePageHeaderProps)}
-      />
-    );
-    expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-  });
-});

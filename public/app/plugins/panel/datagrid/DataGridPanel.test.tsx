@@ -286,6 +286,7 @@ describe('DataGrid', () => {
       });
     });
     it('should add a new column', async () => {
+      jest.spyOn(console, 'warn').mockImplementation();
       const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {

@@ -84,7 +84,7 @@ export function useCombinedRuleNamespaces(
         }
         const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-        // first get all the ruler rules in
+        // first get all the ruler rules from the data source
         Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
           const namespace: CombinedRuleNamespace = {
             rulesSource,
@@ -113,6 +113,72 @@ export function useCombinedRuleNamespaces(
       })
       .flat();
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
+}
+
+export function combineRulesNamespaces(
+  rulesSource: RulesSource,
+  promNamespaces: RuleNamespace[],
+  rulerRules?: RulerRulesConfigDTO
+): CombinedRuleNamespace[] {
+  const namespaces: Record<string, CombinedRuleNamespace> = {};
+
+  // first get all the ruler rules from the data source
+  Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+    const namespace: CombinedRuleNamespace = {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    };
+    namespaces[namespaceName] = namespace;
+    addRulerGroupsToCombinedNamespace(namespace, groups);
+  });
+
+  // then correlate with prometheus rules
+  promNamespaces?.forEach(({ name: namespaceName, groups }) => {
+    const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    });
+
+    addPromGroupsToCombinedNamespace(ns, groups);
+  });
+
+  return Object.values(namespaces);
+}
+
+export function attachRulerRulesToCombinedRules(
+  rulesSource: RulesSource,
+  promNamespace: RuleNamespace,
+  rulerGroups: RulerRuleGroupDTO[]
+): CombinedRuleNamespace {
+  const ns: CombinedRuleNamespace = {
+    rulesSource: rulesSource,
+    name: promNamespace.name,
+    groups: [],
+  };
+
+  // The order is important. Adding Ruler rules overrides Prometheus rules.
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
+  addPromGroupsToCombinedNamespace(ns, promNamespace.groups);
+
+  // Remove ruler rules which does not have Prom rule counterpart
+  // This function should only attach Ruler rules to existing Prom rules
+  ns.groups.forEach((group) => {
+    group.rules = group.rules.filter((rule) => rule.promRule);
+  });
+
+  return ns;
+}
+
+export function addCombinedPromAndRulerGroups(
+  ns: CombinedRuleNamespace,
+  promGroups: RuleGroup[],
+  rulerGroups: RulerRuleGroupDTO[]
+): CombinedRuleNamespace {
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
+  addPromGroupsToCombinedNamespace(ns, promGroups);
+  return ns;
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups

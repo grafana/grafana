@@ -22,12 +22,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('app/core/services/backend_srv', () => ({
-  backendSrv: {
-    getDashboardByUid: jest.fn().mockResolvedValue({ dashboard: {} }),
-  },
-}));
-
 const store = configureStore();
 const mockPost = jest.fn();
 const buildMocks = () => ({
@@ -76,7 +70,7 @@ describe('SaveDashboardDrawer', () => {
     expect(screen.getByRole('button', { name: /overwrite/i })).toBeInTheDocument();
   });
 
-  it('should render corresponding save modal once the errror is handled', async () => {
+  it('should render corresponding save modal once the error is handled', async () => {
     const { onDismiss, dashboard, error } = buildMocks();
     mockPost.mockRejectedValueOnce(error);
 

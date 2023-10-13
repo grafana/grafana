@@ -15,7 +15,7 @@ import { LokiVisualQuery } from '../types';
 export function UnwrapParamEditor({
   onChange,
   index,
-  operationIndex,
+  operationId,
   value,
   query,
   datasource,
@@ -27,7 +27,7 @@ export function UnwrapParamEditor({
 
   return (
     <Select
-      inputId={getOperationParamId(operationIndex, index)}
+      inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
         if (datasource instanceof LokiDatasource) {

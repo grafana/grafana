@@ -127,7 +127,7 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${this.panelPadding}px`,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',
     };
@@ -445,7 +445,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
 
 export function buildLayout(props: Props): BigValueLayout {
   const { width, height, sparkline } = props;
-  const useWideLayout = width / height > 2.5;
+  const useWideLayout = width / height > 2.5 && !props.disableWideLayout;
 
   if (useWideLayout) {
     if (height > 50 && !!sparkline && sparkline.y.values.length > 1) {

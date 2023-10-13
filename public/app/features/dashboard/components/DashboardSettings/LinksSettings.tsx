@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
@@ -33,6 +33,11 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   const isEditing = editIndex !== undefined;
 
   let pageNav: NavModelItem | undefined;
+
+  if (config.featureToggles.dockedMegaMenu) {
+    pageNav = sectionNav.node.parentItem;
+  }
+
   if (isEditing) {
     const title = isNew ? 'New link' : 'Edit link';
     const description = isNew ? 'Create a new link on your dashboard' : 'Edit a specific link of your dashboard';
@@ -40,6 +45,14 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
       text: title,
       subTitle: description,
     };
+
+    if (config.featureToggles.dockedMegaMenu) {
+      const parentUrl = sectionNav.node.url;
+      pageNav.parentItem = sectionNav.node.parentItem && {
+        ...sectionNav.node.parentItem,
+        url: parentUrl,
+      };
+    }
   }
 
   return (

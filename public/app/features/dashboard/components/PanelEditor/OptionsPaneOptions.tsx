@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 import { AngularPanelOptions } from './AngularPanelOptions';
-import { AngularPanelPluginWarning } from './AngularPanelPluginWarning';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -101,7 +102,16 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && <AngularPanelPluginWarning plugin={plugin} />}
+        {panel.isAngularPlugin() && (
+          <AngularDeprecationPluginNotice
+            className={styles.angularDeprecationWrapper}
+            showPluginDetailsLink={true}
+            pluginId={plugin.meta.id}
+            pluginType={plugin.meta.type}
+            angularSupportEnabled={config?.angularSupportEnabled}
+            interactionElementId="panel-options"
+          />
+        )}
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
@@ -204,5 +214,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.components.panel.borderColor};
     border-top: none;
     flex-grow: 1;
+  `,
+  angularDeprecationWrapper: css`
+    padding: ${theme.spacing(1)};
   `,
 });

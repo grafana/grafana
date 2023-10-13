@@ -11,6 +11,10 @@ keywords:
   - alerting
   - alerts
   - notifications
+labels:
+  products:
+    - enterprise
+    - oss
 title: Legacy Alerting Notification Channels API
 ---
 

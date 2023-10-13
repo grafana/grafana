@@ -23,28 +23,28 @@ const getInputControlStyles = stylesFactory((theme: GrafanaTheme2, invalid: bool
   return {
     input: cx(
       inputPadding(theme),
-      css`
-        width: 100%;
-        max-width: 100%;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        padding-right: 0;
-        position: relative;
-        box-sizing: border-box;
-      `,
+      css({
+        width: '100%',
+        maxWidth: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingRight: 0,
+        position: 'relative',
+        boxSizing: 'border-box',
+      }),
       withPrefix &&
-        css`
-          padding-left: 0;
-        `
+        css({
+          paddingLeft: 0,
+        })
     ),
     prefix: cx(
       styles.prefix,
-      css`
-        position: relative;
-      `
+      css({
+        position: 'relative',
+      })
     ),
   };
 });

@@ -1,3 +1,7 @@
+import Map from 'ol/Map';
+import { Point } from 'ol/geom';
+import * as layer from 'ol/layer';
+
 import {
   EventBus,
   FieldType,
@@ -7,14 +11,11 @@ import {
   MapLayerRegistryItem,
   PanelData,
 } from '@grafana/data';
-import Map from 'ol/Map';
-import * as layer from 'ol/layer';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { ScaleDimensionConfig } from '@grafana/schema';
 import { getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { Point } from 'ol/geom';
-import { ScaleDimensionConfig } from '@grafana/schema';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -49,7 +50,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    */
   create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
-    
+
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const WEIGHT_KEY = "_weight";
@@ -76,7 +77,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
         const weightDim = getScaledDimension(frame, config.weight);
         source.forEachFeature( (f) => {
-          const idx = f.get('rowIndex') as number;
+          const idx: number = f.get('rowIndex');
           if(idx != null) {
             f.set(WEIGHT_KEY, weightDim.get(idx));
           }

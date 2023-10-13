@@ -51,6 +51,7 @@ func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds data
 
 type Service interface {
 	CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error)
+	CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error
 	DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error
@@ -78,6 +79,10 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 	return s.createCorrelation(ctx, cmd)
 }
 
+func (s CorrelationsService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
+	return s.createOrUpdateCorrelation(ctx, cmd)
+}
+
 func (s CorrelationsService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
 	return s.deleteCorrelation(ctx, cmd)
 }
@@ -94,7 +99,7 @@ func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd
 	return s.getCorrelationsBySourceUID(ctx, cmd)
 }
 
-func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
 	return s.getCorrelations(ctx, cmd)
 }
 
@@ -110,12 +115,14 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
 			SourceUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
 			TargetUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}

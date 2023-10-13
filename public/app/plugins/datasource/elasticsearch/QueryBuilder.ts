@@ -7,7 +7,13 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './queryDef';
+import {
+  defaultBucketAgg,
+  defaultMetricAgg,
+  findMetricById,
+  highlightTags,
+  defaultGeoHashPrecisionString,
+} from './queryDef';
 import {
   ElasticsearchQuery,
   TermsQuery,
@@ -94,6 +100,7 @@ export class ElasticQueryBuilder {
   getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
+    const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
     esAgg.field = aggDef.field || this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
@@ -109,7 +116,11 @@ export class ElasticQueryBuilder {
 
     const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
 
-    esAgg.fixed_interval = interval;
+    if (interval !== undefined && calendarIntervals.includes(interval)) {
+      esAgg.calendar_interval = interval;
+    } else {
+      esAgg.fixed_interval = interval;
+    }
 
     return esAgg;
   }
@@ -231,7 +242,7 @@ export class ElasticQueryBuilder {
         case 'geohash_grid': {
           esAgg['geohash_grid'] = {
             field: aggDef.field,
-            precision: aggDef.settings?.precision,
+            precision: aggDef.settings?.precision || defaultGeoHashPrecisionString,
           };
           break;
         }

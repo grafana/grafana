@@ -8,6 +8,10 @@ keywords:
   - change
   - organization
   - change
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage user preferences
 weight: 400
 ---

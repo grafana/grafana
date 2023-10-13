@@ -28,13 +28,15 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
       [QueryType.TIME_SERIES_LIST]: 0,
       [QueryType.SLO]: 0,
       [QueryType.ANNOTATION]: 0,
+      [QueryType.PROMQL]: 0,
     };
     cloudmonitorQueries.forEach((query) => {
       if (
         query.queryType === QueryType.TIME_SERIES_QUERY ||
         query.queryType === QueryType.TIME_SERIES_LIST ||
         query.queryType === QueryType.SLO ||
-        query.queryType === QueryType.ANNOTATION
+        query.queryType === QueryType.ANNOTATION ||
+        query.queryType === QueryType.PROMQL
       ) {
         stats[query.queryType]++;
       } else if (query.queryType === 'metrics') {
@@ -58,6 +60,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
         time_series_filter_queries: stats[QueryType.TIME_SERIES_LIST],
         slo_queries: stats[QueryType.SLO],
         annotation_queries: stats[QueryType.ANNOTATION],
+        promQL_queries: stats[QueryType.PROMQL],
       });
     }
   }

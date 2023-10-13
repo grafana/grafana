@@ -92,15 +92,16 @@ describe('isContentTypeApplicationJson', () => {
 
 describe('parseBody', () => {
   it.each`
-    options                  | isAppJson | expected
-    ${undefined}             | ${false}  | ${undefined}
-    ${undefined}             | ${true}   | ${undefined}
-    ${{ data: undefined }}   | ${false}  | ${undefined}
-    ${{ data: undefined }}   | ${true}   | ${undefined}
-    ${{ data: 'some data' }} | ${false}  | ${'some data'}
-    ${{ data: 'some data' }} | ${true}   | ${'some data'}
-    ${{ data: { id: '0' } }} | ${false}  | ${new URLSearchParams({ id: '0' })}
-    ${{ data: { id: '0' } }} | ${true}   | ${'{"id":"0"}'}
+    options                                         | isAppJson | expected
+    ${undefined}                                    | ${false}  | ${undefined}
+    ${undefined}                                    | ${true}   | ${undefined}
+    ${{ data: undefined }}                          | ${false}  | ${undefined}
+    ${{ data: undefined }}                          | ${true}   | ${undefined}
+    ${{ data: 'some data' }}                        | ${false}  | ${'some data'}
+    ${{ data: 'some data' }}                        | ${true}   | ${'some data'}
+    ${{ data: { id: '0' } }}                        | ${false}  | ${new URLSearchParams({ id: '0' })}
+    ${{ data: { id: '0' } }}                        | ${true}   | ${'{"id":"0"}'}
+    ${{ data: new Blob([new Uint8Array([1, 1])]) }} | ${false}  | ${new Blob([new Uint8Array([1, 1])])}
   `(
     "when called with options: '$options' and isAppJson: '$isAppJson' then the result should be '$expected'",
     ({ options, isAppJson, expected }) => {

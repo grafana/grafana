@@ -21,7 +21,7 @@ type dataEvaluator struct {
 }
 
 func newDataEvaluator(refID string, frame *data.Frame) (*dataEvaluator, error) {
-	series, err := expr.WideToMany(frame)
+	series, err := expr.WideToMany(frame, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,10 +37,9 @@ func newDataEvaluator(refID string, frame *data.Frame) (*dataEvaluator, error) {
 	}, nil
 }
 
-func (d *dataEvaluator) Eval(_ context.Context, from, to time.Time, interval time.Duration, callback callbackFunc) error {
+func (d *dataEvaluator) Eval(_ context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error {
 	var resampled = make([]mathexp.Series, 0, len(d.data))
-
-	iterations := 0
+	to := from.Add(time.Duration(evaluations) * interval)
 	for _, s := range d.data {
 		// making sure the input data frame is aligned with the interval
 		r, err := s.Resample(d.refID, interval, d.downsampleFunction, d.upsampleFunction, from, to.Add(-interval)) // we want to query [from,to)
@@ -48,10 +47,9 @@ func (d *dataEvaluator) Eval(_ context.Context, from, to time.Time, interval tim
 			return err
 		}
 		resampled = append(resampled, r)
-		iterations = r.Len()
 	}
 
-	for i := 0; i < iterations; i++ {
+	for i := 0; i < evaluations; i++ {
 		result := make([]eval.Result, 0, len(resampled))
 		var now time.Time
 		for _, series := range resampled {
@@ -87,7 +85,7 @@ func (d *dataEvaluator) Eval(_ context.Context, from, to time.Time, interval tim
 				EvaluatedAt: now,
 			})
 		}
-		err := callback(now, result)
+		err := callback(i, now, result)
 		if err != nil {
 			return err
 		}

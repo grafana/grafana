@@ -10,6 +10,7 @@ export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) 
     severity="info"
     title={`You don’t have permission to ${mode} a public dashboard`}
     data-testid={selectors.NoUpsertPermissionsWarningAlert}
+    bottomSpacing={0}
   >
     Contact your admin to get permission to {mode} create public dashboards
   </Alert>

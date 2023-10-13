@@ -55,7 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       padding: ${theme.spacing(0, 0.25)};
       background-color: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       margin: ${theme.spacing(0.125, 0.5, 0, 0)};
       text-overflow: ellipsis;
       white-space: nowrap;

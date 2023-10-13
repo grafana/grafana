@@ -35,19 +35,18 @@ func TestAuthenticateJWT(t *testing.T) {
 	}
 	jwtHeaderName := "X-Forwarded-User"
 	wantID := &authn.Identity{
-		OrgID:          0,
-		OrgCount:       0,
-		OrgName:        "",
-		OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-		ID:             "",
-		Login:          "eai-doe",
-		Name:           "Eai Doe",
-		Email:          "eai.doe@cor.po",
-		IsGrafanaAdmin: boolPtr(false),
-		AuthModule:     "jwt",
-		AuthID:         "1234567890",
-		IsDisabled:     false,
-		HelpFlags1:     0,
+		OrgID:           0,
+		OrgName:         "",
+		OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+		ID:              "",
+		Login:           "eai-doe",
+		Name:            "Eai Doe",
+		Email:           "eai.doe@cor.po",
+		IsGrafanaAdmin:  boolPtr(false),
+		AuthenticatedBy: login.JWTModule,
+		AuthID:          "1234567890",
+		IsDisabled:      false,
+		HelpFlags1:      0,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			AllowSignUp:     true,
@@ -115,7 +114,7 @@ func TestJWTClaimConfig(t *testing.T) {
 	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 
-	type Dictionary map[string]interface{}
+	type Dictionary map[string]any
 
 	type testCase struct {
 		desc                 string

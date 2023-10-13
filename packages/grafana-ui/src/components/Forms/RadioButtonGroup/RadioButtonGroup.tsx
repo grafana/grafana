@@ -21,6 +21,7 @@ export interface RadioButtonGroupProps<T> {
   fullWidth?: boolean;
   className?: string;
   autoFocus?: boolean;
+  ['aria-label']?: string;
   invalid?: boolean;
 }
 
@@ -36,6 +37,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
+  'aria-label': ariaLabel,
   invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
@@ -71,7 +73,11 @@ export function RadioButtonGroup<T>({
   }, [autoFocus]);
 
   return (
-    <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}>
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}
+    >
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
         const icon = opt.icon ? toIconName(opt.icon) : undefined;
@@ -111,20 +117,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       padding: '2px',
     }),
     fullWidth: css({
       display: 'flex',
     }),
-    icon: css`
-      margin-right: 6px;
-    `,
-    img: css`
-      width: ${theme.spacing(2)};
-      height: ${theme.spacing(2)};
-      margin-right: ${theme.spacing(1)};
-    `,
+    icon: css({
+      marginRight: '6px',
+    }),
+    img: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      marginRight: theme.spacing(1),
+    }),
     invalid: css({
       border: `1px solid ${theme.colors.error.border}`,
     }),

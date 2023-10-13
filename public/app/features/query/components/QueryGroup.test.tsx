@@ -61,7 +61,7 @@ describe('QueryGroup', () => {
   it('Should add query on click', async () => {
     renderScenario({});
 
-    const addQueryButton = await screen.findByTestId('query-tab-add-query');
+    const addQueryButton = await screen.findByRole('button', { name: /Add query/i });
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     expect(queryRowsContainer.children.length).toBe(2);
 
@@ -92,7 +92,7 @@ describe('QueryGroup', () => {
   it('New query should be expanded', async () => {
     renderScenario({});
 
-    const addQueryButton = await screen.findByTestId('query-tab-add-query');
+    const addQueryButton = await screen.findByRole('button', { name: /Add query/i });
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     await userEvent.click(addQueryButton);
 
@@ -119,9 +119,39 @@ describe('QueryGroup', () => {
   it('Should not show add expression button when expressions are disabled', async () => {
     config.expressionsEnabled = false;
     renderScenario({});
-    await screen.findByTestId('query-tab-add-query');
+    await screen.findByRole('button', { name: /Add query/i });
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
+  });
+
+  describe('Angular deprecation', () => {
+    const deprecationText = /legacy platform based on AngularJS/i;
+
+    const oldAngularDetected = mockDS.angularDetected;
+    const oldDatasources = config.datasources;
+
+    afterEach(() => {
+      mockDS.angularDetected = oldAngularDetected;
+      config.datasources = oldDatasources;
+    });
+
+    it('Should render angular deprecation notice for angular plugins', async () => {
+      mockDS.angularDetected = true;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
+      });
+    });
+
+    it('Should not render angular deprecation notice for non-angular plugins', async () => {
+      mockDS.angularDetected = false;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
+      });
+    });
   });
 });
 

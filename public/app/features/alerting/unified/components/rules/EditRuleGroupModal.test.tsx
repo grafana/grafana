@@ -24,7 +24,7 @@ const ui = {
   input: {
     namespace: byLabelText(/^Folder|^Namespace/, { exact: true }),
     group: byLabelText(/Evaluation group/),
-    interval: byLabelText(/Rule group evaluation interval/),
+    interval: byLabelText(/Evaluation interval/),
   },
   folderLink: byTitle(/Go to folder/), // <a> without a href has the generic role
   table: byTestId('dynamic-table'),

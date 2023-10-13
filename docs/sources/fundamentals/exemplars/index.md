@@ -8,6 +8,11 @@ keywords:
   - concepts
   - exemplars
   - prometheus
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Exemplars
 title: Introduction to exemplars
 weight: 800

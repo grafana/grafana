@@ -67,7 +67,12 @@ type ExternalUserInfo struct {
 }
 
 func (e *ExternalUserInfo) String() string {
-	return fmt.Sprintf("%+v", *e)
+	isGrafanaAdmin := "nil"
+	if e.IsGrafanaAdmin != nil {
+		isGrafanaAdmin = fmt.Sprintf("%v", *e.IsGrafanaAdmin)
+	}
+	return fmt.Sprintf("OAuthToken: %+v, AuthModule: %v, AuthId: %v, UserId: %v, Email: %v, Login: %v, Name: %v, Groups: %v, OrgRoles: %v, IsGrafanaAdmin: %v, IsDisabled: %v, SkipTeamSync: %v",
+		e.OAuthToken, e.AuthModule, e.AuthId, e.UserId, e.Email, e.Login, e.Name, e.Groups, e.OrgRoles, isGrafanaAdmin, e.IsDisabled, e.SkipTeamSync)
 }
 
 type LoginInfo struct {
@@ -85,13 +90,6 @@ type RequestURIKey struct{}
 
 // ---------------------
 // COMMANDS
-
-type UpsertUserCommand struct {
-	ReqContext   *contextmodel.ReqContext
-	ExternalUser *ExternalUserInfo
-	UserLookupParams
-	SignupAllowed bool
-}
 
 type SetAuthInfoCommand struct {
 	AuthModule string

@@ -6,7 +6,6 @@ import {
   createOrUpdateSilenceAction,
   deleteAlertManagerConfigAction,
   fetchAlertGroupsAction,
-  fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
   fetchEditableRuleAction,
   fetchExternalAlertmanagersAction,
@@ -33,11 +32,6 @@ export const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
-  amConfigs: createAsyncMapSlice(
-    'amConfigs',
-    fetchAlertManagerConfigAction,
-    (alertManagerSourceName) => alertManagerSourceName
-  ).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
   ruleForm: combineReducers({

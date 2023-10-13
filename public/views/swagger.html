@@ -33,9 +33,9 @@
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js" charset="UTF-8" integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js" charset="UTF-8" integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
+    <script nonce="[[.Nonce]]" src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js" charset="UTF-8" integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script nonce="[[.Nonce]]" src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js" charset="UTF-8" integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script nonce="[[.Nonce]]">
     window.onload = function() {
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({

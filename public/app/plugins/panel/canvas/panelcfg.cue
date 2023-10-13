@@ -56,6 +56,8 @@ composableKinds: PanelCfg: {
 					width?: float64
 				} @cuetsy(kind="interface")
 
+				HttpRequestMethod: "GET" | "POST" @cuetsy(kind="enum", memberNames="GET|POST")
+
 				ConnectionCoordinates: {
 					x: float64
 					y: float64

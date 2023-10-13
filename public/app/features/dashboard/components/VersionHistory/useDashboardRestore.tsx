@@ -6,11 +6,14 @@ import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useSelector } from 'app/types';
 
+import { dashboardWatcher } from '../../../live/dashboard/dashboardWatcher';
 import { DashboardModel } from '../../state';
 
 import { historySrv } from './HistorySrv';
 
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
+  // Skip the watcher logic for this save since it's handled by the hook
+  dashboardWatcher.ignoreNextSave();
   return await historySrv.restoreDashboard(dashboard, version);
 };
 

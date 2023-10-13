@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import React, { FormEvent, useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -11,9 +12,6 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
 
-  const [overrideAudienceAllowed] = useState<boolean>(
-    config.featureToggles.prometheusAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
-  );
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
     !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
@@ -43,39 +41,40 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     }
   };
 
+  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
+
+  const labelWidth = prometheusConfigOverhaulAuth ? 24 : 26;
+
   return (
     <>
       <h6>Azure authentication</h6>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
         disabled={dataSourceConfig.readOnly}
       />
-      {overrideAudienceAllowed && (
-        <>
-          <h6>Azure configuration</h6>
-          <div className="gf-form-group">
-            <InlineFieldRow>
-              <InlineField labelWidth={26} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>
-                <InlineSwitch value={overrideAudienceChecked} onChange={onOverrideAudienceChange} />
-              </InlineField>
-            </InlineFieldRow>
-            {overrideAudienceChecked && (
-              <InlineFieldRow>
-                <InlineField labelWidth={26} label="Resource ID" disabled={dataSourceConfig.readOnly}>
-                  <Input
-                    className="width-30"
-                    value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
-                    onChange={onResourceIdChange}
-                  />
-                </InlineField>
-              </InlineFieldRow>
-            )}
-          </div>
-        </>
-      )}
+      <h6>Azure configuration</h6>
+      <div className="gf-form-group">
+        <InlineFieldRow>
+          <InlineField labelWidth={labelWidth} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>
+            <InlineSwitch value={overrideAudienceChecked} onChange={onOverrideAudienceChange} />
+          </InlineField>
+        </InlineFieldRow>
+        {overrideAudienceChecked && (
+          <InlineFieldRow>
+            <InlineField labelWidth={labelWidth} label="Resource ID" disabled={dataSourceConfig.readOnly}>
+              <Input
+                className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-30')}
+                value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
+                onChange={onResourceIdChange}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        )}
+      </div>
     </>
   );
 };

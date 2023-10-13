@@ -42,10 +42,10 @@ describe('LokiVariableQueryEditor', () => {
 
     expect(onChange).not.toHaveBeenCalled();
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
 
     expect(onChange).toHaveBeenCalledWith({
-      type: LokiVariableQueryType.LabelValues,
+      type: LokiVariableQueryType.LabelNames,
       label: '',
       stream: '',
       refId,

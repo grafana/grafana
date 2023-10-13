@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	mssql "github.com/grafana/go-mssqldb"
-	"github.com/grafana/grafana/pkg/infra/proxy/proxyutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
+	mssql "github.com/microsoft/go-mssqldb"
 	"github.com/stretchr/testify/require"
 	"xorm.io/core"
 )
@@ -14,18 +15,19 @@ import (
 func TestMSSQLProxyDriver(t *testing.T) {
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
 	dialect := "mssql"
+	opts := proxyutil.GetSQLProxyOptions(sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	cnnstr := "server=127.0.0.1;port=1433;user id=sa;password=yourStrong(!)Password;database=db"
-	driverName, err := createMSSQLProxyDriver(settings, cnnstr)
+	driverName, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", opts)
 	require.NoError(t, err)
 
 	t.Run("Driver should not be registered more than once", func(t *testing.T) {
-		testDriver, err := createMSSQLProxyDriver(settings, cnnstr)
+		testDriver, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", opts)
 		require.NoError(t, err)
 		require.Equal(t, driverName, testDriver)
 	})
 
 	t.Run("A new driver should be created for a new connection string", func(t *testing.T) {
-		testDriver, err := createMSSQLProxyDriver(settings, "server=localhost;user id=sa;password=yourStrong(!)Password;database=db2")
+		testDriver, err := createMSSQLProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", "localhost", opts)
 		require.NoError(t, err)
 		require.NotEqual(t, driverName, testDriver)
 	})
@@ -44,7 +46,7 @@ func TestMSSQLProxyDriver(t *testing.T) {
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := mssql.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newMSSQLProxyDriver(settings, connector)
+		driver, err := newMSSQLProxyDriver(connector, "127.0.0.1", opts)
 		require.NoError(t, err)
 
 		conn, err := driver.OpenConnector(cnnstr)
@@ -57,7 +59,7 @@ func TestMSSQLProxyDriver(t *testing.T) {
 	t.Run("Open should use the connector that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := mssql.NewConnector(cnnstr)
 		require.NoError(t, err)
-		driver, err := newMSSQLProxyDriver(settings, connector)
+		driver, err := newMSSQLProxyDriver(connector, "127.0.0.1", opts)
 		require.NoError(t, err)
 
 		_, err = driver.Open(cnnstr)

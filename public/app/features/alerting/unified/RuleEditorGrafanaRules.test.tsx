@@ -8,6 +8,7 @@ import { byRole } from 'testing-library-selector';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
@@ -15,7 +16,7 @@ import { searchFolders } from '../../../../app/features/manage-dashboards/state/
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -31,6 +32,10 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
@@ -62,9 +67,20 @@ describe('RuleEditor grafana managed rules', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersWrite,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
   });
-
-  disableRBAC();
 
   it('can create new grafana managed alert', async () => {
     const dataSources = {
@@ -141,7 +157,7 @@ describe('RuleEditor grafana managed rules', () => {
     //8 segons
 
     // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.saveAndExit.get());
     // 9seg
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     // 9seg

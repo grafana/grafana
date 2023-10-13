@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/correlations/
-canonical: /docs/grafana/latest/developers/http_api/correlation/
+canonical: /docs/grafana/latest/developers/http_api/correlations/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
@@ -10,6 +10,10 @@ keywords:
   - api
   - correlations
   - Glue
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Correlations HTTP API '
 ---
 
@@ -192,6 +196,7 @@ Content-Type: application/json
   "sourceUID": "uyBf2637k",
   "targetUID": "PDDA8E780A17E7EF1",
   "uid": "J6gn7d31L",
+  "provisioned": false,
   "config": {
     "type": "query",
     "field": "message",
@@ -233,6 +238,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
     "uid": "J6gn7d31L",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -245,6 +251,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "P15396BDD62B2BE29",
     "uid": "uWCpURgVk",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -267,6 +274,12 @@ Status codes:
 
 Get all correlations.
 
+Query parameters:
+
+- **page** - Optional. Specify which page number to return. Use the limit parameter to specify the number of correlations per page. The default is page 1.
+- **limit** - Optional. Limits the number of returned correlations per page. The default is 100 correlations per page. The maximum limit is 1000 correlations in a page.
+- **sourceUID** - Optional. Specify a source datasource UID to filter by. This can be repeated to filter by multiple datasources.
+
 **Example request:**
 
 ```http
@@ -287,6 +300,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
     "uid": "J6gn7d31L",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -299,6 +313,7 @@ Content-Type: application/json
     "sourceUID": "PDDA8E780A17E7EF1",
     "targetUID": "P15396BDD62B2BE29",
     "uid": "uWCpURgVk",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",

@@ -30,8 +30,8 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check registry constraints", func(t *testing.T) {
 		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && flag.Stage != FeatureStageGeneralAvailability {
-				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
+			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
 			}
 			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
 				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)

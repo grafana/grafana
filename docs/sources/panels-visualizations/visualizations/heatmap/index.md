@@ -8,13 +8,18 @@ keywords:
   - heatmap
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Heatmap
-weight: 600
+weight: 100
 ---
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../../fundamentals/intro-histograms/" >}}).
+Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
 ![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
@@ -38,6 +43,7 @@ Select one of the following Y-axis value scales:
 - **linear -** Linear scale.
 - **log (base 2) -** Logarithmic scale with base 2.
 - **log (base 10) -** Logarithmic scale with base 10.
+- **symlog -** Symlog scale.
 
 ## Y Axes
 
@@ -61,9 +67,19 @@ This setting determines decimal configuration.
 
 This setting configures the axis range.
 
+### Axis width
+
+This setting configures the width for the axis.
+
+### Axis value
+
+This setting configures the axis value.
+
 ### Reverse
 
 When selected, the axis appears in reverse order.
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
 
 ## Colors
 
@@ -106,3 +122,8 @@ Choose whether you want to display the heatmap legend on the visualization.
 ### Exemplars
 
 Set the color used to show exemplar data.
+
+{{% docs/reference %}}
+[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+{{% /docs/reference %}}

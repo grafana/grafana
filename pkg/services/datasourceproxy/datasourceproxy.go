@@ -12,10 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,9 +25,9 @@ import (
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
-	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
+	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -37,19 +38,21 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator v
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
 		secretsService:         secretsService,
+		features:               features,
 	}
 }
 
 type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
 	PluginRequestValidator validations.PluginRequestValidator
-	pluginStore            plugins.Store
+	pluginStore            pluginstore.Store
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
 	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
 	secretsService         secrets.Service
+	features               featuremgmt.FeatureToggles
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -120,9 +123,10 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
 	if err != nil {
-		if errors.Is(err, datasource.URLValidationError{}) {
+		var urlValidationError datasource.URLValidationError
+		if errors.As(err, &urlValidationError) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)

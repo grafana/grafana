@@ -9,8 +9,12 @@ keywords:
   - guide
   - rules
   - view
-title: View existing alert rules
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: View alerts
+title: View existing alert rules
 weight: 400
 ---
 

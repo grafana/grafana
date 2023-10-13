@@ -9,9 +9,10 @@ import {
   parseDuration,
 } from '@grafana/data/src';
 import { faro } from '@grafana/faro-web-sdk';
-import { config } from '@grafana/runtime/src';
+import { config, reportInteraction } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import { getTimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -54,6 +55,9 @@ interface ProfileData extends DatasourceProfileData {
   bytes: number | null;
   dashboardUID: string;
   panelId?: number;
+  from: string;
+  queryRangeSeconds: number;
+  refreshIntervalMs: number;
 }
 
 /**
@@ -77,8 +81,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
-  // send profile events every 5 minutes
-  sendEventsInterval = 60000 * 5;
+  // send profile events every 10 minutes
+  sendEventsInterval = 60000 * 10;
 
   pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
 
@@ -92,9 +96,11 @@ export class QueryCache<T extends SupportedQueryTypes> {
       panelId: string;
       dashId: string;
       expr: string;
-      interval: string;
+      refreshIntervalMs: number;
       sent: boolean;
       datasource: string;
+      from: string;
+      queryRangeSeconds: number;
     }
   >();
 
@@ -114,7 +120,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (config.grafanaJavascriptAgent.enabled && options.profileFunction !== undefined) {
+    if (
+      (config.grafanaJavascriptAgent.enabled || config.featureToggles?.prometheusIncrementalQueryInstrumentation) &&
+      options.profileFunction !== undefined
+    ) {
       this.profile();
       this.shouldProfile = true;
     } else {
@@ -167,8 +176,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         panelId: currentRequest.panelId?.toString() ?? '',
                         dashId: currentRequest.dashboardUID ?? '',
                         expr: currentRequest.expr ?? '',
-                        interval: currentRequest.interval ?? '',
+                        refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
                         sent: false,
+                        from: currentRequest.from ?? '',
+                        queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
                       });
 
                       // We don't need to save each subsequent request, only the first one
@@ -201,25 +212,36 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     for (let [key, value] of entries) {
       if (!value.sent) {
-        this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
-        faro.api.pushEvent(
-          'incremental query response size',
-          {
-            datasource: value.datasource.toString(),
-            requestCount: value.requestCount.toString(),
-            savedBytesTotal: value.savedBytesTotal.toString(),
-            initialRequestSize: value.initialRequestSize.toString(),
-            lastRequestSize: value.lastRequestSize.toString(),
-            panelId: value.panelId.toString(),
-            dashId: value.dashId.toString(),
-            expr: value.expr.toString(),
-            interval: value.interval.toString(),
-          },
-          'no-interaction',
-          {
+        const event = {
+          datasource: value.datasource.toString(),
+          requestCount: value.requestCount.toString(),
+          savedBytesTotal: value.savedBytesTotal.toString(),
+          initialRequestSize: value.initialRequestSize.toString(),
+          lastRequestSize: value.lastRequestSize.toString(),
+          panelId: value.panelId.toString(),
+          dashId: value.dashId.toString(),
+          expr: value.expr.toString(),
+          refreshIntervalMs: value.refreshIntervalMs.toString(),
+          from: value.from.toString(),
+          queryRangeSeconds: value.queryRangeSeconds.toString(),
+        };
+
+        if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
+          reportInteraction('grafana_incremental_queries_profile', event);
+        } else if (faro.api.pushEvent) {
+          faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
             skipDedupe: true,
-          }
-        );
+          });
+        }
+
+        this.pendingAccumulatedEvents.set(key, {
+          ...value,
+          sent: true,
+          requestCount: 0,
+          savedBytesTotal: 0,
+          initialRequestSize: 0,
+          lastRequestSize: 0,
+        });
       }
     }
   };
@@ -238,6 +260,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
+    const refreshIntervalMs = getTimeSrv().refreshMS;
+
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
@@ -251,6 +275,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
           bytes: null,
           panelId: request.panelId,
           dashboardUID: request.dashboardUID ?? '',
+          from: request.rangeRaw?.from.toString() ?? '',
+          queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
+          refreshIntervalMs: refreshIntervalMs ?? 0,
         });
       }
 

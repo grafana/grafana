@@ -1,7 +1,9 @@
+import TableModel from 'app/core/TableModel';
+
 import { tableDataFormatFilterer, timeSeriesFormatFilterer, transformDataToTable, transformers } from '../transformers';
 
 describe('when transforming time series table', () => {
-  let table: any;
+  let table: TableModel;
 
   describe('given 2 time series', () => {
     const time = new Date().getTime();
@@ -419,7 +421,7 @@ describe('when transforming time series table', () => {
 describe('timeSeriesFormatFilterer', () => {
   describe('when called with an object that contains datapoints property', () => {
     it('then it should return same object in array', () => {
-      const data: any = { datapoints: [] };
+      const data = { datapoints: [] };
 
       const result = timeSeriesFormatFilterer(data);
 
@@ -429,7 +431,7 @@ describe('timeSeriesFormatFilterer', () => {
 
   describe('when called with an object that does not contain datapoints property', () => {
     it('then it should return empty array', () => {
-      const data: any = { prop: [] };
+      const data = { prop: [] };
 
       const result = timeSeriesFormatFilterer(data);
 
@@ -440,7 +442,7 @@ describe('timeSeriesFormatFilterer', () => {
   describe('when called with an array of series with both timeseries and table data', () => {
     it('then it should return an array with timeseries', () => {
       const time = new Date().getTime();
-      const data: any[] = [
+      const data = [
         {
           target: 'series1',
           datapoints: [
@@ -484,7 +486,7 @@ describe('timeSeriesFormatFilterer', () => {
 describe('tableDataFormatFilterer', () => {
   describe('when called with an object that contains columns property', () => {
     it('then it should return same object in array', () => {
-      const data: any = { columns: [] };
+      const data = { columns: [] };
 
       const result = tableDataFormatFilterer(data);
 
@@ -494,7 +496,7 @@ describe('tableDataFormatFilterer', () => {
 
   describe('when called with an object that does not contain columns property', () => {
     it('then it should return empty array', () => {
-      const data: any = { prop: [] };
+      const data = { prop: [] };
 
       const result = tableDataFormatFilterer(data);
 
@@ -505,7 +507,7 @@ describe('tableDataFormatFilterer', () => {
   describe('when called with an array of series with both timeseries and table data', () => {
     it('then it should return an array with table data', () => {
       const time = new Date().getTime();
-      const data: any[] = [
+      const data = [
         {
           target: 'series1',
           datapoints: [

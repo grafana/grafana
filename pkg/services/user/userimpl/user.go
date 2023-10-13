@@ -64,14 +64,22 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
-	stats := map[string]interface{}{}
+func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
+	stats := map[string]any{}
 	caseInsensitiveLoginVal := 0
 	if s.cfg.CaseInsensitiveLogin {
 		caseInsensitiveLoginVal = 1
 	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+
+	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
+	if err != nil {
+		return nil
+	}
+
+	stats["stats.user.role_none.count"] = count
+
 	return stats
 }
 
@@ -90,6 +98,15 @@ func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.M
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	if len(cmd.Login) == 0 {
+		cmd.Login = cmd.Email
+	}
+
+	// if login is still empty both email and login field is missing
+	if len(cmd.Login) == 0 {
+		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
+	}
+
 	cmdOrg := org.GetOrgIDForNewUserCommand{
 		Email:        cmd.Email,
 		Login:        cmd.Login,
@@ -207,10 +224,20 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if len(cmd.Login) == 0 {
+		cmd.Login = cmd.Email
+	}
+
+	// if login is still empty both email and login field is missing
+	if len(cmd.Login) == 0 {
+		return user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
+	}
+
 	if s.cfg.CaseInsensitiveLogin {
 		cmd.Login = strings.ToLower(cmd.Login)
 		cmd.Email = strings.ToLower(cmd.Email)
 	}
+
 	return s.store.Update(ctx, cmd)
 }
 
@@ -219,7 +246,24 @@ func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswo
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: cmd.UserID,
+		OrgID:  cmd.OrgID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !shouldUpdateLastSeen(u.LastSeenAt) {
+		return user.ErrLastSeenUpToDate
+	}
+
 	return s.store.UpdateLastSeenAt(ctx, cmd)
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }
 
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {

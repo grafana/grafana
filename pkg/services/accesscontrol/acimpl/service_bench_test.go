@@ -141,7 +141,7 @@ func benchSearchUsersPermissions(b *testing.B, usersCount, resourceCount int) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu, 1, accesscontrol.SearchOptions{ActionPrefix: "resources:"})
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu, accesscontrol.SearchOptions{ActionPrefix: "resources:"})
 		require.NoError(b, err)
 		require.Len(b, usersPermissions, usersCount)
 		for _, permissions := range usersPermissions {
@@ -206,7 +206,7 @@ func benchSearchUsersWithPerm(b *testing.B, usersCount, resourceCount int) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu, 1,
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu,
 			accesscontrol.SearchOptions{Action: "resources:action2", Scope: "resources:id:1"})
 		require.NoError(b, err)
 		require.Len(b, usersPermissions, usersCount)

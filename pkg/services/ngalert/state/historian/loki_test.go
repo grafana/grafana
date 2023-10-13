@@ -238,6 +238,22 @@ func TestRemoteLokiBackend(t *testing.T) {
 				exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`,
 			},
 			{
+				name: "filters dashboardUID in log line",
+				query: models.HistoryQuery{
+					OrgID:        123,
+					DashboardUID: "dash-uid",
+				},
+				exp: `{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`,
+			},
+			{
+				name: "filters panelID in log line",
+				query: models.HistoryQuery{
+					OrgID:   123,
+					PanelID: 456,
+				},
+				exp: `{orgID="123",from="state-history"} | json | panelID=456`,
+			},
+			{
 				name: "filters instance labels in log line",
 				query: models.HistoryQuery{
 					OrgID: 123,

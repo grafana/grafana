@@ -10,16 +10,20 @@ import {
   PanelData,
   standardTransformers,
   preProcessPanelData,
+  DataLinkConfigOrigin,
+  getRawDisplayProcessor,
+  DataSourceApi,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
+import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -34,8 +38,13 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
+  const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
+    if (canFindPanel(frame)) {
+      customFrames.push(frame);
+      continue;
+    }
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -76,6 +85,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    customFrames,
     flameGraphFrames,
     rawPrometheusFrames,
     graphResult: null,
@@ -86,14 +96,45 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
+  showCorrelationEditorLinks,
   queries,
   correlations,
+  defaultTargetDatasource,
 }: {
+  showCorrelationEditorLinks: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
+  defaultTargetDatasource?: DataSourceApi;
 }) => {
   return (data: PanelData): PanelData => {
-    if (queries?.length && correlations?.length) {
+    if (showCorrelationEditorLinks && defaultTargetDatasource) {
+      for (const frame of data.series) {
+        for (const field of frame.fields) {
+          field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
+
+          field.display = field.display || getRawDisplayProcessor();
+
+          const availableVars: Record<string, string> = {};
+          frame.fields.map((field) => {
+            availableVars[`${field.name}`] = "${__data.fields.['" + `${field.name}` + `']}`;
+          });
+
+          field.config.links.push({
+            url: '',
+            origin: DataLinkConfigOrigin.ExploreCorrelationsEditor,
+            title: `Correlate with ${field.name}`,
+            internal: {
+              datasourceUid: defaultTargetDatasource.uid,
+              datasourceName: defaultTargetDatasource.name,
+              query: { datasource: { uid: defaultTargetDatasource.uid } },
+              meta: {
+                correlationData: { resultField: field.name, vars: availableVars },
+              },
+            },
+          });
+        }
+      }
+    } else if (queries?.length && correlations?.length) {
       const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
       attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
     }
@@ -248,11 +289,20 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined
+  correlations: CorrelationData[] | undefined,
+  showCorrelationEditorLinks: boolean,
+  defaultCorrelationTargetDatasource?: DataSourceApi
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ queries, correlations })),
+    map(
+      decorateWithCorrelations({
+        defaultTargetDatasource: defaultCorrelationTargetDatasource,
+        showCorrelationEditorLinks,
+        queries,
+        correlations,
+      })
+    ),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
@@ -269,4 +319,16 @@ function isTimeSeries(frame: DataFrame): boolean {
   return Boolean(
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
   );
+}
+
+/**
+ * Can we find a panel that matches the type defined on the frame
+ *
+ * @param frame
+ */
+function canFindPanel(frame: DataFrame): boolean {
+  if (!!frame.meta?.preferredVisualisationPluginId) {
+    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+  }
+  return false;
 }

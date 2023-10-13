@@ -1,5 +1,10 @@
 ---
 hide_menu: true
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Release notes for Grafana 8.5.2
 ---
 

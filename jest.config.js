@@ -31,6 +31,9 @@ module.exports = {
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
+    '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
+    // prevent systemjs amd extra from breaking tests.
+    'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

@@ -10,6 +10,10 @@ keywords:
   - api
   - licensing
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: Licensing HTTP API
 ---
 

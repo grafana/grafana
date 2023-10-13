@@ -83,6 +83,6 @@ export const trackDsConfigClicked = (item: string) => {
   reportInteraction('connections_datasources_settings_clicked', { item });
 };
 
-export const trackDsConfigUpdated = (item: string) => {
-  reportInteraction('connections_datasources_ds_configured', { item });
+export const trackDsConfigUpdated = (props: { item: string; error?: unknown }) => {
+  reportInteraction('connections_datasources_ds_configured', props);
 };

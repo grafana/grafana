@@ -2,8 +2,8 @@ import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
-import { getMockDS, getMockDSInstanceSettings } from '../../../../../specs/mocks';
-import { InfluxQuery } from '../../../../../types';
+import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../mocks';
+import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
@@ -39,7 +39,7 @@ jest.mock('./Seg', () => {
 async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
-  const datasource: InfluxDatasource = getMockDS(getMockDSInstanceSettings());
+  const datasource: InfluxDatasource = getMockInfluxDS(getMockDSInstanceSettings());
   datasource.metricFindQuery = () => Promise.resolve([]);
   const { container } = render(
     <VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
@@ -53,7 +53,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
   it('should handle minimal query', async () => {
     const query: InfluxQuery = {
       refId: 'A',
-      policy: 'default',
+      policy: DEFAULT_POLICY,
     };
     await assertEditor(
       query,
@@ -70,7 +70,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
       refId: 'A',
       alias: 'test-alias',
       resultFormat: 'table',
-      policy: 'default',
+      policy: DEFAULT_POLICY,
     };
     await assertEditor(
       query,

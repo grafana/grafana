@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Alert, Field } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState } from 'app/types';
 
 import { VariableLegend } from '../editor/VariableLegend';
@@ -64,7 +64,13 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
       <>
         <VariableLegend>Ad-hoc options</VariableLegend>
         <Field label="Data source" htmlFor="data-source-picker">
-          <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} width={30} noDefault />
+          <DataSourcePicker
+            current={variable.datasource}
+            onChange={this.onDatasourceChanged}
+            width={30}
+            variables={true}
+            noDefault
+          />
         </Field>
 
         {infoText ? <Alert title={infoText} severity="info" /> : null}

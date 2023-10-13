@@ -44,27 +44,27 @@ export default NamedColorsGroup;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    colorRow: css`
-      display: grid;
-      grid-template-columns: 25% 1fr;
-      grid-column-gap: ${theme.spacing(2)};
-      padding: ${theme.spacing(0.5, 0)};
+    colorRow: css({
+      display: 'grid',
+      gridTemplateColumns: '25% 1fr',
+      gridColumnGap: theme.spacing(2),
+      padding: theme.spacing(0.5, 0),
 
-      &:hover {
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    colorLabel: css`
-      padding-left: ${theme.spacing(2)};
-      display: flex;
-      align-items: center;
-    `,
-    swatchRow: css`
-      display: flex;
-      gap: ${theme.spacing(1)};
-      align-items: center;
-      justify-content: space-around;
-      flex-direction: row;
-    `,
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    colorLabel: css({
+      paddingLeft: theme.spacing(2),
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    swatchRow: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      flexDirection: 'row',
+    }),
   };
 };

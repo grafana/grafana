@@ -28,3 +28,18 @@ export function findItem(
 
   return undefined;
 }
+
+export function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
+  return new Array(amount).fill(null).map((_, index) => {
+    return {
+      parentUID,
+      level,
+      isOpen: false,
+      item: {
+        kind: 'ui' as const,
+        uiKind: 'pagination-placeholder' as const,
+        uid: `${parentUID}-pagination-${index}`,
+      },
+    };
+  });
+}

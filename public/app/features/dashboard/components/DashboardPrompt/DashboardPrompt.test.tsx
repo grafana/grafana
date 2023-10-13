@@ -2,14 +2,14 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
-import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel() {
   return createDashboardModelFixture({
     panels: [
-      createPanelJSONFixture({
+      createPanelSaveModel({
         id: 1,
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
@@ -132,14 +132,14 @@ describe('DashboardPrompt', () => {
       });
     });
 
-    it('Should ignore panel schema migrations', () => {
+    it('Should ignore panel schema migrations', async () => {
       const { original, dash } = getTestContext();
       const plugin = getPanelPlugin({}).setMigrationHandler((panel) => {
         delete (panel as any).legend;
         return { option1: 'Aasd' };
       });
 
-      dash.panels[0].pluginLoaded(plugin);
+      await dash.panels[0].pluginLoaded(plugin);
       expect(hasChanges(dash, original)).toBe(false);
     });
 

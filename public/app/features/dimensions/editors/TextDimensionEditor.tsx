@@ -19,13 +19,13 @@ const textOptions = [
   //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
 ];
 
-const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+const dummyFieldSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
-const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
+const dummyStringSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
 type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
 

@@ -47,18 +47,18 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      justify-content: center;
-      flex-direction: row-reverse;
-      margin-left: ${theme.spacing(1)};
+    container: css({
+      display: 'flex',
+      justifyContent: 'center',
+      flexDirection: 'row-reverse',
+      marginLeft: theme.spacing(1),
 
-      & > button {
-        margin-left: -${theme.spacing(1)}; // Overlay the elements a bit on top of each other
-      }
-    `,
-    dots: css`
-      margin-bottom: 3px;
-    `,
+      '& > button': {
+        marginLeft: theme.spacing(-1), // Overlay the elements a bit on top of each other
+      },
+    }),
+    dots: css({
+      marginBottom: '3px',
+    }),
   };
 };

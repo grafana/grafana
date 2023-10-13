@@ -71,7 +71,7 @@ func (m *DisabledMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error
 		return fmt.Errorf("failed to remove managed rbac roles: %w", err)
 	}
 
-	params := []interface{}{"DELETE FROM migration_log WHERE migration_id IN (?, ?, ?, ?, ?, ?, ?, ?)"}
+	params := []any{"DELETE FROM migration_log WHERE migration_id IN (?, ?, ?, ?, ?, ?, ?, ?)"}
 	for _, m := range migrations {
 		params = append(params, m)
 	}

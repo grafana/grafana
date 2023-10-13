@@ -2,13 +2,16 @@ package alerting
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -42,6 +45,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 		Password:       "admin",
 		Login:          "admin",
 	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
+	// Create the namespace we'll save our alerts to.
+	namespaceUID := "default"
+	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
 
 	t.Run("when provisioning notification policies", func(t *testing.T) {
 		url := fmt.Sprintf("http://%s/api/v1/provisioning/policies", grafanaListedAddr)
@@ -332,6 +340,34 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 			require.Equal(t, 200, resp.StatusCode)
 		})
+	})
+
+	t.Run("when provisioning alert rules", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s/api/v1/provisioning/alert-rules", grafanaListedAddr)
+		body := `{"orgID":1,"folderUID":"default","ruleGroup":"Test Group","title":"Provisioned","condition":"A","data":[{"refId":"A","queryType":"","relativeTimeRange":{"from":600,"to":0},"datasourceUid":"f558c85f-66ad-4fd1-b31d-7979e6c93db4","model":{"editorMode":"code","exemplar":false,"expr":"sum(rate(low_card[5m])) \u003e 0","format":"time_series","instant":true,"intervalMs":1000,"legendFormat":"__auto","maxDataPoints":43200,"range":false,"refId":"A"}}],"noDataState":"NoData","execErrState":"Error","for":"0s"}`
+		req := createTestRequest("POST", url, "admin", body)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, 201, resp.StatusCode)
+
+		// We want to check the provenances of both provisioned and non-provisioned rules
+		createRule(t, apiClient, namespaceUID)
+
+		req = createTestRequest("GET", url, "admin", "")
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+
+		var rules definitions.ProvisionedAlertRules
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(&rules))
+		require.NoError(t, resp.Body.Close())
+
+		require.Len(t, rules, 2)
+		sort.Slice(rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		})
+		require.Equal(t, definitions.Provenance("api"), rules[0].Provenance)
+		require.Equal(t, definitions.Provenance(""), rules[1].Provenance)
 	})
 }
 

@@ -39,7 +39,10 @@ export class SwitchCtrl {
 
   static $inject = ['$scope', '$timeout'];
 
-  constructor($scope: any, private $timeout: any) {
+  constructor(
+    $scope: any,
+    private $timeout: any
+  ) {
     this.show = true;
     this.id = $scope.$id;
   }

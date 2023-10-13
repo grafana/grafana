@@ -12,6 +12,7 @@ import {
   IntervalValues,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
@@ -29,8 +30,8 @@ export class TimeSrv {
   oldRefresh?: string;
   timeModel?: TimeModel;
   timeAtLoad: RawTimeRange;
+  refreshMS?: number;
   private autoRefreshBlocked?: boolean;
-  private refreshMS?: number;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
@@ -46,8 +47,8 @@ export class TimeSrv {
       this.shiftTime(e.payload.direction, e.payload.updateUrl);
     });
 
-    appEvents.subscribe(AbsoluteTimeEvent, () => {
-      this.makeAbsoluteTime();
+    appEvents.subscribe(AbsoluteTimeEvent, (e) => {
+      this.makeAbsoluteTime(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -91,10 +92,7 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (this.contextSrv.minRefreshInterval) {
-      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
-    }
-    return intervals;
+    return this.contextSrv.getValidIntervals(intervals);
   }
 
   private parseTime() {
@@ -149,7 +147,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 
@@ -238,7 +236,7 @@ export class TimeSrv {
     if (interval === AutoRefreshInterval) {
       intervalMs = this.getAutoRefreshInteval().intervalMs;
     } else {
-      refresh = this.contextSrv.getValidInterval(interval as string);
+      refresh = this.contextSrv.getValidInterval(interval);
       intervalMs = rangeUtil.intervalToMs(refresh);
     }
 
@@ -341,6 +339,12 @@ export class TimeSrv {
   };
 
   timeRange(): TimeRange {
+    // Scenes can set this global object to the current time range.
+    // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
+    }
+
     return getTimeRange(this.time, this.timeModel);
   }
 
@@ -364,14 +368,9 @@ export class TimeSrv {
     );
   }
 
-  makeAbsoluteTime() {
-    const params = locationService.getSearch();
-    if (params.get('left')) {
-      return; // explore handles this;
-    }
-
+  makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
-    this.setTime({ from, to }, true);
+    this.setTime({ from, to }, updateUrl);
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now

@@ -38,6 +38,7 @@ type Query struct {
 	DashboardUIDs []string
 	DashboardIds  []int64
 	FolderIds     []int64
+	FolderUIDs    []string
 	Permission    dashboards.PermissionType
 	Sort          string
 }
@@ -83,6 +84,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		DashboardIds:  query.DashboardIds,
 		Type:          query.Type,
 		FolderIds:     query.FolderIds,
+		FolderUIDs:    query.FolderUIDs,
 		Tags:          query.Tags,
 		Limit:         query.Limit,
 		Page:          query.Page,

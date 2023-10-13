@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { arrayUtils } from '@grafana/data';
-import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList } from '@grafana/ui';
+import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
@@ -14,6 +15,8 @@ type LinkSettingsListProps = {
 };
 
 export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListProps) => {
+  const styles = useStyles2(getStyles);
+
   const [links, setLinks] = useState(dashboard.links);
 
   const moveLink = (idx: number, direction: number) => {
@@ -69,8 +72,8 @@ export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListP
               </td>
               <td role="gridcell">
                 <HorizontalGroup>
-                  {link.title && <span>{link.title}</span>}
-                  {link.type === 'link' && <span>{link.url}</span>}
+                  {link.title && <span className={styles.titleWrapper}>{link.title}</span>}
+                  {link.type === 'link' && <span className={styles.urlWrapper}>{link.url}</span>}
                   {link.type === 'dashboards' && <TagList tags={link.tags ?? []} />}
                 </HorizontalGroup>
               </td>
@@ -100,3 +103,16 @@ export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListP
     </>
   );
 };
+
+const getStyles = () => ({
+  titleWrapper: css`
+    width: 20vw;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  `,
+  urlWrapper: css`
+    width: 40vw;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  `,
+});

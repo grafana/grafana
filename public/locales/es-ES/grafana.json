@@ -1,8 +1,9 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -25,11 +27,46 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
+      "cannot-move-folders": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-invalid-text": "",
+      "delete-modal-invalid-title": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule_one": "",
+      "alertRule_many": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_many": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_many": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_many": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_many": "",
+      "total_other": ""
     },
     "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
       "name-column": "",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
       "tags-column": ""
     },
     "folder-actions-button": {
@@ -37,6 +74,26 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -72,23 +129,53 @@
     },
     "save": "Guardar"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización"
+      "visualization": "Visualización",
+      "widget": ""
     },
     "empty": {
-      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
-      "add-import-button": "Importar el panel de la biblioteca",
-      "add-import-header": "Importar panel",
-      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
-      "add-row-button": "Añadir fila",
-      "add-row-header": "Añadir una fila",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -155,12 +242,133 @@
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
       "unmark-favorite": "Deshacer marca como favorito"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
+    "json-editor": {
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
     }
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
@@ -170,6 +378,54 @@
       "no-options-label": "",
       "placeholder": ""
     }
+  },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -185,6 +441,18 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body_one": "",
+      "body_many": "",
+      "body_other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
       "success": "Panel de librería guardado"
@@ -192,11 +460,16 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
@@ -245,12 +518,37 @@
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
       "title": "Claves API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -275,12 +573,22 @@
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
       "title": "Paneles de control"
     },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
+    },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
       "title": "Orígenes de datos"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -289,6 +597,9 @@
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
       "title": "Usuarios"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Ayuda"
@@ -300,9 +611,21 @@
     "home": {
       "title": "Inicio"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -320,9 +643,18 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -341,8 +673,17 @@
     "profile/settings": {
       "title": "Perfil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
@@ -364,6 +705,9 @@
     "sign-out": {
       "title": "Cerrar sesión"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
       "title": "Instantáneas"
@@ -374,6 +718,9 @@
     "starred-empty": {
       "title": "Tus paneles de control destacados aparecerán aquí"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
@@ -381,6 +728,9 @@
     "support-bundles": {
       "subtitle": "Descargar paquetes de apoyo",
       "title": "Paquetes de apoyo"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
@@ -397,6 +747,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
     },
     "toolbar": {
       "enable-kiosk": "Activar el modo de quiosco",
@@ -432,6 +787,66 @@
       "view": "Vista"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "",
+    "form": {
+      "add-tag-label": "",
+      "add-tag-placeholder": "",
+      "add-title-label": "",
+      "cancel": "",
+      "heading": "",
+      "interval-label": "",
+      "interval-placeholder": "",
+      "interval-required": "",
+      "name-label": "",
+      "name-placeholder": "",
+      "name-required": "",
+      "save": "",
+      "table-delete": "",
+      "table-drag": "",
+      "table-empty": "",
+      "table-heading": ""
+    },
+    "sub-title": "",
+    "title": ""
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "",
+      "edit": "",
+      "start": "",
+      "tooltip": ""
+    },
+    "create-button": {
+      "title": ""
+    },
+    "delete-modal": {
+      "body": "",
+      "confirm-text": ""
+    },
+    "empty": {
+      "button": "",
+      "pro-tip": "",
+      "pro-tip-link-title": "",
+      "title": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
@@ -449,8 +864,9 @@
       "aria-label": "Desactivar actualización automática",
       "label": "Apagado"
     },
-    "select-button": {
-      "auto-refresh": "Establecer intervalo de actualización automática"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {
@@ -510,6 +926,7 @@
       "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Cancelar",
       "info-text": "Exporte este panel de control.",
       "save-button": "Guardar en archivo",
@@ -572,6 +989,17 @@
       "copy-button": "Copiar al portapapeles"
     }
   },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
+  },
   "shared": {
     "preferences": {
       "theme": {
@@ -600,15 +1028,11 @@
     },
     "title": "Preferencias"
   },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
   },
   "tag-filter": {
     "loading": "Cargando...",
@@ -626,7 +1050,8 @@
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list": "<0><0>Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí./0></0><1><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></1>",
+      "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
+      "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
     "footer": {

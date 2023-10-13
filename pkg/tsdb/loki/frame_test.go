@@ -77,9 +77,7 @@ func TestAdjustFrame(t *testing.T) {
 		verifyFrame := func(frame *data.Frame) {
 			fields := frame.Fields
 
-			require.Equal(t, 5, len(fields))
-
-			idField := fields[4]
+			idField := fields[len(fields)-1]
 			require.Equal(t, "id", idField.Name)
 			require.Equal(t, data.FieldTypeString, idField.Type())
 			require.Equal(t, 4, idField.Len())
@@ -91,12 +89,22 @@ func TestAdjustFrame(t *testing.T) {
 
 		frame := makeFrame()
 
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 		verifyFrame(frame)
 
 		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, false, true)
 		require.NoError(t, err)
 		verifyFrame(frame)
 	})
@@ -112,6 +120,13 @@ func TestAdjustFrame(t *testing.T) {
 			return frame
 		}
 
+		verifyFrame := func(frame *data.Frame, expectedFrameName string) {
+			require.Equal(t, frame.Name, expectedFrameName)
+			require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
+			require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
+			require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		}
+
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
 			QueryType:    QueryTypeRange,
@@ -120,22 +135,28 @@ func TestAdjustFrame(t *testing.T) {
 		}
 
 		frame := makeFrame()
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 
-		require.Equal(t, frame.Name, "legend Application")
-		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
-		require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
-		require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		verifyFrame(frame, "legend Application")
 
 		frame = makeFrame()
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
 		require.NoError(t, err)
 
-		require.Equal(t, frame.Name, "")
-		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
-		require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
-		require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		verifyFrame(frame, "")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "legend Application")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, false, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "")
 	})
 
 	t.Run("should set interval-attribute in response", func(t *testing.T) {
@@ -167,18 +188,26 @@ func TestAdjustFrame(t *testing.T) {
 
 		frame := makeFrame()
 
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 		verifyFrame(frame)
 
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		err = adjustFrame(frame, query, false, true)
 		require.NoError(t, err)
 		verifyFrame(frame)
 	})
 
 	t.Run("should parse response stats", func(t *testing.T) {
-		stats := map[string]interface{}{
-			"summary": map[string]interface{}{
+		stats := map[string]any{
+			"summary": map[string]any{
 				"bytesProcessedPerSecond": 1,
 				"linesProcessedPerSecond": 2,
 				"totalBytesProcessed":     3,
@@ -186,7 +215,7 @@ func TestAdjustFrame(t *testing.T) {
 				"execTime":                5.5,
 			},
 
-			"store": map[string]interface{}{
+			"store": map[string]any{
 				"totalChunksRef":        6,
 				"totalChunksDownloaded": 7,
 				"chunksDownloadTime":    8.8,
@@ -198,7 +227,7 @@ func TestAdjustFrame(t *testing.T) {
 				"totalDuplicates":       14,
 			},
 
-			"ingester": map[string]interface{}{
+			"ingester": map[string]any{
 				"totalReached":       15,
 				"totalChunksMatched": 16,
 				"totalBatches":       17,
@@ -213,7 +242,7 @@ func TestAdjustFrame(t *testing.T) {
 		}
 
 		meta := data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"stats": stats,
 			},
 		}

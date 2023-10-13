@@ -33,12 +33,12 @@ Header.displayName = 'Header';
 
 const getHeaderStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      background-color: ${theme.colors.background.primary};
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px;
-    `,
+    container: css({
+      backgroundColor: theme.colors.background.primary,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '7px',
+    }),
   };
 };

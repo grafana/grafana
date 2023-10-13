@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
-import { focusCss } from '../../themes/mixins';
+import { getFocusStyles } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
 
@@ -44,28 +44,24 @@ const getSelectContainerStyles = stylesFactory(
       wrapper: cx(
         styles.wrapper,
         sharedInputStyle(theme, invalid),
-        focused &&
-          css`
-            ${focusCss(theme.v1)}
-          `,
+        focused && css(getFocusStyles(theme)),
         disabled && styles.inputDisabled,
-        css`
-          position: relative;
-          box-sizing: border-box;
+        css({
+          position: 'relative',
+          boxSizing: 'border-box',
           /* The display property is set by the styles prop in SelectBase because it's dependant on the width prop  */
-          flex-direction: row;
-          flex-wrap: wrap;
-          align-items: stretch;
-          justify-content: space-between;
-
-          min-height: 32px;
-          height: auto;
-          max-width: 100%;
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'stretch',
+          justifyContent: 'space-between',
+          minHeight: '32px',
+          height: 'auto',
+          maxWidth: '100%',
 
           /* Input padding is applied to the InputControl so the menu is aligned correctly */
-          padding: 0;
-          cursor: ${disabled ? 'not-allowed' : 'pointer'};
-        `
+          padding: 0,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        })
       ),
     };
   }

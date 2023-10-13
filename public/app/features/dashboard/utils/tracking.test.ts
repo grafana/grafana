@@ -29,7 +29,6 @@ describe('trackDashboardLoaded', () => {
     expect(reportInteractionSpy).toHaveBeenCalledWith('dashboards_init_dashboard_completed', {
       uid: 'dashboard-123',
       title: 'Test Dashboard',
-      theme: 'dark',
       schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81
       panels_count: 2,
       variable_type_query_count: 2,

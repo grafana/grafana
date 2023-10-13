@@ -103,44 +103,44 @@ const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = styleMixins.hoverColor(theme.colors.background.primary, theme);
 
   return {
-    row: css`
-      label: LegendRow;
-      font-size: ${theme.v1.typography.size.sm};
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      td {
-        padding: ${theme.spacing(0.25, 1)};
-        white-space: nowrap;
-      }
+    row: css({
+      label: 'LegendRow',
+      fontSize: theme.v1.typography.size.sm,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      td: {
+        padding: theme.spacing(0.25, 1),
+        whiteSpace: 'nowrap',
+      },
 
-      &:hover {
-        background: ${rowHoverBg};
-      }
-    `,
-    label: css`
-      label: LegendLabel;
-      white-space: nowrap;
-      background: none;
-      border: none;
-      font-size: inherit;
-      padding: 0;
-      max-width: 600px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
-    labelDisabled: css`
-      label: LegendLabelDisabled;
-      color: ${theme.colors.text.disabled};
-    `,
-    itemWrapper: css`
-      display: flex;
-      white-space: nowrap;
-      align-items: center;
-    `,
-    value: css`
-      text-align: right;
-    `,
-    yAxisLabel: css`
-      color: ${theme.colors.text.secondary};
-    `,
+      '&:hover': {
+        background: rowHoverBg,
+      },
+    }),
+    label: css({
+      label: 'LegendLabel',
+      whiteSpace: 'nowrap',
+      background: 'none',
+      border: 'none',
+      fontSize: 'inherit',
+      padding: 0,
+      maxWidth: '600px',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
+    labelDisabled: css({
+      label: 'LegendLabelDisabled',
+      color: theme.colors.text.disabled,
+    }),
+    itemWrapper: css({
+      display: 'flex',
+      whiteSpace: 'nowrap',
+      alignItems: 'center',
+    }),
+    value: css({
+      textAlign: 'right',
+    }),
+    yAxisLabel: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };

@@ -10,11 +10,13 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/models"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -39,6 +41,7 @@ type TestingApiSrv struct {
 	backtesting     *backtesting.Engine
 	featureManager  featuremgmt.FeatureToggles
 	appUrl          *url.URL
+	tracer          tracing.Tracer
 }
 
 // RouteTestGrafanaRuleConfig returns a list of potential alerts for a given rule configuration. This is intended to be
@@ -49,9 +52,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
-		c.OrgID,
+		c.SignedInUser.GetOrgID(),
 		&folder.Folder{
-			OrgID: c.OrgID,
+			OrgID: c.SignedInUser.GetOrgID(),
 			UID:   body.NamespaceUID,
 			Title: body.NamespaceTitle,
 		},
@@ -86,6 +89,8 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		Clock:                   clock.New(),
 		Historian:               nil,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  srv.tracer,
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	manager := state.NewManager(cfg)
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
@@ -222,7 +227,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		Title: cmd.Title,
 		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
 		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		Condition:       cmd.Condition,
 		Data:            queries,
 		IntervalSeconds: intervalSeconds,

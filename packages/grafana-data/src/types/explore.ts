@@ -1,21 +1,43 @@
 import { DataQuery } from '@grafana/schema';
 
 import { PreferredVisualisationType } from './data';
-import { RawTimeRange, TimeRange } from './time';
+import { TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
+
+// enforce type-incompatibility with RawTimeRange to ensure it's parsed and converted.
+// URLRangeValue may be a string representing UTC time in ms, which is not a compatible
+// value for RawTimeRange when used as a string (it could only be an ISO formatted date)
+export type URLRangeValue = string | { __brand: 'URL Range Value' };
+
+/**
+ * @internal
+ */
+export type URLRange = {
+  from: URLRangeValue;
+  to: URLRangeValue;
+};
 
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
   queries: T[];
-  range: RawTimeRange;
+  range: URLRange;
   panelsState?: ExplorePanelsState;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
   trace?: ExploreTracePanelState;
   logs?: ExploreLogsPanelState;
+}
+
+/**
+ * Keep a list of vars the correlations editor / helper in explore will use
+ */
+/** @internal */
+export interface ExploreCorrelationHelperData {
+  resultField: string;
+  vars: Record<string, string>;
 }
 
 export interface ExploreTracePanelState {
@@ -33,6 +55,7 @@ export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
   queries?: T[];
   range?: TimeRange;
   panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
 }
 
 /**

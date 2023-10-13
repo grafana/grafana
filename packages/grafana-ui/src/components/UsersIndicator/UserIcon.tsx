@@ -110,62 +110,61 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
   const shadowHoverColor = isActive ? theme.colors.primary.text : theme.colors.border.strong;
 
   return {
-    container: css`
-      padding: 0;
-      width: 30px;
-      height: 30px;
-      background: none;
-      border: none;
-      border-radius: ${theme.shape.radius.circle};
-      & > * {
-        border-radius: ${theme.shape.radius.circle};
-      }
-    `,
-    content: css`
-      line-height: 24px;
-      max-width: 100%;
-      border: 3px ${theme.colors.background.primary} solid;
-      box-shadow: ${getIconBorder(shadowColor)};
-      background-clip: padding-box;
-      &:hover {
-        box-shadow: ${getIconBorder(shadowHoverColor)};
-      }
-    `,
-    textContent: css`
-      background: ${theme.colors.background.primary};
-      padding: 0;
-      color: ${theme.colors.text.secondary};
-      text-align: center;
-      font-size: ${theme.typography.size.sm};
-      background: ${theme.colors.background.primary};
-      &:focus {
-        box-shadow: ${getIconBorder(shadowColor)};
-      }
-    `,
-    tooltipContainer: css`
-      text-align: center;
-      padding: ${theme.spacing(0, 1)};
-    `,
-    tooltipName: css`
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    tooltipDate: css`
-      font-weight: ${theme.typography.fontWeightRegular};
-    `,
-    dotContainer: css`
-      display: flex;
-      align-items: center;
-    `,
-    dot: css`
-      height: 6px;
-      width: 6px;
-      background-color: ${theme.colors.primary.main};
-      border-radius: ${theme.shape.radius.circle};
-      display: inline-block;
-      margin-left: ${theme.spacing(1)};
-    `,
-    pointer: css`
-      cursor: pointer;
-    `,
+    container: css({
+      padding: 0,
+      width: '30px',
+      height: '30px',
+      background: 'none',
+      border: 'none',
+      borderRadius: theme.shape.radius.circle,
+      '& > *': {
+        borderRadius: theme.shape.radius.circle,
+      },
+    }),
+    content: css({
+      lineHeight: '24px',
+      maxWidth: '100%',
+      border: `3px ${theme.colors.background.primary} solid`,
+      boxShadow: getIconBorder(shadowColor),
+      backgroundClip: 'padding-box',
+      '&:hover': {
+        boxShadow: getIconBorder(shadowHoverColor),
+      },
+    }),
+    textContent: css({
+      background: theme.colors.background.primary,
+      padding: 0,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+      fontSize: theme.typography.size.sm,
+      '&:focus': {
+        boxShadow: getIconBorder(shadowColor),
+      },
+    }),
+    tooltipContainer: css({
+      textAlign: 'center',
+      padding: theme.spacing(0, 1),
+    }),
+    tooltipName: css({
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    tooltipDate: css({
+      fontWeight: theme.typography.fontWeightRegular,
+    }),
+    dotContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    dot: css({
+      height: '6px',
+      width: '6px',
+      backgroundColor: theme.colors.primary.main,
+      borderRadius: theme.shape.radius.circle,
+      display: 'inline-block',
+      marginLeft: theme.spacing(1),
+    }),
+    pointer: css({
+      cursor: 'pointer',
+    }),
   };
 };

@@ -4,11 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
@@ -62,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       .starred {
         color: ${theme.v1.palette.orange};
       }
@@ -234,7 +233,7 @@ export function RichHistoryCard(props: Props) {
 
     // For starred queries, we want confirmation. For non-starred, we don't.
     if (query.starred) {
-      appEvents.publish(
+      getAppEvents().publish(
         new ShowConfirmModalEvent({
           title: 'Delete',
           text: 'Are you sure you want to permanently delete your starred query?',
@@ -403,14 +402,13 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
-  css`
-    display: flex;
-    align-items: center;
-    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    white-space: nowrap;
-  `;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
+  display: flex;
+  align-items: center;
+  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+  font-weight: ${theme.typography.fontWeightMedium};
+  white-space: nowrap;
+`;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

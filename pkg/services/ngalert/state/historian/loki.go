@@ -11,10 +11,10 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/weaveworks/common/http/client"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -89,7 +89,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 	writeCtx := context.Background()
 	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
 	writeCtx = history_model.WithRuleData(writeCtx, rule)
-	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
+	writeCtx = trace.ContextWithSpan(writeCtx, trace.SpanFromContext(ctx))
 
 	go func(ctx context.Context) {
 		defer cancel()
@@ -377,6 +377,12 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	if query.RuleUID != "" {
 		logQL = fmt.Sprintf("%s | ruleUID=%q", logQL, query.RuleUID)
 	}
+	if query.DashboardUID != "" {
+		logQL = fmt.Sprintf("%s | dashboardUID=%q", logQL, query.DashboardUID)
+	}
+	if query.PanelID != 0 {
+		logQL = fmt.Sprintf("%s | panelID=%d", logQL, query.PanelID)
+	}
 
 	labelFilters := ""
 	labelKeys := make([]string, 0, len(query.Labels))
@@ -394,5 +400,8 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
-	return query.RuleUID != "" || len(query.Labels) > 0
+	return query.RuleUID != "" ||
+		query.DashboardUID != "" ||
+		query.PanelID != 0 ||
+		len(query.Labels) > 0
 }

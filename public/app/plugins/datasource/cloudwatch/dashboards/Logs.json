@@ -688,7 +688,6 @@
   ],
   "refresh": false,
   "schemaVersion": 21,
-  "style": "dark",
   "tags": ["Amazon", "AWS", "CloudWatch", "Logs"],
   "templating": {
     "list": [

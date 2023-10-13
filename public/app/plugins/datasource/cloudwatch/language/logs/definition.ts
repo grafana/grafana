@@ -1,7 +1,9 @@
 import { LanguageDefinition } from '../monarch/register';
 
+export const CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID = 'cloudwatch-logs';
+
 const cloudWatchLogsLanguageDefinition: LanguageDefinition = {
-  id: 'logs',
+  id: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID,
   extensions: [],
   aliases: [],
   mimetypes: [],

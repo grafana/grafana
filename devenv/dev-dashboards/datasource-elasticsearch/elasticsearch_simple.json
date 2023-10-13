@@ -1106,8 +1106,7 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "style": "dark",
-  "tags": [ 
+  "tags": [
     "gdev",
     "elasticsearch",
     "datasource-test"

@@ -263,6 +263,36 @@ func TestEvaluatorTest(t *testing.T) {
 		})
 	})
 
+	t.Run("should not fail if 'to-from' is not times of interval", func(t *testing.T) {
+		from := time.Unix(0, 0)
+		to := from.Add(5 * ruleInterval)
+
+		states := []state.StateTransition{
+			{
+				State: &state.State{
+					CacheID:     "state-1",
+					Labels:      models.GenerateAlertLabels(rand.Intn(5)+1, "test-"),
+					State:       eval.Normal,
+					StateReason: util.GenerateShortUID(),
+				},
+			},
+		}
+
+		manager.stateCallback = func(now time.Time) []state.StateTransition {
+			return states
+		}
+
+		frame, err := engine.Test(context.Background(), nil, rule, from, to)
+		require.NoError(t, err)
+		expectedLen := frame.Rows()
+		for i := 0; i < 100; i++ {
+			jitter := time.Duration(rand.Int63n(ruleInterval.Milliseconds())) * time.Millisecond
+			frame, err = engine.Test(context.Background(), nil, rule, from, to.Add(jitter))
+			require.NoError(t, err)
+			require.Equalf(t, expectedLen, frame.Rows(), "jitter %v caused result to be different that base-line", jitter)
+		}
+	})
+
 	t.Run("should backfill field with nulls if a new dimension created in the middle", func(t *testing.T) {
 		from := time.Unix(0, 0)
 
@@ -359,18 +389,16 @@ type fakeBacktestingEvaluator struct {
 	evalCallback func(now time.Time) (eval.Results, error)
 }
 
-func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from, to time.Time, interval time.Duration, callback callbackFunc) error {
-	idx := 0
-	for now := from; now.Before(to); now = now.Add(interval) {
+func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error {
+	for idx, now := 0, from; idx < evaluations; idx, now = idx+1, now.Add(interval) {
 		results, err := f.evalCallback(now)
 		if err != nil {
 			return err
 		}
-		err = callback(now, results)
+		err = callback(idx, now, results)
 		if err != nil {
 			return err
 		}
-		idx++
 	}
 	return nil
 }

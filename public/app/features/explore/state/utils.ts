@@ -1,21 +1,26 @@
+import { uniq } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
+  dateMath,
+  DateTime,
   EventBusExtended,
   getDefaultTimeRange,
   HistoryItem,
+  isDateTime,
   LoadingState,
   LogRowModel,
   PanelData,
   RawTimeRange,
   TimeFragment,
   TimeRange,
-  dateMath,
-  DateTime,
-  isDateTime,
   toUtc,
+  URLRange,
+  URLRangeValue,
 } from '@grafana/data';
-import { DataSourceRef, TimeZone } from '@grafana/schema';
+import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -37,7 +42,7 @@ export const storeGraphStyle = (graphStyle: string): void => {
 /**
  * Returns a fresh Explore area state
  */
-export const makeExplorePaneState = (): ExploreItemState => ({
+export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   history: [],
@@ -67,6 +72,8 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
+  correlations: undefined,
+  ...overrides,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -78,6 +85,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   traceFrames: [],
   nodeGraphFrames: [],
   flameGraphFrames: [],
+  customFrames: [],
   tableFrames: [],
   rawPrometheusFrames: [],
   rawPrometheusResult: null,
@@ -139,12 +147,7 @@ export function getResultsFromCache(
   return cacheValue;
 }
 
-export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
-  const raw = {
-    from: parseRawTime(range.from)!,
-    to: parseRawTime(range.to)!,
-  };
-
+export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {
   return {
     from: dateMath.parse(raw.from, false, timeZone)!,
     to: dateMath.parse(raw.to, true, timeZone)!,
@@ -152,14 +155,33 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
-function parseRawTime(value: string | DateTime): TimeFragment | null {
-  if (value === null) {
+export function fromURLRange(range: URLRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
+  if (urlRangeValue === null) {
     return null;
   }
 
-  if (isDateTime(value)) {
-    return value;
+  if (isDateTime(urlRangeValue)) {
+    return urlRangeValue;
   }
+
+  if (typeof urlRangeValue !== 'string') {
+    return null;
+  }
+
+  // it can only be a string now
+  const value = urlRangeValue;
 
   if (value.indexOf('now') !== -1) {
     return value;
@@ -204,4 +226,12 @@ export const filterLogRowsByIndex = (
   }
 
   return logRows;
+};
+
+export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
+  if (datasourceUID === MIXED_DATASOURCE_NAME) {
+    return uniq(queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid));
+  } else {
+    return [datasourceUID];
+  }
 };

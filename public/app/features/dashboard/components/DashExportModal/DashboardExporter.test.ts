@@ -96,7 +96,6 @@ it('handles a default datasource in a template variable', async () => {
 
 it('replaces datasource ref in library panel', async () => {
   const dashboard: Dashboard = {
-    style: 'dark',
     editable: true,
     graphTooltip: 1,
     schemaVersion: 38,
@@ -164,8 +163,8 @@ it('replaces datasource ref in library panel', async () => {
   if ('error' in exported) {
     throw new Error('error should not be returned when making exportable json');
   }
-  expect(exported.__elements['c46a6b49-de40-43b3-982c-1b5e1ec084a4'].model.datasource.uid).toBe('${DS_GFDB}');
-  expect(exported.__inputs[0].name).toBe('DS_GFDB');
+  expect(exported.__elements!['c46a6b49-de40-43b3-982c-1b5e1ec084a4'].model.datasource.uid).toBe('${DS_GFDB}');
+  expect(exported.__inputs![0].name).toBe('DS_GFDB');
 });
 
 it('If a panel queries has no datasource prop ignore it', async () => {

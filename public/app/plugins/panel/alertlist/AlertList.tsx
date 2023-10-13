@@ -234,7 +234,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     margin-bottom: ${theme.spacing(0.5)};
   `,
   alertRuleItemIcon: css`

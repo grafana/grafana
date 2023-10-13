@@ -1,0 +1,138 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Flex } from './Flex';
+
+<Meta title="MDX|Flex" component={Flex} />
+
+# Flex
+
+The Flex Component aims at providing a more efficient way to lay out, align and distribute space among items in a container and
+the decision to create it is to ensure consistency in design across Grafana.
+
+### Usage
+
+#### When to use
+
+Use when in need to align components and small parts of the application. Use as parent container to wrap elements that you wish to align in a certain way.
+
+Also:
+
+    * when working with one dimension layout
+    * to display the direction of the elements
+    * to set the elements to wrap
+    * to align items (vertically or horizontally)
+
+#### When not to use
+
+When you need to lay out bigger parts of the application or when you want to create page lay out.
+
+Also:
+
+    * for complex grid layouts with various rows and columns
+    * bidirectional layouts
+    * complex nesting
+    * equal height columns
+
+### Variants
+
+Flex component has few variants that can be used based on the desired alignment you need for your case.
+
+Some examples of how to use the Flex component can be seen below:
+
+- AlignItems stretch
+
+```ts
+import { Flex } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Flex component to align-items stretch and justify-content to be center</h1>
+</header>
+<Flex direction="row" wrap="wrap"  alignItems="stretch" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main} height="10em" />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} height="3em" />
+    <Item color={theme.colors.warning.main} />
+</Flex>
+```
+
+- Wrap items wrap-reverse
+
+```ts
+import { Flex } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Flex component to align-items with wrap-reverse property</h1>
+</header>
+<Flex direction="row" wrap="wrap-reverse"  alignItems="center" justifyContent="center" gap={4}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Flex>
+```
+
+- JustifyContent flex-start
+
+```ts
+import { Flex } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Flex component to align-items with justify-content property</h1>
+</header>
+<Flex direction="row" wrap="wrap"  alignItems="center" justifyContent="flex-start" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Flex>
+```
+
+- Gap of 16px using the ThemeSpacingTokens
+
+```ts
+import { Flex } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Flex component to align-items with gap of 16px</h1>
+</header>
+<Flex direction="row" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Flex>
+```
+
+- Direction column
+
+```ts
+import { Flex } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Flex component to align-items with direction column</h1>
+</header>
+<Flex direction="column" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Flex>
+```
+
+### Props
+
+<ArgTypes of={Flex} />

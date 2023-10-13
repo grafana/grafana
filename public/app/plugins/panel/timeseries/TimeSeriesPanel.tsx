@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps, DataFrameType } from '@grafana/data';
+import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
@@ -31,12 +30,8 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
-
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  };
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -80,13 +75,19 @@ export const TimeSeriesPanel = ({
     >
       {(config, alignedDataFrame) => {
         if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(alignedDataFrame, frames, replaceVariables, timeZone);
+          alignedDataFrame = regenerateLinksSupplier(
+            alignedDataFrame,
+            frames,
+            replaceVariables,
+            timeZone,
+            dataLinkPostProcessor
+          );
         }
 
         return (
           <>
             <KeyboardPlugin config={config} />
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} withZoomY={true} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 frames={frames}
@@ -149,7 +150,6 @@ export const TimeSeriesPanel = ({
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
               />
             )}
 

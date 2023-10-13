@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Make sure PhlareDatasource implements required interfaces. This is important to do
+// Make sure PyroscopeDatasource implements required interfaces. This is important to do
 // since otherwise we will only get a not implemented error response from plugin in
 // runtime. In this example datasource instance implements backend.QueryDataHandler,
 // backend.CheckHealthHandler, backend.StreamHandler interfaces. Plugin should not
@@ -27,18 +27,18 @@ var (
 	_ backend.StreamHandler       = (*Service)(nil)
 )
 
-var logger = log.New("tsdb.phlare")
+var logger = log.New("tsdb.pyroscope")
 
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*PhlareDatasource, error) {
+func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*PyroscopeDatasource, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	in := i.(*PhlareDatasource)
+	in := i.(*PyroscopeDatasource)
 	return in, nil
 }
 
@@ -49,8 +49,8 @@ func ProvideService(httpClientProvider httpclient.Provider, ac accesscontrol.Acc
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewPhlareDatasource(httpClientProvider, settings, ac)
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return NewPyroscopeDatasource(httpClientProvider, settings, ac)
 	}
 }
 

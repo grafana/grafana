@@ -8,15 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "quota.bad-request")
-var ErrInvalidTargetSrv = errutil.NewBase(errutil.StatusBadRequest, "quota.invalid-target")
-var ErrInvalidScope = errutil.NewBase(errutil.StatusBadRequest, "quota.invalid-scope")
-var ErrFailedToGetScope = errutil.NewBase(errutil.StatusInternal, "quota.failed-get-scope")
-var ErrInvalidTarget = errutil.NewBase(errutil.StatusInternal, "quota.invalid-target-table")
-var ErrUsageFoundForTarget = errutil.NewBase(errutil.StatusNotFound, "quota.missing-target-usage")
-var ErrTargetSrvConflict = errutil.NewBase(errutil.StatusBadRequest, "quota.target-srv-conflict")
-var ErrDisabled = errutil.NewBase(errutil.StatusForbidden, "quota.disabled", errutil.WithPublicMessage("Quotas not enabled"))
-var ErrInvalidTagFormat = errutil.NewBase(errutil.StatusInternal, "quota.invalid-invalid-tag-format")
+var ErrBadRequest = errutil.BadRequest("quota.bad-request")
+var ErrInvalidTargetSrv = errutil.BadRequest("quota.invalid-target")
+var ErrInvalidScope = errutil.BadRequest("quota.invalid-scope")
+var ErrFailedToGetScope = errutil.Internal("quota.failed-get-scope")
+var ErrInvalidTarget = errutil.Internal("quota.invalid-target-table")
+var ErrUsageFoundForTarget = errutil.NotFound("quota.missing-target-usage")
+var ErrTargetSrvConflict = errutil.BadRequest("quota.target-srv-conflict")
+var ErrDisabled = errutil.Forbidden("quota.disabled", errutil.WithPublicMessage("Quotas not enabled"))
+var ErrInvalidTagFormat = errutil.Internal("quota.invalid-invalid-tag-format")
 
 type ScopeParameters struct {
 	OrgID  int64

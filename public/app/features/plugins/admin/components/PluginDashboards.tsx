@@ -30,7 +30,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
     const pluginId = this.props.plugin.id;
     getBackendSrv()
       .get(`/api/plugins/${pluginId}/dashboards`)
-      .then((dashboards: any) => {
+      .then((dashboards) => {
         this.setState({ dashboards, loading: false });
       });
   }
@@ -59,21 +59,21 @@ export class PluginDashboards extends PureComponent<Props, State> {
   import = (dash: PluginDashboard, overwrite: boolean) => {
     const { plugin, datasource } = this.props;
 
-    const installCmd: any = {
+    const installCmd = {
       pluginId: plugin.id,
       path: dash.path,
       overwrite: overwrite,
-      inputs: [],
+      inputs: datasource
+        ? [
+            {
+              name: '*',
+              type: 'datasource',
+              pluginId: datasource.meta.id,
+              value: datasource.name,
+            },
+          ]
+        : [],
     };
-
-    if (datasource) {
-      installCmd.inputs.push({
-        name: '*',
-        type: 'datasource',
-        pluginId: datasource.meta.id,
-        value: datasource.name,
-      });
-    }
 
     return getBackendSrv()
       .post(`/api/dashboards/import`, installCmd)

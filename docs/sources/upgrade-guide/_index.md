@@ -8,6 +8,10 @@ keywords:
   - configuration
   - documentation
   - upgrade
+labels:
+  products:
+    - enterprise
+    - oss
 title: Upgrade Grafana
 weight: 3
 ---

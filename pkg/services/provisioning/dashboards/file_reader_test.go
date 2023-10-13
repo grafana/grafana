@@ -34,7 +34,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			Type:    "file",
 			OrgID:   1,
 			Folder:  "",
-			Options: map[string]interface{}{},
+			Options: map[string]any{},
 		}
 	}
 
@@ -102,7 +102,7 @@ func TestDashboardFileReader(t *testing.T) {
 			Type:    "file",
 			OrgID:   1,
 			Folder:  "",
-			Options: map[string]interface{}{},
+			Options: map[string]any{},
 		}
 	}
 
@@ -327,8 +327,8 @@ func TestDashboardFileReader(t *testing.T) {
 
 		t.Run("Two dashboard providers should be able to provisioned the same dashboard without uid", func(t *testing.T) {
 			setup()
-			cfg1 := &config{Name: "1", Type: "file", OrgID: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
-			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
+			cfg1 := &config{Name: "1", Type: "file", OrgID: 1, Folder: "f1", Options: map[string]any{"path": containingID}}
+			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]any{"path": containingID}}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil).Times(2)
 			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
@@ -357,7 +357,7 @@ func TestDashboardFileReader(t *testing.T) {
 			Type:   "file",
 			OrgID:  1,
 			Folder: "",
-			Options: map[string]interface{}{
+			Options: map[string]any{
 				"folder": defaultDashboards,
 			},
 		}
@@ -375,7 +375,7 @@ func TestDashboardFileReader(t *testing.T) {
 			Type:   "file",
 			OrgID:  1,
 			Folder: "TEAM A",
-			Options: map[string]interface{}{
+			Options: map[string]any{
 				"folder": defaultDashboards,
 			},
 		}
@@ -396,7 +396,7 @@ func TestDashboardFileReader(t *testing.T) {
 			OrgID:     1,
 			Folder:    "TEAM B",
 			FolderUID: "general",
-			Options: map[string]interface{}{
+			Options: map[string]any{
 				"folder": defaultDashboards,
 			},
 		}
@@ -441,7 +441,7 @@ func TestDashboardFileReader(t *testing.T) {
 				Name:  configName,
 				Type:  "file",
 				OrgID: 1,
-				Options: map[string]interface{}{
+				Options: map[string]any{
 					"folder": unprovision,
 				},
 			}
@@ -506,7 +506,7 @@ func (ffi FakeFileInfo) ModTime() time.Time {
 	return time.Time{}
 }
 
-func (ffi FakeFileInfo) Sys() interface{} {
+func (ffi FakeFileInfo) Sys() any {
 	return nil
 }
 

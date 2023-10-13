@@ -3,14 +3,11 @@ import { useArgs } from '@storybook/client-api';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { SecretFormField } from './SecretFormField';
 
 const meta: Meta<typeof SecretFormField> = {
   title: 'Forms/SecretFormField',
   component: SecretFormField,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onChange', 'onReset'],

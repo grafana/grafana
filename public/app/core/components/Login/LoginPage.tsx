@@ -6,6 +6,7 @@ import React from 'react';
 import { Alert, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
+import { t } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
@@ -44,7 +45,11 @@ export const LoginPage = () => {
         <LoginLayout isChangingPassword={isChangingPassword}>
           {!isChangingPassword && (
             <InnerBox>
-              {loginErrorMessage && <Alert className={alertStyles} severity="error" title={loginErrorMessage} />}
+              {loginErrorMessage && (
+                <Alert className={alertStyles} severity="error" title={t('login.error.title', 'Login failed')}>
+                  {loginErrorMessage}
+                </Alert>
+              )}
 
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>

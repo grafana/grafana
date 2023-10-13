@@ -7,10 +7,9 @@ import { Page } from 'app/core/components/Page/Page';
 
 export default function FeatureTogglePage() {
   const styles = useStyles2(
-    (theme: GrafanaTheme2) =>
-      css`
-        margin-top: ${theme.spacing(2)};
-      `
+    (theme: GrafanaTheme2) => css`
+      margin-top: ${theme.spacing(2)};
+    `
   );
 
   return (

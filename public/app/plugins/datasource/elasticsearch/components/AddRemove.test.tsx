@@ -18,8 +18,8 @@ describe('AddRemove Button', () => {
     it('Should only show the add button', () => {
       render(<TestComponent items={['something']} />);
 
-      expect(screen.getByText('add')).toBeInTheDocument();
-      expect(screen.queryByText('remove')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Add')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Remove')).not.toBeInTheDocument();
     });
   });
 
@@ -29,7 +29,7 @@ describe('AddRemove Button', () => {
 
       render(<TestComponent items={items} />);
 
-      expect(screen.getAllByText('remove')).toHaveLength(items.length);
+      expect(screen.getAllByLabelText('Remove')).toHaveLength(items.length);
     });
 
     it('Should show the add button only once', () => {
@@ -37,7 +37,7 @@ describe('AddRemove Button', () => {
 
       render(<TestComponent items={items} />);
 
-      expect(screen.getAllByText('add')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Add')).toHaveLength(1);
     });
   });
 });

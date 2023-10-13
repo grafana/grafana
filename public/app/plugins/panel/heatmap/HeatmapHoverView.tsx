@@ -8,6 +8,9 @@ import {
   getFieldDisplayName,
   LinkModel,
   TimeRange,
+  getLinksSupplier,
+  InterpolateFunction,
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
@@ -23,6 +26,8 @@ type Props = {
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
   timeRange: TimeRange;
+  replaceVars: InterpolateFunction;
+  scopedVars: ScopedVars[];
 };
 
 export const HeatmapHoverView = (props: Props) => {
@@ -32,7 +37,7 @@ export const HeatmapHoverView = (props: Props) => {
   return <HeatmapHoverCell {...props} />;
 };
 
-const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
+const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars }: Props) => {
   const index = hover.dataIdx;
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
@@ -119,12 +124,22 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const linkLookup = new Set<string>();
 
   for (const field of visibleFields ?? []) {
-    // TODO: Currently always undefined? (getLinks)
-    if (field.getLinks) {
-      const v = field.values[index];
-      const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+    const hasLinks = field.config.links && field.config.links.length > 0;
 
-      field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
+    if (hasLinks && data.heatmap) {
+      const appropriateScopedVars = scopedVars.find(
+        (scopedVar) =>
+          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
+      );
+
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
+    }
+
+    if (field.getLinks) {
+      const value = field.values[index];
+      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
+      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
           links.push(link);

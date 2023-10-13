@@ -36,7 +36,7 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface")
 
 		#AccessRule: {
-			// The kind this rule applies to (dashboars, alert, etc)
+			// The kind this rule applies to (dashboards, alert, etc)
 			kind: "*" | string
 
 			// READ, WRITE, CREATE, DELETE, ...

@@ -302,7 +302,6 @@
     }
   ],
   "schemaVersion": 26,
-  "style": "dark",
   "tags": ["Tools", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [

@@ -22,7 +22,7 @@ func CustomQueryParameters(logger log.Logger) sdkhttpclient.Middleware {
 			return next
 		}
 
-		data, ok := grafanaData.(map[string]interface{})
+		data, ok := grafanaData.(map[string]any)
 		if !ok {
 			return next
 		}

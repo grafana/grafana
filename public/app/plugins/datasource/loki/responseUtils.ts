@@ -203,6 +203,10 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
     dest.fields[i].values = [].concat.apply(source.fields[i].values, dest.fields[i].values);
+    if (source.fields[i].nanos) {
+      const nanos: number[] = dest.fields[i].nanos?.slice() || [];
+      dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
+    }
   }
   dest.length += source.length;
   dest.meta = {

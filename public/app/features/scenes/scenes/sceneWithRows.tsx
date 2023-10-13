@@ -1,14 +1,14 @@
 import {
-  VizPanel,
   NestedScene,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
   SceneRefreshPicker,
   SceneFlexItem,
+  PanelBuilders,
 } from '@grafana/scenes';
 
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -25,17 +25,11 @@ export function getSceneWithRows(): DashboardScene {
             direction: 'row',
             children: [
               new SceneFlexItem({
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
 
               new SceneFlexItem({
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
             ],
           }),
@@ -47,16 +41,10 @@ export function getSceneWithRows(): DashboardScene {
             direction: 'row',
             children: [
               new SceneFlexItem({
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
               new SceneFlexItem({
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
             ],
           }),

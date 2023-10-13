@@ -11,6 +11,7 @@ import {
   getRangeSnapInterval,
   parseSelector,
   toPromLikeQuery,
+  truncateResult,
 } from './language_utils';
 import { PrometheusCacheLevel } from './types';
 
@@ -472,5 +473,17 @@ describe('toPromLikeQuery', () => {
       expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
       range: true,
     });
+  });
+});
+
+describe('truncateResult', () => {
+  it('truncates array longer then 1k from the start of array', () => {
+    // creates an array of 1k + 1 elements with values from 0 to 1k
+    const array = Array.from(Array(1001).keys());
+    expect(array[1000]).toBe(1000);
+    truncateResult(array);
+    expect(array.length).toBe(1000);
+    expect(array[0]).toBe(0);
+    expect(array[999]).toBe(999);
   });
 });

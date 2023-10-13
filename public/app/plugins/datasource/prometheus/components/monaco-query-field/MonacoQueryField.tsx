@@ -75,7 +75,7 @@ function ensurePromQL(monaco: Monaco) {
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.components.input.borderColor};
     `,
     placeholder: css`

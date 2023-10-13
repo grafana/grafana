@@ -12,7 +12,6 @@ export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, Lo
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
-  onQueryType?: (query: string) => void;
 }
 
 interface LokiQueryFieldState {
@@ -66,7 +65,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource, history, onRunQuery, onQueryType } = this.props;
+    const { ExtraFieldElement, query, datasource, history, onRunQuery } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
@@ -75,7 +74,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
           className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
           data-testid={this.props['data-testid']}
         >
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+          <div className="gf-form--grow flex-shrink-1 min-width-15">
             <MonacoQueryFieldWrapper
               datasource={datasource}
               history={history ?? []}
@@ -83,7 +82,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
-              onQueryType={onQueryType}
             />
           </div>
         </div>

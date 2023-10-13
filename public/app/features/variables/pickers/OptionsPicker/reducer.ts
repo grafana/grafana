@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trimStart } from 'lodash';
 
+import { containsSearchFilter } from '@grafana/data';
+
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
 import { isMulti, isQuery } from '../../guard';
 import { VariableOption, VariableWithOptions } from '../../types';
-import { containsSearchFilter } from '../../utils';
 
 export interface ToggleOption {
   option?: VariableOption;
@@ -105,6 +106,15 @@ const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
   return state;
 };
 
+// Utility function to select all options except 'ALL_VARIABLE_VALUE'
+const selectAllOptions = (options: VariableOption[]) =>
+  options
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE)
+    .map((option) => ({
+      ...option,
+      selected: true,
+    }));
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState: initialOptionPickerState,
@@ -177,21 +187,51 @@ const optionsPickerSlice = createSlice({
         highlightIndex: nextIndex,
       };
     },
+
+    /**
+     * Toggle the 'All' option or clear selections in the Options Picker dropdown.
+     * 1. If 'All' is configured but not selected, and some other options are selected, it deselects all other options and selects only 'All'.
+     * 2. If only 'All' is selected, it deselects 'All' and selects all other available options.
+     * 3. If some options are selected but 'All' is not configured in the variable,
+     *    it clears all selections and defaults to the current behavior for scenarios where 'All' is not configured.
+     * 4. If no options are selected, it selects all available options.
+     */
     toggleAllOptions: (state, action: PayloadAction): OptionsPickerState => {
-      if (state.selectedValues.length > 0) {
+      // Check if 'All' option is configured by the user and if it's selected in the dropdown
+      const isAllSelected = state.selectedValues.find((option) => option.value === ALL_VARIABLE_VALUE);
+      const allOptionConfigured = state.options.find((option) => option.value === ALL_VARIABLE_VALUE);
+
+      // If 'All' option is not selected from the dropdown, but some options are, clear all options and select 'All'
+      if (state.selectedValues.length > 0 && !!allOptionConfigured && !isAllSelected) {
+        state.selectedValues = [];
+
+        state.selectedValues.push({
+          text: allOptionConfigured.text ?? 'All',
+          value: allOptionConfigured.value,
+          selected: true,
+        });
+
+        return applyStateChanges(state, updateOptions);
+      }
+
+      // If 'All' option is the only one selected in the dropdown, unselect "All" and select each one of the other options.
+      if (isAllSelected && state.selectedValues.length === 1) {
+        state.selectedValues = selectAllOptions(state.options);
+        return applyStateChanges(state, updateOptions);
+      }
+
+      // If some options are selected, but 'All' is not configured by the user, clear the selection and let the
+      // current behavior when "All" does not exist and user clear the selected items.
+      if (state.selectedValues.length > 0 && !allOptionConfigured) {
         state.selectedValues = [];
         return applyStateChanges(state, updateOptions);
       }
 
-      state.selectedValues = state.options
-        .filter((option) => option.value !== ALL_VARIABLE_VALUE)
-        .map((option) => ({
-          ...option,
-          selected: true,
-        }));
-
+      // If no options are selected and 'All' is not selected, select all options
+      state.selectedValues = selectAllOptions(state.options);
       return applyStateChanges(state, updateOptions);
     },
+
     updateSearchQuery: (state, action: PayloadAction<string>): OptionsPickerState => {
       state.queryValue = action.payload;
       return state;

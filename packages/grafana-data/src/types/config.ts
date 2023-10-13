@@ -147,7 +147,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
-  isPublicDashboardView: boolean;
+  publicDashboardAccessToken?: string;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
@@ -181,6 +181,7 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  /** @deprecated always set to true. */
   rbacEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
@@ -239,5 +240,5 @@ export interface AuthSettings {
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   GenericOAuthSkipOrgRoleSync?: boolean;
-  DisableSyncLock?: boolean;
+  AuthProxyEnableLoginToken?: boolean;
 }

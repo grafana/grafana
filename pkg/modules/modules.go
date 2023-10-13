@@ -8,18 +8,16 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Engine interface {
-	Init(context.Context) error
 	Run(context.Context) error
-	Shutdown(context.Context) error
+	Shutdown(context.Context, string) error
 }
 
 type Manager interface {
-	RegisterModule(name string, initFn func() (services.Service, error))
-	RegisterInvisibleModule(name string, initFn func() (services.Service, error))
+	RegisterModule(name string, fn initFn)
+	RegisterInvisibleModule(name string, fn initFn)
 }
 
 var _ Engine = (*service)(nil)
@@ -27,7 +25,6 @@ var _ Manager = (*service)(nil)
 
 // service manages the registration and lifecycle of modules.
 type service struct {
-	cfg     *setting.Cfg
 	log     log.Logger
 	targets []string
 
@@ -36,24 +33,28 @@ type service struct {
 	serviceMap     map[string]services.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *service {
+func New(
+	targets []string,
+) *service {
 	logger := log.New("modules")
 
 	return &service{
-		cfg:     cfg,
 		log:     logger,
-		targets: cfg.Target,
+		targets: targets,
 
 		moduleManager: modules.NewManager(logger),
 		serviceMap:    map[string]services.Service{},
 	}
 }
 
-// Init initializes all registered modules.
-func (m *service) Init(_ context.Context) error {
+// Run starts all registered modules.
+func (m *service) Run(ctx context.Context) error {
 	var err error
 
 	for mod, targets := range dependencyMap {
+		if !m.moduleManager.IsModuleRegistered(mod) {
+			continue
+		}
 		if err := m.moduleManager.AddDependency(mod, targets...); err != nil {
 			return err
 		}
@@ -73,13 +74,12 @@ func (m *service) Init(_ context.Context) error {
 	for _, s := range m.serviceMap {
 		svcs = append(svcs, s)
 	}
+
 	m.serviceManager, err = services.NewManager(svcs...)
+	if err != nil {
+		return err
+	}
 
-	return err
-}
-
-// Run starts all registered modules.
-func (m *service) Run(ctx context.Context) error {
 	// we don't need to continue if no modules are registered.
 	// this behavior may need to change if dskit services replace the
 	// current background service registry.
@@ -92,8 +92,9 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
 
+	m.log.Debug("Starting module service manager")
 	// wait until a service fails or stop signal was received
-	err := m.serviceManager.StartAsync(ctx)
+	err = m.serviceManager.StartAsync(ctx)
 	if err != nil {
 		return err
 	}
@@ -116,25 +117,27 @@ func (m *service) Run(ctx context.Context) error {
 }
 
 // Shutdown stops all modules and waits for them to stop.
-func (m *service) Shutdown(ctx context.Context) error {
+func (m *service) Shutdown(ctx context.Context, reason string) error {
 	if m.serviceManager == nil {
 		m.log.Debug("No modules registered, nothing to stop...")
 		return nil
 	}
 	m.serviceManager.StopAsync()
-	m.log.Info("Awaiting services to be stopped...")
+	m.log.Info("Awaiting services to be stopped...", "reason", reason)
 	return m.serviceManager.AwaitStopped(ctx)
 }
 
+type initFn func() (services.Service, error)
+
 // RegisterModule registers a module with the dskit module manager.
-func (m *service) RegisterModule(name string, initFn func() (services.Service, error)) {
-	m.moduleManager.RegisterModule(name, initFn)
+func (m *service) RegisterModule(name string, fn initFn) {
+	m.moduleManager.RegisterModule(name, fn)
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
-// Invisible modules are not visible to the user, and are intended to be used as dependencies.
-func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error)) {
-	m.moduleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
+// Invisible modules are not visible to the user, and are intendent to be used as dependencies.
+func (m *service) RegisterInvisibleModule(name string, fn initFn) {
+	m.moduleManager.RegisterModule(name, fn, modules.UserInvisibleModule)
 }
 
 // IsModuleEnabled returns true if the module is enabled.

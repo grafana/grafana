@@ -1,10 +1,12 @@
-import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
+import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import semver from 'semver';
 
 import {
   CoreApp,
   DataFrame,
+  DataFrameDTO,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
@@ -18,13 +20,13 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   getBackendSrv,
+  getTemplateSrv,
   reportInteraction,
   TemplateSrv,
-  getTemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -38,30 +40,62 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
+  defaultTableFilter,
+  durationMetric,
+  errorRateMetric,
   failedMetric,
   histogramMetric,
   mapPromMetricsToServiceMap,
+  rateMetric,
   serviceMapMetrics,
   totalsMetric,
-  rateMetric,
-  durationMetric,
-  errorRateMetric,
-  defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
+import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
+  createTableFrameFromSearch,
+  transformFromOTLP as transformFromOTEL,
   transformTrace,
   transformTraceList,
-  transformFromOTLP as transformFromOTEL,
-  createTableFrameFromSearch,
-  createTableFrameFromTraceQlQuery,
+  formatTraceQLResponse,
 } from './resultTransformer';
-import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
+import { doTempoChannelStream } from './streaming';
+import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage } from './utils';
+import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
+export const DEFAULT_SPSS = 3; // spans per span set
+
+enum FeatureName {
+  streaming = 'streaming',
+}
+
+/* Map, for each feature (e.g., streaming), the minimum Tempo version required to have that
+ ** feature available. If the running Tempo instance on the user's backend is older than the
+ ** target version, the feature is disabled in Grafana (frontend).
+ */
+const featuresToTempoVersion = {
+  [FeatureName.streaming]: '2.2.0',
+};
+
+// The version that we use as default in case we cannot retrieve it from the backend.
+// This is the last minor version of Tempo that does not expose the endpoint for build information.
+const defaultTempoVersion = '2.1.0';
+
+interface ServiceMapQueryResponse {
+  nodes: DataFrame;
+  edges: DataFrame;
+}
+
+interface ServiceMapQueryResponseWithRates {
+  rates: Array<DataFrame | DataFrameDTO>;
+  nodes: DataFrame;
+  edges: DataFrame;
+}
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -85,6 +119,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
+  // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
+  tempoVersion?: string | null;
+
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
@@ -97,6 +134,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
+
     if (!this.search?.filters) {
       this.search = {
         ...this.search,
@@ -110,6 +148,100 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
         ],
       };
+    }
+
+    this.variables = new TempoVariableSupport(this);
+  }
+
+  async executeVariableQuery(query: TempoVariableQuery) {
+    // Avoid failing if the user did not select the query type (label names, label values, etc.)
+    if (query.type === undefined) {
+      return new Promise<Array<{ text: string }>>(() => []);
+    }
+
+    switch (query.type) {
+      case TempoVariableQueryType.LabelNames: {
+        return await this.labelNamesQuery();
+      }
+      case TempoVariableQueryType.LabelValues: {
+        return this.labelValuesQuery(query.label);
+      }
+      default: {
+        throw Error('Invalid query type', query.type);
+      }
+    }
+  }
+
+  async labelNamesQuery(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.getAutocompleteTags();
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
+  }
+
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+    if (!labelName) {
+      return [];
+    }
+
+    let options;
+    try {
+      // Retrieve the scope of the tag
+      // Example: given `http.status_code`, we want scope `span`
+      // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
+      const scope: string | undefined = (this.languageProvider.tagsV2 || [])
+        // flatten the Scope objects
+        .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
+        // find associated scope
+        .find((tag) => tag.name === labelName)?.scope;
+      if (!scope) {
+        throw Error(`Scope for tag ${labelName} not found`);
+      }
+
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+    } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
+      options = await this.languageProvider.getOptionsV1(labelName);
+    }
+
+    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
+      text: string;
+    }>;
+  }
+
+  init = async () => {
+    const response = await lastValueFrom(
+      this._request('/api/status/buildinfo').pipe(
+        map((response) => response),
+        catchError((error) => {
+          console.error('Failure in retrieving build information', error.data.message);
+          return of({ error, data: { version: null } }); // unknown version
+        })
+      )
+    );
+    this.tempoVersion = response.data.version;
+  };
+
+  /**
+   * Check, for the given feature, whether it is available in Grafana.
+   *
+   * The check is done based on the version of the Tempo instance running on the backend and
+   * the minimum version required by the given feature to work.
+   *
+   * @param featureName - the name of the feature to consider
+   * @return true if the feature is available, false otherwise
+   */
+  private isFeatureAvailable(featureName: FeatureName) {
+    // We know for old Tempo instances we don't know their version, so resort to default
+    const actualVersion = this.tempoVersion ?? defaultTempoVersion;
+
+    try {
+      return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+    } catch {
+      // We assume we are on a development and recent branch, thus we enable all features
+      return true;
     }
   }
 
@@ -199,6 +331,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+
     if (targets.traceql?.length) {
       try {
         const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
@@ -221,55 +354,94 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
+            streaming: config.featureToggles.traceQLStreaming,
           });
-          subQueries.push(
-            this._request('/api/search', {
-              q: queryValue,
-              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-              start: options.range.from.unix(),
-              end: options.range.to.unix(),
-            }).pipe(
-              map((response) => {
-                return {
-                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-                };
-              }),
-              catchError((err) => {
-                return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-              })
-            )
-          );
+
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
+          } else {
+            subQueries.push(
+              this._request('/api/search', {
+                q: queryValue,
+                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                spss: options.targets[0].spss ?? DEFAULT_SPSS,
+                start: options.range.from.unix(),
+                end: options.range.to.unix(),
+              }).pipe(
+                map((response) => {
+                  return {
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceql[0].tableType
+                    ),
+                  };
+                }),
+                catchError((err) => {
+                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+                })
+              )
+            );
+          }
         }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+
     if (targets.traceqlSearch?.length) {
       try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
-        reportInteraction('grafana_traces_traceql_search_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: queryValue ?? '',
-        });
-        subQueries.push(
-          this._request('/api/search', {
-            q: queryValue,
-            limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-            start: options.range.from.unix(),
-            end: options.range.to.unix(),
-          }).pipe(
-            map((response) => {
-              return {
-                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-              };
-            }),
-            catchError((err) => {
-              return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-            })
-          )
-        );
+        if (config.featureToggles.metricsSummary) {
+          const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+          if (groupBy) {
+            subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+          }
+        }
+
+        const traceqlSearchTargets = config.featureToggles.metricsSummary
+          ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t))
+          : targets.traceqlSearch;
+        if (traceqlSearchTargets.length > 0) {
+          const queryValueFromFilters = generateQueryFromFilters(traceqlSearchTargets[0].filters);
+
+          // We want to support template variables also in Search for consistency with other data sources
+          const queryValue = this.templateSrv.replace(queryValueFromFilters, options.scopedVars);
+
+          reportInteraction('grafana_traces_traceql_search_queried', {
+            datasourceType: 'tempo',
+            app: options.app ?? '',
+            grafana_version: config.buildInfo.version,
+            query: queryValue ?? '',
+            streaming: config.featureToggles.traceQLStreaming,
+          });
+
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
+          } else {
+            subQueries.push(
+              this._request('/api/search', {
+                q: queryValue,
+                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                spss: options.targets[0].spss ?? DEFAULT_SPSS,
+                start: options.range.from.unix(),
+                end: options.range.to.unix(),
+              }).pipe(
+                map((response) => {
+                  return {
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceqlSearch[0].tableType
+                    ),
+                  };
+                }),
+                catchError((err) => {
+                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+                })
+              )
+            );
+          }
+        }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
@@ -363,6 +535,81 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     };
   }
 
+  handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
+    reportInteraction('grafana_traces_metrics_summary_queried', {
+      datasourceType: 'tempo',
+      app: options.app ?? '',
+      grafana_version: config.buildInfo.version,
+      filterCount: target.groupBy?.length ?? 0,
+    });
+
+    if (query === '{}') {
+      return of({
+        error: {
+          message:
+            'Please ensure you do not have an empty query. This is so filters are applied and the metrics summary is not generated from all spans.',
+        },
+        data: emptyResponse,
+      });
+    }
+
+    const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
+    return this._request('/api/metrics/summary', {
+      q: query,
+      groupBy,
+      start: options.range.from.unix(),
+      end: options.range.to.unix(),
+    }).pipe(
+      map((response) => {
+        if (!response.data.summaries) {
+          return {
+            error: {
+              message: getErrorMessage(
+                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. You can check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
+              ),
+            },
+            data: emptyResponse,
+          };
+        }
+        // Check if any of the results have series data as older versions of Tempo placed the series data in a different structure
+        const hasSeries = response.data.summaries.some((summary: MetricsSummary) => summary.series.length > 0);
+        if (!hasSeries) {
+          return {
+            error: {
+              message: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
+            },
+            data: emptyResponse,
+          };
+        }
+        return {
+          data: createTableFrameFromMetricsSummaryQuery(response.data.summaries, query, this.instanceSettings),
+        };
+      }),
+      catchError((error) => {
+        return of({
+          error: { message: getErrorMessage(error.data.message) },
+          data: emptyResponse,
+        });
+      })
+    );
+  };
+
+  formatGroupBy = (groupBy: TraceqlFilter[]) => {
+    return groupBy
+      ?.filter((f) => f.tag)
+      .map((f) => {
+        if (f.scope === TraceqlSearchScope.Unscoped) {
+          return `.${f.tag}`;
+        }
+        return f.scope !== TraceqlSearchScope.Intrinsic ? `${f.scope}.${f.tag}` : f.tag;
+      })
+      .join(', ');
+  };
+
+  hasGroupBy = (query: TempoQuery) => {
+    return query.groupBy?.find((gb) => gb.tag);
+  };
+
   /**
    * Handles the simplest of the queries where we have just a trace id and return trace data for it.
    * @param options
@@ -370,7 +617,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @private
    */
   handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
-    const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
+    const validTargets = targets
+      .filter((t) => t.query)
+      .map((t): TempoQuery => ({ ...t, query: t.query?.trim(), queryType: 'traceId' }));
     if (!validTargets.length) {
       return EMPTY;
     }
@@ -407,6 +656,29 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return request;
+  }
+
+  // This function can probably be simplified by avoiding passing both `targets` and `query`,
+  // since `query` is built from `targets`, if you look at how this function is currently called
+  handleStreamingSearch(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[],
+    query: string
+  ): Observable<DataQueryResponse> {
+    if (query === '') {
+      return EMPTY;
+    }
+
+    return merge(
+      ...targets.map((target) =>
+        doTempoChannelStream(
+          { ...target, query },
+          this, // the datasource
+          options,
+          this.instanceSettings
+        )
+      )
+    );
   }
 
   async metadataRequest(url: string, params = {}) {
@@ -452,7 +724,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
       return result.join(', ');
     }
-    return query.query;
+    return query.query ?? '';
   }
 
   buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
@@ -522,7 +794,11 @@ function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: st
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
+function serviceMapQuery(
+  request: DataQueryRequest<TempoQuery>,
+  datasourceUid: string,
+  tempoDatasourceUid: string
+): Observable<ServiceMapQueryResponse> {
   const serviceMapRequest = makePromServiceMapRequest(request);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
@@ -549,25 +825,47 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
 
       // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
       // fixed at some point.
-      nodes.refId = request.targets[0].refId;
-      edges.refId = request.targets[0].refId;
+      const { serviceMapIncludeNamespace, refId } = request.targets[0];
+      nodes.refId = refId;
+      edges.refId = refId;
 
-      nodes.fields[0].config = getFieldConfig(
-        datasourceUid,
-        tempoDatasourceUid,
-        '__data.fields.id',
-        '__data.fields[0]'
-      );
-      edges.fields[0].config = getFieldConfig(
-        datasourceUid,
-        tempoDatasourceUid,
-        '__data.fields.target',
-        '__data.fields.target',
-        '__data.fields.source'
-      );
+      if (serviceMapIncludeNamespace) {
+        nodes.fields[0].config = getFieldConfig(
+          datasourceUid, // datasourceUid
+          tempoDatasourceUid, // tempoDatasourceUid
+          '__data.fields.title', // targetField
+          '__data.fields[0]', // tempoField
+          undefined, // sourceField
+          { targetNamespace: '__data.fields.subtitle' }
+        );
+
+        edges.fields[0].config = getFieldConfig(
+          datasourceUid, // datasourceUid
+          tempoDatasourceUid, // tempoDatasourceUid
+          '__data.fields.targetName', // targetField
+          '__data.fields.target', // tempoField
+          '__data.fields.sourceName', // sourceField
+          { targetNamespace: '__data.fields.targetNamespace', sourceNamespace: '__data.fields.sourceNamespace' }
+        );
+      } else {
+        nodes.fields[0].config = getFieldConfig(
+          datasourceUid,
+          tempoDatasourceUid,
+          '__data.fields.id',
+          '__data.fields[0]'
+        );
+        edges.fields[0].config = getFieldConfig(
+          datasourceUid,
+          tempoDatasourceUid,
+          '__data.fields.target',
+          '__data.fields.target',
+          '__data.fields.source'
+        );
+      }
 
       return {
-        data: [nodes, edges],
+        nodes,
+        edges,
         state: LoadingState.Done,
       };
     })
@@ -576,9 +874,9 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
 
 function rateQuery(
   request: DataQueryRequest<TempoQuery>,
-  serviceMapResponse: DataQueryResponse,
+  serviceMapResponse: ServiceMapQueryResponse,
   datasourceUid: string
-) {
+): Observable<ServiceMapQueryResponseWithRates> {
   const serviceMapRequest = makePromServiceMapRequest(request);
   serviceMapRequest.targets = makeServiceGraphViewRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
@@ -590,8 +888,9 @@ function rateQuery(
         throw new Error(getErrorMessage(errorRes.error?.message));
       }
       return {
-        data: [responses[0]?.data ?? [], serviceMapResponse.data[0], serviceMapResponse.data[1]],
-        state: LoadingState.Done,
+        rates: responses[0]?.data ?? [],
+        nodes: serviceMapResponse.nodes,
+        edges: serviceMapResponse.edges,
       };
     })
   );
@@ -601,7 +900,7 @@ function rateQuery(
 // -> which determine the errorRate/duration span_name(s) we need to query
 function errorAndDurationQuery(
   request: DataQueryRequest<TempoQuery>,
-  rateResponse: DataQueryResponse,
+  rateResponse: ServiceMapQueryResponseWithRates,
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
@@ -610,14 +909,16 @@ function errorAndDurationQuery(
   let durationsBySpanName: string[] = [];
 
   let labels = [];
-  if (request.app === CoreApp.Explore) {
-    if (rateResponse.data[0][0]?.fields[1]?.values) {
-      labels = rateResponse.data[0][0]?.fields[1]?.values;
+  if (rateResponse.rates[0] && request.app === CoreApp.Explore) {
+    const spanNameField = rateResponse.rates[0].fields.find((field) => field.name === 'span_name');
+    if (spanNameField && spanNameField.values) {
+      labels = spanNameField.values;
     }
-  } else if (rateResponse.data[0]) {
-    rateResponse.data[0].map((df: DataFrame) => {
-      if (df.fields[1]?.labels && df.fields[1]?.labels['span_name']) {
-        labels.push(df.fields[1]?.labels['span_name']);
+  } else if (rateResponse.rates) {
+    rateResponse.rates.map((df: DataFrame | DataFrameDTO) => {
+      const spanNameLabels = df.fields.find((field) => field.labels?.['span_name']);
+      if (spanNameLabels) {
+        labels.push(spanNameLabels.labels?.['span_name']);
       }
     });
   }
@@ -657,13 +958,13 @@ function errorAndDurationQuery(
 
       if (serviceGraphView.fields.length === 0) {
         return {
-          data: [rateResponse.data[1], rateResponse.data[2]],
+          data: [rateResponse.nodes, rateResponse.edges],
           state: LoadingState.Done,
         };
       }
 
       return {
-        data: [serviceGraphView, rateResponse.data[1], rateResponse.data[2]],
+        data: [serviceGraphView, rateResponse.nodes, rateResponse.edges],
         state: LoadingState.Done,
       };
     })
@@ -696,26 +997,42 @@ export function getFieldConfig(
   tempoDatasourceUid: string,
   targetField: string,
   tempoField: string,
-  sourceField?: string
+  sourceField?: string,
+  namespaceFields?: { targetNamespace: string; sourceNamespace?: string }
 ) {
-  sourceField = sourceField ? `client="\${${sourceField}}",` : '';
+  let source = sourceField ? `client="\${${sourceField}}",` : '';
+  let target = `server="\${${targetField}}"`;
+  let serverSumBy = 'server';
+
+  if (namespaceFields !== undefined) {
+    const { targetNamespace } = namespaceFields;
+    target += `,server_service_namespace="\${${targetNamespace}}"`;
+    serverSumBy += ', server_service_namespace';
+
+    if (source) {
+      const { sourceNamespace } = namespaceFields;
+      source += `client_service_namespace="\${${sourceNamespace}}",`;
+      serverSumBy += ', client_service_namespace';
+    }
+  }
+
   return {
     links: [
       makePromLink(
         'Request rate',
-        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        `sum by (client, ${serverSumBy})(rate(${totalsMetric}{${source}${target}}[$__rate_interval]))`,
         datasourceUid,
         false
       ),
       makePromLink(
         'Request histogram',
-        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval])) by (le, client, server))`,
+        `histogram_quantile(0.9, sum(rate(${histogramMetric}{${source}${target}}[$__rate_interval])) by (le, client, ${serverSumBy}))`,
         datasourceUid,
         false
       ),
       makePromLink(
         'Failed request rate',
-        `sum by (client, server)(rate(${failedMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
+        `sum by (client, ${serverSumBy})(rate(${failedMetric}{${source}${target}}[$__rate_interval]))`,
         datasourceUid,
         false
       ),
@@ -725,12 +1042,26 @@ export function getFieldConfig(
 }
 
 export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
-  let query = { queryType: 'nativeSearch' } as TempoQuery;
+  let query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
   if (serviceName !== '') {
-    query.serviceName = serviceName;
+    query.filters.push({
+      id: 'service-name',
+      scope: TraceqlSearchScope.Resource,
+      tag: 'service.name',
+      value: serviceName,
+      operator: '=',
+      valueType: 'string',
+    });
   }
   if (spanName !== '') {
-    query.spanName = spanName;
+    query.filters.push({
+      id: 'span-name',
+      scope: TraceqlSearchScope.Span,
+      tag: 'name',
+      value: spanName,
+      operator: '=',
+      valueType: 'string',
+    });
   }
 
   return {
@@ -748,12 +1079,14 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   return {
     ...options,
     targets: serviceMapMetrics.map((metric) => {
+      const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
+      const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
       return {
         format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `sum by (client, server) (rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range]))`,
+        expr: `sum by (client, server${extraSumByFields}) (rate(${metric}${serviceMapQuery || ''}[$__range]))`,
         instant: true,
       };
     }),
@@ -762,7 +1095,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
 
 function getServiceGraphView(
   request: DataQueryRequest<TempoQuery>,
-  rateResponse: DataQueryResponse,
+  rateResponse: ServiceMapQueryResponseWithRates,
   secondResponse: DataQueryResponse,
   errorRateBySpanName: string,
   durationsBySpanName: string[],
@@ -770,14 +1103,15 @@ function getServiceGraphView(
   tempoDatasourceUid: string
 ) {
   let df: any = { fields: [] };
-  const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
+
+  const rate = rateResponse.rates.filter((x) => {
     return x.refId === buildExpr(rateMetric, defaultTableFilter, request);
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateBySpanName;
   });
   const duration = secondResponse.data.filter((x) => {
-    return durationsBySpanName.includes(x.refId);
+    return durationsBySpanName.includes(x.refId ?? '');
   });
 
   if (rate.length > 0 && rate[0].fields?.length > 2) {
@@ -871,30 +1205,33 @@ function getServiceGraphView(
     });
   }
 
-  if (duration.length > 0 && duration[0].fields?.length > 1) {
+  if (duration.length > 0) {
     let durationObj: any = {};
-    duration.map((d) => {
-      const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
-      const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { value: d.fields[1].values[0] };
+    duration.forEach((d) => {
+      if (d.fields.length > 1) {
+        const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
+        const name = d.refId?.split(delimiter)[1].split('"}')[0];
+        durationObj[name!] = { value: d.fields[1].values[0] };
+      }
     });
-
-    df.fields.push({
-      ...duration[0].fields[1],
-      name: 'Duration (p90)',
-      values: getRateAlignedValues({ ...rate }, durationObj),
-      config: {
-        links: [
-          makePromLink(
-            'Duration',
-            buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
-            datasourceUid,
-            false
-          ),
-        ],
-        unit: 's',
-      },
-    });
+    if (Object.keys(durationObj).length > 0) {
+      df.fields.push({
+        ...duration[0].fields[1],
+        name: 'Duration (p90)',
+        values: getRateAlignedValues({ ...rate }, durationObj),
+        config: {
+          links: [
+            makePromLink(
+              'Duration',
+              buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+              datasourceUid,
+              false
+            ),
+          ],
+          unit: 's',
+        },
+      });
+    }
   }
 
   if (df.fields.length > 0 && df.fields[0].values) {

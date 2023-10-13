@@ -1,0 +1,44 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/blocks';
+import { Stack, HorizontalStack } from './index';
+import * as Stories from './Stack.internal.story';
+
+<Meta title="MDX|Stack" component={Stack} />
+
+# Stack
+
+The `Stack` component is designed to assist with layout and positioning of elements within a container, offering a simple and flexible way to stack elements vertically or horizontally. This documentation outlines the proper usage of the Stack component and provides guidance on when to use it over the Grid or Flex components.
+
+There is also a `HorizontalStack` component, which is a thin wrapper around Stack, equivalent to `<Stack direction="row">`.
+
+### Usage
+
+#### When to use
+
+Use the Stack component when you need to arrange elements in a linear format, either vertically or horizontally. It's particularly useful when you want to maintain consistent spacing between items.
+
+Use the Stack component when:
+
+- You need a simple way to stack elements with predictable spacing.
+- You want to ensure consistent alignment.
+
+#### When not to use
+
+Use the `Grid` component instead for these use cases:
+
+- **Intricate Layouts:** Grids are ideal for complex dashboard and magazine-style designs with rows and columns.
+- **Structured Grid:** Use Grids when items need to span multiple rows/columns, creating structured layouts.
+
+Use the `Flex` component instead for these use cases:
+
+- **Alignment:** More options for item alignment.
+- **Flex items:** Custom flex basis or configure how items stretch and wrap.
+
+## Props
+
+### Stack
+
+<ArgTypes of={Stack} />
+
+### HorizontalStack
+
+<ArgTypes of={HorizontalStack} />

@@ -8,6 +8,7 @@ import { LoginPage } from './LoginPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   __esModule: true,
   getBackendSrv: () => ({
     post: postMock,
@@ -102,5 +103,61 @@ describe('Login Page', () => {
     render(<LoginPage />);
 
     expect(screen.getByRole('link', { name: 'Sign in with Okta Test' })).toBeInTheDocument();
+  });
+
+  it('shows oauth errors', async () => {
+    runtimeMock.config.loginError = 'Oh no there was an error :(';
+
+    render(<LoginPage />);
+
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent('Oh no there was an error :(');
+  });
+
+  it('shows an error with incorrect password', async () => {
+    postMock.mockRejectedValueOnce({
+      data: {
+        message: 'Invalid username or password',
+        messageId: 'password-auth.failed',
+        statusCode: 400,
+      },
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    render(<LoginPage />);
+
+    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
+    await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
+
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent('Invalid username or password');
+  });
+
+  it('shows a different error with failed login attempts', async () => {
+    postMock.mockRejectedValueOnce({
+      data: {
+        message: 'Invalid username or password',
+        messageId: 'login-attempt.blocked',
+        statusCode: 401,
+      },
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+
+    render(<LoginPage />);
+
+    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
+    await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
+
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent(
+      'You have exceeded the number of login attempts for this user. Please try again later.'
+    );
   });
 });

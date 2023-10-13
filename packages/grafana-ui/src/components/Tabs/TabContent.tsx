@@ -11,9 +11,9 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 const getTabContentStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    tabContent: css`
-      background: ${theme.colors.background.primary};
-    `,
+    tabContent: css({
+      background: theme.colors.background.primary,
+    }),
   };
 });
 

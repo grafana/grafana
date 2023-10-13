@@ -8,23 +8,23 @@ import { CompletionItem } from '../../types';
 
 const getStyles = (theme: GrafanaTheme2, height: number, visible: boolean) => {
   return {
-    typeaheadItem: css`
-      label: type-ahead-item;
-      z-index: 11;
-      padding: ${theme.spacing(1, 1, 1, 2)};
-      border: ${theme.colors.border.medium};
-      overflow-y: scroll;
-      overflow-x: hidden;
-      outline: none;
-      background: ${theme.colors.background.secondary};
-      color: ${theme.colors.text};
-      box-shadow: 0 0 20px ${theme.v1.colors.dropdownShadow};
-      visibility: ${visible === true ? 'visible' : 'hidden'};
-      width: 250px;
-      min-height: ${height + parseInt(theme.spacing(0.25), 10)}px;
-      position: relative;
-      word-break: break-word;
-    `,
+    typeaheadItem: css({
+      label: 'type-ahead-item',
+      zIndex: 11,
+      padding: theme.spacing(1, 1, 1, 2),
+      border: theme.colors.border.medium,
+      overflowY: 'scroll',
+      overflowX: 'hidden',
+      outline: 'none',
+      background: theme.colors.background.secondary,
+      color: theme.colors.text.secondary,
+      boxShadow: `0 0 20px ${theme.v1.colors.dropdownShadow}`,
+      visibility: visible === true ? 'visible' : 'hidden',
+      width: '250px',
+      minHeight: `${height + parseInt(theme.spacing(0.25), 10)}px`,
+      position: 'relative',
+      wordBreak: 'break-word',
+    }),
   };
 };
 

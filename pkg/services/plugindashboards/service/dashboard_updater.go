@@ -6,16 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
+func ProvideDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
@@ -24,7 +24,7 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashb
 	return du
 }
 
-func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
+func newDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store,
 	pluginDashboardService plugindashboards.Service, dashboardImportService dashboardimport.Service,
 	pluginSettingsService pluginsettings.Service, dashboardPluginService dashboards.PluginService,
 	dashboardService dashboards.DashboardService) *DashboardUpdater {
@@ -43,7 +43,7 @@ func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
 }
 
 type DashboardUpdater struct {
-	pluginStore            plugins.Store
+	pluginStore            pluginstore.Store
 	pluginDashboardService plugindashboards.Service
 	dashboardImportService dashboardimport.Service
 	pluginSettingsService  pluginsettings.Service
@@ -75,7 +75,7 @@ func (du *DashboardUpdater) updateAppDashboards() {
 	}
 }
 
-func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plugins.PluginDTO, orgID int64) {
+func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin pluginstore.Plugin, orgID int64) {
 	du.logger.Info("Syncing plugin dashboards to DB", "pluginId", plugin.ID)
 
 	// Get plugin dashboards

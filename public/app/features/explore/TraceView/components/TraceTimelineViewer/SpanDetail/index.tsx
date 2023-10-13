@@ -19,7 +19,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
@@ -274,20 +274,6 @@ export default function SpanDetail(props: SpanDetailProps) {
           buttonProps={{ icon: 'gf-logs' }}
         />
       );
-    } else {
-      logLinkButton = (
-        <Button
-          variant="primary"
-          size="sm"
-          icon={'gf-logs'}
-          disabled
-          tooltip={
-            'We did not match any variables between the link and this span. Check your configuration or this span attributes.'
-          }
-        >
-          Logs for this span
-        </Button>
-      );
     }
   }
 
@@ -383,6 +369,8 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <a
               {...focusSpanLink}
               onClick={(e) => {

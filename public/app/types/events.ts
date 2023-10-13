@@ -160,7 +160,11 @@ export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
   static type = 'shift-time';
 }
 
-export class AbsoluteTimeEvent extends BusEventBase {
+interface AbsoluteTimeEventPayload {
+  updateUrl: boolean;
+}
+
+export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayload> {
   static type = 'absolute-time';
 }
 

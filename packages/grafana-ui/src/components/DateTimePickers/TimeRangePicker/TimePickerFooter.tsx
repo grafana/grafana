@@ -5,10 +5,12 @@ import React, { useCallback, useState } from 'react';
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Field, RadioButtonGroup, Select } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
+import { Field } from '../../Forms/Field';
+import { RadioButtonGroup } from '../../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Select } from '../../Select/Select';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
@@ -136,42 +138,41 @@ export const TimePickerFooter = (props: Props) => {
 
 const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      padding: 11px;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    editContainer: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      padding: 11px;
-      justify-content: space-between;
-      align-items: center;
-      padding: 7px;
-    `,
-    spacer: css`
-      margin-left: 7px;
-    `,
-    timeSettingContainer: css`
-      padding-top: ${theme.spacing(1)};
-    `,
-    fiscalYearField: css`
-      margin-bottom: 0px;
-    `,
-    timeZoneContainer: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      flex-grow: 1;
-    `,
-    timeZone: css`
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      flex-grow: 1;
-    `,
+    container: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: '11px',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    editContainer: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: '11px',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    spacer: css({
+      marginLeft: '7px',
+    }),
+    timeSettingContainer: css({
+      paddingTop: theme.spacing(1),
+    }),
+    fiscalYearField: css({
+      marginBottom: 0,
+    }),
+    timeZoneContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexGrow: 1,
+    }),
+    timeZone: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      flexGrow: 1,
+    }),
   };
 });

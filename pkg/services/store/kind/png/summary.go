@@ -33,7 +33,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindSVG,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
-			Fields: map[string]interface{}{
+			Fields: map[string]any{
 				"width":  int64(size.X),
 				"height": int64(size.Y),
 			},

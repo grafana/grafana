@@ -128,7 +128,6 @@
       }
     ],
     schemaVersion: 16,
-    style: "dark",
     tags: [],
     templating: {
       list: []

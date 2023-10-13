@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,13 +23,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func SetupFolderService(tb testing.TB, cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus) folder.Service {
+func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus) folder.Service {
 	tb.Helper()
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
 
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, nil, features)
+	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {

@@ -13,10 +13,10 @@ const tracingPrefix = "gRPC Server "
 func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
-		req interface{},
+		req any,
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (resp interface{}, err error) {
+	) (resp any, err error) {
 		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
 		defer span.End()
 		resp, err = handler(ctx, req)
@@ -25,7 +25,7 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 }
 
 func TracingStreamInterceptor(tracer tracing.Tracer) grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx, span := tracer.Start(stream.Context(), tracingPrefix+info.FullMethod)
 		defer span.End()
 		tracingStream := &tracingServerStream{

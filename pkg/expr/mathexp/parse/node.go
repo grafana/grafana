@@ -77,6 +77,8 @@ func (t NodeType) String() string {
 		return "NodeString"
 	case NodeNumber:
 		return "NodeNumber"
+	case NodeVar:
+		return "NodeVar"
 	default:
 		return "NodeUnknown"
 	}

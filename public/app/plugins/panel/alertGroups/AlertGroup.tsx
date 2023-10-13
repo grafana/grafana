@@ -26,7 +26,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
   return (
     <div className={styles.group} data-testid="alert-group">
       {Object.keys(group.labels).length > 0 ? (
-        <AlertLabels labels={group.labels} />
+        <AlertLabels labels={group.labels} size="sm" />
       ) : (
         <div className={styles.noGroupingText}>No grouping</div>
       )}
@@ -49,7 +49,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
                   <span className={textStyles[alert.status.state]}>{state} </span>for {interval}
                 </div>
                 <div>
-                  <AlertLabels labels={alert.labels} />
+                  <AlertLabels labels={alert.labels} size="sm" />
                 </div>
                 <div className={styles.actionsRow}>
                   {alert.status.state === AlertState.Suppressed && (

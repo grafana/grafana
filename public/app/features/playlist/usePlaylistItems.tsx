@@ -19,7 +19,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
     }
   }, [items]);
 
-  const addById = useCallback(
+  const addByUID = useCallback(
     (dashboard?: DashboardPickerDTO) => {
       if (!dashboard) {
         return;
@@ -74,5 +74,5 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
     [items]
   );
 
-  return { items, addById, addByTag, deleteItem, moveItem };
+  return { items, addByUID, addByTag, deleteItem, moveItem };
 }

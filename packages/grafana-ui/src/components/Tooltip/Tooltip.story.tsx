@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import mdx from '../Tooltip/Tooltip.mdx';
 
@@ -10,7 +9,6 @@ import { Tooltip } from './Tooltip';
 const meta: Meta<typeof Tooltip> = {
   title: 'Overlays/Tooltip',
   component: Tooltip,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

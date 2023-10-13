@@ -45,10 +45,14 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: Props) 
             {details && (
               <>
                 {value ? (
+                  // TODO: fix keyboard a11y
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                   <span className={styles.colorText} onClick={showColorPicker}>
                     {value}
                   </span>
                 ) : (
+                  // TODO: fix keyboard a11y
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                   <span className={styles.placeholderText} onClick={showColorPicker}>
                     {settings?.placeholder ?? 'Select color'}
                   </span>

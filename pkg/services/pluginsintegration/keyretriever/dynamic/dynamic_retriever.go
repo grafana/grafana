@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -100,7 +101,7 @@ func (kr *KeyRetriever) updateKeys(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !kr.cfg.PluginForcePublicKeyDownload && time.Since(*lastUpdated) < publicKeySyncInterval {
+	if !kr.cfg.PluginForcePublicKeyDownload && time.Since(lastUpdated) < publicKeySyncInterval {
 		// Cache is still valid
 		return nil
 	}
@@ -130,12 +131,22 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			kr.log.Warn("error closing response body", "error", err)
+			kr.log.Warn("Error closing response body", "error", err)
 		}
 	}()
 
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return err
+	}
+
+	if err := json.Unmarshal(body, &data); err != nil {
+		kr.log.Debug("Error unmarshalling response body", "error", err, "body", string(body))
+		return fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 
 	if len(data.Items) == 0 {
@@ -159,15 +170,13 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 	// Delete keys that are no longer in the API
 	for _, key := range cachedKeys {
 		if !shouldKeep[key] {
-			err = kr.kv.Del(ctx, key)
+			err = kr.kv.Delete(ctx, key)
 			if err != nil {
 				return err
 			}
 		}
 	}
-
-	// Update the last updated timestamp
-	return kr.kv.SetLastUpdated(ctx)
+	return nil
 }
 
 func (kr *KeyRetriever) ensureKeys(ctx context.Context) error {

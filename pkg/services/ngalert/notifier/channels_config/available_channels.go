@@ -1,6 +1,7 @@
 package channels_config
 
 import (
+	"fmt"
 	"os"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
@@ -409,6 +410,87 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
+			Type:        "oncall",
+			Name:        "Grafana OnCall",
+			Description: "Sends alerts to Grafana OnCall",
+			Heading:     "Grafana OnCall settings",
+			Options: []NotifierOption{
+				{
+					Label:        "URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "url",
+					Required:     true,
+				},
+				{
+					Label:   "HTTP Method",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "POST",
+							Label: "POST",
+						},
+						{
+							Value: "PUT",
+							Label: "PUT",
+						},
+					},
+					PropertyName: "httpMethod",
+				},
+				{
+					Label:        "HTTP Basic Authentication - Username",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "username",
+				},
+				{
+					Label:        "HTTP Basic Authentication - Password",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					PropertyName: "password",
+					Secure:       true,
+				},
+				{ // New in 9.1
+					Label:        "Authorization Header - Scheme",
+					Description:  "Optionally provide a scheme for the Authorization Request Header. Default is Bearer.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "authorization_scheme",
+					Placeholder:  "Bearer",
+				},
+				{ // New in 9.1
+					Label:        "Authorization Header - Credentials",
+					Description:  "Credentials for the Authorization Request header. Only one of HTTP Basic Authentication or Authorization Request Header can be set.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "authorization_credentials",
+					Secure:       true,
+				},
+				{ // New in 8.0. TODO: How to enforce only numbers?
+					Label:        "Max Alerts",
+					Description:  "Max alerts to include in a notification. Remaining alerts in the same batch will be ignored above this number. 0 means no limit.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "maxAlerts",
+				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Description:  "Templated title of the message.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "title",
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3.
+					Label:        "Message",
+					Description:  "Custom message. You can use template variables.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+				},
+			},
+		},
+		{
 			Type:        "pushover",
 			Name:        "Pushover",
 			Description: "Sends HTTP POST request to the Pushover API",
@@ -763,6 +845,18 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "parse_mode",
 				},
 				{
+					Label:        "Disable Web Page Preview",
+					Description:  "Disables link previews for links in this message",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_web_page_preview",
+				},
+				{
+					Label:        "Protect Content",
+					Description:  "Protects the contents of the sent message from forwarding and saving",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "protect_content",
+				},
+				{
 					Label:        "Disable Notification",
 					Description:  "Sends the message silently. Users will receive a notification with no sound.",
 					Element:      ElementTypeCheckbox,
@@ -997,6 +1091,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Discord webhook URL",
 					PropertyName: "url",
 					Required:     true,
+					Secure:       true,
 				},
 				{
 					Label:        "Avatar URL",
@@ -1014,15 +1109,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		},
 		{
 			Type:        "googlechat",
-			Name:        "Google Hangouts Chat",
-			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
-			Heading:     "Google Hangouts Chat settings",
+			Name:        "Google Chat",
+			Description: "Sends notifications to Google Chat via webhooks based on the official JSON message format",
+			Heading:     "Google Chat settings",
 			Options: []NotifierOption{
 				{
 					Label:        "URL",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "Google Hangouts Chat incoming webhook url",
+					Placeholder:  "Google Chat incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
 				},
@@ -1245,4 +1340,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 	}
+}
+
+// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
+func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == contactPointType {
+			var secureFields []string
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
 }

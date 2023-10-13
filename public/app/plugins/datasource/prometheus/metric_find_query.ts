@@ -18,7 +18,10 @@ import { PromQueryRequest } from './types';
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
 
-  constructor(private datasource: PrometheusDatasource, private query: string) {
+  constructor(
+    private datasource: PrometheusDatasource,
+    private query: string
+  ) {
     this.datasource = datasource;
     this.query = query;
     this.range = getTimeSrv().timeRange();
@@ -43,7 +46,7 @@ export default class PrometheusMetricFindQuery {
     }
 
     if (labelNamesQuery) {
-      return this.datasource.getTagKeys();
+      return this.datasource.getTagKeys({ filters: [] });
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);

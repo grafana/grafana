@@ -2,6 +2,10 @@
 aliases:
   - ../../../enterprise/enterprise-encryption/using-aws-kms-to-encrypt-database-secrets/
 description: Learn how to use AWS KMS to encrypt secrets in the Grafana database.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Encrypt database secrets using AWS KMS
 weight: 300
 ---

@@ -1,8 +1,18 @@
+import { lastValueFrom } from 'rxjs';
+
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
-import { CorrelationData } from './useCorrelations';
+import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
+import {
+  CorrelationData,
+  CorrelationsData,
+  CorrelationsResponse,
+  getData,
+  toEnrichedCorrelationsData,
+} from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
 
@@ -57,4 +67,26 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
       }
     });
   });
+};
+
+export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {
+  return lastValueFrom(
+    getBackendSrv().fetch<CorrelationsResponse>({
+      url: `/api/datasources/correlations`,
+      method: 'GET',
+      showErrorAlert: false,
+      params: {
+        sourceUID: sourceUIDs,
+      },
+    })
+  )
+    .then(getData)
+    .then(toEnrichedCorrelationsData);
+};
+
+export const createCorrelation = async (
+  sourceUID: string,
+  correlation: CreateCorrelationParams
+): Promise<CreateCorrelationResponse> => {
+  return getBackendSrv().post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation);
 };

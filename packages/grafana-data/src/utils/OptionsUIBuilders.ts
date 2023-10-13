@@ -143,6 +143,21 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       settings: config.settings || {},
     });
   }
+
+  addGenericEditor<TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & any>, // & any... i give up!
+    editor: (props: StandardEditorProps<TSettings>) => JSX.Element
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: editor as any,
+      override: editor as any,
+      process: identityOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || {},
+    });
+  }
 }
 
 export interface NestedValueAccess {

@@ -13,14 +13,17 @@ interface Props {
 export const AlertGroupHeader = ({ group }: Props) => {
   const textStyles = useStyles2(getNotificationsTextColors);
   const total = group.alerts.length;
-  const countByStatus = group.alerts.reduce((statusObj, alert) => {
-    if (statusObj[alert.status.state]) {
-      statusObj[alert.status.state] += 1;
-    } else {
-      statusObj[alert.status.state] = 1;
-    }
-    return statusObj;
-  }, {} as Record<AlertState, number>);
+  const countByStatus = group.alerts.reduce(
+    (statusObj, alert) => {
+      if (statusObj[alert.status.state]) {
+        statusObj[alert.status.state] += 1;
+      } else {
+        statusObj[alert.status.state] = 1;
+      }
+      return statusObj;
+    },
+    {} as Record<AlertState, number>
+  );
 
   return (
     <div>

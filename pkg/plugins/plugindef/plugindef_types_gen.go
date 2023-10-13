@@ -98,7 +98,7 @@ type BuildInfo struct {
 type Dependencies struct {
 	// Required Grafana version for this plugin. Validated using
 	// https://github.com/npm/node-semver.
-	GrafanaDependency string `json:"grafanaDependency"`
+	GrafanaDependency *string `json:"grafanaDependency,omitempty"`
 
 	// (Deprecated) Required Grafana version for this plugin, e.g.
 	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
@@ -278,6 +278,10 @@ type PluginDef struct {
 	// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 	Alerting *bool `json:"alerting,omitempty"`
 
+	// An alias is useful when migrating from one plugin id to another (rebranding etc)
+	// This should be used sparingly, and is currently only supported though a hardcoded checklist
+	AliasIDs []string `json:"aliasIDs,omitempty"`
+
 	// For data source plugins, if the plugin supports annotation
 	// queries.
 	Annotations *bool `json:"annotations,omitempty"`
@@ -434,7 +438,7 @@ type RoleRegistration struct {
 // A proxy route used in datasource plugins for plugin authentication
 // and adding headers to HTTP requests made by the plugin.
 // For more information, refer to [Authentication for data source
-// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+// plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 type Route struct {
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.

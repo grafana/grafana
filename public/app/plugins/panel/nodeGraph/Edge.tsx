@@ -1,5 +1,6 @@
 import React, { MouseEvent, memo } from 'react';
 
+import { nodeR } from './Node';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
@@ -12,8 +13,14 @@ interface Props {
 }
 export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
+
   // Not great typing but after we do layout these properties are full objects not just references
-  const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
+  const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
+    source: NodeDatum;
+    target: NodeDatum;
+    sourceNodeRadius: number;
+    targetNodeRadius: number;
+  };
 
   // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
@@ -23,7 +30,8 @@ export const Edge = memo(function Edge(props: Props) {
       x2: target.x!,
       y2: target.y!,
     },
-    90
+    sourceNodeRadius || nodeR,
+    targetNodeRadius || nodeR
   );
 
   return (

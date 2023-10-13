@@ -36,6 +36,13 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
           key={card.value}
           className={selected === card.value ? cx(styles.card, styles.selected) : styles.card}
           onClick={() => onChange(card.value)}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              onChange(card.value);
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           {card.imgUrl.endsWith('.svg') ? (
             <SanitizedSVG src={card.imgUrl} className={styles.img} />

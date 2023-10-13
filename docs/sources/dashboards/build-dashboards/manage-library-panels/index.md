@@ -8,6 +8,11 @@ aliases:
   - ../../panels/library-panels/unlink-library-panel/
   - ../../panels/panel-library/
   - ../manage-library-panels/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Manage library panels
 title: Manage library panels
 weight: 300
@@ -18,6 +23,10 @@ weight: 300
 A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.
 
 You can save a library panel in a folder alongside saved dashboards.
+
+{{% admonition type="note" %}}
+When [RBAC](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/) is enabled, you need to have the relevant [Permissions](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/) to create, manage, and view library panels.
+{{% /admonition %}}
 
 ## Create a library panel
 

@@ -55,7 +55,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { timeSeriesList, timeSeriesQuery, sloQuery } = target;
+    const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
     return {
       ...target,
@@ -79,6 +79,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
+      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars),
     };
   }
 
@@ -183,9 +184,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    return this.getResource(
-      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`
-    ) as Promise<MetricDescriptor[]>;
+    return this.getResource(`metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`);
   }
 
   async filterMetricsByType(projectName: string, filter: string): Promise<MetricDescriptor[]> {
@@ -321,6 +320,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
     if (query.queryType && [QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
+    }
+
+    if (query.queryType === QueryType.PROMQL) {
+      return (
+        !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.expr && !!query.promQLQuery.step
+      );
     }
 
     return false;

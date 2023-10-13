@@ -1,5 +1,5 @@
 import { chain, difference } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
@@ -18,7 +18,7 @@ import {
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-import { LokiQuery, LokiQueryType } from './types';
+import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -29,8 +29,7 @@ const NS_IN_MS = 1000000;
 // When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortValue: '$__interval' },
-  { label: '$__range', sortValue: '$__range' },
+  { label: '$__auto', sortValue: '$__auto' },
   { label: '1m', sortValue: '00:01:00' },
   { label: '5m', sortValue: '00:05:00' },
   { label: '10m', sortValue: '00:10:00' },
@@ -79,8 +78,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private seriesCache = new LRU<string, Record<string, string[]>>({ max: 10 });
-  private labelsCache = new LRU<string, string[]>({ max: 10 });
+  private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
+  private labelsCache = new LRUCache<string, string[]>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -366,7 +365,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetches all label keys
+   * Fetch all label keys
+   * This asynchronous function returns all available label keys from the data source.
+   * It returns a promise that resolves to an array of strings containing the label keys.
+   *
+   * @returns A promise containing an array of label keys.
+   * @throws An error if the fetch operation fails.
    */
   async fetchLabels(): Promise<string[]> {
     const url = 'labels';
@@ -387,12 +391,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a selector. This is cached by its args but also by the global timeRange currently selected as
-   * they can change over requested time.
-   * @param name
+   * Fetch series labels for a selector
+   *
+   * This method fetches labels for a given stream selector, such as `{job="grafana"}`.
+   * It returns a promise that resolves to a record mapping label names to their corresponding values.
+   *
+   * @param streamSelector - The stream selector for which you want to retrieve labels.
+   * @returns A promise containing a record of label names and their values.
+   * @throws An error if the fetch operation fails.
    */
-  fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
-    const interpolatedMatch = this.datasource.interpolateString(match);
+  fetchSeriesLabels = async (streamSelector: string): Promise<Record<string, string[]>> => {
+    const interpolatedMatch = this.datasource.interpolateString(streamSelector);
     const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
@@ -436,8 +445,18 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return await this.fetchLabelValues(key);
   }
 
-  async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+  /**
+   * Fetch label values
+   *
+   * This asynchronous function fetches values associated with a specified label name.
+   * It returns a promise that resolves to an array of strings containing the label values.
+   *
+   * @param labelName - The name of the label for which you want to retrieve values.
+   * @returns A promise containing an array of label values.
+   * @throws An error if the fetch operation fails.
+   */
+  async fetchLabelValues(labelName: string): Promise<string[]> {
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(labelName));
 
     const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
@@ -460,14 +479,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getParserAndLabelKeys(selector: string): Promise<{
-    extractedLabelKeys: string[];
-    hasJSON: boolean;
-    hasLogfmt: boolean;
-    hasPack: boolean;
-    unwrapLabelKeys: string[];
-  }> {
-    const series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
+  /**
+   * Get parser and label keys for a selector
+   *
+   * This asynchronous function is used to fetch parsers and label keys for a selected log stream based on sampled lines.
+   * It returns a promise that resolves to an object with the following properties:
+   *
+   * - `extractedLabelKeys`: An array of available label keys associated with the log stream.
+   * - `hasJSON`: A boolean indicating whether JSON parsing is available for the stream.
+   * - `hasLogfmt`: A boolean indicating whether Logfmt parsing is available for the stream.
+   * - `hasPack`: A boolean indicating whether Pack parsing is available for the stream.
+   * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
+   *
+   * @param streamSelector - The selector for the log stream you want to analyze.
+   * @returns A promise containing an object with parser and label key information.
+   * @throws An error if the fetch operation fails.
+   */
+  async getParserAndLabelKeys(streamSelector: string): Promise<ParserAndLabelKeysResult> {
+    const series = await this.datasource.getDataSamples({ expr: streamSelector, refId: 'data-samples' });
 
     if (!series.length) {
       return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };

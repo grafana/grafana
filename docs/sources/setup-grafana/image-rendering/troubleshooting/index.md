@@ -8,6 +8,10 @@ keywords:
   - rendering
   - plugin
   - troubleshooting
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Troubleshooting
 title: Troubleshoot image rendering
 weight: 200

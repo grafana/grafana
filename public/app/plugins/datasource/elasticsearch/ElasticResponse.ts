@@ -27,7 +27,10 @@ interface TopMetricBucket {
 }
 
 export class ElasticResponse {
-  constructor(private targets: ElasticsearchQuery[], private response: any) {
+  constructor(
+    private targets: ElasticsearchQuery[],
+    private response: any
+  ) {
     this.targets = targets;
     this.response = response;
   }
@@ -121,7 +124,7 @@ export class ElasticResponse {
               };
               for (let i = 0; i < esAgg.buckets.length; i++) {
                 const bucket = esAgg.buckets[i];
-                const stats = bucket[metric.id] as TopMetricBucket;
+                const stats: TopMetricBucket = bucket[metric.id];
                 const values = stats.top.map((hit) => {
                   if (hit.metrics[metricField]) {
                     return hit.metrics[metricField];
@@ -236,7 +239,7 @@ export class ElasticResponse {
                 // If we selected more than one metric we also add each metric name
                 const metricName = metric.settings.metrics.length > 1 ? `${baseName} ${metricField}` : baseName;
 
-                const stats = bucket[metric.id] as TopMetricBucket;
+                const stats: TopMetricBucket = bucket[metric.id];
 
                 // Size of top_metrics is fixed to 1.
                 addMetricValue(values, metricName, stats.top[0].metrics[metricField]);
@@ -784,8 +787,10 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
 
 const toNameTypePair =
   (docs: Array<Record<string, any>>) =>
-  (propName: string): [string, FieldType] =>
-    [propName, guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName])];
+  (propName: string): [string, FieldType] => [
+    propName,
+    guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
+  ];
 
 /**
  * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess

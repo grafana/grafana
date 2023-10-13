@@ -79,7 +79,9 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrMissingOrganizationMembership.Errorf(
+			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
+			s.allowedOrganizations, data.Orgs)
 	}
 
 	return userInfo, nil

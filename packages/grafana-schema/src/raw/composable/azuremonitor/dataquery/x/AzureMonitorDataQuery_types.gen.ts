@@ -165,6 +165,14 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  */
 export interface AzureLogsQuery {
   /**
+   * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
+   */
+  dashboardTime?: boolean;
+  /**
+   * @deprecated Use dashboardTime instead
+   */
+  intersectTime?: boolean;
+  /**
    * KQL query to be executed.
    */
   query?: string;
@@ -181,7 +189,11 @@ export interface AzureLogsQuery {
    */
   resultFormat?: ResultFormat;
   /**
-   * Workspace ID. This was removed in Grafana 8, but remains for backwards compat
+   * If dashboardTime is set to true this value dictates which column the time filter will be applied to. Defaults to the first tables timeSpan column, the first datetime column found, or TimeGenerated
+   */
+  timeColumn?: string;
+  /**
+   * Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
    */
   workspace?: string;
 }

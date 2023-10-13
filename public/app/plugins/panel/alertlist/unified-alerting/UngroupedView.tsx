@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-use';
 
@@ -28,6 +28,7 @@ type Props = {
   options: UnifiedAlertListOptions;
   handleInstancesLimit?: (limit: boolean) => void;
   limitInstances: boolean;
+  hideViewRuleLinkText?: boolean;
 };
 
 function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState, number>>) {
@@ -36,7 +37,7 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
     .reduce((total, currentTotal) => total + currentTotal, 0);
 }
 
-const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances }: Props) => {
+const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();
@@ -89,11 +90,15 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                       </div>
                       <Spacer />
                       {href && (
-                        <a href={href} target="__blank" className={styles.link} rel="noopener">
-                          <Stack alignItems="center" gap={1}>
-                            View alert rule
-                            <Icon name={'external-link-alt'} size="sm" />
-                          </Stack>
+                        <a
+                          href={href}
+                          target="__blank"
+                          className={styles.link}
+                          rel="noopener"
+                          aria-label="View alert rule"
+                        >
+                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert rule</span>
+                          <Icon name={'external-link-alt'} size="sm" />
                         </a>
                       )}
                     </Stack>
@@ -142,7 +147,7 @@ const getStateTagStyles = (theme: GrafanaTheme2) => ({
 
     display: inline-block;
     color: white;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     font-size: ${theme.typography.bodySmall.fontSize};
     text-transform: capitalize;
     line-height: 1.2;

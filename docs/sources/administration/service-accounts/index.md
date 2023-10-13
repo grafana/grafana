@@ -8,6 +8,10 @@ description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Service accounts
 title: Service accounts
 weight: 800
@@ -115,6 +119,10 @@ You can assign roles to a Grafana service account to control access for the asso
 You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#update-service-account" >}}).
 
 In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also [assign RBAC roles]({{< relref "../roles-and-permissions/access-control/assign-rbac-roles" >}}) to grant very specific permissions to applications that interact with Grafana.
+
+{{% admonition type="note" %}}
+Since Grafana 10.2.0, the `No Basic Role` is available for organization users or service accounts. This role has no permissions. Permissions can be granted with RBAC.
+{{% /admonition %}}
 
 ### Before you begin
 

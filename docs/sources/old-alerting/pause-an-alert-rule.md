@@ -9,6 +9,10 @@ keywords:
   - guide
   - rules
   - view
+labels:
+  products:
+    - enterprise
+    - oss
 title: Pause an alert rule
 weight: 400
 ---

@@ -2,11 +2,10 @@
 description: Detect and revoke leaked Grafana service account tokens
 labels:
   products:
-    - cloud
     - enterprise
     - oss
-title: Configure Grafana secret scanning and notifications
 menuTitle: Configure secret scanning
+title: Configure Grafana secret scanning and notifications
 weight: 1000
 ---
 
@@ -69,7 +68,7 @@ Save the configuration file and restart Grafana.
 ## Configure outgoing webhook notifications
 
 1. Create an oncall integration of the type **Webhook** and set up alerts.
-   To learn how to create a Grafana OnCall integration, refer to [Webhook integrations for Grafana OnCall](/docs/oncall/latest/integrations/available-integrations/configure-webhook/).
+   To learn how to create a Grafana OnCall integration, refer to [Inbound Webhook integrations for Grafana OnCall](/docs/oncall/latest/integrations/webhook/).
 
 1. Copy the webhook URL of the new integration.
 

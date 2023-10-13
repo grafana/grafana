@@ -14,6 +14,7 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
@@ -35,7 +36,7 @@ const INTERACTION_ITEM = {
   DISMISS: 'dismiss',
 };
 
-interface DataSourceModalProps {
+export interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
@@ -43,6 +44,7 @@ interface DataSourceModalProps {
   reportedInteractionFrom?: string;
 
   // DS filters
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
   tracing?: boolean;
   mixed?: boolean;
   dashboard?: boolean;
@@ -53,11 +55,22 @@ interface DataSourceModalProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
+  uploadFile?: boolean;
 }
 
 export function DataSourceModal({
+  tracing,
   dashboard,
   mixed,
+  metrics,
+  type,
+  annotations,
+  variables,
+  alerting,
+  pluginId,
+  logs,
+  uploadFile,
+  filter,
   onChange,
   current,
   onDismiss,
@@ -106,9 +119,32 @@ export function DataSourceModal({
     }
   });
 
+  // Built-in data sources used twice because of mobile layout adjustments
+  // In movile the list is appended to the bottom of the DS list
+  const BuiltInList = ({ className }: { className?: string }) => {
+    return (
+      <BuiltInDataSourceList
+        className={className}
+        onChange={onChangeDataSource}
+        current={current}
+        filter={filter}
+        variables={variables}
+        tracing={tracing}
+        metrics={metrics}
+        type={type}
+        annotations={annotations}
+        alerting={alerting}
+        pluginId={pluginId}
+        logs={logs}
+        dashboard={dashboard}
+        mixed={mixed}
+      />
+    );
+  };
+
   return (
     <Modal
-      title="Select data source"
+      title={t('data-source-picker.modal.title', 'Select data source')}
       closeOnEscape={true}
       closeOnBackdropClick={true}
       isOpen={true}
@@ -124,7 +160,7 @@ export function DataSourceModal({
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}
-          placeholder="Search data source"
+          placeholder={t('data-source-picker.modal.input-placeholder', 'Select data source')}
           onChange={(e) => {
             setSearch(e.currentTarget.value);
             reportSearchUsageOnce();
@@ -132,10 +168,6 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
-            dashboard={false}
-            mixed={false}
-            variables
-            filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
             onChange={onChangeDataSource}
             current={current}
             onClickEmptyStateCTA={() =>
@@ -144,27 +176,27 @@ export function DataSourceModal({
                 src: analyticsInteractionSrc,
               })
             }
-          />
-          <BuiltInDataSourceList
+            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            variables={variables}
+            tracing={tracing}
+            metrics={metrics}
+            type={type}
+            annotations={annotations}
+            alerting={alerting}
+            pluginId={pluginId}
+            logs={logs}
             dashboard={dashboard}
             mixed={mixed}
-            className={styles.appendBuiltInDataSourcesList}
-            onChange={onChangeDataSource}
-            current={current}
           />
+          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </CustomScrollbar>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInDataSourceList
-              onChange={onChangeDataSource}
-              current={current}
-              dashboard={dashboard}
-              mixed={mixed}
-            />
+            <BuiltInList />
           </CustomScrollbar>
-          {config.featureToggles.editPanelCSVDragAndDrop && (
+          {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
@@ -180,7 +212,11 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.newDSSection}>
-          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
+          <span className={styles.newDSDescription}>
+            <Trans i18nKey="data-source-picker.modal.configure-new-data-source">
+              Open a new tab and configure a data source
+            </Trans>
+          </span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {

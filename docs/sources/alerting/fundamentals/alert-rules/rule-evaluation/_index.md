@@ -1,11 +1,17 @@
 ---
-title: Alert rule evaluation
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/
 description: Introduction to alert rule evaluation
-weight: 106
 keywords:
   - grafana
   - alerting
   - evaluation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Alert rule evaluation
+weight: 106
 ---
 
 # Alert rule evaluation
@@ -39,7 +45,7 @@ Evaluation will occur as follows:
 [00:30] First evaluation - condition not met.
 
 [01:00] Second evaluation - condition breached.
-Pending counter starts. **Alert stars pending.**
+Pending counter starts. **Alert starts pending.**
 
 [01:30] Third evaluation - condition breached. Pending counter = 30s. **Pending state.**
 

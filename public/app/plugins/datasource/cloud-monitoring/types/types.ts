@@ -37,6 +37,7 @@ export interface Aggregation {
 
 export interface CloudMonitoringOptions extends DataSourceOptions {
   gceDefaultProject?: string;
+  enableSecureSocksProxy?: boolean;
 }
 
 export interface CloudMonitoringSecureJsonData extends DataSourceSecureJsonData {}

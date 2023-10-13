@@ -15,15 +15,15 @@ interface AbstractListProps<T> extends ListProps<T> {
 }
 
 const getStyles = stylesFactory((inlineList = false) => ({
-  list: css`
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-  `,
+  list: css({
+    listStyleType: 'none',
+    margin: 0,
+    padding: 0,
+  }),
 
-  item: css`
-    display: ${(inlineList && 'inline-block') || 'block'};
-  `,
+  item: css({
+    display: (inlineList && 'inline-block') || 'block',
+  }),
 }));
 
 export class AbstractList<T> extends PureComponent<AbstractListProps<T>> {

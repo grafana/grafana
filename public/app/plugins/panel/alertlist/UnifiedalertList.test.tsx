@@ -89,7 +89,7 @@ const defaultOptions: UnifiedAlertListOptions = {
   folder: { id: 1, title: 'test folder' },
   stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false },
   alertInstanceLabelFilter: '',
-  datasource: 'Alertmanager',
+  datasource: 'grafana',
   viewMode: ViewMode.List,
 };
 
@@ -188,8 +188,8 @@ describe('UnifiedAlertList', () => {
 
     await user.click(expandElement);
 
-    const tagsElement = await byRole('list', { name: 'Tags' }).find();
-    expect(await byRole('listitem').find(tagsElement)).toHaveTextContent('severity=critical');
+    const labelsElement = await byRole('list', { name: 'Labels' }).find();
+    expect(await byRole('listitem').find(labelsElement)).toHaveTextContent('severitycritical');
 
     expect(replaceVarsSpy).toHaveBeenLastCalledWith('$label');
     expect(filterAlertsSpy).toHaveBeenLastCalledWith(

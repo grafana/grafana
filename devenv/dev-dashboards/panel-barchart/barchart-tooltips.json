@@ -571,8 +571,7 @@
     ],
     "refresh": "",
     "schemaVersion": 38,
-    "style": "dark",
-    "tags": [
+      "tags": [
         "gdev",
         "panel-tests",
         "barchart",

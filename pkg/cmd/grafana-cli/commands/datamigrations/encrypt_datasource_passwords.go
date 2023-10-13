@@ -95,7 +95,7 @@ func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName
 			return 0, fmt.Errorf("%v: %w", "marshaling newSecureJsonData failed", err)
 		}
 
-		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}
+		newRow := map[string]any{"secure_json_data": data, passwordFieldName: ""}
 		session.Table("data_source")
 		session.Where("id = ?", string(row["id"]))
 		// Setting both columns while having value only for secure_json_data should clear the [passwordFieldName] column
@@ -111,20 +111,20 @@ func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName
 	return rowsUpdated, nil
 }
 
-func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]interface{}, error) {
+func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]any, error) {
 	encryptedPassword, err := util.Encrypt(row[passwordFieldName], setting.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var secureJSONData map[string]interface{}
+	var secureJSONData map[string]any
 
 	if len(row["secure_json_data"]) > 0 {
 		if err := json.Unmarshal(row["secure_json_data"], &secureJSONData); err != nil {
 			return nil, err
 		}
 	} else {
-		secureJSONData = map[string]interface{}{}
+		secureJSONData = map[string]any{}
 	}
 
 	jsonFieldName := util.ToCamelCase(passwordFieldName)

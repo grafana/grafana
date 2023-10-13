@@ -11,13 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -154,8 +156,10 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		var respModel apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(b, &respModel))
+		require.Len(t, respModel.Created, len(rules.Rules))
 	}
 
 	// Check that we cannot create a rule that has a panel_id and no dashboard_uid
@@ -209,7 +213,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "invalid rule specification at index [0]: both annotations __dashboardUid__ and __panelId__ must be specified", res["message"])
 	}
@@ -433,8 +437,10 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		var respModel apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(b, &respModel))
+		require.Len(t, respModel.Created, len(rules.Rules))
 	}
 
 	expectedAllJSON := fmt.Sprintf(`
@@ -617,7 +623,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
 	}
@@ -635,7 +641,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
 	}
@@ -663,7 +669,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
@@ -801,5 +807,5 @@ type rulesData struct {
 type groupData struct {
 	Name  string
 	File  string
-	Rules []interface{}
+	Rules []any
 }

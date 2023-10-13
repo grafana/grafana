@@ -16,13 +16,14 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       severity="warning"
       title="Unsupported data sources"
       data-testid={selectors.UnsupportedDataSourcesWarningAlert}
+      bottomSpacing={0}
     >
       <p className={styles.unsupportedDataSourceDescription}>
         There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data
         sources may not function properly: {unsupportedDataSources}.
       </p>
       <a
-        href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
+        href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
         Read more about supported data sources

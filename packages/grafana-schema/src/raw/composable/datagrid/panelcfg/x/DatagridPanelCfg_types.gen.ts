@@ -9,7 +9,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "10.2.0-pre";
 
 export interface Options {
   selectedSeries: number;

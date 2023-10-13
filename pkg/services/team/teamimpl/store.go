@@ -9,9 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,21 +30,23 @@ type store interface {
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
+	RegisterDelete(query string)
 }
 
 type xormStore struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db      db.DB
+	cfg     *setting.Cfg
+	deletes []string
 }
 
-func getFilteredUsers(signedInUser *user.SignedInUser, hiddenUsers map[string]struct{}) []string {
+func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
 	filteredUsers := make([]string, 0, len(hiddenUsers))
-	if signedInUser == nil || signedInUser.IsGrafanaAdmin {
+	if signedInUser == nil || signedInUser.IsNil() || signedInUser.GetIsGrafanaAdmin() {
 		return filteredUsers
 	}
 
 	for u := range hiddenUsers {
-		if u == signedInUser.Login {
+		if u == signedInUser.GetLogin() {
 			continue
 		}
 		filteredUsers = append(filteredUsers, u)
@@ -142,6 +144,8 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
 		}
 
+		deletes = append(deletes, ss.deletes...)
+
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
 			if err != nil {
@@ -187,7 +191,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		queryWithWildcards := "%" + query.Query + "%"
 
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 		for _, user := range filteredUsers {
@@ -215,7 +219,17 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		sql.WriteString(` and` + acFilter.Where)
 		params = append(params, acFilter.Args...)
 
-		sql.WriteString(` order by team.name asc`)
+		if len(query.SortOpts) > 0 {
+			orderBy := ` order by `
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					orderBy += query.SortOpts[i].Filter[j].OrderBy() + ","
+				}
+			}
+			sql.WriteString(orderBy[:len(orderBy)-1])
+		} else {
+			sql.WriteString(` order by team.name asc`)
+		}
 
 		if query.Limit != 0 {
 			offset := query.Limit * (query.Page - 1)
@@ -256,7 +270,7 @@ func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) 
 	var queryResult *team.TeamDTO
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 		sql.WriteString(getTeamSelectSQLBase(ss.db, filteredUsers))
@@ -292,7 +306,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	queryResult := make([]*team.TeamDTO, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
-		var params []interface{}
+		var params []any
 		params = append(params, query.OrgID, query.UserID)
 
 		sql.WriteString(getTeamSelectSQLBase(ss.db, []string{}))
@@ -556,4 +570,9 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		return nil, err
 	}
 	return queryResult, nil
+}
+
+// RegisterDelete registers a delete query to be executed when the transaction is committed
+func (ss *xormStore) RegisterDelete(query string) {
+	ss.deletes = append(ss.deletes, query)
 }

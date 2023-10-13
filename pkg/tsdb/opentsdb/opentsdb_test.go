@@ -163,7 +163,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Equal(t, "avg", metric["aggregator"])
 		require.Nil(t, metric["downsample"])
 
-		metricTags := metric["tags"].(map[string]interface{})
+		metricTags := metric["tags"].(map[string]any)
 		require.Len(t, metricTags, 2)
 		require.Equal(t, "prod", metricTags["env"])
 		require.Equal(t, "grafana", metricTags["app"])
@@ -193,14 +193,14 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Equal(t, "cpu.average.percent", metric["metric"])
 		require.Equal(t, "avg", metric["aggregator"])
 
-		metricTags := metric["tags"].(map[string]interface{})
+		metricTags := metric["tags"].(map[string]any)
 		require.Len(t, metricTags, 2)
 		require.Equal(t, "prod", metricTags["env"])
 		require.Equal(t, "grafana", metricTags["app"])
 		require.Nil(t, metricTags["ip"])
 
 		require.True(t, metric["rate"].(bool))
-		require.False(t, metric["rateOptions"].(map[string]interface{})["counter"].(bool))
+		require.False(t, metric["rateOptions"].(map[string]any)["counter"].(bool))
 	})
 
 	t.Run("Build metric with rate and counter enabled", func(t *testing.T) {
@@ -228,14 +228,14 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Equal(t, "cpu.average.percent", metric["metric"])
 		require.Equal(t, "avg", metric["aggregator"])
 
-		metricTags := metric["tags"].(map[string]interface{})
+		metricTags := metric["tags"].(map[string]any)
 		require.Len(t, metricTags, 2)
 		require.Equal(t, "prod", metricTags["env"])
 		require.Equal(t, "grafana", metricTags["app"])
 		require.Nil(t, metricTags["ip"])
 
 		require.True(t, metric["rate"].(bool))
-		metricRateOptions := metric["rateOptions"].(map[string]interface{})
+		metricRateOptions := metric["rateOptions"].(map[string]any)
 		require.Len(t, metricRateOptions, 3)
 		require.True(t, metricRateOptions["counter"].(bool))
 		require.Equal(t, float64(45), metricRateOptions["counterMax"])

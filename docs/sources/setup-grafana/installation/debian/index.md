@@ -3,8 +3,12 @@ aliases:
   - ../../installation/debian/
   - ../../installation/installation/debian/
 description: Install guide for Grafana on Debian or Ubuntu
-title: Install Grafana on Debian or Ubuntu
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Debian or Ubuntu
+title: Install Grafana on Debian or Ubuntu
 weight: 100
 ---
 
@@ -35,24 +39,29 @@ Grafana Enterprise is the recommended and default edition. It is available for f
 
 Complete the following steps to install Grafana from the APT repository:
 
-1. To install required packages and download the Grafana repository signing key, run the following commands:
+1. Install the prerequisite packages:
 
    ```bash
-   sudo apt-get install -y apt-transport-https
-   sudo apt-get install -y software-properties-common wget
-   sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+   sudo apt-get install -y apt-transport-https software-properties-common wget
+   ```
+
+1. Import the GPG key:
+
+   ```bash
+   sudo mkdir -p /etc/apt/keyrings/
+   wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
    ```
 
 1. To add a repository for stable releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. To add a repository for beta releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. Run the following command to update the list of available packages:
@@ -91,6 +100,42 @@ Complete the following steps to install Grafana using DEB or the standalone bina
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
+
+## Uninstall on Debian or Ubuntu
+
+Complete any of the following steps to uninstall Grafana.
+
+To uninstall Grafana, run the following commands in a terminal window:
+
+1. If you configured Grafana to run with systemd, stop the systemd servivce for Grafana server:
+
+   ```shell
+   sudo systemctl stop grafana-server
+   ```
+
+1. If you configured Grafana to run with init.d, stop the init.d service for Grafana server:
+
+   ```shell
+   sudo service grafana-server stop
+   ```
+
+1. To uninstall Grafana OSS:
+
+   ```shell
+   sudo apt-get remove grafana
+   ```
+
+1. To uninstall Grafana Enterprise:
+
+   ```shell
+   sudo apt-get remove grafana-enterprise
+   ```
+
+1. Optional: To remove the Grafana repository:
+
+   ```bash
+   sudo rm -i /etc/apt/sources.list.d/grafana.list
+   ```
 
 ## Next steps
 

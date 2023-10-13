@@ -261,6 +261,7 @@ export class DatasourceSrv implements DataSourceService {
           const key = `$\{${variable.name}\}`;
           base.push({
             ...dsSettings,
+            isDefault: false,
             name: key,
             uid: key,
           });
@@ -351,7 +352,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   }
 
   const isString = typeof ref === 'string';
-  return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
+  return isString ? ref : ref?.uid;
 }
 
 export function variableInterpolation(value: any[]) {

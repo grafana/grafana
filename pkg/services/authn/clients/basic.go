@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	errDecodingBasicAuthHeader = errutil.NewBase(errutil.StatusBadRequest, "basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
+	errDecodingBasicAuthHeader = errutil.BadRequest("basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
 )
 
 var _ authn.ContextAwareClient = new(Basic)

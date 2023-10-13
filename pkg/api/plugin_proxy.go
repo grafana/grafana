@@ -14,9 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var (
+	once                 sync.Once
+	pluginProxyTransport *http.Transport
+)
+
 func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
-	var once sync.Once
-	var pluginProxyTransport *http.Transport
 	once.Do(func() {
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -40,7 +43,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 		return
 	}
 
-	query := pluginsettings.GetByPluginIDArgs{OrgID: c.OrgID, PluginID: plugin.ID}
+	query := pluginsettings.GetByPluginIDArgs{OrgID: c.SignedInUser.GetOrgID(), PluginID: plugin.ID}
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to fetch plugin settings", err)
@@ -48,7 +51,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	}
 
 	proxyPath := getProxyPath(c)
-	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes, c, proxyPath, hs.Cfg, hs.SecretsService, hs.tracer, pluginProxyTransport)
+	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes, c, proxyPath, hs.Cfg, hs.SecretsService, hs.tracer, pluginProxyTransport, hs.Features)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create plugin proxy", err)
 		return

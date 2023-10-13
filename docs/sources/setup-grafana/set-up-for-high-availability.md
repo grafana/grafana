@@ -2,18 +2,28 @@
 aliases:
   - ../administration/set-up-for-high-availability/
   - ../tutorials/ha_setup/
+description: Learn how to set up Grafana to be highly available.
 keywords:
   - grafana
   - tutorials
   - HA
   - high availability
-title: Set up Grafana for high availability
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up HA
-description: Learn how to set up Grafana to be highly available.
+title: Set up Grafana for high availability
 weight: 900
 ---
 
 # Set up Grafana for high availability
+
+{{% admonition type="note" %}}
+To prevent duplicate alerts in Grafana high availability, additional steps are required.
+
+Please refer to [Alerting high availability](#alerting-high-availability) for more information.
+{{% /admonition %}}
 
 Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data by default. For high availability, you must use a shared database to store this data. This shared database can be either MySQL or Postgres.
 

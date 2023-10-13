@@ -7,13 +7,13 @@ import { Text } from './Text';
 
 describe('Text', () => {
   it('renders correctly', () => {
-    render(<Text as={'h1'}>This is a text component</Text>);
+    render(<Text element={'h1'}>This is a text component</Text>);
     expect(screen.getByText('This is a text component')).toBeInTheDocument();
   });
   it('keeps the element type but changes its styles', () => {
     const customVariant: keyof ThemeTypographyVariantTypes = 'body';
     render(
-      <Text as={'h1'} variant={customVariant}>
+      <Text element={'h1'} variant={customVariant}>
         This is a text component
       </Text>
     );
@@ -26,7 +26,7 @@ describe('Text', () => {
     const customColor = 'info';
     const theme = createTheme();
     render(
-      <Text as={'h1'} color={customColor}>
+      <Text element={'h1'} color={customColor}>
         This is a text component
       </Text>
     );

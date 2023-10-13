@@ -8,8 +8,13 @@ keywords:
   - configuration
   - documentation
   - proxy
-title: Configure auth proxy authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Auth proxy
+title: Configure auth proxy authentication
 weight: 1500
 ---
 

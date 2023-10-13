@@ -36,7 +36,11 @@ export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
 
-  constructor(public options: CanvasFrameOptions, scene: Scene, public parent?: FrameState) {
+  constructor(
+    public options: CanvasFrameOptions,
+    scene: Scene,
+    public parent?: FrameState
+  ) {
     super(frameItemDummy, options, parent);
 
     this.scene = scene;
@@ -130,7 +134,7 @@ export class FrameState extends ElementState {
         if (shiftItemsOnDuplicate) {
           const { constraint, placement: oldPlacement } = element.options;
           const { vertical, horizontal } = constraint ?? {};
-          const placement = { ...oldPlacement } ?? ({} as Placement);
+          const placement: Placement = { ...oldPlacement } ?? {};
 
           switch (vertical) {
             case VerticalConstraint.Top:

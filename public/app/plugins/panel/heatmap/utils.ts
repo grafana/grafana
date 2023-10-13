@@ -67,7 +67,6 @@ interface PrepConfigOpts {
   isToolTipOpen: MutableRefObject<boolean>;
   timeZone: string;
   getTimeRange: () => TimeRange;
-  palette: string[];
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideLE?: number;
@@ -75,6 +74,8 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   sync?: () => DashboardCursorSync;
+  // Identifies the shared key for uPlot cursor sync
+  eventsScope?: string;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -88,13 +89,13 @@ export function prepConfig(opts: PrepConfigOpts) {
     isToolTipOpen,
     timeZone,
     getTimeRange,
-    palette,
     cellGap,
     hideLE,
     hideGE,
     yAxisConfig,
     ySizeDivisor,
     sync,
+    eventsScope = '__global_',
   } = opts;
 
   const xScaleKey = 'x';
@@ -525,16 +526,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       ySizeDivisor,
       disp: {
         fill: {
-          values: (u, seriesIdx) => {
-            let countFacetIdx = !isSparseHeatmap ? 2 : 3;
-            return valuesToFills(
-              u.data[seriesIdx][countFacetIdx] as unknown as number[],
-              palette,
-              dataRef.current?.minValue!,
-              dataRef.current?.maxValue!
-            );
-          },
-          index: palette,
+          values: (u, seriesIdx) => dataRef.current?.heatmapColors?.values!,
+          index: dataRef.current?.heatmapColors?.palette!,
         },
       },
     }),
@@ -613,7 +606,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       scales: [xScaleKey, yScaleKey],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
@@ -965,7 +958,7 @@ export const boundedMinMax = (
   return [minValue, maxValue];
 };
 
-export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
+export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number): number[] => {
   let range = maxValue - minValue || 1;
 
   let paletteSize = palette.length;

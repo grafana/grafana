@@ -62,63 +62,62 @@ Tab.displayName = 'Tab';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    item: css`
-      list-style: none;
-      position: relative;
-      display: flex;
-      white-space: nowrap;
-    `,
-    link: css`
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(1.5, 2, 1)};
-      display: block;
-      height: 100%;
+    item: css({
+      listStyle: 'none',
+      position: 'relative',
+      display: 'flex',
+      whiteSpace: 'nowrap',
+      padding: theme.spacing(0.5),
+    }),
+    link: css({
+      color: theme.colors.text.secondary,
+      padding: theme.spacing(1, 1.5, 0.5),
+      borderRadius: theme.shape.radius.default,
 
-      svg {
-        margin-right: ${theme.spacing(1)};
-      }
+      display: 'block',
+      height: '100%',
 
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
+      svg: {
+        marginRight: theme.spacing(1),
+      },
 
-      &::before {
-        display: block;
-        content: ' ';
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 4px;
-        border-radius: ${theme.shape.radius.default};
-        bottom: 0px;
-      }
-    `,
-    notActive: css`
-      a:hover,
-      &:hover,
-      &:focus {
-        color: ${theme.colors.text.primary};
+      '&:focus-visible': getFocusStyles(theme),
 
-        &::before {
-          background-color: ${theme.colors.action.hover};
-        }
-      }
-    `,
-    activeStyle: css`
-      label: activeTabStyle;
-      color: ${theme.colors.text.primary};
-      overflow: hidden;
+      '&::before': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        height: '4px',
+        borderRadius: theme.shape.radius.default,
+        bottom: 0,
+      },
+    }),
+    notActive: css({
+      'a:hover, &:hover, &:focus': {
+        color: theme.colors.text.primary,
 
-      a {
-        color: ${theme.colors.text.primary};
-      }
+        '&::before': {
+          backgroundColor: theme.colors.action.hover,
+        },
+      },
+    }),
+    activeStyle: css({
+      label: 'activeTabStyle',
+      color: theme.colors.text.primary,
+      overflow: 'hidden',
 
-      &::before {
-        background-image: ${theme.colors.gradients.brandHorizontal};
-      }
-    `,
-    suffix: css`
-      margin-left: ${theme.spacing(1)};
-    `,
+      a: {
+        color: theme.colors.text.primary,
+      },
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+      },
+    }),
+    suffix: css({
+      marginLeft: theme.spacing(1),
+    }),
   };
 };

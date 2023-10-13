@@ -24,7 +24,7 @@ export const LANGUAGES: LanguageDefinitions[] = [
   {
     code: ENGLISH_US,
     name: 'English',
-    loader: () => Promise.resolve({}),
+    loader: () => import('../../../locales/en-US/grafana.json'),
   },
 
   {

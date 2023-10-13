@@ -8,8 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginOption,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
 import { PostgresDatasource } from '../datasource';
 import { PostgresOptions, PostgresTLSModes, SecureJsonData } from '../types';
@@ -38,7 +37,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
         // This is needed or else we get an error when we try to save the datasource.
         updateDatasourcePluginOption({ options, onOptionsChange }, 'version', result.datasource.version);
       } else {
-        const datasource = await getDatasourceSrv().loadDatasource(options.name);
+        const datasource = await getDataSourceSrv().get(options.name);
 
         if (datasource instanceof PostgresDatasource) {
           const version = await datasource.getVersion();

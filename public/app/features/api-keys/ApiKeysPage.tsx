@@ -16,7 +16,7 @@ import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
-  const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
   return {
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,

@@ -1,6 +1,9 @@
 package accesscontrol
 
 import (
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"sync"
@@ -253,6 +256,15 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 	return perms
 }
 
+// FixedRoleUID generates a UID of 34 bytes: "fixed_" + base64(sha1(roleName))
+func FixedRoleUID(roleName string) string {
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	hasher := sha1.New()
+	hasher.Write([]byte(roleName))
+
+	return fmt.Sprintf("%s%s", FixedRoleUIDPrefix, base64.RawURLEncoding.EncodeToString(hasher.Sum(nil)))
+}
+
 // ValidateFixedRole errors when a fixed role does not match expected pattern
 func ValidateFixedRole(role RoleDTO) error {
 	if !strings.HasPrefix(role.Name, FixedRolePrefix) {
@@ -264,6 +276,9 @@ func ValidateFixedRole(role RoleDTO) error {
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern
 func ValidateBuiltInRoles(builtInRoles []string) error {
 	for _, br := range builtInRoles {
+		if org.RoleType(br) == org.RoleNone {
+			return ErrNoneRoleAssignment
+		}
 		if !org.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
 			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
 		}
@@ -323,6 +338,17 @@ func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 			Version:     1,
 			DisplayName: string(org.RoleViewer),
 			Description: "Viewer role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
+		string(org.RoleNone): {
+			Name:        BasicRolePrefix + "none",
+			UID:         BasicRoleUIDPrefix + "none",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(org.RoleNone),
+			Description: "None role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,

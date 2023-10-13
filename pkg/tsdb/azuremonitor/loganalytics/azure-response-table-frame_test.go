@@ -90,6 +90,11 @@ func TestTraceTableToFrame(t *testing.T) {
 			testFile:     "traces/2-traces-single-table.json",
 			resultFormat: dataquery.ResultFormatTrace,
 		},
+		{
+			name:         "single trace with empty serviceTags and tags",
+			testFile:     "traces/3-traces-empty-dynamics.json",
+			resultFormat: dataquery.ResultFormatTrace,
+		},
 	}
 
 	for _, tt := range tests {

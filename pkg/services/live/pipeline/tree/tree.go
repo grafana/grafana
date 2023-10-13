@@ -65,7 +65,7 @@ const (
 	catchAll
 )
 
-type Handler interface{}
+type Handler any
 
 func New() *Node {
 	return new(Node)
@@ -392,7 +392,7 @@ func (n *Node) GetValue(path string, unescape bool) (value NodeValue) {
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
-// nolint:gocyclo
+// nolint:gocyclo,nakedret
 func (n *Node) getValue(path string, params *Params, skippedNodes *[]skippedNode, unescape bool) (value NodeValue) {
 	var globalParamsCount int16
 

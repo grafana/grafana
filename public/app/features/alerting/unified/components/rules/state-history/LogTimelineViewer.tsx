@@ -43,6 +43,7 @@ export const LogTimelineViewer = React.memo(({ frames, timeRange, onPointerMove 
             { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
             { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
             { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
+            { label: 'Mixed', color: theme.colors.text.secondary, yAxis: 1 },
           ]}
         >
           {(builder) => {

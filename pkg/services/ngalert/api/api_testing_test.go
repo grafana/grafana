@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -216,6 +217,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			srv := &TestingApiSrv{
 				accessControl: ac,
+				tracer:        tracing.InitializeTracerForTest(),
 			}
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
@@ -269,7 +271,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
 	if ac == nil {
-		ac = acMock.New().WithDisabled()
+		ac = acMock.New()
 	}
 
 	return &TestingApiSrv{
@@ -277,5 +279,6 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 		accessControl:   ac,
 		evaluator:       evaluator,
 		cfg:             config(t),
+		tracer:          tracing.InitializeTracerForTest(),
 	}
 }

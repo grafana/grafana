@@ -12,6 +12,7 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import {
   fetchAlertManagerConfig,
@@ -20,12 +21,13 @@ import {
   fetchStatus,
 } from '../../api/alertmanager';
 import {
-  disableRBAC,
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -55,7 +57,9 @@ const renderAdminPage = (alertManagerSourceName?: string) => {
 
   return render(
     <TestProvider>
-      <AlertmanagerConfig />
+      <AlertmanagerProvider accessType="instance">
+        <AlertmanagerConfig />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };
@@ -85,11 +89,12 @@ const ui = {
 describe('Admin config', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    // FIXME: scope down
+    grantUserPermissions(Object.values(AccessControlAction));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     contextSrv.isGrafanaAdmin = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
-    disableRBAC();
   });
 
   it('Reset alertmanager config', async () => {
@@ -129,7 +134,7 @@ describe('Admin config', () => {
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
 
-    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
   });
 
   it('Read-only when using Prometheus Alertmanager', async () => {

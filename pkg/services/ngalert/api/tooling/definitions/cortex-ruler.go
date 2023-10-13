@@ -19,6 +19,18 @@ import (
 //       202: NamespaceConfigResponse
 //
 
+// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+//
+// List rules in provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
+
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
@@ -39,8 +51,20 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: Ack
+//       202: UpdateRuleGroupResponse
 //
+
+// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+//
+// Converts submitted rule group to provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
 
 // swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
@@ -126,7 +150,7 @@ import (
 //       202: Ack
 //       404: NotFound
 
-// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
 	// in:path
 	Namespace string
@@ -258,12 +282,13 @@ func (c *GettableRuleGroupConfig) validate() error {
 }
 
 type ApiRuleNode struct {
-	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
-	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Expr        string            `yaml:"expr" json:"expr"`
-	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
 type RuleType int
@@ -431,7 +456,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
@@ -444,12 +469,12 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (d Duration) MarshalYAML() (interface{}, error) {
+func (d Duration) MarshalYAML() (any, error) {
 	return time.Duration(d).Seconds(), nil
 }
 
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var v interface{}
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
@@ -460,4 +485,12 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
+}
+
+// swagger:model
+type UpdateRuleGroupResponse struct {
+	Message string   `json:"message"`
+	Created []string `json:"created,omitempty"`
+	Updated []string `json:"updated,omitempty"`
+	Deleted []string `json:"deleted,omitempty"`
 }

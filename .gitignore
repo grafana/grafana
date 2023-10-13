@@ -17,6 +17,7 @@ vendor/
 /docs/menu.yaml
 /requests
 tsconfig.tsbuildinfo
+__debug_bin*
 
 # Yarn
 .yarn/*
@@ -36,6 +37,9 @@ tsconfig.tsbuildinfo
 
 # Enterprise reporting fonts
 /public/fonts/dejavu
+
+# Swagger intermediate file
+/public/api-spec.json
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
@@ -83,8 +87,10 @@ public/css/*.min.css
 /devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 
 conf/custom.ini
-/conf/provisioning/**/custom.yaml
-/conf/provisioning/**/dev.yaml
+
+/conf/provisioning/**/*.yaml
+!/conf/provisioning/**/sample.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
@@ -122,6 +128,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 *.orig
 
 /devenv/bulk-dashboards/*.json
+/devenv/bulk-folders/*/*.json
 /devenv/bulk_alerting_dashboards/*.json
 /devenv/datasources_bulk.yaml
 /devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml
@@ -137,7 +144,6 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
 /packages/**/package.tgz
-/packages/grafana-toolkit/sass
 ## CI places the packages in a different location
 /npm-artifacts
 

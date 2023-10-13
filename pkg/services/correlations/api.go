@@ -48,18 +48,13 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgID
+	cmd.OrgId = c.SignedInUser.GetOrgID()
 
 	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) || errors.Is(err, ErrTargetDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}
-
-		if errors.Is(err, ErrSourceDataSourceReadOnly) {
-			return response.Error(http.StatusForbidden, "Data source is read only", err)
-		}
-
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
@@ -76,7 +71,7 @@ type CreateCorrelationParams struct {
 	SourceUID string `json:"sourceUID"`
 }
 
-//swagger:response createCorrelationResponse
+// swagger:response createCorrelationResponse
 type CreateCorrelationResponse struct {
 	// in: body
 	Body CreateCorrelationResponseBody `json:"body"`
@@ -96,7 +91,7 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgID,
+		OrgId:     c.SignedInUser.GetOrgID(),
 	}
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
@@ -109,8 +104,8 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
 
-		if errors.Is(err, ErrSourceDataSourceReadOnly) {
-			return response.Error(http.StatusForbidden, "Data source is read only", err)
+		if errors.Is(err, ErrCorrelationReadOnly) {
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
@@ -158,7 +153,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgID
+	cmd.OrgId = c.SignedInUser.GetOrgID()
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -170,8 +165,8 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
 
-		if errors.Is(err, ErrSourceDataSourceReadOnly) {
-			return response.Error(http.StatusForbidden, "Data source is read only", err)
+		if errors.Is(err, ErrCorrelationReadOnly) {
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
@@ -192,7 +187,7 @@ type UpdateCorrelationParams struct {
 	Body UpdateCorrelationCommand `json:"body"`
 }
 
-//swagger:response updateCorrelationResponse
+// swagger:response updateCorrelationResponse
 type UpdateCorrelationResponse struct {
 	// in: body
 	Body UpdateCorrelationResponseBody `json:"body"`
@@ -211,7 +206,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) 
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgID,
+		OrgId:     c.SignedInUser.GetOrgID(),
 	}
 
 	correlation, err := s.getCorrelation(c.Req.Context(), query)
@@ -257,7 +252,7 @@ type GetCorrelationResponse struct {
 func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgID,
+		OrgId:     c.SignedInUser.GetOrgID(),
 	}
 
 	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
@@ -282,7 +277,7 @@ type GetCorrelationsBySourceUIDParams struct {
 	DatasourceUID string `json:"sourceUID"`
 }
 
-//swagger:response getCorrelationsBySourceUIDResponse
+// swagger:response getCorrelationsBySourceUIDResponse
 type GetCorrelationsBySourceUIDResponse struct {
 	// in: body
 	Body []Correlation `json:"body"`
@@ -298,8 +293,25 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext) response.Response {
+	limit := c.QueryInt64("limit")
+	if limit <= 0 {
+		limit = 100
+	} else if limit > 1000 {
+		limit = 1000
+	}
+
+	page := c.QueryInt64("page")
+	if page <= 0 {
+		page = 1
+	}
+
+	sourceUIDs := c.QueryStrings("sourceUID")
+
 	query := GetCorrelationsQuery{
-		OrgId: c.OrgID,
+		OrgId:      c.SignedInUser.GetOrgID(),
+		Limit:      limit,
+		Page:       page,
+		SourceUIDs: sourceUIDs,
 	}
 
 	correlations, err := s.getCorrelations(c.Req.Context(), query)
@@ -312,6 +324,27 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
+}
+
+// swagger:parameters getCorrelations
+type GetCorrelationsParams struct {
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	// maximum: 1000
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// type: array
+	// collectionFormat: multi
+	// required:false
+	SourceUIDs []string `json:"sourceUID"`
 }
 
 //swagger:response getCorrelationsResponse

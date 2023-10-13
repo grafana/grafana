@@ -145,10 +145,10 @@ func TestSetPublicDashboardOrgIdOnContext(t *testing.T) {
 }
 
 func TestSetPublicDashboardFlag(t *testing.T) {
-	t.Run("Adds context.IsPublicDashboardView=true to request", func(t *testing.T) {
-		ctx := &contextmodel.ReqContext{}
-		SetPublicDashboardFlag(ctx)
-		assert.True(t, ctx.IsPublicDashboardView)
+	t.Run("Adds context.PublicDashboardAccessToken to request", func(t *testing.T) {
+		ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(&http.Request{}, map[string]string{":accessToken": "asdfasdfasdfsadfasdfsfd"})}}
+		SetPublicDashboardAccessToken(ctx)
+		assert.NotEmpty(t, ctx.PublicDashboardAccessToken)
 	})
 }
 

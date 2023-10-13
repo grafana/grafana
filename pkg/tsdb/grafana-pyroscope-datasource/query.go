@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -27,13 +27,13 @@ type dsJsonModel struct {
 }
 
 const (
-	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
-	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
-	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
+	queryTypeProfile = string(dataquery.PyroscopeQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 )
 
-// query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
-func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+// query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
+func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
 
@@ -91,22 +91,30 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 				logger.Error("Error GetProfile()", "err", err)
 				return err
 			}
-			frame := responseToDataFrames(prof)
+
+			var frame *data.Frame
+			if prof != nil {
+				frame = responseToDataFrames(prof)
+
+				// If query called with streaming on then return a channel
+				// to subscribe on a client-side and consume updates from a plugin.
+				// Feel free to remove this if you don't need streaming for your datasource.
+				if qm.WithStreaming {
+					channel := live.Channel{
+						Scope:     live.ScopeDatasource,
+						Namespace: pCtx.DataSourceInstanceSettings.UID,
+						Path:      "stream",
+					}
+					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				}
+			} else {
+				// We still send empty data frame to give feedback that query really run, just didn't return any data.
+				frame = getEmptyDataFrame()
+			}
 			responseMutex.Lock()
 			response.Frames = append(response.Frames, frame)
 			responseMutex.Unlock()
 
-			// If query called with streaming on then return a channel
-			// to subscribe on a client-side and consume updates from a plugin.
-			// Feel free to remove this if you don't need streaming for your datasource.
-			if qm.WithStreaming {
-				channel := live.Channel{
-					Scope:     live.ScopeDatasource,
-					Namespace: pCtx.DataSourceInstanceSettings.UID,
-					Path:      "stream",
-				}
-				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-			}
 			return nil
 		})
 	}
@@ -118,7 +126,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-// responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *ProfileResponse) *data.Frame {
@@ -151,7 +159,7 @@ type ProfileTree struct {
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
 func levelsToTree(levels []*Level, names []string) *ProfileTree {
 	if len(levels) == 0 {
 		return nil
@@ -176,7 +184,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("parentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
 			break
 		}
 
@@ -220,7 +228,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
 				// we will check if it is a child of the next parent item in line.
 				if len(parentsStack) == 0 {
-					logger.Error("parentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
 					break
 				}
 				currentParent = parentsStack[:1][0]
@@ -273,6 +281,18 @@ func (pt *ProfileTree) String() string {
 	return tree.String()
 }
 
+func getEmptyDataFrame() *data.Frame {
+	var emptyProfileDataFrame = data.NewFrame("response")
+	emptyProfileDataFrame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
+	emptyProfileDataFrame.Fields = data.Fields{
+		data.NewField("level", nil, []int64{}),
+		data.NewField("value", nil, []int64{}),
+		data.NewField("self", nil, []int64{}),
+		data.NewField("label", nil, []string{}),
+	}
+	return emptyProfileDataFrame
+}
+
 type CustomMeta struct {
 	ProfileTypeID string
 }
@@ -312,14 +332,14 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 
 type EnumField struct {
 	field     *data.Field
-	valuesMap map[string]int64
-	counter   int64
+	valuesMap map[string]data.EnumItemIndex
+	counter   data.EnumItemIndex
 }
 
 func NewEnumField(name string, labels data.Labels) *EnumField {
 	return &EnumField{
-		field:     data.NewField(name, labels, []int64{}),
-		valuesMap: make(map[string]int64),
+		field:     data.NewField(name, labels, []data.EnumItemIndex{}),
+		valuesMap: make(map[string]data.EnumItemIndex),
 	}
 }
 

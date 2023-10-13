@@ -12,7 +12,7 @@ export interface JoinByLabelsTransformOptions {
 export const joinByLabelsTransformer: SynchronousDataTransformerInfo<JoinByLabelsTransformOptions> = {
   id: DataTransformerID.joinByLabels,
   name: 'Join by labels',
-  description: 'Flatten labeled results into a table joined by labels',
+  description: 'Flatten labeled results into a table joined by labels.',
   defaultOptions: {},
 
   operator: (options, ctx) => (source) =>

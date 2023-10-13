@@ -3,14 +3,11 @@ import React from 'react';
 
 import { FileDropzone } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './FileDropzone.mdx';
 
 const meta: Meta<typeof FileDropzone> = {
   title: 'Forms/FileDropzone',
   component: FileDropzone,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

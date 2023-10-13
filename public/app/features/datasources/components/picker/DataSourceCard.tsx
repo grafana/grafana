@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, TagList, useStyles2 } from '@grafana/ui';
+import { Card, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -12,7 +12,8 @@ interface DataSourceCardProps {
 }
 
 export function DataSourceCard({ ds, onClick, selected, description, ...htmlProps }: DataSourceCardProps) {
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, ds.meta.builtIn);
 
   return (
     <Card
@@ -37,7 +38,7 @@ export function DataSourceCard({ ds, onClick, selected, description, ...htmlProp
 }
 
 // Get styles for the component
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
     card: css`
       cursor: pointer;
@@ -75,6 +76,7 @@ function getStyles(theme: GrafanaTheme2) {
       > img {
         max-height: 100%;
         min-width: 24px;
+        filter: invert(${builtIn && theme.isLight ? 1 : 0});
       }
     `,
     name: css`

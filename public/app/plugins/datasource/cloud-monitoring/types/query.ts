@@ -4,7 +4,6 @@ export { QueryType };
 export {
   TimeSeriesList,
   PreprocessorType,
-  AnnotationQuery,
   TimeSeriesQuery,
   SLOQuery,
   MetricQuery,
@@ -14,6 +13,7 @@ export {
   AlignmentTypes,
   ValueTypes,
   MetricFindQueryTypes,
+  PromQLQuery,
 } from '../dataquery.gen';
 
 /**

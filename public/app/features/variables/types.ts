@@ -89,7 +89,7 @@ export interface VariableQueryEditorProps {
 
 export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > = ComponentType<VariableQueryEditorProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
 export interface VariablesChangedEvent {

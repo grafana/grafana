@@ -103,20 +103,20 @@ export const TagsInput = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    min-height: ${theme.spacing(4)};
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    flex-wrap: wrap;
-  `,
-  tags: css`
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(0.5)};
-  `,
-  addButtonStyle: css`
-    margin: 0 -${theme.spacing(1)};
-  `,
+  wrapper: css({
+    minHeight: theme.spacing(4),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    flexWrap: 'wrap',
+  }),
+  tags: css({
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.5),
+  }),
+  addButtonStyle: css({
+    margin: `0 -${theme.spacing(1)}`,
+  }),
 });

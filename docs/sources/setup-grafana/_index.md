@@ -1,7 +1,11 @@
 ---
 description: Includes topics for setting up a Grafana instance.
-title: Set up Grafana
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up
+title: Set up Grafana
 weight: 10
 ---
 

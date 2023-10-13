@@ -1,8 +1,12 @@
 ---
-title: Grafana schema
-weight: 200
 _build:
   list: false
+labels:
+  products:
+  - enterprise
+  - oss
+title: Grafana schema
+weight: 200
 ---
 
 # Grafana schema
@@ -22,10 +26,11 @@ parts. Additionally, we must account for having Grafana continue to work as we m
 for every large-scale refactoring.
 
 In the Grafana ecosystem, there are three basic Kind categories and associated schema categories:
+
 - [Core Kinds]({{< relref "core/" >}})
 - Custom Kinds
 - [Composable Kinds]({{< relref "composable/" >}})
 
-The schema authoring workflow for each varies, as does the path to maturity. 
-[Grafana Kinds - From Zero to Maturity]({{< relref "maturity/" >}}) contains general reference material applicable to 
-all Kind-writing, and links to the guides for each category of Kind. 
+The schema authoring workflow for each varies, as does the path to maturity.
+[Grafana Kinds - From Zero to Maturity]({{< relref "maturity/" >}}) contains general reference material applicable to
+all Kind-writing, and links to the guides for each category of Kind.

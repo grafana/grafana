@@ -137,7 +137,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
 				Login:  "octocat",
-				Role:   "",
+				Role:   "Viewer",
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
@@ -203,8 +203,8 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				IsGrafanaAdmin: boolPointer,
 			},
 		},
-		{ // Case that's going to change with Grafana 10
-			name:              "No fallback to default org role (will change in Grafana 10)",
+		{
+			name:              "fallback to default org role",
 			roleAttributePath: "",
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
@@ -214,7 +214,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
 				Login:  "octocat",
-				Role:   "",
+				Role:   "Editor",
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},

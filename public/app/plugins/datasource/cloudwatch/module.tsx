@@ -1,10 +1,10 @@
 import { DashboardLoadedEvent, DataSourcePlugin } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
-import { ConfigEditor } from './components/ConfigEditor';
-import LogsCheatSheet from './components/LogsCheatSheet';
-import { MetaInspector } from './components/MetaInspector';
-import { QueryEditor } from './components/QueryEditor';
+import LogsCheatSheet from './components/CheatSheet/LogsCheatSheet';
+import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
+import { MetaInspector } from './components/MetaInspector/MetaInspector';
+import { QueryEditor } from './components/QueryEditor/QueryEditor';
 import { CloudWatchDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';
 import { CloudWatchJsonData, CloudWatchQuery } from './types';

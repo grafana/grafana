@@ -30,18 +30,6 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 		fi
 	done
 
-  # @grafana/toolkit structure is different to the other packages
-  if [[ "$dir_name" == "grafana-toolkit" ]]; then
-    if [ ! -d bin ] || [ ! -f bin/grafana-toolkit.js ]; then
-      echo -e "❌ Failed: Missing 'bin' directory or required files in package $dir_name.\n"
-      exit 1
-    fi
-
-    echo -e "✅ Passed: package checks for $file.\n"
-    popd || exit
-    continue
-  fi
-
   # Assert commonjs builds
   if [ ! -d dist ] || [ ! -f dist/index.js ] || [ ! -f dist/index.d.ts ]; then
     echo -e "❌ Failed: Missing 'dist' directory or required commonjs files in package $dir_name.\n"

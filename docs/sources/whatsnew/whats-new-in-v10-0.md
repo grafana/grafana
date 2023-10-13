@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v10.0
 weight: -37
 ---
@@ -52,7 +57,7 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 _Available in public preview in all editions of Grafana._
 
-Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
+Scenes is a new front-end library by Grafana that empowers Grafana plugin developers to effortlessly build stunning dashboard-like experiences into their Grafana app plugins. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
 To try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
 
@@ -158,7 +163,7 @@ _Generally available in all editions of Grafana._
 
 We've implemented support for adding time regions to the Time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday to Friday to display work weeks, right alongside your data. Time regions are also a useful way to highlight specific parts of a day like night, work hours, or whatever you want to define for each day. They allow you to quickly orient yourself in parts of the day or ignore highlighted parts of the time series.
 
-To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-time-region" >}}).
+To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-time-regions" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
@@ -170,7 +175,7 @@ _Generally available in all editions of Grafana._
 
 You can now filter dashboard annotations to apply annotations to all panels or selected panels, or use them to exclude selected panels.
 
-To learn more, refer to our [annotation filtering documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#filter-by-panel" >}}).
+To learn more, refer to our [documentation about adding annotation queries]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
@@ -356,7 +361,7 @@ Data types are now being defined to create a data plane layer between producers 
 
 Learn more:
 
-- [Data plane contract - Technical specification](https://grafana.github.io/dataplane/contract/)
+- [Data plane contract - Technical specification](https://grafana.com/developers/dataplane/)
 - [Example typed dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
 - [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
 

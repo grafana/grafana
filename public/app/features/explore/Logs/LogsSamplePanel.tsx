@@ -14,10 +14,10 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';
+import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { SETTINGS_KEYS } from './utils/logs';
@@ -82,7 +82,7 @@ export function LogsSamplePanel(props: Props) {
     );
   } else if (queryResponse.state === LoadingState.Loading) {
     LogsSamplePanelContent = <span>Logs sample is loading...</span>;
-  } else if (queryResponse.data.length === 0 || queryResponse.data[0].length === 0) {
+  } else if (queryResponse.data.length === 0 || queryResponse.data.every((frame) => frame.length === 0)) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);

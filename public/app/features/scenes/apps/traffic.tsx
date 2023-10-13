@@ -3,7 +3,6 @@ import React from 'react';
 import {
   SceneFlexLayout,
   SceneTimePicker,
-  VizPanel,
   EmbeddedScene,
   SceneTimeRange,
   VariableValueSelectors,
@@ -14,74 +13,38 @@ import {
   SceneObjectBase,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  PanelBuilders,
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
 import { getInstantQuery, getTimeSeriesQuery, getVariablesDefinitions } from './utils';
 
 export function getTrafficScene(): EmbeddedScene {
-  const httpHandlersTable = new VizPanel({
-    $data: getInstantQuery({
-      expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3)) ',
-    }),
-    pluginId: 'table',
-    title: 'Handlers',
-    options: {
-      footer: {
-        enablePagination: true,
-      },
-    },
-    fieldConfig: {
-      defaults: {},
-      overrides: [
-        {
-          matcher: {
-            id: 'byRegexp',
-            options: '.*',
+  const httpHandlersTable = PanelBuilders.table()
+    .setData(
+      getInstantQuery({
+        expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3)) ',
+      })
+    )
+    .setTitle('Handlers')
+    .setOption('footer', { enablePagination: true })
+    .setOverrides((b) =>
+      b
+        .matchFieldsWithNameByRegex('.*')
+        .overrideFilterable(false)
+        .matchFieldsWithName('Time')
+        .overrideCustomFieldConfig('hidden', true)
+        .matchFieldsWithName('Value')
+        .overrideDisplayName('Duration (Avg)')
+        .matchFieldsWithName('handler')
+        .overrideLinks([
+          {
+            title: 'Go to handler drilldown view',
+            url: '/scenes/grafana-monitoring/traffic?handler=${__value.text:percentencode}',
           },
-          properties: [{ id: 'filterable', value: false }],
-        },
-        {
-          matcher: {
-            id: 'byName',
-            options: 'Time',
-          },
-          properties: [{ id: 'custom.hidden', value: true }],
-        },
-        {
-          matcher: {
-            id: 'byName',
-            options: 'Value',
-          },
-          properties: [{ id: 'displayName', value: 'Duration (Avg)' }],
-        },
-        {
-          matcher: {
-            id: 'byName',
-            options: 'handler',
-          },
-          properties: [
-            {
-              id: 'links',
-              value: [
-                {
-                  title: 'Go to handler drilldown view',
-                  url: '/scenes/grafana-monitoring/traffic?handler=${__value.text:percentencode}',
-                  // onBuildUrl: () => {
-                  //   const params = locationService.getSearchObject();
-                  //   return getLinkUrlWithAppUrlState('/scenes/grafana-monitoring/traffic', {
-                  //     ...params,
-                  //     handler: '${__value.text:percentencode}',
-                  //   });
-                  // },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  });
+        ])
+    )
+    .build();
 
   const scene = new EmbeddedScene({
     $variables: getVariablesDefinitions(),
@@ -108,7 +71,7 @@ export interface HandlerDrilldownViewBehaviorState extends SceneObjectState {
 export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldownViewBehaviorState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['handler'] });
 
-  public constructor() {
+  constructor() {
     super({});
 
     this.addActivationHandler(() => {
@@ -130,24 +93,25 @@ export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldo
   private getDrilldownView(handler: string): SceneFlexItem {
     return new SceneFlexItem({
       key: 'drilldown-flex',
-      body: new VizPanel({
-        $data: getTimeSeriesQuery({
-          expr: `rate(grafana_http_request_duration_seconds_sum{handler="${handler}"}[$__rate_interval]) * 1e3`,
-        }),
-        pluginId: 'timeseries',
-        title: `Handler: ${handler} details`,
-        headerActions: (
+      body: PanelBuilders.timeseries()
+        .setData(
+          getTimeSeriesQuery({
+            expr: `rate(grafana_http_request_duration_seconds_sum{handler="${handler}"}[$__rate_interval]) * 1e3`,
+          })
+        )
+        .setTitle(`Handler: ${handler} details`)
+        .setHeaderActions(
           <Button size="sm" variant="secondary" icon="times" onClick={() => this.setState({ handler: undefined })} />
-        ),
-      }),
+        )
+        .build(),
     });
   }
 
-  public getUrlState() {
+  getUrlState() {
     return { handler: this.state.handler };
   }
 
-  public updateFromUrl(values: SceneObjectUrlValues) {
+  updateFromUrl(values: SceneObjectUrlValues) {
     if (typeof values.handler === 'string' || values.handler === undefined) {
       this.setState({ handler: values.handler });
     }

@@ -50,23 +50,40 @@ func labelFingerprint(labels data.Labels) string {
 	return fmt.Sprintf("%016x", sig)
 }
 
-// panelKey uniquely identifies a panel.
-type panelKey struct {
+// PanelKey uniquely identifies a panel.
+type PanelKey struct {
 	orgID   int64
 	dashUID string
 	panelID int64
 }
 
-// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *panelKey {
+func NewPanelKey(orgID int64, dashUID string, panelID int64) PanelKey {
+	return PanelKey{
+		orgID:   orgID,
+		dashUID: dashUID,
+		panelID: panelID,
+	}
+}
+
+// PanelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
+func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *PanelKey {
 	if rule.DashboardUID != "" {
-		return &panelKey{
-			orgID:   rule.OrgID,
-			dashUID: rule.DashboardUID,
-			panelID: rule.PanelID,
-		}
+		key := NewPanelKey(rule.OrgID, rule.DashboardUID, rule.PanelID)
+		return &key
 	}
 	return nil
+}
+
+func (p PanelKey) OrgID() int64 {
+	return p.orgID
+}
+
+func (p PanelKey) DashUID() string {
+	return p.dashUID
+}
+
+func (p PanelKey) PanelID() int64 {
+	return p.panelID
 }
 
 func mergeLabels(base, into data.Labels) data.Labels {

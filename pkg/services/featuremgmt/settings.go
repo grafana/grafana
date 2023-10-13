@@ -8,7 +8,7 @@ import (
 
 type configBody struct {
 	// define variables that can be used in expressions
-	Vars map[string]interface{} `yaml:"vars"`
+	Vars map[string]any `yaml:"vars"`
 
 	// Define and override feature flag properties
 	Flags []FeatureFlag `yaml:"flags"`

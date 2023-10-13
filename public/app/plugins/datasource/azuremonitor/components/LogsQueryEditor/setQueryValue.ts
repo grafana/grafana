@@ -19,3 +19,23 @@ export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): A
     },
   };
 }
+
+export function setDashboardTime(query: AzureMonitorQuery, dashboardTime: boolean): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      dashboardTime,
+    },
+  };
+}
+
+export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      timeColumn,
+    },
+  };
+}

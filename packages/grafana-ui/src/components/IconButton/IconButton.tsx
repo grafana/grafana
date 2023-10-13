@@ -118,59 +118,52 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
   }
 
   return {
-    button: css`
-      z-index: 0;
-      position: relative;
-      margin: 0 ${theme.spacing(0.5)} 0 0;
-      box-shadow: none;
-      border: none;
-      display: inline-flex;
-      background: transparent;
-      justify-content: center;
-      align-items: center;
-      padding: 0;
-      color: ${iconColor};
+    button: css({
+      zIndex: 0,
+      position: 'relative',
+      margin: `0 ${theme.spacing.x0_5} 0 0`,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'inline-flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      color: iconColor,
 
-      &[disabled],
-      &:disabled {
-        cursor: not-allowed;
-        color: ${theme.colors.action.disabledText};
-        opacity: 0.65;
-      }
+      '&[disabled], &:disabled': {
+        cursor: 'not-allowed',
+        color: theme.colors.action.disabledText,
+        opacity: 0.65,
+      },
 
-      &:before {
-        z-index: -1;
-        position: absolute;
-        opacity: 0;
-        width: ${hoverSize}px;
-        height: ${hoverSize}px;
-        border-radius: ${theme.shape.radius.default};
-        content: '';
-        transition-duration: 0.2s;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-property: opacity;
-      }
+      '&:before': {
+        zIndex: -1,
+        position: 'absolute',
+        opacity: 0,
+        width: `${hoverSize}px`,
+        height: `${hoverSize}px`,
+        borderRadius: theme.shape.radius.default,
+        content: '""',
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionProperty: 'opacity',
+      },
 
-      &:focus,
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
+      '&:focus, &:focus-visible': getFocusStyles(theme),
 
-      &:focus:not(:focus-visible) {
-        ${getMouseFocusStyles(theme)}
-      }
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-      &:hover {
-        &:before {
-          background-color: ${variant === 'secondary'
-            ? theme.colors.action.hover
-            : colorManipulator.alpha(iconColor, 0.12)};
-          opacity: 1;
-        }
-      }
-    `,
-    icon: css`
-      vertical-align: baseline;
-    `,
+      '&:hover': {
+        '&:before': {
+          backgroundColor:
+            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
+          opacity: 1,
+        },
+      },
+    }),
+    icon: css({
+      verticalAlign: 'baseline',
+    }),
   };
 });

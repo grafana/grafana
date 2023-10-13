@@ -57,9 +57,10 @@ func (a *api) registerEndpoints() {
 }
 
 type Assignments struct {
-	Users        bool `json:"users"`
-	Teams        bool `json:"teams"`
-	BuiltInRoles bool `json:"builtInRoles"`
+	Users           bool `json:"users"`
+	ServiceAccounts bool `json:"serviceAccounts"`
+	Teams           bool `json:"teams"`
+	BuiltInRoles    bool `json:"builtInRoles"`
 }
 
 type Description struct {
@@ -75,19 +76,20 @@ func (a *api) getDescription(c *contextmodel.ReqContext) response.Response {
 }
 
 type resourcePermissionDTO struct {
-	ID            int64    `json:"id"`
-	RoleName      string   `json:"roleName"`
-	IsManaged     bool     `json:"isManaged"`
-	IsInherited   bool     `json:"isInherited"`
-	UserID        int64    `json:"userId,omitempty"`
-	UserLogin     string   `json:"userLogin,omitempty"`
-	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
-	Team          string   `json:"team,omitempty"`
-	TeamID        int64    `json:"teamId,omitempty"`
-	TeamAvatarUrl string   `json:"teamAvatarUrl,omitempty"`
-	BuiltInRole   string   `json:"builtInRole,omitempty"`
-	Actions       []string `json:"actions"`
-	Permission    string   `json:"permission"`
+	ID               int64    `json:"id"`
+	RoleName         string   `json:"roleName"`
+	IsManaged        bool     `json:"isManaged"`
+	IsInherited      bool     `json:"isInherited"`
+	IsServiceAccount bool     `json:"isServiceAccount"`
+	UserID           int64    `json:"userId,omitempty"`
+	UserLogin        string   `json:"userLogin,omitempty"`
+	UserAvatarUrl    string   `json:"userAvatarUrl,omitempty"`
+	Team             string   `json:"team,omitempty"`
+	TeamID           int64    `json:"teamId,omitempty"`
+	TeamAvatarUrl    string   `json:"teamAvatarUrl,omitempty"`
+	BuiltInRole      string   `json:"builtInRole,omitempty"`
+	Actions          []string `json:"actions"`
+	Permission       string   `json:"permission"`
 }
 
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
@@ -115,19 +117,20 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 			}
 
 			dto = append(dto, resourcePermissionDTO{
-				ID:            p.ID,
-				RoleName:      p.RoleName,
-				UserID:        p.UserId,
-				UserLogin:     p.UserLogin,
-				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
-				Team:          p.Team,
-				TeamID:        p.TeamId,
-				TeamAvatarUrl: teamAvatarUrl,
-				BuiltInRole:   p.BuiltInRole,
-				Actions:       p.Actions,
-				Permission:    permission,
-				IsManaged:     p.IsManaged,
-				IsInherited:   p.IsInherited,
+				ID:               p.ID,
+				RoleName:         p.RoleName,
+				UserID:           p.UserId,
+				UserLogin:        p.UserLogin,
+				UserAvatarUrl:    dtos.GetGravatarUrl(p.UserEmail),
+				Team:             p.Team,
+				TeamID:           p.TeamId,
+				TeamAvatarUrl:    teamAvatarUrl,
+				BuiltInRole:      p.BuiltInRole,
+				Actions:          p.Actions,
+				Permission:       permission,
+				IsManaged:        p.IsManaged,
+				IsInherited:      p.IsInherited,
+				IsServiceAccount: p.IsServiceAccount,
 			})
 		}
 	}
@@ -155,7 +158,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
@@ -175,7 +178,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgID, teamID, resourceID, cmd.Permission)
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
@@ -192,7 +195,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgID, builtInRole, resourceID, cmd.Permission)
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
@@ -208,7 +211,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetPermissions(c.Req.Context(), c.OrgID, resourceID, cmd.Permissions...)
+	_, err := a.service.SetPermissions(c.Req.Context(), c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set permissions", err)
 	}

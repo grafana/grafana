@@ -44,7 +44,7 @@ func (m *MockScreenshotService) Take(arg0 context.Context, arg1 ScreenshotOption
 }
 
 // Take indicates an expected call of Take.
-func (mr *MockScreenshotServiceMockRecorder) Take(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockScreenshotServiceMockRecorder) Take(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Take", reflect.TypeOf((*MockScreenshotService)(nil).Take), arg0, arg1)
 }

@@ -1,4 +1,4 @@
-import { DataFrame, Field, SortedVector } from '@grafana/data';
+import { DataFrame, Field, FieldType, SortedVector } from '@grafana/data';
 
 export enum SortDirection {
   Ascending,
@@ -15,8 +15,9 @@ export enum SortDirection {
 // - the third row will become the first
 // - the first row will become the second
 // - the second row will become the third
-function makeIndex(field: Field<string>, dir: SortDirection): number[] {
-  const fieldValues: string[] = field.values;
+function makeIndex(field: Field<number>, dir: SortDirection): number[] {
+  const fieldValues: number[] = field.values;
+  const { nanos } = field;
 
   // we first build an array which is [0,1,2,3....]
   const index = Array(fieldValues.length);
@@ -39,33 +40,53 @@ function makeIndex(field: Field<string>, dir: SortDirection): number[] {
       return isAsc ? 1 : -1;
     }
 
+    // the millisecond timestamps are equal,
+    // compare the nanosecond part, if available
+
+    if (nanos === undefined) {
+      return 0;
+    }
+
+    const nanoA = nanos[a];
+    const nanoB = nanos[b];
+
+    if (nanoA < nanoB) {
+      return isAsc ? -1 : 1;
+    }
+
+    if (nanoA > nanoB) {
+      return isAsc ? 1 : -1;
+    }
+
     return 0;
   });
 
   return index;
 }
 
-// sort a dataframe that is in the Loki format ascending or descending,
-// based on the nanosecond-timestamp
+// sort a dataframe that is in the Loki dataframe format ascending or desceding based on time,
+// with nanosecond precision.
 export function sortDataFrameByTime(frame: DataFrame, dir: SortDirection): DataFrame {
   const { fields, ...rest } = frame;
 
   // we use the approach used in @grafana/data/sortDataframe.
-  // we cannot use it directly, because our tsNs field has a type=time,
-  // so we have to build the `index` manually.
+  // we cannot use it directly, because it does not take `.nanos` into account
+  // (see https://github.com/grafana/grafana/issues/72351).
+  // we can switch to to @grafana/data/sortDataframe when the issue is fixed.
 
-  const tsNsField = fields.find((field) => field.name === 'tsNs');
-  if (tsNsField === undefined) {
-    throw new Error('missing nanosecond-timestamp field. should never happen');
+  const timeField = fields.find((field) => field.type === FieldType.time);
+  if (timeField === undefined) {
+    throw new Error('missing timestamp field. should never happen');
   }
 
-  const index = makeIndex(tsNsField, dir);
+  const index = makeIndex(timeField, dir);
 
   return {
     ...rest,
     fields: fields.map((field) => ({
       ...field,
       values: new SortedVector(field.values, index).toArray(),
+      nanos: field.nanos === undefined ? undefined : new SortedVector(field.nanos, index).toArray(),
     })),
   };
 

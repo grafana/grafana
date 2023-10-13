@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -31,7 +32,7 @@ type EntityReferenceResolver interface {
 	Resolve(ctx context.Context, ref *entity.EntityExternalReference) (ResolutionInfo, error)
 }
 
-func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStore plugins.Store) EntityReferenceResolver {
+func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStore pluginstore.Store) EntityReferenceResolver {
 	return &standardReferenceResolver{
 		pluginStore: pluginStore,
 		ds: dsCache{
@@ -42,7 +43,7 @@ func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStor
 }
 
 type standardReferenceResolver struct {
-	pluginStore plugins.Store
+	pluginStore pluginstore.Store
 	ds          dsCache
 }
 

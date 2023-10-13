@@ -23,7 +23,7 @@ type ResourceOriginInfo struct {
 	Timestamp *time.Time `json:"time,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ any
 }
 
 // GrafanaResourceMetadata is standard k8s object metadata with helper functions
@@ -31,7 +31,7 @@ type GrafanaResourceMetadata v1.ObjectMeta
 
 // GrafanaResource is a generic kubernetes resource with a helper for the common grafana metadata
 // This is a temporary solution until this object (or similar) can be moved to the app-sdk or kindsys
-type GrafanaResource[Spec interface{}, Status interface{}] struct {
+type GrafanaResource[Spec any, Status any] struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 
@@ -40,7 +40,7 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 	Status   *Status                 `json:"status,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ any
 }
 
 // Annotation keys
@@ -53,10 +53,10 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/origin/name"
-const annoKeyOriginPath = "grafana.com/origin/path"
-const annoKeyOriginKey = "grafana.com/origin/key"
-const annoKeyOriginTime = "grafana.com/origin/time"
+const annoKeyOriginName = "grafana.com/originName"
+const annoKeyOriginPath = "grafana.com/originPath"
+const annoKeyOriginKey = "grafana.com/originKey"
+const annoKeyOriginTime = "grafana.com/originTime"
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]

@@ -51,6 +51,14 @@ func init() {
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
+
+	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
+		pFromCtx := ctx.Value(logParamsContextKey{})
+		if pFromCtx != nil {
+			return pFromCtx.([]any), true
+		}
+		return nil, false
+	})
 }
 
 // logManager manage loggers
@@ -102,7 +110,7 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 	}
 }
 
-func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
+func (lm *logManager) New(ctx ...any) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return lm.ConcreteLogger
 	}
@@ -143,15 +151,15 @@ func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
 }
 
 type ConcreteLogger struct {
-	ctx []interface{}
+	ctx []any
 	gokitlog.SwapLogger
 }
 
-func newConcreteLogger(logger gokitlog.Logger, ctx ...interface{}) *ConcreteLogger {
+func newConcreteLogger(logger gokitlog.Logger, ctx ...any) *ConcreteLogger {
 	var swapLogger gokitlog.SwapLogger
 
 	if len(ctx) == 0 {
-		ctx = []interface{}{}
+		ctx = []any{}
 		swapLogger.Swap(logger)
 	} else {
 		swapLogger.Swap(gokitlog.With(logger, ctx...))
@@ -167,33 +175,33 @@ func (cl ConcreteLogger) GetLogger() gokitlog.Logger {
 	return &cl.SwapLogger
 }
 
-func (cl *ConcreteLogger) Warn(msg string, args ...interface{}) {
+func (cl *ConcreteLogger) Warn(msg string, args ...any) {
 	_ = cl.log(msg, level.WarnValue(), args...)
 }
 
-func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
+func (cl *ConcreteLogger) Debug(msg string, args ...any) {
 	_ = cl.log(msg, level.DebugValue(), args...)
 }
 
-func (cl *ConcreteLogger) Log(ctx ...interface{}) error {
+func (cl *ConcreteLogger) Log(ctx ...any) error {
 	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, logTimeFormat))
 	return logger.Log(ctx...)
 }
 
-func (cl *ConcreteLogger) Error(msg string, args ...interface{}) {
+func (cl *ConcreteLogger) Error(msg string, args ...any) {
 	_ = cl.log(msg, level.ErrorValue(), args...)
 }
 
-func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
+func (cl *ConcreteLogger) Info(msg string, args ...any) {
 	_ = cl.log(msg, level.InfoValue(), args...)
 }
 
-func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
-	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
+func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...any) error {
+	return cl.Log(append([]any{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
 func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
-	args := []interface{}{}
+	args := []any{}
 
 	for _, p := range ctxLogProviders {
 		if pArgs, exists := p(ctx); exists {
@@ -208,7 +216,7 @@ func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
 	return cl
 }
 
-func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
+func (cl *ConcreteLogger) New(ctx ...any) *ConcreteLogger {
 	if len(ctx) == 0 {
 		root.New()
 	}
@@ -228,12 +236,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 // Example creating a contextual logger:
 //
 //	contextualLogger := requestLogger.New("username", "user123")
-func New(ctx ...interface{}) *ConcreteLogger {
+func New(ctx ...any) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
 	}
 
-	ctx = append([]interface{}{"logger"}, ctx...)
+	ctx = append([]any{"logger"}, ctx...)
 	return root.New(ctx...)
 }
 
@@ -242,7 +250,7 @@ func NewNopLogger() *ConcreteLogger {
 	return newConcreteLogger(gokitlog.NewNopLogger())
 }
 
-func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) *ConcreteLogger {
+func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...any) gokitlog.Logger, ctx []any) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return ctxLogger
 	}
@@ -252,22 +260,34 @@ func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface
 }
 
 // WithPrefix adds context that will be added to the log message
-func WithPrefix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
+func WithPrefix(ctxLogger *ConcreteLogger, ctx ...any) *ConcreteLogger {
 	return with(ctxLogger, gokitlog.WithPrefix, ctx)
 }
 
 // WithSuffix adds context that will be appended at the end of the log message
-func WithSuffix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
+func WithSuffix(ctxLogger *ConcreteLogger, ctx ...any) *ConcreteLogger {
 	return with(ctxLogger, gokitlog.WithSuffix, ctx)
 }
 
 // ContextualLogProviderFunc contextual log provider function definition.
-type ContextualLogProviderFunc func(ctx context.Context) ([]interface{}, bool)
+type ContextualLogProviderFunc func(ctx context.Context) ([]any, bool)
 
 // RegisterContextualLogProvider registers a ContextualLogProviderFunc
 // that will be used to provide context when Logger.FromContext is called.
 func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
 	ctxLogProviders = append(ctxLogProviders, mw)
+}
+
+type logParamsContextKey struct{}
+
+// WithContextualAttributes adds contextual attributes to the logger based on the given context.
+// That allows loggers further down the chain to automatically log those attributes.
+func WithContextualAttributes(ctx context.Context, logParams []any) context.Context {
+	p := logParams
+	if ctx.Value(logParamsContextKey{}) != nil {
+		p = append(ctx.Value(logParamsContextKey{}).([]any), logParams...)
+	}
+	return context.WithValue(ctx, logParamsContextKey{}, p)
 }
 
 var logLevels = map[string]level.Option{
@@ -328,7 +348,7 @@ func Stack(skip int) string {
 
 // StackCaller returns a go-kit Valuer function that returns the stack trace from the place it is called. Argument `skip` allows skipping top n lines from the stack.
 func StackCaller(skip int) gokitlog.Valuer {
-	return func() interface{} {
+	return func() any {
 		return Stack(skip + 1)
 	}
 }

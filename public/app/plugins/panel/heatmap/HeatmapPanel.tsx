@@ -43,6 +43,16 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
 
+  //  necessary for enabling datalinks in hover view
+  let scopedVarsFromRawData = [];
+  for (const series of data.series) {
+    for (const field of series.fields) {
+      if (field.state?.scopedVars) {
+        scopedVarsFromRawData.push(field.state.scopedVars);
+      }
+    }
+  }
+
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
@@ -54,17 +64,27 @@ export const HeatmapPanel = ({
     [replaceVariables]
   );
 
+  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
+
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(
+        data.series,
+        data.annotations,
+        options,
+        palette,
+        theme,
+        getFieldLinksSupplier,
+        replaceVariables
+      );
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier, replaceVariables]);
 
   const facets = useMemo(() => {
-    let exemplarsXFacet: number[] = []; // "Time" field
-    let exemplarsyFacet: number[] = [];
+    let exemplarsXFacet: number[] | undefined = []; // "Time" field
+    let exemplarsyFacet: Array<number | undefined> = [];
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
@@ -75,16 +95,14 @@ export const HeatmapPanel = ({
 
       if (hasLabeledY) {
         let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
-        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
+        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
       } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values as number[]; // "Value" field
+        exemplarsyFacet = info.exemplars?.fields[1].values; // "Value" field
       }
     }
 
     return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
-
-  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
@@ -116,8 +134,8 @@ export const HeatmapPanel = ({
   dataRef.current = info;
 
   const builder = useMemo(() => {
-    const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
-      ?.scaleDistribution as ScaleDistributionConfig;
+    const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
+
     return prepConfig({
       dataRef,
       theme,
@@ -134,7 +152,6 @@ export const HeatmapPanel = ({
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
-      palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -167,8 +184,8 @@ export const HeatmapPanel = ({
           <ColorScale
             hoverValue={hoverValue}
             colorPalette={palette}
-            min={dataRef.current.minValue!}
-            max={dataRef.current.maxValue!}
+            min={dataRef.current.heatmapColors?.minValue!}
+            max={dataRef.current.heatmapColors?.maxValue!}
             display={info.display}
           />
         </div>
@@ -210,6 +227,8 @@ export const HeatmapPanel = ({
               data={info}
               hover={hover}
               showHistogram={options.tooltip.yHistogram}
+              replaceVars={replaceVariables}
+              scopedVars={scopedVarsFromRawData}
             />
           </VizTooltipContainer>
         )}

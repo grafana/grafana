@@ -3,8 +3,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { Field } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { Field, Text } from '@grafana/ui';
+import { Box } from '@grafana/ui/src/unstable';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -150,15 +152,18 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Field label="Query">
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            templateSrv={getTemplateSrv()}
-            onChange={this.onLegacyQueryChange}
-          />
-        </Field>
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              templateSrv={getTemplateSrv()}
+              onChange={this.onLegacyQueryChange}
+            />
+          </Box>
+        </Box>
       );
     }
 
@@ -166,19 +171,22 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Field label="Query">
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            onChange={this.onQueryChange}
-            onRunQuery={() => {}}
-            data={{ series: [], state: LoadingState.Done, timeRange: range }}
-            range={range}
-            onBlur={() => {}}
-            history={[]}
-          />
-        </Field>
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              onChange={this.onQueryChange}
+              onRunQuery={() => {}}
+              data={{ series: [], state: LoadingState.Done, timeRange: range }}
+              range={range}
+              onBlur={() => {}}
+              history={[]}
+            />
+          </Box>
+        </Box>
       );
     }
 

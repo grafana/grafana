@@ -11,7 +11,6 @@ import { PromRuleType } from '../../../types/unified-alerting-dto';
 
 import { RedirectToRuleViewer } from './RedirectToRuleViewer';
 import * as combinedRuleHooks from './hooks/useCombinedRule';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
@@ -23,8 +22,8 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('react-use');
 
-const renderRedirectToRuleViewer = (pathname: string) => {
-  jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '' });
+const renderRedirectToRuleViewer = (pathname: string, search?: string) => {
+  jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '', search });
 
   locationService.push(pathname);
 
@@ -50,11 +49,9 @@ const mockRuleSourceByName = () => {
 
 describe('Redirect to Rule viewer', () => {
   it('should list rules that match the same name', () => {
-    jest.mocked(useCombinedRulesMatching).mockReturnValue({
-      result: mockedRules,
+    jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
+      rules: mockedRules,
       loading: false,
-      dispatched: true,
-      requestId: 'A',
       error: undefined,
     });
     mockRuleSourceByName();
@@ -62,12 +59,21 @@ describe('Redirect to Rule viewer', () => {
     expect(screen.getAllByText('Cloud test alert')).toHaveLength(2);
   });
 
-  it('should redirect to view rule page if only one match', () => {
-    jest.mocked(useCombinedRulesMatching).mockReturnValue({
-      result: [mockedRules[0]],
+  it('should show no rules if empty response', () => {
+    jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
+      rules: [],
       loading: false,
-      dispatched: true,
-      requestId: 'A',
+      error: undefined,
+    });
+    mockRuleSourceByName();
+    renderRedirectToRuleViewer('/alerting/test prom/prom alert/find');
+    expect(screen.getByTestId('no-rules')).toBeInTheDocument();
+  });
+
+  it('should redirect to view rule page if only one match', () => {
+    jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
+      rules: [mockedRules[0]],
+      loading: false,
       error: undefined,
     });
     mockRuleSourceByName();
@@ -76,37 +82,70 @@ describe('Redirect to Rule viewer', () => {
   });
 
   it('should properly decode rule name', () => {
-    const rulesMatchingSpy = jest.spyOn(combinedRuleHooks, 'useCombinedRulesMatching').mockReturnValue({
-      result: [mockedRules[0]],
+    const rulesMatchingSpy = jest.spyOn(combinedRuleHooks, 'useCloudCombinedRulesMatching').mockReturnValue({
+      rules: [mockedRules[0]],
       loading: false,
-      dispatched: true,
-      requestId: 'A',
       error: undefined,
     });
+    mockRuleSourceByName();
 
     const ruleName = 'cloud rule++ !@#$%^&*()-/?';
 
     renderRedirectToRuleViewer(`/alerting/prom-db/${encodeURIComponent(ruleName)}/find`);
 
-    expect(rulesMatchingSpy).toHaveBeenCalledWith(ruleName, 'prom-db');
+    expect(rulesMatchingSpy).toHaveBeenCalledWith(ruleName, 'prom-db', { groupName: undefined, namespace: undefined });
     expect(screen.getByText('Redirected')).toBeInTheDocument();
   });
 
-  it('should properly decode source name', () => {
-    const rulesMatchingSpy = jest.spyOn(combinedRuleHooks, 'useCombinedRulesMatching').mockReturnValue({
-      result: [mockedRules[0]],
+  it('should apply additional group name and namespace filters', () => {
+    const rulesMatchingSpy = jest.spyOn(combinedRuleHooks, 'useCloudCombinedRulesMatching').mockReturnValue({
+      rules: [mockedRules[0]],
       loading: false,
-      dispatched: true,
-      requestId: 'A',
       error: undefined,
     });
+    mockRuleSourceByName();
+
+    const ruleName = 'prom alert';
+    const dsName = 'test prom';
+    const group = 'foo';
+    const namespace = 'bar';
+
+    renderRedirectToRuleViewer(`/alerting/${dsName}/${ruleName}/find`, `?group=${group}&namespace=${namespace}`);
+    expect(rulesMatchingSpy).toHaveBeenCalledWith(ruleName, dsName, {
+      groupName: group,
+      namespace: namespace,
+    });
+  });
+
+  it('should properly decode source name', () => {
+    const rulesMatchingSpy = jest.spyOn(combinedRuleHooks, 'useCloudCombinedRulesMatching').mockReturnValue({
+      rules: [mockedRules[0]],
+      loading: false,
+      error: undefined,
+    });
+    mockRuleSourceByName();
 
     const sourceName = 'prom<|>++ !@#$%^&*()-/?';
 
     renderRedirectToRuleViewer(`/alerting/${encodeURIComponent(sourceName)}/prom alert/find`);
 
-    expect(rulesMatchingSpy).toHaveBeenCalledWith('prom alert', sourceName);
+    expect(rulesMatchingSpy).toHaveBeenCalledWith('prom alert', sourceName, {
+      groupName: undefined,
+      namespace: undefined,
+    });
     expect(screen.getByText('Redirected')).toBeInTheDocument();
+  });
+
+  it('should show error when datasource does not exist', () => {
+    jest.mocked(getRulesSourceByName).mockReturnValueOnce(undefined);
+    jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
+      rules: [],
+      loading: false,
+      error: undefined,
+    });
+
+    renderRedirectToRuleViewer(`/alerting/does-not-exist/prom alert/find`);
+    expect(screen.getByText('Could not find data source with name: does-not-exist.')).toBeInTheDocument();
   });
 });
 

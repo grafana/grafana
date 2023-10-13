@@ -137,6 +137,29 @@ describe('addPanelToDashboard', () => {
           );
         }
       );
+
+      it('Sets visualization to plugin panel ID if there are custom panel frames', async () => {
+        const queries = [{ refId: 'A' }];
+        const queryResponse: ExplorePanelData = {
+          ...createEmptyQueryResponse(),
+          ['customFrames']: [
+            new MutableDataFrame({
+              refId: 'A',
+              fields: [],
+              meta: { preferredVisualisationPluginId: 'someCustomPluginId' },
+            }),
+          ],
+        };
+
+        await setDashboardInLocalStorage({ queries, queryResponse });
+        expect(spy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dashboard: expect.objectContaining({
+              panels: expect.arrayContaining([expect.objectContaining({ type: 'someCustomPluginId' })]),
+            }),
+          })
+        );
+      });
     });
   });
 });

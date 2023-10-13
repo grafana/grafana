@@ -8,6 +8,10 @@ keywords:
   - enterprise
   - api
   - reporting
+labels:
+  products:
+    - enterprise
+    - oss
 title: Reporting API
 ---
 

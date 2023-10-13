@@ -16,7 +16,7 @@ func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
 	return &SysLogHandler{}
 }
 
-func (sw *SysLogHandler) Log(keyvals ...interface{}) error {
+func (sw *SysLogHandler) Log(keyvals ...any) error {
 	return nil
 }
 

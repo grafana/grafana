@@ -1,6 +1,7 @@
 package frontendlogging
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -65,7 +66,7 @@ func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolv
  * just assumes that a [source filename].map file might exist in the same dir as the source file
  * and only considers sources coming from grafana core or plugins`
  */
-func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMapLocation, error) {
+func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceURL string) (*sourceMapLocation, error) {
 	u, err := url.Parse(sourceURL)
 	if err != nil {
 		return nil, err
@@ -84,7 +85,7 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
-		for _, route := range store.routeResolver.Routes() {
+		for _, route := range store.routeResolver.Routes(ctx) {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginID)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{
@@ -98,14 +99,14 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 	return nil, nil
 }
 
-func (store *SourceMapStore) getSourceMap(sourceURL string) (*sourceMap, error) {
+func (store *SourceMapStore) getSourceMap(ctx context.Context, sourceURL string) (*sourceMap, error) {
 	store.Lock()
 	defer store.Unlock()
 
 	if smap, ok := store.cache[sourceURL]; ok {
 		return smap, nil
 	}
-	sourceMapLocation, err := store.guessSourceMapLocation(sourceURL)
+	sourceMapLocation, err := store.guessSourceMapLocation(ctx, sourceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +138,8 @@ func (store *SourceMapStore) getSourceMap(sourceURL string) (*sourceMap, error) 
 	return smap, nil
 }
 
-func (store *SourceMapStore) resolveSourceLocation(frame Frame) (*Frame, error) {
-	smap, err := store.getSourceMap(frame.Filename)
+func (store *SourceMapStore) resolveSourceLocation(ctx context.Context, frame Frame) (*Frame, error) {
+	smap, err := store.getSourceMap(ctx, frame.Filename)
 	if err != nil {
 		return nil, err
 	}

@@ -1185,7 +1185,6 @@ describe('modifyQuery', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
-    config.featureToggles.elasticToggleableFilters = true;
   });
   describe('with empty query', () => {
     let query: ElasticsearchQuery;
@@ -1199,19 +1198,7 @@ describe('modifyQuery', () => {
       );
     });
 
-    it('should toggle the filter', () => {
-      query.query = 'foo:"bar"';
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
-    });
-
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        '-foo:"bar"'
-      );
-    });
-
-    it('should remove a positive filter to add a negative filter', () => {
-      query.query = 'foo:"bar"';
       expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         '-foo:"bar"'
       );
@@ -1244,29 +1231,81 @@ describe('modifyQuery', () => {
       expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
+});
 
-  describe('legacy behavior', () => {
+describe('toggleQueryFilter', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  describe('with empty query', () => {
+    let query: ElasticsearchQuery;
     beforeEach(() => {
-      config.featureToggles.elasticToggleableFilters = false;
+      query = { query: '', refId: 'A' };
     });
-    it('should not modify other filters in the query', () => {
-      expect(
-        ds.modifyQuery(
-          { query: 'test:"value"', refId: 'A' },
-          { type: 'ADD_FILTER', options: { key: 'test', value: 'value' } }
-        ).query
-      ).toBe('test:"value"');
-      expect(
-        ds.modifyQuery(
-          { query: 'test:"value"', refId: 'A' },
-          { type: 'ADD_FILTER_OUT', options: { key: 'test', value: 'value' } }
-        ).query
-      ).toBe('test:"value" AND -test:"value"');
+
+    it('should add the filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'foo:"bar"'
+      );
+    });
+
+    it('should toggle the filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should remove a positive filter to add a negative filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+  });
+
+  describe('with non-empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: 'test:"value"', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND -foo:"bar"'
+      );
     });
   });
 });
 
-describe('addAdHocFilters', () => {
+describe('queryHasFilter()', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  it('inspects queries for filter presence', () => {
+    const query = { refId: 'A', query: 'grafana:"awesome"' };
+    expect(
+      ds.queryHasFilter(query, {
+        key: 'grafana',
+        value: 'awesome',
+      })
+    ).toBe(true);
+  });
+});
+
+describe('addAdhocFilters', () => {
   describe('with invalid filters', () => {
     it('should filter out ad hoc filter without key', () => {
       const { ds, templateSrv } = getTestContext();
@@ -1321,6 +1360,15 @@ describe('addAdHocFilters', () => {
 
       const query = ds.addAdHocFilters('');
       expect(query).toBe('field\\:name:"field:value"');
+    });
+
+    it('should escape characters in filter values', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field "value"', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field \\"value\\""');
     });
   });
 

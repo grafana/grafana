@@ -59,6 +59,7 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, > operator and number value'}                            | ${'bar'} | ${'>'}   | ${'5'}         | ${'{foo="bar"} | logfmt | bar>5'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, < operator and non-number value'}                        | ${'bar'} | ${'<'}   | ${'5KiB'}      | ${'{foo="bar"} | logfmt | bar<`5KiB`'}
+    ${'sum(rate({x="y"} | logfmt [5m])) + sum(rate({x="z"} | logfmt [5m]))'}                                                          | ${'metric query with non empty selectors and parsers'}                         | ${'bar'} | ${'='}   | ${'baz'}       | ${'sum(rate({x="y"} | logfmt | bar=`baz` [5m])) + sum(rate({x="z"} | logfmt | bar=`baz` [5m]))'}
   `(
     'should add label to query:  $query, description: $description',
     ({ query, description, label, operator, value, expectedResult }) => {
@@ -71,6 +72,18 @@ describe('addLabelToQuery()', () => {
       }
     }
   );
+
+  it('should always add label as labelFilter if force flag is given', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', true)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should always add label as labelFilter if force flag is given with a parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', true)).toEqual(
+      '{foo="bar"} | logfmt | forcedLabel=`value`'
+    );
+  });
 });
 
 describe('addParserToQuery', () => {

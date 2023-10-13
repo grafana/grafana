@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { Button, useTheme2 } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -10,12 +12,17 @@ import { DebugSection } from './DebugSection';
 import { DerivedField } from './DerivedField';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
+  addButton: css`
+    margin-right: 10px;
   `,
   derivedField: css`
     margin-bottom: ${theme.spacing(1)};
+  `,
+  container: css`
+    margin-bottom: ${theme.spacing(4)};
+  `,
+  debugSection: css`
+    margin-top: ${theme.spacing(4)};
   `,
 });
 
@@ -38,14 +45,17 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
   );
 
   return (
-    <>
-      <h3 className="page-heading">Derived fields</h3>
-
-      <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from a log message and create a link from its value.
-      </div>
-
-      <div className="gf-form-group">
+    <ConfigSubSection
+      title="Derived fields"
+      description={
+        <ConfigDescriptionLink
+          description="Derived fields can be used to extract new fields from a log message and create a link from its value."
+          suffix="loki/configure-loki-data-source/#derived-fields"
+          feature="derived fields"
+        />
+      }
+    >
+      <div className={styles.container}>
         {fields.map((field, index) => {
           return (
             <DerivedField
@@ -77,9 +87,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
         <div>
           <Button
             variant="secondary"
-            className={css`
-              margin-right: 10px;
-            `}
+            className={styles.addButton}
             icon="plus"
             onClick={(event) => {
               event.preventDefault();
@@ -96,18 +104,18 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
             </Button>
           )}
         </div>
-      </div>
 
-      {showDebug && (
-        <div className="gf-form-group">
-          <DebugSection
-            className={css`
-              margin-bottom: 10px;
-            `}
-            derivedFields={fields}
-          />
-        </div>
-      )}
-    </>
+        {showDebug && (
+          <div className={styles.debugSection}>
+            <DebugSection
+              className={css`
+                margin-bottom: 10px;
+              `}
+              derivedFields={fields}
+            />
+          </div>
+        )}
+      </div>
+    </ConfigSubSection>
   );
 };

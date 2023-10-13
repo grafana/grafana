@@ -1,10 +1,23 @@
+import { flattenDeep } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  LoadingState,
+  PanelData,
+  getDefaultTimeRange,
+  toDataFrame,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
+import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { ExplorePanelData } from 'app/types';
 
 import {
+  decorateWithCorrelations,
   decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
@@ -16,6 +29,16 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
+
+jest.mock('../../plugins/importPanelPlugin', () => {
+  const actual = jest.requireActual('../../plugins/importPanelPlugin');
+  return {
+    ...actual,
+    hasPanelPlugin: (id: string) => {
+      return id === 'someCustomPanelPlugin';
+    },
+  };
+});
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({
@@ -84,6 +107,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: null,
     traceFrames: [],
     nodeGraphFrames: [],
+    customFrames: [],
     flameGraphFrames: [],
     rawPrometheusFrames: [],
     rawPrometheusResult: null,
@@ -91,6 +115,23 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
 
   return { ...defaults, ...args };
 };
+
+const datasource = {
+  name: 'testDs',
+  type: 'postgres',
+  uid: 'ds1',
+  getRef: () => {
+    return { type: 'postgres', uid: 'ds1' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const datasourceInstance = {
+  name: datasource.name,
+  id: 1,
+  uid: datasource.uid,
+  type: datasource.type,
+  jsonData: {},
+} as DataSourceInstanceSettings<DataSourceJsonData>;
 
 describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
@@ -111,6 +152,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
       traceFrames: [],
+      customFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [flameGraph],
       graphResult: null,
@@ -139,6 +181,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -169,6 +212,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -312,5 +356,139 @@ describe('decorateWithLogsResult', () => {
     const { logs } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
     expect(decorateWithLogsResult()(panelData).logsResult).not.toBeNull();
+  });
+});
+
+describe('decorateWithCustomFrames', () => {
+  it('returns empty array if no custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([]);
+  });
+  it('returns data if we have custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const customFrame = toDataFrame({
+      name: 'custom-panel',
+      refId: 'A',
+      fields: [],
+      meta: { preferredVisualisationType: 'table', preferredVisualisationPluginId: 'someCustomPanelPlugin' },
+    });
+
+    const series = [table, logs, timeSeries, emptyTable, flameGraph, customFrame];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
+  });
+});
+
+describe('decorateWithCorrelations', () => {
+  it('returns no links if there are no correlations and no editor links', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: false,
+      queries: [],
+      correlations: [],
+      defaultTargetDatasource: undefined,
+    })(panelData);
+    expect(
+      flattenDeep(postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links)))
+    ).toEqual([]);
+  });
+
+  it('returns one field link per field if there are no correlations, but there are editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: true,
+      queries: [],
+      correlations: [],
+      defaultTargetDatasource: datasource,
+    })(panelData);
+    const flattenedLinks = flattenDeep(
+      postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))
+    );
+    expect(flattenedLinks.length).toEqual(table.fields.length);
+    expect(flattenedLinks[0]).not.toBeUndefined();
+  });
+
+  it('returns one field link per field if there are correlations and editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const correlations = [{ source: datasourceInstance, target: datasourceInstance }] as CorrelationData[];
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: true,
+      queries: [],
+      correlations: correlations,
+      defaultTargetDatasource: datasource,
+    })(panelData);
+    const flattenedLinks = flattenDeep(
+      postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))
+    );
+    expect(flattenedLinks.length).toEqual(table.fields.length);
+    expect(flattenedLinks[0]).not.toBeUndefined();
+  });
+
+  it('returns one field link per correlation if there are correlations and we are not showing editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const correlations = [
+      {
+        uid: '0',
+        source: datasourceInstance,
+        target: datasourceInstance,
+        provisioned: true,
+        config: { field: panelData.series[0].fields[0].name },
+      },
+    ] as CorrelationData[];
+
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: false,
+      queries: [{ refId: 'A', datasource: datasource.getRef() }],
+      correlations: correlations,
+      defaultTargetDatasource: undefined,
+    })(panelData);
+    expect(
+      flattenDeep(postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))).length
+    ).toEqual(correlations.length);
   });
 });

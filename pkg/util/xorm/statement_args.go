@@ -14,7 +14,7 @@ import (
 	"xorm.io/core"
 )
 
-func quoteNeeded(a interface{}) bool {
+func quoteNeeded(a any) bool {
 	switch a.(type) {
 	case int, int8, int16, int32, int64:
 		return false
@@ -66,7 +66,7 @@ func convertString(arg string) string {
 	return buf.String()
 }
 
-func convertArg(arg interface{}, convertFunc func(string) string) string {
+func convertArg(arg any, convertFunc func(string) string) string {
 	if quoteNeeded(arg) {
 		argv := fmt.Sprintf("%v", arg)
 		return convertFunc(argv)
@@ -77,7 +77,7 @@ func convertArg(arg interface{}, convertFunc func(string) string) string {
 
 const insertSelectPlaceHolder = true
 
-func (statement *Statement) writeArg(w *builder.BytesWriter, arg interface{}) error {
+func (statement *Statement) writeArg(w *builder.BytesWriter, arg any) error {
 	switch argv := arg.(type) {
 	case bool:
 		if argv {
@@ -118,7 +118,7 @@ func (statement *Statement) writeArg(w *builder.BytesWriter, arg interface{}) er
 	return nil
 }
 
-func (statement *Statement) writeArgs(w *builder.BytesWriter, args []interface{}) error {
+func (statement *Statement) writeArgs(w *builder.BytesWriter, args []any) error {
 	for i, arg := range args {
 		if err := statement.writeArg(w, arg); err != nil {
 			return err

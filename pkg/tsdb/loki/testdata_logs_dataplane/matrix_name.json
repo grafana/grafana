@@ -1,0 +1,17 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "level": "error",
+          "__name__": "moon"
+        },
+        "values": [
+          [1639125366.989, "0.4"]
+        ]
+      }
+    ]
+  }
+}

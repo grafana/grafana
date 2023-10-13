@@ -24,6 +24,8 @@ export class DynamicLabelsCompletionItemProvider implements Completeable {
       Number: 'number.cloudwatch-dynamicLabels',
       String: 'string.cloudwatch-dynamicLabels',
       Variable: 'variable.cloudwatch-dynamicLabels',
+      Comment: 'comment.cloudwatch-dynamicLabels',
+      Regexp: 'regexp.cloudwatch-dynamicLabels',
     };
   }
 

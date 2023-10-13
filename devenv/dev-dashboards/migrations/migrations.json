@@ -562,7 +562,6 @@
   ],
   "refresh": "",
   "schemaVersion": 34,
-  "style": "dark",
   "tags": [
     "gdev",
     "migrations",

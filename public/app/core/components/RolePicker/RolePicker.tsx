@@ -14,6 +14,7 @@ export interface Props {
   isLoading?: boolean;
   disabled?: boolean;
   basicRoleDisabled?: boolean;
+  basicRoleDisabledMessage?: string;
   showBasicRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
   onBasicRoleChange?: (newRole: OrgRole) => void;
@@ -32,6 +33,7 @@ export const RolePicker = ({
   disabled,
   isLoading,
   basicRoleDisabled,
+  basicRoleDisabledMessage,
   showBasicRole,
   onRolesChange,
   onBasicRoleChange,
@@ -49,7 +51,7 @@ export const RolePicker = ({
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, basicRole]);
+  }, [appliedRoles, basicRole, onBasicRoleChange]);
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
@@ -162,7 +164,7 @@ export const RolePicker = ({
       }}
       ref={ref}
     >
-      <ClickOutsideWrapper onClick={onClickOutside}>
+      <ClickOutsideWrapper onClick={onClickOutside} useCapture={true}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}
@@ -184,6 +186,7 @@ export const RolePicker = ({
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
             basicRoleDisabled={basicRoleDisabled}
+            disabledMessage={basicRoleDisabledMessage}
             showBasicRole={showBasicRole}
             updateDisabled={basicRoleDisabled && !canUpdateRoles}
             apply={apply}

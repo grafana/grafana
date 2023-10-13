@@ -1,11 +1,17 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/
 description: About Grafana alert rules
 keywords:
   - grafana
   - alerting
   - rules
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert rules
-weight: 105
+weight: 106
 ---
 
 # Alert rules
@@ -16,7 +22,21 @@ While queries and expressions select the data set to evaluate, a condition sets 
 
 An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
-- [Alert rule types]({{< relref "./alert-rule-types" >}})
-- [Alert instances]({{< relref "./alert-instances" >}})
-- [Organising alert rules]({{< relref "./organising-alerts" >}})
-- [Annotation and labels]({{< relref "../annotation-label" >}})
+- [Alert rule types][alert-rule-types]
+- [Alert instances][alert-instances]
+- [Organising alert rules][organising-alerts]
+- [Annotation and labels][annotation-label]
+
+{{% docs/reference %}}
+[alert-instances]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-instances"
+[alert-instances]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-instances"
+
+[alert-rule-types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
+[alert-rule-types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-rule-types"
+
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+
+[organising-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/organising-alerts"
+[organising-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/organising-alerts"
+{{% /docs/reference %}}

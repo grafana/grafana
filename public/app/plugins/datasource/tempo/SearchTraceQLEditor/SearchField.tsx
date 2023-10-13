@@ -3,8 +3,9 @@ import { uniq } from 'lodash';
 import React, { useState, useEffect, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -35,6 +36,7 @@ interface Props {
   hideTag?: boolean;
   hideValue?: boolean;
   allowDelete?: boolean;
+  query: string;
 }
 const SearchField = ({
   filter,
@@ -48,6 +50,7 @@ const SearchField = ({
   hideTag,
   hideValue,
   allowDelete,
+  query,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
@@ -60,7 +63,7 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      return await languageProvider.getOptionsV2(scopedTag);
+      return filter.tag ? await languageProvider.getOptionsV2(scopedTag, query) : [];
     } catch (error) {
       // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
@@ -72,7 +75,15 @@ const SearchField = ({
     return [];
   };
 
-  const { loading: isLoadingValues, value: options } = useAsync(updateOptions, [scopedTag, languageProvider, setError]);
+  const { loading: isLoadingValues, value: options } = useAsync(updateOptions, [
+    scopedTag,
+    languageProvider,
+    setError,
+    query,
+  ]);
+  if (filter.value && options && !options.find((o) => o === filter.value)) {
+    options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
+  }
 
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
@@ -88,7 +99,9 @@ const SearchField = ({
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
+  const scopeOptions = Object.values(TraceqlSearchScope)
+    .filter((s) => s !== TraceqlSearchScope.Intrinsic)
+    .map((t) => ({ label: t, value: t }));
 
   // If all values have type string or int/float use a focused list of operators instead of all operators
   const optionsOfFirstType = options?.filter((o) => o.type === options[0]?.type);
@@ -103,13 +116,24 @@ const SearchField = ({
       operatorList = numberOperators;
   }
 
+  /**
+   * Add to a list of options the current template variables.
+   *
+   * @param options a list of options
+   * @returns the list of given options plus the template variables
+   */
+  const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
+    const templateVariables = getTemplateSrv().getVariables();
+    return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
+  };
+
   return (
     <HorizontalGroup spacing={'none'} width={'auto'}>
       {!hideScope && (
         <Select
           className={styles.dropdown}
           inputId={`${filter.id}-scope`}
-          options={scopeOptions}
+          options={withTemplateVariableOptions(scopeOptions)}
           value={filter.scope}
           onChange={(v) => {
             updateFilter({ ...filter, scope: v?.value });
@@ -124,10 +148,12 @@ const SearchField = ({
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-          options={(filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-            label: t,
-            value: t,
-          }))}
+          options={withTemplateVariableOptions(
+            (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+              label: t,
+              value: t,
+            }))
+          )}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
@@ -141,7 +167,7 @@ const SearchField = ({
       <Select
         className={styles.dropdown}
         inputId={`${filter.id}-operator`}
-        options={operatorList.map(operatorSelectableValue)}
+        options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
@@ -156,13 +182,13 @@ const SearchField = ({
           className={styles.dropdown}
           inputId={`${filter.id}-value`}
           isLoading={isLoadingValues}
-          options={options}
+          options={withTemplateVariableOptions(options)}
           value={filter.value}
           onChange={(val) => {
             if (Array.isArray(val)) {
-              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
+              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type || uniqueOptionType });
             } else {
-              updateFilter({ ...filter, value: val?.value, valueType: val?.type });
+              updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
             }
           }}
           placeholder="Select value"

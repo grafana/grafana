@@ -33,12 +33,14 @@ class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
+  prevColorIndex: number | undefined;
 
   constructor(colorsHex: string[], theme: GrafanaTheme2) {
     const filteredColors = getFilteredColors(colorsHex, theme);
     this.colorsHex = filteredColors;
     this.colorsRgb = filteredColors.map(strToRgb);
     this.cache = new Map();
+    this.prevColorIndex = undefined;
   }
 
   _getColorIndex(key: string): number {
@@ -47,15 +49,14 @@ class ColorGenerator {
       const hash = this.hashCode(key.toLowerCase());
       i = Math.abs(hash % this.colorsHex.length);
 
-      const prevCacheItem = Array.from(this.cache).pop();
-      if (prevCacheItem && prevCacheItem[1]) {
+      if (this.prevColorIndex !== undefined) {
         // disallow a color that is the same as the previous color
-        if (prevCacheItem[1] === i) {
+        if (this.prevColorIndex === i) {
           i = this.getNextIndex(i);
         }
 
         // disallow a color that looks very similar to the previous color
-        const prevColor = this.colorsHex[prevCacheItem[1]];
+        const prevColor = this.colorsHex[this.prevColorIndex];
         if (tinycolor.readability(prevColor, this.colorsHex[i]) < 1.5) {
           let newIndex = i;
           for (let j = 0; j < this.colorsHex.length; j++) {
@@ -70,6 +71,7 @@ class ColorGenerator {
       }
 
       this.cache.set(key, i);
+      this.prevColorIndex = i;
     }
     return i;
   }
@@ -132,19 +134,20 @@ export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, nu
 }
 
 export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
+  const filtered = [...colorsHex];
   // Remove red as a span color because it looks like an error
-  const redIndex = colorsHex.indexOf('#E24D42');
+  const redIndex = filtered.indexOf('#E24D42');
   if (redIndex > -1) {
-    colorsHex.splice(redIndex, 1);
+    filtered.splice(redIndex, 1);
   }
   const redIndex2 = colorsHex.indexOf('#BF1B00');
   if (redIndex2 > -1) {
-    colorsHex.splice(redIndex2, 1);
+    filtered.splice(redIndex2, 1);
   }
 
   // Only add colors that have a contrast ratio >= 3 for the current theme
   let filteredColors = [];
-  for (const color of colorsHex) {
+  for (const color of filtered) {
     if (tinycolor.readability(theme.colors.background.primary, color) >= 3) {
       filteredColors.push(color);
     }

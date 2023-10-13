@@ -191,7 +191,7 @@ const getStyles = <T extends unknown>(
   return (theme: GrafanaTheme2) => ({
     container: css`
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       color: ${theme.colors.text.secondary};
     `,
     row: css`

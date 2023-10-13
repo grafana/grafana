@@ -82,7 +82,7 @@ func TestAPI_getUserPermissions(t *testing.T) {
 				{Action: datasources.ActionRead, Scope: datasources.ScopeProvider.GetResourceScope("aabbccdd")},
 			},
 			expectedOutput: util.DynMap{
-				datasources.ActionRead: []interface{}{
+				datasources.ActionRead: []any{
 					datasources.ScopeAll,
 					datasources.ScopeProvider.GetResourceScope("aabbccdd"),
 				}},

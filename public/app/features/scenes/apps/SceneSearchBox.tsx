@@ -8,11 +8,11 @@ export interface SceneSearchBoxState extends SceneObjectState {
 }
 
 export class SceneSearchBox extends SceneObjectBase<SceneSearchBoxState> {
-  public onChange = (evt: React.FormEvent<HTMLInputElement>) => {
+  onChange = (evt: React.FormEvent<HTMLInputElement>) => {
     this.setState({ value: evt.currentTarget.value });
   };
 
-  public static Component = ({ model }: SceneComponentProps<SceneSearchBox>) => {
+  static Component = ({ model }: SceneComponentProps<SceneSearchBox>) => {
     const { value } = model.useState();
 
     return <Input width={25} placeholder="Search..." value={value} onChange={model.onChange} />;

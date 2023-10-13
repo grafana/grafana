@@ -268,12 +268,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:         "",
-					AuthID:     "2032",
-					AuthModule: "oauth",
-					Login:      "test",
-					Name:       "test",
-					Email:      "test",
+					ID:              "",
+					AuthID:          "2032",
+					AuthenticatedBy: "oauth",
+					Login:           "test",
+					Name:            "test",
+					Email:           "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -286,13 +286,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             "user:1",
-				AuthID:         "2032",
-				AuthModule:     "oauth",
-				Login:          "test",
-				Name:           "test",
-				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				ID:              "user:1",
+				AuthID:          "2032",
+				AuthenticatedBy: "oauth",
+				Login:           "test",
+				Name:            "test",
+				Email:           "test",
+				IsGrafanaAdmin:  ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -313,12 +313,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:         "",
-					Login:      "test",
-					Name:       "test",
-					Email:      "test",
-					AuthModule: "oauth",
-					AuthID:     "2032",
+					ID:              "",
+					Login:           "test",
+					Name:            "test",
+					Email:           "test",
+					AuthenticatedBy: "oauth",
+					AuthID:          "2032",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -341,17 +341,17 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:             "",
-					Login:          "test_create",
-					Name:           "test_create",
-					IsGrafanaAdmin: ptrBool(true),
-					Email:          "test_create",
-					AuthModule:     "oauth",
-					AuthID:         "2032",
+					ID:              "",
+					Login:           "test_create",
+					Name:            "test_create",
+					IsGrafanaAdmin:  ptrBool(true),
+					Email:           "test_create",
+					AuthenticatedBy: "oauth",
+					AuthID:          "2032",
 					ClientParams: authn.ClientParams{
-						SyncUser:            true,
-						AllowSignUp:         true,
-						EnableDisabledUsers: true,
+						SyncUser:    true,
+						AllowSignUp: true,
+						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test_create"),
@@ -362,17 +362,17 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             "user:2",
-				Login:          "test_create",
-				Name:           "test_create",
-				Email:          "test_create",
-				AuthModule:     "oauth",
-				AuthID:         "2032",
-				IsGrafanaAdmin: ptrBool(true),
+				ID:              "user:2",
+				Login:           "test_create",
+				Name:            "test_create",
+				Email:           "test_create",
+				AuthenticatedBy: "oauth",
+				AuthID:          "2032",
+				IsGrafanaAdmin:  ptrBool(true),
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         true,
-					EnableDisabledUsers: true,
+					SyncUser:    true,
+					AllowSignUp: true,
+					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test_create"),
@@ -398,8 +398,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					IsDisabled:     false,
 					IsGrafanaAdmin: ptrBool(true),
 					ClientParams: authn.ClientParams{
-						SyncUser:            true,
-						EnableDisabledUsers: true,
+						SyncUser:   true,
+						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							UserID: ptrInt64(3),
 							Email:  nil,
@@ -417,8 +417,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				IsDisabled:     false,
 				IsGrafanaAdmin: ptrBool(true),
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					EnableDisabledUsers: true,
+					SyncUser:   true,
+					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						UserID: ptrInt64(3),
 						Email:  nil,
@@ -486,16 +486,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: false},
-			},
-			enableUser: false,
-		},
-		{
-			desc: "should skip if identity is not disabled",
-			identity: &authn.Identity{
-				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
-				IsDisabled:   false,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: false},
 			},
 			enableUser: false,
 		},
@@ -504,7 +495,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceAPIKey, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: true},
 			},
 			enableUser: false,
 		},
@@ -513,7 +504,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: true},
 			},
 			enableUser: true,
 		},
@@ -529,7 +520,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			}
 
 			s := UserSync{userService: userSvc}
-			err := s.EnableDisabledUserHook(context.Background(), tt.identity, nil)
+			err := s.EnableUserHook(context.Background(), tt.identity, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.enableUser, called)
 		})
