@@ -143,6 +143,7 @@ You can manage the permissions for library panels with [RBAC](https://grafana.co
 ## Permission validation on custom role creation and update
 
 <!-- Mihaly Gyongyosi -->
+<!-- Cloud -->
 
 <!-- already in on-prem -->
 
