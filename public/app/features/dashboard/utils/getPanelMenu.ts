@@ -1,4 +1,5 @@
 import {
+  getTimeZone,
   PanelMenuItem,
   PluginExtensionLink,
   PluginExtensionPoints,
@@ -326,7 +327,9 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     pluginId: panel.type,
     title: panel.title,
     timeRange: dashboard.time,
-    timeZone: dashboard.timezone,
+    timeZone: getTimeZone({
+      timeZone: dashboard.timezone,
+    }),
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,
