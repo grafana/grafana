@@ -26,7 +26,7 @@ Make sure you have permission to add new correlations. Only users with write per
 1. Click on a link to begin adding new correlation. Links are associated with a field that will be used as [a results field of a correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration" >}}).
 1. Explore opens a split view. Use the right pane to setup [the target query source of the correlation]({{< relref "/docs/grafana/latest/administration/correlations/correlation-configuration#target-query" >}}).
 1. Build target query using [variables syntax]({{< relref "/docs/grafana/latest/dashboards/variables/variable-syntax" >}}) with variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
-1. Provide optional label and description. Label is used as the name of the link inside the visualization. I can contain variables.
+1. Provide optional label and description. Label is used as the name of the link inside the visualization. It can contain variables.
 1. Click "Save" button in the top bar to save the correlation and exit Correlations Editor mode.
 1. The link used to create the correlation will be replaced with a data link in each row. The variables will be dynamically replaced with values from a selected row.
 
