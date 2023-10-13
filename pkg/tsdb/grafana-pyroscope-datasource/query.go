@@ -27,10 +27,9 @@ type dsJsonModel struct {
 }
 
 const (
-	queryTypeProfile     = string(dataquery.PyroscopeQueryTypeProfile)
-	queryTypeMetrics     = string(dataquery.PyroscopeQueryTypeMetrics)
-	queryTypeBoth        = string(dataquery.PyroscopeQueryTypeBoth)
-	queryTypeSpanProfile = string(dataquery.PyroscopeQueryTypeSpanProfile)
+	queryTypeProfile = string(dataquery.PyroscopeQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 )
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
