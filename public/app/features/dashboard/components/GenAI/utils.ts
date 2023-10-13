@@ -1,5 +1,4 @@
 import { DashboardModel, PanelModel } from '../../state';
-import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 import { openai } from './llms';
