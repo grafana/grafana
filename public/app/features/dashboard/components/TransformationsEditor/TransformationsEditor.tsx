@@ -655,7 +655,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: `${theme.spacing(2)}`,
     }),
     pickerInformationLineHighlight: css({
-      verticalAlign: 'middle'
+      verticalAlign: 'middle',
     }),
     illustationSwitchLabel: css({
       whiteSpace: 'nowrap',
