@@ -94,7 +94,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
   name: 'Button',
   description: 'Button',
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   standardEditorConfig: {
     background: false,
