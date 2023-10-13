@@ -88,9 +88,9 @@ Previously, the only transformation that supported [dashboard variables](https:/
 
 _Generally available in Grafana Open Source and Enterprise_
 
-The **Add field from calculation** transformation has two new modes.
+The **Add field from calculation** transformation has a couple updates.
 
-**Unary operations** let you apply mathematical operations to a field. The currently supported operations are:
+**Unary operations** is a new mode that lets you apply mathematical operations to a field. The currently supported operations are:
 
 - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
 - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
@@ -100,7 +100,7 @@ The **Add field from calculation** transformation has two new modes.
 
 {{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
 
-**Row index** adds a field that represents the row index of the row.
+**Row index** can now show the index as a percentage.
 
 Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
