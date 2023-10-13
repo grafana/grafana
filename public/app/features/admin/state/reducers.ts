@@ -127,7 +127,7 @@ const initialUserListAdminState: UserListAdminState = {
   users: [],
   query: '',
   page: 0,
-  perPage: 5,
+  perPage: 50,
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'activeLast30Days', value: false }],
