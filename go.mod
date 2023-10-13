@@ -37,7 +37,6 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
-	github.com/apache/arrow/go/v12 v12.0.1 // @grafana/observability-metrics
 	github.com/aws/aws-sdk-go v1.44.325 // @grafana/aws-datasources
 	github.com/beevik/etree v1.2.0 // @grafana/backend-platform
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
