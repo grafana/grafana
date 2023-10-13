@@ -20,7 +20,7 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 ## Create a new correlation
 
 1. Go to Explore.
-1. Select test data source.
+1. Select `test data source`.
 1. Click on "+ Add" dropdown and select "Add correlation" button.
 1. Explore is now in Correlations Editor mode indicated by a blue border.
 1. Select scenario: `CSV File`.
