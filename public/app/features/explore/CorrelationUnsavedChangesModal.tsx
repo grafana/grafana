@@ -7,7 +7,8 @@ import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types';
 interface UnsavedChangesModalProps {
   dirtyCorrelation: boolean;
   dirtyQueryEditor: boolean;
-  action?: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
+  action: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
+  isActionLeft: boolean;
   onDiscard: () => void;
   onCancel: () => void;
   onSave: () => void;

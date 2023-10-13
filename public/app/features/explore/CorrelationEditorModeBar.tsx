@@ -220,7 +220,8 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           }}
           dirtyCorrelation={correlationDetails?.correlationDirty || false}
           dirtyQueryEditor={correlationDetails?.queryEditorDirty || false}
-          action={correlationDetails?.postConfirmAction?.action}
+          action={correlationDetails?.postConfirmAction!.action}
+          isActionLeft={correlationDetails?.postConfirmAction!.isActionLeft}
         />
       )}
       <div className={styles.correlationEditorTop}>

@@ -40,6 +40,7 @@ export interface CorrelationEditorDetails {
     exploreId: string;
     action: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
     changeDatasourceUid?: string;
+    isActionLeft: boolean;
   };
   canSave?: boolean;
   label?: string;

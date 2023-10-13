@@ -110,6 +110,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
               changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -156,6 +157,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             postConfirmAction: {
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
             },
           })
         );
