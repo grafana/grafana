@@ -44,8 +44,9 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -330,13 +331,6 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:         "timeSeriesTable",
-			Description:  "Enable time series table transformer & sparkline cell type",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        appO11ySquad,
 		},
 		{
 			Name:         "influxdbBackendMigration",
@@ -873,6 +867,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "panelTitleSearchInV1",
+			Description:     "Enable searching for dashboards using panel title in search v1",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 	}
 )
