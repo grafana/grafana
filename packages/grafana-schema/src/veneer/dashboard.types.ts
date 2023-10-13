@@ -7,7 +7,7 @@ export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends Omit<raw.Panel, 'fieldConfig'> {
-  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
+  fieldConfig?: FieldConfigSource<TCustomFieldConfig>;
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
@@ -36,6 +36,9 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery>
   extends Omit<raw.AnnotationQuery, 'target' | 'datasource'> {
   datasource?: DataSourceRef | null;
   target?: TQuery;
+  // TODO: When migrating to snapshot queries, remove this property.
+  // With snapshot queries annotations become a part of the panel snapshot data.
+  snapshotData?: unknown;
 }
 
 export interface AnnotationContainer extends Omit<raw.AnnotationContainer, 'list'> {

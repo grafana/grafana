@@ -374,6 +374,14 @@
       "placeholder": "Cĥőőşę"
     }
   },
+  "graph": {
+    "container": {
+      "content": "Ŗęŉđęřįŉģ ŧőő mäŉy şęřįęş įŉ ä şįŉģľę päŉęľ mäy įmpäčŧ pęřƒőřmäŉčę äŉđ mäĸę đäŧä ĥäřđęř ŧő řęäđ. Cőŉşįđęř řęƒįŉįŉģ yőūř qūęřįęş.",
+      "show-all-series": "Ŝĥőŵ äľľ {{length}}",
+      "show-only-series": "Ŝĥőŵįŉģ őŉľy {{MAX_NUMBER_OF_TIME_SERIES}} şęřįęş",
+      "title": "Ğřäpĥ"
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Đäşĥþőäřđ",
@@ -516,6 +524,18 @@
     },
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
+    },
+    "config-access": {
+      "subtitle": "Cőŉƒįģūřę äččęşş ƒőř įŉđįvįđūäľ ūşęřş, ŧęämş, äŉđ şęřvįčę äččőūŉŧş",
+      "title": "Ůşęřş äŉđ äččęşş"
+    },
+    "config-general": {
+      "subtitle": "Mäŉäģę đęƒäūľŧ přęƒęřęŉčęş äŉđ şęŧŧįŉģş äčřőşş Ğřäƒäŉä",
+      "title": "Ğęŉęřäľ"
+    },
+    "config-plugins": {
+      "subtitle": "Ĩŉşŧäľľ pľūģįŉş äŉđ đęƒįŉę ŧĥę řęľäŧįőŉşĥįpş þęŧŵęęŉ đäŧä",
+      "title": "Pľūģįŉş äŉđ đäŧä"
     },
     "connect-data": {
       "title": "Cőŉŉęčŧ đäŧä"

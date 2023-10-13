@@ -29,7 +29,7 @@ export function getGrafanaEvalSuccessVsFailuresScene(datasource: DataSourceRef, 
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of successful and failed alert rule evaluations')
       .setData(query)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)

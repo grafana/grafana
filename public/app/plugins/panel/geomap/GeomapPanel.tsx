@@ -400,15 +400,15 @@ export class GeomapPanel extends Component<Props, State> {
 }
 
 const styles = {
-  wrap: css`
-    position: relative;
-    width: 100%;
-    height: 100%;
-  `,
-  map: css`
-    position: absolute;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-  `,
+  wrap: css({
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  }),
+  map: css({
+    position: 'absolute',
+    zIndex: 0,
+    width: '100%',
+    height: '100%',
+  }),
 };
