@@ -1,9 +1,19 @@
 import { CoreApp } from '@grafana/data';
 import { sceneGraph, SceneGridItem, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from './DashboardScene';
 
 describe('DashboardScene', () => {
+  describe('DashboardSrv.getCurrent compatibility', () => {
+    it('Should set to compatibility wrapper', () => {
+      const scene = buildTestScene();
+      scene.activate();
+
+      expect(getDashboardSrv().getCurrent()?.uid).toBe('dash-1');
+    });
+  });
+
   describe('Editing and discarding', () => {
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
