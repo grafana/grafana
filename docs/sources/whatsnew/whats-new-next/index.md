@@ -27,7 +27,7 @@ October 12, 2023
 
 _Generally Available in Grafana Cloud_
 
-Introducing Content Outline in Grafana Explore. We recognized the challenges of complex mixed queries, as well as, lengthy logs and traces results, leading to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](), as well as the following video demo.
+Introducing Content Outline in Grafana **Explore**. We recognized the challenges of complex mixed queries, as well as, lengthy logs and traces results, leading to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](), as well as the following video demo.
 
 {{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
 
