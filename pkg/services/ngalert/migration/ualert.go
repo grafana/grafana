@@ -63,7 +63,6 @@ func (om *OrgMigration) migrateOrgAlerts(ctx context.Context) error {
 				return fmt.Errorf("insert alert rules: %w", err)
 			}
 		}
-
 	}
 	return nil
 }
