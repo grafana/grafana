@@ -192,24 +192,9 @@ export const ConvertFieldTypeTransformerEditor = ({
                 <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.generateButton}>
                   Generate enum values from data
                 </Button>
-                {/* Create a drag and drop table with the following columns: Text, Color, Icon, Description */}
-                {/* TODO: break this out into separate component? */}
+                {/* TODO: break this out into separate component?  */}
                 <VerticalGroup>
                   <table className={styles.compactTable}>
-                    <thead>
-                      {/* 
-                        TODO: Figure out table headings, if needed
-                      <tr>
-                        <th style={{ width: '1%' }}></th>
-                        <th style={{ width: '5%', textAlign: 'left' }} colSpan={2}>
-                          Text
-                        </th>
-                        <th style={{ width: '5%' }}>Icon</th>
-                        <th style={{ width: '5%' }}>Color</th>
-                        <th style={{ textAlign: 'left' }}>Description</th>
-                        <th style={{ width: '1%' }}></th>
-                      </tr> */}
-                    </thead>
                     <DragDropContext onDragEnd={onDragEnd}>
                       <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
                         {(provided) => (
@@ -224,31 +209,6 @@ export const ConvertFieldTypeTransformerEditor = ({
                                       </div>
                                     </td>
                                     <td>{value}</td>
-                                    <td>
-                                      <ColorPicker
-                                        color={c.enumConfig?.color![idx] ?? '#fff'}
-                                        onChange={(color) => console.log(color)}
-                                        enableNamedColors={true}
-                                      />
-                                    </td>
-                                    <td data-testid="iconPicker">
-                                      <ResourcePicker
-                                        onChange={(icon) => console.log(icon)}
-                                        value={c.enumConfig?.icon![idx] ?? ''}
-                                        size={ResourcePickerSize.SMALL}
-                                        folderName={ResourceFolderName.Icon}
-                                        mediaType={MediaType.Icon}
-                                        color={c.enumConfig?.color![idx] ?? '#fff'}
-                                      />
-                                    </td>
-                                    <td>
-                                      <Input
-                                        value={c.enumConfig?.description![idx] ?? ''}
-                                        placeholder={'Description'}
-                                        onChange={(e) => console.log(e)}
-                                        width={24}
-                                      />
-                                    </td>
                                   </tr>
                                 )}
                               </Draggable>
@@ -260,9 +220,6 @@ export const ConvertFieldTypeTransformerEditor = ({
                     </DragDropContext>
                   </table>
                 </VerticalGroup>
-                {/* <InlineField label={''} labelWidth={6}>
-                  <div>TODO... show options here (alpha panels enabled)</div>
-                </InlineField> */}
               </InlineFieldRow>
             )}
           </div>
@@ -292,7 +249,6 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
 
 const getStyles = (theme: GrafanaTheme2) => ({
   compactTable: css({
-    width: '100%',
     'tbody td': {
       padding: theme.spacing(0.5),
     },
