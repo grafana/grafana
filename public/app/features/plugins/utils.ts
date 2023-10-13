@@ -58,12 +58,11 @@ export function buildPluginSectionNav(
     return activePage;
   }
 
-  // Find and set active page
-  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map((child) => {
+  function findAndSetActivePage(child: NavModelItem): NavModelItem {
     if (child.children) {
       // Doing this here to make sure that first we check if any of the children is active
       // (In case yes, then the check for the parent will not mark it as active)
-      const children = child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl));
+      const children = child.children.map(findAndSetActivePage);
 
       return {
         ...setPageToActive(child, currentUrl),
@@ -72,7 +71,10 @@ export function buildPluginSectionNav(
     }
 
     return setPageToActive(child, currentUrl);
-  });
+  }
+
+  // Find and set active page
+  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map(findAndSetActivePage);
 
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }
