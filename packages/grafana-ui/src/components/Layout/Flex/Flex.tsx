@@ -43,11 +43,11 @@ interface FlexProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' 
 }
 
 export const Flex = React.forwardRef<HTMLDivElement, FlexProps>(
-  ({ gap = 1, alignItems, justifyContent, direction, wrap, children }, ref) => {
+  ({ gap = 1, alignItems, justifyContent, direction, wrap, children, ...rest }, ref) => {
     const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
 
     return (
-      <div ref={ref} className={styles.flex}>
+      <div ref={ref} className={styles.flex} {...rest}>
         {children}
       </div>
     );

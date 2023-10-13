@@ -96,6 +96,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     alignItems,
     boxShadow,
     element,
+    ...rest
   } = props;
   const styles = useStyles2(
     getStyles,
@@ -127,7 +128,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
   const Element = element ?? 'div';
 
   return (
-    <Element ref={ref} className={styles.root}>
+    <Element ref={ref} className={styles.root} {...rest}>
       {children}
     </Element>
   );
