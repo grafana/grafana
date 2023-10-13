@@ -23,8 +23,8 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 1. Select test data source.
 1. Click on "+ Add" dropdown and select "Add correlation" button.
 1. Explore is now in Correlations Editor mode indicated by a blue border.
-1. Select scenario: CSV File.
-1. Select file: population_by_state.csv.
+1. Select scenario: `CSV File`.
+1. Select file: `population_by_state.csv`.
 1. Note that each cell is a link that you can use to create a new correlation. 
 
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-source-10.2.png" max-width="600px" caption="Selecting the source of a correlation" >}}
