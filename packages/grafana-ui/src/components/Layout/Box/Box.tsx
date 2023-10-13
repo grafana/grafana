@@ -68,74 +68,65 @@ interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' |
   element?: ElementType;
 }
 
-export const Box = React.forwardRef<HTMLDivElement, React.PropsWithChildren<BoxProps>>(
-  (
-    {
-      children,
-      margin,
-      marginX,
-      marginY,
-      marginTop,
-      marginBottom,
-      marginLeft,
-      marginRight,
-      padding,
-      paddingX,
-      paddingY,
-      paddingTop,
-      paddingBottom,
-      paddingLeft,
-      paddingRight,
-      display,
-      backgroundColor,
-      grow,
-      shrink,
-      borderColor,
-      borderStyle,
-      borderRadius,
-      justifyContent,
-      alignItems,
-      boxShadow,
-      element,
-    },
-    ref
-  ) => {
-    const styles = useStyles2(
-      getStyles,
-      margin,
-      marginX,
-      marginY,
-      marginTop,
-      marginBottom,
-      marginLeft,
-      marginRight,
-      padding,
-      paddingX,
-      paddingY,
-      paddingTop,
-      paddingBottom,
-      paddingLeft,
-      paddingRight,
-      display,
-      backgroundColor,
-      grow,
-      shrink,
-      borderColor,
-      borderStyle,
-      borderRadius,
-      justifyContent,
-      alignItems,
-      boxShadow
-    );
-    const Element = element ?? 'div';
+export const Box = ({
+  children,
+  margin,
+  marginX,
+  marginY,
+  marginTop,
+  marginBottom,
+  marginLeft,
+  marginRight,
+  padding,
+  paddingX,
+  paddingY,
+  paddingTop,
+  paddingBottom,
+  paddingLeft,
+  paddingRight,
+  display,
+  backgroundColor,
+  grow,
+  shrink,
+  borderColor,
+  borderStyle,
+  borderRadius,
+  justifyContent,
+  alignItems,
+  boxShadow,
+  element,
+}: React.PropsWithChildren<BoxProps>) => {
+  const styles = useStyles2(
+    getStyles,
+    margin,
+    marginX,
+    marginY,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    padding,
+    paddingX,
+    paddingY,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    display,
+    backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
+    boxShadow
+  );
+  const Element = element ?? 'div';
 
-    return (
-      <Element ref={ref} className={styles.root}>
-        {children}
-      </Element>
-    );
-  }
-);
+  return <Element className={styles.root}>{children}</Element>;
+};
 
 Box.displayName = 'Box';
 
