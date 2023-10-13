@@ -24,7 +24,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERT
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
-import { deepFreeze } from 'app/features/plugins/extensions/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -372,30 +371,31 @@ export class DashboardModel implements TimeModel {
     const originalVariables = this.originalTemplating?.list ?? [];
     const currentVariables = this.getVariablesFromState(this.uid);
 
-    return {
-      list: currentVariables.map((variable) => {
-        const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);
+    const saveModels = currentVariables.map((variable) => {
+      const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);
 
-        if (!options.saveVariables) {
-          const original = originalVariables.find(
-            ({ name, type }: any) => name === variable.name && type === variable.type
-          );
+      if (!options.saveVariables) {
+        const original = originalVariables.find(
+          ({ name, type }: any) => name === variable.name && type === variable.type
+        );
 
-          if (!original) {
-            return variableSaveModel;
-          }
-
-          if (variable.type === 'adhoc') {
-            variableSaveModel.filters = original.filters;
-          } else {
-            variableSaveModel.current = original.current;
-            variableSaveModel.options = original.options;
-          }
+        if (!original) {
+          return variableSaveModel;
         }
 
-        return variableSaveModel;
-      }),
-    };
+        if (variable.type === 'adhoc') {
+          variableSaveModel.filters = original.filters;
+        } else {
+          variableSaveModel.current = original.current;
+          variableSaveModel.options = original.options;
+        }
+      }
+
+      return variableSaveModel;
+    });
+
+    const saveModelsWithoutNull = sortedDeepCloneWithoutNulls(saveModels);
+    return { list: saveModelsWithoutNull };
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
@@ -592,10 +592,10 @@ export class DashboardModel implements TimeModel {
     }
 
     this.originalDashboard = savedModel;
-    this.originalTemplating = this.getTemplatingSaveModel(options);
+    this.originalTemplating = savedModel.templating;
 
     if (options.saveTimerange) {
-      this.originalTime = deepFreeze(this.time);
+      this.originalTime = savedModel.time;
     }
   }
 
@@ -1256,6 +1256,8 @@ export class DashboardModel implements TimeModel {
       return false;
     }
 
+    console.log('current', JSON.stringify(currentVariables, null, 2));
+    console.log('original', JSON.stringify(originalVariables, null, 2));
     return !isEqual(currentVariables, originalVariables);
   }
 
