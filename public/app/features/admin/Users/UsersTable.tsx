@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { InteractiveTable, CellProps, Tooltip, Icon, Tag, Pagination, Column, FetchDataFunc, Text } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Flex, Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
@@ -133,13 +133,13 @@ export const UsersTable = ({
     [showLicensedRole]
   );
   return (
-    <Flex direction={'column'} gap={2}>
+    <Stack gap={2}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
         <Flex justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
         </Flex>
       )}
-    </Flex>
+    </Stack>
   );
 };
