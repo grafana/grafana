@@ -53,8 +53,17 @@ interface K8sPlaylist {
 }
 
 class K8sAPI implements PlaylistAPI {
-  readonly url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/org-${contextSrv.user.orgId}/playlists`;
-  readonly legacy = new LegacyAPI(); // set to null for full CRUD
+  readonly url: string;
+  readonly legacy: PlaylistAPI | undefined;
+
+  constructor() {
+    const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
+    this.url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
+
+    // When undefined, this will use k8s for all CRUD features
+    // if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+    this.legacy = new LegacyAPI();
+  }
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<K8sPlaylistList>(this.url);

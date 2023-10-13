@@ -33,6 +33,22 @@ We've also made it easier to find the correct dashboard variable by displaying a
 
 {{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
 
+## Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
+
 ## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->

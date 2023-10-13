@@ -7,11 +7,14 @@ import { HttpRequestMethod } from '../../panelcfg.gen';
 
 import { APIEditorConfig } from './APIEditor';
 
-export const callApi = (api: APIEditorConfig, isTest = false) => {
+type IsLoadingCallback = (loading: boolean) => void;
+
+export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
   if (api && api.endpoint) {
     // If API endpoint origin matches Grafana origin, don't call it.
     if (requestMatchesGrafanaOrigin(api.endpoint)) {
       appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
+      updateLoadingStateCallback && updateLoadingStateCallback(false);
       return;
     }
     const request = getRequest(api);
@@ -20,15 +23,12 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
       .fetch(request)
       .subscribe({
         error: (error) => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertError, ['Error has occurred: ', JSON.stringify(error)]);
-            console.error(error);
-          }
+          appEvents.emit(AppEvents.alertError, ['An error has occurred: ', JSON.stringify(error)]);
+          updateLoadingStateCallback && updateLoadingStateCallback(false);
         },
         complete: () => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertSuccess, ['Test successful']);
-          }
+          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+          updateLoadingStateCallback && updateLoadingStateCallback(false);
         },
       });
   }
