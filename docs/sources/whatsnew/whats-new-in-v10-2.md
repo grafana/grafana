@@ -60,6 +60,52 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
+### Add dashboard and folder permissions to service accounts
+
+<!-- Jo Guerreiro -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+Service accounts allow you to create a token that can be used to authenticate with Grafana.
+You can use this token to access Grafana's API, as well as dashboards that the service account has access to.
+
+In this release, we've added the ability to assign dashboard and folder permissions to service accounts.
+This means that you can now create a service account that can be used to access a specific dashboard and nothing else.
+
+This is useful if you want to limit the access service accounts have to your Grafana instance.
+
+### Add data source permissions to service accounts
+
+<!-- Jo Guerreiro -->
+
+_Available in Grafana Enterprise_
+
+Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources.
+However, without proper access controls, service accounts can pose a security risk to your Grafana instance.
+
+To address this issue, Grafana 10.2 introduces the ability to assign data source permissions to service accounts.
+With this feature, you can create a service account that has access to a specific data source and nothing else.
+This is useful in scenarios where you want to limit the access service accounts have to your Grafana instance.
+
+For example, imagine you have a team of developers who need to access a specific data source to develop a new feature.
+Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
+This way, you can limit the potential damage that could be caused by a compromised service account.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Data source permissions in 10.2" >}}
+
+### Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
+
 ### Permission validation on custom role creation and update
 
 <!-- Mihaly Gyongyosi -->
@@ -67,6 +113,8 @@ The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3
 _Generally available in Grafana Enterprise_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
+
+<<<<<<< HEAD
 
 ## Dashboards and visualizations
 
@@ -86,4 +134,56 @@ Now, you can automatically calculate the min or max of each visualized field bas
 {{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated per field" >}}
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
-This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+# This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+
+## Transformations
+
+As our work on improving the user experience of transforming data continues, we've also been adding new capabilities to transformations.
+
+### Support for dashboard variables in transformations
+
+<!-- Oscar Kilhed, Victor Marin -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+
+{{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
+
+### New modes for the Add field from calculation transformation
+
+<!-- Victor Marin -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+The **Add field from calculation** transformation has a couple updates.
+
+**Unary operations** is a new mode that lets you apply mathematical operations to a field. The currently supported operations are:
+
+- **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+- **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+- **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+- **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+- **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+
+{{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
+
+**Row index** can now show the index as a percentage.
+
+Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
+
+### New transformation: Format string
+
+<!-- Solomon Dubock, BI Squad -->
+
+_Experimental in Grafana Open Source and Enterprise_
+
+With the new **Format string** transformation, you can manipulate string fields to improve how they're displayed. The currently supported operations are:
+
+- **Change case** changes the case of your string to upper case, lower case, sentence case, title case, pascal case, camel case, or snake case.
+- **Trim** removes white space characters at the start and end of your string.
+- **Substring** selects a part of your string field.
+
+Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
+
+> > > > > > > docs/whats-new-v10.2
