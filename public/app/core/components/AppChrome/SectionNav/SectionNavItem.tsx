@@ -12,6 +12,9 @@ export interface Props {
   level?: number;
 }
 
+// max level depth to render
+const MAX_DEPTH = 2;
+
 export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -23,7 +26,7 @@ export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: level < 2 && (Boolean(children?.length) || item.isSection),
+    [styles.isSection]: level < MAX_DEPTH && (Boolean(children?.length) || item.isSection),
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
   });
@@ -57,7 +60,8 @@ export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props
         {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
-      {level < 2 && children?.map((child, index) => <SectionNavItem item={child} key={index} level={level + 1} />)}
+      {level < MAX_DEPTH &&
+        children?.map((child, index) => <SectionNavItem item={child} key={index} level={level + 1} />)}
     </>
   );
 }
