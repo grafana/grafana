@@ -21,7 +21,10 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
-export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
+export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType?: string): number | undefined {
+  if (!widgetType) {
+    widgetType = 'text';
+  }
   const newPanel: Partial<PanelModel> = {
     type: widgetType,
     title: 'Widget title',

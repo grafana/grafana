@@ -8,7 +8,12 @@ import { Button, useStyles2, Text } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
+import {
+  onAddLibraryPanel,
+  onCreateNewPanel,
+  onCreateNewWidgetPanel,
+  onImportDashboard,
+} from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -75,8 +80,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                     fill="outline"
                     data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
                     onClick={() => {
+                      const id = onCreateNewWidgetPanel(dashboard, initialDatasource);
                       reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
-                      locationService.partial({ addWidget: true });
+                      locationService.partial({ editPanel: id });
                     }}
                     disabled={!canCreate}
                   >

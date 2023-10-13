@@ -10,6 +10,7 @@ import {
   onAddLibraryPanel,
   onCreateNewPanel,
   onCreateNewRow,
+  onCreateNewWidgetPanel,
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
@@ -44,8 +45,10 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
           label={t('dashboard.add-menu.widget', 'Widget')}
           onClick={() => {
+            const id = onCreateNewWidgetPanel(dashboard);
             reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_widget' });
-            locationService.partial({ addWidget: true });
+            locationService.partial({ editPanel: id });
+            // locationService.partial({ addWidget: true });
           }}
         />
       )}
