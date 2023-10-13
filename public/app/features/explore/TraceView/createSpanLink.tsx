@@ -17,7 +17,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { validateInterval, validateIntervalRegex } from 'app/core/components/IntervalInput/validation';
+import { isValidInterval, validateIntervalRegex } from 'app/core/components/IntervalInput/validation';
 import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -549,7 +549,7 @@ function getTimeRangeFromSpan(
 }
 
 function isValidTimeRange(timeRange: string) {
-  return timeRange !== '0' && !validateInterval(timeRange, validateIntervalRegex);
+  return timeRange !== '0' && isValidInterval(timeRange, validateIntervalRegex);
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query

@@ -3,7 +3,7 @@ import { useDebounce } from 'react-use';
 
 import { InlineField, Input } from '@grafana/ui';
 
-import { validateInterval, validateIntervalRegex } from './validation';
+import { isValidInterval, validateIntervalRegex } from './validation';
 
 interface Props {
   value: string;
@@ -29,13 +29,13 @@ interface FieldProps {
 
 export const IntervalInput = (props: Props) => {
   const validationRegex = props.validationRegex || validateIntervalRegex;
-  const [intervalIsInvalid, setIntervalIsInvalid] = useState(() => {
-    return props.value ? validateInterval(props.value, validationRegex) : false;
+  const [intervalIsValid, setIntervalIsValid] = useState(() => {
+    return props.value ? isValidInterval(props.value, validationRegex) : true;
   });
 
   useDebounce(
     () => {
-      setIntervalIsInvalid(validateInterval(props.value, validationRegex));
+      setIntervalIsValid(isValidInterval(props.value, validationRegex));
     },
     500,
     [props.value]
@@ -44,7 +44,7 @@ export const IntervalInput = (props: Props) => {
   const fieldProps: FieldProps = {
     labelWidth: 26,
     disabled: props.disabled ?? false,
-    invalid: intervalIsInvalid,
+    invalid: !intervalIsValid,
     error: props.isInvalidError,
   };
   if (props.label) {
