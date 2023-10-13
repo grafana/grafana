@@ -289,7 +289,7 @@ require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana
 
 require github.com/grafana/pyroscope/api v0.2.0 // @grafana/observability-traces-and-profiling
 
-require github.com/apache/arrow/go/v13 v13.0.0
+require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
 require (
 	cloud.google.com/go v0.110.6 // indirect
