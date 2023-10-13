@@ -55,6 +55,10 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
+	// FlagExploreContentOutline
+	// Content outline sidebar
+	FlagExploreContentOutline = "exploreContentOutline"
+
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -474,6 +478,10 @@ const (
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagFormatString
+	// Enable format string transformer
+	FlagFormatString = "formatString"
 
 	// FlagTransformationsVariableSupport
 	// Allows using variables in transformations

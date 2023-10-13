@@ -44,8 +44,9 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -84,6 +85,14 @@ var (
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -816,6 +825,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
 		},
 		{
 			Name:         "transformationsVariableSupport",
