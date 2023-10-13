@@ -177,6 +177,8 @@ Refer to the [Google Authentication documentation](https://grafana.com/docs/graf
 
 <!-- Heitor Tashiro Sergent -->
 
+September 19, 2023
+
 _Generally available in Grafana Cloud_
 
 You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug failed performance tests and proactively improve application reliability.
@@ -195,6 +197,8 @@ To learn more, refer to the [Integration with Grafana Cloud Traces documentation
 <!-- Miguel Palau -->
 <!-- OSS, Enterprise -->
 
+September 25, 2023
+
 _Generally available in Grafana Cloud_
 
 The SAP HANA® data source now supports tenant databases connections by using the database name and/or instance number. For more information, refer to [SAP HANA® configuration](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
@@ -206,6 +210,8 @@ The SAP HANA® data source now supports tenant databases connections by using th
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
 
+August 31, 2023
+
 _Generally available in Grafana Cloud_
 
 The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
@@ -216,6 +222,8 @@ The Datadog data source now supports log aggregation. This feature helps aggrega
 
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
+
+September 1, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -230,6 +238,8 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 <!-- Fabrizio Casati -->
 <!-- OSS, Enterprise -->
 
+August 24, 2023
+
 _Generally available in Grafana Cloud_
 
 The Tempo data source now supports query-type template variables. With this update, you can create variables for which the values are a list of attribute names or attribute values seen on spans received by Tempo.
@@ -243,6 +253,8 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 <!-- Fabrizio Casati -->
 <!-- OSS, Enterprise -->
 
+October 3, 2023
+
 _Generally available in Grafana Cloud_
 
 The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
@@ -253,6 +265,8 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceq
 
 <!-- Brenda Muir -->
 <!-- OSS, Enterprise -->
+
+September 13, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -277,6 +291,8 @@ To learn more, refer to the following video demo.
 
 <!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
 <!-- Cloud -->
+
+October 24, 2023
 
 _Available in private preview in Grafana Cloud_
 
