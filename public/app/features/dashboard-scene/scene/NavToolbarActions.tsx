@@ -22,6 +22,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   if (uid) {
     toolbarActions.push(
       <DashNavButton
+        key="share-dashboard-button"
         tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
         icon="share-alt"
         iconSize="lg"
@@ -33,7 +34,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
     toolbarActions.push(
       <DashNavButton
-        key="button-scenes"
+        key="view-in-old-dashboard-button"
         tooltip={'View as dashboard'}
         icon="apps"
         onClick={() => locationService.push(`/d/${uid}`)}

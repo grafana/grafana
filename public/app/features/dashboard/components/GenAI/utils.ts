@@ -1,4 +1,5 @@
 import { DashboardModel, PanelModel } from '../../state';
+import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 import { openai } from './llms';
@@ -41,14 +42,26 @@ export const sanitizeReply = (reply: string) => {
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: string;
-  migrationChanges: string;
+  // userChanges: string;
+  // migrationChanges: string;
+  userChanges: Diffs;
+  migrationChanges: Diffs;
 } {
-  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
+  // const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
+  // Re-parse the dashboard to remove functions and other non-serializable properties
+  const currentDashboard = dashboard.getSaveModelClone();
+  const originalDashboard = dashboard.getOriginalDashboard()!;
+
+  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
+
+  // return {
+  //   userChanges: userDiff,
+  //   migrationChanges: migrationDiff,
+  // };
 
   return {
-    userChanges: userDiff,
-    migrationChanges: migrationDiff,
+    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
+    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
   };
 }
 
