@@ -116,13 +116,17 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       alignItems: 'center',
       display: 'flex',
     },
-    showExpandButton &&
-      level !== 0 && {
-        marginLeft: theme.spacing(1.5),
+    level === 0 &&
+      showExpandButton && {
+        marginLeft: theme.spacing(2),
       },
-    !showExpandButton &&
-      level === 0 && {
-        marginLeft: theme.spacing(4.5),
+    level === 0 &&
+      !showExpandButton && {
+        marginLeft: theme.spacing(6.25),
+      },
+    level !== 0 &&
+      showExpandButton && {
+        marginLeft: theme.spacing(1.5),
       },
     !showExpandButton &&
       level === 1 && {
@@ -137,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       display: 'grid',
       fontSize: theme.typography.pxToRem(14),
       gridAutoFlow: 'column',
-      gridTemplateColumns: `${theme.spacing(7)} auto`,
+      gridTemplateColumns: `${theme.spacing(4)} auto`,
       alignItems: 'center',
       fontWeight: theme.typography.fontWeightMedium,
     },
