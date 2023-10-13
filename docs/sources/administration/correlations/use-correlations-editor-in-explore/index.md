@@ -20,21 +20,21 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 ## Create a new correlation
 
 1. Go to Explore.
-1. Select test data source.
+1. Select `test data source`.
 1. Click on "+ Add" dropdown and select "Add correlation" button.
 1. Explore is now in Correlations Editor mode indicated by a blue border.
-1. Select scenario: CSV File.
-1. Select file: population_by_state.csv.
-1. Note that each cell is a link that you can use to create a new correlation.
+1. Select scenario: `CSV File`.
+1. Select file: `population_by_state.csv`.
+1. Note that each cell is a link that you can click on to start creating a new correlation.
 
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-source-10.2.png" max-width="600px" caption="Selecting the source of a correlation" >}}
 
-1. Create new correlation that attaches a data link in State column: click on any cell in "State" column, e.g. "California".
-1. Explore opens in split view. Select the same data source as on the left.
+1. Create new correlation that attaches a data link in the `State` column: click on any cell in the `State` column, e.g. "California".
+1. Explore opens in split view. Select the same data source you selected in the left pane.
 1. The helper above the query editor contains all available variables you can use the target query. Variables contain all data fields (table columns) from the selected row.
-1. Select Scenario: "CSV Metric Values".
-1. In Query Editor's "String Input" field provide variables with population values for each year: `${1980},${2000},${2020}`. This will generate a graph using variable values.
-1. In Query Editor's "Alias" field provide variable containing state name: `${State}`
+1. Select Scenario: `CSV Metric Values`.
+1. In the Query Editor's `String Input` field provide variables with population values for each year: `${1980},${2000},${2020}`. This will generate a graph using variable values.
+1. In the Query Editor's `Alias` field, write `${State}`
 
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-target-10.2.png" max-width="600px" caption="Setting up the target of a correlation" >}}
 
