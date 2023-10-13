@@ -29,15 +29,11 @@ export default function AdminFeatureTogglesPage() {
         <div className={styles.icon}>
           <Icon name="exclamation-triangle" />
         </div>
-        {featureMgmtState?.restartRequired || updateSuccessful ? (
-          <span className={styles.message}>
-            A restart is pending for your Grafana instance to apply the latest feature toggle changes
-          </span>
-        ) : (
-          <span className={styles.message}>
-            Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes
-          </span>
-        )}
+        <span className={styles.message}>
+          {featureMgmtState?.restartRequired || updateSuccessful
+            ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
+            : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
+        </span>
       </div>
     );
   };
