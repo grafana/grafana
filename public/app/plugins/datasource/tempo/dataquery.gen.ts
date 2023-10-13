@@ -31,7 +31,7 @@ export interface TempoQuery extends common.DataQuery {
   /**
    * TraceQL query or trace ID
    */
-  query: string;
+  query?: string;
   /**
    * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */

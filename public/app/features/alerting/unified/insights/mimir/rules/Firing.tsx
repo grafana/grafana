@@ -23,7 +23,7 @@ export function getFiringCloudAlertsScene(datasource: DataSourceRef, panelTitle:
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of currently firing alert rule instances')
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,

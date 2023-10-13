@@ -190,19 +190,26 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				return
 			}
 
-			if targetOrgID != GlobalOrgID && userCopy.Permissions[targetOrgID] == nil {
-				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
-				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
-				if err != nil {
-					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-					return
+			if userCopy.OrgID != targetOrgID {
+				switch targetOrgID {
+				case GlobalOrgID:
+					userCopy.OrgID = GlobalOrgID
+					userCopy.OrgRole = org.RoleNone
+					userCopy.OrgName = ""
+				default:
+					query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
+					queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+					if err != nil {
+						deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+						return
+					}
+					userCopy.OrgID = queryResult.OrgID
+					userCopy.OrgName = queryResult.OrgName
+					userCopy.OrgRole = queryResult.OrgRole
 				}
-				userCopy.OrgID = queryResult.OrgID
-				userCopy.OrgName = queryResult.OrgName
-				userCopy.OrgRole = queryResult.OrgRole
 			}
 
-			if userCopy.Permissions[userCopy.OrgID] == nil {
+			if userCopy.Permissions[targetOrgID] == nil {
 				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -212,7 +219,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				if userCopy.Permissions == nil {
 					userCopy.Permissions = make(map[int64]map[string][]string)
 				}
-				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
+				userCopy.Permissions[targetOrgID] = GroupScopesByAction(permissions)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
@@ -221,7 +228,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
+			c.SignedInUser.Permissions[targetOrgID] = userCopy.Permissions[targetOrgID]
 		}
 	}
 }

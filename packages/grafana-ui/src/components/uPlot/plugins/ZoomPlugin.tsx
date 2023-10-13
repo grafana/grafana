@@ -11,6 +11,8 @@ interface ZoomPluginProps {
 // min px width that triggers zoom
 const MIN_ZOOM_DIST = 5;
 
+const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
+
 /**
  * @alpha
  */
@@ -21,9 +23,13 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
 
     if (withZoomY) {
       config.addHook('init', (u) => {
-        u.root!.addEventListener(
+        u.over!.addEventListener(
           'mousedown',
           (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
             if (e.button === 0 && e.shiftKey) {
               yDrag = true;
 
@@ -45,6 +51,10 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
     }
 
     config.addHook('setSelect', (u) => {
+      if (!maybeZoomAction(u.cursor!.event)) {
+        return;
+      }
+
       if (withZoomY && yDrag) {
         if (u.select.height >= MIN_ZOOM_DIST) {
           for (let key in u.scales!) {
@@ -76,6 +86,10 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
     config.setCursor({
       bind: {
         dblclick: (u) => () => {
+          if (!maybeZoomAction(u.cursor!.event)) {
+            return null;
+          }
+
           if (withZoomY && yZoomed) {
             for (let key in u.scales!) {
               if (key !== 'x') {

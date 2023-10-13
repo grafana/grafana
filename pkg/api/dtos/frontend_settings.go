@@ -93,27 +93,27 @@ type FrontendSettingsFooterConfigItemDTO struct {
 }
 
 // Enterprise-only
-type FrontendSettingsPublicDashboardFooterConfigDTO struct {
-	Hide bool   `json:"hide"`
-	Text string `json:"text"`
-	Logo string `json:"logo"`
-	Link string `json:"link"`
+type FrontendSettingsPublicDashboardConfigDTO struct {
+	FooterHide     bool   `json:"footerHide"`
+	FooterText     string `json:"footerText"`
+	FooterLogo     string `json:"footerLogo"`
+	FooterLink     string `json:"footerLink"`
+	HeaderLogoHide bool   `json:"headerLogoHide"`
 }
 
 // Enterprise-only
 type FrontendSettingsWhitelabelingDTO struct {
-	Links      []FrontendSettingsFooterConfigItemDTO `json:"links"`
-	LoginTitle string                                `json:"loginTitle"`
-
-	AppTitle              *string                                         `json:"appTitle,omitempty"`
-	LoginLogo             *string                                         `json:"loginLogo,omitempty"`
-	MenuLogo              *string                                         `json:"menuLogo,omitempty"`
-	LoginBackground       *string                                         `json:"loginBackground,omitempty"`
-	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
-	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
-	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
-	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
-	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
+	Links              []FrontendSettingsFooterConfigItemDTO     `json:"links"`
+	LoginTitle         string                                    `json:"loginTitle"`
+	AppTitle           *string                                   `json:"appTitle,omitempty"`
+	LoginLogo          *string                                   `json:"loginLogo,omitempty"`
+	MenuLogo           *string                                   `json:"menuLogo,omitempty"`
+	LoginBackground    *string                                   `json:"loginBackground,omitempty"`
+	LoginSubtitle      *string                                   `json:"loginSubtitle,omitempty"`
+	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
+	LoadingLogo        *string                                   `json:"loadingLogo,omitempty"`
+	HideEdition        *bool                                     `json:"hideEdition,omitempty"`
+	PublicDashboard    *FrontendSettingsPublicDashboardConfigDTO `json:"publicDashboard,omitempty"`
 }
 
 type FrontendSettingsSqlConnectionLimitsDTO struct {

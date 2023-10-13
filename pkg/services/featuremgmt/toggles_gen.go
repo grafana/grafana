@@ -55,6 +55,10 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
+	// FlagExploreContentOutline
+	// Content outline sidebar
+	FlagExploreContentOutline = "exploreContentOutline"
+
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -144,7 +148,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -195,14 +199,6 @@ const (
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
-	// FlagTimeSeriesTable
-	// Enable time series table transformer &amp; sparkline cell type
-	FlagTimeSeriesTable = "timeSeriesTable"
-
-	// FlagPrometheusResourceBrowserCache
-	// Displays browser caching options in Prometheus data source configuration
-	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
-
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -212,7 +208,7 @@ const (
 	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
@@ -264,7 +260,7 @@ const (
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
 	// FlagUseCachingService
-	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	// When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.
 	FlagUseCachingService = "useCachingService"
 
 	// FlagEnableElasticsearchBackendQuerying
@@ -407,10 +403,6 @@ const (
 	// Enable InfluxDB SQL query language support with new querying UI
 	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 
-	// FlagNoBasicRole
-	// Enables a new role that has no permissions by default
-	FlagNoBasicRole = "noBasicRole"
-
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
@@ -438,6 +430,10 @@ const (
 	// FlagRequestInstrumentationStatusSource
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLibraryPanelRBAC
+	// Enables RBAC support for library panels
+	FlagLibraryPanelRBAC = "libraryPanelRBAC"
 
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
@@ -475,13 +471,17 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagAlertingModifiedExport
-	// Enables using UI for provisioned rules modification and export
-	FlagAlertingModifiedExport = "alertingModifiedExport"
+	// FlagPanelMonitoring
+	// Enables panel monitoring through logs and measurements
+	FlagPanelMonitoring = "panelMonitoring"
 
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagFormatString
+	// Enable format string transformer
+	FlagFormatString = "formatString"
 
 	// FlagTransformationsVariableSupport
 	// Allows using variables in transformations
@@ -490,4 +490,24 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
+
+	// FlagNavAdminSubsections
+	// Splits the administration section of the nav tree into subsections
+	FlagNavAdminSubsections = "navAdminSubsections"
+
+	// FlagRecoveryThreshold
+	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
+	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagAwsDatasourcesNewFormStyling
+	// Applies new form styling for configuration and query editors in AWS plugins
+	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
+
+	// FlagCachingOptimizeSerializationMemoryUsage
+	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
+	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
+
+	// FlagPanelTitleSearchInV1
+	// Enable searching for dashboards using panel title in search v1
+	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 )

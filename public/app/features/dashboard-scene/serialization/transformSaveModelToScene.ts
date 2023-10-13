@@ -1,4 +1,5 @@
 import {
+  AdHocVariableModel,
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
@@ -29,8 +30,8 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
+  AdHocFilterSet,
 } from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -41,8 +42,11 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
+
+import { getAngularPanelMigrationHandler } from './angularMigration';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -53,11 +57,8 @@ export interface DashboardLoaderState {
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: true,
+    autoMigrateOldPanels: false,
   });
-
-  // Setting for built-in annotations query to run
-  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -150,11 +151,24 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
+  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
+          if (isAdhocVariable(v)) {
+            filtersSets.push(
+              new AdHocFilterSet({
+                name: v.name,
+                datasource: v.datasource,
+                filters: v.filters ?? [],
+                baseFilters: v.baseFilters ?? [],
+              })
+            );
+            return null;
+          }
+
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -183,8 +197,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   const controls: SceneObject[] = [
-    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
+    ...filtersSets,
+    new SceneDataLayerControls(),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({
@@ -196,6 +211,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
+    id: oldModel.id,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -322,6 +338,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    extendPanelContext: setDashboardPanelContext,
+    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
   if (panel.timeFrom || panel.timeShift) {
@@ -364,3 +382,4 @@ const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type 
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
 const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
