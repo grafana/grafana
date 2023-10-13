@@ -3,14 +3,14 @@ import React, { useCallback, useMemo } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, LoadingState } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { changeQueries, runQueries } from './state/query';
+import { cancelQueries, changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
@@ -45,8 +45,11 @@ export const QueryRows = ({ exploreId }: Props) => {
   const eventBridge = useSelector(getEventBridge);
 
   const onRunQueries = useCallback(() => {
+    if (queryResponse.state === LoadingState.Streaming) {
+      dispatch(cancelQueries(exploreId));
+    }
     dispatch(runQueries({ exploreId }));
-  }, [dispatch, exploreId]);
+  }, [dispatch, exploreId, queryResponse.state]);
 
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {
