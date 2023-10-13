@@ -80,7 +80,7 @@ Creating correlations has just become easier. Try out our new correlations edito
 
 To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, contact Grafana Support.
 
-## Create correlations for provisioned data sources
+### Create correlations for provisioned data sources
 
 <!-- Piotr Jamróz -->
 
