@@ -57,7 +57,7 @@ export interface DashboardLoaderState {
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: true,
+    autoMigrateOldPanels: false,
   });
 
   // Setting for built-in annotations query to run
