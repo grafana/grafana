@@ -20,6 +20,7 @@ export interface Props {
 const typeOptions: Array<{ value: Query['queryType']; label: string; description: string }> = [
   { value: 'metrics', label: 'Metric', description: 'Return aggregated metrics' },
   { value: 'profile', label: 'Profile', description: 'Return profile' },
+  { value: 'spanProfile', label: 'Span Profile', description: 'Return profile' },
   { value: 'both', label: 'Both', description: 'Return both metric and profile data' },
 ];
 
@@ -89,6 +90,16 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                   return c.value!;
                 });
                 onQueryChange({ ...query, groupBy: changes });
+              }}
+            />
+          </EditorField>
+          <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
+            <Input
+              value={query.spanSelector || ['']}
+              type="string"
+              placeholder="64f170a96d5f537095"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({ ...query, spanSelector: [event.currentTarget.value] });
               }}
             />
           </EditorField>
