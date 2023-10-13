@@ -53,17 +53,19 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               value={query.limit}
             />
           </EditorField>
-          <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
-            <AutoSizeInput
-              className="width-4"
-              placeholder="auto"
-              type="number"
-              min={1}
-              defaultValue={query.spss || DEFAULT_SPSS}
-              onCommitChange={onSpssChange}
-              value={query.spss}
-            />
-          </EditorField>
+          {(!query.tableType || query.tableType === SearchTableType.Traces) && (
+            <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
+              <AutoSizeInput
+                className="width-4"
+                placeholder="auto"
+                type="number"
+                min={1}
+                defaultValue={query.spss || DEFAULT_SPSS}
+                onCommitChange={onSpssChange}
+                value={query.spss}
+              />
+            </EditorField>
+          )}
           <EditorField label="Table Format" tooltip="How the query data should be displayed in the results table">
             <RadioButtonGroup
               options={[
