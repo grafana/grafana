@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -99,7 +101,7 @@ func TestServiceStart(t *testing.T) {
 			ctx := context.Background()
 			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.migrationStore.SetMigrated(ctx, tt.isMigrationRun)
+			err := service.migrationStore.SetMigrated(ctx, anyOrg, tt.isMigrationRun)
 			require.NoError(t, err)
 
 			err = service.Run(ctx)
@@ -109,7 +111,7 @@ func TestServiceStart(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.migrationStore.IsMigrated(ctx)
+			migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, migrated)
 		})
@@ -557,6 +559,34 @@ func TestDashAlertMigration(t *testing.T) {
 				expectedFolder = generalFolder
 			}
 			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
+		}
+	})
+
+	t.Run("deduplicate names in same org and folder", func(t *testing.T) {
+		defer teardown(t, x, service)
+		da1 := createAlert(t, 1, 1, 1, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1), nil)
+		da2 := createAlert(t, 1, 1, 2, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1), nil)
+		alerts := []*models.Alert{da1, da2}
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+		}
+		setupLegacyAlertsTables(t, x, nil, alerts, folders, dashes)
+		err := service.Run(context.Background())
+		require.NoError(t, err)
+
+		rules := getAlertRules(t, x, 1)
+		require.Len(t, rules, 2)
+
+		for _, ar := range rules {
+			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
+			if *ar.PanelID == 2 {
+				parts := strings.SplitN(ar.Title, "_", 2)
+				require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
+				require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+			}
 		}
 	})
 }

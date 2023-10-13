@@ -51,14 +51,14 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
 		err = service.Run(ctx)
 		require.NoError(t, err)
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
+		migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, true, migrated)
 
@@ -98,7 +98,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
+		migrated, err = service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, false, migrated)
 
@@ -132,14 +132,14 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
 		err = service.Run(ctx)
 		require.NoError(t, err)
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
+		migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, true, migrated)
 
@@ -168,7 +168,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
+		migrated, err = service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, false, migrated)
 
@@ -210,14 +210,14 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
 		err = service.Run(ctx)
 		require.NoError(t, err)
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
+		migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, true, migrated)
 
@@ -262,7 +262,7 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
+		migrated, err = service.migrationStore.IsMigrated(ctx, anyOrg)
 		require.NoError(t, err)
 		require.Equal(t, false, migrated)
 

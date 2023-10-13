@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *MigrationService {
+func NewTestMigrationService(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *MigrationService {
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}

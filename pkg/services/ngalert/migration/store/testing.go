@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,9 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -36,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
+func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
 	if cfg.UnifiedAlerting.BaseInterval == 0 {
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
@@ -92,8 +93,9 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		log:                            &logtest.Fake{},
 		cfg:                            cfg,
 		store:                          sqlStore,
-		kv:                             fakes.NewFakeKVStore(t),
+		kv:                             kvstore.ProvideService(sqlStore),
 		alertingStore:                  &alertingStore,
+		encryptionService:              fake_secrets.NewFakeSecretsService(),
 		dashboardService:               dashboardService,
 		folderService:                  folderService,
 		dataSourceCache:                datasourceService.ProvideCacheService(cache, sqlStore, datasourceGuardian.ProvideGuardian()),
@@ -102,5 +104,6 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		orgService:                     orgService,
 		legacyAlertStore:               legacyAlertStore,
 		legacyAlertNotificationService: legacyalerting.ProvideService(sqlStore, encryptionservice.SetupTestService(t), nil),
+		dashboardProvisioningService:   dashboardService,
 	}
 }

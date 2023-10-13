@@ -3,12 +3,14 @@ package migration
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -20,6 +22,47 @@ const (
 	// notification channel.
 	ContactLabelTemplate = "__contacts_%s__"
 )
+
+func (om *OrgMigration) cleanupDashboardAlerts(ctx context.Context, du *migmodels.DashboardUpgrade) error {
+	// Cleanup.
+	if du != nil {
+		ruleUids := make([]string, 0, len(du.MigratedAlerts))
+		for _, pair := range du.MigratedAlerts {
+			if pair.AlertRule != nil && pair.AlertRule.UID != "" {
+				ruleUids = append(ruleUids, pair.AlertRule.UID)
+			}
+		}
+		if len(ruleUids) > 0 {
+			err := om.migrationStore.DeleteAlertRules(ctx, om.orgID, ruleUids...)
+			if err != nil {
+				return fmt.Errorf("delete existing alert rules: %w", err)
+			}
+		}
+
+		// Delete newly created folder if one exists and there should be nothing in it.
+		if du.NewFolderUID != "" && du.NewFolderUID != du.FolderUID {
+			// Remove uid from summary.createdFolders
+			found := false
+			for i, uid := range om.state.CreatedFolders {
+				if uid == du.NewFolderUID {
+					om.state.CreatedFolders = append(om.state.CreatedFolders[:i], om.state.CreatedFolders[i+1:]...)
+					found = true
+					break
+				}
+			}
+			// Safety check to prevent deleting folders that were not created by this migration.
+			if found {
+				err := om.migrationStore.DeleteFolders(ctx, om.orgID, du.NewFolderUID)
+				if err != nil && !errors.Is(err, migrationStore.ErrFolderNotDeleted) {
+					return fmt.Errorf("delete folder '%s': %w", du.NewFolderName, err)
+				}
+				om.log.Warn("Failed to delete folder during cleanup: %w", err)
+				du.AddWarning(err.Error())
+			}
+		}
+	}
+	return nil
+}
 
 func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []string) (map[string]string, map[string]string) {
 	tags := alert.GetTagsFromSettings()

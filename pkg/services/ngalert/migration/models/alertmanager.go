@@ -15,17 +15,44 @@ const UseLegacyChannelsLabel = "__use_legacy_channels__"
 
 // Alertmanager is a helper struct for creating migrated alertmanager configs.
 type Alertmanager struct {
-	Config      *apiModels.PostableUserConfig
+	config      *apiModels.PostableUserConfig
 	legacyRoute *apiModels.Route
 }
 
-// NewAlertmanager creates a new Alertmanager.
-func NewAlertmanager() *Alertmanager {
-	c, r := createBaseConfig()
-	return &Alertmanager{
-		Config:      c,
-		legacyRoute: r,
+// FromPostableUserConfig creates an Alertmanager from a PostableUserConfig.
+func FromPostableUserConfig(config *apiModels.PostableUserConfig) *Alertmanager {
+	if config == nil {
+		// No existing amConfig created from a previous migration.
+		c, r := createBaseConfig()
+		return &Alertmanager{
+			config:      c,
+			legacyRoute: r,
+		}
+	} else if config.AlertmanagerConfig.Route == nil {
+		// No existing base route created from a previous migration.
+		defaultRoute, nestedLegacyChannelRoute := createDefaultRoute()
+		config.AlertmanagerConfig.Route = defaultRoute
+		return &Alertmanager{
+			config:      config,
+			legacyRoute: nestedLegacyChannelRoute,
+		}
 	}
+	return &Alertmanager{
+		config:      config,
+		legacyRoute: getOrCreateNestedLegacyRoute(config),
+	}
+}
+
+// CleanConfig removes the nested legacy route from the base PostableUserConfig if it's empty.
+func (am *Alertmanager) CleanConfig() *apiModels.PostableUserConfig {
+	for i, r := range am.config.AlertmanagerConfig.Route.Routes {
+		if isNestedLegacyRoute(r) && len(r.Routes) == 0 {
+			// Remove empty nested route.
+			am.config.AlertmanagerConfig.Route.Routes = append(am.config.AlertmanagerConfig.Route.Routes[:i], am.config.AlertmanagerConfig.Route.Routes[i+1:]...)
+			return am.config
+		}
+	}
+	return am.config
 }
 
 // AddRoute adds a route to the alertmanager config.
@@ -35,7 +62,61 @@ func (am *Alertmanager) AddRoute(route *apiModels.Route) {
 
 // AddReceiver adds a receiver to the alertmanager config.
 func (am *Alertmanager) AddReceiver(recv *apiModels.PostableApiReceiver) {
-	am.Config.AlertmanagerConfig.Receivers = append(am.Config.AlertmanagerConfig.Receivers, recv)
+	am.config.AlertmanagerConfig.Receivers = append(am.config.AlertmanagerConfig.Receivers, recv)
+}
+
+// CleanupReceiversAndRoutes removes receivers and routes for channels that are being replaced.
+func (am *Alertmanager) CleanupReceiversAndRoutes(pairs ...*ContactPair) {
+	// Find all previously migrated ContactPairs for these channels.
+	upgradesToReplace := make(map[string]*ContactPointUpgrade)
+	for _, pair := range pairs {
+		if pair.ContactPointUpgrade != nil && pair.ContactPointUpgrade.Name != "" {
+			upgradesToReplace[pair.ContactPointUpgrade.Name] = pair.ContactPointUpgrade
+		}
+	}
+
+	// Remove receivers for channels that are being replaced.
+	var keptReceivers []*apiModels.PostableApiReceiver
+	for _, recv := range am.config.AlertmanagerConfig.Receivers {
+		if _, ok := upgradesToReplace[recv.Name]; !ok {
+			keptReceivers = append(keptReceivers, recv)
+		} else {
+			// Don't keep receiver and remove all nested routes that reference it.
+			// This will fail validation if the user has created other routes that reference this receiver.
+			// In that case, they must manually delete the added routes.
+			am.removeRoutesForReceiver(recv.Name)
+		}
+	}
+	am.config.AlertmanagerConfig.Receivers = keptReceivers
+}
+
+// removeRoutesForReceiver removes all routes that reference the given receiver.
+func (am *Alertmanager) removeRoutesForReceiver(recv string) {
+	var keptRoutes []*apiModels.Route
+	for i, route := range am.legacyRoute.Routes {
+		if route.Receiver != recv {
+			keptRoutes = append(keptRoutes, am.legacyRoute.Routes[i])
+		}
+	}
+	am.legacyRoute.Routes = keptRoutes
+}
+
+// getOrCreateNestedLegacyRoute finds or creates the nested route for migrated channels.
+func getOrCreateNestedLegacyRoute(config *apiModels.PostableUserConfig) *apiModels.Route {
+	for _, r := range config.AlertmanagerConfig.Route.Routes {
+		if isNestedLegacyRoute(r) {
+			return r
+		}
+	}
+	nestedLegacyChannelRoute := createNestedLegacyRoute()
+	// Add new nested route as the first of the top-level routes.
+	config.AlertmanagerConfig.Route.Routes = append([]*apiModels.Route{nestedLegacyChannelRoute}, config.AlertmanagerConfig.Route.Routes...)
+	return nestedLegacyChannelRoute
+}
+
+// isNestedLegacyRoute checks whether a route is the nested legacy route for migrated channels.
+func isNestedLegacyRoute(r *apiModels.Route) bool {
+	return len(r.ObjectMatchers) == 1 && r.ObjectMatchers[0].Name == UseLegacyChannelsLabel
 }
 
 // createBaseConfig creates an alertmanager config with the root-level route, default receiver, and nested route
