@@ -2,7 +2,6 @@ package grafanaapiserver
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
@@ -17,8 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authentication/authenticator"
-	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -93,9 +90,6 @@ type service struct {
 	config     *config
 	restConfig *clientrest.Config
 
-	stopCh    chan struct{}
-	stoppedCh chan error
-
 	rr       routing.RouteRegister
 	handler  web.Handler
 	builders []APIGroupBuilder
@@ -111,7 +105,6 @@ func ProvideService(
 	s := &service{
 		config:     newConfig(cfg),
 		rr:         rr,
-		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
 		authorizer: authz,
 	}
@@ -170,6 +163,7 @@ func (s *service) start(ctx context.Context) error {
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
+	o.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
@@ -179,25 +173,6 @@ func (s *service) start(ctx context.Context) error {
 	o.CoreAPI = nil
 	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
 		o.Etcd = nil
-	}
-
-	// Get the util to get the paths to pre-generated certs
-	certUtil := certgenerator.CertUtil{
-		K8sDataPath: s.config.dataPath,
-	}
-
-	if err := certUtil.InitializeCACertPKI(); err != nil {
-		return err
-	}
-
-	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
-		return err
-	}
-
-	o.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
-	o.SecureServing.ServerCert.CertKey = options.CertKey{
-		CertFile: certUtil.APIServerCertFile(),
-		KeyFile:  certUtil.APIServerKeyFile(),
 	}
 
 	if err := o.Validate(); len(err) > 0 {
@@ -210,18 +185,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	rootCert, err := certUtil.GetK8sCACert()
-	if err != nil {
-		return err
-	}
-
-	authenticator, err := newAuthenticator(rootCert)
-	if err != nil {
-		return err
-	}
-
 	serverConfig.Authorization.Authorizer = s.authorizer
-	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
 	builders := s.builders
@@ -281,11 +245,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.LoopbackClientConfig
-	err = s.writeKubeConfiguration(s.restConfig)
-	if err != nil {
-		return err
-	}
-
 	prepared := server.PrepareRun()
 
 	// TODO: this is a hack. see note in ProvideService
@@ -304,22 +263,11 @@ func (s *service) start(ctx context.Context) error {
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
 
-	go func() {
-		s.stoppedCh <- prepared.Run(s.stopCh)
-	}()
-
 	return nil
 }
 
 func (s *service) running(ctx context.Context) error {
-	select {
-	case err := <-s.stoppedCh:
-		if err != nil {
-			return err
-		}
-	case <-ctx.Done():
-		close(s.stopCh)
-	}
+	<-ctx.Done()
 	return nil
 }
 
@@ -351,23 +299,4 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 		AuthInfos:      authinfos,
 	}
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
-}
-
-func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
-	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
-		UsernameHeaders:     []string{"X-Remote-User"},
-		GroupHeaders:        []string{"X-Remote-Group"},
-		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
-	}
-
-	requestHeaderAuthenticator, err := headerrequest.New(
-		reqHeaderOptions.UsernameHeaders,
-		reqHeaderOptions.GroupHeaders,
-		reqHeaderOptions.ExtraHeaderPrefixes,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return requestHeaderAuthenticator, nil
 }
