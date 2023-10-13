@@ -1358,6 +1358,12 @@ describe('addAdhocFilters', () => {
       expect(ds.addAdHocFilters('  ')).toBe('test:"test1"');
     });
 
+    it('should not fail if the filter value is a number', () => {
+      // @ts-expect-error
+      jest.mocked(templateSrvMock.getAdhocFilters).mockReturnValue([{ key: 'key', operator: '=', value: 1, condition: '' }]);
+      expect(ds.addAdHocFilters('')).toBe('key:"1"');
+    });
+
     it.each(['=', '!=', '=~', '!~', '>', '<', '', ''])(`should properly build queries with '%s' filters`, (operator: string) => {
       jest.mocked(templateSrvMock.getAdhocFilters).mockReturnValue([{ key: 'key', operator, value: 'value', condition: '' }]);
 

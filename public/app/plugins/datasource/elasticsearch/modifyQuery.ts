@@ -88,6 +88,12 @@ export function addAddHocFilter(query: string, filter: AdHocVariableFilter): str
     return query;
   }
 
+  filter = {
+    ...filter,
+    // Type is defined as string, but it can be a number.
+    value: filter.value.toString(),
+  };
+
   const equalityFilters = ['=', '!='];
   if (equalityFilters.includes(filter.operator)) {
     return addFilterToQuery(query, filter.key, filter.value, filter.operator === '=' ? '' : '-');
