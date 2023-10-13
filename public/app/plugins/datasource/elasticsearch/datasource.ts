@@ -57,9 +57,8 @@ import {
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
 import {
+  addAddHocFilter,
   addFilterToQuery,
-  escapeFilter,
-  escapeFilterValue,
   queryHasFilter,
   removeFilterFromQuery,
 } from './modifyQuery';
@@ -955,35 +954,11 @@ export class ElasticDatasource
     if (adhocFilters.length === 0) {
       return query;
     }
-    const esFilters = adhocFilters.map((filter) => {
-      let { key, operator, value } = filter;
-      if (!key || !value) {
-        return;
-      }
-      /**
-       * Keys and values in ad hoc filters may contain characters such as
-       * colons, which needs to be escaped.
-       */
-      key = escapeFilter(key);
-      value = escapeFilterValue(value);
-      switch (operator) {
-        case '=':
-          return `${key}:"${value}"`;
-        case '!=':
-          return `-${key}:"${value}"`;
-        case '=~':
-          return `${key}:/${value}/`;
-        case '!~':
-          return `-${key}:/${value}/`;
-        case '>':
-          return `${key}:>${value}`;
-        case '<':
-          return `${key}:<${value}`;
-      }
-      return;
+    let finalQuery = query;
+    adhocFilters.forEach((filter) => {
+      finalQuery = addAddHocFilter(finalQuery, filter);
     });
 
-    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
     return finalQuery;
   }
 
