@@ -44,7 +44,7 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 ## Test a newly created correlations
 
 1. Once the correlation is saved Explore will exit Correlations Editor automatically and re-rerun the query in the left pane.
-1. Click on a state name. Note how values from the row are inserted into the query on the right and the graph changes using the values for each row. The query is rerun with updates values everytime you click on a state name.
+1. Click on a state name. Note how values from the row are inserted into the query on the right and the graph changes using the values for each row. The query is rerun with updates values every time you click on a state name.
 
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-example-link-10.2.png" max-width="600px" caption="Result of clicking on a data link" >}}
 
