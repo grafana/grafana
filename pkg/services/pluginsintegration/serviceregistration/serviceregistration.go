@@ -61,7 +61,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	extSvc, err := s.os.SaveExternalService(ctx, registration)
-	if err != nil {
+	if err != nil || extSvc == nil {
 		return nil, err
 	}
 
