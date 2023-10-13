@@ -75,7 +75,7 @@ const ContactPoints = () => {
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
-  const [exportContactPointsSupported, exportContacPointsAllowed] = useAlertmanagerAbility(
+  const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.ExportContactPoint
   );
 
@@ -142,7 +142,7 @@ const ContactPoints = () => {
                             <Button
                               icon="download-alt"
                               variant="secondary"
-                              disabled={!exportContacPointsAllowed}
+                              disabled={!exportContactPointsAllowed}
                               onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
                             >
                               Export all
@@ -259,7 +259,7 @@ export const ContactPoint = ({
         />
         {showFullMetadata ? (
           <div>
-            {receivers?.map((receiver, index) => {
+            {receivers.map((receiver, index) => {
               const diagnostics = receiver[RECEIVER_STATUS_KEY];
               const metadata = receiver[RECEIVER_META_KEY];
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
