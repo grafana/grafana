@@ -33,6 +33,8 @@ This feature is disabled by default. To enable it, file a Support Escalation.
 
 Read more [here](https://grafana.com/docs/grafana/next/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by). 
 
+{{< video-embed src="joeys-video-link-NEEDED" >}}
+
 ## Support for dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
