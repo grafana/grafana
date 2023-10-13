@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export type PyroscopeQueryType = ('metrics' | 'profile' | 'spanProfile' | 'both');
+export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 

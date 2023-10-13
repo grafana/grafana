@@ -11,10 +11,9 @@ package dataquery
 
 // Defines values for PyroscopeQueryType.
 const (
-	PyroscopeQueryTypeBoth        PyroscopeQueryType = "both"
-	PyroscopeQueryTypeMetrics     PyroscopeQueryType = "metrics"
-	PyroscopeQueryTypeProfile     PyroscopeQueryType = "profile"
-	PyroscopeQueryTypeSpanProfile PyroscopeQueryType = "spanProfile"
+	PyroscopeQueryTypeBoth    PyroscopeQueryType = "both"
+	PyroscopeQueryTypeMetrics PyroscopeQueryType = "metrics"
+	PyroscopeQueryTypeProfile PyroscopeQueryType = "profile"
 )
 
 // These are the common properties available to all queries in all datasources.

@@ -13,7 +13,7 @@ import * as common from '@grafana/schema';
 
 export const pluginVersion = "10.2.0-pre";
 
-export type PyroscopeQueryType = ('metrics' | 'profile' | 'spanProfile' | 'both');
+export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
