@@ -84,6 +84,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			return "", err
 		}
 
+		if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
+			s.logger.Error("Failed to add id token to cache", "error", err)
+		}
+
 		return token, nil
 	})
 
@@ -91,13 +95,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		return "", err
 	}
 
-	token := result.(string)
-
-	if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
-		s.logger.Error("Failed to add id token to cache", "error", err)
-	}
-
-	return token, nil
+	return result.(string), nil
 }
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
