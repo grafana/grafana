@@ -44,14 +44,14 @@ const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) =
 
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const updateLoadingState = (loading: boolean) => {
+  const updateLoadingStateCallback = (loading: boolean) => {
     setIsLoading(loading);
   };
 
   const onClick = () => {
     if (data?.api && data?.api?.endpoint) {
       setIsLoading(true);
-      callApi(data.api, updateLoadingState);
+      callApi(data.api, updateLoadingStateCallback);
     }
   };
 
