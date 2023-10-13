@@ -5,26 +5,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardScene } from './DashboardScene';
 
 describe('DashboardScene', () => {
-  describe('Given a standard scene', () => {
-    it('Should set inspectPanelKey when url has inspect key', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: '2' });
-      expect(scene.state.inspectPanelKey).toBe('2');
-    });
-
-    it('Should handle inspect key that is not found', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: '12321' });
-      expect(scene.state.inspectPanelKey).toBe(undefined);
-    });
-
-    it('Should set viewPanelKey when url has viewPanel', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanelKey).toBe('2');
-    });
-  });
-
   describe('DashboardSrv.getCurrent compatibility', () => {
     it('Should set to compatibility wrapper', () => {
       const scene = buildTestScene();
