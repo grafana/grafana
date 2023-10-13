@@ -91,6 +91,10 @@ func (s *Service) DBMigration(db db.DB) {
 		s.log.Error("DB migration on folder service start failed.")
 	}
 
+	if !s.features.IsEnabled(featuremgmt.FlagFolderUIDMigration) {
+		return
+	}
+
 	if err := db.RunAndRegisterCodeMigration(context.Background(), folder_uid_migration_id, func(sess *sqlstore.DBSession) error {
 		// populate folder_uid column
 		// for dashboards the source of truth is the dashboard table
