@@ -32,7 +32,7 @@ Please make sure you have setup up [a test data source]({{< relref "/docs/grafan
 1. Create new correlation that attaches a data link in the `State` column: click on any cell in the `State` column, e.g. "California". 
 1. Explore opens in split view. Select the same data source as on the left.
 1. The helper above the query editor contains all available variables you can use the target query. Variables contain all data fields (table columns) from the selected row.
-1. Select Scenario: "CSV Metric Values".
+1. Select Scenario: `CSV Metric Values`.
 1. In Query Editor's "String Input" field provide variables with population values for each year: `${1980},${2000},${2020}`. This will generate a graph using variable values.
 1. In Query Editor's "Alias" field provide variable containing state name: `${State}`
 
