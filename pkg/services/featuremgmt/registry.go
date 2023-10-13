@@ -325,13 +325,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "timeSeriesTable",
-			Description:  "Enable time series table transformer & sparkline cell type",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        appO11ySquad,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStagePublicPreview,
