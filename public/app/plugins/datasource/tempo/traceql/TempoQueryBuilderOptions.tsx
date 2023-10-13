@@ -34,8 +34,8 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
 
   const collapsedInfoList = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
-    `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
+    `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
   ];
 
   return (
