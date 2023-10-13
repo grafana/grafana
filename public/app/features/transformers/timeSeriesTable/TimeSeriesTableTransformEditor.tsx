@@ -42,6 +42,7 @@ export function TimeSeriesTableTransformEditor({
                 <StatsPicker
                   stats={[options.refIdToStat?.[refId] ?? ReducerID.lastNotNull]}
                   onChange={onSelectStat.bind(null, refId)}
+                  filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
                 />
               </InlineField>
             </InlineFieldRow>
