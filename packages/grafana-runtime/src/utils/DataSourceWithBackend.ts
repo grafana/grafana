@@ -192,8 +192,8 @@ class DataSourceWithBackend<
 
     const body = {
       queries,
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
+      from: range?.from.valueOf().toString(),
+      to: range?.to.valueOf().toString(),
     };
 
     if (config.featureToggles.queryOverLive) {
