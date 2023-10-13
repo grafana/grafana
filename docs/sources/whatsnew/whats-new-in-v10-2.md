@@ -108,7 +108,7 @@ Learn more in the [Add field from calculation documentation](https://grafana.com
 
 <!-- Solomon Dubock, BI Squad -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Experimental in Grafana Open Source and Enterprise_
 
 With the new **Format string** transformation, you can manipulate string fields to improve how they're displayed. The currently supported operations are:
 
