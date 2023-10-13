@@ -1,6 +1,14 @@
 import React from 'react';
 
-import { FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame, Field } from '@grafana/data';
+import {
+  FieldType,
+  FieldConfig,
+  getMinMaxAndDelta,
+  FieldSparkline,
+  isDataFrame,
+  Field,
+  isDataFrameWithValue,
+} from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -12,12 +20,16 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
+import { useTheme2 } from '../../themes';
+import { measureText } from '../../utils';
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { TableCellProps } from './types';
-import { getCellOptions } from './utils';
+import { getAlignmentFactor, getCellOptions } from './utils';
 
-export const defaultSparklineCellConfig: GraphFieldConfig = {
+export const defaultSparklineCellConfig: TableSparklineCellOptions = {
+  type: TableCellDisplayMode.Sparkline,
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Smooth,
   lineWidth: 1,
@@ -26,11 +38,13 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
   pointSize: 2,
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
+  hideValue: false,
 };
 
 export const SparklineCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps, timeRange } = props;
   const sparkline = getSparkline(cell.value);
+  const theme = useTheme2();
 
   if (!sparkline) {
     return (
@@ -70,15 +84,42 @@ export const SparklineCell = (props: TableCellProps) => {
     },
   };
 
+  const hideValue = field.config.custom?.cellOptions?.hideValue;
+  let valueWidth = 0;
+  let valueElement: React.ReactNode = null;
+  if (!hideValue) {
+    const value = isDataFrameWithValue(cell.value) ? cell.value.value : null;
+    const displayValue = field.display!(value);
+    const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
+
+    valueWidth =
+      measureText(`${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`, 16).width +
+      theme.spacing.gridSize;
+
+    valueElement = (
+      <FormattedValueDisplay
+        style={{
+          width: `${valueWidth - theme.spacing.gridSize}px`,
+          textAlign: 'right',
+          marginRight: theme.spacing(1),
+        }}
+        value={displayValue}
+      />
+    );
+  }
+
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      <Sparkline
-        width={innerWidth}
-        height={tableStyles.cellHeightInner}
-        sparkline={sparkline}
-        config={config}
-        theme={tableStyles.theme}
-      />
+      {valueElement}
+      <div>
+        <Sparkline
+          width={innerWidth - valueWidth}
+          height={tableStyles.cellHeightInner}
+          sparkline={sparkline}
+          config={config}
+          theme={tableStyles.theme}
+        />
+      </div>
     </div>
   );
 };

@@ -468,6 +468,12 @@ const (
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
+
+	// Library Panel actions
+	ActionLibraryPanelsCreate = "library.panels:create"
+	ActionLibraryPanelsRead   = "library.panels:read"
+	ActionLibraryPanelsWrite  = "library.panels:write"
+	ActionLibraryPanelsDelete = "library.panels:delete"
 )
 
 var (

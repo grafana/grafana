@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 interface GrafanaPoliciesPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
@@ -45,7 +45,7 @@ export const GrafanaPoliciesExporter = ({ onClose }: GrafanaPoliciesExporterProp
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={jsonAndYamlGrafanaExportProviders}
+      formatProviders={Object.values(allGrafanaExportProviders)}
     >
       <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
