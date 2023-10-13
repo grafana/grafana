@@ -34,7 +34,7 @@ type Service struct {
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*PyroscopeDatasource, error) {
-	logger.Debug("getInstance called")
+	logger.Debug("getInstance called", "PluginID", pluginCtx.PluginID)
 
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
@@ -69,7 +69,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	response, err := i.QueryData(ctx, req)
-	logger.Debug("QueryData succeeded")
+	if err != nil {
+		logger.Debug("QueryData errored", "error", err)
+	} else {
+		logger.Debug("QueryData succeeded")
+	}
 	return response, err
 }
 
@@ -82,9 +86,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	call := i.CallResource(ctx, req, sender)
-	logger.Debug("CallResource succeeded")
-	return call
+	err = i.CallResource(ctx, req, sender)
+	if err != nil {
+		logger.Debug("CallResource errored", "error", err)
+	} else {
+		logger.Debug("CallResource succeeded")
+	}
+	return err
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -96,9 +104,13 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, err
 	}
 
-	check, err := i.CheckHealth(ctx, req)
-	logger.Debug("CheckHealth succeeded")
-	return check, err
+	response, err := i.CheckHealth(ctx, req)
+	if err != nil {
+		logger.Debug("CheckHealth errored", "error", err)
+	} else {
+		logger.Debug("CheckHealth succeeded")
+	}
+	return response, err
 }
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -110,9 +122,13 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		return nil, err
 	}
 
-	stream, err := i.SubscribeStream(ctx, req)
-	logger.Debug("SubscribeStream succeeded")
-	return stream, err
+	response, err := i.SubscribeStream(ctx, req)
+	if err != nil {
+		logger.Debug("SubscribeStream errored", "error", err)
+	} else {
+		logger.Debug("SubscribeStream succeeded")
+	}
+	return response, err
 }
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
@@ -124,9 +140,13 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return err
 	}
 
-	stream := i.RunStream(ctx, req, sender)
-	logger.Debug("RunStream succeeded")
-	return stream
+	err = i.RunStream(ctx, req, sender)
+	if err != nil {
+		logger.Debug("RunStream errored", "error", err)
+	} else {
+		logger.Debug("RunStream succeeded")
+	}
+	return err
 }
 
 // PublishStream is called when a client sends a message to the stream.
@@ -139,7 +159,11 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 		return nil, err
 	}
 
-	stream, err := i.PublishStream(ctx, req)
-	logger.Debug("PublishStream succeeded")
-	return stream, err
+	response, err := i.PublishStream(ctx, req)
+	if err != nil {
+		logger.Debug("PublishStream errored", "error", err)
+	} else {
+		logger.Debug("PublishStream succeeded")
+	}
+	return response, err
 }
