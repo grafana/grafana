@@ -582,7 +582,7 @@ export class DashboardModel implements TimeModel {
     });
   }
 
-  clearUnsavedChanges() {
+  clearUnsavedChanges(savedModel: Dashboard) {
     for (const panel of this.panels) {
       panel.configRev = 0;
     }
@@ -593,7 +593,7 @@ export class DashboardModel implements TimeModel {
       this.panelInEdit.configRev = 0;
     }
 
-    this.originalDashboard = this.getSaveModelClone();
+    this.originalDashboard = savedModel;
   }
 
   hasUnsavedChanges() {
