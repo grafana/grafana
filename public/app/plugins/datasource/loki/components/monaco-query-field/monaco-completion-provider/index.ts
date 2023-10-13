@@ -147,14 +147,26 @@ export const calculateRange = (
     }
   }
 
-  // Otherwise we want the range to be calculated as the cursor position, as we want to insert the autocomplete, instead of overwriting existing text
-  // The cursor position is the length of the wordUntil
+  if (situation && situation.type === 'IN_LABEL_SELECTOR_WITH_LABEL_NAME') {
+    // Otherwise we want the range to be calculated as the cursor position, as we want to insert the autocomplete, instead of overwriting existing text
+    // The cursor position is the length of the wordUntil
+    return word != null
+      ? monaco.Range.lift({
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: wordUntil.endColumn,
+          endColumn: wordUntil.endColumn,
+        })
+      : monaco.Range.fromPositions(position);
+  }
+
+  // And for all other non-label cases, we want to use the word start and end column
   return word != null
     ? monaco.Range.lift({
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
-        startColumn: wordUntil.endColumn,
-        endColumn: wordUntil.endColumn,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
       })
     : monaco.Range.fromPositions(position);
 };
