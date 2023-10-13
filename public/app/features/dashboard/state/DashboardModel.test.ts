@@ -755,7 +755,6 @@ describe('DashboardModel', () => {
             {
               name: 'Server',
               type: 'query',
-              datasource: null,
               refresh: 1,
               options: [],
               current: {
@@ -823,7 +822,6 @@ describe('DashboardModel', () => {
             {
               name: 'Filter',
               type: 'adhoc',
-              datasource: null,
               refresh: 0,
               filters: [
                 {
