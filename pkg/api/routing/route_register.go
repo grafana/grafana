@@ -171,8 +171,9 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handl
 
 	if rr.debug && rr.log != nil {
 		// Look twice up the stack as this is a private method called by public methods outside of this package.
-		_, file, line, _ := runtime.Caller(2)
-		rr.log.Debug("register route", "method", method, "pattern", fullPattern, "file", file, "line", line)
+		if _, file, line, ok := runtime.Caller(2); ok {
+			rr.log.Debug("register route", "method", method, "pattern", fullPattern, "file", file, "line", line)
+		}
 	}
 
 	rr.routes = append(rr.routes, route{
