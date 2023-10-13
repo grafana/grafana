@@ -412,10 +412,12 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
+	// nolint:staticcheck
 	if cmd.FolderUID != "" || cmd.FolderID != 0 {
 		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        c.SignedInUser.GetOrgID(),
-			UID:          &cmd.FolderUID,
+			OrgID: c.SignedInUser.GetOrgID(),
+			UID:   &cmd.FolderUID,
+			// nolint:staticcheck
 			ID:           &cmd.FolderID,
 			SignedInUser: c.SignedInUser,
 		})
@@ -425,6 +427,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			}
 			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
 		}
+		// nolint:staticcheck
 		cmd.FolderID = folder.ID
 		cmd.FolderUID = folder.UID
 	}
@@ -1075,6 +1078,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.UID)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	// nolint:staticcheck
 	saveCmd.FolderID = dash.FolderID
 
 	return hs.postDashboard(c, saveCmd)
