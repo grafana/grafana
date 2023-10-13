@@ -502,4 +502,8 @@ const (
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins
 	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
+
+	// FlagCostManagementUi
+	// Toggles the display of the new cost management ui plugin
+	FlagCostManagementUi = "costManagementUi"
 )

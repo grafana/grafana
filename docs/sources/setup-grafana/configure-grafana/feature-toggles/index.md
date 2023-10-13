@@ -149,6 +149,7 @@ Experimental features might be changed or removed without prior notice.
 | `navAdminSubsections`                       | Splits the administration section of the nav tree into subsections                                           |
 | `recoveryThreshold`                         | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                     |
 | `awsDatasourcesNewFormStyling`              | Applies new form styling for configuration and query editors in AWS plugins                                  |
+| `costManagementUi`                          | Toggles the display of the new cost management ui plugin                                                     |
 
 ## Development feature toggles
 

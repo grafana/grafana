@@ -866,5 +866,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the new cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
+		},
 	}
 )
