@@ -29,7 +29,7 @@ _Generally Available in Grafana Cloud_
 
 Public dashboards allow you to share your visualizations and insights to a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
 
-{{< video-embed src="/media/</media/docs/grafana/dashboards/public-dashboards-demo.mp4>" >}}
+{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
 ## Distributed tracing in Grafana Cloud k6
 
