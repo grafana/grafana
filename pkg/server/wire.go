@@ -143,6 +143,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
@@ -346,6 +347,7 @@ var wireBasicSet = wire.NewSet(
 	resolver.ProvideEntityReferenceResolver,
 	httpentitystore.ProvideHTTPEntityStore,
 	teamimpl.ProvideService,
+	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
 	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),

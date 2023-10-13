@@ -23,7 +23,7 @@ export function getPausedGrafanaAlertsScene(datasource: DataSourceRef, panelTitl
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of current paused alert rules')
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
