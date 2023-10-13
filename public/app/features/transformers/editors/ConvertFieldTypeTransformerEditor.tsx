@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
@@ -107,7 +107,7 @@ export const ConvertFieldTypeTransformerEditor = ({
     [onChange, options]
   );
 
-  const [enumRows, updateEnumRows] = React.useState<string[]>([]);
+  const [enumRows, updateEnumRows] = useState<string[]>([]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) {
@@ -156,8 +156,17 @@ export const ConvertFieldTypeTransformerEditor = ({
     updateEnumRows([...enumRows, '']);
   };
 
-  const onChangeEnumValue = (index: number, event: React.FormEvent<HTMLInputElement>) => {
-    onChangeEnumMapping(index, event.currentTarget.value);
+  const onChangeEnumValue = (index: number, value: string) => {
+    onChangeEnumMapping(index, value);
+  };
+
+  // This current approach leads to sticky input (not dismissed when clicking outside input, and only through tabbing)
+  // This can be addressed via adding a outside click handler and keeping track of inputRefs of each row
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+  const setEditRow = (index: number, value: string) => {
+    setEditingIndex(index);
+    setEditingValue(value);
   };
 
   return (
@@ -242,17 +251,36 @@ export const ConvertFieldTypeTransformerEditor = ({
                                         <Icon name="draggabledots" size="lg" />
                                       </div>
                                     </td>
-                                    <td>
-                                      <Input type="text" value={value} onChange={(e) => onChangeEnumValue(index, e)} />
-                                    </td>
+                                    {editingIndex === index ? (
+                                      <td>
+                                        <Input
+                                          type="text"
+                                          value={editingValue}
+                                          onChange={(event) => setEditingValue(event.currentTarget.value)}
+                                          onBlur={() => {
+                                            setEditingIndex(null);
+                                            onChangeEnumValue(index, editingValue);
+                                          }}
+                                        />
+                                      </td>
+                                    ) : (
+                                      <td
+                                        onClick={() => setEditRow(index, value)}
+                                        className={styles.clickableTableCell}
+                                      >
+                                        {value}
+                                      </td>
+                                    )}
                                     <td className={styles.textAlignCenter}>
-                                      <IconButton
-                                        name="trash-alt"
-                                        onClick={() => onRemoveEnumRow(index)}
-                                        data-testid="remove-value-mapping"
-                                        aria-label="Delete value mapping"
-                                        tooltip="Delete"
-                                      />
+                                      <HorizontalGroup spacing="sm">
+                                        <IconButton
+                                          name="trash-alt"
+                                          onClick={() => onRemoveEnumRow(index)}
+                                          data-testid="remove-enum-row"
+                                          aria-label="Delete enum row"
+                                          tooltip="Delete"
+                                        />
+                                      </HorizontalGroup>
                                     </td>
                                   </tr>
                                 )}
@@ -320,5 +348,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   textAlignCenter: css({
     textAlign: 'center',
+  }),
+  clickableTableCell: css({
+    cursor: 'pointer',
   }),
 });
