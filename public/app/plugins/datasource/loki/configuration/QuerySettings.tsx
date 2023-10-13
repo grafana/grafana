@@ -41,7 +41,7 @@ export const QuerySettings = (props: Props) => {
           type="number"
           id="loki_config_maxLines"
           value={maxLines}
-          onChange={(event: { currentTarget: { value: string } }) => onMaxLinedChange(event.currentTarget.value)}
+          onChange={(event: React.FormEvent<HTMLInputElement>) => onMaxLinedChange(event.currentTarget.value)}
           width={16}
           placeholder="1000"
           spellCheck={false}
@@ -66,7 +66,7 @@ export const QuerySettings = (props: Props) => {
               type="string"
               id="loki_config_predefinedOperations"
               value={predefinedOperations}
-              onChange={(event: { currentTarget: { value: string } }) =>
+              onChange={(event: React.FormEvent<HTMLInputElement>) =>
                 onPredefinedOperationsChange(event.currentTarget.value)
               }
               width={40}
