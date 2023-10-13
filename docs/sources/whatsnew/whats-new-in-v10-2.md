@@ -67,3 +67,23 @@ The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3
 _Generally available in Grafana Enterprise_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
+
+## Correlations Editor in Explore
+
+<!-- Kristina Durivage -->
+
+_Available in public preview in Grafana_
+
+Creating correlations has just become easier. Check out our new correlations editor inside Explore by selecting the `+ Add > Add correlation` option from the top bar, or from the command palette. The editor shows all possible places where data links can be placed. The editor will guide you through building and testing target queries. For more details please check [the documentation]({{< relref "../administration/correlations/" >}}).
+
+To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
+## Create correlations for provisioned data sources
+
+<!-- Piotr Jamróz -->
+
+_Available in public preview in Grafana_
+
+You can now create correlations either using administration page or provisioning regardless of whether data source was provisioned or not. In previous versions there was a restriction that if a data source was provisioned, the only way to add correlations to it was also with provisioning. It's no longer the case and you can easily create new correlations mixing both methods - using administration page and/or provisioning.
+
+To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
