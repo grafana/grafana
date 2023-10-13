@@ -192,6 +192,6 @@ Learn more in the [Format string documentation](https://grafana.com/docs/grafana
 
 <!-- Alexander Weaver -->
 
-<Availability note>
+_Generally available in Grafana Open Source and Enterprise_
 
 We've added support for the Microsoft Teams contact points when using an external Alertmanager.
