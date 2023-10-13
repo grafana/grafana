@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- OSS, Enterprise -->
 <!-- already in on-prem -->
 
-<Date>
+October 3, 2023
 
 _Available in public preview in Grafana Cloud_
 
@@ -38,7 +38,7 @@ To enable this feature, contact Grafana Support.
 <!-- OSS, Enterprise -->
 <!-- already in on-prem -->
 
-<Date>
+September 13, 2023
 
 _Available in public preview in Grafana Cloud_
 
