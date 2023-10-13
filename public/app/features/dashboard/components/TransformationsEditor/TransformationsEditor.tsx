@@ -591,99 +591,98 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    hide: css`
-      display: none;
-    `,
-    card: css`
-      margin: 0;
-      padding: ${theme.spacing(1)};
-    `,
-    grid: css`
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      grid-auto-rows: 1fr;
-      gap: ${theme.spacing(2)} ${theme.spacing(1)};
-      width: 100%;
-    `,
-    newCard: css`
-      grid-template-rows: min-content 0 1fr 0;
-    `,
-    cardDisabled: css`
-      background-color: rgb(204, 204, 220, 0.045);
-      color: ${theme.colors.text.disabled} !important;
-    `,
+    hide: css({
+      display: 'none',
+    }),
+    card: css({
+      margin: '0',
+      padding: `${theme.spacing(1)}`,
+    }),
+    grid: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+      gridAutoRows: '1fr',
+      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      width: '100%',
+    }),
+    newCard: css({
+      gridTemplateRows: 'min-content 0 1fr 0',
+    }),
+    cardDisabled: css({
+      backgroundColor: 'rgb(204, 204, 220, 0.045)',
+      color: `${theme.colors.text.disabled} !important`,
+    }),
     heading: css`
-      font-weight: 400;
-
-      > button {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: no-wrap;
-      }
+      font-weight: 400,
+      > button: {
+        width: '100%',
+        display: 'flex',
+        justify-content: 'space-between',
+        align-items: 'center',
+        flex-wrap: 'no-wrap',
+      },
     `,
-    description: css`
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    `,
-    image: css`
-      display: block;
-      max-width: 100%;
-      margin-top: ${theme.spacing(2)};
-    `,
-    searchWrapper: css`
-      display: flex;
-      flex-wrap: wrap;
-      column-gap: 27px;
-      row-gap: 16px;
-      width: 100%;
-    `,
-    searchInput: css`
-      flex-grow: 1;
-      width: initial;
-    `,
-    showImages: css`
-      flex-basis: 0;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    `,
-    pickerInformationLine: css`
-      font-size: 16px;
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    pickerInformationLineHighlight: css`
-      vertical-align: middle;
-    `,
-    illustationSwitchLabel: css`
-      white-space: nowrap;
-    `,
-    filterWrapper: css`
-      padding: ${theme.spacing(1)} 0;
-      display: flex;
-      flex-wrap: wrap;
-      row-gap: ${theme.spacing(1)};
-      column-gap: ${theme.spacing(0.5)};
-    `,
-    listInformationLineWrapper: css`
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    `,
-    listInformationLineText: css`
-      font-size: 16px;
-    `,
-    pluginStateInfoWrapper: css`
-      margin-left: 5px;
-    `,
-    cardApplicableInfo: css`
-      position: absolute;
-      bottom: ${theme.spacing(1)};
-      right: ${theme.spacing(1)};
-    `,
+    description: css({
+      fontSize: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    }),
+    image: css({
+      display: 'block',
+      maxEidth: '100%`',
+      marginTop: `${theme.spacing(2)}`,
+    }),
+    searchWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      columnGap: '27px',
+      rowGap: '16px',
+      width: '100%',
+    }),
+    searchInput: css({
+      flexGrow: '1',
+      width: 'initial',
+    }),
+    showImages: css({
+      flexBasis: '0',
+      display: 'flex',
+      gap: '8px',
+      alignItems: 'center',
+    }),
+    pickerInformationLine: css({
+      fontSize: '16px',
+      marginBottom: `${theme.spacing(2)}`,
+    }),
+    pickerInformationLineHighlight: css({
+      verticalAlign: 'middle'
+    }),
+    illustationSwitchLabel: css({
+      whiteSpace: 'nowrap',
+    }),
+    filterWrapper: css({
+      padding: `${theme.spacing(1)} 0`,
+      display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: `${theme.spacing(1)}`,
+      columnGap: `${theme.spacing(0.5)}`,
+    }),
+    listInformationLineWrapper: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '24px',
+    }),
+    listInformationLineText: css({
+      fontSize: '16px',
+    }),
+    pluginStateInfoWrapper: css({
+      marginLeft: '5px',
+    }),
+    cardApplicableInfo: css({
+      position: 'absolute',
+      bottom: `${theme.spacing(1)}`,
+      right: `${theme.spacing(1)}`,
+    }),
   };
 };
 
