@@ -117,6 +117,7 @@ cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,
 externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
+formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
