@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ElementType } from 'react';
+import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
@@ -68,34 +68,35 @@ interface BoxProps {
   element?: ElementType;
 }
 
-export const Box = ({
-  children,
-  margin,
-  marginX,
-  marginY,
-  marginTop,
-  marginBottom,
-  marginLeft,
-  marginRight,
-  padding,
-  paddingX,
-  paddingY,
-  paddingTop,
-  paddingBottom,
-  paddingLeft,
-  paddingRight,
-  display,
-  backgroundColor,
-  grow,
-  shrink,
-  borderColor,
-  borderStyle,
-  borderRadius,
-  justifyContent,
-  alignItems,
-  boxShadow,
-  element,
-}: React.PropsWithChildren<BoxProps>) => {
+export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
+  const {
+    children,
+    margin,
+    marginX,
+    marginY,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    padding,
+    paddingX,
+    paddingY,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    display,
+    backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
+    boxShadow,
+    element,
+  } = props;
   const styles = useStyles2(
     getStyles,
     margin,
@@ -125,8 +126,12 @@ export const Box = ({
   );
   const Element = element ?? 'div';
 
-  return <Element className={styles.root}>{children}</Element>;
-};
+  return (
+    <Element ref={ref} className={styles.root}>
+      {children}
+    </Element>
+  );
+});
 
 Box.displayName = 'Box';
 

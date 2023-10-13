@@ -208,7 +208,9 @@ describe('GenAIButton', () => {
       // The tooltip keeps interactive to be able to click the link
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
-      expect(tooltip).toHaveTextContent('Something went wrong');
+      expect(tooltip).toHaveTextContent(
+        'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+      );
     });
 
     it('should call the onClick callback', async () => {
