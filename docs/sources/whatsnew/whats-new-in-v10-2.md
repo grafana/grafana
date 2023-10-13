@@ -86,6 +86,6 @@ To try out Correlations, enable the `correlations` feature toggle. If you’re u
 
 _Available in public preview in Grafana_
 
-You can now create correlations either using administration page or provisioning regardless of whether data source was provisioned or not. In previous versions there was a restriction that if a data source was provisioned, the only way to add correlations to it was also with provisioning. It's no longer the case and you can easily create new correlations mixing both methods - using administration page and/or provisioning.
+You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
 
 To try out Correlations, enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
