@@ -18,6 +18,37 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Support for dashboard variables in transformations
+
+<!-- Oscar Kilhed, Victor Marin -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Experimental in Grafana Cloud_
+
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations.
+
+We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+
+{{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
+
+## Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
+
 ## Distributed tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->

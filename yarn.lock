@@ -3226,9 +3226,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.15.0":
-  version: 1.17.0
-  resolution: "@grafana/scenes@npm:1.17.0"
+"@grafana/scenes@npm:^1.18.0":
+  version: 1.18.0
+  resolution: "@grafana/scenes@npm:1.18.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3240,7 +3240,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 0bd8603ae59c199c595a45a7bc31e318a1928b18307469bcd5ee5f83c3aaee89c5c27a1341a479440d928505681ab6a2479809a5cac56e8e93ba7acf06adff93
+  checksum: 395e4ef7a01b963df5f3aac3adc2e82c8d409e2679c8ed428137f66ebbbc84570458d1a36db31080622848e86c8e2e82f780e2a1257de0ea61152a41e8650516
   languageName: node
   linkType: hard
 
@@ -3402,10 +3402,10 @@ __metadata:
     react-window: 1.8.9
     rimraf: 5.0.1
     rollup: 2.79.1
+    rollup-plugin-copy: 3.5.0
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.8.1
     sass-loader: 13.3.2
     slate: 0.47.9
@@ -6808,16 +6808,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^4.1.1":
-  version: 4.2.0
-  resolution: "@rollup/pluginutils@npm:4.2.0"
-  dependencies:
-    estree-walker: ^2.0.1
-    picomatch: ^2.2.2
-  checksum: 2e86d9bfb95919727bcba0bbbdbedc98e25a1e51fe3047f18ec6d85e0743d1c73e1c0de3f9fdbd2ff6b90c32f30d4b2706c9e794f3c2e7a80156980081558e2e
-  languageName: node
-  linkType: hard
-
 "@rollup/pluginutils@npm:^5.0.1":
   version: 5.0.2
   resolution: "@rollup/pluginutils@npm:5.0.2"
@@ -8999,10 +8989,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/fs-extra@npm:^8.0.1":
+  version: 8.1.3
+  resolution: "@types/fs-extra@npm:8.1.3"
+  dependencies:
+    "@types/node": "*"
+  checksum: e2800ba91fd7978baaa9d75050836b9a7b8aabc0be27ba57c939ba6568e6ac7a5faae614a2f36370cce4d1cd1b86d4c3a8c95e3f1a5bc4db36292f8181b92ac6
+  languageName: node
+  linkType: hard
+
 "@types/geojson@npm:*":
   version: 7946.0.8
   resolution: "@types/geojson@npm:7946.0.8"
   checksum: 6049a39b025cfe323d5cf87333d87c133ec963cdbd349c49295bee779827ee4b46a3041fd8bd2e7a4b02d6d1e26f3002968875928941bbed08477bfd5f6f9284
+  languageName: node
+  linkType: hard
+
+"@types/glob@npm:^7.1.1":
+  version: 7.2.0
+  resolution: "@types/glob@npm:7.2.0"
+  dependencies:
+    "@types/minimatch": "*"
+    "@types/node": "*"
+  checksum: 6ae717fedfdfdad25f3d5a568323926c64f52ef35897bcac8aca8e19bc50c0bd84630bbd063e5d52078b2137d8e7d3c26eabebd1a2f03ff350fff8a91e79fc19
   languageName: node
   linkType: hard
 
@@ -9255,17 +9264,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/minimatch@npm:*, @types/minimatch@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "@types/minimatch@npm:5.1.2"
+  checksum: 0391a282860c7cb6fe262c12b99564732401bdaa5e395bee9ca323c312c1a0f45efbf34dce974682036e857db59a5c9b1da522f3d6055aeead7097264c8705a8
+  languageName: node
+  linkType: hard
+
 "@types/minimatch@npm:^3.0.3":
   version: 3.0.5
   resolution: "@types/minimatch@npm:3.0.5"
   checksum: c41d136f67231c3131cf1d4ca0b06687f4a322918a3a5adddc87ce90ed9dbd175a3610adee36b106ae68c0b92c637c35e02b58c8a56c424f71d30993ea220b92
-  languageName: node
-  linkType: hard
-
-"@types/minimatch@npm:^5.1.2":
-  version: 5.1.2
-  resolution: "@types/minimatch@npm:5.1.2"
-  checksum: 0391a282860c7cb6fe262c12b99564732401bdaa5e395bee9ca323c312c1a0f45efbf34dce974682036e857db59a5c9b1da522f3d6055aeead7097264c8705a8
   languageName: node
   linkType: hard
 
@@ -12819,6 +12828,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"colorette@npm:^1.1.0":
+  version: 1.4.0
+  resolution: "colorette@npm:1.4.0"
+  checksum: 01c3c16058b182a4ab4c126a65a75faa4d38a20fa7c845090b25453acec6c371bb2c5dceb0a2338511f17902b9d1a9af0cadd8509c9403894b79311032c256c3
+  languageName: node
+  linkType: hard
+
 "colorette@npm:^2.0.10, colorette@npm:^2.0.14, colorette@npm:^2.0.16, colorette@npm:^2.0.19":
   version: 2.0.20
   resolution: "colorette@npm:2.0.20"
@@ -16033,7 +16049,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"estree-walker@npm:^2.0.1, estree-walker@npm:^2.0.2":
+"estree-walker@npm:^2.0.2":
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 6151e6f9828abe2259e57f5fd3761335bb0d2ebd76dc1a01048ccee22fabcfef3c0859300f6d83ff0d1927849368775ec5a6d265dde2f6de5a1be1721cd94efc
@@ -16300,6 +16316,19 @@ __metadata:
     merge2: ^1.3.0
     micromatch: ^4.0.4
   checksum: 2f4708ff112d2b451888129fdd9a0938db88b105b0ddfd043c064e3c4d3e20eed8d7c7615f7565fee660db34ddcf08a2db1bf0ab3c00b87608e4719694642d78
+  languageName: node
+  linkType: hard
+
+"fast-glob@npm:^3.0.3":
+  version: 3.3.1
+  resolution: "fast-glob@npm:3.3.1"
+  dependencies:
+    "@nodelib/fs.stat": ^2.0.2
+    "@nodelib/fs.walk": ^1.2.3
+    glob-parent: ^5.1.2
+    merge2: ^1.3.0
+    micromatch: ^4.0.4
+  checksum: b6f3add6403e02cf3a798bfbb1183d0f6da2afd368f27456010c0bc1f9640aea308243d4cb2c0ab142f618276e65ecb8be1661d7c62a7b4e5ba774b9ce5432e5
   languageName: node
   linkType: hard
 
@@ -17429,6 +17458,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globby@npm:10.0.1":
+  version: 10.0.1
+  resolution: "globby@npm:10.0.1"
+  dependencies:
+    "@types/glob": ^7.1.1
+    array-union: ^2.1.0
+    dir-glob: ^3.0.1
+    fast-glob: ^3.0.3
+    glob: ^7.1.3
+    ignore: ^5.1.1
+    merge2: ^1.2.3
+    slash: ^3.0.0
+  checksum: a16754b93eff58c1070ca9b0a92c69d9d97a184870fbc7dcb1b99a3ff202311ae66dd5662cbec874deaa888d0172024332e14d04d038c23949d5f8e29341dad2
+  languageName: node
+  linkType: hard
+
 "globby@npm:^11.0.1, globby@npm:^11.0.2, globby@npm:^11.1.0":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
@@ -17521,7 +17566,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.7
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.15.0
+    "@grafana/scenes": ^1.18.0
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -18605,7 +18650,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ignore@npm:^5.0.4, ignore@npm:^5.2.0, ignore@npm:^5.2.4":
+"ignore@npm:^5.0.4, ignore@npm:^5.1.1, ignore@npm:^5.2.0, ignore@npm:^5.2.4":
   version: 5.2.4
   resolution: "ignore@npm:5.2.4"
   checksum: 3d4c309c6006e2621659311783eaea7ebcd41fe4ca1d78c91c473157ad6666a57a2df790fe0d07a12300d9aac2888204d7be8d59f9aaf665b1c7fcdb432517ef
@@ -19278,6 +19323,13 @@ __metadata:
   dependencies:
     isobject: ^3.0.1
   checksum: 2a401140cfd86cabe25214956ae2cfee6fbd8186809555cd0e84574f88de7b17abacb2e477a6a658fa54c6083ecbda1e6ae404c7720244cd198903848fca70ca
+  languageName: node
+  linkType: hard
+
+"is-plain-object@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "is-plain-object@npm:3.0.1"
+  checksum: d13fe75db350d4ac669595cdfe0242ae87fcecddf2bca858d2dd443a6ed6eb1f69951fac8c2fa85b16106c6b0d7738fea86c2aca2ecee7fd61de15c1574f2cc5
   languageName: node
   linkType: hard
 
@@ -21498,7 +21550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"merge2@npm:^1.3.0, merge2@npm:^1.4.1":
+"merge2@npm:^1.2.3, merge2@npm:^1.3.0, merge2@npm:^1.4.1":
   version: 1.4.1
   resolution: "merge2@npm:1.4.1"
   checksum: 7268db63ed5169466540b6fb947aec313200bcf6d40c5ab722c22e242f651994619bcd85601602972d3c85bd2cc45a358a4c61937e9f11a061919a1da569b0c2
@@ -26314,6 +26366,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-copy@npm:3.5.0":
+  version: 3.5.0
+  resolution: "rollup-plugin-copy@npm:3.5.0"
+  dependencies:
+    "@types/fs-extra": ^8.0.1
+    colorette: ^1.1.0
+    fs-extra: ^8.1.0
+    globby: 10.0.1
+    is-plain-object: ^3.0.0
+  checksum: 706ba6bd2052b95d1037f12963ff4b50749730f18aefad10544f9574aff7c035c88c5dd9ae1f0c0408cf09862e595a0ea4d68e13c2717addaea2bda3ade0d0e0
+  languageName: node
+  linkType: hard
+
 "rollup-plugin-dts@npm:^5.0.0":
   version: 5.3.0
   resolution: "rollup-plugin-dts@npm:5.3.0"
@@ -26368,17 +26433,6 @@ __metadata:
     "@types/node":
       optional: true
   checksum: bb4909a90f2e824717a67ad146b2cccc40411ee54709ffa548c47c4dfe485bd55039a5850d7640ecb2691de9dc30e3fd57287e4d74331f36fed9c263d86dd4dc
-  languageName: node
-  linkType: hard
-
-"rollup-plugin-svg-import@npm:^1.6.0":
-  version: 1.6.0
-  resolution: "rollup-plugin-svg-import@npm:1.6.0"
-  dependencies:
-    "@rollup/pluginutils": ^4.1.1
-  peerDependencies:
-    rollup: ">=1.29.0 <3.0.0"
-  checksum: 453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
   languageName: node
   linkType: hard
 

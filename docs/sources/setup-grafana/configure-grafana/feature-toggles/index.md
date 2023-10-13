@@ -159,3 +159,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAuth`     | Starts an OAuth2 authentication provider for external services                               |
 | `idForwarding`            | Generate signed id token for identity that can be forwarded to plugins and external services |
 | `externalServiceAccounts` | Automatic service account and token setup for plugins                                        |
+| `panelTitleSearchInV1`    | Enable searching for dashboards using panel title in search v1                               |

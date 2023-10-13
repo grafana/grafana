@@ -213,4 +213,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
     };
   }
+
+  canEditDashboard() {
+    return Boolean(this.state.meta.canEdit || this.state.meta.canMakeEditable);
+  }
 }
