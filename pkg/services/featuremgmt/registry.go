@@ -325,13 +325,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "timeSeriesTable",
-			Description:  "Enable time series table transformer & sparkline cell type",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        appO11ySquad,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStagePublicPreview,
@@ -811,13 +804,6 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
-			Name:         "alertingModifiedExport",
-			Description:  "Enables using UI for provisioned rules modification and export",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
 			Stage:        FeatureStageExperimental,
@@ -873,6 +859,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "panelTitleSearchInV1",
+			Description:     "Enable searching for dashboards using panel title in search v1",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 	}
 )
