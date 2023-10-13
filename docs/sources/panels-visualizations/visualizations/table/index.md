@@ -148,12 +148,9 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-> **Note:** This cell type is available in Grafana 9.5+ as an opt-in beta feature.
-> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-
 Shows value rendered as a sparkline. Requires [time series to table][] data transform.
 
-{{< figure src="/static/img/docs/tables/sparkline.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
 ## Cell value inspect
 

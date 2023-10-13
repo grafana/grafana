@@ -55,6 +55,10 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
+	// FlagExploreContentOutline
+	// Content outline sidebar
+	FlagExploreContentOutline = "exploreContentOutline"
+
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -194,10 +198,6 @@ const (
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
-
-	// FlagTimeSeriesTable
-	// Enable time series table transformer &amp; sparkline cell type
-	FlagTimeSeriesTable = "timeSeriesTable"
 
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
@@ -502,4 +502,8 @@ const (
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
+
+	// FlagPanelTitleSearchInV1
+	// Enable searching for dashboards using panel title in search v1
+	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 )
