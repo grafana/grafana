@@ -1011,21 +1011,21 @@ Use this transformation to format the output of a time field. Output can be form
 ### Format string
 
 {{% admonition type="note" %}}
-This transformation is available in Grafana 10.2+ and can be enabled through the `formatString` feature toggle.
+This transformation is available in Grafana 10.2+ and can be enabled using the `formatString` feature toggle.
 {{% /admonition %}}
 
-Use this transformation to format the output of a string field. Output can be formatted using various ways:
+Use this transformation to format the output of a string field. You can format output in the following ways:
 
-- Upper case - formats the string to have all characters in upper case
-- Lower case - formats the string to have all characters in lower case
-- Sentence case - formats the string to have the first character in upper case
-- Title case - formats the string to have the first character of each word in upper case
-- Pascal case - formats the string to have the first character of each word in upper case and no spaces
-- Camel case - formats the string to have no spaces and the first character of each word in upper case, except the first word
-- Snake case - formats the string to have all characters in lower case and underscores instead of spaces
-- Kebab case - formats the string to have all characters in lower case and dashes instead of spaces
-- Trim - removes all leading and trailing spaces from the string
-- Substring - returns a substring of the string, using the specified start and end positions
+- Upper case - Formats the entire string in upper case characters.
+- Lower case - Formats the entire string in lower case characters.
+- Sentence case - Formats the the first character of the string in upper case.
+- Title case - Formats the first character of each word in the string in upper case.
+- Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't includes spaces between words.
+- Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+- Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+- Trim - Removes all leading and trailing spaces from the string.
+- Substring - Returns a substring of the string, using the specified start and end positions.
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
