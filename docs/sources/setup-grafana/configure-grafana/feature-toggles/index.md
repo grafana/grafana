@@ -129,7 +129,7 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 | `grafanaAPIServerWithExperimentalAPIs`      | Register experimental APIs with the k8s API server                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
-| `traceToProfiles`                           | Enables trace to profiles                                                                                    |
+| `traceToProfiles`                           | Enables linking between traces and profiles                                                                  |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                        |

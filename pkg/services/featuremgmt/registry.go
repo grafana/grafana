@@ -659,7 +659,7 @@ var (
 		},
 		{
 			Name:         "traceToProfiles",
-			Description:  "Enables trace to profiles",
+			Description:  "Enables linking between traces and profiles",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,

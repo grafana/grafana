@@ -388,7 +388,7 @@ const (
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
 	// FlagTraceToProfiles
-	// Enables trace to profiles
+	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
 
 	// FlagPermissionsFilterRemoveSubquery
