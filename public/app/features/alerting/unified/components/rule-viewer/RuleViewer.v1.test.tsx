@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
@@ -57,9 +58,12 @@ const mocks = {
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
-    clone: byRole('button', { name: /^copy$/i }),
-    delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
+  },
+  moreButton: byRole('button', { name: /More/i }),
+  moreButtons: {
+    duplicate: byRole('menuitem', { name: /^Duplicate$/i }),
+    delete: byRole('menuitem', { name: /delete/i }),
   },
   loadingIndicator: byText(/Loading rule/i),
 };
@@ -208,11 +212,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
       await renderRuleViewer();
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.get()).toBeInTheDocument();
     });
 
     it('Should not render Silence button for users wihout the instance create permission', async () => {
@@ -266,9 +273,12 @@ describe('RuleDetails RBAC', () => {
       });
       grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
-      await renderRuleViewer();
+      const user = userEvent.setup();
 
-      expect(ui.actionButtons.clone.get()).toBeInTheDocument();
+      await renderRuleViewer();
+      await user.click(ui.moreButton.get());
+
+      expect(ui.moreButtons.duplicate.get()).toBeInTheDocument();
     });
 
     it('Should NOT render clone button for users without create rule permission', async () => {
@@ -281,10 +291,12 @@ describe('RuleDetails RBAC', () => {
 
       const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
       grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+      const user = userEvent.setup();
 
       await renderRuleViewer();
+      await user.click(ui.moreButton.get());
 
-      expect(ui.actionButtons.clone.query()).not.toBeInTheDocument();
+      expect(ui.moreButtons.duplicate.query()).not.toBeInTheDocument();
     });
   });
   describe('Cloud rules action buttons', () => {
@@ -326,11 +338,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
       await renderRuleViewer();
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.query()).toBeInTheDocument();
     });
   });
 });

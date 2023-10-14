@@ -1,10 +1,14 @@
+import { Monaco, monacoTypes } from '@grafana/ui/src';
+
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
 import { createLokiDatasource } from '../../../mocks';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { getAfterSelectorCompletions, getCompletions } from './completions';
-import { Label, Situation } from './situation';
+import { getSituation, Label, Situation } from './situation';
+
+import { calculateRange } from './index';
 
 jest.mock('../../../querybuilder/operations', () => ({
   explainOperator: () => 'Operator docs',
@@ -796,5 +800,102 @@ describe('IN_LOGFMT completions', () => {
         },
       ]
     `);
+  });
+
+  describe('calculateRange', () => {
+    let monaco: Monaco;
+    beforeEach(() => {
+      monaco = {
+        Range: {
+          lift(range: monacoTypes.Range): monacoTypes.Range {
+            return range;
+          },
+        },
+      } as Monaco;
+    });
+
+    it('getSituation fails to return autocomplete when inserting before any other labels', () => {
+      // Ideally we'd be able to autocomplete in this situation as well, but currently not supported to insert labels at the start.
+      //{^label1="value1",label2="value2"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 1);
+      expect(situation).toBe(null);
+    });
+    it('tests inserting new label before existing label name', () => {
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 17);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_NO_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2"',
+        startColumn: 17,
+        endColumn: 32,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: '',
+        startColumn: 17,
+        endColumn: 17,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 17,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 17,
+        endColumn: 32,
+      });
+    });
+    it('tests inserting new label within existing label value', () => {
+      //{label1="value1",label2="^value2"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value"}', 25);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_WITH_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2"',
+        startColumn: 18,
+        endColumn: 33,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="',
+        startColumn: 18,
+        endColumn: 26,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 25,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 26,
+        endColumn: 32,
+      });
+    });
+    it('tests inserting new label within existing label value containing dashes', () => {
+      // {label1="value1",label2="value2^-value"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2-value"}', 30);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_WITH_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2-value"',
+        startColumn: 18,
+        endColumn: 39,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2',
+        startColumn: 18,
+        endColumn: 32,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 25,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 26,
+        endColumn: 38,
+      });
+    });
   });
 });

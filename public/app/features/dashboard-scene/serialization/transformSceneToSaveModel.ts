@@ -92,6 +92,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     ...defaultDashboard,
     title: state.title,
     uid: state.uid,
+    id: state.id,
     time: {
       from: timeRange.from,
       to: timeRange.to,
@@ -336,7 +337,6 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
         enable: annotation.enable,
         iconColor: annotation.iconColor,
         type: annotation.type,
-        // @ts-expect-error
         builtIn: annotation.builtIn,
         hide: annotation.hide,
         // TODO: Remove when we migrate snapshots to snapshot queries.
