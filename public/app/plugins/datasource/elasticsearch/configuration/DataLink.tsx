@@ -125,6 +125,7 @@ export const DataLink = (props: Props) => {
       <div className={styles.row}>
         <InlineField label="Internal link" labelWidth={12}>
           <InlineSwitch
+            label="Internal link"
             value={showInternalLink || false}
             onChange={() => {
               if (showInternalLink) {
