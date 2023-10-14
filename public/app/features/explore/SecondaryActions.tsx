@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { HorizontalGroup, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -34,32 +35,32 @@ export function SecondaryActions(props: Props) {
         {!props.addQueryRowButtonHidden && (
           <ToolbarButton
             variant="canvas"
-            aria-label="Add query"
+            aria-label={t('explore.history.secondaryActions.queryadd-button-label', 'Add query')}
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"
           >
-            Add query
+            <Trans i18nKey="explore.history.secondaryActions.queryAddButton">Add query</Trans>
           </ToolbarButton>
         )}
         {!props.richHistoryRowButtonHidden && (
           <ToolbarButton
             variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
-            aria-label="Query history"
+            aria-label={t('explore.history.secondaryActions.queryHistory-button-label', 'Query history')}
             onClick={props.onClickRichHistoryButton}
             data-testid={Components.QueryTab.queryHistoryButton}
             icon="history"
           >
-            Query history
+            <Trans i18nKey="explore.history.secondaryActions.queryHistoryButton">Query history</Trans>
           </ToolbarButton>
         )}
         <ToolbarButton
           variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
-          aria-label="Query inspector"
+          aria-label={t('explore.history.secondaryActions.queryinspector-button-label', 'Query inspector')}
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          Query inspector
+          <Trans i18nKey="explore.history.secondaryActions.queryInspectorButton">Query inspector</Trans>
         </ToolbarButton>
       </HorizontalGroup>
     </div>

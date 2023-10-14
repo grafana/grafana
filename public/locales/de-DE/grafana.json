@@ -244,8 +244,6 @@
         "delete-starred-query-confirmation-text": "",
         "delete-yes-text": "",
         "edit-comment-tooltip": "",
-        "enter-key": "",
-        "escape-key": "",
         "loading-text": "",
         "optional-description": "",
         "query-comment-label": "",
@@ -305,6 +303,27 @@
         "showing-queries": "",
         "sort-queries-aria-label": "",
         "sort-queries-placeholder": ""
+      },
+      "rich-history-utils": {
+        "aWeekAgo": "",
+        "daysAgo": "",
+        "defaultFrom": "",
+        "defaultTo": "",
+        "error": {
+          "saving-failed": "",
+          "updateFailed": ""
+        },
+        "today": "",
+        "twoWeeksAgo": "",
+        "yesterday": ""
+      },
+      "secondaryActions": {
+        "queryadd-button-label": "",
+        "queryAddButton": "",
+        "queryHistory-button-label": "",
+        "queryHistoryButton": "",
+        "queryinspector-button-label": "",
+        "queryInspectorButton": ""
       }
     }
   },

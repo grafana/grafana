@@ -62,6 +62,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   } = props;
   const styles = useStyles2(getStyles);
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
+  let optionLabel = selectedOption?.label;
 
   const onDelete = () => {
     appEvents.publish(
@@ -107,7 +108,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           title={t('explore.history.rich-history-settings-tab.history-time-span', 'History time span')}
         >
           <Trans i18nKey="explore.history.rich-history-settings-tab.alert-info">
-            Grafana will keep entries up to {selectedOption?.label}.
+            Grafana will keep entries up to {{ optionLabel }}. Starred entries will not be deleted.
           </Trans>
         </Alert>
       )}

@@ -244,8 +244,6 @@
         "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
         "delete-yes-text": "Đęľęŧę",
         "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-        "enter-key": "Ēŉŧęř",
-        "escape-key": "Ēşčäpę",
         "loading-text": "ľőäđįŉģ...",
         "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
         "query-comment-label": "Qūęřy čőmmęŉŧ",
@@ -276,7 +274,7 @@
         "sort-placeholder": "Ŝőřŧ qūęřįęş þy"
       },
       "rich-history-settings-tab": {
-        "alert-info": "Ğřäƒäŉä ŵįľľ ĸęęp ęŉŧřįęş ūp ŧő {şęľęčŧęđØpŧįőŉ?.ľäþęľ}.",
+        "alert-info": "Ğřäƒäŉä ŵįľľ ĸęęp ęŉŧřįęş ūp ŧő {{optionLabel}}. Ŝŧäřřęđ ęŉŧřįęş ŵįľľ ŉőŧ þę đęľęŧęđ.",
         "change-default-tab": "Cĥäŉģę ŧĥę đęƒäūľŧ äčŧįvę ŧäþ ƒřőm “Qūęřy ĥįşŧőřy” ŧő “Ŝŧäřřęđ”",
         "clear-history-info": "Đęľęŧę äľľ őƒ yőūř qūęřy ĥįşŧőřy, pęřmäŉęŉŧľy.",
         "clear-query-history": "Cľęäř qūęřy ĥįşŧőřy",
@@ -305,6 +303,27 @@
         "showing-queries": "Ŝĥőŵįŉģ {qūęřįęş.ľęŉģŧĥ} őƒ {ŧőŧäľQūęřįęş} <5>Ŀőäđ mőřę</5>",
         "sort-queries-aria-label": "Ŝőřŧ qūęřįęş",
         "sort-queries-placeholder": "Ŝőřŧ qūęřįęş þy"
+      },
+      "rich-history-utils": {
+        "aWeekAgo": "ä ŵęęĸ äģő",
+        "daysAgo": "{{num}} đäyş äģő",
+        "defaultFrom": "ŉőŵ-1ĥ",
+        "defaultTo": "ŉőŵ",
+        "error": {
+          "saving-failed": "Ŝävįŉģ řįčĥ ĥįşŧőřy ƒäįľęđ",
+          "updateFailed": "Ŗįčĥ Ħįşŧőřy ūpđäŧę ƒäįľęđ"
+        },
+        "today": "ŧőđäy",
+        "twoWeeksAgo": "ŧŵő ŵęęĸş äģő",
+        "yesterday": "yęşŧęřđäy"
+      },
+      "secondaryActions": {
+        "queryadd-button-label": "Åđđ qūęřy",
+        "queryAddButton": "Åđđ qūęřy",
+        "queryHistory-button-label": "Qūęřy ĥįşŧőřy",
+        "queryHistoryButton": "Qūęřy ĥįşŧőřy",
+        "queryinspector-button-label": "Qūęřy įŉşpęčŧőř",
+        "queryInspectorButton": "Qūęřy įŉşpęčŧőř"
       }
     }
   },

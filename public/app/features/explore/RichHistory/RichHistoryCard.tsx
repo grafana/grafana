@@ -282,14 +282,11 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
-    if (
-      keyEvent.key === t('explore.history.rich-history-card.enter-key', 'Enter') &&
-      (keyEvent.shiftKey || keyEvent.ctrlKey)
-    ) {
+    if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
       onUpdateComment();
     }
 
-    if (keyEvent.key === t('explore.history.rich-history-card.escape-key', 'Escape')) {
+    if (keyEvent.key === 'Escape') {
       onCancelUpdateComment();
     }
   };

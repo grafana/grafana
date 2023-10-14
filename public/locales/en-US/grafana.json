@@ -244,8 +244,6 @@
         "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
         "delete-yes-text": "Delete",
         "edit-comment-tooltip": "Edit comment",
-        "enter-key": "Enter",
-        "escape-key": "Escape",
         "loading-text": "loading...",
         "optional-description": "An optional description of what the query does.",
         "query-comment-label": "Query comment",
@@ -276,7 +274,7 @@
         "sort-placeholder": "Sort queries by"
       },
       "rich-history-settings-tab": {
-        "alert-info": "Grafana will keep entries up to {selectedOption?.label}.",
+        "alert-info": "Grafana will keep entries up to {{optionLabel}}. Starred entries will not be deleted.",
         "change-default-tab": "Change the default active tab from “Query history” to “Starred”",
         "clear-history-info": "Delete all of your query history, permanently.",
         "clear-query-history": "Clear query history",
@@ -305,6 +303,27 @@
         "showing-queries": "Showing {queries.length} of {totalQueries} <5>Load more</5>",
         "sort-queries-aria-label": "Sort queries",
         "sort-queries-placeholder": "Sort queries by"
+      },
+      "rich-history-utils": {
+        "aWeekAgo": "a week ago",
+        "daysAgo": "{{num}} days ago",
+        "defaultFrom": "now-1h",
+        "defaultTo": "now",
+        "error": {
+          "saving-failed": "Saving rich history failed",
+          "updateFailed": "Rich History update failed"
+        },
+        "today": "today",
+        "twoWeeksAgo": "two weeks ago",
+        "yesterday": "yesterday"
+      },
+      "secondaryActions": {
+        "queryadd-button-label": "Add query",
+        "queryAddButton": "Add query",
+        "queryHistory-button-label": "Query history",
+        "queryHistoryButton": "Query history",
+        "queryinspector-button-label": "Query inspector",
+        "queryInspectorButton": "Query inspector"
       }
     }
   },
