@@ -134,6 +134,23 @@ In this example, using the same data, with the min and max calculated for each i
 
 This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
 
+### Generative AI features for dashboards
+
+// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+
+- **Generate panel titles and descriptions** - You can now generate a title and description for your panel based on the data you've added to it. This is useful when you want to quickly create a panel and don't want to spend time coming up with a title or description.
+- **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
+
+TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+
+TODO: Add image / gif / video
+
 ### New Canvas button element
 
 _Available in public preview in all editions of Grafana_
