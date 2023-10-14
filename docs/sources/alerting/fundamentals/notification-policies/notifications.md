@@ -111,7 +111,7 @@ Should you wish to receive all alerts together in a single notification, you can
 
 ### Timing options
 
-The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about: Group wait, Group interval, and Repeat interval. 
+The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about: Group wait, Group interval, and Repeat interval.
 
 #### Group wait
 
