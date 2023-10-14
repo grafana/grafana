@@ -17867,6 +17867,7 @@ __metadata:
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-forge: ^1.3.1
+    node-gzip: ^1.1.2
     node-notifier: 10.0.1
     ol: 7.4.0
     ol-ext: 4.0.10
@@ -17968,6 +17969,7 @@ __metadata:
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yaml: ^2.0.0
     yargs: ^17.5.1
+    zlib: ^1.0.5
   dependenciesMeta:
     prettier@3.0.0:
       unplugged: true
@@ -22366,6 +22368,13 @@ __metadata:
   bin:
     node-gyp: bin/node-gyp.js
   checksum: a0304728eb56c99ce61b3210b934d247b72bba81658d1d92fc0f125bbdd252bbcdedcd949a09ead9e52d6fa742301945ead06d0e2d67f614f4426b5fc6d30996
+  languageName: node
+  linkType: hard
+
+"node-gzip@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "node-gzip@npm:1.1.2"
+  checksum: 5cefff1ff68fa3279dec3c7e92b0ff93ab4763cfb585985d25d937cf781a42eb78975c7555abf49f2325b45a8cdf19b48bed50eeab23f3630018869572def46b
   languageName: node
   linkType: hard
 
@@ -30600,6 +30609,13 @@ __metadata:
   version: 1.0.0
   resolution: "yocto-queue@npm:1.0.0"
   checksum: 2cac84540f65c64ccc1683c267edce396b26b1e931aa429660aefac8fbe0188167b7aee815a3c22fa59a28a58d898d1a2b1825048f834d8d629f4c2a5d443801
+  languageName: node
+  linkType: hard
+
+"zlib@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "zlib@npm:1.0.5"
+  checksum: 5ef5693a1deb70f65845424f5ecce1ee956e50320aa438126759fd28ec8a25ae876acb3b179b4f5050427e7e0dfcd9e45bdae23f055b2d732bc2fe1dbe4da169
   languageName: node
   linkType: hard
 
