@@ -488,6 +488,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/data-trails',
       chromeless: false,
+      exact: false,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
