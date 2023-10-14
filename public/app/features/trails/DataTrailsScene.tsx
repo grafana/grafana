@@ -6,15 +6,22 @@ import {
   AdHocFilterSet,
   AdHocFiltersVariable,
   EmbeddedScene,
+  getUrlSyncManager,
   MultiValueVariable,
+  PanelBuilders,
   QueryVariable,
   SceneComponentProps,
   SceneControlsSpacer,
+  SceneFlexItem,
+  SceneFlexLayout,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
+  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
+  SceneTimeRange,
+  sceneUtils,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueOption,
@@ -35,6 +42,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     return <scene.Component model={scene} />;
   };
+
+  public onMetricSelected(metricName: string) {
+    const metricsScene = buildInitialMetricScene(this.state.scene, metricName);
+    this.setState({ scene: metricsScene });
+  }
 }
 
 export interface TrailPhaseSelectMetricState extends SceneObjectState {}
@@ -53,23 +65,24 @@ export class TrailPhaseSelectMetric extends SceneObjectBase<TrailPhaseSelectMetr
     return [];
   }
 
+  public onSelectMetric(metricName: string) {
+    if (this.parent?.parent instanceof DataTrail) {
+      this.parent.parent.onMetricSelected(metricName);
+    }
+  }
+
   static Component = ({ model }: SceneComponentProps<TrailPhaseSelectMetric>) => {
     model.useState();
     const options = model.getMetricNames();
 
     return (
       <Flex direction="column" gap={0}>
-        <Flex direction="column" gap={0}>
+        <Flex direction="column" gap={2}>
           <Input placeholder="Search metrics" />
           <div></div>
         </Flex>
         {options.map((option, index) => (
-          <Card
-            key={index}
-            onClick={() => {
-              console.log('click');
-            }}
-          >
+          <Card key={index} onClick={() => model.onSelectMetric(String(option.value))}>
             <Card.Heading>{String(option.value)}</Card.Heading>
           </Card>
         ))}
@@ -83,6 +96,14 @@ export interface DataTrailsAppState extends SceneObjectState {
 }
 
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
+  public constructor(state: Partial<DataTrailsAppState>) {
+    super(state);
+
+    this.addActivationHandler(() => {
+      getUrlSyncManager().initSync(this.state.trail!);
+    });
+  }
+
   static Component = ({ model }: SceneComponentProps<DataTrailsApp>) => {
     const { trail } = model.useState();
     return (
@@ -98,6 +119,7 @@ export const trailsDS = { uid: 'gdev-prometheus', type: 'prometheus' };
 export const dataTrailsApp = new DataTrailsApp({
   trail: new DataTrail({
     scene: new EmbeddedScene({
+      $timeRange: new SceneTimeRange({}),
       $variables: new SceneVariableSet({
         variables: [
           AdHocFiltersVariable.create({
@@ -109,6 +131,8 @@ export const dataTrailsApp = new DataTrailsApp({
             name: 'metricName',
             datasource: trailsDS,
             hide: VariableHide.hideVariable,
+            includeAll: true,
+            defaultToAll: true,
             query: { query: 'label_values({$labelFilters},__name__)', refId: 'A' },
           }),
         ],
@@ -123,3 +147,46 @@ export const dataTrailsApp = new DataTrailsApp({
     }),
   }),
 });
+
+function buildInitialMetricScene(phase1Scene: EmbeddedScene, metric: string) {
+  const clone = sceneUtils.cloneSceneObjectState(phase1Scene.state);
+  return new EmbeddedScene({
+    $variables: new SceneVariableSet({
+      variables: [clone.$variables!.state.variables[0]],
+    }),
+    $timeRange: clone.$timeRange,
+    controls: clone.controls,
+    body: new SceneFlexLayout({
+      children: [
+        new SceneFlexItem({
+          body: PanelBuilders.timeseries()
+            .setTitle(metric)
+            .setData(
+              new SceneQueryRunner({
+                datasource: trailsDS,
+                queries: [
+                  {
+                    refId: 'A',
+                    expr: `sum(rate(${metric}{\${labelFilters}}[$__rate_interval]))`,
+                  },
+                ],
+              })
+            )
+            .build(),
+        }),
+      ],
+    }),
+  });
+}
+
+export interface DataTrailStep extends SceneObjectState {
+  scene: EmbeddedScene;
+}
+
+export class DataTrailStep extends SceneObjectBase<DataTrailState> {
+  static Component = ({ model }: SceneComponentProps<DataTrail>) => {
+    const { scene } = model.useState();
+
+    return <scene.Component model={scene} />;
+  };
+}
