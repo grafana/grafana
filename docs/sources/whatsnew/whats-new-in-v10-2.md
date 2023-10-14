@@ -114,7 +114,6 @@ _Generally available in Grafana Enterprise_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
 
-
 ## Dashboards and visualizations
 
 ### Calculate visualization min/max individually per field
@@ -134,6 +133,56 @@ Now, you can automatically calculate the min or max of each visualized field bas
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
 This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+
+### New Canvas button element
+
+_Available in public preview in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation]({{< relref "../panels-visualizations/visualizations/canvas/#TODO" >}}).
+
+TODO: Add image / gif / video
+
+### Time series visualization now support y-axis zooming
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+
+To learn more, refer to our [Time series documentation]({{< relref "../panels-visualizations/visualizations/TODO" >}}).
+
+TODO: Add image / gif / video
+
+### Visualize enum data in Time series and State timeline visualizations
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
+
+TODO: Add image / gif / video
+
+### Data visualization quality of life improvements
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+TBD / WIP - some high level thoughts
+
+- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
+- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
+- Gauge styling updates?
+- Exemplar tooltip config (if it makes it for 10.2)
+- ?
+
+TODO: Add image / gif / video (maybe not for this one)
 
 ## Transformations
 
