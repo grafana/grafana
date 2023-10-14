@@ -1,10 +1,14 @@
 import React from 'react';
 
+import { getFrameDisplayName } from '@grafana/data';
 import {
+  ConstantVariable,
   EmbeddedScene,
   getUrlSyncManager,
   PanelBuilders,
+  QueryVariable,
   SceneComponentProps,
+  SceneDataNode,
   SceneFlexItem,
   SceneFlexLayout,
   SceneObjectBase,
@@ -16,7 +20,10 @@ import {
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
+import { BreakdownActionButton } from './BreakdownAction';
+import { ByFrameRepeater } from './ByFrameRepeater';
 import { buildSelectMetricScene } from './StepSelectMetric';
+import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
 
 export interface DataTrailState extends SceneObjectState {
   activeScene?: EmbeddedScene;
@@ -47,7 +54,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({ activeScene: this.getSelectMetricScene() });
     } else {
       this.setState({
-        activeScene: buildInitialMetricScene(this.getSelectMetricScene(), this.state.metric),
+        activeScene: buildGraphScene(this.getSelectMetricScene(), this.state.metric),
       });
     }
 
@@ -69,7 +76,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         this.setState({
           metric: values.metric,
-          activeScene: buildInitialMetricScene(this.getSelectMetricScene(), values.metric),
+          activeScene: buildGraphScene(this.getSelectMetricScene(), values.metric),
         });
       }
     } else if (this.state.metric) {
@@ -121,16 +128,24 @@ export const dataTrailsApp = new DataTrailsApp({
   trail: new DataTrail({}),
 });
 
-function buildInitialMetricScene(currentScene: EmbeddedScene, metric: string) {
+function buildGraphScene(currentScene: EmbeddedScene, metric: string) {
   const clone = currentScene.clone();
 
   clone.setState({
     $variables: new SceneVariableSet({
-      variables: [clone.state.$variables!.state.variables[0]],
+      variables: [
+        clone.state.$variables!.state.variables[0],
+        new ConstantVariable({
+          name: 'metric',
+          value: metric,
+        }),
+      ],
     }),
     body: new SceneFlexLayout({
+      direction: 'column',
       children: [
         new SceneFlexItem({
+          minHeight: 400,
           body: PanelBuilders.timeseries()
             .setTitle(metric)
             .setData(
@@ -139,9 +154,16 @@ function buildInitialMetricScene(currentScene: EmbeddedScene, metric: string) {
                 queries: [
                   {
                     refId: 'A',
-                    expr: `sum(rate(${metric}{\${labelFilters}}[$__rate_interval]))`,
+                    expr: 'sum(rate(${metric}{${labelFilters}}[$__rate_interval]))',
                   },
                 ],
+              })
+            )
+            .setHeaderActions(
+              new BreakdownActionButton({
+                isEnabled: false,
+                childIndex: 1,
+                getBreakdownScene: getBreakdownScene,
               })
             )
             .build(),
@@ -151,4 +173,62 @@ function buildInitialMetricScene(currentScene: EmbeddedScene, metric: string) {
   });
 
   return clone;
+}
+
+function getBreakdownScene() {
+  return new SceneFlexItem({
+    body: new VariableTabLayout({
+      $variables: new SceneVariableSet({
+        variables: [
+          new QueryVariable({
+            name: 'groupby',
+            label: 'Group by',
+            datasource: { uid: 'gdev-prometheus' },
+            query: 'label_names(${metric})',
+            value: '',
+            text: '',
+          }),
+        ],
+      }),
+      variableName: 'groupby',
+      $data: new SceneQueryRunner({
+        queries: [
+          {
+            refId: 'A',
+            datasource: { uid: 'gdev-prometheus' },
+            expr: 'sum(rate(${metric}{${labelFilters}}[$__rate_interval])) by($groupby)',
+          },
+        ],
+      }),
+      body: new SplittableLayoutItem({
+        isSplit: false,
+        single: new SceneFlexLayout({
+          direction: 'column',
+          children: [
+            new SceneFlexItem({
+              minHeight: 300,
+              body: PanelBuilders.timeseries().setHoverHeader(true).build(),
+            }),
+          ],
+        }),
+        split: new ByFrameRepeater({
+          body: new SceneFlexLayout({
+            direction: 'column',
+            children: [],
+          }),
+          getLayoutChild: (data, frame, frameIndex) => {
+            return new SceneFlexItem({
+              minHeight: 200,
+              body: PanelBuilders.timeseries()
+                .setTitle(getFrameDisplayName(frame, frameIndex))
+                .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+                .setOption('legend', { showLegend: false })
+                .setCustomFieldConfig('fillOpacity', 9)
+                .build(),
+            });
+          },
+        }),
+      }),
+    }),
+  });
 }
