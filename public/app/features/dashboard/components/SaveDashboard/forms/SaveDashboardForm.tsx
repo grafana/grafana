@@ -100,6 +100,7 @@ export const SaveDashboardForm = ({
                     });
                     setMessage(text);
                   }}
+                  disabled={!saveModel.hasChanges}
                 />
               )}
               <TextArea
