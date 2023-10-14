@@ -281,7 +281,6 @@
     "@reduxjs/toolkit": "1.9.5",
     "@remix-run/router": "^1.5.0",
     "@testing-library/react-hooks": "^8.0.1",
-    "@types/node-gzip": "^1.1.1",
     "@types/react-resizable": "3.0.4",
     "@types/trusted-types": "2.0.3",
     "@types/webpack-env": "1.18.1",
@@ -347,7 +346,6 @@
     "mousetrap-global-bind": "1.1.0",
     "moveable": "0.43.1",
     "node-forge": "^1.3.1",
-    "node-gzip": "^1.1.2",
     "ol": "7.4.0",
     "ol-ext": "4.0.10",
     "papaparse": "5.4.1",
@@ -414,8 +412,7 @@
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.6.2",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz",
-    "zlib": "^1.0.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },
   "resolutions": {
     "underscore": "1.13.6",

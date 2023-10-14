@@ -1,4 +1,3 @@
-import { gzip } from 'node-gzip';
 import React, { useEffect, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
@@ -64,39 +63,6 @@ const LogsQueryEditor = ({
       });
     }
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
-
-  async function getQueryUrl(
-  ): Promise<string> {
-    let queryString = query.azureLogAnalytics?.query || "";
-    const r = await gzip(queryString);
-    const resources = query.azureLogAnalytics?.resources || [];
-
-    let portalUrl = datasource.azureLogAnalyticsDatasource.azurePortalUrl + '/#blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/';
-  
-    const resourcesJson: {Resources: Array<{ResourceID: string}>} = {
-      Resources: [],
-    };
-    for (const resource of resources) {
-      resourcesJson.Resources.push({
-        ResourceID: resource,
-      });
-    }
-  
-    let resourcesMarshalled = JSON.stringify(resourcesJson);
-  
-    const from = timeRange?.from.toISOString();
-    const to = timeRange?.to.toISOString();
-    const timespan = encodeURIComponent(`${from}/${to}`);
-  
-    portalUrl += encodeURIComponent(resourcesMarshalled);
-    portalUrl += '/query/' + encodeURIComponent(r.toString() || '') + '/isQueryBase64Compressed/true/timespan/' + timespan;
-  
-    return portalUrl;
-  }
-
-  const queryAzureMonitor = async () => {
-    window.open(await getQueryUrl(), "_blank")
-  };
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -172,13 +138,6 @@ const LogsQueryEditor = ({
 
             {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
           </EditorFieldGroup>
-          <Button
-            icon='link'
-            type="button"
-            onClick={queryAzureMonitor}
-          >
-            View in Azure Portal
-          </Button>
         </EditorRow>
       </EditorRows>
     </span>
