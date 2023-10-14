@@ -97,13 +97,13 @@ In this way, we can avoid having to specify the same contact point multiple time
 
 ### Grouping
 
-Grouping is an important feature of Grafana Alerting as it allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming and in some cases can negatively impact a first-responders ability to respond to the issue. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
+Grouping is an important feature of Grafana Alerting as it allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming and in some cases can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
-You choose how alerts are grouped together using the Group by option in a notification policy. By default, notification policies in Grafana group alerts by their alert rule using the `alertname` and `grafana_folder` labels (since alert names are not unique across multiple folders). Should you wish to group alert instances by something other than the alert rule, check the grouping to any other combination of labels.
+You choose how alerts are grouped together using the Group by option in a notification policy. By default, notification policies in Grafana group alerts together by alert rule using the `alertname` and `grafana_folder` labels (since alert names are not unique across multiple folders). Should you wish to group alerts by something other than the alert rule, change the grouping to any other combination of labels.
 
 #### Disable grouping
 
-Should you wish to receive every alert as a separate notification, you can do so by grouping by a special label called `...`. This is useful when your alerts are being delivered to an automated system instead of a first-responder, such as an audit logging system for later analysis in post-incident reviews.
+Should you wish to receive every alert as a separate notification, you can do so by grouping by a special label called `...`. This is useful when your alerts are being delivered to an automated system instead of a first-responder.
 
 #### A single group for all alerts
 
@@ -111,7 +111,7 @@ Should you wish to receive all alerts together in a single notification, you can
 
 ### Timing options
 
-The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about. These are called Group wait, Group interval, and Repeat interval. 
+The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about: Group wait, Group interval, and Repeat interval. 
 
 #### Group wait
 
@@ -121,13 +121,13 @@ Group wait is the amount of time Grafana waits before sending the first notifica
 
 #### Group interval
 
-Once the first notification has been sent for a new group of alerts, Grafana starts the Group interval timer. This is the amount of time Grafana waits before sending notifications about changes to the group. For example, another firing alert might have been added to the group while an existing alert might have been resolved. If an alert was too late to be included in the first notification due to Group wait, it will be included in subsequent notifications after Group interval. Once Group interval is over, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
+Once the first notification has been sent for a new group of alerts, Grafana starts the Group interval timer. This is the amount of time Grafana waits before sending notifications about changes to the group. For example, another firing alert might have just been added to the group while an existing alert might have resolved. If an alert was too late to be included in the first notification due to Group wait, it will be included in subsequent notifications after Group interval. Once Group interval has elapsed, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
 
 **Default** 5 minutes
 
 #### Repeat interval
 
-Repeat interval decides how often notifications are repeated if the alerts in the group have not changed. You can think of these as reminders that there some alerts are still firing. Repeat interval is closely related to Group interval, which means your Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it will be coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval will be rounded up to the nearest multiple of 5 which is 10 minutes.
+Repeat interval decides how often notifications are repeated if the group has not changed since the last notification. You can think of these as reminders that some alerts are still firing. Repeat interval is closely related to Group interval, which means your Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it will be coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval will be rounded up to the nearest multiple of 5 which is 10 minutes.
 
 **Default** 4 hours
 
