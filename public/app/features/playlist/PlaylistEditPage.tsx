@@ -8,7 +8,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylist, updatePlaylist } from './api';
+import { getPlaylistAPI } from './api';
 import { Playlist } from './types';
 
 export interface RouteParams {
@@ -18,10 +18,11 @@ export interface RouteParams {
 interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 
 export const PlaylistEditPage = ({ match }: Props) => {
-  const playlist = useAsync(() => getPlaylist(match.params.uid), [match.params]);
+  const api = getPlaylistAPI();
+  const playlist = useAsync(() => api.getPlaylist(match.params.uid), [match.params]);
 
   const onSubmit = async (playlist: Playlist) => {
-    await updatePlaylist(match.params.uid, playlist);
+    await api.updatePlaylist(playlist);
     locationService.push('/playlists');
   };
 

@@ -37,7 +37,7 @@ export function InlineEditBody() {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
-    const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
+    const supplier = (builder: PanelOptionsEditorBuilder<any>) => {
       if (activeTab === InlineEditTabs.ElementManagement) {
         builder.addNestedOptions(getLayerEditor(instanceState));
       }

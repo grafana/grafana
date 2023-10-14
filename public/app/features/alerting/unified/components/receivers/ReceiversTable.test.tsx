@@ -17,7 +17,7 @@ import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } fr
 import { backendSrv } from '../../../../../core/services/backend_srv';
 import * as receiversApi from '../../api/receiversApi';
 import { mockProvisioningApi, setupMswServer } from '../../mockApi';
-import { enableRBAC, grantUserPermissions } from '../../mocks';
+import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -184,7 +184,6 @@ describe('ReceiversTable', () => {
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
       it('should be visible when user has permissions to read provisioning', async () => {
-        enableRBAC();
         grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
 
         await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
@@ -193,7 +192,6 @@ describe('ReceiversTable', () => {
         expect(buttons).toHaveLength(2);
       });
       it('should be visible when user has permissions to read provisioning with secrets', async () => {
-        enableRBAC();
         grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
 
         await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
@@ -202,7 +200,6 @@ describe('ReceiversTable', () => {
         expect(buttons).toHaveLength(2);
       });
       it('should not be visible when user has no provisioning permissions', async () => {
-        enableRBAC();
         grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
         await renderReceieversTable(receivers, [], GRAFANA_RULES_SOURCE_NAME);
@@ -235,7 +232,6 @@ describe('ReceiversTable', () => {
 
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
-      enableRBAC();
       grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
 
       // Act

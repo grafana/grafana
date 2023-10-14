@@ -5,3 +5,10 @@ export type LLMAppHealthCheck = {
     version?: string;
   };
 };
+
+export type LLMAppSettings = {
+  enabled: boolean;
+  info: {
+    version: string;
+  };
+};

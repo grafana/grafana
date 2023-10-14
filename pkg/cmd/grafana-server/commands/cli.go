@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
+	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
@@ -52,7 +53,11 @@ func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp st
 
 func RunServer(opts ServerOptions) error {
 	if Version || VerboseVersion {
-		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		if opts.EnterpriseCommit != gcli.DefaultCommitValue && opts.EnterpriseCommit != "" {
+			fmt.Printf("Version %s (commit: %s, branch: %s, enterprise-commit: %s)\n", opts.Version, opts.Commit, opts.BuildBranch, opts.EnterpriseCommit)
+		} else {
+			fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		}
 		if VerboseVersion {
 			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
