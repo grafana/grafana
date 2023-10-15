@@ -1,142 +1,27 @@
-import { clone } from 'lodash';
 import React from 'react';
 
-import { AdHocVariableFilter, getFrameDisplayName } from '@grafana/data';
+import { getFrameDisplayName } from '@grafana/data';
 import {
-  AdHocFiltersVariable,
-  ConstantVariable,
   EmbeddedScene,
-  getUrlSyncManager,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
-  SceneControlsSpacer,
   SceneDataNode,
   SceneFlexItem,
   SceneFlexLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
-  SceneTimeRange,
   SceneVariableSet,
-  VariableValueSelectors,
 } from '@grafana/scenes';
-import { VariableHide } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ByFrameRepeater } from './ByFrameRepeater';
-import { buildSelectMetricScene } from './StepSelectMetric';
+import { DataTrail } from './DataTrail';
 import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
-import { trailsDS } from './common';
-
-export interface DataTrailState extends SceneObjectState {
-  activeScene?: EmbeddedScene;
-  urlSync?: boolean;
-  metric?: string;
-  filters?: AdHocVariableFilter[];
-  /** Active action view name */
-  actionView?: string;
-}
-
-export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'actionView'] });
-
-  public constructor(state: Partial<DataTrailState>) {
-    super(state);
-
-    this.addActivationHandler(this._onActivate.bind(this));
-  }
-
-  private startScene: EmbeddedScene = buildSelectMetricScene();
-
-  public _onActivate() {
-    this.syncSceneWithState();
-
-    if (this.state.urlSync) {
-      getUrlSyncManager().initSync(this);
-    }
-
-    return () => {
-      if (this.state.urlSync) {
-        getUrlSyncManager().cleanUp(this);
-      }
-    };
-  }
-
-  getUrlState() {
-    return { metric: this.state.metric, actionView: this.state.actionView };
-  }
-
-  updateFromUrl(values: SceneObjectUrlValues) {
-    const stateUpdate: Partial<DataTrailState> = {};
-
-    if (typeof values.metric === 'string') {
-      if (this.state.metric !== values.metric) {
-        stateUpdate.metric = values.metric;
-        //stateUpdate.activeScene = buildGraphScene(values.metric, );
-      }
-    } else if (values.metric === null) {
-      stateUpdate.metric = undefined;
-      stateUpdate.activeScene = this.startScene;
-    }
-
-    if (typeof values.actionView === 'string') {
-      if (this.state.actionView !== values.actionView) {
-        stateUpdate.actionView = values.actionView;
-        stateUpdate.activeScene = buildBreakdownScene(stateUpdate.activeScene ?? this.state.activeScene!);
-      }
-    } else if (values.actionView === null) {
-      stateUpdate.actionView = undefined;
-      stateUpdate.activeScene = removeActionScene(this.state.activeScene!);
-    }
-
-    this.setState(stateUpdate);
-  }
-
-  private syncSceneWithState() {
-    let activeScene = this.state.activeScene;
-
-    if (!this.state.metric && activeScene !== this.startScene) {
-      this.setState({ activeScene: this.startScene });
-      return;
-    }
-
-    if (this.state.metric) {
-      activeScene = buildGraphScene(this.state.metric, this.state.filters ?? []);
-    }
-
-    if (this.state.actionView === 'breakdown') {
-      activeScene = buildBreakdownScene(this.state.activeScene!);
-    }
-
-    this.setState({ activeScene });
-  }
-
-  public onToggleBreakdown = () => {
-    if (this.state.actionView === 'breakdown') {
-      this.setState({ actionView: undefined, activeScene: removeActionScene(this.state.activeScene!) });
-    } else {
-      this.setState({ actionView: 'breakdown', activeScene: buildBreakdownScene(this.state.activeScene!) });
-    }
-  };
-
-  static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { activeScene } = model.useState();
-
-    if (!activeScene) {
-      return null;
-    }
-
-    return <activeScene.Component model={activeScene} />;
-  };
-}
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail?: DataTrail;
@@ -155,7 +40,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
     }
 
     return (
-      <Page navId="explore" pageNav={{ text: 'Data trails' }}>
+      <Page navId="explore" pageNav={{ text: 'Data trails', icon: 'code-branch' }}>
         {trail && <trail.Component model={trail} />}
       </Page>
     );
@@ -166,60 +51,7 @@ export const dataTrailsApp = new DataTrailsApp({
   trail: new DataTrail({ urlSync: true }),
 });
 
-function buildGraphScene(metric: string, filters: AdHocVariableFilter[]) {
-  return new EmbeddedScene({
-    controls: [
-      new VariableValueSelectors({}),
-      new SceneControlsSpacer(),
-      new SceneTimePicker({}),
-      new SceneRefreshPicker({}),
-    ],
-    $timeRange: new SceneTimeRange({}),
-    $variables: new SceneVariableSet({
-      variables: [
-        AdHocFiltersVariable.create({
-          name: 'Filters',
-          datasource: trailsDS,
-          filters: filters,
-        }),
-        new ConstantVariable({
-          name: 'metric',
-          value: metric,
-          hide: VariableHide.hideVariable,
-        }),
-      ],
-    }),
-    body: new SceneFlexLayout({
-      direction: 'column',
-      children: [
-        new SceneFlexItem({
-          minHeight: 400,
-          maxHeight: 400,
-          body: PanelBuilders.timeseries()
-            .setTitle(metric)
-            .setData(
-              new SceneQueryRunner({
-                datasource: trailsDS,
-                queries: [
-                  {
-                    refId: 'A',
-                    expr: 'sum(rate(${metric}{${Filters}}[$__rate_interval]))',
-                  },
-                ],
-              })
-            )
-            .build(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: new MetricActionBar({}),
-        }),
-      ],
-    }),
-  });
-}
-
-function buildBreakdownScene(activeScene: EmbeddedScene) {
+export function buildBreakdownScene(activeScene: EmbeddedScene) {
   const layout = activeScene.state.body as SceneFlexLayout;
 
   const newChildren = [...layout.state.children, getBreakdownScene()];
@@ -228,7 +60,7 @@ function buildBreakdownScene(activeScene: EmbeddedScene) {
   return activeScene;
 }
 
-function removeActionScene(activeScene: EmbeddedScene) {
+export function removeActionScene(activeScene: EmbeddedScene) {
   const layout = activeScene.state.body as SceneFlexLayout;
 
   const newChildren = layout.state.children.slice(0, 2);
