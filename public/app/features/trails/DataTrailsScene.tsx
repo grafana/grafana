@@ -70,7 +70,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         stateUpdate.metric = values.metric;
         stateUpdate.activeScene = buildGraphScene(this.startScene, values.metric);
       }
-    } else if (this.state.metric === null) {
+    } else if (values.metric === null) {
       stateUpdate.metric = undefined;
       stateUpdate.activeScene = this.startScene;
     }
