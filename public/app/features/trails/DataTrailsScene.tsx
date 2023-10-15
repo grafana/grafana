@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { getFrameDisplayName } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import {
   ConstantVariable,
   EmbeddedScene,
@@ -106,6 +105,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     this.setState({ activeScene });
   }
+
+  public onToggleBreakdown = () => {
+    if (this.state.actionView === 'breakdown') {
+      this.setState({ actionView: undefined, activeScene: removeActionScene(this.state.activeScene!) });
+    } else {
+      this.setState({ actionView: 'breakdown', activeScene: buildBreakdownScene(this.state.activeScene!) });
+    }
+  };
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { activeScene } = model.useState();
@@ -271,32 +278,20 @@ function getBreakdownScene() {
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public onToggleBreakdown = () => {
-    const { actionView } = getTrailFor(this).state;
-    locationService.partial({ actionView: actionView === 'breakdown' ? null : 'breakdown' }, true);
-  };
-
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
+    const trail = getTrailFor(model);
     const { actionView } = getTrailFor(model).useState();
 
     return (
       <Box paddingY={1}>
         <Flex gap={2}>
-          <ToolbarButton variant={actionView === 'breakdown' ? 'active' : 'canvas'} onClick={model.onToggleBreakdown}>
+          <ToolbarButton variant={actionView === 'breakdown' ? 'active' : 'canvas'} onClick={trail.onToggleBreakdown}>
             Breakdown
           </ToolbarButton>
-          <ToolbarButton variant={'canvas'} onClick={model.onToggleBreakdown}>
-            View logs
-          </ToolbarButton>
-          <ToolbarButton variant={'canvas'} onClick={model.onToggleBreakdown}>
-            Related metrics
-          </ToolbarButton>
-          <ToolbarButton variant={'canvas'} onClick={model.onToggleBreakdown}>
-            Add to dashboard
-          </ToolbarButton>
-          <ToolbarButton variant={'canvas'} onClick={model.onToggleBreakdown}>
-            Bookmark trail
-          </ToolbarButton>
+          <ToolbarButton variant={'canvas'}>View logs</ToolbarButton>
+          <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
+          <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
+          <ToolbarButton variant={'canvas'}>Bookmark trail</ToolbarButton>
         </Flex>
       </Box>
     );
