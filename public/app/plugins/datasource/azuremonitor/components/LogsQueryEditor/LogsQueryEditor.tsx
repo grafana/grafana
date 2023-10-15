@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert, Button } from '@grafana/ui';
-
+import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
