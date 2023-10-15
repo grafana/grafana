@@ -23,7 +23,7 @@ import { VariableHide } from '@grafana/schema';
 import { Input, Card } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
-import { trailsDS } from './DataTrailsScene';
+import { trailsDS } from './common';
 
 export interface TrailPhaseSelectMetricState extends SceneObjectState {}
 

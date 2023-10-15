@@ -10,7 +10,7 @@ import {
   SceneObjectBase,
   SceneObjectState,
 } from '@grafana/scenes';
-import { RadioButtonGroup, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 export interface VariableTabLayoutState extends SceneObjectState {
   variableName: string;
@@ -37,9 +37,10 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
 
   public static Component = ({ model }: SceneComponentProps<VariableTabLayout>) => {
     const { variableName, body } = model.useState();
-    const bodyState = body.useState();
     const styles = useStyles2(getStyles);
     const variable = sceneGraph.lookupVariable(variableName, model);
+
+    body.useState();
 
     if (!variable) {
       return <div>Variable {variableName} not found</div>;
@@ -57,25 +58,26 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
 
     let { splittable, isSplit } = model.getSplitState();
 
+    const labelOptions = options.map((x) => ({ value: x.value, label: x.label }));
+
     return (
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
-        <TabsBar>
-          <div className={styles.tabHeading}>Breakdown by label</div>
-          {options.map((option, index) => (
-            <Tab
-              key={index}
-              label={option.label}
-              active={option.value === variable.state.value}
-              onChangeTab={() => variable.changeValueTo(option.value, option.label)}
+        <div className={styles.controls}>
+          <Field label="By label">
+            <RadioButtonGroup
+              options={labelOptions}
+              value={variable.state.value}
+              onChange={(v) => variable.changeValueTo(v)}
             />
-          ))}
+          </Field>
+
           {splittable && (
-            <div className={styles.tabControls}>
+            <Field label="View">
               <RadioButtonGroup options={radioOptions} value={isSplit} onChange={model.onSplitChange} />
-            </div>
+            </Field>
           )}
-        </TabsBar>
+        </div>
         <div className={styles.content}>
           <body.Component model={body} />
         </div>
@@ -87,7 +89,6 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      marginLeft: theme.spacing(2),
       flexGrow: 1,
       display: 'flex',
       minHeight: '100%',
@@ -96,17 +97,17 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       flexGrow: 1,
       display: 'flex',
-      paddingTop: theme.spacing(2),
+      paddingTop: theme.spacing(0),
     }),
     tabHeading: css({
       paddingRight: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
     }),
-    tabControls: css({
-      flexGrow: 1,
+    controls: css({
+      flexGrow: 0,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'flex-end',
+      justifyContent: 'space-between',
     }),
   };
 }
