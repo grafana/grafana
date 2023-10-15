@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { getFrameDisplayName } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -53,6 +54,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
             maxHeight: 400,
             body: PanelBuilders.timeseries()
               .setTitle(state.metric)
+              .setCustomFieldConfig('fillOpacity', 9)
               .setData(
                 new SceneQueryRunner({
                   datasource: trailsDS,
@@ -202,6 +204,7 @@ function buildBreakdownScene() {
               .setTitle(getFrameDisplayName(frame, frameIndex))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setOption('legend', { showLegend: false })
+              .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
               .setCustomFieldConfig('fillOpacity', 9)
               .build(),
           });
@@ -209,4 +212,9 @@ function buildBreakdownScene() {
       }),
     }),
   });
+}
+
+function getColorByIndex(index: number) {
+  const visTheme = config.theme2.visualization;
+  return visTheme.getColorByName(visTheme.palette[index % 5]);
 }
