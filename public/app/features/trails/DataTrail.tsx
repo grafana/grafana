@@ -22,7 +22,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { GraphTrailView } from './GraphTrailView';
 import { SelectMetricTrailView } from './SelectMetricTrailView';
-import { trailsDS } from './common';
+import { trailsDS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
   activeScene: SceneObject;

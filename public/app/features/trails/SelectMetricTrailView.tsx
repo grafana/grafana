@@ -15,7 +15,7 @@ import { VariableHide } from '@grafana/schema';
 import { Input, Card } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
-import { trailsDS } from './common';
+import { trailsDS } from './shared';
 
 export interface SelectMetricTrailViewState extends SceneObjectState {
   metricNames: VariableValueOption[];
