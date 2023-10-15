@@ -1,10 +1,12 @@
 import { locationUtil, PanelMenuItem } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { sceneGraph, SceneQueryRunner, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
+import { DataTrailDrawer } from 'app/features/trails/DataTrailDrawer';
+import { buildVisualQueryFromString } from 'app/plugins/datasource/prometheus/querybuilder/parsing';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -75,6 +77,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           scopedVars: { __sceneObject: { value: panel } },
         }),
       });
+
+      if (dashboard instanceof DashboardScene) {
+        addDataTrailAction(queryRunner, dashboard, items);
+      }
     }
 
     items.push({
@@ -89,4 +95,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
+}
+
+function addDataTrailAction(queryRunner: SceneQueryRunner, dashboard: DashboardScene, items: PanelMenuItem[]) {
+  const ds = getDataSourceSrv().getInstanceSettings(queryRunner.state.datasource);
+  if (!ds || ds.meta.id !== 'prometheus' || queryRunner.state.queries.length > 1) {
+    return;
+  }
+
+  const query = queryRunner.state.queries[0];
+  const parsedResult = buildVisualQueryFromString(query.expr);
+  if (parsedResult.errors.length > 0) {
+    return;
+  }
+
+  items.push({
+    text: 'Data trail',
+    iconClassName: 'code-branch',
+    onClick: () => {
+      dashboard.showModal(new DataTrailDrawer({ query: parsedResult.query, dsRef: ds }));
+    },
+    shortcut: 'p s',
+  });
 }

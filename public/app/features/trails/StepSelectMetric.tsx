@@ -85,7 +85,7 @@ export function buildSelectMetricScene() {
     $variables: new SceneVariableSet({
       variables: [
         AdHocFiltersVariable.create({
-          name: 'labelFilters',
+          name: 'Filters',
           datasource: trailsDS,
           filters: [],
         }),
@@ -95,7 +95,7 @@ export function buildSelectMetricScene() {
           hide: VariableHide.hideVariable,
           includeAll: true,
           defaultToAll: true,
-          query: { query: 'label_values({$labelFilters},__name__)', refId: 'A' },
+          query: { query: 'label_values({$Filters},__name__)', refId: 'A' },
         }),
       ],
     }),

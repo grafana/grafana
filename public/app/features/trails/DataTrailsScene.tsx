@@ -1,13 +1,16 @@
+import { clone } from 'lodash';
 import React from 'react';
 
-import { getFrameDisplayName } from '@grafana/data';
+import { AdHocVariableFilter, getFrameDisplayName } from '@grafana/data';
 import {
+  AdHocFiltersVariable,
   ConstantVariable,
   EmbeddedScene,
   getUrlSyncManager,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
+  SceneControlsSpacer,
   SceneDataNode,
   SceneFlexItem,
   SceneFlexLayout,
@@ -17,7 +20,11 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   SceneQueryRunner,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
   SceneVariableSet,
+  VariableValueSelectors,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
@@ -31,7 +38,9 @@ import { trailsDS } from './common';
 
 export interface DataTrailState extends SceneObjectState {
   activeScene?: EmbeddedScene;
+  urlSync?: boolean;
   metric?: string;
+  filters?: AdHocVariableFilter[];
   /** Active action view name */
   actionView?: string;
 }
@@ -50,10 +59,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   public _onActivate() {
     this.syncSceneWithState();
 
-    getUrlSyncManager().initSync(this);
+    if (this.state.urlSync) {
+      getUrlSyncManager().initSync(this);
+    }
 
     return () => {
-      getUrlSyncManager().cleanUp(this);
+      if (this.state.urlSync) {
+        getUrlSyncManager().cleanUp(this);
+      }
     };
   }
 
@@ -67,7 +80,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         stateUpdate.metric = values.metric;
-        stateUpdate.activeScene = buildGraphScene(this.startScene, values.metric);
+        //stateUpdate.activeScene = buildGraphScene(values.metric, );
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
@@ -96,7 +109,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     if (this.state.metric) {
-      activeScene = buildGraphScene(this.startScene, this.state.metric);
+      activeScene = buildGraphScene(this.state.metric, this.state.filters ?? []);
     }
 
     if (this.state.actionView === 'breakdown') {
@@ -150,16 +163,25 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 }
 
 export const dataTrailsApp = new DataTrailsApp({
-  trail: new DataTrail({}),
+  trail: new DataTrail({ urlSync: true }),
 });
 
-function buildGraphScene(currentScene: EmbeddedScene, metric: string) {
-  const clone = currentScene.clone();
-
-  clone.setState({
+function buildGraphScene(metric: string, filters: AdHocVariableFilter[]) {
+  return new EmbeddedScene({
+    controls: [
+      new VariableValueSelectors({}),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
+    $timeRange: new SceneTimeRange({}),
     $variables: new SceneVariableSet({
       variables: [
-        clone.state.$variables!.state.variables[0],
+        AdHocFiltersVariable.create({
+          name: 'Filters',
+          datasource: trailsDS,
+          filters: filters,
+        }),
         new ConstantVariable({
           name: 'metric',
           value: metric,
@@ -181,7 +203,7 @@ function buildGraphScene(currentScene: EmbeddedScene, metric: string) {
                 queries: [
                   {
                     refId: 'A',
-                    expr: 'sum(rate(${metric}{${labelFilters}}[$__rate_interval]))',
+                    expr: 'sum(rate(${metric}{${Filters}}[$__rate_interval]))',
                   },
                 ],
               })
@@ -195,8 +217,6 @@ function buildGraphScene(currentScene: EmbeddedScene, metric: string) {
       ],
     }),
   });
-
-  return clone;
 }
 
 function buildBreakdownScene(activeScene: EmbeddedScene) {
@@ -238,7 +258,7 @@ function getBreakdownScene() {
           {
             refId: 'A',
             datasource: { uid: 'gdev-prometheus' },
-            expr: 'sum(rate(${metric}{${labelFilters}}[$__rate_interval])) by($groupby)',
+            expr: 'sum(rate(${metric}{${Filters}}[$__rate_interval])) by($groupby)',
           },
         ],
       }),
