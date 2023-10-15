@@ -272,7 +272,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   // we make a distinction here becase for "canExport" we show the menu item, if not we hide it
   const canExport = isGranaManagedAlertmanager;
-  const allowedToExport = contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const allowedToExport = contextSrv.hasPermission(permissions.provisioning.read);
 
   return (
     <div className={styles.headerWrapper}>

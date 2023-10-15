@@ -30,6 +30,10 @@ export enum ReducerID {
   uniqueValues = 'uniqueValues',
 }
 
+export function isReducerID(id: string): id is ReducerID {
+  return Object.keys(ReducerID).includes(id);
+}
+
 // Internal function
 type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 

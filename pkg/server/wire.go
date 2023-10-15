@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
 	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
@@ -91,6 +92,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmigration "github.com/grafana/grafana/pkg/services/ngalert/migration"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -140,6 +143,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
@@ -238,6 +242,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
+	ngmigration.ProvideService,
+	migrationStore.ProvideMigrationStore,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -341,6 +347,7 @@ var wireBasicSet = wire.NewSet(
 	resolver.ProvideEntityReferenceResolver,
 	httpentitystore.ProvideHTTPEntityStore,
 	teamimpl.ProvideService,
+	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
 	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
@@ -359,6 +366,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
+	extsvcaccounts.ProvideExtSvcAccountsService,
+	wire.Bind(new(extsvcauth.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
 	oasimpl.ProvideService,
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	extsvcreg.ProvideExtSvcRegistry,

@@ -14,6 +14,7 @@ import {
   formattedValueToString,
   durationToMilliseconds,
   parseDuration,
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config } from '@grafana/runtime';
@@ -36,7 +37,21 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   name: 'Create heatmap',
   description: 'Generate heatmap data from source data.',
   defaultOptions: {},
+  isApplicable: (data) => {
+    const { xField, yField, xs, ys } = findHeatmapFields(data);
 
+    if (xField || yField) {
+      return TransformationApplicabilityLevels.NotPossible;
+    }
+
+    if (!xs.length || !ys.length) {
+      return TransformationApplicabilityLevels.NotPossible;
+    }
+
+    return TransformationApplicabilityLevels.Applicable;
+  },
+  isApplicableDescription:
+    'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.',
   operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
@@ -278,56 +293,8 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 }
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
-  //console.time('calculateHeatmapFromData');
-
-  // optimization
-  //let xMin = Infinity;
-  //let xMax = -Infinity;
-
-  let xField: Field | undefined = undefined;
-  let yField: Field | undefined = undefined;
-
-  let dataLen = 0;
-  // pre-allocate arrays
-  for (let frame of frames) {
-    // TODO: assumes numeric timestamps, ordered asc, without nulls
-    const x = frame.fields.find((f) => f.type === FieldType.time);
-    if (x) {
-      dataLen += frame.length;
-    }
-  }
-
-  let xs: number[] = Array(dataLen);
-  let ys: number[] = Array(dataLen);
-  let j = 0;
-
-  for (let frame of frames) {
-    // TODO: assumes numeric timestamps, ordered asc, without nulls
-    const x = frame.fields.find((f) => f.type === FieldType.time);
-    if (!x) {
-      continue;
-    }
-
-    if (!xField) {
-      xField = x; // the first X
-    }
-
-    const xValues = x.values;
-    for (let field of frame.fields) {
-      if (field !== x && field.type === FieldType.number) {
-        const yValues = field.values;
-
-        for (let i = 0; i < xValues.length; i++, j++) {
-          xs[j] = xValues[i];
-          ys[j] = yValues[i];
-        }
-
-        if (!yField) {
-          yField = field;
-        }
-      }
-    }
-  }
+  // Find fields in the heatmap
+  const { xField, yField, xs, ys } = findHeatmapFields(frames);
 
   if (!xField || !yField) {
     throw 'no heatmap fields found';
@@ -398,8 +365,62 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     ],
   };
 
-  //console.timeEnd('calculateHeatmapFromData');
   return frame;
+}
+
+/**
+ * Find fields that can be used within a heatmap
+ *
+ * @param frames
+ *  An array of DataFrames
+ */
+function findHeatmapFields(frames: DataFrame[]) {
+  let xField: Field | undefined = undefined;
+  let yField: Field | undefined = undefined;
+  let dataLen = 0;
+
+  // pre-allocate arrays
+  for (let frame of frames) {
+    // TODO: assumes numeric timestamps, ordered asc, without nulls
+    const x = frame.fields.find((f) => f.type === FieldType.time);
+    if (x) {
+      dataLen += frame.length;
+    }
+  }
+
+  let xs: number[] = Array(dataLen);
+  let ys: number[] = Array(dataLen);
+  let j = 0;
+
+  for (let frame of frames) {
+    // TODO: assumes numeric timestamps, ordered asc, without nulls
+    const x = frame.fields.find((f) => f.type === FieldType.time);
+    if (!x) {
+      continue;
+    }
+
+    if (!xField) {
+      xField = x; // the first X
+    }
+
+    const xValues = x.values;
+    for (let field of frame.fields) {
+      if (field !== x && field.type === FieldType.number) {
+        const yValues = field.values;
+
+        for (let i = 0; i < xValues.length; i++, j++) {
+          xs[j] = xValues[i];
+          ys[j] = yValues[i];
+        }
+
+        if (!yField) {
+          yField = field;
+        }
+      }
+    }
+  }
+
+  return { xField, yField, xs, ys };
 }
 
 interface HeatmapOpts {
