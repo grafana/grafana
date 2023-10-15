@@ -1,24 +1,17 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, getFrameDisplayName, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
 import {
   AdHocFiltersVariable,
-  ConstantVariable,
   getUrlSyncManager,
-  PanelBuilders,
-  QueryVariable,
   SceneComponentProps,
   SceneControlsSpacer,
-  SceneDataNode,
-  SceneFlexItem,
-  SceneFlexLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -27,11 +20,8 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { ByFrameRepeater } from './ByFrameRepeater';
-import { MetricActionBar } from './DataTrailsScene';
 import { GraphTrailView } from './GraphTrailView';
 import { SelectMetricTrailView } from './SelectMetricTrailView';
-import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
 import { trailsDS } from './common';
 
 export interface DataTrailState extends SceneObjectState {
@@ -48,12 +38,11 @@ export interface DataTrailState extends SceneObjectState {
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'actionView'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
   private _selectMetricView: SceneObject;
 
   public constructor(state: Partial<DataTrailState>) {
     super({
-      activeScene: new SelectMetricTrailView({}),
       $timeRange: new SceneTimeRange({}),
       $variables: new SceneVariableSet({
         variables: [
@@ -70,16 +59,16 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
+      activeScene: new SelectMetricTrailView({}),
       ...state,
     });
 
     this._selectMetricView = this.state.activeScene;
+    this.syncSceneWithState();
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
   public _onActivate() {
-    this.syncSceneWithState();
-
     if (this.state.urlSync) {
       getUrlSyncManager().initSync(this);
     }
@@ -108,45 +97,22 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.activeScene = this._selectMetricView;
     }
 
-    if (typeof values.actionView === 'string') {
-      if (this.state.actionView !== values.actionView) {
-        stateUpdate.actionView = values.actionView;
-        stateUpdate.actionScene = buildBreakdownScene(stateUpdate.metric ?? this.state.metric!);
-      }
-    } else if (values.actionView === null) {
-      stateUpdate.actionView = undefined;
-      stateUpdate.activeScene = undefined;
-    }
-
     this.setState(stateUpdate);
   }
 
   private syncSceneWithState() {
     let activeScene = this.state.activeScene;
 
-    if (!this.state.metric) {
-      this.setState({ activeScene: this._selectMetricView });
-      return;
-    }
-
     if (this.state.metric) {
       activeScene = new GraphTrailView({ metric: this.state.metric });
-    }
-
-    if (this.state.actionView === 'breakdown') {
-      activeScene = buildBreakdownScene(this.state.metric);
-    }
-
-    this.setState({ activeScene });
-  }
-
-  public onToggleBreakdown = () => {
-    if (this.state.actionView === 'breakdown') {
-      this.setState({ actionView: undefined, actionScene: undefined });
     } else {
-      this.setState({ actionView: 'breakdown', actionScene: buildBreakdownScene(this.state.metric!) });
+      activeScene = this._selectMetricView;
     }
-  };
+
+    if (activeScene !== this.state.activeScene) {
+      this.setState({ activeScene });
+    }
+  }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, activeScene, actionScene } = model.useState();
@@ -196,65 +162,4 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
     }),
   };
-}
-
-function buildBreakdownScene(metric: string) {
-  return new VariableTabLayout({
-    $variables: new SceneVariableSet({
-      variables: [
-        new ConstantVariable({
-          name: 'metric',
-          value: metric,
-          hide: VariableHide.hideVariable,
-        }),
-        new QueryVariable({
-          name: 'groupby',
-          label: 'Group by',
-          datasource: { uid: 'gdev-prometheus' },
-          query: 'label_names(${metric})',
-          value: '',
-          text: '',
-        }),
-      ],
-    }),
-    variableName: 'groupby',
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: { uid: 'gdev-prometheus' },
-          expr: 'sum(rate(${metric}{${filters}}[$__rate_interval])) by($groupby)',
-        },
-      ],
-    }),
-    body: new SplittableLayoutItem({
-      isSplit: false,
-      single: new SceneFlexLayout({
-        direction: 'column',
-        children: [
-          new SceneFlexItem({
-            minHeight: 300,
-            body: PanelBuilders.timeseries().setHoverHeader(true).build(),
-          }),
-        ],
-      }),
-      split: new ByFrameRepeater({
-        body: new SceneFlexLayout({
-          direction: 'column',
-          children: [],
-        }),
-        getLayoutChild: (data, frame, frameIndex) => {
-          return new SceneFlexItem({
-            minHeight: 200,
-            body: PanelBuilders.timeseries()
-              .setTitle(getFrameDisplayName(frame, frameIndex))
-              .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-              .setOption('legend', { showLegend: false })
-              .setCustomFieldConfig('fillOpacity', 9)
-              .build(),
-          });
-        },
-      }),
-    }),
-  });
 }
