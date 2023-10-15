@@ -12,20 +12,17 @@ import { DataTrail } from './DataTrail';
 interface DataTrailDrawerState extends SceneObjectState {
   query: PromVisualQuery;
   dsRef: DataSourceRef;
-  trail?: DataTrail;
 }
 
 export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
   static Component = DataTrailDrawerRenderer;
 
+  public trail: DataTrail;
+
   constructor(state: DataTrailDrawerState) {
     super(state);
 
-    this.addActivationHandler(this._activationHandler.bind(this));
-  }
-
-  private _activationHandler() {
-    this.setState({ trail: buildDataTrailFromQuery(this.state.query) });
+    this.trail = buildDataTrailFromQuery(state.query);
   }
 
   onClose = () => {
@@ -35,15 +32,9 @@ export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
 }
 
 function DataTrailDrawerRenderer({ model }: SceneComponentProps<DataTrailDrawer>) {
-  const { trail } = model.useState();
-
-  if (!trail) {
-    return;
-  }
-
   return (
     <Drawer title={'Data trail'} onClose={model.onClose} size="lg">
-      <trail.Component model={trail} />
+      <model.trail.Component model={model.trail} />
     </Drawer>
   );
 }
@@ -54,5 +45,6 @@ export function buildDataTrailFromQuery(query: PromVisualQuery) {
   return new DataTrail({
     metric: query.metric,
     filters,
+    urlSync: false,
   });
 }

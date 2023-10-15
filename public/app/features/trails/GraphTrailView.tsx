@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getFrameDisplayName } from '@grafana/data';
+import { DataFrame, getFrameDisplayName } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -17,9 +17,11 @@ import {
   SceneObjectUrlValues,
   QueryVariable,
   SceneDataNode,
+  sceneGraph,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { ToolbarButton } from '@grafana/ui';
+import { Button, ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 
 import { ByFrameRepeater } from './ByFrameRepeater';
@@ -165,7 +167,7 @@ function buildBreakdownScene() {
           name: 'groupby',
           label: 'Group by',
           datasource: { uid: 'gdev-prometheus' },
-          query: 'label_names(${metric})',
+          query: { query: 'label_names(${metric})', refId: 'A' },
           value: '',
           text: '',
         }),
@@ -188,7 +190,7 @@ function buildBreakdownScene() {
         children: [
           new SceneFlexItem({
             minHeight: 300,
-            body: PanelBuilders.timeseries().setHoverHeader(true).build(),
+            body: PanelBuilders.timeseries().setTitle('$metric').build(),
           }),
         ],
       }),
@@ -206,6 +208,7 @@ function buildBreakdownScene() {
               .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
               .setCustomFieldConfig('fillOpacity', 9)
+              .setHeaderActions(new OpenTrailButton({ frame }))
               .build(),
           });
         },
@@ -217,4 +220,46 @@ function buildBreakdownScene() {
 function getColorByIndex(index: number) {
   const visTheme = config.theme2.visualization;
   return visTheme.getColorByName(visTheme.palette[index % 5]);
+}
+
+export interface OpenTrailButtonState extends SceneObjectState {
+  frame: DataFrame;
+}
+
+export class OpenTrailButton extends SceneObjectBase<OpenTrailButtonState> {
+  public onClick = () => {
+    const variable = sceneGraph.lookupVariable('filters', this);
+    if (!(variable instanceof AdHocFiltersVariable)) {
+      return;
+    }
+
+    const labels = this.state.frame.fields[1]?.labels ?? {};
+    if (Object.keys(labels).length !== 1) {
+      return;
+    }
+
+    // const graphView = getGraphView(this);
+    // graphView.onToggleBreakdown();
+
+    const labelName = Object.keys(labels)[0];
+
+    variable.state.set.setState({
+      filters: [
+        ...variable.state.set.state.filters,
+        {
+          key: labelName,
+          operator: '=',
+          value: labels[labelName],
+        },
+      ],
+    });
+  };
+
+  public static Component = ({ model }: SceneComponentProps<OpenTrailButton>) => {
+    return (
+      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+        Add label filter
+      </Button>
+    );
+  };
 }
