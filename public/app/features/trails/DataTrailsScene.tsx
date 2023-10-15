@@ -1,27 +1,18 @@
 import React from 'react';
 
-import { getFrameDisplayName } from '@grafana/data';
 import {
   EmbeddedScene,
-  PanelBuilders,
-  QueryVariable,
   SceneComponentProps,
-  SceneDataNode,
-  SceneFlexItem,
   SceneFlexLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneQueryRunner,
-  SceneVariableSet,
 } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 
-import { ByFrameRepeater } from './ByFrameRepeater';
 import { DataTrail } from './DataTrail';
-import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail?: DataTrail;
@@ -67,64 +58,6 @@ export function removeActionScene(activeScene: EmbeddedScene) {
 
   layout.setState({ children: newChildren });
   return activeScene;
-}
-
-function getBreakdownScene() {
-  return new SceneFlexItem({
-    body: new VariableTabLayout({
-      $variables: new SceneVariableSet({
-        variables: [
-          new QueryVariable({
-            name: 'groupby',
-            label: 'Group by',
-            datasource: { uid: 'gdev-prometheus' },
-            query: 'label_names(${metric})',
-            value: '',
-            text: '',
-          }),
-        ],
-      }),
-      variableName: 'groupby',
-      $data: new SceneQueryRunner({
-        queries: [
-          {
-            refId: 'A',
-            datasource: { uid: 'gdev-prometheus' },
-            expr: 'sum(rate(${metric}{${Filters}}[$__rate_interval])) by($groupby)',
-          },
-        ],
-      }),
-      body: new SplittableLayoutItem({
-        isSplit: false,
-        single: new SceneFlexLayout({
-          direction: 'column',
-          children: [
-            new SceneFlexItem({
-              minHeight: 300,
-              body: PanelBuilders.timeseries().setHoverHeader(true).build(),
-            }),
-          ],
-        }),
-        split: new ByFrameRepeater({
-          body: new SceneFlexLayout({
-            direction: 'column',
-            children: [],
-          }),
-          getLayoutChild: (data, frame, frameIndex) => {
-            return new SceneFlexItem({
-              minHeight: 200,
-              body: PanelBuilders.timeseries()
-                .setTitle(getFrameDisplayName(frame, frameIndex))
-                .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-                .setOption('legend', { showLegend: false })
-                .setCustomFieldConfig('fillOpacity', 9)
-                .build(),
-            });
-          },
-        }),
-      }),
-    }),
-  });
 }
 
 export interface MetricActionBarState extends SceneObjectState {}

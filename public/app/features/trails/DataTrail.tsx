@@ -29,6 +29,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { MetricActionBar } from './DataTrailsScene';
+import { GraphTrailView } from './GraphTrailView';
 import { SelectMetricTrailView } from './SelectMetricTrailView';
 import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
 import { trailsDS } from './common';
@@ -100,7 +101,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         stateUpdate.metric = values.metric;
-        stateUpdate.activeScene = buildGraphScene(values.metric);
+        stateUpdate.activeScene = new GraphTrailView({ metric: values.metric });
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
@@ -129,7 +130,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     if (this.state.metric) {
-      activeScene = buildGraphScene(this.state.metric);
+      activeScene = new GraphTrailView({ metric: this.state.metric });
     }
 
     if (this.state.actionView === 'breakdown') {
@@ -195,45 +196,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
     }),
   };
-}
-
-export function buildGraphScene(metric: string) {
-  return new SceneFlexLayout({
-    $variables: new SceneVariableSet({
-      variables: [
-        new ConstantVariable({
-          name: 'metric',
-          value: metric,
-          hide: VariableHide.hideVariable,
-        }),
-      ],
-    }),
-    direction: 'column',
-    children: [
-      new SceneFlexItem({
-        minHeight: 400,
-        maxHeight: 400,
-        body: PanelBuilders.timeseries()
-          .setTitle(metric)
-          .setData(
-            new SceneQueryRunner({
-              datasource: trailsDS,
-              queries: [
-                {
-                  refId: 'A',
-                  expr: 'sum(rate(${metric}{${filters}}[$__rate_interval]))',
-                },
-              ],
-            })
-          )
-          .build(),
-      }),
-      new SceneFlexItem({
-        ySizing: 'content',
-        body: new MetricActionBar({}),
-      }),
-    ],
-  });
 }
 
 function buildBreakdownScene(metric: string) {
