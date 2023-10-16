@@ -46,9 +46,9 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
-		opts, err := client.CreateTransportOptions(settings, cfg, plog)
+		opts, err := client.CreateTransportOptions(ctx, settings, cfg, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
