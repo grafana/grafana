@@ -16,9 +16,6 @@ export const showModalMessage = (
   dirtyCorrelation: boolean,
   dirtyQueryEditor: boolean
 ) => {
-  console.log(
-    `action=${action} isActionLeft=${isActionLeft} dirtyCorrelation=${dirtyCorrelation} dirtyQueryEditor=${dirtyQueryEditor}`
-  );
   const messageTemplate = template(
     '<%= actionStr %> will <%= consequenceStr %>. Would you like to save before continuing?'
   );
