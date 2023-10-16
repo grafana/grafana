@@ -6,6 +6,7 @@ import { type FeatureToggle, useUpdateFeatureTogglesMutation } from './AdminFeat
 
 interface Props {
   featureToggles: FeatureToggle[];
+  onUpdateSuccess: () => void;
 }
 
 const sortByName: SortByFn<FeatureToggle> = (a, b) => {
@@ -27,10 +28,11 @@ const sortByEnabled: SortByFn<FeatureToggle> = (a, b) => {
   return a.original.enabled === b.original.enabled ? 0 : a.original.enabled ? 1 : -1;
 };
 
-export function AdminFeatureTogglesTable({ featureToggles }: Props) {
+export function AdminFeatureTogglesTable({ featureToggles, onUpdateSuccess }: Props) {
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [updateFeatureToggles] = useUpdateFeatureTogglesMutation();
   const [modifiedToggles, setModifiedToggles] = useState<FeatureToggle[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
     const updatedToggle = { ...toggle, enabled: newValue };
@@ -56,10 +58,16 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
   };
 
   const handleSaveChanges = async () => {
-    const resp = await updateFeatureToggles(modifiedToggles);
-    // Reset modifiedToggles after successful update
-    if (!('error' in resp)) {
-      setModifiedToggles([]);
+    setIsSaving(true);
+    try {
+      const resp = await updateFeatureToggles(modifiedToggles);
+      // Reset modifiedToggles after successful update
+      if (!('error' in resp)) {
+        onUpdateSuccess();
+        setModifiedToggles([]);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -103,8 +111,8 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
-        <Button disabled={!hasModifications()} onClick={handleSaveChanges}>
-          Save Changes
+        <Button disabled={!hasModifications() || isSaving} onClick={handleSaveChanges}>
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
       <InteractiveTable columns={columns} data={localToggles} getRowId={(featureToggle) => featureToggle.name} />

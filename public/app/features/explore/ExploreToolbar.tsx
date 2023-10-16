@@ -4,7 +4,7 @@ import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -43,25 +43,39 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
     },
+  }),
+  toolbarButton: css({
+    display: 'flex',
+    justifyContent: 'center',
+    marginRight: theme.spacing(0.5),
+    width: splitted && theme.spacing(6),
   }),
 });
 
 interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
+  onContentOutlineToogle: () => void;
+  isContentOutlineOpen: boolean;
   topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {
+export function ExploreToolbar({
+  exploreId,
+  topOfViewRef,
+  onChangeTime,
+  onContentOutlineToogle,
+  isContentOutlineOpen,
+}: Props) {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
-
   const splitted = useSelector(isSplit);
+  const styles = useStyles2(getStyles, splitted);
+
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
   const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
@@ -217,6 +231,21 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
+          config.featureToggles.exploreContentOutline && (
+            <ToolbarButton
+              key="content-outline"
+              variant="canvas"
+              tooltip="Content outline"
+              icon="list-ui-alt"
+              iconOnly={splitted}
+              onClick={onContentOutlineToogle}
+              aria-expanded={isContentOutlineOpen}
+              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+              className={styles.toolbarButton}
+            >
+              Outline
+            </ToolbarButton>
+          ),
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
@@ -225,7 +254,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-        ]}
+        ].filter(Boolean)}
         forceShowLeftItems
       >
         {[

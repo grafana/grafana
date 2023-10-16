@@ -281,18 +281,36 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 
 // RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
 func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+	toStringIfNotNil := func(d *model.Duration) *string {
+		if d == nil {
+			return nil
+		}
+		s := d.String()
+		return &s
+	}
+
+	matchers := make([]*definitions.MatcherExport, 0, len(route.ObjectMatchers))
+	for _, matcher := range route.ObjectMatchers {
+		matchers = append(matchers, &definitions.MatcherExport{
+			Label: matcher.Name,
+			Match: matcher.Type.String(),
+			Value: matcher.Value,
+		})
+	}
+
 	export := definitions.RouteExport{
-		Receiver:          route.Receiver,
-		GroupByStr:        route.GroupByStr,
-		Match:             route.Match,
-		MatchRE:           route.MatchRE,
-		Matchers:          route.Matchers,
-		ObjectMatchers:    route.ObjectMatchers,
-		MuteTimeIntervals: route.MuteTimeIntervals,
-		Continue:          route.Continue,
-		GroupWait:         route.GroupWait,
-		GroupInterval:     route.GroupInterval,
-		RepeatInterval:    route.RepeatInterval,
+		Receiver:            route.Receiver,
+		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
+		Match:               route.Match,
+		MatchRE:             route.MatchRE,
+		Matchers:            route.Matchers,
+		ObjectMatchers:      route.ObjectMatchers,
+		ObjectMatchersSlice: matchers,
+		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		Continue:            OmitDefault(util.Pointer(route.Continue)),
+		GroupWait:           toStringIfNotNil(route.GroupWait),
+		GroupInterval:       toStringIfNotNil(route.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(route.RepeatInterval),
 	}
 
 	if len(route.Routes) > 0 {
@@ -303,4 +321,24 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	return &export
+}
+
+// OmitDefault returns nil if the value is the default.
+func OmitDefault[T comparable](v *T) *T {
+	var def T
+	if v == nil {
+		return v
+	}
+	if *v == def {
+		return nil
+	}
+	return v
+}
+
+// NilIfEmpty returns nil if pointer to slice points to the empty slice.
+func NilIfEmpty[T any](v *[]T) *[]T {
+	if v == nil || len(*v) == 0 {
+		return nil
+	}
+	return v
 }
