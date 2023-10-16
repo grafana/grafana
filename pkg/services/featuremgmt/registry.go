@@ -44,8 +44,9 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -84,6 +85,14 @@ var (
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -236,7 +245,7 @@ var (
 		},
 		{
 			Name:         "nestedFolderPicker",
-			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -325,13 +334,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "timeSeriesTable",
-			Description:  "Enable time series table transformer & sparkline cell type",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        appO11ySquad,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStagePublicPreview,
@@ -346,7 +348,7 @@ var (
 		},
 		{
 			Name:        "prometheusDataplane",
-			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
 			Expression:  "true",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityMetricsSquad,
@@ -431,7 +433,7 @@ var (
 		},
 		{
 			Name:            "useCachingService",
-			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
@@ -811,13 +813,6 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
-			Name:         "alertingModifiedExport",
-			Description:  "Enables using UI for provisioned rules modification and export",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
 			Stage:        FeatureStageExperimental,
@@ -830,6 +825,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
 		},
 		{
 			Name:         "transformationsVariableSupport",
@@ -866,6 +868,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
+		},
+		{
+			Name:         "cachingOptimizeSerializationMemoryUsage",
+			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:            "panelTitleSearchInV1",
+			Description:     "Enable searching for dashboards using panel title in search v1",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 	}
 )

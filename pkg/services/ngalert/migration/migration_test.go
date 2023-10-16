@@ -697,7 +697,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			NamespaceUID:    "folder5-1",
 			DashboardUID:    pointer("dash1-1"),
 			PanelID:         pointer(int64(1)),
-			RuleGroup:       "alert1",
+			RuleGroup:       "dash1-1",
 			RuleGroupIndex:  1,
 			NoDataState:     ngModels.NoData,
 			ExecErrState:    ngModels.AlertingErrState,
@@ -712,6 +712,8 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		for _, mutator := range mutators {
 			mutator(rule)
 		}
+
+		rule.RuleGroup = fmt.Sprintf("%s - %d", *rule.DashboardUID, *rule.PanelID)
 
 		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
 		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)

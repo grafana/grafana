@@ -26,6 +26,7 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
+// addErrorSilence adds a silence for the given rule to the orgMigration if the ExecutionErrorState was set to keep_state.
 func (om *OrgMigration) addErrorSilence(rule *models.AlertRule) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
@@ -58,6 +59,7 @@ func (om *OrgMigration) addErrorSilence(rule *models.AlertRule) error {
 	return nil
 }
 
+// addNoDataSilence adds a silence for the given rule to the orgMigration if the NoDataState was set to keep_state.
 func (om *OrgMigration) addNoDataSilence(rule *models.AlertRule) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {

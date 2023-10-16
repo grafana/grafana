@@ -97,7 +97,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
     const { snapshotExpires } = this.state;
-    const dash = this.dashboard.getSaveModelClone();
+    const dash = this.dashboard.getSaveModelCloneOld();
 
     this.scrubDashboard(dash);
 

@@ -76,16 +76,35 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT OR IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
-			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
 		} else {
-			_, err = sess.Exec("INSERT IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+			`)
 		}
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+		`)
 		return err
 	})
 	if err != nil {
-		s.log.Error("DB migration on folder service start failed.")
+		s.log.Error("DB migration on folder service start failed.", "err", err)
 	}
 }
 
