@@ -3,8 +3,7 @@ package database
 import (
 	"context"
 	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
-	"crypto/sha1"
-	"encoding/hex"
+
 	"errors"
 	"testing"
 
@@ -301,10 +300,4 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			})
 		})
 	}
-}
-
-func sha1Hash(text string) string {
-	h := sha1.New()
-	_, _ = h.Write([]byte(text))
-	return hex.EncodeToString(h.Sum(nil))
 }
