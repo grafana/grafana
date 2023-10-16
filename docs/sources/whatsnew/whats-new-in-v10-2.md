@@ -196,7 +196,7 @@ We've added initial support to detect situations in which various transformation
 
 {{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
 
-For users with the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. For everyone who would like to try it, this feature flag can be enabled in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
+If you have the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. If you'd like to try it, enable this feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 
 ### Extended time zone support in Format time and Convert field type transformations
 
