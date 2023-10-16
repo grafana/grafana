@@ -831,7 +831,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -997,7 +997,7 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
@@ -1213,7 +1213,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2138,7 +2138,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2283,7 +2283,7 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
@@ -3833,7 +3833,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3971,7 +3971,7 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
@@ -4673,6 +4673,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ca08db1d3dfc2bad19b90e4a799e26e2d4aa5a903cdd0ad23a2f532551376bfc
+hmac: d69f669703187b0b28eb91b38a662617b2ee60da5712fd0efe2511a6429895a9
 
 ...
