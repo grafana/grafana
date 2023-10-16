@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -166,7 +165,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				require.NoError(t, err)
 
 				errDBSession := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-					storedRole, err := getRoleByUID(ctx, sess, sha1Hash(fmt.Sprintf("externalservice_%s_permissions", tt.runs[i].cmd.ExternalServiceID)))
+					storedRole, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.runs[i].cmd.ExternalServiceID)))
 					require.NoError(t, err)
 					require.NotNil(t, storedRole)
 					require.Equal(t, tt.runs[i].cmd.Global, storedRole.Global(), "Incorrect global state of the role")
