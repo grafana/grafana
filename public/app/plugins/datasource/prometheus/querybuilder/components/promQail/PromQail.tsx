@@ -417,7 +417,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
     }),
     metricTableButton: css({
-      marginLeft: '10px',
+      float: 'right',
     }),
     queryQuestion: css({
       textAlign: 'end',
@@ -491,8 +491,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     useButton: css({
-      width: '10%',
-      marginLeft: '12px',
+      marginLeft: 'auto',
     }),
   };
 };
