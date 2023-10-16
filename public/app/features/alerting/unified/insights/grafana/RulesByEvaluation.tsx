@@ -23,7 +23,7 @@ export function getGrafanaRulesByEvaluationScene(datasource: DataSourceRef, pane
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('See how many of your alert rules are paused or active')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })

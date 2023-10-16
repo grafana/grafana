@@ -17,6 +17,7 @@ import {
   Pagination,
   VerticalGroup,
   useStyles2,
+  Avatar,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -25,7 +26,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { Avatar } from '../admin/Users/Avatar';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -70,7 +70,7 @@ export const TeamList = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'name',
@@ -96,10 +96,9 @@ export const TeamList = ({
               id: 'role',
               header: 'Role',
               cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
                   AccessControlAction.ActionTeamsRolesList,
-                  original,
-                  false
+                  original
                 );
                 return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
               },
