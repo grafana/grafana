@@ -29,8 +29,6 @@ interface Props {
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
   labelCardinalityState: Record<string, fieldNameMeta>;
-  // 0 - 100
-  sparsityThreshold: number;
   height: number;
 }
 
@@ -85,9 +83,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
 
   useEffect(() => {
     const prepare = async () => {
-      console.log('prepare()');
       if (!logsFrames || !logsFrames.length) {
-        console.log('no log frames?');
         setTableFrame(undefined);
         return;
       }
@@ -141,18 +137,23 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         });
       });
 
-      Object.keys(labelCardinalityState).forEach((key) => {
-        if (!labelCardinalityState[key].active) {
-          transformations.push({
-            id: 'organize',
-            options: {
-              excludeByName: {
-                [key]: true,
-              },
-            },
-          });
-        }
-      });
+      // Every field that isn't active is visible
+      let labelFilters: Record<string, true> = {};
+      Object.keys(labelCardinalityState)
+        .filter((key) => !labelCardinalityState[key].active)
+        .forEach((key) => {
+          labelFilters[key] = true;
+        });
+
+      // Add one transform to remove the fields that are not currently selected
+      if (Object.keys(labelFilters).length > 0) {
+        transformations.push({
+          id: 'organize',
+          options: {
+            excludeByName: labelFilters,
+          },
+        });
+      }
 
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
@@ -163,7 +164,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
     };
     prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState, props.sparsityThreshold]);
+  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState]);
 
   if (!tableFrame) {
     return null;

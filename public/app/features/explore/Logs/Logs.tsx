@@ -586,7 +586,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             config.featureToggles.logsExploreTableVisualisation
               ? this.state.visualisationType === 'logs'
                 ? 'Logs'
-                : 'Table'
+                : 'Table (experimental)'
               : 'Logs'
           }
           actions={

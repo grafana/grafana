@@ -10,10 +10,10 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data/src';
-import { Checkbox } from '@grafana/ui';
 import { Themeable2 } from '@grafana/ui/src';
 
 import { LogsTable } from './LogsTable';
+import { LogsTableNavColumn } from './LogsTableNavColumn';
 
 interface LogsTableProps {
   logsFrames?: DataFrame[];
@@ -30,16 +30,31 @@ interface Props extends Themeable2 {
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
 }
 
-function getStyles(theme: GrafanaTheme2, height: number) {
+function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   return {
     wrapper: css({
       display: 'flex',
     }),
     sidebar: css({
       height: height,
-      fontSize: theme.typography.pxToRem(10),
+      fontSize: theme.typography.pxToRem(11),
       overflowY: 'scroll',
+      width: width,
+      paddingRight: theme.spacing(1.5),
     }),
+    columnHeader: css({
+      fontSize: theme.typography.h6.fontSize,
+      background: theme.colors.background.secondary,
+      position: 'sticky',
+      top: 0,
+      left: 0,
+      padding: '6px 6px 6px 15px',
+      zIndex: 3,
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+    }),
+    labelCount: css({}),
+    checkbox: css({}),
   };
 }
 
@@ -55,6 +70,10 @@ const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
   // from TableContainer.tsx
   return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
 });
+
+const normalize = (value: number, total: number): number => {
+  return Math.floor((100 * value) / total);
+};
 
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   const { logsFrames } = props.logsTableProps;
@@ -103,18 +122,16 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       // Converting the Map to an Object will be expensive, hoping the savings from deduping with set/map above will make up for it
       pendingLabelState = Object.fromEntries(labelCardinality);
 
-      // Don't normalize, we want count
-      // Object.keys(normalizeLabelCardinality).forEach((key) => {
-      //   normalizeLabelCardinality[key].count = Math.round(
-      //     (100 * normalizeLabelCardinality[key].count) / numberOfLogLines
-      //   );
-      // });
+      // Normalize to percent
+      Object.keys(pendingLabelState).forEach((key) => {
+        pendingLabelState[key].count = normalize(pendingLabelState[key].count, numberOfLogLines);
+      });
     }
 
-    //
+    // Normalize the other fields
     otherFields.forEach((field) => {
       pendingLabelState[field.name] = {
-        count: field.values.filter((value) => value).length,
+        count: normalize(field.values.filter((value) => value).length, numberOfLogLines),
         active: pendingLabelState[field.name]?.active,
       };
     });
@@ -163,62 +180,47 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     props.updatePanelState(newPanelState);
   };
 
-  const Columns = (props: {
-    labels: Record<fieldName, fieldNameMeta>;
-    valueFilter: (value: number) => boolean;
-  }): JSX.Element => {
-    const { labels, valueFilter } = props;
-    if (labels) {
-      const labelKeys = Object.keys(labels);
-
-      return (
-        <div>
-          {labelKeys
-            .filter((labelName) => valueFilter(labels[labelName].count))
-            .map((labelName) => (
-              <div key={labelName}>
-                <Checkbox
-                  label={labelName}
-                  onChange={() => toggleColumn(labelName)}
-                  checked={labels[labelName]?.active}
-                />
-                <>({labels[labelName]?.count})</>
-              </div>
-            ))}
-        </div>
-      );
-    }
-
-    return <div></div>;
-  };
-
-  console.info('RENDER', labelCardinalityState);
-
   if (!labelCardinalityState) {
     return null;
   }
 
   const height = getTableHeight(logsFrames);
-  const styles = getStyles(props.theme, height);
+  const sidebarWidth = 220;
+  const totalWidth = props.logsTableProps.width;
+  const tableWidth = totalWidth - sidebarWidth;
+
+  const styles = getStyles(props.theme, height, sidebarWidth);
 
   return (
     <div className={styles.wrapper}>
       <section className={styles.sidebar}>
-        <div>Columns</div>
-        <div>Available</div>
-        <Columns labels={labelCardinalityState} valueFilter={(value) => !!value} />
-        <div>Empty</div>
-        <Columns labels={labelCardinalityState} valueFilter={(value) => !value} />
+        <div className={styles.columnHeader}>Common columns</div>
+        <LogsTableNavColumn
+          toggleColumn={toggleColumn}
+          labels={labelCardinalityState}
+          valueFilter={(value) => value === 100}
+        />
+        <div className={styles.columnHeader}>Available columns</div>
+        <LogsTableNavColumn
+          toggleColumn={toggleColumn}
+          labels={labelCardinalityState}
+          valueFilter={(value) => !!value && value !== 100}
+        />
+        <div className={styles.columnHeader}>Empty columns</div>
+        <LogsTableNavColumn
+          toggleColumn={toggleColumn}
+          labels={labelCardinalityState}
+          valueFilter={(value) => !value}
+        />
       </section>
       <LogsTable
         logsSortOrder={props.logsTableProps.logsSortOrder}
         range={props.logsTableProps.range}
         splitOpen={props.logsTableProps.splitOpen}
         timeZone={props.logsTableProps.timeZone}
-        width={props.logsTableProps.width}
+        width={tableWidth}
         logsFrames={logsFrames}
         labelCardinalityState={labelCardinalityState}
-        sparsityThreshold={80}
         height={height}
       />
     </div>
