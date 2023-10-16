@@ -89,6 +89,10 @@ func TestNewExternalAlertmanager(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 	amURL := os.Getenv("AM_URL")
