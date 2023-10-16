@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
 
-import { InteractiveTable, CellProps, Tooltip, Icon, Tag, Pagination, Column, FetchDataFunc, Text } from '@grafana/ui';
+import { InteractiveTable, CellProps, Tooltip, Icon, Tag, Pagination, Column, FetchDataFunc, Text, Avatar } from '@grafana/ui';
 import { Flex, Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
-import { Avatar } from './Avatar';
 import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
@@ -33,7 +32,7 @@ export const UsersTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt={'User avatar'} />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt={'User avatar'} />,
       },
       {
         id: 'login',

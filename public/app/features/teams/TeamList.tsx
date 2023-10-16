@@ -12,6 +12,7 @@ import {
   Tooltip,
   Column,
   Pagination,
+  Avatar,
 } from '@grafana/ui';
 import { Stack, Flex } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -21,7 +22,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { Avatar } from '../admin/Users/Avatar';
 import { TableWrapper } from '../admin/Users/TableWrapper';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
@@ -66,7 +66,7 @@ export const TeamList = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'name',
