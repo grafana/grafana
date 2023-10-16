@@ -96,11 +96,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
         newState.logDetailsFilterAvailable = true;
       }
       if (hasLogsContextSupport(datasourceInstance)) {
-        const logContextSupport: LogsContainerState['logContextSupport'] = {};
         logsQueries.forEach(({ refId }) => {
-          logContextSupport[refId] = datasourceInstance;
+          newState.logContextSupport[refId] = datasourceInstance;
         });
-        newState.logContextSupport = logContextSupport;
       }
       this.setState(newState);
       return;
