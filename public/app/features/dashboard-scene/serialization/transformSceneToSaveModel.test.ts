@@ -374,7 +374,7 @@ describe('transformSceneToSaveModel', () => {
 
       const result = gridItemToPanel(panel);
 
-      expect(result.transformations.length).toBe(1);
+      expect(result.transformations?.length).toBe(1);
 
       expect(result.maxDataPoints).toBe(100);
       expect(result.targets?.length).toBe(2);
@@ -458,7 +458,7 @@ describe('transformSceneToSaveModel', () => {
 
       const result = gridItemToPanel(panel);
 
-      expect(result.transformations.length).toBe(1);
+      expect(result.transformations?.length).toBe(1);
 
       expect(result.targets?.length).toBe(1);
       expect(result.targets?.[0]).toEqual({

@@ -139,6 +139,8 @@ export function generateRandomNodes(count = 10) {
     nodeFields.arc__errors.values.push(node.error);
     const rnd = Math.random();
     nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
+    nodeFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(rnd > 0.5 ? 30 : 40);
+
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random
