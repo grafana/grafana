@@ -15571,7 +15571,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create an API key.",
+        "summary": "Create an API key!",
         "tags": [
           "api_keys"
         ]
@@ -18487,6 +18487,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
@@ -18572,6 +18575,9 @@
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"

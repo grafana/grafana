@@ -3386,7 +3386,7 @@
         "tags": [
           "api_keys"
         ],
-        "summary": "Create an API key.",
+        "summary": "Create an API key!",
         "operationId": "addAPIkey",
         "deprecated": true,
         "parameters": [
@@ -6077,6 +6077,9 @@
           "401": {
             "$ref": "#/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
@@ -6191,6 +6194,9 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
