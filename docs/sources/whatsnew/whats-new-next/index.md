@@ -329,14 +329,18 @@ Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect al
 
 To learn more, refer to the [Grafana OnCall integration for Alerting documentation](/docs/grafana/next/alerting/alerting-rules/manage-contact-points/configure-oncall/).
 
-## New browse dashboards view
+## New browse dashboards
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 <!-- OSS, Enterprise -->
 
-_Available in public preview in Grafana Cloud_
+September 19, 2023
 
-We are gradually rolling out our new browse dashboards user interface. With this new feature, we removed the **General** folder, and dashboards now sit at the root level. The feature also provides easier editing functionality, as well as faster search renders.
+_Generally available in Grafana Cloud_
+
+The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage for your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
+
+To make using folders easier and more consistent, there is no longer a special **General** folder. Dashboards without a folder, or dashboards previously in **General**, are now shown at the root level.
 
 To learn more, refer to the following video demo.
 
