@@ -145,9 +145,16 @@ func ApplyteamHTTPHeaders(req *http.Request, ds *datasources.DataSource, teams [
 				continue
 			}
 
-			v := headers.([]map[string]interface{})
-			for _, header := range v {
-				req.Header.Set(header["header"].(string), header["value"].(string))
+			teamHeaders := headers.([]map[string]interface{})
+			for _, headerValue := range teamHeaders {
+				header := headerValue["header"].(string)
+				value := headerValue["value"].(string)
+				// check if headerv is already set in req.Header
+				if req.Header.Get(header) != "" {
+					req.Header.Add(header, value)
+					continue
+				}
+				req.Header.Set(header, value)
 			}
 		}
 	}
