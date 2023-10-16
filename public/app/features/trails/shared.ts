@@ -7,7 +7,9 @@ export interface DataTrailActionView<T extends SceneObjectState = SceneObjectSta
 }
 
 export interface ActionViewDefinition {
-  name: string;
+  displayName: string;
   value: string;
   getScene: () => DataTrailActionView;
 }
+
+export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;

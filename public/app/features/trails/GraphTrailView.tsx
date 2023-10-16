@@ -20,7 +20,7 @@ import { Box, Flex } from '@grafana/ui/src/unstable';
 
 import { ActionViewBreakdown } from './ActionViewBreakdown';
 import { ActionViewLogs } from './ActionViewLogs';
-import { ActionViewDefinition, DataTrailActionView, trailsDS } from './shared';
+import { ActionViewDefinition, DataTrailActionView, MakeOptional, trailsDS } from './shared';
 
 export interface GraphTrailViewState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -31,45 +31,10 @@ export interface GraphTrailViewState extends SceneObjectState {
 export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: Omit<GraphTrailViewState, 'body'>) {
+  public constructor(state: MakeOptional<GraphTrailViewState, 'body'>) {
     super({
-      $variables: new SceneVariableSet({
-        variables: [
-          new ConstantVariable({
-            name: 'metric',
-            value: state.metric,
-            hide: VariableHide.hideVariable,
-          }),
-        ],
-      }),
-      body: new SceneFlexLayout({
-        direction: 'column',
-        children: [
-          new SceneFlexItem({
-            minHeight: 400,
-            maxHeight: 400,
-            body: PanelBuilders.timeseries()
-              .setTitle(state.metric)
-              .setCustomFieldConfig('fillOpacity', 9)
-              .setData(
-                new SceneQueryRunner({
-                  datasource: trailsDS,
-                  queries: [
-                    {
-                      refId: 'A',
-                      expr: 'sum(rate(${metric}{${filters}}[$__rate_interval]))',
-                    },
-                  ],
-                })
-              )
-              .build(),
-          }),
-          new SceneFlexItem({
-            ySizing: 'content',
-            body: new MetricActionBar({}),
-          }),
-        ],
-      }),
+      $variables: getVariablesWithMetricConstant(state.metric),
+      body: state.body ?? buildGraphScene(state.metric),
       ...state,
     });
   }
@@ -81,6 +46,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
   updateFromUrl(values: SceneObjectUrlValues) {
     if (typeof values.actionView === 'string') {
       if (this.state.actionView !== values.actionView) {
+        const actionViewDef = actionViewsDefinitions.find((v) => v.value === values.actionView);
         this.setActionView(new ActionViewBreakdown({}));
       }
     } else if (values.actionView === null) {
@@ -116,9 +82,9 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
   };
 }
 
-const actionViews: ActionViewDefinition[] = [
-  { name: 'Breakdown', value: 'breakdown', getScene: () => new ActionViewBreakdown({}) },
-  { name: 'Logs', value: 'logs', getScene: () => new ActionViewLogs({}) },
+const actionViewsDefinitions: ActionViewDefinition[] = [
+  { displayName: 'Breakdown', value: 'breakdown', getScene: () => new ActionViewBreakdown({}) },
+  { displayName: 'Logs', value: 'logs', getScene: () => new ActionViewLogs({}) },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
@@ -135,16 +101,15 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     return (
       <Box paddingY={1}>
         <Flex gap={2}>
-          {actionViews.map((viewDef) => (
+          {actionViewsDefinitions.map((viewDef) => (
             <ToolbarButton
               key={viewDef.value}
               variant={viewDef.value === actionView ? 'active' : 'canvas'}
               onClick={() => trail.toggleActionView(viewDef)}
             >
-              {viewDef.name}
+              {viewDef.displayName}
             </ToolbarButton>
           ))}
-          <ToolbarButton variant={model.getButtonVariant('logs', actionView)}>View logs</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Bookmark trail</ToolbarButton>
@@ -166,4 +131,47 @@ function getGraphView(model: SceneObject): GraphTrailView {
   console.error('Unable to find graph view for', model);
 
   throw new Error('Unable to find trail');
+}
+
+function getVariablesWithMetricConstant(metric: string) {
+  return new SceneVariableSet({
+    variables: [
+      new ConstantVariable({
+        name: 'metric',
+        value: metric,
+        hide: VariableHide.hideVariable,
+      }),
+    ],
+  });
+}
+
+function buildGraphScene(metric: string) {
+  return new SceneFlexLayout({
+    direction: 'column',
+    children: [
+      new SceneFlexItem({
+        minHeight: 300,
+        maxHeight: 400,
+        body: PanelBuilders.timeseries()
+          .setTitle(metric)
+          .setCustomFieldConfig('fillOpacity', 9)
+          .setData(
+            new SceneQueryRunner({
+              datasource: trailsDS,
+              queries: [
+                {
+                  refId: 'A',
+                  expr: 'sum(rate(${metric}{${filters}}[$__rate_interval]))',
+                },
+              ],
+            })
+          )
+          .build(),
+      }),
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: new MetricActionBar({}),
+      }),
+    ],
+  });
 }

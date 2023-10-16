@@ -37,7 +37,7 @@ function buildLogsScene() {
         {
           refId: 'A',
           datasource: { uid: 'gdev-loki' },
-          expr: '{${filters}mu!=""} | logfmt',
+          expr: '{${filters}} | logfmt',
         },
       ],
     }),
