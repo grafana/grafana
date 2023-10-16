@@ -37,12 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const (
-	DefaultAPIServerIp   = "127.0.0.1"
-	DefaultServerPort    = 6443
-	DefaultAPIServerHost = "https://" + DefaultAPIServerIp + ":6443"
-)
-
 var (
 	_ Service                    = (*service)(nil)
 	_ RestConfigProvider         = (*service)(nil)
