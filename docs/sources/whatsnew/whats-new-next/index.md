@@ -165,6 +165,8 @@ To learn more, refer to the [CloudWatch authentication documentation](/docs/graf
 <!-- Kyle Brandt, Observability Metrics -->
 <!-- Enterprise -->
 
+<Date>
+
 _Generally available in Grafana Cloud_
 
 With recorded queries, a single recorded query can now record multiple metrics.
