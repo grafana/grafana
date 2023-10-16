@@ -538,7 +538,6 @@ describe('CorrelationsPage', () => {
       openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Logfmt'));
       await userEvent.click(screen.getByRole('button', { name: /remove transformation/i }));
-      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).not.toBeInTheDocument();
 

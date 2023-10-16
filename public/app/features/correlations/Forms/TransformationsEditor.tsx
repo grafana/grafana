@@ -7,10 +7,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Button,
-  DeleteButton,
   Field,
   FieldArray,
   Icon,
+  IconButton,
   Input,
   InputControl,
   Label,
@@ -231,9 +231,10 @@ export const TransformationsEditor = (props: Props) => {
                         </Field>
                         {!readOnly && (
                           <div className={styles.removeButton}>
-                            <DeleteButton
-                              aria-label="remove transformation"
-                              onConfirm={() => {
+                            <IconButton
+                              tooltip="Remove transformation"
+                              name="trash-alt"
+                              onClick={() => {
                                 remove(index);
                                 const keptValsCopy: Array<{ expression?: string; mapValue?: string } | undefined> = [
                                   ...keptVals,
@@ -241,8 +242,9 @@ export const TransformationsEditor = (props: Props) => {
                                 keptValsCopy[index] = undefined;
                                 setKeptVals(compact(keptValsCopy));
                               }}
-                              closeOnConfirm
-                            />
+                            >
+                              Remove
+                            </IconButton>
                           </div>
                         )}
                       </Stack>
