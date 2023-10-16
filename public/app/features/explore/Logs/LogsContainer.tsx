@@ -185,7 +185,11 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     const ds = this.state.logContextSupport[row.dataFrame.refId];
     const query = this.getQuery(logsQueries, row, ds);
 
-    return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? ds.getLogRowContextUi(row, runContextQuery, query) : <></>;
+    return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
+      ds.getLogRowContextUi(row, runContextQuery, query)
+    ) : (
+      <></>
+    );
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
