@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type Service struct {
@@ -15,20 +13,10 @@ type Service struct {
 
 var _ playlist.Service = &Service{}
 
-func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
-	var sqlstore store
-
-	// 🐢🐢🐢 pick the store
-	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
-		sqlstore = &sqlxStore{
-			sess: db.GetSqlxSession(),
-		}
-	} else {
-		sqlstore = &sqlStore{
-			db: db,
-		}
-	}
-	return &Service{store: sqlstore}
+func ProvideService(db db.DB) playlist.Service {
+	return &Service{store: &sqlStore{
+		db: db,
+	}}
 }
 
 func (s *Service) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
@@ -57,7 +45,7 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 	}
 	items := make([]playlist.PlaylistItemDTO, len(rawItems))
 	for i := 0; i < len(rawItems); i++ {
-		items[i].Type = playlist.PlaylistItemType(rawItems[i].Type)
+		items[i].Type = rawItems[i].Type
 		items[i].Value = rawItems[i].Value
 
 		// Add the unused title to the result
@@ -67,10 +55,13 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 		}
 	}
 	return &playlist.PlaylistDTO{
-		Uid:      v.UID,
-		Name:     v.Name,
-		Interval: v.Interval,
-		Items:    items,
+		Uid:       v.UID,
+		Name:      v.Name,
+		Interval:  v.Interval,
+		Items:     items,
+		CreatedAt: v.CreatedAt,
+		UpdatedAt: v.UpdatedAt,
+		OrgID:     v.OrgId,
 	}, nil
 }
 

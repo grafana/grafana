@@ -11,15 +11,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { deletePlaylist, searchPlaylists, playlistAPI } from './api';
+import { getPlaylistAPI, searchPlaylists } from './api';
 import { Playlist } from './types';
 
-const { getAllPlaylist } = playlistAPI;
-
 export const PlaylistPage = () => {
+  const api = getPlaylistAPI();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const allPlaylists = useAsync(() => getAllPlaylist(), [forcePlaylistsFetch]);
+  const allPlaylists = useAsync(() => api.getAllPlaylist(), [forcePlaylistsFetch]);
   const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
 
   const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
@@ -31,7 +30,7 @@ export const PlaylistPage = () => {
     if (!playlistToDelete) {
       return;
     }
-    deletePlaylist(playlistToDelete.uid).finally(() => {
+    api.deletePlaylist(playlistToDelete.uid).finally(() => {
       setForcePlaylistsFetch(forcePlaylistsFetch + 1);
       setPlaylistToDelete(undefined);
     });

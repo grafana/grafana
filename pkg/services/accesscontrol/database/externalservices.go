@@ -2,9 +2,7 @@ package database
 
 import (
 	"context"
-	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
-	"crypto/sha1"
-	"encoding/hex"
+
 	"errors"
 	"fmt"
 	"time"
@@ -13,24 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// extServiceRoleUID generates a 160 bit unique ID using SHA-1 that fits within the 40 characters limit of the role UID.
-func extServiceRoleUID(externalServiceID string) string {
-	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
-	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
-	hasher := sha1.New()
-	hasher.Write([]byte(uid))
-
-	return hex.EncodeToString(hasher.Sum(nil))
-}
-
 func extServiceRoleName(externalServiceID string) string {
 	name := fmt.Sprintf("%s%s:permissions", accesscontrol.ExternalServiceRolePrefix, externalServiceID)
 	return name
 }
 
 func (s *AccessControlStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	uid := extServiceRoleUID(externalServiceID)
-
+	uid := accesscontrol.PrefixedRoleUID(extServiceRoleName(externalServiceID))
 	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		stored, errGet := getRoleByUID(ctx, sess, uid)
 		if errGet != nil {
@@ -90,11 +77,12 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 }
 
 func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.Role {
+	name := extServiceRoleName(cmd.ExternalServiceID)
 	role := accesscontrol.Role{
 		OrgID:       cmd.OrgID,
 		Version:     1,
-		Name:        extServiceRoleName(cmd.ExternalServiceID),
-		UID:         extServiceRoleUID(cmd.ExternalServiceID),
+		Name:        name,
+		UID:         accesscontrol.PrefixedRoleUID(name),
 		DisplayName: fmt.Sprintf("External Service %s Permissions", cmd.ExternalServiceID),
 		Description: fmt.Sprintf("External Service %s permissions", cmd.ExternalServiceID),
 		Group:       "External Service",

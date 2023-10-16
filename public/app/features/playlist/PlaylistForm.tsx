@@ -29,7 +29,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const doSubmit = (list: Playlist) => {
     setSaving(true);
-    onSubmit({ ...list, items });
+    onSubmit({ ...list, items, uid: playlist.uid });
   };
 
   return (
