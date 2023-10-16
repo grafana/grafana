@@ -74,7 +74,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           />
         </Field>
 
-        <Field label="Database name" required>
+        <Field label="Database name">
           <Input
             width={WIDTH_LONG}
             name="database"
@@ -97,7 +97,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           />
         </Field>
 
-        <Field label="Password" required>
+        <Field label="Password">
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"
