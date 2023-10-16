@@ -988,7 +988,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Item"
+                "$ref": "#/components/schemas/PlaylistItemDTO"
               },
               "type": "array"
             }
@@ -1000,7 +1000,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
             }
           }
         },
@@ -1791,7 +1791,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
             }
           }
         },
@@ -7412,6 +7412,30 @@
         },
         "type": "object"
       },
+      "PlaylistDTO": {
+        "properties": {
+          "interval": {
+            "description": "Interval sets the time between switching views in a playlist.",
+            "type": "string"
+          },
+          "items": {
+            "description": "The ordered list of items that the playlist will iterate over.",
+            "items": {
+              "$ref": "#/components/schemas/PlaylistItemDTO"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the playlist.",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PlaylistDashboard": {
         "properties": {
           "id": {
@@ -7464,6 +7488,23 @@
             "type": "string"
           },
           "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PlaylistItemDTO": {
+        "properties": {
+          "title": {
+            "description": "Title is an unused property -- it will be removed in the future",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of the item.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
