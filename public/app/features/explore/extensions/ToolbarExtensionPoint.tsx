@@ -1,6 +1,6 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
-import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
 import { getPluginLinkExtensions, config } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
@@ -101,7 +101,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       targets: queries,
       data: queryResponse,
       timeRange: range.raw,
-      timeZone: timeZone,
+      timeZone: getTimeZone({ timeZone }),
       shouldShowAddCorrelation:
         config.featureToggles.correlations === true &&
         canWriteCorrelations &&

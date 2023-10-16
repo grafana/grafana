@@ -30,6 +30,9 @@ export const togglesApi = createApi({
   reducerPath: 'togglesApi',
   baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
   endpoints: (builder) => ({
+    getManagerState: builder.query<FeatureMgmtState, void>({
+      query: () => ({ url: '/featuremgmt/state' }),
+    }),
     getFeatureToggles: builder.query<FeatureToggle[], void>({
       query: () => ({ url: '/featuremgmt' }),
     }),
@@ -50,5 +53,9 @@ type FeatureToggle = {
   readOnly?: boolean;
 };
 
-export const { useGetFeatureTogglesQuery, useUpdateFeatureTogglesMutation } = togglesApi;
-export type { FeatureToggle };
+type FeatureMgmtState = {
+  restartRequired: boolean;
+};
+
+export const { useGetManagerStateQuery, useGetFeatureTogglesQuery, useUpdateFeatureTogglesMutation } = togglesApi;
+export type { FeatureToggle, FeatureMgmtState };
