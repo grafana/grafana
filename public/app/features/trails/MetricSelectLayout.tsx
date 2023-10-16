@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -16,7 +18,8 @@ import {
   VariableValueOption,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Button } from '@grafana/ui';
+import { Button, Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 
 import {
   getVariablesWithMetricConstant,
@@ -24,13 +27,15 @@ import {
   trailsDS,
   VAR_FILTERS,
   VAR_FILTERS_EXPR,
-  VAR_METRIC,
   VAR_METRIC_EXPR,
   VAR_METRIC_NAMES,
 } from './shared';
 
 export interface MetricSelectLayoutState extends SceneObjectState {
   body: SceneFlexLayout;
+  showHeading?: boolean;
+  searchQuery?: string;
+  showPreviews?: boolean;
 }
 
 export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState> {
@@ -38,6 +43,7 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
     super({
       $variables: getMetricNamesVariableSet(),
       body: state.body ?? new SceneFlexLayout({ children: [], wrap: 'wrap' }),
+      ...state,
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
@@ -56,25 +62,37 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
         (this.state.$variables as any)._handleVariableValueChanged(variable);
       }
 
-      if (variable.state.name === VAR_METRIC_NAMES && variable instanceof QueryVariable) {
-        this.buildLayout(variable.state.options);
+      if (variable.state.name === VAR_METRIC_NAMES) {
+        this.buildLayout();
       }
     }
   }
 
   private _onActivate() {
-    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
-
-    if (variable instanceof QueryVariable && !variable.state.loading) {
-      this.buildLayout(variable.state.options);
-    }
+    this.buildLayout();
   }
 
-  private buildLayout(metricNames: VariableValueOption[]) {
+  private buildLayout() {
+    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
+
+    if (!(variable instanceof QueryVariable)) {
+      return;
+    }
+
+    if (variable.state.loading) {
+      return;
+    }
+
+    const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
+    const metricNames = variable.state.options;
     const children: SceneFlexItem[] = [];
 
     for (const metric of metricNames) {
       const metricName = String(metric.value);
+      if (!metricName.match(searchRegex)) {
+        continue;
+      }
+
       children.push(
         new SceneFlexItem({
           minHeight: 150,
@@ -84,7 +102,7 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
         })
       );
 
-      if (children.length > 5) {
+      if (children.length > 10) {
         break;
       }
     }
@@ -92,8 +110,26 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
     this.state.body.setState({ children });
   }
 
+  public onSearchChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
+    this.setState({ searchQuery: evt.currentTarget.value });
+    this.buildLayout();
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricSelectLayout>) => {
-    return <model.state.body.Component model={model.state.body} />;
+    const { showHeading, searchQuery } = model.useState();
+    const styles = useStyles2(getStyles);
+
+    console.log('showHadin', showHeading);
+    return (
+      <Flex direction="column">
+        {showHeading && <Text variant="h4">Select a metric</Text>}
+        <div className={styles.header}>
+          <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
+          <InlineSwitch showLabel={true} label="Show previews" />
+        </div>
+        <model.state.body.Component model={model.state.body} />
+      </Flex>
+    );
   };
 }
 
@@ -145,5 +181,16 @@ export class SelectMetricAction extends SceneObjectBase<SelectMetricActionState>
         Select
       </Button>
     );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    header: css({
+      flexGrow: 1,
+      display: 'flex',
+      gap: theme.spacing(2),
+      marginBottom: theme.spacing(1),
+    }),
   };
 }

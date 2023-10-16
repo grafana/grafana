@@ -21,6 +21,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 
 import { GraphTrailView } from './GraphTrailView';
+import { MetricSelectLayout } from './MetricSelectLayout';
 import { SelectMetricTrailView } from './SelectMetricTrailView';
 import { MetricSelectedEvent, trailsDS } from './shared';
 
@@ -59,7 +60,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
-      topScene: new SelectMetricTrailView({}),
+      topScene: new MetricSelectLayout({ showHeading: true }),
       ...state,
     });
 
