@@ -253,7 +253,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			}
 			roleID := int64(-1)
 			err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-				role, err := getRoleByUID(ctx, sess, extServiceRoleUID(tt.id))
+				role, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.id)))
 				if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
 					return err
 				}
@@ -295,7 +295,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 
 			// Role should be deleted
 			_ = s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-				storedRole, err := getRoleByUID(ctx, sess, extServiceRoleUID(tt.id))
+				storedRole, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.id)))
 				require.ErrorIs(t, err, accesscontrol.ErrRoleNotFound)
 				require.Nil(t, storedRole)
 				return nil

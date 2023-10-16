@@ -26,7 +26,6 @@ const (
 
 	PluginRolePrefix = "plugins:"
 
-	// Basic Role None
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
 )
@@ -276,7 +275,7 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 }
 
 // PrefixedRoleUID generates a uid from name with the same prefix.
-// Generated uid is 28 bytes + lenght of prefix: <prefix>_base64(sha1(roleName))
+// Generated uid is 28 bytes + length of prefix: <prefix>_base64(sha1(roleName))
 func PrefixedRoleUID(roleName string) string {
 	prefix := strings.Split(roleName, ":")[0] + "_"
 
