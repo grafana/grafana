@@ -1,5 +1,4 @@
 import { chain, difference, once } from 'lodash';
-import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
 
@@ -11,7 +10,7 @@ import {
   HistoryItem,
   LanguageProvider,
 } from '@grafana/data';
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
@@ -23,7 +22,6 @@ import {
   parseSelector,
   processHistogramMetrics,
   processLabels,
-  roundSecToMin,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
@@ -116,13 +114,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   datasource: PrometheusDatasource;
   labelKeys: string[] = [];
   declare labelFetchTs: number;
-  /**
-   *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
-   *  not account for different size of a response. If that is needed a `length` function can be added in the options.
-   *  10 as a max size is totally arbitrary right now.
-   */
-  private labelsCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
-  private labelValuesCache = new LRUCache<string, string[]>({ max: 10 });
+
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
 
@@ -135,11 +127,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getDefaultCacheHeaders() {
-    // @todo clean up prometheusResourceBrowserCache feature flag
-    if (config.featureToggles.prometheusResourceBrowserCache) {
-      if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
-        return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
-      }
+    if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
+      return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
     }
     return;
   }
@@ -177,10 +166,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    // @todo clean up prometheusResourceBrowserCache feature flag
-    const headers = config.featureToggles.prometheusResourceBrowserCache
-      ? buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay)
-      : {};
+    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         '/api/v1/metadata',
@@ -574,11 +560,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
 
-    // @todo clean up prometheusResourceBrowserCache feature flag
-    if (!config.featureToggles.prometheusResourceBrowserCache) {
-      return await this.fetchSeriesValuesLRUCache(interpolatedName, range, name, urlParams);
-    }
-
     const value = await this.request(
       `/api/v1/label/${interpolatedName}/values`,
       [],
@@ -587,39 +568,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     );
     return value ?? [];
   };
-
-  /**
-   * @deprecated
-   * @todo clean up prometheusResourceBrowserCache feature flag
-   * @param interpolatedName
-   * @param range
-   * @param name
-   * @param urlParams
-   * @private
-   */
-  private async fetchSeriesValuesLRUCache(
-    interpolatedName: string | null,
-    range: { start: string; end: string },
-    name: string,
-    urlParams: { start: string; end: string }
-  ) {
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName ?? '',
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
-      name: name,
-    });
-
-    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
-    let value: string[] | undefined = this.labelValuesCache.get(cacheKey);
-    if (!value) {
-      value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
-      if (value) {
-        this.labelValuesCache.set(cacheKey, value);
-      }
-    }
-    return value ?? [];
-  }
 
   /**
    * Gets series labels
@@ -662,52 +610,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
     const url = `/api/v1/series`;
 
-    if (!config.featureToggles.prometheusResourceBrowserCache) {
-      return await this.fetchSeriesLabelsLRUCache(interpolatedName, range, withName, url, urlParams);
-    }
-
     const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     const { values } = processLabels(data, withName);
     return values;
   };
-
-  /**
-   * @deprecated
-   * @param interpolatedName
-   * @param range
-   * @param withName
-   * @param url
-   * @param urlParams
-   * @private
-   */
-  private async fetchSeriesLabelsLRUCache(
-    interpolatedName: string,
-    range: { start: string; end: string },
-    withName: boolean | undefined,
-    url: string,
-    urlParams: { start: string; 'match[]': string; end: string }
-  ) {
-    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
-    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
-    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
-    // when user does not the newest values for a minute if already cached.
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName,
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
-      withName: withName ? 'true' : 'false',
-    });
-
-    const cacheKey = `/api/v1/series?${cacheParams.toString()}`;
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      const data = await this.request(url, [], urlParams);
-      const { values } = processLabels(data, withName);
-      value = values;
-      this.labelsCache.set(cacheKey, value);
-    }
-    return value;
-  }
 
   /**
    * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
@@ -723,52 +629,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
     };
     const url = `/api/v1/labels`;
-    if (!config.featureToggles.prometheusResourceBrowserCache) {
-      return await this.fetchSeriesLabelMatchLRUCache(interpolatedName, range, withName, url, urlParams);
-    }
 
     const data: string[] = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     // Convert string array to Record<string , []>
     return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
   };
-
-  /**
-   * @deprecated
-   * @param interpolatedName
-   * @param range
-   * @param withName
-   * @param url
-   * @param urlParams
-   * @private
-   */
-  private async fetchSeriesLabelMatchLRUCache(
-    interpolatedName: string,
-    range: { start: string; end: string },
-    withName: boolean | undefined,
-    url: string,
-    urlParams: { start: string; 'match[]': string; end: string }
-  ) {
-    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
-    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
-    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
-    // when user does not the newest values for a minute if already cached.
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName,
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
-      withName: withName ? 'true' : 'false',
-    });
-
-    const cacheKey = `${url}?${cacheParams.toString()}`;
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      const data: string[] = await this.request(url, [], urlParams);
-      // Convert string array to Record<string , []>
-      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
-      this.labelsCache.set(cacheKey, value);
-    }
-    return value;
-  }
 
   /**
    * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.

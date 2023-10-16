@@ -17,6 +17,7 @@ import {
   Pagination,
   HorizontalGroup,
   VerticalGroup,
+  Avatar,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -26,8 +27,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
-
-import { Avatar } from './Avatar';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -72,6 +71,7 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -94,7 +94,7 @@ export const OrgUsersTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'login',
@@ -187,10 +187,17 @@ export const OrgUsersTable = ({
 
   return (
     <VerticalGroup spacing="md" data-testid={selectors.container}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
-      <HorizontalGroup justify="flex-end">
-        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-      </HorizontalGroup>
+      <div className={styles.wrapper}>
+        <InteractiveTable
+          columns={columns}
+          data={users}
+          getRowId={(user) => String(user.userId)}
+          fetchData={fetchData}
+        />
+        <HorizontalGroup justify="flex-end">
+          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+        </HorizontalGroup>
+      </div>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}

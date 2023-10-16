@@ -23,7 +23,7 @@ export function getRuleGroupIntervalScene(datasource: DataSourceRef, panelTitle:
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The current and historical rule group evaluation interval')
       .setData(query)
       .setUnit('s')
       .setOption('graphMode', BigValueGraphMode.Area)

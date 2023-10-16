@@ -55,10 +55,10 @@ type postgresProxyDriver struct {
 var _ driver.DriverContext = (*postgresProxyDriver)(nil)
 var _ core.Driver = (*postgresProxyDriver)(nil)
 
-// newPostgresProxyDriver updates the dialer for a postgres connector with a dialer that proxys connections through the secure socks proxy
+// newPostgresProxyDriver updates the dialer for a postgres connector with a dialer that proxies connections through the secure socks proxy
 // and returns a new postgres driver to register
 func newPostgresProxyDriver(connector *pq.Connector, opts *sdkproxy.Options) (*postgresProxyDriver, error) {
-	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
+	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
 	if err != nil {
 		return nil, err
 	}
