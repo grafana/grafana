@@ -2834,6 +2834,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana-plugins/grafana-testdata-datasource@workspace:*, @grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
+  dependencies:
+    "@emotion/css": 11.11.2
+    "@grafana/data": 10.2.0-pre
+    "@grafana/e2e-selectors": 10.2.0-pre
+    "@grafana/experimental": 1.7.0
+    "@grafana/plugin-configs": 10.2.0-pre
+    "@grafana/runtime": 10.2.0-pre
+    "@grafana/schema": 10.2.0-pre
+    "@grafana/ui": 10.2.0-pre
+    "@testing-library/react": 14.0.0
+    "@testing-library/user-event": 14.4.3
+    "@types/jest": 29.5.4
+    "@types/lodash": 4.14.195
+    "@types/node": 18.16.16
+    "@types/react": 18.2.15
+    "@types/testing-library__jest-dom": 5.14.8
+    lodash: 4.17.21
+    react: 18.2.0
+    react-use: 17.4.0
+    rxjs: 7.8.1
+    swc-loader: 0.2.3
+    ts-node: 10.9.1
+    tslib: 2.6.0
+    webpack: 5.88.1
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
@@ -3193,7 +3225,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/plugin-configs@10.2.0-pre, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+  version: 0.0.0-use.local
+  resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    copy-webpack-plugin: 11.0.0
+    eslint-webpack-plugin: 4.0.1
+    fork-ts-checker-webpack-plugin: 8.0.0
+    glob: 10.3.3
+    replace-in-file-webpack-plugin: 1.0.6
+    tslib: 2.6.0
+    webpack: 5.88.1
+  languageName: unknown
+  linkType: soft
+
+"@grafana/runtime@10.2.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -8368,6 +8415,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/user-event@npm:14.4.3":
+  version: 14.4.3
+  resolution: "@testing-library/user-event@npm:14.4.3"
+  peerDependencies:
+    "@testing-library/dom": ">=7.21.4"
+  checksum: 852c48ea6db1c9471b18276617c84fec4320771e466cd58339a732ca3fd73ad35e5a43ae14f51af51a8d0a150dcf60fcaab049ef367871207bea8f92c4b8195e
+  languageName: node
+  linkType: hard
+
 "@testing-library/user-event@npm:14.5.1":
   version: 14.5.1
   resolution: "@testing-library/user-event@npm:14.5.1"
@@ -9350,6 +9406,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:18.16.16":
+  version: 18.16.16
+  resolution: "@types/node@npm:18.16.16"
+  checksum: 0efad726dd1e0bef71c392c708fc5d78c5b39c46b0ac5186fee74de4ccb1b2e847b3fa468da67d62812f56569da721b15bf31bdc795e6c69b56c73a45079ed2d
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^14.14.31":
   version: 14.18.36
   resolution: "@types/node@npm:14.18.36"
@@ -9774,12 +9837,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/testing-library__jest-dom@npm:5.14.8, @types/testing-library__jest-dom@npm:^5.9.1":
+"@types/testing-library__jest-dom@npm:5.14.8":
   version: 5.14.8
   resolution: "@types/testing-library__jest-dom@npm:5.14.8"
   dependencies:
     "@types/jest": "*"
   checksum: 18f5ba7d0db8ebd91667b544537762ce63f11c4fd02b3d57afa92f9457a384d3ecf9bc7b50b6b445af1b3ea38b69862b4f95130720d4dd23621d598ac074d93a
+  languageName: node
+  linkType: hard
+
+"@types/testing-library__jest-dom@npm:^5.9.1":
+  version: 5.14.9
+  resolution: "@types/testing-library__jest-dom@npm:5.14.9"
+  dependencies:
+    "@types/jest": "*"
+  checksum: d364494fc2545316292e88861146146af1e3818792ca63b62a63758b2f737669b687f4aaddfcfbcb7d0e1ed7890a9bd05de23ff97f277d5e68de574497a9ee72
   languageName: node
   linkType: hard
 
@@ -17675,6 +17747,7 @@ __metadata:
     "@emotion/react": 11.11.1
     "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
+    "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -26253,6 +26326,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"replace-in-file-webpack-plugin@npm:1.0.6":
+  version: 1.0.6
+  resolution: "replace-in-file-webpack-plugin@npm:1.0.6"
+  checksum: 0c00a074e544ebe1aef0615e594f6daad47427950a2454e88f94dcb185839d68ce07854b83bbcb5f9b2336f8e8ae24017db4eca085135a9be84e43585163301a
+  languageName: node
+  linkType: hard
+
 "request-progress@npm:^3.0.0":
   version: 3.0.0
   resolution: "request-progress@npm:3.0.0"
@@ -28260,7 +28340,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"swc-loader@npm:^0.2.3":
+"swc-loader@npm:0.2.3, swc-loader@npm:^0.2.3":
   version: 0.2.3
   resolution: "swc-loader@npm:0.2.3"
   peerDependencies:
