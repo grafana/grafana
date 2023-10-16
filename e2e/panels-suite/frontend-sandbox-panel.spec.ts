@@ -112,9 +112,9 @@ describe('Panel sandbox', () => {
 
     it('Can access specific window global variables', () => {
       cy.get('[data-testid="button-test-globals"]').click();
-      cy.get('[data-sandbox-global="Prism"]');
-      cy.get('[data-sandbox-global="jQuery"]');
-      cy.get('[data-sandbox-global="location"]');
+      cy.get('[data-sandbox-global="Prism"]').should('be.visible');
+      cy.get('[data-sandbox-global="jQuery"]').should('be.visible');
+      cy.get('[data-sandbox-global="location"]').should('be.visible');
     });
   });
 
