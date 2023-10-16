@@ -3,7 +3,20 @@
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
-const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'].join('|');
+const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'];
+function getIgnorePatternForEsModules() {
+  // Dodgy way to detect if packages have been installed with yarn pnpm linker, where they're symlinked from node_modules/.store
+  const isYarnPnpm = process.argv.some((arg) => arg.includes('node_modules/.store'));
+
+  if (isYarnPnpm) {
+    return `/node_modules/\\.store/(?!${esModules.join('|')})`;
+  }
+
+  // default to yarn pnp
+  return `/node_modules/(?!${esModules.join('|')})`;
+
+  // For pnpm, check the tip in https://jestjs.io/docs/configuration#transformignorepatterns-arraystring
+}
 
 module.exports = {
   verbose: false,
@@ -11,10 +24,8 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
-  transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
-  ],
-  moduleDirectories: ['public'],
+  transformIgnorePatterns: [getIgnorePatternForEsModules()],
+  moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
