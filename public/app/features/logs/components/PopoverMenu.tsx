@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { parseKeyValue } from '@grafana/data/src/utils/url';
 import { Menu } from '@grafana/ui';
+import { parseKeyValue } from 'app/plugins/datasource/loki/queryUtils';
+import { copyText } from '../utils';
 
 interface PopoverMenuProps {
   selection: string;
@@ -22,6 +23,8 @@ export const PopoverMenu = ({
 }: PopoverMenuProps) => {
   const [isFilterActive, setIsFilterActive] = useState(false);
   const [keyValueSelection, setKeyValueSelection] = useState(parseKeyValue(selection));
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!onClickFilterLabel || !keyValueSelection.key || !keyValueSelection.value) {
       return;
@@ -40,9 +43,11 @@ export const PopoverMenu = ({
     keyValueSelection.key && keyValueSelection.value ? `${keyValueSelection.key}=${keyValueSelection.value}` : '';
 
   return (
-    <div style={{ position: 'fixed', top: y, left: x, zIndex: 9999 }}>
+    <div style={{ position: 'fixed', top: y, left: x, zIndex: 9999 }} ref={containerRef}>
       <Menu>
-        <Menu.Item label="Copy" onClick={() => {}} />
+        <Menu.Item label="Copy" onClick={() => {
+          copyText(selection, containerRef);
+        }} />
         {parsedKeyValue && (
           <>
             <Menu.Item
