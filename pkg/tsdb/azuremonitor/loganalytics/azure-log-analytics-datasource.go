@@ -274,7 +274,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
-		if dataquery.ResultFormat(query.ResultFormat) == (dataquery.ResultFormatTrace) && query.Query == "" {
+		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
 			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
 		}
 	}
@@ -314,7 +314,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
+	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat)
 	if err != nil {
 		return nil, err
 	}
