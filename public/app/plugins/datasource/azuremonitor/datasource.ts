@@ -8,6 +8,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   LoadingState,
+  QueryFixAction,
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -200,7 +201,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   modifyQuery(
     query: AzureMonitorQuery,
-    action: { type: 'ADD_FILTER' | 'ADD_FILTER_OUT'; options: { key: string; value: any } }
+    action: QueryFixAction
   ): AzureMonitorQuery {
     if (!action.options) {
       return query;
