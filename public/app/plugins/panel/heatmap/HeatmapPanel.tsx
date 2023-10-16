@@ -171,7 +171,7 @@ export const HeatmapPanel = ({
             {/*children ? children(config, alignedFrame) : null*/}
             <ZoomPlugin
               config={builder}
-              onZoom={({from, to}) => {
+              onZoom={({ from, to }) => {
                 onChangeTimeRange({ from, to });
               }}
             />
