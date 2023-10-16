@@ -3,14 +3,18 @@ import {
   PanelMenuItem,
   PluginExtensionLink,
   PluginExtensionPoints,
+  urlUtil,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
-import { AngularComponent, locationService, reportInteraction, getPluginLinkExtensions } from '@grafana/runtime';
+import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -201,6 +205,77 @@ export function getPanelMenu(
     shortcut: 'i',
     subMenu: inspectMenu,
   });
+
+  const createAlert = async () => {
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const navigateToAlertListView = async () => {
+    const alertListUrl = urlUtil.renderUrl('/alerting/list', {
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(alertListUrl);
+  };
+
+  const onNavigateToAlertListView = (event: React.MouseEvent) => {
+    event.preventDefault();
+    navigateToAlertListView();
+    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+  };
+
+  const onCreateAlert = (event: React.MouseEvent) => {
+    event.preventDefault();
+    createAlert();
+    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+  };
+
+  const { unifiedAlertingEnabled } = getConfig();
+  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
+  const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
+  const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
+
+  const alertingMenuAvailable = isAlertingAvailableForRead;
+  if (alertingMenuAvailable) {
+    // prepare submenu depending on permissions
+    const subMenu: PanelMenuItem[] = [];
+    if (hasRuleUpdatePermissions) {
+      subMenu.push({
+        text: t('panel.header-menu.create-alert', `Create alert rule from this panel`),
+        onClick: (e: React.MouseEvent) => onCreateAlert(e),
+      });
+    }
+    subMenu.push({
+      text: t('panel.header-menu.view-alerts', `View all alert rules`),
+      onClick: (e: React.MouseEvent) => onNavigateToAlertListView(e),
+    });
+
+    menu.push({
+      type: 'submenu',
+      text: t('panel.header-menu.alerting', `Alerting`),
+      iconClassName: 'bell',
+      onClick: (e: React.MouseEvent<HTMLElement>) => {
+        const currentTarget = e.currentTarget;
+        const target = e.target;
+
+        if (
+          target === currentTarget ||
+          (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+        ) {
+          onInspectPanel();
+        }
+      },
+      shortcut: 'a',
+      subMenu: subMenu,
+    });
+  }
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
