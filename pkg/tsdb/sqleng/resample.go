@@ -76,6 +76,12 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 		return f, nil
 	}
 
+	intervalSeconds := int64(qm.Interval.Seconds())
+
+	if intervalSeconds == 0 {
+		return f, fmt.Errorf("unable to resample data with interval smaller than 1 second")
+	}
+
 	newFields := make([]*data.Field, 0, len(f.Fields))
 	for _, field := range f.Fields {
 		newField := data.NewFieldFromFieldType(field.Type(), 0)
@@ -90,7 +96,7 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	startUnixTime := qm.TimeRange.From.Unix() / intervalSeconds * intervalSeconds
 	startTime := time.Unix(startUnixTime, 0)
 
 	for currentTime := startTime; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
