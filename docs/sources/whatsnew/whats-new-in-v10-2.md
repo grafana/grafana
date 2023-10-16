@@ -255,7 +255,7 @@ Learn more in the [Format string documentation](https://grafana.com/docs/grafana
 
 <!-- Kyle Cunningham -->
 
-_Available in public preview in all editions of Grafana_
+_Available in public preview in all Grafana Open Source and Enterprise_
 
 We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
 
