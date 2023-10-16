@@ -13,9 +13,11 @@ export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<St
   ({ gap = 1, direction = 'column', children, ...rest }, ref) => {
     return (
       <Flex ref={ref} gap={gap} direction={direction} wrap="wrap" {...rest}>
-        {React.Children.map(children, (child) => (
-          <div>{child}</div>
-        ))}
+        {React.Children.toArray(children)
+          .filter(Boolean)
+          .map((child, index) => (
+            <div key={index}>{child}</div>
+          ))}
       </Flex>
     );
   }
