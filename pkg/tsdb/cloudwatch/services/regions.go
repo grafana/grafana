@@ -32,10 +32,9 @@ func (r *RegionsService) GetRegions() ([]resources.ResourceResponse[resources.Re
 
 	result := make([]resources.ResourceResponse[resources.Region], 0)
 
-	ec2Regions, err := r.DescribeRegions(&ec2.DescribeRegionsInput{})
-	if err != nil {
-		return nil, err
-	}
+	// we ignore this error and always send default regions
+	// we only fetch incase a user has enabled additional regions
+	ec2Regions, _ := r.DescribeRegions(&ec2.DescribeRegionsInput{})
 
 	mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
 
