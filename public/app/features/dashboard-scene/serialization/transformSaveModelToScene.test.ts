@@ -637,7 +637,56 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it.each(['interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it('should migrate interval variable', () => {
+      const variable = {
+        name: 'intervalVar',
+        label: 'Interval Label',
+        type: 'interval' as VariableType,
+        rootStateKey: 'N4XLmH5Vz',
+        auto: false,
+        refresh: 2,
+        auto_count: 30,
+        auto_min: '10s',
+        current: {
+          selected: true,
+          text: '1m',
+          value: '1m',
+        },
+        options: [
+          {
+            selected: true,
+            text: '1m',
+            value: '1m',
+          },
+        ],
+        query: '1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d, 7d, 14d, 30d',
+        id: 'intervalVar',
+        global: false,
+        index: 4,
+        hide: 0,
+        skipUrlSync: false,
+        state: 'Done',
+        error: null,
+        description: null,
+      };
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+      expect(rest).toEqual({
+        label: 'Interval Label',
+        autoEnabled: false,
+        autoMinInterval: '10s',
+        autoStepCount: 30,
+        description: null,
+        refresh: 2,
+        intervals: ['1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d'],
+        hide: 0,
+        name: 'intervalVar',
+        skipUrlSync: false,
+        type: 'interval',
+        value: '1m',
+      });
+    });
+    it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
