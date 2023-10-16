@@ -74,7 +74,8 @@ export function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
  * generally requires.
  */
 export default function transformTraceData(data: TraceResponse | undefined): Trace | null {
-  if (!data?.traceID) {
+  console.log(data?.spans);
+  if (!data?.traceID || data?.spans.some((x) => !x.processID || !x.spanID)) {
     return null;
   }
   const traceID = data.traceID.toLowerCase();
