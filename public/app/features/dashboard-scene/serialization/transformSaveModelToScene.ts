@@ -32,7 +32,6 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
 } from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -43,6 +42,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -59,9 +59,6 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
-
-  // Setting for built-in annotations query to run
-  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -200,9 +197,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   const controls: SceneObject[] = [
-    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     ...filtersSets,
+    new SceneDataLayerControls(),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({
@@ -214,6 +211,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
+    id: oldModel.id,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -340,6 +338,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 

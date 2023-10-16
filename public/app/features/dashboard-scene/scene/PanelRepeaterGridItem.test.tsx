@@ -97,4 +97,14 @@ describe('PanelRepeaterGridItem', () => {
     // given 5 rows with total height 25 gives new itemHeight of 5
     expect(repeater.state.itemHeight).toBe(5);
   });
+
+  it('When updating variable should update repeats', async () => {
+    const { scene, repeater, variable } = buildScene({ variableQueryTime: 0 });
+
+    activateFullSceneTree(scene);
+
+    variable.changeValueTo(['1', '3'], ['A', 'C']);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(2);
+  });
 });

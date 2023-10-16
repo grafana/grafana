@@ -28,7 +28,7 @@ import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstanc
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
 import { getGrafanaRulesByEvaluationScene } from '../insights/grafana/RulesByEvaluation';
 import { getGrafanaRulesByEvaluationPercentageScene } from '../insights/grafana/RulesByEvaluationPercentage';
-import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getAlertsByStateScene as getGrafanaAlertsByStateScene } from '../insights/grafana/alertmanager/AlertsByState';
 import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
@@ -267,7 +267,8 @@ function getGrafanaAlertmanagerScenes() {
       children: [
         new SceneFlexLayout({
           children: [
-            getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notification delivery'),
+            getGrafanaAlertsByStateScene(cloudUsageDs, 'Firing alerts by state'),
+            // getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notification delivery'),
             getGrafanaAlertmanagerSilencesScene(cloudUsageDs, 'Silences'),
           ],
         }),
