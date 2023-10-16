@@ -4478,7 +4478,7 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: api_key
+  name: api_key_dev
   path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
@@ -4658,6 +4658,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 634d0641a815203e1b82f82e6f12fce5043defc92b73279cc6411b47f1f66542
+hmac: 454aa63996051e6b72815aa9d88a4119512825b873b3b71d56edeae20b27c5b1
 
 ...
