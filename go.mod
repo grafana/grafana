@@ -275,7 +275,6 @@ require (
 )
 
 require (
-	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.19.0 // @grafana/backend-platform
 	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad

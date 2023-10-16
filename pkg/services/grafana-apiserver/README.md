@@ -23,7 +23,7 @@ Start `etcd`:
 make devenv sources=etcd
 ```
 
-Enable dual write to `etcd`:
+Add etcd server to `custom.ini`:
 
 ```ini
 [grafana-apiserver]
@@ -32,10 +32,11 @@ etcd_servers = 127.0.0.1:2379
 
 ### `kubectl` access
 
-From the root of the repository:
-
+1. Create a service account token: http://localhost:3000/org/serviceaccounts
+1. Edit `data/grafana-apiserver/grafana.kubeconfig` and replace the token placeholder with the service account token created in the previous step.
+1. From the root of the Grafanaa repository, run the following:
 ```bash
-export KUBECONFIG=$PWD/data/k8s/grafana.kubeconfig
+export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
 kubectl api-resources
 ```
 

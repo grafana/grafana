@@ -3,14 +3,13 @@ package grafanaapiserver
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +38,9 @@ import (
 )
 
 const (
-	DefaultAPIServerHost = "https://" + certgenerator.DefaultAPIServerIp + ":6443"
+	DefaultAPIServerIp   = "127.0.0.1"
+	DefaultServerPort    = 6443
+	DefaultAPIServerHost = "https://" + DefaultAPIServerIp + ":6443"
 )
 
 var (
@@ -163,8 +164,6 @@ func (s *service) start(ctx context.Context) error {
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
-	o.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
-	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
 	o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
@@ -180,9 +179,18 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	err := o.ApplyTo(serverConfig)
-	if err != nil {
-		return err
+	serverConfig.ExternalAddress = s.config.host
+	serverConfig.LoopbackClientConfig = &clientrest.Config{
+		Host: s.config.appURL,
+		TLSClientConfig: clientrest.TLSClientConfig{
+			Insecure: true,
+		},
+	}
+
+	if o.Etcd != nil {
+		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
+			return err
+		}
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
@@ -192,8 +200,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// Install schemas
 	for _, b := range builders {
-		err = b.InstallSchema(Scheme) // previously was in init
-		if err != nil {
+		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 	}
@@ -245,7 +252,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.LoopbackClientConfig
-	prepared := server.PrepareRun()
+
+	// only write kubeconfig in dev mode
+	if s.config.devMode {
+		if err := s.ensureKubeConfig(); err != nil {
+			return err
+		}
+	}
 
 	// TODO: this is a hack. see note in ProvideService
 	s.handler = func(c *contextmodel.ReqContext) {
@@ -260,7 +273,7 @@ func (s *service) start(ctx context.Context) error {
 		req.Header.Set("X-Remote-Group", "grafana")
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
+		server.Handler.ServeHTTP(resp, req)
 	}
 
 	return nil
@@ -271,10 +284,10 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
+func (s *service) ensureKubeConfig() error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                restConfig.Host,
+		Server:                s.restConfig.Host,
 		InsecureSkipTLSVerify: true,
 	}
 
@@ -287,7 +300,7 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token: restConfig.BearerToken,
+		Token: "REPLACE_WITH_SERVICE_ACCOUNT_TOKEN",
 	}
 
 	clientConfig := clientcmdapi.Config{
@@ -298,5 +311,13 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
+
+	kubeconfigPath := path.Join(s.config.dataPath, "grafana.kubeconfig")
+
+	// check if kubeconfig already exists
+	if _, err := os.Stat(kubeconfigPath); err == nil {
+		return nil
+	}
+
+	return clientcmd.WriteToFile(clientConfig, kubeconfigPath)
 }
