@@ -20,7 +20,14 @@ import { Box, Flex } from '@grafana/ui/src/unstable';
 
 import { ActionViewBreakdown } from './ActionViewBreakdown';
 import { ActionViewLogs } from './ActionViewLogs';
-import { ActionViewDefinition, DataTrailActionView, MakeOptional, trailsDS } from './shared';
+import { ActionViewRelatedMetrics } from './ActionViewRelatedMetrics';
+import {
+  ActionViewDefinition,
+  DataTrailActionView,
+  getVariablesWithMetricConstant,
+  MakeOptional,
+  trailsDS,
+} from './shared';
 
 export interface GraphTrailViewState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -47,7 +54,9 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
     if (typeof values.actionView === 'string') {
       if (this.state.actionView !== values.actionView) {
         const actionViewDef = actionViewsDefinitions.find((v) => v.value === values.actionView);
-        this.setActionView(new ActionViewBreakdown({}));
+        if (actionViewDef) {
+          this.setActionView(actionViewDef?.getScene());
+        }
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
@@ -85,6 +94,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Breakdown', value: 'breakdown', getScene: () => new ActionViewBreakdown({}) },
   { displayName: 'Logs', value: 'logs', getScene: () => new ActionViewLogs({}) },
+  { displayName: 'Related metrics', value: 'related', getScene: () => new ActionViewRelatedMetrics({}) },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
@@ -131,18 +141,6 @@ function getGraphView(model: SceneObject): GraphTrailView {
   console.error('Unable to find graph view for', model);
 
   throw new Error('Unable to find trail');
-}
-
-function getVariablesWithMetricConstant(metric: string) {
-  return new SceneVariableSet({
-    variables: [
-      new ConstantVariable({
-        name: 'metric',
-        value: metric,
-        hide: VariableHide.hideVariable,
-      }),
-    ],
-  });
 }
 
 function buildGraphScene(metric: string) {

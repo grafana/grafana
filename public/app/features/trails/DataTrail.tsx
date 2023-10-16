@@ -22,10 +22,10 @@ import { useStyles2 } from '@grafana/ui';
 
 import { GraphTrailView } from './GraphTrailView';
 import { SelectMetricTrailView } from './SelectMetricTrailView';
-import { trailsDS } from './shared';
+import { MetricSelectedEvent, trailsDS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
-  activeScene: SceneObject;
+  topScene: SceneObject;
   urlSync?: boolean;
   filters?: AdHocVariableFilter[];
   mainScene?: SceneObject;
@@ -59,11 +59,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
-      activeScene: new SelectMetricTrailView({}),
+      topScene: new SelectMetricTrailView({}),
       ...state,
     });
 
-    this._selectMetricView = this.state.activeScene;
+    this._selectMetricView = this.state.topScene;
     this.syncSceneWithState();
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -73,11 +73,20 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       getUrlSyncManager().initSync(this);
     }
 
+    // Some scene elements publish this
+    this.subscribeToEvent(MetricSelectedEvent, (evt) => this.metricSelected(evt.payload));
+
     return () => {
       if (this.state.urlSync) {
         getUrlSyncManager().cleanUp(this);
       }
     };
+  }
+
+  private metricSelected(metric: string) {
+    this.setState({
+      topScene: new GraphTrailView({ metric }),
+    });
   }
 
   getUrlState() {
@@ -90,32 +99,32 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         stateUpdate.metric = values.metric;
-        stateUpdate.activeScene = new GraphTrailView({ metric: values.metric });
+        stateUpdate.topScene = new GraphTrailView({ metric: values.metric });
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
-      stateUpdate.activeScene = this._selectMetricView;
+      stateUpdate.topScene = this._selectMetricView;
     }
 
     this.setState(stateUpdate);
   }
 
   private syncSceneWithState() {
-    let activeScene = this.state.activeScene;
+    let topScene = this.state.topScene;
 
     if (this.state.metric) {
-      activeScene = new GraphTrailView({ metric: this.state.metric });
+      topScene = new GraphTrailView({ metric: this.state.metric });
     } else {
-      activeScene = this._selectMetricView;
+      topScene = this._selectMetricView;
     }
 
-    if (activeScene !== this.state.activeScene) {
-      this.setState({ activeScene });
+    if (topScene !== this.state.topScene) {
+      this.setState({ topScene });
     }
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, activeScene, actionScene } = model.useState();
+    const { controls, topScene: activeScene, actionScene } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
