@@ -87,6 +87,14 @@ var (
 			Owner:       grafanaExploreSquad,
 		},
 		{
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
+		},
+		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			Stage:       FeatureStageExperimental,
@@ -817,6 +825,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
 		},
 		{
 			Name:         "transformationsVariableSupport",
