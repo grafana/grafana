@@ -973,7 +973,7 @@ def remote_alertmanager_integration_tests_steps():
         "AM_URL": "http://mimir_backend:8080",
     }
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir", "8080", environment = environment)
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
 
 def memcached_integration_tests_steps():
     cmds = [

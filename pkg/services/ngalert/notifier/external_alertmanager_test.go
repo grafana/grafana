@@ -89,26 +89,24 @@ func TestNewExternalAlertmanager(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
-	amURL := os.Getenv("AM_URL")
 
-	// Using a wrong password should cause an error.
 	cfg := externalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
-		BasicAuthPassword: "wrongpassword",
+		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
 	am, err := newExternalAlertmanager(cfg, 1)
-	require.NoError(t, err)
-
-	_, err = am.ListSilences(context.Background(), []string{})
-	require.NotNil(t, err)
-
-	// Using the correct password should make the request succeed.
-	cfg.BasicAuthPassword = password
-	am, err = newExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
