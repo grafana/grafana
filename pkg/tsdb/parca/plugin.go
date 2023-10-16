@@ -35,8 +35,8 @@ type ParcaDatasource struct {
 }
 
 // NewParcaDatasource creates a new datasource instance.
-func NewParcaDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	opt, err := settings.HTTPClientOptions(ctx)
+func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		logger.Error("Failed to get HTTP options", "error", err)
 		return nil, err
