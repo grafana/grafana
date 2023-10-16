@@ -186,7 +186,7 @@ With the new **Format string** transformation, you can manipulate string fields 
 
 Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
 
-### Detect Unusable Transformations
+### Detect unusable transformations
 
 <!-- Kyle Cunningham -->
 
