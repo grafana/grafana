@@ -21,7 +21,7 @@ func TestProvideConfig(t *testing.T) {
 	section.Key("log_level").SetValue("5")
 	section.Key("etcd_servers").SetValue("http://localhost:2379")
 
-	actual := provideConfig(cfg)
+	actual := ProvideConfig(cfg)
 
 	expected := &config{
 		enabled:     true,
@@ -33,5 +33,4 @@ func TestProvideConfig(t *testing.T) {
 		logLevel:    5,
 	}
 	require.Equal(t, expected, actual)
-
 }
