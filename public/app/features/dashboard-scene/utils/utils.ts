@@ -181,10 +181,26 @@ export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel
 }
 
 // Transform new interval scene model to old interval core model
-
 export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
   const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
   return variableQuery;
+}
+
+export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
+  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+
+  // If the interval is the old auto format, return the new auto interval from scenes.
+  if (selectedInterval.startsWith('$__auto_interval_')) {
+    return '$__auto';
+  }
+
+  // Check if the selected interval is valid.
+  if (intervals.includes(selectedInterval)) {
+    return selectedInterval;
+  }
+
+  // If the selected interval is not valid, return the first valid interval.
+  return intervals[0];
 }
 
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {

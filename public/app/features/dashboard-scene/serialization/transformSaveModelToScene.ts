@@ -46,7 +46,11 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getIntervalsFromOldIntervalModel, getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  getCurrentValueForOldIntervalModel,
+  getIntervalsFromOldIntervalModel,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 
@@ -296,7 +300,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
     });
   } else if (isIntervalVariable(variable)) {
     const intervals = getIntervalsFromOldIntervalModel(variable);
-    const currentInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
