@@ -13,13 +13,14 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Table } from '@grafana/ui';
+import { AdHocFilterItem, Table } from '@grafana/ui';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { separateVisibleFields } from 'app/features/logs/components/logParser';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { fieldNameMeta } from './LogsTableWrap';
+import { ELASTIC_TABLE_SPECIAL_FIELDS, fieldNameMeta, LOKI_TABLE_SPECIAL_FIELDS } from './LogsTableWrap';
 
 interface Props {
   logsFrames?: DataFrame[];
@@ -30,6 +31,9 @@ interface Props {
   logsSortOrder: LogsSortOrder;
   labelCardinalityState: Record<string, fieldNameMeta>;
   height: number;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  datasourceType?: string;
 }
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
@@ -69,10 +73,13 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         field.config = {
           ...field.config,
           custom: {
-            filterable: true,
             inspect: true,
+            filterable: true, // This sets the columns to be filterable
             ...field.config.custom,
           },
+          // This sets the individual field value as filterable
+
+          filterable: isFieldFilterable(field),
         };
       }
 
@@ -80,6 +87,28 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
     },
     [logsSortOrder, range, splitOpen, timeZone]
   );
+
+  const isFieldFilterable = (field: Field) => {
+    if (field.config.links && field.config.links.length > 0) {
+      // If we have derived fields (links) we don't want to filter on them?
+      // But wait, with correlations anything can be a link?
+      // I think we need a better way of determining when a field is synthetic/derived
+      return false;
+    }
+
+    if (props.datasourceType === 'loki') {
+      // Special fields are also not filterable
+      if (LOKI_TABLE_SPECIAL_FIELDS.includes(field.name)) {
+        return false;
+      }
+    } else if (props.datasourceType === 'elasticsearch') {
+      if (ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     const prepare = async () => {
@@ -99,7 +128,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       // TODO: explore if `logsFrame.ts` can help us with getting the right fields
       const transformations = dataFrame.fields
         .filter((field: Field & { typeInfo?: { frame: string } }) => {
-          return field.typeInfo?.frame === 'json.RawMessage';
+          return field.typeInfo?.frame === 'json.RawMessage' && props.datasourceType === 'loki';
         })
         .flatMap((field: Field) => {
           return [
@@ -170,10 +199,25 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
     return null;
   }
 
+  const onCellFilterAdded = (filter: AdHocFilterItem) => {
+    if (!props.onClickFilterLabel || !props.onClickFilterOutLabel) {
+      return;
+    }
+    const { value, key, operator } = filter;
+    if (operator === FILTER_FOR_OPERATOR) {
+      props.onClickFilterLabel(key, value);
+    }
+
+    if (operator === FILTER_OUT_OPERATOR) {
+      props.onClickFilterOutLabel(key, value);
+    }
+  };
+
   return (
     <Table
       data={tableFrame}
       width={width}
+      onCellFilterAdded={onCellFilterAdded}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />

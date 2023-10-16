@@ -20,6 +20,9 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
     }),
     checkbox: css({}),
+    columnWrapper: css({
+      marginBottom: theme.spacing(1.5),
+    }),
   };
 }
 
@@ -31,27 +34,24 @@ export const LogsTableNavColumn = (props: {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  if (labels) {
-    const labelKeys = Object.keys(labels);
-
+  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].count));
+  if (labelKeys.length) {
     return (
-      <div>
-        {labelKeys
-          .filter((labelName) => valueFilter(labels[labelName].count))
-          .map((labelName) => (
-            <div className={styles.wrap} key={labelName}>
-              <Checkbox
-                className={styles.checkbox}
-                label={labelName}
-                onChange={() => toggleColumn(labelName)}
-                checked={labels[labelName]?.active ?? false}
-              />
-              <span className={styles.labelCount}>({labels[labelName]?.count}%)</span>
-            </div>
-          ))}
+      <div className={styles.columnWrapper}>
+        {labelKeys.map((labelName) => (
+          <div className={styles.wrap} key={labelName}>
+            <Checkbox
+              className={styles.checkbox}
+              label={labelName}
+              onChange={() => toggleColumn(labelName)}
+              checked={labels[labelName]?.active ?? false}
+            />
+            <span className={styles.labelCount}>({labels[labelName]?.count}%)</span>
+          </div>
+        ))}
       </div>
     );
   }
 
-  return <div>No labels</div>;
+  return <div>No columns</div>;
 };

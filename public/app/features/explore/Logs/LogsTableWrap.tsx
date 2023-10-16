@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { useEffect } from 'react';
 
@@ -10,10 +11,14 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data/src';
-import { Themeable2 } from '@grafana/ui/src';
+import { Field, Input, Themeable2 } from '@grafana/ui/src';
+
+import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
 
 import { LogsTable } from './LogsTable';
 import { LogsTableNavColumn } from './LogsTableNavColumn';
+
+// @todo do we want to import from prom?
 
 interface LogsTableProps {
   logsFrames?: DataFrame[];
@@ -28,6 +33,9 @@ interface Props extends Themeable2 {
   logsTableProps: LogsTableProps;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  datasourceType?: string;
 }
 
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {
@@ -38,9 +46,16 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
     sidebar: css({
       height: height,
       fontSize: theme.typography.pxToRem(11),
-      overflowY: 'scroll',
+      overflowY: 'hidden',
       width: width,
       paddingRight: theme.spacing(1.5),
+    }),
+    sidebarWrap: css({
+      overflowY: 'scroll',
+      height: 'calc(100% - 50px)',
+    }),
+    searchWrap: css({
+      padding: theme.spacing(0.4),
     }),
     columnHeader: css({
       fontSize: theme.typography.h6.fontSize,
@@ -50,7 +65,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       left: 0,
       padding: '6px 6px 6px 15px',
       zIndex: 3,
-      marginTop: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
     labelCount: css({}),
@@ -75,28 +89,33 @@ const normalize = (value: number, total: number): number => {
   return Math.floor((100 * value) / total);
 };
 
+// @todo this is a hack to get the other Fields that are used as columns, but we should have a better way to do this
+export const LOKI_TABLE_SPECIAL_FIELDS = ['labels', 'id', 'tsNs', 'Line', 'Time'];
+export const ELASTIC_TABLE_SPECIAL_FIELDS = ['@timestamp', 'line'];
+
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   const { logsFrames } = props.logsTableProps;
   // Save the normalized cardinality of each label
-  const [labelCardinalityState, setLabelCardinality] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(
-    undefined
-  );
+  const [columnsWithMeta, setColumnsWithMeta] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(undefined);
+
+  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = React.useState<
+    Record<fieldName, fieldNameMeta> | undefined
+  >(undefined);
 
   useEffect(() => {
     // @todo cleanup
     const labelsField = logsFrames?.length ? logsFrames[0].fields.find((field) => field.name === 'labels') : undefined;
     const numberOfLogLines = logsFrames ? logsFrames[0].length : 0;
 
-    // @todo this is a hack to get the other Fields that are used as columns, but we should have a better way to do this
     const otherFields = logsFrames?.length
-      ? logsFrames[0].fields.filter(
-          (field) =>
-            field.name !== 'labels' &&
-            field.name !== 'id' &&
-            field.name !== 'tsNs' &&
-            field.name !== 'Line' &&
-            field.name !== 'Time'
-        )
+      ? logsFrames[0].fields.filter((field) => {
+          if (props.datasourceType === 'loki') {
+            return !LOKI_TABLE_SPECIAL_FIELDS.includes(field.name);
+          } else if (props.datasourceType === 'elasticsearch') {
+            return !ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name);
+          }
+          return true;
+        })
       : [];
 
     //@todo this map doesn't need the active state and it should be removed
@@ -146,22 +165,24 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       });
     }
 
-    setLabelCardinality(pendingLabelState);
+    setColumnsWithMeta(pendingLabelState);
+    // Query changed, reset the search state.
+    setFilteredColumnsWithMeta(undefined);
     // We don't want to update the state if the url changes, we want to update the active state when the data is changed.
-  }, [logsFrames, props.panelState?.columns]);
+  }, [logsFrames, props.panelState?.columns, props.datasourceType]);
 
   const toggleColumn = (columnName: fieldName) => {
-    if (!labelCardinalityState || !(columnName in labelCardinalityState)) {
-      console.warn('failed to get column', labelCardinalityState);
+    if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
+      console.warn('failed to get column', columnsWithMeta);
       return;
     }
     const pendingLabelCardinality = {
-      ...labelCardinalityState,
-      [columnName]: { ...labelCardinalityState[columnName], active: !labelCardinalityState[columnName]?.active },
+      ...columnsWithMeta,
+      [columnName]: { ...columnsWithMeta[columnName], active: !columnsWithMeta[columnName]?.active },
     };
 
     // Set local state
-    setLabelCardinality(pendingLabelCardinality);
+    setColumnsWithMeta(pendingLabelCardinality);
 
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
@@ -180,7 +201,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     props.updatePanelState(newPanelState);
   };
 
-  if (!labelCardinalityState) {
+  if (!columnsWithMeta) {
     return null;
   }
 
@@ -191,37 +212,75 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
 
   const styles = getStyles(props.theme, height, sidebarWidth);
 
+  const dispatcher = (data: string[][]) => {
+    const matches = data[0];
+    let newColumnsWithMeta: Record<fieldName, fieldNameMeta> = {};
+    matches.forEach((match) => {
+      if (match in columnsWithMeta) {
+        newColumnsWithMeta[match] = columnsWithMeta[match];
+      }
+    });
+    setFilteredColumnsWithMeta(newColumnsWithMeta);
+  };
+
+  const search = (needle: string) => {
+    fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
+  };
+
+  const debouncedSearch = debounce(search, 500);
+
+  const onChange = (e: React.FormEvent<HTMLInputElement>) => {
+    const value = e.currentTarget?.value;
+    if (value) {
+      debouncedSearch(value);
+    } else {
+      setFilteredColumnsWithMeta(undefined);
+    }
+  };
+
   return (
     <div className={styles.wrapper}>
       <section className={styles.sidebar}>
-        <div className={styles.columnHeader}>Common columns</div>
-        <LogsTableNavColumn
-          toggleColumn={toggleColumn}
-          labels={labelCardinalityState}
-          valueFilter={(value) => value === 100}
-        />
-        <div className={styles.columnHeader}>Available columns</div>
-        <LogsTableNavColumn
-          toggleColumn={toggleColumn}
-          labels={labelCardinalityState}
-          valueFilter={(value) => !!value && value !== 100}
-        />
-        <div className={styles.columnHeader}>Empty columns</div>
-        <LogsTableNavColumn
-          toggleColumn={toggleColumn}
-          labels={labelCardinalityState}
-          valueFilter={(value) => !value}
-        />
+        <Field className={styles.searchWrap}>
+          <Input type={'text'} placeholder={'Search columns by name'} onChange={onChange} />
+        </Field>
+
+        <div className={styles.sidebarWrap}>
+          {/* Sidebar columns */}
+          <>
+            <div className={styles.columnHeader}>Common columns</div>
+            <LogsTableNavColumn
+              toggleColumn={toggleColumn}
+              labels={filteredColumnsWithMeta ?? columnsWithMeta}
+              valueFilter={(value) => value === 100}
+            />
+            <div className={styles.columnHeader}>Available columns</div>
+            <LogsTableNavColumn
+              toggleColumn={toggleColumn}
+              labels={filteredColumnsWithMeta ?? columnsWithMeta}
+              valueFilter={(value) => !!value && value !== 100}
+            />
+            <div className={styles.columnHeader}>Empty columns</div>
+            <LogsTableNavColumn
+              toggleColumn={toggleColumn}
+              labels={filteredColumnsWithMeta ?? columnsWithMeta}
+              valueFilter={(value) => !value}
+            />
+          </>
+        </div>
       </section>
       <LogsTable
+        onClickFilterLabel={props.onClickFilterLabel}
+        onClickFilterOutLabel={props.onClickFilterOutLabel}
         logsSortOrder={props.logsTableProps.logsSortOrder}
         range={props.logsTableProps.range}
         splitOpen={props.logsTableProps.splitOpen}
         timeZone={props.logsTableProps.timeZone}
         width={tableWidth}
         logsFrames={logsFrames}
-        labelCardinalityState={labelCardinalityState}
+        labelCardinalityState={columnsWithMeta}
         height={height}
+        datasourceType={props.datasourceType}
       />
     </div>
   );

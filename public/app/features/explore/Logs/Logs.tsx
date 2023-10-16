@@ -200,8 +200,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
   }
 
   onLogRowHover = (row?: LogRowModel) => {
-    console.log('state', getState().explore.panes[this.props.exploreId]);
-    console.log('urlFromState', getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!));
     if (!row) {
       this.props.eventBus.publish(new DataHoverClearEvent());
     } else {
@@ -243,12 +241,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState(() => ({
       visualisationType: visualisation,
     }));
-    console.log('setting viz type', visualisation);
     const payload = {
       ...this.props.panelState?.logs,
       visualisationType: visualisation,
     };
-    console.log('payload', payload);
     this.updatePanelState(payload);
   };
 
@@ -721,6 +717,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     width: width - 80,
                     logsFrames: this.props.logsFrames,
                   }}
+                  datasourceType={this.props.datasourceType}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
                   panelState={this.props.panelState?.logs}
                   theme={theme}
                   updatePanelState={this.updatePanelState}
