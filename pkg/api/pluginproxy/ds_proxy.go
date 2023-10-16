@@ -274,7 +274,12 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		proxyutil.ApplyteamHTTPHeaders(req, proxy.ds, proxy.ctx.Teams)
+		err := proxyutil.ApplyteamHTTPHeaders(req, proxy.ds, proxy.ctx.Teams)
+		if err != nil {
+			// NOTE: could downgrade the errors to warnings
+			ctxLogger.Error("Error applying teamHTTPHeaders", "error", err)
+			return
+		}
 	}
 }
 

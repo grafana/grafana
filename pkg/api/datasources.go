@@ -374,7 +374,6 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 					}
 				}
 			}
-
 		}
 	}
 
