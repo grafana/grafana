@@ -327,6 +327,7 @@ export function panelRepeaterToPanels(repeater: PanelRepeaterGridItem, isSnapsho
 }
 
 export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
+  const collapsed = Boolean(gridRow.state.isCollapsed);
   const rowPanel: RowPanel = {
     type: 'row',
     id: getPanelIdForVizPanel(gridRow),
@@ -337,19 +338,19 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
       w: gridRow.state.width ?? 24,
       h: gridRow.state.height ?? 1,
     },
-    collapsed: Boolean(gridRow.state.isCollapsed),
+    collapsed,
     panels: [],
   };
 
   if (gridRow.state.$behaviors?.length) {
     const behavior = gridRow.state.$behaviors[0];
-
     if (behavior instanceof RowRepeaterBehavior) {
       rowPanel.repeat = behavior.state.variableName;
     }
   }
 
   if (isSnapshot) {
+    // Rows that are repeated has SceneVariableSet attached to them.
     if (gridRow.state.$variables) {
       const localVariable = gridRow.state.$variables;
       const scopedVars: ScopedVars = (localVariable.state.variables as LocalValueVariable[]).reduce((acc, variable) => {
@@ -373,13 +374,15 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   if (isSnapshot) {
     gridRow.state.children.forEach((c) => {
       if (c instanceof PanelRepeaterGridItem) {
-        panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(c, isSnapshot));
+        // Perform snapshot only for uncollapsed rows
+        panelsInsideRow = panelsInsideRow.concat(panelRepeaterToPanels(c, !collapsed));
       } else {
-        panelsInsideRow.push(gridItemToPanel(c, isSnapshot));
+        // Perform snapshot only for uncollapsed panels
+        panelsInsideRow.push(gridItemToPanel(c, !collapsed));
       }
     });
   } else {
-    panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c, isSnapshot));
+    panelsInsideRow = gridRow.state.children.map((c) => gridItemToPanel(c));
   }
 
   if (gridRow.state.isCollapsed) {
