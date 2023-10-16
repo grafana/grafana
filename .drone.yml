@@ -2841,7 +2841,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3090,7 +3090,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3268,7 +3268,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3498,7 +3498,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3541,7 +3541,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3606,7 +3606,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3642,7 +3642,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -4478,10 +4478,16 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: api_key_dev
+  name: api_key
   path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
+---
+get:
+  name: api_key_dev
+  path: infra/data/ci/grafana-release-eng/grafanacom
+kind: secret
+name: grafana_api_key_dev
 ---
 get:
   name: .dockerconfigjson
@@ -4658,6 +4664,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: cc6669ee1631d0c2da7c401e13b021cb092e66b69f8e254039cbf9d0aa60e4b9
+hmac: 100e903222beae8b8c49e9b55dbfb462afbd7ae6662be71b0d7f337aabafa138
 
 ...

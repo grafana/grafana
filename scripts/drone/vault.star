@@ -42,7 +42,8 @@ def secrets():
     return [
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
         vault_secret(gcp_grafanauploads_base64, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials_base64"),
-        vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key_dev"),
+        vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),
+        vault_secret("grafana_api_key_dev", "infra/data/ci/grafana-release-eng/grafanacom", "api_key_dev"),
         vault_secret(pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
