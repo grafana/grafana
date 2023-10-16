@@ -250,6 +250,28 @@ With the new **Format string** transformation, you can manipulate string fields 
 
 Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
 
+### Detect unusable transformations
+
+<!-- Kyle Cunningham -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
+
+{{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
+
+If you have the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. If you'd like to try it, enable this feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
+
+### Extended time zone support in Format time and Convert field type transformations
+
+<!-- Kyle Cunningham -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+We've added support for setting timezones manually when formatting times as strings using the **Format time** and **Convert field type** transformations. This allows times to be formatted relative to any timezone across the globe.
+
+{{< figure src="/media/docs/grafana/transformations/format-timezone.png" caption="Timezone support in the Format time transformation" >}}
+
 ## Alerting
 
 ### Additional contact points for External Alertmanager
