@@ -89,8 +89,8 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions(ctx)
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, err
 		}

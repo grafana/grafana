@@ -37,29 +37,50 @@ describe('getDashboardChanges', () => {
     const result = getDashboardChanges(dashboard);
 
     // Assertions
-    expect(result.userChanges).toEqual({
-      panels: [
-        {
-          op: 'replace',
-          originalValue: 'Panel 1',
-          value: 'New title',
-          startLineNumber: expect.any(Number),
-          path: ['panels', '0', 'title'],
-        },
-      ],
-    });
+    expect(result.migrationChanges).toEqual(
+      '===================================================================\n' +
+        '--- Before migration changes\t\n' +
+        '+++ After migration changes\t\n' +
+        '@@ -1,9 +1,9 @@\n' +
+        ' {\n' +
+        '   "editable": true,\n' +
+        '   "graphTooltip": 0,\n' +
+        '-  "schemaVersion": 37,\n' +
+        '+  "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '       "type": "timeseries",\n' +
+        '       "title": "Panel 1",\n'
+    );
+    expect(result.userChanges).toEqual(
+      '===================================================================\n' +
+        '--- Before user changes\t\n' +
+        '+++ After user changes\t\n' +
+        '@@ -3,16 +3,17 @@\n' +
+        '   "graphTooltip": 0,\n' +
+        '   "schemaVersion": 38,\n' +
+        '   "timezone": "",\n' +
+        '   "panels": [\n' +
+        '     {\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "title": "Panel 1",\n' +
+        '+      "id": 1,\n' +
+        '       "options": {\n' +
+        '         "legend": {\n' +
+        '           "displayMode": "hidden",\n' +
+        '           "showLegend": false\n' +
+        '         }\n' +
+        '-      }\n' +
+        '+      },\n' +
+        '+      "title": "New title",\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n' +
+        '\\ No newline at end of file\n'
+    );
     expect(result.migrationChanges).toBeDefined();
-    expect(result.userChanges).not.toContain({
-      panels: [
-        {
-          op: 'replace',
-          originalValue: 'Panel 1',
-          value: 'New title',
-          startLineNumber: expect.any(Number),
-          path: ['panels', '0', 'title'],
-        },
-      ],
-    });
   });
 });
 

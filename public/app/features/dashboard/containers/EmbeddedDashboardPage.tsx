@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { Dashboard, TimeZone } from '@grafana/schema';
 import { Button, ModalsController, PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -105,7 +105,7 @@ const Toolbar = ({ dashboard, dashboardJson }: ToolbarProps) => {
     dispatch(updateTimeZoneForSession(timeZone));
   };
 
-  const saveDashboard = async (clone: DashboardModel) => {
+  const saveDashboard = async (clone: Dashboard) => {
     const params = locationService.getSearch();
     const serverPort = params.get('serverPort');
     if (!clone || !serverPort) {
