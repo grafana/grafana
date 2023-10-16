@@ -46,7 +46,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
           <div
             className={cx(styles.labelWrapper, {
               [styles.isActive]: isActive,
-              [styles.hasActiveChild]: hasActiveChild,
             })}
           >
             <FeatureHighlightWrapper>
@@ -142,9 +141,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,
     },
-  }),
-  hasActiveChild: css({
-    color: theme.colors.text.primary,
   }),
 });
 
