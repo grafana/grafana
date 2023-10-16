@@ -133,9 +133,9 @@ func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
 	}
 }
 
-func ApplyTeamHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) {
+func ApplyteamHTTPHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) {
 	if ds.JsonData != nil {
-		for teamID, headers := range ds.JsonData.Get("teamHeaders").MustMap() {
+		for teamID, headers := range ds.JsonData.Get("teamHTTPHeaders").MustMap() {
 			id, err := strconv.ParseInt(teamID, 10, 64)
 			if err != nil {
 				// FIXME: logging here

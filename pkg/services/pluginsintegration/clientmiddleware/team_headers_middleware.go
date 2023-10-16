@@ -12,22 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-// NewTeamHeaderMiddleware creates a new plugins.ClientMiddleware that will
+// NewTeamHTTPHeaderMiddleware creates a new plugins.ClientMiddleware that will
 // set headers based on teams user is member of.
-func NewTeamHeadersMiddleware() plugins.ClientMiddleware {
+func NewTeamHTTPHeadersMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		return &TeamHeadersMiddleware{
+		return &TeamHTTPHeadersMiddleware{
 			next: next,
 		}
 	})
 }
 
-type TeamHeadersMiddleware struct {
+type TeamHTTPHeadersMiddleware struct {
 	next plugins.Client
 }
 
-type TeamHeadersJSONData struct {
-	TeamHeaders TeamHttpHeaders `json:"teamHeaders"`
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHttpHeaders `json:"teamHttpHeaders"`
 }
 
 type TeamHttpHeaders map[string][]TeamHttpHeader
@@ -37,7 +37,7 @@ type TeamHttpHeader struct {
 	Value  string `json:"value"`
 }
 
-func (m *TeamHeadersMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m *TeamHTTPHeadersMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.next.QueryData(ctx, req)
 	}
@@ -50,7 +50,7 @@ func (m *TeamHeadersMiddleware) QueryData(ctx context.Context, req *backend.Quer
 	return m.next.QueryData(ctx, req)
 }
 
-func (m *TeamHeadersMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (m *TeamHTTPHeadersMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.next.CallResource(ctx, req, sender)
 	}
@@ -63,7 +63,7 @@ func (m *TeamHeadersMiddleware) CallResource(ctx context.Context, req *backend.C
 	return m.next.CallResource(ctx, req, sender)
 }
 
-func (m *TeamHeadersMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (m *TeamHTTPHeadersMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
 		return m.next.CheckHealth(ctx, req)
 	}
@@ -76,23 +76,23 @@ func (m *TeamHeadersMiddleware) CheckHealth(ctx context.Context, req *backend.Ch
 	return m.next.CheckHealth(ctx, req)
 }
 
-func (m *TeamHeadersMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+func (m *TeamHTTPHeadersMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return m.next.CollectMetrics(ctx, req)
 }
 
-func (m *TeamHeadersMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (m *TeamHTTPHeadersMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return m.next.SubscribeStream(ctx, req)
 }
 
-func (m *TeamHeadersMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (m *TeamHTTPHeadersMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return m.next.PublishStream(ctx, req)
 }
 
-func (m *TeamHeadersMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (m *TeamHTTPHeadersMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
 
-func (m *TeamHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
+func (m *TeamHTTPHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
@@ -115,22 +115,22 @@ func (m *TeamHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend.Plu
 	// TODO: add teams to User struct in grafana-plugin-sdk-go@v0.179.0/backend/common.go
 	// teams := pCtx.User.Teams
 	teams := []int64{}
-	teamHeaders, err := getTeamHeaders(ds, teams)
+	teamHTTPHeaders, err := getTeamHTTPHeaders(ds, teams)
 	if err != nil {
 		return err
 	}
 
 	switch t := req.(type) {
 	case *backend.QueryDataRequest:
-		for key, value := range teamHeaders {
+		for key, value := range teamHTTPHeaders {
 			t.SetHTTPHeader(key, value)
 		}
 	case *backend.CheckHealthRequest:
-		for key, value := range teamHeaders {
+		for key, value := range teamHTTPHeaders {
 			t.SetHTTPHeader(key, value)
 		}
 	case *backend.CallResourceRequest:
-		for key, value := range teamHeaders {
+		for key, value := range teamHTTPHeaders {
 			t.SetHTTPHeader(key, value)
 		}
 	}
@@ -138,20 +138,20 @@ func (m *TeamHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend.Plu
 	return nil
 }
 
-func getTeamHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
-	teamHeaders := make(map[string]string)
-	teamHeadersJSON := TeamHeadersJSONData{}
+func getTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
+	teamHTTPHeaders := make(map[string]string)
+	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
 	if ds.JsonData != nil {
 		jsonData, err := ds.JsonData.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal(jsonData, &teamHeadersJSON)
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
 		if err != nil {
 			return nil, err
 		}
 
-		for teamID, headers := range teamHeadersJSON.TeamHeaders {
+		for teamID, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
 			id, err := strconv.ParseInt(teamID, 10, 64)
 			if err != nil {
 				// FIXME: logging here
@@ -163,12 +163,12 @@ func getTeamHeaders(ds *datasources.DataSource, teams []int64) (map[string]strin
 
 			for _, header := range headers {
 				// TODO: handle multiple header values
-				teamHeaders[header.Header] = header.Value
+				teamHTTPHeaders[header.Header] = header.Value
 			}
 		}
 	}
 
-	return teamHeaders, nil
+	return teamHTTPHeaders, nil
 }
 
 func contains(slice []int64, value int64) bool {
