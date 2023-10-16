@@ -22,7 +22,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 <!-- Kyle Cunningham -->
 <!-- OSS, Enterprise -->
-<!-- already in on-prem -->
+<!-- already in on-prem release notes -->
 
 _Available in public preview in Grafana Cloud_
 
