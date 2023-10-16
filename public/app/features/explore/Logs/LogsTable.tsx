@@ -36,6 +36,28 @@ interface Props {
   datasourceType?: string;
 }
 
+const isFieldFilterable = (field: Field, datasourceType?: string) => {
+  if (field.config.links && field.config.links.length > 0) {
+    // If we have derived fields (links) we don't want to filter on them?
+    // But wait, with correlations anything can be a link?
+    // I think we need a better way of determining when a field is synthetic/derived
+    return false;
+  }
+
+  if (datasourceType === 'loki') {
+    // Special fields are also not filterable
+    if (LOKI_TABLE_SPECIAL_FIELDS.includes(field.name)) {
+      return false;
+    }
+  } else if (datasourceType === 'elasticsearch') {
+    if (ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, labelCardinalityState } = props;
 
@@ -79,36 +101,14 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           },
           // This sets the individual field value as filterable
 
-          filterable: isFieldFilterable(field),
+          filterable: isFieldFilterable(field, props.datasourceType),
         };
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, range, splitOpen, timeZone]
+    [logsSortOrder, range, splitOpen, timeZone, props.datasourceType]
   );
-
-  const isFieldFilterable = (field: Field) => {
-    if (field.config.links && field.config.links.length > 0) {
-      // If we have derived fields (links) we don't want to filter on them?
-      // But wait, with correlations anything can be a link?
-      // I think we need a better way of determining when a field is synthetic/derived
-      return false;
-    }
-
-    if (props.datasourceType === 'loki') {
-      // Special fields are also not filterable
-      if (LOKI_TABLE_SPECIAL_FIELDS.includes(field.name)) {
-        return false;
-      }
-    } else if (props.datasourceType === 'elasticsearch') {
-      if (ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name)) {
-        return false;
-      }
-    }
-
-    return true;
-  };
 
   useEffect(() => {
     const prepare = async () => {
@@ -193,7 +193,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
     };
     prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState]);
+  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState, props.datasourceType]);
 
   if (!tableFrame) {
     return null;
@@ -219,7 +219,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       width={width}
       onCellFilterAdded={onCellFilterAdded}
       height={props.height}
-      footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+      footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
     />
   );
 };
