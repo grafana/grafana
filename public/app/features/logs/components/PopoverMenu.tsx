@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useEffect, useState, MouseEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { parseKeyValue } from '@grafana/data/src/utils/url';
 import { Menu } from '@grafana/ui';

@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, MouseEvent } from 'react';
 
 import {
   TimeZone,
@@ -19,6 +19,7 @@ import { sortLogRows } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
+import { PopoverMenu } from './PopoverMenu';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
@@ -63,6 +64,8 @@ export interface Props extends Themeable2 {
 
 interface State {
   renderAll: boolean;
+  selection: string;
+  menuCoordinates: { x: number; y: number };
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -74,6 +77,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
+    selection: '',
+    menuCoordinates: { x: 0, y: 0 },
   };
 
   /**
@@ -84,6 +89,28 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       this.props.onOpenContext(row, onClose);
     }
   };
+
+  handleSelection = (e: MouseEvent<HTMLTableRowElement>): boolean => {
+    const selection = document.getSelection()?.toString();
+    if (!selection) {
+      return false;
+    }
+    this.setState({
+      selection,
+      menuCoordinates: { x: e.clientX, y: e.clientY },
+    });
+    return true;
+  };
+
+  handleDeselection = () => {
+    if (document.getSelection()?.toString()) {
+      return;
+    }
+    this.setState({
+      selection: '',
+      menuCoordinates: { x: 0, y: 0 },
+    });
+  }
 
   componentDidMount() {
     // Staged rendering
@@ -96,9 +123,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
+    document.addEventListener('selectionchange', this.handleDeselection);
   }
 
   componentWillUnmount() {
+    document.removeEventListener('selectionchange', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
@@ -134,56 +163,61 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
-        <tbody>
-          {hasData &&
-            firstRows.map((row) => (
-              <LogRow
-                key={keyMaker.getKey(row.uid)}
-                getRows={getRows}
-                row={row}
-                showDuplicates={showDuplicates}
-                logsSortOrder={logsSortOrder}
-                onOpenContext={this.openContext}
-                styles={styles}
-                onPermalinkClick={this.props.onPermalinkClick}
-                scrollIntoView={this.props.scrollIntoView}
-                permalinkedRowId={this.props.permalinkedRowId}
-                onPinLine={this.props.onPinLine}
-                onUnpinLine={this.props.onUnpinLine}
-                pinned={this.props.pinnedRowId === row.uid}
-                isFilterLabelActive={this.props.isFilterLabelActive}
-                {...rest}
-              />
-            ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row) => (
-              <LogRow
-                key={keyMaker.getKey(row.uid)}
-                getRows={getRows}
-                row={row}
-                showDuplicates={showDuplicates}
-                logsSortOrder={logsSortOrder}
-                onOpenContext={this.openContext}
-                styles={styles}
-                onPermalinkClick={this.props.onPermalinkClick}
-                scrollIntoView={this.props.scrollIntoView}
-                permalinkedRowId={this.props.permalinkedRowId}
-                onPinLine={this.props.onPinLine}
-                onUnpinLine={this.props.onUnpinLine}
-                pinned={this.props.pinnedRowId === row.uid}
-                isFilterLabelActive={this.props.isFilterLabelActive}
-                {...rest}
-              />
-            ))}
-          {hasData && !renderAll && (
-            <tr>
-              <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <>
+        {this.state.selection && (<PopoverMenu selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
+        <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
+          <tbody>
+            {hasData &&
+              firstRows.map((row) => (
+                <LogRow
+                  key={keyMaker.getKey(row.uid)}
+                  getRows={getRows}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  logsSortOrder={logsSortOrder}
+                  onOpenContext={this.openContext}
+                  styles={styles}
+                  onPermalinkClick={this.props.onPermalinkClick}
+                  scrollIntoView={this.props.scrollIntoView}
+                  permalinkedRowId={this.props.permalinkedRowId}
+                  onPinLine={this.props.onPinLine}
+                  onUnpinLine={this.props.onUnpinLine}
+                  pinned={this.props.pinnedRowId === row.uid}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
+                  handleSelection={this.handleSelection}
+                  {...rest}
+                />
+              ))}
+            {hasData &&
+              renderAll &&
+              lastRows.map((row) => (
+                <LogRow
+                  key={keyMaker.getKey(row.uid)}
+                  getRows={getRows}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  logsSortOrder={logsSortOrder}
+                  onOpenContext={this.openContext}
+                  styles={styles}
+                  onPermalinkClick={this.props.onPermalinkClick}
+                  scrollIntoView={this.props.scrollIntoView}
+                  permalinkedRowId={this.props.permalinkedRowId}
+                  onPinLine={this.props.onPinLine}
+                  onUnpinLine={this.props.onUnpinLine}
+                  pinned={this.props.pinnedRowId === row.uid}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
+                  handleSelection={this.handleSelection}
+                  {...rest}
+                />
+              ))}
+            {hasData && !renderAll && (
+              <tr>
+                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </>
     );
   }
 }

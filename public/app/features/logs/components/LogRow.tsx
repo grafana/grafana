@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, MouseEvent } from 'react';
 
 import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -48,6 +48,7 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   containerRendered?: boolean;
+  handleSelection: (e: MouseEvent<HTMLTableRowElement>) => boolean;
 }
 
 interface State {
@@ -88,7 +89,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
-  toggleDetails = () => {
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+    if (this.props.handleSelection(e)) {
+      // Event handled by the parent.
+      return;
+    }
+
     if (!this.props.enableLogDetails) {
       return;
     }
@@ -205,7 +211,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         <tr
           ref={this.logLineRef}
           className={logRowBackground}
-          onClick={this.toggleDetails}
+          onClick={this.onRowClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           /**
