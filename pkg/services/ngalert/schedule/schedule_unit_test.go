@@ -644,7 +644,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}, 5*time.Second, 100*time.Millisecond)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
-			sender.AssertNumberOfCalls(t, "Send", 1)
+			sender.AssertNumberOfCalls(t, "SendCtx", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 			require.Len(t, args.PostableAlerts, expectedToBeSent)
@@ -747,7 +747,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
-			sender.AssertNumberOfCalls(t, "Send", 1)
+			sender.AssertNumberOfCalls(t, "SendCtx", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 			assert.Len(t, args.PostableAlerts, 1)
@@ -782,7 +782,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			waitForTimeChannel(t, evalAppliedChan)
 
-			sender.AssertNumberOfCalls(t, "Send", 1)
+			sender.AssertNumberOfCalls(t, "SendCtx", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 
@@ -797,7 +797,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().SendCtx(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -873,7 +873,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	if senderMock == nil {
 		senderMock = &AlertsSenderMock{}
-		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
+		senderMock.EXPECT().SendCtx(mock.Anything, mock.Anything, mock.Anything).Return()
 	}
 
 	cfg := setting.UnifiedAlertingSettings{
