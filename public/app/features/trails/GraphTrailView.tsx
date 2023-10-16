@@ -124,7 +124,6 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               {viewDef.displayName}
             </ToolbarButton>
           ))}
-          <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Bookmark trail</ToolbarButton>
           {trail.state.embedded && (
@@ -161,6 +160,7 @@ function buildGraphScene(metric: string) {
         maxHeight: 400,
         body: PanelBuilders.timeseries()
           .setTitle(metric)
+          .setOption('legend', { showLegend: false })
           .setCustomFieldConfig('fillOpacity', 9)
           .setData(
             new SceneQueryRunner({

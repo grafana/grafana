@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { dataTrailsApp } from './DataTrailsScene';
+import { dataTrailsApp } from './DataTrailsApp';
 
 export interface Props extends GrafanaRouteComponentProps<{}> {}
 

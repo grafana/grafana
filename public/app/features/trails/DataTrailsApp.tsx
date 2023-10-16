@@ -22,7 +22,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
     }
 
     return (
-      <Page navId="explore" pageNav={{ text: 'Data trails', icon: 'code-branch' }}>
+      <Page navId="explore" pageNav={{ text: 'Data trail' }}>
         {trail && <trail.Component model={trail} />}
       </Page>
     );

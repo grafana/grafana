@@ -10,19 +10,22 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariableSet,
+  SceneVariableValueChangedEvent,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { GraphTrailView } from './GraphTrailView';
 import { MetricSelectLayout } from './MetricSelectLayout';
-import { MetricSelectedEvent, trailsDS } from './shared';
+import { MetricSelectedEvent, trailsDS, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
   topScene: SceneObject;
@@ -31,6 +34,7 @@ export interface DataTrailState extends SceneObjectState {
   mainScene?: SceneObject;
   actionScene?: SceneObject;
   controls: SceneObject[];
+  history: DataTrailHistory;
 
   // Sycned with url
   actionView?: string;
@@ -59,6 +63,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
+      history: new DataTrailHistory({}),
       topScene: new MetricSelectLayout({ showHeading: true }),
       ...state,
     });
@@ -74,7 +79,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     // Some scene elements publish this
-    this.subscribeToEvent(MetricSelectedEvent, (evt) => this.metricSelected(evt.payload));
+    this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
+    this.subscribeToEvent(SceneVariableValueChangedEvent, this._handleVariableValueChanged.bind(this));
+    this.subscribeToEvent(SceneObjectStateChangedEvent, this._handleSceneObjectStateChanged.bind(this));
 
     return () => {
       if (!this.state.embedded) {
@@ -83,10 +90,36 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  private metricSelected(metric: string) {
+  public moveTooStep(step: DataTrailHistoryStep) {
+    if (!this.state.embedded) {
+      getUrlSyncManager().cleanUp(this);
+    }
+
+    this.setState(step.trailState);
+
+    if (!this.state.embedded) {
+      getUrlSyncManager().initSync(this);
+    }
+  }
+
+  private _handleSceneObjectStateChanged(evt: SceneObjectStateChangedEvent) {
+    if (evt.payload.changedObject instanceof SceneTimeRange) {
+      this.state.history.addTrailStep(this, 'time');
+    }
+  }
+
+  private _handleVariableValueChanged(evt: SceneVariableValueChangedEvent) {
+    if (evt.payload.state.name === VAR_FILTERS) {
+      this.state.history.addTrailStep(this, 'filters');
+    }
+  }
+
+  private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
     this.setState({
-      topScene: new GraphTrailView({ metric }),
+      topScene: new GraphTrailView({ metric: evt.payload }),
+      metric: evt.payload,
     });
+    this.state.history.addTrailStep(this, 'metric');
   }
 
   getUrlState() {
@@ -123,16 +156,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
   }
 
-  public openEmbedddedInPage() {
-    // Temporary way until we have a list of trails view
-  }
-
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene: activeScene, actionScene } = model.useState();
+    const { controls, topScene: activeScene, actionScene, history } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
       <div className={styles.container}>
+        <history.Component model={history} />
         {controls && (
           <div className={styles.controls}>
             {controls.map((control) => (

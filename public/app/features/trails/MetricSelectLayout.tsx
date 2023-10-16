@@ -124,7 +124,7 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
         {showHeading && <Text variant="h4">Select a metric</Text>}
         <div className={styles.header}>
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
-          <InlineSwitch showLabel={true} label="Show previews" />
+          <InlineSwitch showLabel={true} label="Show previews" value={true} />
         </div>
         <model.state.body.Component model={model.state.body} />
       </Flex>

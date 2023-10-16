@@ -9,7 +9,7 @@ import { PromVisualQuery } from 'app/plugins/datasource/prometheus/querybuilder/
 import { getDashboardSceneFor } from '../dashboard-scene/utils/utils';
 
 import { DataTrail } from './DataTrail';
-import { dataTrailsApp } from './DataTrailsScene';
+import { dataTrailsApp } from './DataTrailsApp';
 import { OpenEmbeddedTrailEvent } from './shared';
 
 interface DataTrailDrawerState extends SceneObjectState {
