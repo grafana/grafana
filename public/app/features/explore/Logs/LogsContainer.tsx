@@ -126,8 +126,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
 
       this.setState(newState);
     });
-
-    console.log(newState);
   }
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
@@ -152,49 +150,51 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     origRow: LogRowModel,
     options: LogRowContextOptions
   ): Promise<DataQueryResponse | []> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, origRow, datasourceInstance);
-      return datasourceInstance.getLogRowContext(row, options, query);
+    if (!origRow.dataFrame.refId || !this.state.logContextSupport[origRow.dataFrame.refId]) {
+      return Promise.resolve([]);
     }
 
-    return [];
+    const ds = this.state.logContextSupport[origRow.dataFrame.refId];
+    const query = this.getQuery(logsQueries, origRow, ds);
+
+    return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
-      return datasourceInstance.getLogRowContextQuery(row, options, query);
+    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+      return Promise.resolve(null);
     }
 
-    return null;
+    const ds = this.state.logContextSupport[row.dataFrame.refId];
+    const query = this.getQuery(logsQueries, row, ds);
+
+    return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query) : Promise.resolve(null);
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextUiSupport(datasourceInstance) && datasourceInstance.getLogRowContextUi) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
-      return datasourceInstance.getLogRowContextUi(row, runContextQuery, query);
+    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+      return <></>;
     }
 
-    return <></>;
+    const ds = this.state.logContextSupport[row.dataFrame.refId];
+    const query = this.getQuery(logsQueries, row, ds);
+
+    return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? ds.getLogRowContextUi(row, runContextQuery, query) : <></>;
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
-    if (!row) {
+    if (!row || !row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
       return false;
     }
-    const { datasourceInstance } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance)) {
-      return datasourceInstance.showContextToggle(row);
-    }
-
-    return false;
+    const ds = this.state.logContextSupport[row.dataFrame.refId];
+    return ds.showContextToggle(row);
   };
 
   getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
