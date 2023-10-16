@@ -4,8 +4,6 @@ import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  SceneVariableSet,
-  ConstantVariable,
   SceneObject,
   SceneFlexLayout,
   SceneFlexItem,
@@ -14,18 +12,19 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
 } from '@grafana/scenes';
-import { VariableHide } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 
 import { ActionViewBreakdown } from './ActionViewBreakdown';
 import { ActionViewLogs } from './ActionViewLogs';
 import { ActionViewRelatedMetrics } from './ActionViewRelatedMetrics';
+import { getTrailFor } from './getUtils';
 import {
   ActionViewDefinition,
   DataTrailActionView,
   getVariablesWithMetricConstant,
   MakeOptional,
+  OpenEmbeddedTrailEvent,
   trailsDS,
 } from './shared';
 
@@ -104,9 +103,14 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     return currentView === actionViewName ? 'active' : 'canvas';
   }
 
+  public onOpenTrail = () => {
+    this.publishEvent(new OpenEmbeddedTrailEvent(), true);
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
-    const trail = getGraphView(model);
-    const { actionView } = trail.useState();
+    const graphView = getGraphViewFor(model);
+    const trail = getTrailFor(model);
+    const { actionView } = graphView.useState();
 
     return (
       <Box paddingY={1}>
@@ -115,7 +119,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton
               key={viewDef.value}
               variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => trail.toggleActionView(viewDef)}
+              onClick={() => graphView.toggleActionView(viewDef)}
             >
               {viewDef.displayName}
             </ToolbarButton>
@@ -123,19 +127,24 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Bookmark trail</ToolbarButton>
+          {trail.state.embedded && (
+            <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
+              Open trail
+            </ToolbarButton>
+          )}
         </Flex>
       </Box>
     );
   };
 }
 
-function getGraphView(model: SceneObject): GraphTrailView {
+function getGraphViewFor(model: SceneObject): GraphTrailView {
   if (model instanceof GraphTrailView) {
     return model;
   }
 
   if (model.parent) {
-    return getGraphView(model.parent);
+    return getGraphViewFor(model.parent);
   }
 
   console.error('Unable to find graph view for', model);

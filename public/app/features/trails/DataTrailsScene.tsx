@@ -30,5 +30,5 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 }
 
 export const dataTrailsApp = new DataTrailsApp({
-  trail: new DataTrail({ urlSync: true }),
+  trail: new DataTrail({ embedded: false }),
 });

@@ -15,7 +15,6 @@ import {
   sceneGraph,
   VariableDependencyConfig,
   SceneVariable,
-  VariableValueOption,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Button, Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
@@ -193,4 +192,13 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
     }),
   };
+}
+
+{
+  /* <Card
+key={index}
+href={sceneGraph.interpolate(model, `\${__url.path}\${__url.params}&metric=${option.value}`)}
+>
+<Card.Heading>{String(option.value)}</Card.Heading>
+</Card> */
 }

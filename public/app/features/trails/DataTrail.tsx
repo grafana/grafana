@@ -22,12 +22,11 @@ import { useStyles2 } from '@grafana/ui';
 
 import { GraphTrailView } from './GraphTrailView';
 import { MetricSelectLayout } from './MetricSelectLayout';
-import { SelectMetricTrailView } from './SelectMetricTrailView';
 import { MetricSelectedEvent, trailsDS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
   topScene: SceneObject;
-  urlSync?: boolean;
+  embedded?: boolean;
   filters?: AdHocVariableFilter[];
   mainScene?: SceneObject;
   actionScene?: SceneObject;
@@ -70,7 +69,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public _onActivate() {
-    if (this.state.urlSync) {
+    if (!this.state.embedded) {
       getUrlSyncManager().initSync(this);
     }
 
@@ -78,7 +77,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.subscribeToEvent(MetricSelectedEvent, (evt) => this.metricSelected(evt.payload));
 
     return () => {
-      if (this.state.urlSync) {
+      if (!this.state.embedded) {
         getUrlSyncManager().cleanUp(this);
       }
     };
@@ -122,6 +121,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (topScene !== this.state.topScene) {
       this.setState({ topScene });
     }
+  }
+
+  public openEmbedddedInPage() {
+    // Temporary way until we have a list of trails view
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
