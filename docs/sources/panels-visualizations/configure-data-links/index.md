@@ -75,7 +75,7 @@ Value-specific variables are available under `__value` namespace:
 
 To access values and labels from other fields use:
 
-- `${__data.fields[i]}` - value of field i (on the same row)
+- `${__data.fields[i]}` - value of field `i` (on the same row)
 - `${__data.fields["NameOfField"]}` - value of field using name instead of index
 - `${__data.fields["NameOfField"]}` - value of field using name instead of index
 - `${__data.fields[1].labels.cluster}` - access labels of another field
