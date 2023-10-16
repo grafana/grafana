@@ -66,7 +66,7 @@ export function QuerySuggestionItem(props: Props) {
         >
           Explainer
         </Button>
-        {historical && !showExp && order !== 5 && <div className={styles.textPadding}></div>}
+        {!showExp && order !== 5 && <div className={styles.textPadding}></div>}
 
         {showExp && !querySuggestion.explanation && (
           <div className={styles.center}>
