@@ -2841,7 +2841,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -2857,7 +2857,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-d4d2e26
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3090,7 +3090,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3106,7 +3106,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-d4d2e26
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3268,7 +3268,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3284,7 +3284,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-d4d2e26
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3498,7 +3498,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3514,7 +3514,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-d4d2e26
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3541,7 +3541,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3606,7 +3606,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3642,7 +3642,7 @@ steps:
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
     GCOM_API_KEY:
-      from_secret: grafana_api_key_dev
+      from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3658,7 +3658,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-d4d2e26
+  image: grafana/grafana-build:main
   name: rgm-publish
   pull: always
   volumes:
@@ -3683,7 +3683,7 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages-testing
+    target_bucket: grafana-packages
 - depends_on:
   - rgm-publish
   image: us.gcr.io/kubernetes-dev/package-publish:latest
@@ -3703,7 +3703,7 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages-testing
+    target_bucket: grafana-packages
 trigger:
   event:
     include:
@@ -4484,12 +4484,6 @@ kind: secret
 name: grafana_api_key
 ---
 get:
-  name: api_key_dev
-  path: infra/data/ci/grafana-release-eng/grafanacom
-kind: secret
-name: grafana_api_key_dev
----
-get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4664,6 +4658,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 100e903222beae8b8c49e9b55dbfb462afbd7ae6662be71b0d7f337aabafa138
+hmac: 9a0506f6007cfb8a323f7e6b13bf738bc604f17a545f32e43a0f720c6a0f32db
 
 ...
