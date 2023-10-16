@@ -22,6 +22,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -59,46 +60,76 @@ interface LogsContainerProps extends PropsFromRedux {
 
 interface LogsContainerState {
   logDetailsFilterAvailable: boolean;
+  /**
+   * LogContext support for mixed data sources.
+   * @alpha
+   */
+  logContextSupport: Record<string, DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>>;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   state: LogsContainerState = {
     logDetailsFilterAvailable: false,
+    logContextSupport: {},
   };
 
   componentDidMount() {
-    this.checkFiltersAvailability();
+    this.checkDataSourcesFeatures();
   }
 
   componentDidUpdate(prevProps: LogsContainerProps) {
-    this.checkFiltersAvailability();
+    this.checkDataSourcesFeatures();
   }
 
-  private checkFiltersAvailability() {
+  private checkDataSourcesFeatures() {
     const { logsQueries, datasourceInstance } = this.props;
 
-    if (!logsQueries) {
+    if (!logsQueries || !datasourceInstance) {
       return;
     }
 
-    if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
-      this.setState({ logDetailsFilterAvailable: true });
+    let newState: LogsContainerState = { ...this.state, logDetailsFilterAvailable: false };
+
+    // Not in mixed mode.
+    if (datasourceInstance.name !== MIXED_DATASOURCE_NAME) {
+      if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
+        newState.logDetailsFilterAvailable = true;
+      }
+      if (hasLogsContextSupport(datasourceInstance)) {
+        const logContextSupport: LogsContainerState['logContextSupport'] = {};
+        logsQueries.forEach(({ refId }) => {
+          logContextSupport[refId] = datasourceInstance;
+        });
+        newState.logContextSupport = logContextSupport;
+      }
+      this.setState(newState);
       return;
     }
 
+    // Mixed mode.
     const promises = [];
+    const refIds: string[] = [];
     for (const query of logsQueries) {
-      if (query.datasource) {
+      if (query.datasource && !newState.logContextSupport[query.refId]) {
         promises.push(getDataSourceSrv().get(query.datasource));
+        refIds.push(query.refId);
       }
     }
 
     Promise.all(promises).then((dataSources) => {
-      const logDetailsFilterAvailable = dataSources.some(
+      newState.logDetailsFilterAvailable = dataSources.some(
         (ds) => ds.modifyQuery || hasToggleableQueryFiltersSupport(ds)
       );
-      this.setState({ logDetailsFilterAvailable });
+      dataSources.forEach((ds, i) => {
+        if (hasLogsContextSupport(ds)) {
+          newState.logContextSupport[refIds[i]] = ds;
+        }
+      });
+
+      this.setState(newState);
     });
+
+    console.log(newState);
   }
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
@@ -156,6 +187,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
+    if (!row) {
+      return false;
+    }
     const { datasourceInstance } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
