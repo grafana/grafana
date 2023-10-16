@@ -3,6 +3,7 @@
   "name": "TestData",
   "id": "grafana-testdata-datasource",
   "aliasIDs": ["testdata"],
+  "executable": "gpx_testdata",
 
   "metrics": true,
   "logs": true,
@@ -24,7 +25,8 @@
     "logos": {
       "small": "img/testdata.svg",
       "large": "img/testdata.svg"
-    }
+    },
+    "version": "%VERSION%"
   },
 
   "includes": [
