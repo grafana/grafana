@@ -160,7 +160,7 @@ The Grafana Assume Role authentication provider lets Grafana Cloud users of the 
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
 
-## Recorded Queries: Record multiple metrics from a single query
+## Recorded queries: Record multiple metrics from a single query
 
 <!-- Kyle Brandt, Observability Metrics -->
 <!-- Enterprise -->
