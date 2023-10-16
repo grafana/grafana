@@ -88,7 +88,19 @@ func (s *Session) Priority() uint {
 }
 
 func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if identity.SessionToken == nil {
+		return nil
+	}
+
+	if err := s.rotateTokenHook(ctx, identity, r); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Session) rotateTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		return nil
 	}
 
