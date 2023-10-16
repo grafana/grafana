@@ -169,7 +169,7 @@ _Experimental in Grafana Open Source and Enterprise_
 
 We've added an **Aggregate By** option to the [TraceQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#write-traceql-queries-using-search) to leverage Tempo's [metrics summary API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/metrics-summary/). You can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` received in the last hour that match your filter criteria, grouped by whatever attributes you specify.
 
-This feature is disabled by default. To enable it, use the `metricsSummary` [experimental feature toggle](https://grafana.com/docs/grafana/next/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+This feature is disabled by default. To enable it, use the `metricsSummary` [experimental feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
 For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by).
 
