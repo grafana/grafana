@@ -65,6 +65,7 @@ export interface Props extends Themeable2 {
 interface State {
   renderAll: boolean;
   selection: string;
+  selectedRow: LogRowModel | null;
   menuCoordinates: { x: number; y: number };
 }
 
@@ -78,6 +79,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   state: State = {
     renderAll: false,
     selection: '',
+    selectedRow: null,
     menuCoordinates: { x: 0, y: 0 },
   };
 
@@ -90,7 +92,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   };
 
-  handleSelection = (e: MouseEvent<HTMLTableRowElement>): boolean => {
+  handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
     const selection = document.getSelection()?.toString();
     if (!selection) {
       return false;
@@ -98,6 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     this.setState({
       selection,
       menuCoordinates: { x: e.clientX, y: e.clientY },
+      selectedRow: row,
     });
     return true;
   };
@@ -164,7 +167,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     return (
       <>
-        {this.state.selection && (<PopoverMenu selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
+        {this.state.selection && this.state.selectedRow && (<PopoverMenu row={this.state.selectedRow} selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&

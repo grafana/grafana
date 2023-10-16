@@ -48,7 +48,7 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   containerRendered?: boolean;
-  handleSelection: (e: MouseEvent<HTMLTableRowElement>) => boolean;
+  handleSelection: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
 }
 
 interface State {
@@ -90,7 +90,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
-    if (this.props.handleSelection(e)) {
+    if (this.props.handleSelection(e, this.props.row)) {
       // Event handled by the parent.
       return;
     }
