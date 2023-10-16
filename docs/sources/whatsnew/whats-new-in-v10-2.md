@@ -136,8 +136,7 @@ This is not only useful in the stat visualization; gauge, bar gauge, and status 
 
 ### Generative AI features for dashboards
 
-// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
-_Generally available in all editions of Grafana_
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
