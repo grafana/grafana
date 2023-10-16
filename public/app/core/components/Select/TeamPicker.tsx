@@ -9,10 +9,12 @@ import { Team } from 'app/types';
 export interface Props {
   onSelected: (team: SelectableValue<Team>) => void;
   className?: string;
+  teamId?: number;
 }
 
 export interface State {
   isLoading: boolean;
+  value?: SelectableValue<Team>;
 }
 
 export class TeamPicker extends Component<Props, State> {
@@ -27,6 +29,25 @@ export class TeamPicker extends Component<Props, State> {
       leading: true,
       trailing: true,
     });
+  }
+
+  componentDidMount(): void {
+    const { teamId } = this.props;
+    if (!teamId) {
+      return;
+    }
+
+    getBackendSrv()
+      .get(`/api/teams/${teamId}`)
+      .then((team: Team) => {
+        this.setState({
+          value: {
+            value: team,
+            label: team.name,
+            imgUrl: team.avatarUrl,
+          },
+        });
+      });
   }
 
   search(query?: string) {
@@ -54,13 +75,14 @@ export class TeamPicker extends Component<Props, State> {
 
   render() {
     const { onSelected, className } = this.props;
-    const { isLoading } = this.state;
+    const { isLoading, value } = this.state;
     return (
       <div className="user-picker" data-testid="teamPicker">
         <AsyncSelect
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
+          value={value}
           onChange={onSelected}
           className={className}
           placeholder="Select a team"
