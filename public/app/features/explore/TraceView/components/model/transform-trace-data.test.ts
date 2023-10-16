@@ -143,6 +143,58 @@ describe('transformTraceData()', () => {
     expect(transformTraceData(traceData)).toEqual(null);
   });
 
+  it('should return null for any span without a spanID', () => {
+    const traceData = {
+      traceID,
+      processes,
+      spans: [
+        {
+          traceID,
+          operationName: 'rootOperation',
+          references: [
+            {
+              refType: 'CHILD_OF',
+              traceID,
+              spanID: rootSpanID,
+            },
+          ],
+          startTime,
+          duration,
+          tags: [],
+          processID: 'p1',
+        },
+      ],
+    } as unknown as TraceResponse;
+
+    expect(transformTraceData(traceData)).toEqual(null);
+  });
+
+  it('should return null for any span without a processID', () => {
+    const traceData = {
+      traceID,
+      processes,
+      spans: [
+        {
+          traceID,
+          spanID: '41f71485ed2593e4',
+          operationName: 'rootOperation',
+          references: [
+            {
+              refType: 'CHILD_OF',
+              traceID,
+              spanID: rootSpanID,
+            },
+          ],
+          startTime,
+          duration,
+          tags: [],
+        },
+      ],
+    } as unknown as TraceResponse;
+
+    expect(transformTraceData(traceData)).toEqual(null);
+  });
+
   it('should return trace data with correct traceName based on root span with missing ref', () => {
     const traceData = {
       traceID,
