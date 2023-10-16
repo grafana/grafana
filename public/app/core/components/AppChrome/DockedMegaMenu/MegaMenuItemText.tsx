@@ -13,12 +13,11 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url?: string;
-  level: number;
 }
 
-export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url, level }: Props) {
+export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, isChild, level);
+  const styles = getStyles(theme, isActive, isChild);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -75,12 +74,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
-const getStyles = (
-  theme: GrafanaTheme2,
-  isActive: Props['isActive'],
-  isChild: Props['isActive'],
-  level: Props['level']
-) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
   button: css({
     backgroundColor: 'unset',
     borderStyle: 'unset',

@@ -17,7 +17,6 @@ interface Props {
   activeItem?: NavModelItem;
   onClose?: () => void;
   level?: number;
-  showExpandButton?: string; //TODO: check type
 }
 
 export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
@@ -26,7 +25,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
-  const showExpandButton = linkHasChildren(link) || link.emptyMessage;
+  const showExpandButton = Boolean(linkHasChildren(link) || link.emptyMessage);
 
   const styles = useStyles2(getStyles, level, showExpandButton);
 
@@ -53,7 +52,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
             }}
             target={link.target}
             url={link.url}
-            level={level}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -93,7 +91,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton: Props['showExpandButton']) => ({
+const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton: boolean) => ({
   menuItem: css([
     {
       display: 'flex',
