@@ -22,7 +22,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 <!-- George Robinson -->
 
-<Date>
+October 30, 2023
 
 _Generally available in Grafana Cloud_
 
