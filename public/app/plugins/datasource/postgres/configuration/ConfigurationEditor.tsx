@@ -11,18 +11,17 @@ import {
 import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
-  Alert,
   Divider,
   Input,
   Select,
   SecretInput,
-  Link,
   Field,
   Tooltip,
   Label,
   Icon,
   Switch,
   SecureSocksProxySettings,
+  Collapse,
 } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
@@ -50,6 +49,7 @@ export const postgresVersions: Array<SelectableValue<number>> = [
 
 export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>) => {
   const [versionOptions, setVersionOptions] = useState(postgresVersions);
+  const [isOpen, setIsOpen] = useState(true);
 
   useAutoDetectFeatures({ props, setVersionOptions });
   useMigrateDatabaseFields(props);
@@ -98,6 +98,17 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         docsLink="https://grafana.com/docs/grafana/latest/datasources/postgres/"
         hasRequiredFields={true}
       />
+
+      <Divider />
+
+      <Collapse collapsible label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
+        query. <br />
+        Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
+        statements like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. <br />
+        To protect against this we <strong>Highly</strong> recommend you create a specific PostgreSQL user with
+        restricted permissions. Check out the docs for more information.
+      </Collapse>
 
       <Divider />
 
@@ -395,20 +406,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <SecureSocksProxySettings options={options} onOptionsChange={() => onOptionsChange(options)} />
         )}
       </ConfigSection>
-
-      <Divider />
-
-      <Alert title="User Permission" severity="info">
-        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
-        query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-        statements like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <strong>Highly</strong> recommend you create a specific PostgreSQL user with restricted
-        permissions. Check out the{' '}
-        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/postgres/">
-          PostgreSQL Data Source Docs
-        </Link>{' '}
-        for more information.
-      </Alert>
     </>
   );
 };
