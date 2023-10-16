@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type namespaceMapper = func(orgId int64) string
@@ -17,6 +18,13 @@ func orgNamespaceMapper(orgId int64) string {
 		return "default"
 	}
 	return fmt.Sprintf("org-%d", orgId)
+}
+
+func getNamespaceMapper(cfg *setting.Cfg) namespaceMapper {
+	if cfg.StackID != "" {
+		return func(orgId int64) string { return "stack-" + cfg.StackID }
+	}
+	return orgNamespaceMapper
 }
 
 func convertToK8sResource(v *playlist.PlaylistDTO, namespacer namespaceMapper) *Playlist {

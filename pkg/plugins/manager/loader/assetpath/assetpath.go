@@ -45,7 +45,8 @@ func DefaultService(cfg *config.Cfg) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(n.pluginJSON.Type), filepath.Base(n.dir)), nil
+		baseDir := getBaseDir(n.dir)
+		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
 	}
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
@@ -56,7 +57,8 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		return path.Join("core:plugin", filepath.Base(n.dir)), nil
+		baseDir := getBaseDir(n.dir)
+		return path.Join("core:plugin", baseDir), nil
 	}
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
@@ -93,4 +95,13 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 // DefaultLogoPath returns the default logo path for the specified plugin type.
 func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
 	return path.Join("/", s.cfg.GrafanaAppSubURL, fmt.Sprintf("/public/img/icn-%s.svg", string(pluginType)))
+}
+
+func getBaseDir(pluginDir string) string {
+	baseDir := filepath.Base(pluginDir)
+	// Decoupled core plugins will be suffixed with "dist" if they have been built
+	if baseDir == "dist" {
+		return filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+	}
+	return baseDir
 }
