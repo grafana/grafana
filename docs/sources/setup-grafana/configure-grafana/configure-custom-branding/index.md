@@ -16,7 +16,7 @@ weight: 300
 Custom branding enables you to replace the Grafana Labs brand and logo with your corporate brand and logo.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide your desired custom elements and corresponding logos to our Support team. We will help you in hosting your images and updating your Custom Branding.
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
 {{% /admonition %}}
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.
