@@ -2,13 +2,12 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, IconName, NavModelItem, toIconName } from '@grafana/data';
 import { Button, Icon, useStyles2, Text } from '@grafana/ui';
 
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';
-import { MegaMenuItemIcon } from './MegaMenuItemIcon';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
@@ -30,6 +29,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
   const showExpandButton = level < MAX_DEPTH && (linkHasChildren(link) || link.emptyMessage);
+  const iconName: IconName | undefined = link.icon ? toIconName(link.icon) : undefined;
 
   return (
     <li className={styles.listItem}>
@@ -49,7 +49,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             })}
           >
             <FeatureHighlightWrapper>
-              <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
+              <div className={styles.iconWrapper}>{level === 0 && <Icon name={iconName ?? 'link'} size="xl" />}</div>
             </FeatureHighlightWrapper>
             <Indent level={Math.max(0, level - 1)} spacing={2} />
             <Text truncate>{link.text}</Text>
