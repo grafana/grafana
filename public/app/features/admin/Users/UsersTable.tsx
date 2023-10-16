@@ -14,11 +14,11 @@ import {
   VerticalGroup,
   HorizontalGroup,
   FetchDataFunc,
+  Avatar,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
-import { Avatar } from './Avatar';
 import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
@@ -46,7 +46,7 @@ export const UsersTable = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt={'User avatar'} />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt={'User avatar'} />,
       },
       {
         id: 'login',

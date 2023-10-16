@@ -14,13 +14,14 @@ var (
 )
 
 type FeatureManager struct {
-	isDevMod  bool
-	licensing licensing.Licensing
-	flags     map[string]*FeatureFlag
-	enabled   map[string]bool // only the "on" values
-	config    string          // path to config file
-	vars      map[string]any
-	log       log.Logger
+	isDevMod        bool
+	restartRequired bool
+	licensing       licensing.Licensing
+	flags           map[string]*FeatureFlag
+	enabled         map[string]bool // only the "on" values
+	config          string          // path to config file
+	vars            map[string]any
+	log             log.Logger
 }
 
 // This will merge the flags with the current configuration
@@ -146,6 +147,14 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 		v = append(v, *value)
 	}
 	return v
+}
+
+func (fm *FeatureManager) GetState() *FeatureManagerState {
+	return &FeatureManagerState{RestartRequired: fm.restartRequired}
+}
+
+func (fm *FeatureManager) SetRestartRequired() {
+	fm.restartRequired = true
 }
 
 // Check to see if a feature toggle exists by name

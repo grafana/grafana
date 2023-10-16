@@ -13,7 +13,7 @@ import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-aler
 
 import { LogMessages } from '../../Analytics';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { mockFolderApi, mockProvisioningApi, setupMswServer } from '../../mockApi';
+import { mockExportApi, mockFolderApi, setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
@@ -61,7 +61,7 @@ const ui = {
   },
   moreActionsButton: byRole('button', { name: 'More' }),
   export: {
-    dialog: byRole('dialog', { name: 'Drawer title Export' }),
+    dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
     editor: byTestId('code-editor'),
@@ -121,7 +121,7 @@ describe('Rules group tests', () => {
       // Arrange
       mockUseHasRuler(true, true);
       mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage' }));
-      mockProvisioningApi(server).exportRuleGroup('cpu-usage', 'TestGroup', {
+      mockExportApi(server).exportRulesGroup('cpu-usage', 'TestGroup', {
         yaml: 'Yaml Export Content',
         json: 'Json Export Content',
       });
