@@ -9,7 +9,7 @@ import { Team } from 'app/types';
 export interface Props {
   onSelected: (team: SelectableValue<Team>) => void;
   className?: string;
-  value?: number;
+  teamId?: number;
 }
 
 export interface State {
@@ -32,12 +32,13 @@ export class TeamPicker extends Component<Props, State> {
   }
 
   componentDidMount(): void {
-    const { value } = this.props;
-    if (!value) {
+    const { teamId } = this.props;
+    if (!teamId) {
       return;
     }
+
     getBackendSrv()
-      .get(`/api/teams/${value}`)
+      .get(`/api/teams/${teamId}`)
       .then((team: Team) => {
         this.setState({
           value: {
@@ -74,14 +75,14 @@ export class TeamPicker extends Component<Props, State> {
 
   render() {
     const { onSelected, className } = this.props;
-    const { isLoading } = this.state;
+    const { isLoading, value } = this.state;
     return (
       <div className="user-picker" data-testid="teamPicker">
         <AsyncSelect
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
-          value={this.state.value}
+          value={value}
           onChange={onSelected}
           className={className}
           placeholder="Select a team"
