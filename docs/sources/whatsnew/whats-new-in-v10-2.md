@@ -19,7 +19,7 @@ weight: -39
 
 Welcome to Grafana 10.2! Read on to learn about changes to ...
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.2, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.2/index.md" >}}).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.2/).
 
 <!-- Template below
 
@@ -30,7 +30,7 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 {{% admonition type="note" %}}
-You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
+Use full URLs for links. When linking to versioned docs, replace the version with the version interpolation placeholder (for example, <GRAFANA_VERSION>, <TEMPO_VERSION>, <MIMIR_VERSION>) so the system can determine the correct set of docs to point to. For example, "https://grafana.com/docs/grafana/latest/administration/" becomes "https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/".
 {{% /admonition %}}
 -->
 <!-- Add an image, GIF or video  as below
@@ -52,7 +52,7 @@ With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationC
 
 With the current release, we've introduced a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh access tokens when they expire. In addition, to further improve security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It's enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
 
-For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/).
+For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
 
 {{% admonition type="note" %}}
 The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
@@ -112,9 +112,7 @@ Refer to the [Google Authentication documentation](http://grafana.com/docs/grafa
 
 _Generally available in Grafana Enterprise_
 
-With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
-
-<<<<<<< HEAD
+With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
 
 ## Dashboards and visualizations
 
@@ -134,7 +132,74 @@ Now, you can automatically calculate the min or max of each visualized field bas
 {{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated per field" >}}
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
-# This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+
+### Generative AI features for dashboards
+
+// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+
+- **Generate panel titles and descriptions** - You can now generate a title and description for your panel based on the data you've added to it. This is useful when you want to quickly create a panel and don't want to spend time coming up with a title or description.
+- **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
+
+TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+
+TODO: Add image / gif / video
+
+### New Canvas button element
+
+_Available in public preview in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+
+TODO: Add image / gif / video
+
+### Time series visualization now support y-axis zooming
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+
+To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/TODO).
+
+TODO: Add image / gif / video
+
+### Visualize enum data in Time series and State timeline visualizations
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
+
+TODO: Add image / gif / video
+
+### Data visualization quality of life improvements
+
+_Generally available in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+
+TBD / WIP - some high level thoughts
+
+- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
+- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
+- Gauge styling updates?
+- Exemplar tooltip config (if it makes it for 10.2)
+- ?
+
+TODO: Add image / gif / video (maybe not for this one)
 
 ## Transformations
 
@@ -208,3 +273,34 @@ We've added support for setting timezones manually when formatting times as stri
 
 {{< figure src="/media/docs/grafana/transformations/format-timezone.png" caption="Timezone support in the Format time transformation" >}}
 
+## Alerting
+
+### Additional contact points for External Alertmanager
+
+<!-- Alexander Weaver -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+We've added support for the Microsoft Teams contact points when using an external Alertmanager.
+
+## Correlations
+
+### Correlations editor in Explore
+
+<!-- Kristina Durivage -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+Creating correlations has just become easier. Try out our new correlations editor in **Explore** by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+
+To try out **Correlations**, enable the `correlations` feature toggle.
+
+### Create correlations for provisioned data sources
+
+<!-- Piotr Jamróz -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
+
+To try out **Correlations**, enable the `correlations` feature toggle.

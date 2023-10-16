@@ -43,6 +43,7 @@ func ProvideSecretsMigrator(
 		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
+		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.StdEncoding},
 		alertingSecret{},
 	}
 

@@ -57,7 +57,7 @@ export const ExemplarMarker = ({
       },
     ],
   });
-  const popoverRenderTimeout = useRef<NodeJS.Timer>();
+  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (
