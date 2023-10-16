@@ -192,7 +192,7 @@ Learn more in the [Format string documentation](https://grafana.com/docs/grafana
 
 _Available behind a feature flag in Grafana Open Source and Enterprise_
 
-We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, in selecting transformations it would require a process of trial and error or otherwise knowing how a given transformation worked beforehand to configure them correctly. Transformations that we've detected can't be used will be shaded in the interface to indicate they can't be used along with a helpful message explaining why.
+We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
 
 {{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
 
