@@ -89,36 +89,41 @@ export function QuerySuggestionItem(props: Props) {
                   Prometheus doc
                 </a>
               </div>
-              {!gaveExplanationFeedback && (
-                <div className={cx(styles.rightButtons, styles.secondaryText)}>
-                  Was this explanation helpful?
-                  <div className={styles.floatRight}>
-                    <Button
-                      fill="outline"
-                      variant="secondary"
-                      size="sm"
-                      className={styles.leftButton}
-                      onClick={() => {
-                        explanationFeedback(querySuggestion, true, historical);
-                        updateGaveExplanationFeedback(true);
-                      }}
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      fill="outline"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        explanationFeedback(querySuggestion, false, historical);
-                        updateGaveExplanationFeedback(true);
-                      }}
-                    >
-                      No
-                    </Button>
-                  </div>
+
+              <div className={cx(styles.rightButtons, styles.secondaryText)}>
+                Was this explanation helpful?
+                <div className={styles.floatRight}>
+                  {!gaveExplanationFeedback ? (
+                    <>
+                      <Button
+                        fill="outline"
+                        variant="secondary"
+                        size="sm"
+                        className={styles.leftButton}
+                        onClick={() => {
+                          explanationFeedback(querySuggestion, true, historical);
+                          updateGaveExplanationFeedback(true);
+                        }}
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        fill="outline"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          explanationFeedback(querySuggestion, false, historical);
+                          updateGaveExplanationFeedback(true);
+                        }}
+                      >
+                        No
+                      </Button>
+                    </>
+                  ) : (
+                    'Thank you!'
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
             {!last && <hr />}
