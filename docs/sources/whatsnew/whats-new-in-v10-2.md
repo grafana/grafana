@@ -204,7 +204,7 @@ For users with the `transformationsRedesign` feature flag set, you'll be able to
 
 _Generally available in Grafana Open Source and Enterprise_
 
-Support has been added to set timezones manually when formatting times as strings using the *Format time* and *Convert field type*. This allows times to be formatted relative to any timezone across the globe!
+We've added support for setting timezones manually when formatting times as strings using the **Format time** and **Convert field type** transformations. This allows times to be formatted relative to any timezone across the globe.
 
 {{< figure src="/media/docs/grafana/transformations/format-timezone.png" caption="Timezone support in the format time transformation" >}}
 
