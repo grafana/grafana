@@ -137,49 +137,49 @@ export function buildPanelRepeaterScene(options: SceneOptions) {
     children: defaults.useRowRepeater ? [] : [rowChildren],
   });
 
+  const panelRepeatVariable = new TestVariable({
+    name: 'server',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'A', value: '1' },
+      { label: 'B', value: '2' },
+      { label: 'C', value: '3' },
+      { label: 'D', value: '4' },
+      { label: 'E', value: '5' },
+    ].slice(0, options.numberOfOptions),
+  });
+
+  const rowRepeatVariable = new TestVariable({
+    name: 'handler',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'AA', value: '11' },
+      { label: 'BB', value: '22' },
+      { label: 'CC', value: '33' },
+      { label: 'DD', value: '44' },
+      { label: 'EE', value: '55' },
+    ].slice(0, options.numberOfOptions),
+  });
+
   const scene = new EmbeddedScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     $variables: new SceneVariableSet({
-      variables: [
-        new TestVariable({
-          name: 'server',
-          query: 'A.*',
-          value: ALL_VARIABLE_VALUE,
-          text: ALL_VARIABLE_TEXT,
-          isMulti: true,
-          includeAll: true,
-          delayMs: options.variableQueryTime,
-          optionsToReturn: [
-            { label: 'A', value: '1' },
-            { label: 'B', value: '2' },
-            { label: 'C', value: '3' },
-            { label: 'D', value: '4' },
-            { label: 'E', value: '5' },
-          ].slice(0, options.numberOfOptions),
-        }),
-
-        new TestVariable({
-          name: 'handler',
-          query: 'A.*',
-          value: ALL_VARIABLE_VALUE,
-          text: ALL_VARIABLE_TEXT,
-          isMulti: true,
-          includeAll: true,
-          delayMs: options.variableQueryTime,
-          optionsToReturn: [
-            { label: 'AA', value: '11' },
-            { label: 'BB', value: '22' },
-            { label: 'CC', value: '33' },
-            { label: 'DD', value: '44' },
-            { label: 'EE', value: '55' },
-          ].slice(0, options.numberOfOptions),
-        }),
-      ],
+      variables: [panelRepeatVariable, rowRepeatVariable],
     }),
     body: new SceneGridLayout({
       children: [row],
     }),
   });
 
-  return { scene, repeater, row };
+  return { scene, repeater, row, variable: panelRepeatVariable };
 }

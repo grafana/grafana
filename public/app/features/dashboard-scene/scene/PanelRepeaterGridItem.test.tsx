@@ -99,7 +99,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('When updating variable should update repeats', async () => {
-    const { scene, repeater, variable } = buildScene({ variableQueryTime: 0 });
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0 });
 
     activateFullSceneTree(scene);
 
