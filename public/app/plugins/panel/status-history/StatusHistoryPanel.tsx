@@ -9,6 +9,7 @@ import {
   useTheme2,
   VizTooltipContainer,
   ZoomPlugin,
+  TooltipPlugin2,
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
@@ -22,7 +23,8 @@ import {
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
-import { StatusHistoryTooltip } from './StatusHistoryTooltip';
+// import { StatusHistoryTooltip } from './StatusHistoryTooltip';
+import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -198,7 +200,7 @@ export const StatusHistoryPanel = ({
       {...options}
       mode={TimelineMode.Samples}
     >
-      {(config, alignedFrame) => {
+      {/* {(config, alignedFrame) => {
         if (oldConfig.current !== config) {
           oldConfig.current = addTooltipSupport({
             config,
@@ -220,7 +222,26 @@ export const StatusHistoryPanel = ({
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
-      }}
+      }} */}
+      {/* {props.options.tooltip.mode !== TooltipDisplayMode.None && ( */}
+      {(config, alignedFrame) => (
+        <TooltipPlugin2
+          config={config}
+          render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+            return (
+              <StatusHistoryTooltip2
+                data={frames ?? []}
+                dataIdxs={dataIdxs}
+                alignedData={alignedFrame}
+                seriesIdx={seriesIdx}
+                // datapointIdx={datapointIdx}
+                timeZone={timeZone}
+              />
+            );
+          }}
+        />
+      )}
+      {/* )} */}
     </TimelineChart>
   );
 };
