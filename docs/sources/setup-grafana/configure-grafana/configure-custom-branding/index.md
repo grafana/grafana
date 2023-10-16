@@ -13,7 +13,7 @@ weight: 300
 
 # Configure custom branding
 
-Custom branding enables you to replace the Grafana Labs brand and logo with your own corporate brand and logo.
+Custom branding enables you to replace the Grafana Labs brand and logo with your corporate brand and logo.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide your desired custom elements and corresponding logos to our Support team. We will help you in hosting your images and updating your Custom Branding.
