@@ -772,7 +772,9 @@
   },
   "panel": {
     "header-menu": {
+      "alerting": "Alerting",
       "copy": "Copy",
+      "create-alert": "Create alert rule from this panel",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -788,7 +790,8 @@
       "share": "Share",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
-      "view": "View"
+      "view": "View",
+      "view-alerts": "View all alert rules"
     }
   },
   "playlist-edit": {

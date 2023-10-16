@@ -778,7 +778,9 @@
   },
   "panel": {
     "header-menu": {
+      "alerting": "",
       "copy": "Copiar",
+      "create-alert": "",
       "create-library-panel": "Crear panel de librería",
       "duplicate": "Duplicar",
       "edit": "Editar",
@@ -794,7 +796,8 @@
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
       "unlink-library-panel": "Desvincular panel de librería",
-      "view": "Vista"
+      "view": "Vista",
+      "view-alerts": ""
     }
   },
   "playlist-edit": {

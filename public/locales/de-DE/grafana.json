@@ -772,7 +772,9 @@
   },
   "panel": {
     "header-menu": {
+      "alerting": "",
       "copy": "Kopieren",
+      "create-alert": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
@@ -788,7 +790,8 @@
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
-      "view": "Anzeigen"
+      "view": "Anzeigen",
+      "view-alerts": ""
     }
   },
   "playlist-edit": {
