@@ -37,9 +37,10 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	require.Nil(t, err)
 
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
-		OrgID:    1,
-		IsFolder: false,
-		FolderID: dash.ID,
+		OrgID:     1,
+		IsFolder:  false,
+		FolderID:  dash.ID,
+		FolderUID: dash.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",
