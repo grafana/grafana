@@ -21,7 +21,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -230,8 +229,8 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	data := clientmiddleware.TeamHttpHeaders{
-		"1234": []clientmiddleware.TeamHttpHeader{
+	data := datasources.TeamHttpHeaders{
+		"1234": []datasources.TeamHttpHeader{
 			// Authorization is used by the auth proxy
 			// As part of
 			// contexthandler.AuthHTTPHeaderListFromContext(ctx)

@@ -64,6 +64,16 @@ type DataSource struct {
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
 }
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHttpHeaders `json:"teamHttpHeaders"`
+}
+
+type TeamHttpHeaders map[string][]TeamHttpHeader
+
+type TeamHttpHeader struct {
+	Header string `json:"header"`
+	Value  string `json:"value"`
+}
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
 // allowed cookies, otherwise an empty list.

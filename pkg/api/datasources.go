@@ -355,28 +355,26 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 	if list == nil {
 		return nil
 	}
-	for key, valueInterface := range jsonData.Get("teamHTTPHeaders").MustMap() {
-		// Assert valueInterface to a slice of empty interfaces
-		valueSlice, ok := valueInterface.([]interface{})
-		if !ok {
-			// Handle this case, maybe log an error or continue to next iteration
-			continue
+	teamHTTPHeadersJSON := datasources.TeamHTTPHeadersJSONData{}
+	if jsonData != nil {
+		jsonData, err := jsonData.MarshalJSON()
+		if err != nil {
+			return err
 		}
-		for _, item := range valueSlice {
-			headerMap, ok := item.(map[string]interface{})
-			if !ok {
-				// FIXME: Handle this case
-				continue
-			}
-
-			header, _ := headerMap["header"].(string)
-
-			for _, name := range list.Items {
-				if header == name {
-					datasourcesLogger.Error("Cannot add a data source team header with a used by our proxy header", "headerName", key)
-					return errors.New("validation error, invalid header name specified")
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
+		if err != nil {
+			return err
+		}
+		for _, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
+			for _, header := range headers {
+				for _, name := range list.Items {
+					if header.Header == name {
+						datasourcesLogger.Error("Cannot add a data source team header with a used by our proxy header", "headerName", header.Header)
+						return errors.New("validation error, invalid header name specified")
+					}
 				}
 			}
+
 		}
 	}
 

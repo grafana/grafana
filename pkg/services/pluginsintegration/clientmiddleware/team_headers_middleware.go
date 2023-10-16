@@ -27,17 +27,6 @@ type TeamHTTPHeadersMiddleware struct {
 	next plugins.Client
 }
 
-type TeamHTTPHeadersJSONData struct {
-	TeamHTTPHeaders TeamHttpHeaders `json:"teamHttpHeaders"`
-}
-
-type TeamHttpHeaders map[string][]TeamHttpHeader
-
-type TeamHttpHeader struct {
-	Header string `json:"header"`
-	Value  string `json:"value"`
-}
-
 func (m *TeamHTTPHeadersMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.next.QueryData(ctx, req)
@@ -69,6 +58,7 @@ func (m *TeamHTTPHeadersMiddleware) CheckHealth(ctx context.Context, req *backen
 		return m.next.CheckHealth(ctx, req)
 	}
 
+	// NOTE: might not be needed to set headers. we want to for now set these headers
 	err := m.setHeaders(ctx, req.PluginContext, req)
 	if err != nil {
 		return nil, err
@@ -143,7 +133,7 @@ func (m *TeamHTTPHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend
 
 func getTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
 	teamHTTPHeaders := make(map[string]string)
-	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
+	teamHTTPHeadersJSON := datasources.TeamHTTPHeadersJSONData{}
 	if ds.JsonData != nil {
 		jsonData, err := ds.JsonData.MarshalJSON()
 		if err != nil {
@@ -166,6 +156,7 @@ func getTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]s
 
 			for _, header := range headers {
 				// TODO: handle multiple header values
+				// add tests for these cases
 				teamHTTPHeaders[header.Header] = header.Value
 			}
 		}
