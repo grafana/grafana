@@ -7,34 +7,37 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
+)
+
+const (
+	keyPrefix   = "id"
+	headerKeyID = "kid"
 )
 
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
-func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
-	key := keyService.GetServerPrivateKey() // FIXME: replace with signing specific key
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": "default", // FIXME: replace with specific key id
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &LocalSigner{
-		signer: signer,
-	}, nil
+func ProvideLocalSigner(keyService signingkeys.Service, features featuremgmt.FeatureToggles) (*LocalSigner, error) {
+	return &LocalSigner{features, keyService}, nil
 }
 
 type LocalSigner struct {
-	signer jose.Signer
+	features   featuremgmt.FeatureToggles
+	keyService signingkeys.Service
 }
 
 func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (string, error) {
-	builder := jwt.Signed(s.signer).Claims(claims.Claims)
+	if !s.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		return "", nil
+	}
+
+	signer, err := s.getSigner(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	builder := jwt.Signed(signer).Claims(claims.Claims)
 
 	token, err := builder.CompactSerialize()
 	if err != nil {
@@ -42,4 +45,21 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 	}
 
 	return token, nil
+}
+
+func (s *LocalSigner) getSigner(ctx context.Context) (jose.Signer, error) {
+	id, key, err := s.keyService.GetOrCreatePrivateKey(ctx, keyPrefix, jose.ES256)
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]any{headerKeyID: id},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return signer, nil
 }

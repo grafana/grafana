@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -33,7 +34,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	query := &annotations.ItemQuery{
 		From:         c.QueryInt64("from"),
 		To:           c.QueryInt64("to"),
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
 		AlertID:      c.QueryInt64("alertId"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -48,7 +49,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUID != "" {
-		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.OrgID}
+		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.SignedInUser.GetOrgID()}
 		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
@@ -73,7 +74,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 			if val, ok := dashboardCache[item.DashboardID]; ok {
 				item.DashboardUID = val
 			} else {
-				query := dashboards.GetDashboardQuery{ID: item.DashboardID, OrgID: c.OrgID}
+				query := dashboards.GetDashboardQuery{ID: item.DashboardID, OrgID: c.SignedInUser.GetOrgID()}
 				queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && queryResult != nil {
 					item.DashboardUID = &queryResult.UID
@@ -116,7 +117,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
-		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
@@ -132,9 +133,14 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(400, "Failed to save annotation", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
+	}
+
 	item := annotations.Item{
-		OrgID:       c.OrgID,
-		UserID:      c.UserID,
+		OrgID:       c.SignedInUser.GetOrgID(),
+		UserID:      userID,
 		DashboardID: cmd.DashboardId,
 		PanelID:     cmd.PanelId,
 		Epoch:       cmd.Time,
@@ -214,9 +220,14 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
+	}
+
 	item := annotations.Item{
-		OrgID:  c.OrgID,
-		UserID: c.UserID,
+		OrgID:  c.SignedInUser.GetOrgID(),
+		UserID: userID,
 		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
@@ -264,9 +275,15 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return dashboardGuardianResponse(err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to update annotation", err)
+	}
+
 	item := annotations.Item{
-		OrgID:    c.OrgID,
-		UserID:   c.UserID,
+		OrgID:    c.SignedInUser.GetOrgID(),
+		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    cmd.Time,
 		EpochEnd: cmd.TimeEnd,
@@ -319,9 +336,15 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return dashboardGuardianResponse(err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to update annotation", err)
+	}
+
 	existing := annotations.Item{
-		OrgID:    c.OrgID,
-		UserID:   c.UserID,
+		OrgID:    c.SignedInUser.GetOrgID(),
+		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    annotation.Time,
 		EpochEnd: annotation.TimeEnd,
@@ -373,7 +396,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	}
 
 	if cmd.DashboardUID != "" {
-		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
@@ -398,13 +421,13 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 		}
 		dashboardId = annotation.DashboardID
 		deleteParams = &annotations.DeleteParams{
-			OrgID: c.OrgID,
+			OrgID: c.SignedInUser.GetOrgID(),
 			ID:    cmd.AnnotationId,
 		}
 	} else {
 		dashboardId = cmd.DashboardId
 		deleteParams = &annotations.DeleteParams{
-			OrgID:       c.OrgID,
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: cmd.DashboardId,
 			PanelID:     cmd.PanelId,
 		}
@@ -477,7 +500,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	}
 
 	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		ID:    annotationID,
 	})
 	if err != nil {
@@ -496,7 +519,7 @@ func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, annotation *
 }
 
 func canEditDashboard(c *contextmodel.ReqContext, dashboardID int64) (bool, error) {
-	guard, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	guard, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return false, err
 	}
@@ -539,7 +562,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Response {
 	query := &annotations.TagsQuery{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		Tag:   c.Query("tag"),
 		Limit: c.QueryInt64("limit"),
 	}

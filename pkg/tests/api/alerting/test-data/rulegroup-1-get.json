@@ -1,0 +1,92 @@
+{
+  "name": "Group1",
+  "interval": "1m",
+  "rules": [
+    {
+      "expr": "",
+      "for": "5m",
+      "labels": {
+        "label1": "test-label"
+      },
+      "annotations": {
+        "annotation": "test-annotation"
+      },
+      "grafana_alert": {
+        "id": 1,
+        "orgId": 1,
+        "title": "Rule1",
+        "condition": "A",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 0,
+              "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "0 > 0",
+              "intervalMs": 1000,
+              "maxDataPoints": 43200,
+              "type": "math"
+            }
+          }
+        ],
+        "updated": "2023-09-29T17:37:19Z",
+        "intervalSeconds": 60,
+        "version": 1,
+        "uid": "<dynamic>",
+        "namespace_uid": "<dynamic>",
+        "namespace_id": 0,
+        "rule_group": "Group1",
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting",
+        "is_paused": false
+      }
+    },
+    {
+      "expr": "",
+      "for": "5m",
+      "labels": {
+        "label1": "test-label"
+      },
+      "annotations": {
+        "annotation": "test-annotation"
+      },
+      "grafana_alert": {
+        "id": 2,
+        "orgId": 1,
+        "title": "Rule2",
+        "condition": "A",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 0,
+              "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "0 == 0",
+              "intervalMs": 1000,
+              "maxDataPoints": 43200,
+              "type": "math"
+            }
+          }
+        ],
+        "updated": "2023-09-29T17:37:19Z",
+        "intervalSeconds": 60,
+        "version": 1,
+        "uid": "<dynamic>",
+        "namespace_uid": "<dynamic>",
+        "namespace_id": 0,
+        "rule_group": "Group1",
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting",
+        "is_paused": false
+      }
+    }
+  ]
+}

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -187,7 +186,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 
 // CountInFolder is a handler for retrieving the number of library panels contained
 // within a given folder and for a specific organisation.
-func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		folder, err := lps.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
@@ -195,7 +194,7 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 			return err
 		}
 
-		q := sess.Table("library_element").Where("org_id = ?", u.OrgID).
+		q := sess.Table("library_element").Where("org_id = ?", u.GetOrgID()).
 			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))
 		count, err = q.Count()
 		return err
@@ -203,7 +202,7 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 }
 
 // DeleteInFolder deletes the library panels contained in a given folder.
-func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	return lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID)
 }
 

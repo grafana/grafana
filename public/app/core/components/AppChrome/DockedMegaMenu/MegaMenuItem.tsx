@@ -15,27 +15,30 @@ import { hasChildMatch } from './utils';
 interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  onClose?: () => void;
+  onClick?: () => void;
   level?: number;
 }
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
+// max level depth to render
+const MAX_DEPTH = 2;
+
+export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
-  const showExpandButton = linkHasChildren(link) || link.emptyMessage;
+  const showExpandButton = level < MAX_DEPTH && (linkHasChildren(link) || link.emptyMessage);
 
   return (
-    <li>
+    <li className={styles.listItem}>
       <div className={styles.collapsibleSectionWrapper}>
         <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
             link.onClick?.();
-            onClose?.();
+            onClick?.();
           }}
           target={link.target}
           url={link.url}
@@ -75,7 +78,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
                   key={`${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
-                  onClose={onClose}
+                  onClick={onClick}
                   level={level + 1}
                 />
               ))
@@ -120,6 +123,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  listItem: css({
+    flex: 1,
   }),
   isActive: css({
     color: theme.colors.text.primary,
