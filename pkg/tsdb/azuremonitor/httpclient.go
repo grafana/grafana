@@ -1,7 +1,6 @@
 package azuremonitor
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -21,8 +20,8 @@ type Provider interface {
 	GetTLSConfig(...httpclient.Options) (*tls.Config, error)
 }
 
-func newHTTPClient(ctx context.Context, route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider Provider) (*http.Client, error) {
-	clientOpts, err := settings.HTTPClientOptions(ctx)
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider Provider) (*http.Client, error) {
+	clientOpts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
