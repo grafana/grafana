@@ -12,9 +12,21 @@ overrides:
   trim: 1.0.1
   semver@~7.0.0: 7.5.4
   semver@7.3.4: 7.5.4
-  slate-dev-environment@^0.2.2: patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
-  react-split-pane@0.1.92: patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
+  slate-dev-environment@^0.2.2: ^0.2.2
+  react-split-pane@0.1.92: 0.1.92
+  '@storybook/blocks@7.4.5': 7.4.5
   ngtemplate-loader>loader-utils: ^2.0.0
+
+patchedDependencies:
+  '@storybook/blocks@7.4.5':
+    hash: fhrfjt2oykdsm2ig2q6lbdk7rm
+    path: .yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch
+  react-split-pane@0.1.92:
+    hash: 32j44ks77okx75n4vtdlhbregm
+    path: .yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
+  slate-dev-environment@0.2.5:
+    hash: x7uab3hd7blxvprisjxmbnb2he
+    path: .yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
 
 importers:
 
@@ -468,8 +480,8 @@ importers:
         specifier: 5.7.4
         version: 5.7.4(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       react-split-pane:
-        specifier: patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
-        version: link:patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
+        specifier: 0.1.92
+        version: 0.1.92(patch_hash=32j44ks77okx75n4vtdlhbregm)(react-dom@18.2.0)(react@18.2.0)
       react-table:
         specifier: 7.8.0
         version: 7.8.0(react@18.2.0)
@@ -506,9 +518,6 @@ importers:
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
-      sass:
-        specifier: link:./public/sass
-        version: link:public/sass
       selecto:
         specifier: 1.26.0
         version: 1.26.0
@@ -1017,9 +1026,12 @@ importers:
       rudder-sdk-js:
         specifier: 2.37.0
         version: 2.37.0
+      sass:
+        specifier: 1.63.6
+        version: 1.63.6
       sass-loader:
         specifier: 13.3.2
-        version: 13.3.2(sass@public+sass)(webpack@5.88.1)
+        version: 13.3.2(sass@1.63.6)(webpack@5.88.1)
       style-loader:
         specifier: 3.3.3
         version: 3.3.3(webpack@5.88.1)
@@ -1915,7 +1927,7 @@ importers:
         version: 7.4.5(react-dom@18.2.0)(react@18.2.0)
       '@storybook/blocks':
         specifier: 7.4.5
-        version: 7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
+        version: 7.4.5(patch_hash=fhrfjt2oykdsm2ig2q6lbdk7rm)(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       '@storybook/client-api':
         specifier: 7.4.5
         version: 7.4.5
@@ -2083,7 +2095,7 @@ importers:
         version: 5.0.2(rollup@2.79.1)
       sass-loader:
         specifier: 13.3.2
-        version: 13.3.2(sass@public+sass)(webpack@5.88.1)
+        version: 13.3.2(sass@1.63.6)(webpack@5.88.1)
       storybook:
         specifier: 7.4.5
         version: 7.4.5
@@ -8013,7 +8025,7 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/blocks': 7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
+      '@storybook/blocks': 7.4.5(patch_hash=fhrfjt2oykdsm2ig2q6lbdk7rm)(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       '@storybook/client-logger': 7.4.5
       '@storybook/components': 7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       '@storybook/core-common': 7.4.5
@@ -8042,7 +8054,7 @@ packages:
     dependencies:
       '@jest/transform': 29.6.4
       '@mdx-js/react': 2.3.0(react@18.2.0)
-      '@storybook/blocks': 7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
+      '@storybook/blocks': 7.4.5(patch_hash=fhrfjt2oykdsm2ig2q6lbdk7rm)(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       '@storybook/client-logger': 7.4.5
       '@storybook/components': 7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
       '@storybook/csf-plugin': 7.4.5
@@ -8266,7 +8278,7 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: true
 
-  /@storybook/blocks@7.4.5(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0):
+  /@storybook/blocks@7.4.5(patch_hash=fhrfjt2oykdsm2ig2q6lbdk7rm)(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-FhAIkCT2HrzJcKsC3mL5+uG3GrbS23mYAT1h3iyPjCliZzxfCCI9UCMUXqYx4Z/FmAGJgpsQQXiBFZuoTHO9aQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -8303,6 +8315,7 @@ packages:
       - encoding
       - supports-color
     dev: true
+    patched: true
 
   /@storybook/builder-manager@7.4.5:
     resolution: {integrity: sha512-Jhql8iZgK9cxDmG9NSTejsj5FptHni2TBa5Sea2Uz1NIBQ0OpzNdUfYVX6TN/PEq3QrWXTrAEKPqsL2qGjOrxw==}
@@ -8776,7 +8789,7 @@ packages:
       style-loader: '*'
     dependencies:
       css-loader: 6.8.1(webpack@5.88.1)
-      sass-loader: 13.3.2(sass@public+sass)(webpack@5.88.1)
+      sass-loader: 13.3.2(sass@1.63.6)(webpack@5.88.1)
       style-loader: 3.3.3(webpack@5.88.1)
     dev: true
 
@@ -16528,7 +16541,6 @@ packages:
 
   /immutable@4.3.1:
     resolution: {integrity: sha512-lj9cnmB/kVS0QHsJnYKD1uo3o39nrbKxszjnqS9Fr6NB7bZzW45U6WSGBPKXDL/CvDKqDNPA4r3DoDQ8GTxo2A==}
-    dev: false
 
   /import-fresh@3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
@@ -16838,6 +16850,10 @@ packages:
 
   /is-hotkey@0.2.0:
     resolution: {integrity: sha512-UknnZK4RakDmTgz4PI1wIph5yxSs/mvChWs9ifnlXsKuXgWmOkY/hAE0H/k2MIqH0RlRye0i1oC07MCRSD28Mw==}
+    dev: false
+
+  /is-in-browser@1.1.3:
+    resolution: {integrity: sha512-FeXIBgG/CPGd/WUxuEyvgGTEfwiG9Z4EKGxjNMRqviiIIfsmgrpnHLffEDdwUHqNva1VEW91o3xBT/m8Elgl9g==}
     dev: false
 
   /is-installed-globally@0.4.0:
@@ -21585,6 +21601,26 @@ packages:
       '@daybrush/utils': 1.13.0
       '@egjs/list-differ': 1.0.0
 
+  /react-split-pane@0.1.92(patch_hash=32j44ks77okx75n4vtdlhbregm)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-GfXP1xSzLMcLJI5BM36Vh7GgZBpy+U/X0no+VM3fxayv+p1Jly5HpMofZJraeaMl73b3hvlr+N9zJKvLB/uz9w==}
+    peerDependencies:
+      react: ^16.0.0-0
+      react-dom: ^16.0.0-0
+    dependencies:
+      prop-types: 15.8.1
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      react-lifecycles-compat: 3.0.4
+      react-style-proptype: 3.2.2
+    dev: false
+    patched: true
+
+  /react-style-proptype@3.2.2:
+    resolution: {integrity: sha512-ywYLSjNkxKHiZOqNlso9PZByNEY+FTyh3C+7uuziK0xFXu9xzdyfHwg4S9iyiRRoPCR4k2LqaBBsWVmSBwCWYQ==}
+    dependencies:
+      prop-types: 15.8.1
+    dev: false
+
   /react-style-singleton@2.2.1(@types/react@18.2.15)(react@18.2.0):
     resolution: {integrity: sha512-ZWj0fHEMyWkHzKYUr2Bs/4zU6XLmq9HsgBURm7g5pAVfyn49DgUiNgY2d4lXRlYSiCif9YBGpQleewkcqddc7g==}
     engines: {node: '>=10'}
@@ -22390,7 +22426,7 @@ packages:
   /safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  /sass-loader@13.3.2(sass@public+sass)(webpack@5.88.1):
+  /sass-loader@13.3.2(sass@1.63.6)(webpack@5.88.1):
     resolution: {integrity: sha512-CQbKl57kdEv+KDLquhC+gE3pXt74LEAzm+tzywcA0/aHZuub8wTErbjAoNI57rPUWRYRNC5WUnNl8eGJNbDdwg==}
     engines: {node: '>= 14.15.0'}
     peerDependencies:
@@ -22410,8 +22446,18 @@ packages:
         optional: true
     dependencies:
       neo-async: 2.6.2
-      sass: link:public/sass
+      sass: 1.63.6
       webpack: 5.88.1(@swc/core@1.3.38)(esbuild@0.18.12)(webpack-cli@5.1.4)
+    dev: true
+
+  /sass@1.63.6:
+    resolution: {integrity: sha512-MJuxGMHzaOW7ipp+1KdELtqKbfAWbH7OLIdoSMnVe3EXPMTmxTmlaZDCTsgIpPCs3w99lLo9/zDKkOrJuT5byw==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      chokidar: 3.5.3
+      immutable: 4.3.1
+      source-map-js: 1.0.2
     dev: true
 
   /saxes@6.0.0:
@@ -22687,11 +22733,18 @@ packages:
       slate: 0.47.9(immutable@4.3.1)
     dev: false
 
+  /slate-dev-environment@0.2.5(patch_hash=x7uab3hd7blxvprisjxmbnb2he):
+    resolution: {integrity: sha512-oLD8Fclv/RqrDv6RYfN2CRzNcRXsUB99Qgcw5L/njTjxAdDPguV6edQ3DgUG9Q2pLFLhI15DwsKClzVfFzfwGQ==}
+    dependencies:
+      is-in-browser: 1.1.3
+    dev: false
+    patched: true
+
   /slate-hotkeys@0.2.11:
     resolution: {integrity: sha512-xhq/TlI74dRbO57O4ulGsvCcV4eaQ5nEEz9noZjeNLtNzFRd6lSgExRqAJqKGGIeJw+FnJ3OcqGvdb5CEc9/Ew==}
     dependencies:
       is-hotkey: 0.1.4
-      slate-dev-environment: link:patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
+      slate-dev-environment: 0.2.5(patch_hash=x7uab3hd7blxvprisjxmbnb2he)
     dev: false
 
   /slate-plain-serializer@0.7.13(immutable@4.3.1)(slate@0.47.9):
@@ -22747,7 +22800,7 @@ packages:
       selection-is-backward: 1.0.0
       slate: 0.47.9(immutable@4.3.1)
       slate-base64-serializer: 0.2.115(slate@0.47.9)
-      slate-dev-environment: link:patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
+      slate-dev-environment: 0.2.5(patch_hash=x7uab3hd7blxvprisjxmbnb2he)
       slate-hotkeys: 0.2.11
       slate-plain-serializer: 0.7.13(immutable@4.3.1)(slate@0.47.9)
       slate-prop-types: 0.5.44(immutable@4.3.1)(slate@0.47.9)
