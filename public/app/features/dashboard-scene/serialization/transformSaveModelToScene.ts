@@ -3,6 +3,7 @@ import {
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
+  IntervalVariableModel,
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
@@ -19,6 +20,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  IntervalVariable,
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
@@ -44,7 +46,11 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  getCurrentValueForOldIntervalModel,
+  getIntervalsFromOldIntervalModel,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 
@@ -292,6 +298,21 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       isMulti: variable.multi,
       hide: variable.hide,
     });
+  } else if (isIntervalVariable(variable)) {
+    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    return new IntervalVariable({
+      ...commonProperties,
+      value: currentInterval,
+      description: variable.description,
+      intervals: intervals,
+      autoEnabled: variable.auto,
+      autoStepCount: variable.auto_count,
+      autoMinInterval: variable.auto_min,
+      refresh: variable.refresh,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
   } else if (isConstantVariable(variable)) {
     return new ConstantVariable({
       ...commonProperties,
@@ -323,6 +344,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     height: panel.gridPos.h,
   });
 }
+
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -382,4 +404,5 @@ const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type 
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
 const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isIntervalVariable = (v: VariableModel): v is IntervalVariableModel => v.type === 'interval';
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
