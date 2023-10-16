@@ -208,4 +208,3 @@ We've added support for setting timezones manually when formatting times as stri
 
 {{< figure src="/media/docs/grafana/transformations/format-timezone.png" caption="Timezone support in the format time transformation" >}}
 
-> > > > > > > docs/whats-new-v10.2
