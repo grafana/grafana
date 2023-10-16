@@ -288,7 +288,12 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
 }
 
-func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+// TODO: remove, rename SendCtx to Send.
+func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+	d.SendCtx(context.Background(), key, alerts)
+}
+
+func (d *AlertsRouter) SendCtx(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New(key.LogContext()...)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")

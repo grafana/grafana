@@ -24,9 +24,9 @@ func (_m *AlertsSenderMock) EXPECT() *AlertsSenderMock_Expecter {
 	return &AlertsSenderMock_Expecter{mock: &_m.Mock}
 }
 
-// Send provides a mock function with given fields: ctx, key, alerts
-func (_m *AlertsSenderMock) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
-	_m.Called(ctx, key, alerts)
+// Send provides a mock function with given fields: key, alerts
+func (_m *AlertsSenderMock) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+	_m.Called(key, alerts)
 }
 
 // AlertsSenderMock_Send_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Send'
@@ -35,16 +35,15 @@ type AlertsSenderMock_Send_Call struct {
 }
 
 // Send is a helper method to define mock.On call
-//   - ctx context.Context
 //   - key models.AlertRuleKey
 //   - alerts definitions.PostableAlerts
-func (_e *AlertsSenderMock_Expecter) Send(ctx interface{}, key interface{}, alerts interface{}) *AlertsSenderMock_Send_Call {
-	return &AlertsSenderMock_Send_Call{Call: _e.mock.On("Send", ctx, key, alerts)}
+func (_e *AlertsSenderMock_Expecter) Send(key interface{}, alerts interface{}) *AlertsSenderMock_Send_Call {
+	return &AlertsSenderMock_Send_Call{Call: _e.mock.On("Send", key, alerts)}
 }
 
-func (_c *AlertsSenderMock_Send_Call) Run(run func(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts)) *AlertsSenderMock_Send_Call {
+func (_c *AlertsSenderMock_Send_Call) Run(run func(key models.AlertRuleKey, alerts definitions.PostableAlerts)) *AlertsSenderMock_Send_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.AlertRuleKey), args[2].(definitions.PostableAlerts))
+		run(args[0].(models.AlertRuleKey), args[1].(definitions.PostableAlerts))
 	})
 	return _c
 }
@@ -54,7 +53,42 @@ func (_c *AlertsSenderMock_Send_Call) Return() *AlertsSenderMock_Send_Call {
 	return _c
 }
 
-func (_c *AlertsSenderMock_Send_Call) RunAndReturn(run func(context.Context, models.AlertRuleKey, definitions.PostableAlerts)) *AlertsSenderMock_Send_Call {
+func (_c *AlertsSenderMock_Send_Call) RunAndReturn(run func(models.AlertRuleKey, definitions.PostableAlerts)) *AlertsSenderMock_Send_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SendCtx provides a mock function with given fields: ctx, key, alerts
+func (_m *AlertsSenderMock) SendCtx(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+	_m.Called(ctx, key, alerts)
+}
+
+// AlertsSenderMock_SendCtx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendCtx'
+type AlertsSenderMock_SendCtx_Call struct {
+	*mock.Call
+}
+
+// SendCtx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key models.AlertRuleKey
+//   - alerts definitions.PostableAlerts
+func (_e *AlertsSenderMock_Expecter) SendCtx(ctx interface{}, key interface{}, alerts interface{}) *AlertsSenderMock_SendCtx_Call {
+	return &AlertsSenderMock_SendCtx_Call{Call: _e.mock.On("SendCtx", ctx, key, alerts)}
+}
+
+func (_c *AlertsSenderMock_SendCtx_Call) Run(run func(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts)) *AlertsSenderMock_SendCtx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.AlertRuleKey), args[2].(definitions.PostableAlerts))
+	})
+	return _c
+}
+
+func (_c *AlertsSenderMock_SendCtx_Call) Return() *AlertsSenderMock_SendCtx_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *AlertsSenderMock_SendCtx_Call) RunAndReturn(run func(context.Context, models.AlertRuleKey, definitions.PostableAlerts)) *AlertsSenderMock_SendCtx_Call {
 	_c.Call.Return(run)
 	return _c
 }

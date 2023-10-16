@@ -47,8 +47,8 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewParcaDatasource(httpClientProvider, settings)
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return NewParcaDatasource(ctx, httpClientProvider, settings)
 	}
 }
 

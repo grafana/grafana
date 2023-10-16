@@ -38,7 +38,8 @@ type ScheduleService interface {
 //
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
 type AlertsSender interface {
-	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
+	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
+	SendCtx(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
 // RulesStore is a store that provides alert rules for scheduling
@@ -360,7 +361,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(grafanaCtx, key, expiredAlerts)
+			sch.alertsSender.SendCtx(grafanaCtx, key, expiredAlerts)
 		}
 	}
 
@@ -437,7 +438,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
 		))
 		if len(alerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(ctx, key, alerts)
+			sch.alertsSender.SendCtx(ctx, key, alerts)
 		}
 		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 	}
