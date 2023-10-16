@@ -74,7 +74,7 @@ title: Grafana documentation
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v10-2/" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-2/" class="nav-cards__item nav-cards__item--guide">
         <h4>What's new in v10.2</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
