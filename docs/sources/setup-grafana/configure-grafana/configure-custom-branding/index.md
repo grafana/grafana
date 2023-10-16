@@ -21,7 +21,7 @@ Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-ente
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.
 
-Custom branding enables you to change the following elements:
+With custom branding, you have the ability to modify the following elements:
 
 - Application title
 - Login background
@@ -38,7 +38,7 @@ Custom branding enables you to change the following elements:
 
 {{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="Custom branding example" >}}
 
-The configuration file in Grafana Enterprise contains the following options. For more information about configuring Grafana, refer to [Configuration]({{< relref "../../configure-grafana" >}}).
+The configuration file in Grafana Enterprise contains the following options. For more information about configuring Grafana, refer to [Configure Grafana]({{< relref "../../configure-grafana" >}}).
 
 ```ini
 # Enterprise only
@@ -78,7 +78,7 @@ The configuration file in Grafana Enterprise contains the following options. For
 ;hide_edition =
 ```
 
-You can replace the default footer links (Documentation, Support, Community) and add custom links. The following example shows how to replace the default footer and help links with custom links.
+You have the option of adding custom links in place of the default footer links (Documentation, Support, Community). Below is an example of how to replace the default footer and help links with custom links.
 
 ```ini
 footer_links = support guides extracustom
@@ -90,7 +90,7 @@ footer_links_extracustom_text = Custom text
 footer_links_extracustom_url = http://your.custom.site
 ```
 
-The following example show how to configure custom branding using environment variables instead of the `custom.ini` or `grafana.ini` files.
+The following example shows configuring custom branding using environment variables instead of the `custom.ini` or `grafana.ini` files.
 
 ```
 GF_WHITE_LABELING_FOOTER_LINKS=support guides extracustom
@@ -109,7 +109,7 @@ The following two links are always present in the footer:
 - Grafana edition
 - Grafana version with build number
 
-If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer and only what is specified is included.
+If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer, and only what is specified is included.
 
 ## Custom branding for public dashboards
 
