@@ -71,6 +71,8 @@ Value-specific variables are available under `__value` namespace:
 - `__value.text` - text representation of a value
 - `__value.calc` - calculation name if the value is result of calculation
 
+Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
+
 ## Data variables
 
 To access values and labels from other fields use:
