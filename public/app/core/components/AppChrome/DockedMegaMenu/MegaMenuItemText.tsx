@@ -26,9 +26,12 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
 
       {children}
 
-      {target === '_blank' && (
-        <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
-      )}
+      {
+        // As nav links are supposed to link to internal urls this option should be used with caution
+        target === '_blank' && (
+          <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
+        )
+      }
     </div>
   );
 
