@@ -20,7 +20,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
   const styles = getStyles(theme, isActive, isChild);
 
   const linkContent = (
-    <div className={styles.linkContent}>
+    <div className={cx(styles.linkContent, { [styles.linkContentActive]: isActive })}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
 
       {children}
@@ -85,6 +85,19 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     gap: '0.5rem',
     height: '100%',
     width: '100%',
+  }),
+  linkContentActive: css({
+    '&::before': {
+      display: 'block',
+      content: '" "',
+      height: theme.spacing(3),
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      backgroundImage: theme.colors.gradients.brandVertical,
+    },
   }),
   externalLinkIcon: css({
     color: theme.colors.text.secondary,

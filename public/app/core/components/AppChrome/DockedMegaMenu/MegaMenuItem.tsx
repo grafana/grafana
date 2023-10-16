@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Button, Icon, useStyles2, Text } from '@grafana/ui';
+import { useStyles2, Text, IconButton } from '@grafana/ui';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -32,17 +32,18 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   return (
     <li>
       <div className={styles.menuItem}>
-        {showExpandButton && (
-          <Button
-            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-            variant="secondary"
-            fill="text"
-            className={styles.collapseButton}
-            onClick={() => setSectionExpanded(!sectionExpanded)}
-          >
-            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
-          </Button>
-        )}
+        <Indent level={level} spacing={2} />
+        <div className={styles.collapseButtonWrapper}>
+          {showExpandButton && (
+            <IconButton
+              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+              className={styles.collapseButton}
+              onClick={() => setSectionExpanded(!sectionExpanded)}
+              name={sectionExpanded ? 'angle-up' : 'angle-down'}
+              size="xl"
+            />
+          )}
+        </div>
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -59,10 +60,13 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
                 [styles.hasActiveChild]: hasActiveChild,
               })}
             >
+              {/* This div is needed in order to ensure the text is placed in grid column 2
+              TODO: Can we do this any better? */}
+              {/*<div className={styles.iconWrapper}>*/}
               <FeatureHighlightWrapper>
                 <>{level === 0 && <MegaMenuItemIcon link={link} />}</>
               </FeatureHighlightWrapper>
-              <Indent level={Math.max(0, level - 1)} spacing={2} />
+              {/*</div>*/}
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
@@ -95,18 +99,18 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
   menuItem: css([
     {
       display: 'flex',
-    },
-    level === 1 && {
-      marginRight: theme.spacing(4),
+      alignItems: 'center',
+      gap: theme.spacing(2),
     },
   ]),
+  collapseButtonWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: theme.spacing(3),
+  }),
   collapseButton: css([
     {
       color: theme.colors.text.disabled,
-      padding: theme.spacing(0, 0.5),
-    },
-    level === 1 && {
-      marginLeft: theme.spacing(5.5),
     },
   ]),
   collapsibleSectionWrapper: css([
@@ -114,76 +118,34 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       alignItems: 'center',
       display: 'flex',
     },
-    level === 0 &&
-      showExpandButton && {
-        marginLeft: theme.spacing(2.5),
-      },
-    level === 0 &&
-      !showExpandButton && {
-        marginLeft: theme.spacing(6.75),
-      },
-    level === 1 &&
-      showExpandButton && {
-        marginLeft: theme.spacing(1.5),
-      },
-    level === 1 &&
-      !showExpandButton && {
-        marginLeft: theme.spacing(11),
-      },
-    level === 2 && {
-      marginLeft: theme.spacing(8.5),
-
-      '&::before': {
-        content: '""',
-        height: theme.spacing(4.75),
-        position: 'absolute',
-        width: 1,
-        left: 61,
-        borderLeft: `1px solid ${theme.colors.text.secondary}`,
-      },
-    },
+    // level === 2 && {
+    //   marginLeft: theme.spacing(8.5),
+    //
+    //   '&::before': {
+    //     content: '""',
+    //     height: theme.spacing(4.75),
+    //     position: 'absolute',
+    //     width: 1,
+    //     left: 61,
+    //     borderLeft: `1px solid ${theme.colors.text.secondary}`,
+    //   },
+    // },
   ]),
   labelWrapper: css([
     {
-      display: 'grid',
+      display: 'flex',
       fontSize: theme.typography.pxToRem(14),
-      gridAutoFlow: 'column',
-      gridTemplateColumns: `${theme.spacing(5)} auto`,
       alignItems: 'center',
+      gap: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
-    },
-    level === 1 && {
-      gridTemplateColumns: `${theme.spacing(0.5)} auto`,
-    },
-    level === 2 && {
-      gridTemplateColumns: `${theme.spacing(5)} auto`,
+      paddingLeft: theme.spacing(1),
     },
   ]),
   isActive: css({
     color: theme.colors.text.primary,
-
-    '&::before': [
-      {
-        display: 'block',
-        content: '" "',
-        height: theme.spacing(3),
-        position: 'absolute',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: theme.spacing(0.5),
-        borderRadius: theme.shape.radius.default,
-        backgroundImage: theme.colors.gradients.brandVertical,
-      },
-      level === 0 && {
-        left: theme.spacing(-1.25),
-      },
-      level === 1 && {
-        left: theme.spacing(-1.25),
-      },
-      level === 2 && {
-        left: theme.spacing(3.5),
-      },
-    ],
+  }),
+  iconWrapper: css({
+    width: theme.spacing(5),
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,
