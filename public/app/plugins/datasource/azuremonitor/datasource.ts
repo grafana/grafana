@@ -219,7 +219,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
         break;
       }
     }
-    return { ...query, azureLogAnalytics: {...query.azureLogAnalytics, query: expression }};
+    return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
   }
 }
 
