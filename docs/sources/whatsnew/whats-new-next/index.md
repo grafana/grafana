@@ -187,7 +187,6 @@ Public dashboards allow you to share your visualizations and insights to a broad
 
 {{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
-
 ## Support for dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
