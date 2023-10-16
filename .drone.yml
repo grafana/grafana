@@ -1196,8 +1196,7 @@ steps:
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else echo "please regenerate specification by running make swagger-clean
-    && make openapi3-gen" return 1; fi
+    date!"; else return 1; fi
   depends_on:
   - clone-enterprise
   environment:
@@ -4725,6 +4724,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7cd684938831db42b42e7fa249ed708cd5c648067c28458e611ae63d1b60ec61
+hmac: f66557014fa3b7bc3c75f15cbb9209b79529aaace7f890a94acb8ea14996497c
 
 ...
