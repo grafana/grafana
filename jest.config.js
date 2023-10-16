@@ -5,17 +5,23 @@ process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylig
 
 const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'];
 function getIgnorePatternForEsModules() {
-  // Dodgy way to detect if packages have been installed with yarn pnpm linker, where they're symlinked from node_modules/.store
-  const isYarnPnpm = process.argv.some((arg) => arg.includes('node_modules/.store'));
+  // This contains a bunch of dodgy heuristics to detect if we're running in yarn pnp or pnpm.
 
+  const isYarnPnpm = process.argv.some((arg) => arg.includes('node_modules/.store'));
+  console.log('Is yarn pnpm?', isYarnPnpm);
   if (isYarnPnpm) {
     return `/node_modules/\\.store/(?!${esModules.join('|')})`;
   }
 
-  // default to yarn pnp
-  return `/node_modules/(?!${esModules.join('|')})`;
+  const isPnpm = process.env.npm_config_user_agent?.includes('pnpm/');
+  console.log('Is pnpm?', isPnpm);
+  if (isPnpm) {
+    // For pnpm, check the tip in https://jestjs.io/docs/configuration#transformignorepatterns-arraystring
+    return `/node_modules/\\.pnpm/(?!${esModules.join('|')})`;
+  }
 
-  // For pnpm, check the tip in https://jestjs.io/docs/configuration#transformignorepatterns-arraystring
+  // default to yarn pnp?
+  return `/node_modules/(?!${esModules.join('|')})`;
 }
 
 module.exports = {

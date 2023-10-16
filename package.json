@@ -432,6 +432,22 @@
     "history@4.10.1": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
     "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch"
   },
+  "pnpm": {
+    "overrides": {
+      "ngtemplate-loader>loader-utils": "^2.0.0",
+      "slate-dev-environment@^0.2.2": "^0.2.2",
+      "react-split-pane@0.1.92": "0.1.92",
+      "@storybook/blocks@7.4.5": "7.4.5",
+      "history@4.10.1": "4.10.1",
+      "history@^4.9.0": "^4.9.0"
+    },
+    "patchedDependencies": {
+      "slate-dev-environment@0.2.5": ".yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
+      "react-split-pane@0.1.92": ".yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
+      "@storybook/blocks@7.4.5": ".yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch",
+      "history@4.10.1": ".yarn/patches/history-npm-4.10.1-ee217563ae.patch"
+    }
+  },
   "workspaces": {
     "packages": [
       "packages/*",
@@ -442,7 +458,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "packageManager": "yarn@4.0.0",
+  "_packageManager": "yarn@4.0.0",
   "dependenciesMeta": {
     "prettier@3.0.0": {
       "unplugged": true
