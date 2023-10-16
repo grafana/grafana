@@ -1003,10 +1003,14 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -2285,10 +2289,14 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -3969,10 +3977,14 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -4661,6 +4673,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: efc8706531a40b72753d483d3d8a7ba4941b5f54e0b21a68bcf47556a97a9ede
+hmac: ca08db1d3dfc2bad19b90e4a799e26e2d4aa5a903cdd0ad23a2f532551376bfc
 
 ...

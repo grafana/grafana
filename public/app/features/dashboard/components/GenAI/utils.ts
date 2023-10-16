@@ -1,6 +1,6 @@
 import { DashboardModel, PanelModel } from '../../state';
-import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
+import { getDashboardStringDiff } from './jsonDiffText';
 import { openai } from './llms';
 
 export enum Role {
@@ -41,18 +41,14 @@ export const sanitizeReply = (reply: string) => {
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: Diffs;
-  migrationChanges: Diffs;
+  userChanges: string;
+  migrationChanges: string;
 } {
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = dashboard.getSaveModelClone();
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-
-  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
+  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
 
   return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+    userChanges: userDiff,
+    migrationChanges: migrationDiff,
   };
 }
 

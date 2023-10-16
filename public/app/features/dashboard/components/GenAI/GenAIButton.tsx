@@ -26,6 +26,8 @@ export interface GenAIButtonProps {
   temperature?: number;
   // Event tracking source. Send as `src` to Rudderstack event
   eventTrackingSrc: EventTrackingSrc;
+  // Whether the button should be disabled
+  disabled?: boolean;
 }
 
 export const GenAIButton = ({
@@ -37,6 +39,7 @@ export const GenAIButton = ({
   onGenerate,
   temperature = 1,
   eventTrackingSrc,
+  disabled,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -47,7 +50,7 @@ export const GenAIButton = ({
 
   const hasHistory = history.length > 0;
   const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
-  const isButtonDisabled = isFirstHistoryEntry || (value && !value.enabled && !error);
+  const isButtonDisabled = disabled || isFirstHistoryEntry || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
