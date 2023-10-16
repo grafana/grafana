@@ -64,11 +64,6 @@ def swagger_gen_step(ver_mode):
         },
         "commands": [
             "apk add --update git make",
-            "pwd",
-            "echo 'listing...'",
-            "ls -l",
-            "pwd",
-            "cat Makefile",
             "make swagger-clean && make openapi3-gen",
             "for f in public/api-merged.json public/openapi3.json; do git add $f; done",
             'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else echo "please regenerate specification by running make swagger-clean && make openapi3-gen" && return 1; fi',
