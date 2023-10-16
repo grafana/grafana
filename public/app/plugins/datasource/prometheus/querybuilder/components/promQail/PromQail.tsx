@@ -35,6 +35,8 @@ export const PromQail = (props: PromQailProps) => {
 
   const [labelNames, setLabelNames] = useState<string[]>([]);
 
+  const suggestions = state.interactions.reduce((acc, int) => acc + int.suggestions.length, 0);
+
   const responsesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -45,8 +47,9 @@ export const PromQail = (props: PromQailProps) => {
   };
 
   useEffect(() => {
+    // only scroll when an interaction has been added or the suggestions have been updated
     scrollToBottom();
-  }, [state.interactions]);
+  }, [state.interactions.length, suggestions]);
 
   useEffect(() => {
     const fetchLabels = async () => {
