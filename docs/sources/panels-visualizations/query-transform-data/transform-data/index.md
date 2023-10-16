@@ -995,10 +995,9 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
-> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+For each generated "Trend" field value calculation function can be selected. Default is "last non null value". This value will be displayed next to the sparkline and used for sorting table rows.
 
 ### Format Time
 
@@ -1007,6 +1006,23 @@ This transformation is available in Grafana 10.1+ as an alpha feature.
 {{% /admonition %}}
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
+
+### Format string
+
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `formatString` in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+
+Use this transformation to format the output of a string field. You can format output in the following ways:
+
+- Upper case - Formats the entire string in upper case characters.
+- Lower case - Formats the entire string in lower case characters.
+- Sentence case - Formats the the first character of the string in upper case.
+- Title case - Formats the first character of each word in the string in upper case.
+- Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
+- Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+- Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+- Trim - Removes all leading and trailing spaces from the string.
+- Substring - Returns a substring of the string, using the specified start and end positions.
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
