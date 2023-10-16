@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -333,7 +334,7 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg) error {
 	if jsonData == nil || !cfg.AuthProxyEnabled {
 		return nil
 	}
@@ -348,12 +349,33 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 		}
 	}
 
-	for key, value := range jsonData.Get("teamHeaders").MustMap() {
-		v := value.([]map[string]string)
-		for _, header := range v {
-			if header["header"] == cfg.AuthProxyHeaderName {
-				datasourcesLogger.Error("Forbidden to add a data source team header with a name equal to auth proxy header name", "headerName", key)
-				return errors.New("validation error, invalid header name specified")
+	// This part
+	// Prevent adding a data source team header with a name that matches the auth proxy header name
+	list := contexthandler.AuthHTTPHeaderListFromContext(ctx)
+	if list == nil {
+		return nil
+	}
+	for key, valueInterface := range jsonData.Get("teamHTTPHeaders").MustMap() {
+		// Assert valueInterface to a slice of empty interfaces
+		valueSlice, ok := valueInterface.([]interface{})
+		if !ok {
+			// Handle this case, maybe log an error or continue to next iteration
+			continue
+		}
+		for _, item := range valueSlice {
+			headerMap, ok := item.(map[string]interface{})
+			if !ok {
+				// FIXME: Handle this case
+				continue
+			}
+
+			header, _ := headerMap["header"].(string)
+
+			for _, name := range list.Items {
+				if header == name {
+					datasourcesLogger.Error("Cannot add a data source team header with a used by our proxy header", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
+				}
 			}
 		}
 	}
@@ -398,7 +420,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return resp
 		}
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
@@ -463,7 +485,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
@@ -503,7 +525,7 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
