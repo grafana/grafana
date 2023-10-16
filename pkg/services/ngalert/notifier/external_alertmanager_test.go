@@ -93,9 +93,13 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
-	amURL := os.Getenv("AM_URL")
 
 	// Using a wrong password should cause an error.
 	cfg := externalAlertmanagerConfig{
