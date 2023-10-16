@@ -10,7 +10,6 @@ import (
 type StatusSource string
 
 const (
-	StatusSourceNone       StatusSource = ""
 	StatusSourcePlugin     StatusSource = "plugin"
 	StatusSourceDownstream StatusSource = "downstream"
 )
@@ -18,13 +17,13 @@ const (
 type statusSourceCtxKey struct{}
 
 // StatusSourceFromContext returns the plugin request status source stored in the context.
-// If no plugin request status source is stored in the context, [StatusSourceNone] is returned.
+// If no plugin request status source is stored in the context, [StatusSourcePlugin] is returned.
 func StatusSourceFromContext(ctx context.Context) StatusSource {
 	value, ok := ctx.Value(statusSourceCtxKey{}).(*StatusSource)
 	if ok {
 		return *value
 	}
-	return StatusSourceNone
+	return StatusSourcePlugin
 }
 
 // WithStatusSource sets the plugin request status source for the context.
