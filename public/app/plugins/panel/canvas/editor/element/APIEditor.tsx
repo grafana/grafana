@@ -6,7 +6,6 @@ import {
   StringFieldConfigSettings,
   SelectableValue,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
@@ -141,7 +140,7 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
-  return config.disableSanitizeHtml ? (
+  return (
     <>
       <InlineFieldRow>
         <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
@@ -195,7 +194,5 @@ export function APIEditor({ value, context, onChange }: Props) {
         value?.contentType === defaultApiConfig.contentType &&
         renderJSON(value?.data ?? '{}')}
     </>
-  ) : (
-    <>Must enable disableSanitizeHtml feature flag to access</>
   );
 }

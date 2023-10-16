@@ -35,6 +35,117 @@ For more information, refer to the [documentation](https://grafana.com/docs/graf
 
 {{< figure src="/media/docs/tempo/metrics-summary-10-2.png" caption="Aggregate by" >}}
 
+## No basic role
+
+<!-- Eric Leijonmarck -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+We're excited to introduce the "No basic role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
+
+Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
+
+For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+
+## Content outline
+
+<!-- Thanos Karachalios -->
+<!-- OSS,Enterprise -->
+
+October 12, 2023
+
+_Generally Available in Grafana Cloud_
+
+Introducing Content Outline in Grafana **Explore**. We recognized the challenges of complex mixed queries, as well as, lengthy logs and traces results, leading to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
+
+{{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
+
+## Issues snapshot in Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 29, 2023
+
+_Generally available in Grafana Cloud_
+
+To provide quicker identification and troubleshooting, the home page contains a snapshot of issues that reach the following thresholds:
+
+- Pods that have been in a non-running state for more than 15 minutes
+- Nodes with CPU usage above 90% for more than five minutes
+- Nodes using more than 90% of memory for more than five minutes
+- Persistent Volumes with capacity above 90%
+- Node disks with capacity above 90%
+
+(Release 1.3.1)
+{{< figure max-width="80%" src="/media/docs/grafana-cloud/k8s/K8smon-snapshotview.png" caption="Home page snapshot view" >}}
+
+## Tabs navigation in Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
+
+_Generally available in Grafana Cloud_
+
+Quickly switch between the Cluster, namespace, workload, and Node views on the **Cluster Navigation** page using tabs. (Release 1.3.0)
+
+{{< figure max-width="40%" src="/media/docs/grafana-cloud/k8s/k8smon-clusternav-tabs.png" caption="Tabs on **Cluster Navigation** page" >}}
+
+## Data source menu on Cost and Efficiency views in Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
+
+_Generally available in Grafana Cloud_
+
+You can change the data source you are viewing on the **Cost** and **Efficiency** views. (Release 1.2.1)
+
+## Predict namespace memory usage in Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
+
+_Generally available in Grafana Cloud_
+
+Click **Predict Memory usage** to predict namespace memory usage on the namespace detail page. (Release 1.2.1)
+
+{{< figure max-width="50%" src="/media/docs/grafana-cloud/k8s/k8smon-predict-memusage-namespace.png" caption="**Predict Memory usage** button" >}}
+
+## Streamlined configuration of Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 15, 2023
+
+_Generally available in Grafana Cloud_
+
+Configure with [Grafana Kubernetes Monitoring Helm chart](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/config-k8s-agent-flow) using a streamlined process. With this method, you can set on/off switches to gather metrics, logs, events, traces, and cost metrics. (Release 1.2.0)
+
+{{< figure max-width="60%" src="/media/docs/grafana-cloud/k8s/k8smon-config-wizard.png" caption="Configuration wizard" >}}
+
+## Traces collection with Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
+
+_Generally available in Grafana Cloud_
+
+Collect traces when you configure Kubernetes Monitoring, and then use Tempo to create search queries. Refer to [Navigate to traces](/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/navigate-k8s-monitoring/#navigate-to-traces) for more information. (Release 1.3.0)
+
+## Kafka integration in Kubernetes Monitoring
+
+<!-- Beverly Buchanan -->
+
+September 14, 2023
+
+_Generally available in Grafana Cloud_
+
+The Kafka integration is available for use in Kubernetes Monitoring. (Release 1.3.6)
+
 ## Public dashboards
 
 <!-- Thanos Karachalios -->
@@ -83,6 +194,8 @@ Refer to the [Google Authentication documentation](https://grafana.com/docs/graf
 
 <!-- Heitor Tashiro Sergent -->
 
+September 19, 2023
+
 _Generally available in Grafana Cloud_
 
 You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug failed performance tests and proactively improve application reliability.
@@ -101,6 +214,8 @@ To learn more, refer to the [Integration with Grafana Cloud Traces documentation
 <!-- Miguel Palau -->
 <!-- OSS, Enterprise -->
 
+September 25, 2023
+
 _Generally available in Grafana Cloud_
 
 The SAP HANA® data source now supports tenant databases connections by using the database name and/or instance number. For more information, refer to [SAP HANA® configuration](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
@@ -112,6 +227,8 @@ The SAP HANA® data source now supports tenant databases connections by using th
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
 
+August 31, 2023
+
 _Generally available in Grafana Cloud_
 
 The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
@@ -122,6 +239,8 @@ The Datadog data source now supports log aggregation. This feature helps aggrega
 
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
+
+September 1, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -136,6 +255,8 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 <!-- Fabrizio Casati -->
 <!-- OSS, Enterprise -->
 
+August 24, 2023
+
 _Generally available in Grafana Cloud_
 
 The Tempo data source now supports query-type template variables. With this update, you can create variables for which the values are a list of attribute names or attribute values seen on spans received by Tempo.
@@ -149,6 +270,8 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 <!-- Fabrizio Casati -->
 <!-- OSS, Enterprise -->
 
+October 3, 2023
+
 _Generally available in Grafana Cloud_
 
 The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
@@ -159,6 +282,8 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceq
 
 <!-- Brenda Muir -->
 <!-- OSS, Enterprise -->
+
+September 13, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -183,6 +308,8 @@ To learn more, refer to the following video demo.
 
 <!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
 <!-- Cloud -->
+
+October 24, 2023
 
 _Available in private preview in Grafana Cloud_
 
