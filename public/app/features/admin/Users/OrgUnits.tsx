@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React, { forwardRef, PropsWithChildren } from 'react';
 
 import { IconName } from '@grafana/data';
 import { Icon, Tooltip } from '@grafana/ui';
@@ -17,9 +17,7 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
       placement={'top'}
       content={<Flex direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Flex>}
     >
-      <div>
-        <Content icon={icon}>{units.length}</Content>
-      </div>
+      <Content icon={icon}>{units.length}</Content>
     </Tooltip>
   ) : (
     <Content icon={icon}>{units[0].name}</Content>
@@ -30,10 +28,12 @@ interface ContentProps extends PropsWithChildren {
   icon: IconName;
 }
 
-export const Content = ({ children, icon }: ContentProps) => {
+export const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
   return (
-    <Box display={'flex'} alignItems={'center'} marginRight={1}>
+    <Box ref={ref} display={'flex'} alignItems={'center'} marginRight={1}>
       <Icon name={icon} /> <Box marginLeft={1}>{children}</Box>
     </Box>
   );
-};
+});
+
+Content.displayName = 'TooltipContent';
