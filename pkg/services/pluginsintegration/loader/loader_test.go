@@ -497,7 +497,6 @@ func TestLoader_Load(t *testing.T) {
 func TestLoader_Load_ExternalRegistration(t *testing.T) {
 	boolPtr := func(b bool) *bool { return &b }
 	stringPtr := func(s string) *string { return &s }
-	authProvPtr := func(a plugindef.AuthProvider) *plugindef.AuthProvider { return &a }
 
 	t.Run("Load a plugin with oauth client registration", func(t *testing.T) {
 		cfg := &config.Cfg{
@@ -530,7 +529,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					Plugins:        []plugins.Dependency{},
 				},
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
-					AuthProvider: authProvPtr(plugindef.AuthProviderOAuth2Server),
 					Impersonation: &plugindef.Impersonation{
 						Enabled: boolPtr(true),
 						Groups:  boolPtr(true),
@@ -541,13 +539,10 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 							},
 						},
 					},
-					Self: &plugindef.Self{
-						Enabled: boolPtr(true),
-						Permissions: []plugindef.Permission{
-							{
-								Action: "read",
-								Scope:  stringPtr("datasource"),
-							},
+					Permissions: []plugindef.Permission{
+						{
+							Action: "read",
+							Scope:  stringPtr("datasource"),
 						},
 					},
 				},
@@ -636,13 +631,10 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					Plugins:        []plugins.Dependency{},
 				},
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
-					Self: &plugindef.Self{
-						Enabled: boolPtr(true),
-						Permissions: []plugindef.Permission{
-							{
-								Action: "read",
-								Scope:  stringPtr("datasource"),
-							},
+					Permissions: []plugindef.Permission{
+						{
+							Action: "read",
+							Scope:  stringPtr("datasource"),
 						},
 					},
 				},

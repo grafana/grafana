@@ -18,14 +18,11 @@
     "version": "1.0.0"
   },
   "externalServiceRegistration": {
-    "self": {
-      "enabled" : true,
-      "permissions" :  [
-        {
-          "action": "read",
-          "scope": "datasource"
-        }
-      ]
-    }
+    "permissions" :  [
+      {
+        "action": "read",
+        "scope": "datasource"
+      }
+    ]
   }
 }
