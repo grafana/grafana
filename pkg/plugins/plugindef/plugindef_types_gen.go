@@ -122,7 +122,8 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
-// ExternalServiceRegistration defines model for ExternalServiceRegistration.
+// ExternalServiceRegistration allows the service to get a service account token
+// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 type ExternalServiceRegistration struct {
 	Impersonation *Impersonation `json:"impersonation,omitempty"`
 
@@ -316,7 +317,10 @@ type PluginDef struct {
 	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
-	Executable                  *string                     `json:"executable,omitempty"`
+	Executable *string `json:"executable,omitempty"`
+
+	// ExternalServiceRegistration allows the service to get a service account token
+	// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 	ExternalServiceRegistration ExternalServiceRegistration `json:"externalServiceRegistration"`
 
 	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
