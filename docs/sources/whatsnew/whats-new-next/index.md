@@ -18,6 +18,94 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Generative AI features for dashboards
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+<Release date>
+
+_Available in public preview in Grafana Cloud_
+
+// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
+
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+
+- **Generate panel titles and descriptions** - You can now generate a title and description for your panel based on the data you've added to it. This is useful when you want to quickly create a panel and don't want to spend time coming up with a title or description.
+- **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
+
+TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+
+TODO: Add image / gif / video
+
+## New Canvas button element
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+<Release date>
+  
+_Available in public preview in Grafana Cloud_
+
+You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+
+TODO: Add image / gif / video
+
+## Time series visualization now support y-axis zooming
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+<Release date>
+
+_Available in public preview in Grafana Cloud_
+
+You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+
+To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
+
+TODO: Add image / gif / video
+
+## Visualize enum data in Time series and State timeline visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+<Release date>
+
+_Available in public preview in Grafana Cloud_
+
+You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
+
+TODO: Add image / gif / video
+
+## Data visualization quality of life improvements
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+<Release date>
+
+_Available in public preview in Grafana Cloud_
+
+TBD / WIP - some high level thoughts
+
+- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
+- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
+- Gauge styling updates?
+- Exemplar tooltip config (if it makes it for 10.2)
+- ?
+
+TODO: Add image / gif / video (maybe not for this one)
+
 ## Alerting insights
 
 <!-- George Robinson -->
