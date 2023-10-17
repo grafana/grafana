@@ -36,7 +36,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
         {level !== 0 && <Indent level={level === 1 ? 1.2 : 1.7} spacing={3} />}
         <div
           className={cx(styles.collapseButtonWrapper, {
-            [styles.thirdLevelItems]: level === 2,
+            [styles.itemConnector]: level >= 2,
           })}
         >
           {showExpandButton && (
@@ -105,18 +105,19 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    position: 'relative',
   }),
   collapseButtonWrapper: css({
     display: 'flex',
     alignItems: 'center',
     width: theme.spacing(3),
   }),
-  thirdLevelItems: css({
+  itemConnector: css({
     '&::before': {
       content: '""',
-      height: theme.spacing(4.75),
+      height: '100%',
       position: 'absolute',
-      borderLeft: `1px solid ${theme.colors.text.secondary}`,
+      borderLeft: `1px solid ${theme.colors.border.medium}`,
     },
   }),
   collapseButton: css({
