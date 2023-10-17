@@ -104,6 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
