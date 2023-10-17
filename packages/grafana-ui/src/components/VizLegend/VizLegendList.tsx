@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
       width: '100%',
       paddingLeft: theme.spacing(0.5),
+      gap: '15px 25px',
     }),
     section: css({
       display: 'flex',
@@ -116,6 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     sectionRight: css({
       justifyContent: 'flex-end',
       flexGrow: 1,
+      flexBasis: '50%',
     }),
   };
 };
