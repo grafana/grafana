@@ -232,7 +232,14 @@ export class DashboardGrid extends PureComponent<Props> {
      * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
      */
     return (
-      <div style={{ flex: '1 1 auto', display: this.props.editPanel ? 'none' : undefined }}>
+      <div
+        style={{
+          flex: '1 1 auto',
+          position: 'relative',
+          zIndex: 1,
+          display: this.props.editPanel ? 'none' : undefined,
+        }}
+      >
         <AutoSizer disableHeight>
           {({ width }) => {
             if (width === 0) {
