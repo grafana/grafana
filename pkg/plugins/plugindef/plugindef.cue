@@ -413,14 +413,15 @@ schemas: [{
 		// External service registration information
 		externalServiceRegistration: #ExternalServiceRegistration
 
+		// ExternalServiceRegistration allows the service to get a service account token
+		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 		#ExternalServiceRegistration: {
-			// AuthProvider defines which authentication provider will be used by the plugin to authenticate against Grafana.
-			// Defaults to "ServiceAccounts"
-			authProvider?: #AuthProvider
+			// Permissions are the permissions that the external service needs its associated service account to have.
+			permissions?: [...#Permission]
+
 			// Impersonation describes the permissions that the external service will have on behalf of the user
+			// This is only available with the OAuth2 Server
 			impersonation?: #Impersonation
-			// Self describes the permissions that the external service will have on behalf of itself
-			self?: 		#Self
 		}
 
 		#Impersonation: {
@@ -433,19 +434,6 @@ schemas: [{
 			// Permissions are the permissions that the external service needs when impersonating a user.
 			// The intersection of this set with the impersonated user's permission guarantees that the client will not
 			// gain more privileges than the impersonated user has.
-			permissions?: [...#Permission]
-		}
-
-		// AuthProvider is a string which can be 'ServiceAccounts', 'OAuth2Server'.
-		// It identifies which authentication provider will be used by the plugin to authenticate against Grafana.
-		#AuthProvider: "ServiceAccounts" | "OAuth2Server"
-
-		#Self: {
-			// Enabled allows the service to get a service account token if the AuthProvider is 'ServiceAccounts'
-			// or to use the client_credentials grant if the AuthProvider is 'OAuth2Server'
-			// Defaults to true.
-			enabled?: bool
-			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 		}
 	}

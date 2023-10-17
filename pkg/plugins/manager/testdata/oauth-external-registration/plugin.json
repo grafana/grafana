@@ -18,7 +18,6 @@
     "version": "1.0.0"
   },
   "externalServiceRegistration": {
-    "authProvider": "OAuth2Server",
     "impersonation": {
       "enabled" : true,
       "groups" : true,
@@ -29,14 +28,11 @@
         }
       ]
     },
-    "self": {
-      "enabled" : true,
-      "permissions" :  [
-        {
-          "action": "read",
-          "scope": "datasource"
-        }
-      ]
-    }
+    "permissions" :  [
+      {
+        "action": "read",
+        "scope": "datasource"
+      }
+    ]
   }
 }

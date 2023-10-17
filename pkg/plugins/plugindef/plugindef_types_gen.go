@@ -9,12 +9,6 @@
 
 package plugindef
 
-// Defines values for AuthProvider.
-const (
-	AuthProviderOAuth2Server    AuthProvider = "OAuth2Server"
-	AuthProviderServiceAccounts AuthProvider = "ServiceAccounts"
-)
-
 // Defines values for BasicRole.
 const (
 	BasicRoleAdmin        BasicRole = "Admin"
@@ -78,10 +72,6 @@ const (
 	ReleaseStateStable     ReleaseState = "stable"
 )
 
-// AuthProvider is a string which can be 'ServiceAccounts', 'OAuth2Server'.
-// It identifies which authentication provider will be used by the plugin to authenticate against Grafana.
-type AuthProvider string
-
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
 // With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
 // in turn inherits them from the Viewer basic role.
@@ -132,13 +122,13 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
-// ExternalServiceRegistration defines model for ExternalServiceRegistration.
+// ExternalServiceRegistration allows the service to get a service account token
+// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 type ExternalServiceRegistration struct {
-	// AuthProvider is a string which can be 'ServiceAccounts', 'OAuth2Server'.
-	// It identifies which authentication provider will be used by the plugin to authenticate against Grafana.
-	AuthProvider  *AuthProvider  `json:"authProvider,omitempty"`
 	Impersonation *Impersonation `json:"impersonation,omitempty"`
-	Self          *Self          `json:"self,omitempty"`
+
+	// Permissions are the permissions that the external service needs its associated service account to have.
+	Permissions []Permission `json:"permissions,omitempty"`
 }
 
 // Header describes an HTTP header that is forwarded with a proxied request for
@@ -327,7 +317,10 @@ type PluginDef struct {
 	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
-	Executable                  *string                     `json:"executable,omitempty"`
+	Executable *string `json:"executable,omitempty"`
+
+	// ExternalServiceRegistration allows the service to get a service account token
+	// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 	ExternalServiceRegistration ExternalServiceRegistration `json:"externalServiceRegistration"`
 
 	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
@@ -483,17 +476,6 @@ type Route struct {
 	// proxied to.
 	Url       *string    `json:"url,omitempty"`
 	UrlParams []URLParam `json:"urlParams,omitempty"`
-}
-
-// Self defines model for Self.
-type Self struct {
-	// Enabled allows the service to get a service account token if the AuthProvider is 'ServiceAccounts'
-	// or to use the client_credentials grant if the AuthProvider is 'OAuth2Server'
-	// Defaults to true.
-	Enabled *bool `json:"enabled,omitempty"`
-
-	// Permissions are the permissions that the external service needs its associated service account to have.
-	Permissions []Permission `json:"permissions,omitempty"`
 }
 
 // TODO docs

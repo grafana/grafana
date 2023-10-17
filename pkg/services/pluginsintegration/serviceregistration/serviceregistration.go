@@ -38,13 +38,9 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	self := extsvcauth.SelfCfg{}
-	if svc.Self != nil {
-		self.Permissions = toAccessControlPermissions(svc.Self.Permissions)
-		if svc.Self.Enabled != nil {
-			self.Enabled = *svc.Self.Enabled
-		} else {
-			self.Enabled = true
-		}
+	if len(svc.Permissions) > 0 {
+		self.Permissions = toAccessControlPermissions(svc.Permissions)
+		self.Enabled = true
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
@@ -55,7 +51,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 
 	// Default authProvider now is ServiceAccounts
 	registration.AuthProvider = extsvcauth.ServiceAccounts
-	if svc.AuthProvider != nil && *svc.AuthProvider == plugindef.AuthProviderOAuth2Server {
+	if svc.Impersonation != nil {
 		registration.AuthProvider = extsvcauth.OAuth2Server
 		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
 	}
