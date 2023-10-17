@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Alert, LinkButton } from '@grafana/ui';
 
 import Datasource from '../../datasource';
