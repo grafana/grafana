@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,7 +24,7 @@ export interface TooltipProps {
 
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
-    const [controlledVisible, setControlledVisible] = React.useState(show);
+    const [controlledVisible, setControlledVisible] = useState(show);
     const tooltipId = useId();
 
     useEffect(() => {
@@ -45,10 +45,9 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
       visible: show ?? controlledVisible,
-      placement: placement,
-      interactive: interactive,
+      placement,
+      interactive,
       delayHide: interactive ? 100 : 0,
-      delayShow: 150,
       offset: [0, 8],
       trigger: ['hover', 'focus'],
       onVisibleChange: setControlledVisible,
@@ -74,7 +73,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       <>
         {React.cloneElement(children, {
           ref: handleRef,
-          tabIndex: 0, // tooltip should be keyboard focusable
+          tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': visible ? tooltipId : undefined,
         })}
         {visible && (
