@@ -225,7 +225,6 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
 		return nil
 	}
-	rawJSON = []byte("{\"name\": []}")
 
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
