@@ -24,7 +24,6 @@ load(
     "store_storybook_step",
     "test_a11y_frontend_step",
     "trigger_oss",
-    "trigger_test_release",
     "upload_cdn_step",
     "upload_packages_step",
     "verify_gen_cue_step",
@@ -65,7 +64,6 @@ def build_e2e(trigger, ver_mode):
     if ver_mode == "pr":
         build_steps.extend(
             [
-                trigger_test_release(),
                 enterprise_downstream_step(ver_mode = ver_mode),
             ],
         )
