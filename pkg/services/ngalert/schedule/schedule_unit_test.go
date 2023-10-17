@@ -59,7 +59,7 @@ func TestProcessTicks(t *testing.T) {
 	mockedClock := clock.NewMock()
 
 	notifier := &AlertsSenderMock{}
-	notifier.EXPECT().SendCtx(mock.Anything, mock.Anything, mock.Anything).Return()
+	notifier.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -578,7 +578,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		updateChan := make(chan ruleVersionAndPauseStatus)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().SendCtx(mock.Anything, rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -644,7 +644,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}, 5*time.Second, 100*time.Millisecond)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
-			sender.AssertNumberOfCalls(t, "SendCtx", 1)
+			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 			require.Len(t, args.PostableAlerts, expectedToBeSent)
@@ -659,7 +659,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().SendCtx(mock.Anything, rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -747,7 +747,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
-			sender.AssertNumberOfCalls(t, "SendCtx", 1)
+			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 			assert.Len(t, args.PostableAlerts, 1)
@@ -764,7 +764,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 
 			sender := AlertsSenderMock{}
-			sender.EXPECT().SendCtx(mock.Anything, rule.GetKey(), mock.Anything).Return()
+			sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 			ruleStore.PutRule(context.Background(), rule)
@@ -782,7 +782,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			waitForTimeChannel(t, evalAppliedChan)
 
-			sender.AssertNumberOfCalls(t, "SendCtx", 1)
+			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
 
@@ -797,7 +797,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().SendCtx(mock.Anything, rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -873,7 +873,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	if senderMock == nil {
 		senderMock = &AlertsSenderMock{}
-		senderMock.EXPECT().SendCtx(mock.Anything, mock.Anything, mock.Anything).Return()
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
 	}
 
 	cfg := setting.UnifiedAlertingSettings{
