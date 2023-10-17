@@ -132,7 +132,7 @@ _Available in public preview in Grafana Open Source and Enterprise_
 
 You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
 
-To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/TODO).
+To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
 
 TODO: Add image / gif / video
 
@@ -425,7 +425,7 @@ For example, imagine you have a team of developers who need to access a specific
 Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
 This way, you can limit the potential damage that could be caused by a compromised service account.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" caption="Data source permissions in 10.2" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" max-width="600px" caption="Data source permissions in 10.2" >}}
 
 ### Role mapping support for Google OIDC
 
