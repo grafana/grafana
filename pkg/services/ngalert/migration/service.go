@@ -19,7 +19,11 @@ const actionName = "alerting migration"
 //nolint:stylecheck
 var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 
-type MigrationService struct {
+type UpgradeService interface {
+	Run(ctx context.Context) error
+}
+
+type migrationService struct {
 	lock           *serverlock.ServerLockService
 	cfg            *setting.Cfg
 	log            log.Logger
@@ -35,8 +39,8 @@ func ProvideService(
 	store db.DB,
 	migrationStore migrationStore.Store,
 	encryptionService secrets.Service,
-) (*MigrationService, error) {
-	return &MigrationService{
+) (UpgradeService, error) {
+	return &migrationService{
 		lock:              lock,
 		log:               log.New("ngalert.migration"),
 		cfg:               cfg,
@@ -49,7 +53,7 @@ func ProvideService(
 // Run starts the migration. This will either migrate from legacy alerting to unified alerting or revert the migration.
 // If the migration status in the kvstore is not set and unified alerting is enabled, the migration will be executed.
 // If the migration status in the kvstore is set and both unified alerting is disabled and ForceMigration is set to true, the migration will be reverted.
-func (ms *MigrationService) Run(ctx context.Context) error {
+func (ms *migrationService) Run(ctx context.Context) error {
 	var errMigration error
 	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
@@ -111,7 +115,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 }
 
 // migrateAllOrgs executes the migration for all orgs.
-func (ms *MigrationService) migrateAllOrgs(ctx context.Context) error {
+func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 	orgs, err := ms.migrationStore.GetAllOrgs(ctx)
 	if err != nil {
 		return fmt.Errorf("get orgs: %w", err)

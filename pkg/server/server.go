@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,10 +38,9 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	upgradeService *migration.MigrationService,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, upgradeService, backgroundServiceProvider)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +53,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 }
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, upgradeService *migration.MigrationService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -65,7 +63,6 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		childRoutines:       childRoutines,
 		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
-		upgradeService:      upgradeService,
 		roleRegistry:        roleRegistry,
 		shutdownFn:          shutdownFn,
 		shutdownFinished:    make(chan struct{}),
@@ -104,7 +101,6 @@ type Server struct {
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
-	upgradeService      *migration.MigrationService
 }
 
 // Init initializes the server and its services.
@@ -126,10 +122,6 @@ func (s *Server) Init() error {
 	}
 
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
-	}
-
-	if err := s.upgradeService.Run(s.context); err != nil {
 		return err
 	}
 
