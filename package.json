@@ -397,6 +397,7 @@
     "react-virtualized-auto-sizer": "1.0.7",
     "react-window": "1.8.9",
     "react-window-infinite-loader": "1.0.9",
+    "react-zoom-pan-pinch": "^3.1.0",
     "redux": "4.2.1",
     "redux-thunk": "2.4.2",
     "regenerator-runtime": "0.13.11",
