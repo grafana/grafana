@@ -181,6 +181,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
         })
       );
+    } else {
+      console.warn('Not updating, no panels state');
     }
   };
 

@@ -71,7 +71,7 @@ describe('LogsTable', () => {
     return (
       <LogsTable
         height={400}
-        labelCardinalityState={{}}
+        columnsWithMeta={{}}
         logsSortOrder={LogsSortOrder.Descending}
         splitOpen={() => undefined}
         timeZone={'utc'}
@@ -146,8 +146,8 @@ describe('LogsTable', () => {
   it('should render extracted labels as columns (loki)', async () => {
     setup({
       datasourceType: 'loki',
-      labelCardinalityState: {
-        foo: { active: true, count: 3 },
+      columnsWithMeta: {
+        foo: { active: true, percentOfLinesWithLabel: 3 },
       },
     });
 

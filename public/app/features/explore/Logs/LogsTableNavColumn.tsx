@@ -39,7 +39,7 @@ export const LogsTableNavColumn = (props: {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].count));
+  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].percentOfLinesWithLabel));
   if (labelKeys.length) {
     return (
       <div className={styles.columnWrapper}>
@@ -51,7 +51,7 @@ export const LogsTableNavColumn = (props: {
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}
             />
-            <span className={styles.labelCount}>({labels[labelName]?.count}%)</span>
+            <span className={styles.labelCount}>({labels[labelName]?.percentOfLinesWithLabel}%)</span>
           </div>
         ))}
       </div>

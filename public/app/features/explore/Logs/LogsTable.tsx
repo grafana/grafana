@@ -29,7 +29,7 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-  labelCardinalityState: Record<string, fieldNameMeta>;
+  columnsWithMeta: Record<string, fieldNameMeta>;
   height: number;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
@@ -59,12 +59,15 @@ const isFieldFilterable = (field: Field, datasourceType?: string) => {
 };
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, labelCardinalityState } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
+  // Can't convert the dataFrame fields to a string easily because the contain circular references, using the time values,
+  const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
+
+  // Prepare field overrides specific to the table context
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
-      // HERE IDIOT
       const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
@@ -100,7 +103,6 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
-
           filterable: isFieldFilterable(field, props.datasourceType),
         };
       }
@@ -110,16 +112,21 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
     [logsSortOrder, range, splitOpen, timeZone, props.datasourceType]
   );
 
+  /**
+   * Known issue here is that there is a re-render of the table when the set of labels has changed,
+   * the transformations are added after the fresh data has already been rendered
+   */
   useEffect(() => {
     const prepare = async () => {
-      if (!logsFrames || !logsFrames.length) {
+      if (!logFrameRaw) {
         setTableFrame(undefined);
         return;
       }
 
-      // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
-      let dataFrame = logsFrames[0];
+      // Tables currently only support one frame
+      let dataFrame = logFrameRaw;
 
+      // Parse into log frame
       const logsFrame = parseLogsFrame(dataFrame);
       const timeIndex = logsFrame?.timeField.index;
       dataFrame = sortDataFrame(dataFrame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
@@ -153,9 +160,9 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           ];
         });
 
-      // remove fields that should not be displayed
+      // remove hidden fields
       const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
-      hiddenFields.forEach((field: Field, index: number) => {
+      hiddenFields.forEach((field: Field) => {
         transformations.push({
           id: 'organize',
           options: {
@@ -166,10 +173,10 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         });
       });
 
-      // Every field that isn't active is visible
+      // Create object of label filters to filter out any columns not selected by the user
       let labelFilters: Record<string, true> = {};
-      Object.keys(labelCardinalityState)
-        .filter((key) => !labelCardinalityState[key].active)
+      Object.keys(columnsWithMeta)
+        .filter((key) => !columnsWithMeta[key].active)
         .forEach((key) => {
           labelFilters[key] = true;
         });
@@ -185,16 +192,17 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
 
       if (transformations.length > 0) {
-        const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-
-        const tableFrame = prepareTableFrame(transformedDataFrame);
+        const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
+        const tableFrame = prepareTableFrame(transformedDataFrame[0]);
         setTableFrame(tableFrame);
       } else {
         setTableFrame(prepareTableFrame(dataFrame));
       }
     };
     prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder, labelCardinalityState, props.datasourceType]);
+    // There are a lot of dependencies that make this complicated, we only want to update the table when the columns or the data has changed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
@@ -215,12 +223,14 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
   };
 
   return (
-    <Table
-      data={tableFrame}
-      width={width}
-      onCellFilterAdded={onCellFilterAdded}
-      height={props.height}
-      footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
-    />
+    tableFrame && (
+      <Table
+        data={tableFrame}
+        width={width}
+        onCellFilterAdded={onCellFilterAdded}
+        height={props.height}
+        footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
+      />
+    )
   );
 };
