@@ -57,7 +57,7 @@
       "version": ""
     }
   ],
-  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
+  "description": "The dashboard provides insights of dependency performance of Azure Apps through Application Insights.",
   "editable": true,
   "id": null,
   "links": [
@@ -1773,7 +1773,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration asc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\r\n| top 1 by duration asc\r\n| project tostring(duration)",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
@@ -1801,7 +1801,7 @@
         "options": [],
         "query": {
           "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where ['Dependency Name'] in ($dependency)\r\n| top 1 by duration desc\r\n| project tostring(duration)\r\n\r\n",
+            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target), duration\r\n| where (\"All\" in ($dependency) or [\"Dependency Name\"] in ($dependency))\r\n| top 1 by duration desc\r\n| project tostring(duration)",
             "resources": ["/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"]
           },
           "queryType": "Azure Log Analytics",
