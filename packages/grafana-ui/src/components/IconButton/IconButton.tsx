@@ -61,10 +61,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
   let ariaLabel: string | undefined;
   let buttonRef: typeof ref | undefined;
 
-  if ('tooltip' in props) {
-    const { tooltip } = props;
-    ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
-  } else if ('ariaLabel' in props || 'aria-label' in props) {
+  if ('ariaLabel' in props || 'aria-label' in props) {
     const { ariaLabel: deprecatedAriaLabel, ['aria-label']: ariaLabelProp } = props;
     ariaLabel = ariaLabelProp || deprecatedAriaLabel;
     buttonRef = ref;
