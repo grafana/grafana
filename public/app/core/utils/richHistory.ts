@@ -61,7 +61,7 @@ export async function addToRichHistory(
           dispatch(
             notifyApp(
               createErrorNotification(
-                t('explore.history.rich-history-utils.error.updateFailed', 'Rich History update failed'),
+                t('explore.rich-history-utils-notification.update-failed', 'Rich History update failed'),
                 error.message
               )
             )
@@ -109,7 +109,7 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
       dispatch(
         notifyApp(
           createErrorNotification(
-            t('explore.history.rich-history-utils.error.saving-failed', 'Saving rich history failed'),
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
             error.message
           )
         )
@@ -127,7 +127,7 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
       dispatch(
         notifyApp(
           createErrorNotification(
-            t('explore.history.rich-history-utils.error.saving-failed', 'Saving rich history failed'),
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
             error.message
           )
         )
@@ -146,7 +146,7 @@ export async function deleteQueryInRichHistory(id: string) {
       dispatch(
         notifyApp(
           createErrorNotification(
-            t('explore.history.rich-history-utils.error.saving-failed', 'Saving rich history failed'),
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
             error.message
           )
         )
@@ -160,8 +160,8 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: {
-      from: t('explore.history.rich-history-utils.defaultFrom', 'now-1h'),
-      to: t('explore.history.rich-history-utils.defaultTo', 'now'),
+      from: t('explore.rich-history-utils.default-from', 'now-1h'),
+      to: t('explore.rich-history-utils.default-to', 'now'),
     },
     datasource: query.datasourceName,
     queries: query.queries,
@@ -178,19 +178,19 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   let str;
   switch (num) {
     case 0:
-      str = t('explore.history.rich-history-utils.today', 'today');
+      str = t('explore.rich-history-utils.today', 'today');
       break;
     case 1:
-      str = t('explore.history.rich-history-utils.yesterday', 'yesterday');
+      str = t('explore.rich-history-utils.yesterday', 'yesterday');
       break;
     case 7:
-      str = t('explore.history.rich-history-utils.aWeekAgo', 'a week ago');
+      str = t('explore.rich-history-utils.a-week-ago', 'a week ago');
       break;
     case 14:
-      str = t('explore.history.rich-history-utils.twoWeeksAgo', 'two weeks ago');
+      str = t('explore.rich-history-utils.two-weeks-ago', 'two weeks ago');
       break;
     default:
-      str = t('explore.history.rich-history-utils.daysAgo', '{{num}} days ago', { num: `${num}` });
+      str = t('explore.rich-history-utils.days-ago', '{{num}} days ago', { num: `${num}` });
   }
 
   return str;

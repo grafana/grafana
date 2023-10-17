@@ -108,7 +108,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   if (!richHistorySearchFilters) {
     return (
       <span>
-        <Trans i18nKey="explore.history.rich-history-starred-tab.loading">Loading...</Trans>;
+        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>;
       </span>
     );
   }
@@ -127,11 +127,11 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder={t(
-                'explore.history.rich-history-starred-tab.filter-queries-placeholder',
+                'explore.rich-history-starred-tab.filter-queries-placeholder',
                 'Filter queries for data sources(s)'
               )}
               aria-label={t(
-                'explore.history.rich-history-starred-tab.filter-queries-aria-label',
+                'explore.rich-history-starred-tab.filter-queries-aria-label',
                 'Filter queries for data sources(s)'
               )}
               onChange={(options: SelectableValue[]) => {
@@ -142,26 +142,26 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
           <div className={styles.filterInput}>
             <FilterInput
               escapeRegex={false}
-              placeholder={t('explore.history.rich-history-starred-tab.search-queries-placeholder', 'Search queries')}
+              placeholder={t('explore.rich-history-starred-tab.search-queries-placeholder', 'Search queries')}
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div
-            aria-label={t('explore.history.rich-history-starred-tab.sort-queries-aria-label', 'Sort queries')}
+            aria-label={t('explore.rich-history-starred-tab.sort-queries-aria-label', 'Sort queries')}
             className={styles.sort}
           >
             <Select
               value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
-              placeholder={t('explore.history.rich-history-starred-tab.sort-queries-placeholder', 'Sort queries by')}
+              placeholder={t('explore.rich-history-starred-tab.sort-queries-placeholder', 'Sort queries by')}
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
         {loading && (
           <span>
-            <Trans i18nKey="explore.history.rich-history-starred-tab.loading-results">Loading results...</Trans>
+            <Trans i18nKey="explore.rich-history-starred-tab.loading-results">Loading results...</Trans>
           </span>
         )}
         {!loading &&
@@ -170,7 +170,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>
-            <Trans i18nKey="explore.history.rich-history-starred-tab.showing-queries">
+            <Trans i18nKey="explore.rich-history-starred-tab.showing-queries">
               Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
             </Trans>
           </div>
@@ -178,7 +178,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
         <div className={styles.footer}>
           {!config.queryHistoryEnabled
             ? t(
-                'explore.history.rich-history-starred-tab.local-history-message',
+                'explore.rich-history-starred-tab.local-history-message',
                 'The history is local to your browser and is not shared with others.'
               )
             : ''}

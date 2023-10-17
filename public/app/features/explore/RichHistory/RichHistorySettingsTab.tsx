@@ -44,10 +44,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const retentionPeriodOptions = [
-  { value: 2, label: t('explore.history.rich-history-settings-tab.retention-period.2-days', '2 days') },
-  { value: 5, label: t('explore.history.rich-history-settings-tab.retention-period.5-days', '5 days') },
-  { value: 7, label: t('explore.history.rich-history-settings-tab.retention-period.1-week', '1 week') },
-  { value: 14, label: t('explore.history.rich-history-settings-tab.retention-period.2-weeks', '2 weeks') },
+  { value: 2, label: t('explore.rich-history-settings-tab.retention-period.2-days', '2 days') },
+  { value: 5, label: t('explore.rich-history-settings-tab.retention-period.5-days', '5 days') },
+  { value: 7, label: t('explore.rich-history-settings-tab.retention-period.1-week', '1 week') },
+  { value: 14, label: t('explore.rich-history-settings-tab.retention-period.2-weeks', '2 weeks') },
 ];
 
 export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
@@ -67,19 +67,19 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('explore.history.rich-history-settings-tab.delete-title', 'Delete'),
+        title: t('explore.rich-history-settings-tab.delete-title', 'Delete'),
         text: t(
-          'explore.history.rich-history-settings-tab.delete-confirm-text',
+          'explore.rich-history-settings-tab.delete-confirm-text',
           'Are you sure you want to permanently delete your query history?'
         ),
-        yesText: t('explore.history.rich-history-settings-tab.delete-yes-text', 'Delete'),
+        yesText: t('explore.rich-history-settings-tab.delete-yes-text', 'Delete'),
         icon: 'trash-alt',
         onConfirm: () => {
           deleteRichHistory();
           dispatch(
             notifyApp(
               createSuccessNotification(
-                t('explore.history.rich-history-settings-tab.query-history-deleted', 'Query history deleted')
+                t('explore.rich-history-settings-tab.query-history-deleted', 'Query history deleted')
               )
             )
           );
@@ -92,9 +92,9 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     <div className={styles.container}>
       {supportedFeatures().changeRetention ? (
         <Field
-          label={t('explore.history.rich-history-settings-tab.history-time-span', 'History time span')}
+          label={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}
           description={t(
-            'explore.history.rich-history-settings-tab.history-time-span-description',
+            'explore.rich-history-settings-tab.history-time-span-description',
             `Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`
           )}
         >
@@ -103,18 +103,15 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           </div>
         </Field>
       ) : (
-        <Alert
-          severity="info"
-          title={t('explore.history.rich-history-settings-tab.history-time-span', 'History time span')}
-        >
-          <Trans i18nKey="explore.history.rich-history-settings-tab.alert-info">
+        <Alert severity="info" title={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}>
+          <Trans i18nKey="explore.rich-history-settings-tab.alert-info">
             Grafana will keep entries up to {{ optionLabel }}. Starred entries will not be deleted.
           </Trans>
         </Alert>
       )}
       <InlineField
         label={t(
-          'explore.history.rich-history-settings-tab.change-default-tab',
+          'explore.rich-history-settings-tab.change-default-tab',
           'Change the default active tab from “Query history” to “Starred”'
         )}
         className={styles.spaceBetween}
@@ -128,7 +125,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
       {supportedFeatures().onlyActiveDataSource && (
         <InlineField
           label={t(
-            'explore.history.rich-history-settings-tab.only-show-active-datasource',
+            'explore.rich-history-settings-tab.only-show-active-datasource',
             'Only show queries for data source currently active in Explore'
           )}
           className={styles.spaceBetween}
@@ -143,17 +140,15 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
       {supportedFeatures().clearHistory && (
         <div>
           <div className={styles.bold}>
-            <Trans i18nKey="explore.history.rich-history-settings-tab.clear-query-history">Clear query history</Trans>
+            <Trans i18nKey="explore.rich-history-settings-tab.clear-query-history">Clear query history</Trans>
           </div>
           <div className={styles.bottomMargin}>
-            <Trans i18nKey="explore.history.rich-history-settings-tab.clear-history-info">
+            <Trans i18nKey="explore.rich-history-settings-tab.clear-history-info">
               Delete all of your query history, permanently.
             </Trans>
           </div>
           <Button variant="destructive" onClick={onDelete}>
-            <Trans i18nKey="explore.history.rich-history-settings-tab.clear-query-history-button">
-              Clear query history
-            </Trans>
+            <Trans i18nKey="explore.rich-history-settings-tab.clear-query-history-button">Clear query history</Trans>
           </Button>
         </div>
       )}

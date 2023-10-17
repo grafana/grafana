@@ -94,7 +94,7 @@ export function RichHistoryContainer(props: Props) {
   if (!richHistorySettings) {
     return (
       <span>
-        <Trans i18nKey="explore.history.rich-history-container.loading">Loading...</Trans>
+        <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>
       </span>
     );
   }

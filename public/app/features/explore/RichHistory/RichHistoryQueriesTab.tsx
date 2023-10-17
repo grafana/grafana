@@ -155,7 +155,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   if (!richHistorySearchFilters) {
     return (
       <span>
-        <Trans i18nKey="explore.history.rich-history-queries-tab.loading">Loading...</Trans>;
+        <Trans i18nKey="explore.rich-history-queries-tab.loading">Loading...</Trans>;
       </span>
     );
   }
@@ -172,7 +172,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
       <div className={styles.containerSlider}>
         <div className={styles.fixedSlider}>
           <div className={styles.labelSlider}>
-            <Trans i18nKey="explore.history.rich-history-queries-tab.filter-history">Filter history</Trans>
+            <Trans i18nKey="explore.rich-history-queries-tab.filter-history">Filter history</Trans>
           </div>
           <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
           <div className={styles.slider}>
@@ -203,13 +203,10 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder={t(
-                'explore.history.rich-history-queries-tab.filter-placeholder',
+                'explore.rich-history-queries-tab.filter-placeholder',
                 'Filter queries for data sources(s)'
               )}
-              aria-label={t(
-                'explore.history.rich-history-queries-tab.filter-aria-label',
-                'Filter queries for data sources(s)'
-              )}
+              aria-label={t('explore.rich-history-queries-tab.filter-aria-label', 'Filter queries for data sources(s)')}
               onChange={(options: SelectableValue[]) => {
                 updateFilters({ datasourceFilters: options.map((option) => option.value) });
               }}
@@ -218,19 +215,19 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
           <div className={styles.filterInput}>
             <FilterInput
               escapeRegex={false}
-              placeholder={t('explore.history.rich-history-queries-tab.search-placeholder', 'Search queries')}
+              placeholder={t('explore.rich-history-queries-tab.search-placeholder', 'Search queries')}
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div
-            aria-label={t('explore.history.rich-history-queries-tab.sort-aria-label', 'Sort queries')}
+            aria-label={t('explore.rich-history-queries-tab.sort-aria-label', 'Sort queries')}
             className={styles.sort}
           >
             <Select
               value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
-              placeholder={t('explore.history.rich-history-queries-tab.sort-placeholder', 'Sort queries by')}
+              placeholder={t('explore.rich-history-queries-tab.sort-placeholder', 'Sort queries by')}
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
@@ -238,7 +235,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
 
         {loading && (
           <span>
-            <Trans i18nKey="explore.history.rich-history-queries-tab.loading-results">Loading results...</Trans>
+            <Trans i18nKey="explore.rich-history-queries-tab.loading-results">Loading results...</Trans>
           </span>
         )}
 
@@ -251,7 +248,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                   <span className={styles.queries}>
                     {partialResults ? (
                       <Trans
-                        i18nKey="explore.history.rich-history-queries-tab.displaying-queries"
+                        i18nKey="explore.rich-history-queries-tab.displaying-queries"
                         defaults="Displaying {{ count }} queries"
                         values={{ count: mappedQueriesToHeadings[heading].length }}
                       />
@@ -270,7 +267,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
         {partialResults ? (
           <div>
             <Trans
-              i18nKey="explore.history.rich-history-queries-tab.showing-queries"
+              i18nKey="explore.rich-history-queries-tab.showing-queries"
               defaults="Showing {{ shown }} of {{ total }} <0>Load more</0>"
               values={{ shown: queries.length, total: totalQueries }}
               components={[
@@ -284,7 +281,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
         <div className={styles.footer}>
           {!config.queryHistoryEnabled
             ? t(
-                'explore.history.rich-history-queries-tab.history-local',
+                'explore.rich-history-queries-tab.history-local',
                 'The history is local to your browser and is not shared with others.'
               )
             : ''}

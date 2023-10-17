@@ -21,10 +21,10 @@ export enum Tabs {
 
 export const getSortOrderOptions = () =>
   [
-    { label: t('explore.history.rich-history.newest-first', 'Newest first'), value: SortOrder.Descending },
-    { label: t('explore.history.rich-history.oldest-first', 'Oldest first'), value: SortOrder.Ascending },
-    { label: t('explore.history.rich-history.datasource-a-z', 'Data source A-Z'), value: SortOrder.DatasourceAZ },
-    { label: t('explore.history.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
+    { label: t('explore.rich-history.newest-first', 'Newest first'), value: SortOrder.Descending },
+    { label: t('explore.rich-history.oldest-first', 'Oldest first'), value: SortOrder.Ascending },
+    { label: t('explore.rich-history.datasource-a-z', 'Data source A-Z'), value: SortOrder.DatasourceAZ },
+    { label: t('explore.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
 export interface RichHistoryProps extends Themeable2 {
@@ -113,7 +113,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     const { loading } = this.state;
 
     const QueriesTab: TabConfig = {
-      label: t('explore.history.rich-history.query-history', 'Query history'),
+      label: t('explore.rich-history.query-history', 'Query history'),
       value: Tabs.RichHistory,
       content: (
         <RichHistoryQueriesTab
@@ -134,7 +134,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     };
 
     const StarredTab: TabConfig = {
-      label: t('explore.history.rich-history.starred', 'Starred'),
+      label: t('explore.rich-history.starred', 'Starred'),
       value: Tabs.Starred,
       content: (
         <RichHistoryStarredTab
@@ -154,7 +154,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     };
 
     const SettingsTab: TabConfig = {
-      label: t('explore.history.rich-history.settings', 'Settings'),
+      label: t('explore.rich-history.settings', 'Settings'),
       value: Tabs.Settings,
       content: (
         <RichHistorySettingsTab
@@ -176,7 +176,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
         tabs={tabs}
         onClose={onClose}
         defaultTab={firstTab}
-        closeIconTooltip={t('explore.history.rich-history.close-tooltip', 'Close query history')}
+        closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}
       />
     );
   }

@@ -35,32 +35,32 @@ export function SecondaryActions(props: Props) {
         {!props.addQueryRowButtonHidden && (
           <ToolbarButton
             variant="canvas"
-            aria-label={t('explore.history.secondaryActions.queryadd-button-label', 'Add query')}
+            aria-label={t('explore.secondary-actions.queryadd-button-label', 'Add query')}
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"
           >
-            <Trans i18nKey="explore.history.secondaryActions.queryAddButton">Add query</Trans>
+            <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
           </ToolbarButton>
         )}
         {!props.richHistoryRowButtonHidden && (
           <ToolbarButton
             variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
-            aria-label={t('explore.history.secondaryActions.queryHistory-button-label', 'Query history')}
+            aria-label={t('explore.secondary-actions.queryhistory-button-label', 'Query history')}
             onClick={props.onClickRichHistoryButton}
             data-testid={Components.QueryTab.queryHistoryButton}
             icon="history"
           >
-            <Trans i18nKey="explore.history.secondaryActions.queryHistoryButton">Query history</Trans>
+            <Trans i18nKey="explore.secondary-actions.queryhistory-button">Query history</Trans>
           </ToolbarButton>
         )}
         <ToolbarButton
           variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
-          aria-label={t('explore.history.secondaryActions.queryinspector-button-label', 'Query inspector')}
+          aria-label={t('explore.secondary-actions.queryinspector-button-label', 'Query inspector')}
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          <Trans i18nKey="explore.history.secondaryActions.queryInspectorButton">Query inspector</Trans>
+          <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>
         </ToolbarButton>
       </HorizontalGroup>
     </div>
