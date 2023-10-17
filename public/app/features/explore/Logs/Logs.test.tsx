@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import {
+  DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
+  Field,
   FieldType,
   LoadingState,
   LogLevel,
@@ -95,14 +97,9 @@ describe('Logs', () => {
     });
   });
 
-  const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
-    const rows = [
-      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
-      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
-      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
-    ];
-
-    const testDataFrame = {
+  const getMockDataFrame = (override?: Partial<DataFrame>) => {
+    const testDataFrame: DataFrame = {
+      meta: {},
       fields: [
         {
           config: {},
@@ -140,10 +137,53 @@ describe('Logs', () => {
             { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins' },
             { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins' },
           ],
+        } as Field,
+      ],
+      length: 3,
+    };
+    return { ...testDataFrame, ...override };
+  };
+
+  const getMockElasticFrame = (override?: Partial<DataFrame>) => {
+    const testDataFrame: DataFrame = {
+      meta: {},
+      fields: [
+        {
+          config: {},
+          name: '@timestamp',
+          type: FieldType.time,
+          values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
+        },
+        {
+          config: {},
+          name: 'line',
+          type: FieldType.string,
+          values: ['log message 1', 'log message 2', 'log message 3'],
+        },
+        {
+          config: {},
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1697561006608165746', '1697560998869868000', '1697561010006578474'],
         },
       ],
       length: 3,
     };
+    return { ...testDataFrame, ...override };
+  };
+
+  const getComponent = (
+    partialProps?: Partial<ComponentProps<typeof Logs>>,
+    dataFrame?: DataFrame,
+    logs?: LogRowModel[]
+  ) => {
+    const rows = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+
+    const testDataFrame = dataFrame ?? getMockDataFrame();
     return (
       <Logs
         datasourceType={'loki'}
@@ -182,8 +222,8 @@ describe('Logs', () => {
       />
     );
   };
-  const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
-    return render(getComponent(partialProps, logs));
+  const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, dataFrame?: DataFrame, logs?: LogRowModel[]) => {
+    return render(getComponent(partialProps, dataFrame ? dataFrame : getMockDataFrame(), logs));
   };
 
   describe('scrolling behavior', () => {
@@ -219,7 +259,7 @@ describe('Logs', () => {
           logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
         }
 
-        setup({ panelState: { logs: { id: 'uid47' } } }, logs);
+        setup({ panelState: { logs: { id: 'uid47' } } }, undefined, logs);
 
         expect(scrollIntoViewSpy).toBeCalledTimes(1);
         // element.getBoundingClientRect().top will always be 0 for jsdom
@@ -249,6 +289,7 @@ describe('Logs', () => {
         };
         setup(
           { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
+          undefined,
           logs
         );
 
@@ -269,7 +310,7 @@ describe('Logs', () => {
   });
 
   it('should render no logs found', () => {
-    setup({}, []);
+    setup({}, undefined, []);
 
     expect(screen.getByText(/no logs found\./i)).toBeInTheDocument();
     expect(
@@ -503,7 +544,7 @@ describe('Logs', () => {
       expect(logsSection).toBeInTheDocument();
     });
 
-    it('should change visualisation to table on toggle', async () => {
+    it('should change visualisation to table on toggle (loki)', async () => {
       setup({
         datasourceType: 'loki',
       });
@@ -514,10 +555,13 @@ describe('Logs', () => {
       expect(table).toBeInTheDocument();
     });
 
-    it('should change visualisation to table on toggle', async () => {
-      setup({
-        datasourceType: 'elastic',
-      });
+    it('should change visualisation to table on toggle (elastic)', async () => {
+      setup(
+        {
+          datasourceType: 'elasticsearch',
+        },
+        getMockElasticFrame()
+      );
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
 
