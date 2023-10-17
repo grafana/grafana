@@ -221,6 +221,47 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	assert.Equal(t, 400, sc.resp.Code)
 }
 
+// Using a team HTTP header whose name matches the name specified for auth proxy header should fail
+func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{},
+		Cfg:                setting.NewCfg(),
+	}
+	sc := setupScenarioContext(t, "/api/datasources/1234")
+
+	data := datasources.TeamHTTPHeaders{
+		"1234": []datasources.TeamHTTPHeader{
+			// Authorization is used by the auth proxy
+			// As part of
+			// contexthandler.AuthHTTPHeaderListFromContext(ctx)
+			{
+				Header: "Authorization",
+				Value:  "Could be anything",
+			},
+		},
+	}
+
+	hs.Cfg.AuthProxyEnabled = true
+	jsonData := simplejson.New()
+	jsonData.Set("teamHTTPHeaders", data)
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+			Name:     "Test",
+			URL:      "localhost:5432",
+			Access:   "direct",
+			Type:     "test",
+			JsonData: jsonData,
+		})
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+		return hs.AddDataSource(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 400, sc.resp.Code)
+}
+
 // Updating data sources with URLs not specifying protocol should work.
 func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const name = "Test"

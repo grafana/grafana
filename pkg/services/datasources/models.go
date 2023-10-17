@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -63,6 +64,33 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+}
+
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
+}
+
+type TeamHTTPHeaders map[string][]TeamHTTPHeader
+
+type TeamHTTPHeader struct {
+	Header string `json:"header"`
+	Value  string `json:"value"`
+}
+
+func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
+	if ds.JsonData != nil {
+		jsonData, err := ds.JsonData.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return teamHTTPHeadersJSON.TeamHTTPHeaders, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
@@ -172,8 +200,9 @@ type GetDataSourcesQuery struct {
 type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgID int64 // optional: filter by org_id
-	Type  string
+	OrgID    int64 // optional: filter by org_id
+	Type     string
+	AliasIDs []string
 }
 
 type GetDefaultDataSourceQuery struct {
