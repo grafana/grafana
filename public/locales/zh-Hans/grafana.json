@@ -766,7 +766,6 @@
   },
   "panel": {
     "header-menu": {
-      "alerting": "",
       "copy": "复制",
       "create-alert": "",
       "create-library-panel": "创建库面板",
@@ -784,8 +783,7 @@
       "share": "分享",
       "show-legend": "显示图例",
       "unlink-library-panel": "取消链接库面板",
-      "view": "查看",
-      "view-alerts": ""
+      "view": "查看"
     }
   },
   "playlist-edit": {

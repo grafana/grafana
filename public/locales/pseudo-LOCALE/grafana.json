@@ -772,7 +772,6 @@
   },
   "panel": {
     "header-menu": {
-      "alerting": "Åľęřŧįŉģ",
       "copy": "Cőpy",
       "create-alert": "Cřęäŧę äľęřŧ",
       "create-library-panel": "Cřęäŧę ľįþřäřy päŉęľ",
@@ -790,8 +789,7 @@
       "share": "Ŝĥäřę",
       "show-legend": "Ŝĥőŵ ľęģęŉđ",
       "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
-      "view": "Vįęŵ",
-      "view-alerts": "Vįęŵ äľľ äľęřŧ řūľęş"
+      "view": "Vįęŵ"
     }
   },
   "playlist-edit": {
