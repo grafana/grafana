@@ -166,7 +166,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   };
 
   const onAddEnumRow = () => {
-    updateEnumRows([...enumRows, 'value']);
+    updateEnumRows([...enumRows, '']);
   };
 
   const onChangeEnumValue = (index: number, value: string) => {
@@ -314,7 +314,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                                         onClick={() => setEditRow(index, value)}
                                         className={styles.clickableTableCell}
                                       >
-                                        {value}
+                                        {value && value !== '' ? value : 'Click to edit'}
                                       </td>
                                     )}
                                     <td className={styles.textAlignCenter}>
