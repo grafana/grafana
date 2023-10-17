@@ -1,18 +1,21 @@
 import React from 'react';
 
-import { ThemeSpacingTokens } from '@grafana/data';
+import { Flex, FlexProps } from '../Flex/Flex';
 
-import { Flex } from '../Flex/Flex';
-import { ResponsiveProp } from '../utils/responsiveness';
-interface StackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
-  direction?: ResponsiveProp<'column' | 'row'>;
-  gap?: ResponsiveProp<ThemeSpacingTokens>;
-}
+interface StackProps extends Pick<FlexProps, 'gap' | 'direction' | 'alignItems' | 'justifyContent'> {}
 
 export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>(
-  ({ gap = 1, direction = 'column', children, ...rest }, ref) => {
+  ({ gap = 1, alignItems, justifyContent, direction = 'column', children, ...rest }, ref) => {
     return (
-      <Flex ref={ref} gap={gap} direction={direction} wrap="wrap" {...rest}>
+      <Flex
+        ref={ref}
+        gap={gap}
+        direction={direction}
+        alignItems={alignItems}
+        justifyContent={justifyContent}
+        wrap="wrap"
+        {...rest}
+      >
         {React.Children.toArray(children)
           .filter(Boolean)
           .map((child, index) => (

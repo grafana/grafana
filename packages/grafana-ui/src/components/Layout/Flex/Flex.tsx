@@ -33,7 +33,7 @@ export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 
 export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
-interface FlexProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+export interface FlexProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
