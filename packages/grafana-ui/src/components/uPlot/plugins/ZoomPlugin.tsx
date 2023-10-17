@@ -73,6 +73,8 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
             const maxX = u.posToVal(u.select.left + u.select.width, 'x');
 
             onZoom({ from: minX, to: maxX });
+
+            yZoomed = false;
           }
         }
       }
