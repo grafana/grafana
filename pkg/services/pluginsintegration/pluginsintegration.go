@@ -158,7 +158,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
 		clientmiddleware.NewContextualLoggerMiddleware(),
-		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
+		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
