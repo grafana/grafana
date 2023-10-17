@@ -122,6 +122,7 @@ transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,fals
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
+teamHttpHeaders,experimental,@grafana/grafana-authnz-team,false,false,false,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,false

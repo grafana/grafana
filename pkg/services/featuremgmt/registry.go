@@ -863,6 +863,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
+		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
 			Stage:        FeatureStageExperimental,
