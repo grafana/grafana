@@ -83,13 +83,14 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     width: '100%',
   }),
   linkContentActive: css({
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.background.secondary,
+    position: 'relative',
     '&::before': {
       display: 'block',
       content: '" "',
-      height: theme.spacing(3),
+      height: '100%',
       position: 'absolute',
-      top: '50%',
-      transform: 'translateY(-50%)',
       width: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,
@@ -103,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     boxSizing: 'border-box',
     position: 'relative',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
-    padding: theme.spacing(1, 1, 1, 0),
+    height: theme.spacing(4),
     width: '100%',
     '&:hover, &:focus-visible': {
       textDecoration: 'underline',

@@ -105,6 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    height: theme.spacing(4),
     position: 'relative',
   }),
   collapseButtonWrapper: css({
@@ -127,6 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleSectionWrapper: css({
     alignItems: 'center',
     display: 'flex',
+    flex: 1,
     minWidth: 0,
   }),
   labelWrapper: css({
