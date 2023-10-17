@@ -800,7 +800,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -966,16 +966,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -1178,7 +1182,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2103,7 +2107,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2248,16 +2252,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -3762,7 +3770,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3900,16 +3908,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -4598,6 +4610,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ff105572d451a06880931bc5d3abdb86e50161eb84091e09118d9bf6a229e39b
+hmac: d6bd1e6c990959426e575500bd89b4e28cdbc991f245e0723dc912ccc4460470
 
 ...
