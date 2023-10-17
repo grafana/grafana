@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, TimeZone, TraceLog } from '@grafana/data';
-import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Tab, TabContent, TabsBar, TextArea, useStyles2 } from '@grafana/ui';
 
 import { ExploreDrawer } from '../ExploreDrawer';
 
@@ -57,29 +57,48 @@ export function DetailsPanel(props: Props) {
     return null;
   }
 
-  let { operationName, process, tags, logs, warnings } = span;
+  let { operationName, process, tags, logs, warnings, stackTraces } = span;
   const { logs: logsState } = detailState;
 
   const tabs = [TabLabels.Attributes];
+  const tabsCounters: Record<string, number> = {};
   warnings = ['Testing the warning', 'And here is another', 'Two more', 'Last one!'];
+  stackTraces = ['Testing the stack traces', 'And here is another', 'Two more', 'Last one!'];
   if (logs && logs.length > 0) {
     tabs.push(TabLabels.Events);
+    tabsCounters[TabLabels.Events] = logs.length;
   }
   if (warnings && warnings.length > 0) {
     tabs.push(TabLabels.Warnings);
+    tabsCounters[TabLabels.Warnings] = warnings.length;
   }
-
-  const tabsCounters: Record<string, number> = {};
-  tabsCounters[TabLabels.Events] = logs.length;
-  tabsCounters[TabLabels.Warnings] = warnings.length;
+  if (stackTraces && stackTraces.length > 0) {
+    tabs.push(TabLabels.StackTraces);
+    tabsCounters[TabLabels.StackTraces] = stackTraces.length;
+  }
 
   const linksGetter = () => [];
 
   const onDrawerResize = () => {
-    const height = (document.querySelector(`.${styles.container}`)?.firstChild as HTMLElement).style.height;
-    const heightVal =
-      height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
-    setDetailsPanelOffset(heightVal);
+    const container = document.querySelector(`.${styles.container}`)?.firstChild;
+    if (container instanceof HTMLElement) {
+      const height = container.style.height;
+      const heightVal =
+        height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
+      setDetailsPanelOffset(heightVal);
+    }
+  };
+
+  const StackTraces = ({ stackTraces }: { stackTraces: string[] }) => {
+    let text;
+    if (stackTraces?.length > 1) {
+      text = stackTraces.map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`).join('\n');
+    } else {
+      text = stackTraces?.[0];
+    }
+    return (
+      <TextArea className={styles.stackTraces} style={{ cursor: 'unset' }} readOnly cols={10} rows={10} value={text} />
+    );
   };
 
   return (
@@ -160,6 +179,7 @@ export function DetailsPanel(props: Props) {
             />
           )}
           {activeTab === TabLabels.Warnings && <TextList data={warnings} />}
+          {activeTab === TabLabels.StackTraces && <StackTraces stackTraces={stackTraces ?? []} />}
           {/*tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
           {tabsState[4] && tabsState[4].active && <div>References not yet implemented</div>} */}
         </TabContent>
@@ -230,5 +250,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   attributeValues: css`
     display: flex;
     flex-direction: column;
+  `,
+  stackTraces: css`
+    word-break: break-all;
+    white-space: pre;
   `,
 });
