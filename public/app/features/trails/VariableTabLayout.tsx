@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
+import { LayoutSwitcher } from './LayoutSwitcher';
 import { VAR_FILTERS } from './shared';
 
 export interface VariableTabLayoutState extends SceneObjectState {
@@ -25,20 +26,6 @@ export interface VariableTabLayoutState extends SceneObjectState {
  * Just a proof of concept example of a behavior
  */
 export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
-  public onSplitChange = (split: boolean) => {
-    if (this.state.body instanceof SplittableLayoutItem) {
-      this.state.body.setState({ isSplit: split });
-    }
-  };
-
-  public getSplitState(): { splittable: boolean; isSplit: boolean } {
-    if (this.state.body instanceof SplittableLayoutItem) {
-      return { splittable: true, isSplit: this.state.body.state.isSplit };
-    }
-
-    return { isSplit: false, splittable: false };
-  }
-
   public getLabelNamesFiltered(options: VariableValueOption[]) {
     const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
     const labelOptions: Array<SelectableValue<string>> = [];
@@ -75,12 +62,6 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
     }
 
     const { loading, options } = variable.useState();
-    const radioOptions = [
-      { value: false, label: 'Single graph' },
-      { value: true, label: 'Split' },
-    ];
-
-    let { splittable, isSplit } = model.getSplitState();
     const labelOptions = model.getLabelNamesFiltered(options);
 
     return (
@@ -95,11 +76,7 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
             />
           </Field>
 
-          {splittable && (
-            <Field label="View">
-              <RadioButtonGroup options={radioOptions} value={isSplit} onChange={model.onSplitChange} />
-            </Field>
-          )}
+          {body instanceof LayoutSwitcher && <body.Selector model={body} />}
         </div>
         <div className={styles.content}>
           <body.Component model={body} />
@@ -132,19 +109,5 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
-  };
-}
-
-export interface SplittableLayoutItemState extends SceneObjectState {
-  isSplit: boolean;
-  single: SceneObject;
-  split: SceneObject;
-}
-
-export class SplittableLayoutItem extends SceneObjectBase<SplittableLayoutItemState> {
-  public static Component = ({ model }: SceneComponentProps<SplittableLayoutItem>) => {
-    const { isSplit, split, single } = model.useState();
-
-    return isSplit ? <split.Component model={split} /> : <single.Component model={single} />;
   };
 }

@@ -12,7 +12,8 @@ import {
 
 import { AddToFiltersGraphAction } from '../AddToFiltersGraphAction';
 import { ByFrameRepeater } from '../ByFrameRepeater';
-import { SplittableLayoutItem, VariableTabLayout } from '../VariableTabLayout';
+import { LayoutSwitcher } from '../LayoutSwitcher';
+import { VariableTabLayout } from '../VariableTabLayout';
 
 export function buildBreakdownActionScene() {
   return new SceneFlexItem({
@@ -39,8 +40,8 @@ export function buildBreakdownActionScene() {
           },
         ],
       }),
-      body: new SplittableLayoutItem({
-        isSplit: false,
+      body: new LayoutSwitcher({
+        active: 'grid',
         single: new SceneFlexLayout({
           direction: 'column',
           children: [
@@ -50,14 +51,35 @@ export function buildBreakdownActionScene() {
             }),
           ],
         }),
-        split: new ByFrameRepeater({
+        rows: new ByFrameRepeater({
           body: new SceneFlexLayout({
             direction: 'column',
             children: [],
           }),
           getLayoutChild: (data, frame, frameIndex) => {
             return new SceneFlexItem({
-              minHeight: 200,
+              minHeight: 180,
+              body: PanelBuilders.timeseries()
+                .setTitle(getFrameDisplayName(frame, frameIndex))
+                .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+                .setOption('legend', { showLegend: false })
+                .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
+                .setCustomFieldConfig('fillOpacity', 9)
+                .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+                .build(),
+            });
+          },
+        }),
+        grid: new ByFrameRepeater({
+          body: new SceneFlexLayout({
+            direction: 'row',
+            children: [],
+            wrap: 'wrap',
+          }),
+          getLayoutChild: (data, frame, frameIndex) => {
+            return new SceneFlexItem({
+              minHeight: 180,
+              minWidth: 350,
               body: PanelBuilders.timeseries()
                 .setTitle(getFrameDisplayName(frame, frameIndex))
                 .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
