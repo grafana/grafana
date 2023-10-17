@@ -42,8 +42,8 @@ type PyroscopeDatasource struct {
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
-	opt, err := settings.HTTPClientOptions()
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, err
 	}

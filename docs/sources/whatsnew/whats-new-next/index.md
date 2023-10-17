@@ -18,10 +18,67 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Alerting insights
+
+<!-- George Robinson -->
+
+October 30, 2023
+
+_Generally available in Grafana Cloud_
+
+Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
+## Correlations editor in Explore
+
+<!-- Kristina Durivage -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem -->
+
+October 3, 2023
+
+_Available in public preview in Grafana Cloud_
+
+Creating correlations has just become easier. Try out our new correlations editor in **Explore** by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+
+To enable this feature, contact Grafana Support.
+
+## Create correlations for provisioned data sources
+
+<!-- Piotr Jamróz -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem -->
+
+September 13, 2023
+
+_Available in public preview in Grafana Cloud_
+
+You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
+
+To enable this feature, contact Grafana Support.
+
+## Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
+
+<!-- Joey Tawadrous, Jen Villa -->
+<!-- available in on-prem, both open source Grafana and Grafana Enterprise, starting with Grafana 10.2, but also requires Tempo or Grafana Enterprise Traces (GET) v2.2 or greater -->
+
+October 24, 2023
+
+_Experimental in Grafana Cloud_
+
+We've added an **Aggregate By** option to the [TraceQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#write-traceql-queries-using-search) to leverage Grafana Cloud Traces' [metrics summary API](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/). You can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` received in the last hour that match your filter criteria, grouped by whatever attributes you specify.
+
+This feature is disabled by default. To enable it, file contact Grafana Support.
+
+For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by).
+
+{{< figure src="/media/docs/tempo/metrics-summary-10-2.png" caption="Aggregate by" >}}
+
 ## No basic role
 
 <!-- Eric Leijonmarck -->
 <!-- OSS, Enterprise -->
+
+October 12, 2023
 
 _Generally available in Grafana Cloud_
 
@@ -30,6 +87,8 @@ We're excited to introduce the "No basic role," a new basic role with no permiss
 Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
 
 For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+
+To assign the "No basic role" in your Grafana Cloud stack, contact Grafana Support and ask them to enable the `skip_org_role_sync` feature toggle. You'll be able to change basic roles that are synced using GCom.
 
 ## Content outline
 
@@ -274,18 +333,35 @@ Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect al
 
 To learn more, refer to the [Grafana OnCall integration for Alerting documentation](/docs/grafana/next/alerting/alerting-rules/manage-contact-points/configure-oncall/).
 
-## New browse dashboards view
+## New browse dashboards
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 <!-- OSS, Enterprise -->
 
-_Available in public preview in Grafana Cloud_
+September 19, 2023
 
-We are gradually rolling out our new browse dashboards user interface. With this new feature, we removed the **General** folder, and dashboards now sit at the root level. The feature also provides easier editing functionality, as well as faster search renders.
+_Generally available in Grafana Cloud_
+
+The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage for your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
+
+To make using folders easier and more consistent, there is no longer a special **General** folder. Dashboards without a folder, or dashboards previously in **General**, are now shown at the root level.
 
 To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+
+## Multiple spansets per trace
+
+<!-- Joey Tawadrous -->
+<!-- OSS, Enterprise -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the following `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
+
+{{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
 ## Temporary credentials in CloudWatch data source
 
@@ -299,6 +375,17 @@ _Available in private preview in Grafana Cloud_
 The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
+
+## Recorded queries: Record multiple metrics from a single query
+
+<!-- Kyle Brandt, Observability Metrics -->
+<!-- Enterprise -->
+
+October 3, 2023
+
+_Generally available in Grafana Cloud_
+
+With recorded queries, a single recorded query can now record multiple metrics.
 
 ## Permission validation on custom role creation and update
 

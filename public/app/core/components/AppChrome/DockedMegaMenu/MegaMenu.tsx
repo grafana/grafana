@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { cloneDeep } from 'lodash';
 import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -22,13 +21,11 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = React.memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navBarTree = useSelector((state) => state.navBarTree);
+    const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-
-    const navTree = cloneDeep(navBarTree);
 
     // Remove profile + help from tree
     const navItems = navTree
