@@ -153,6 +153,7 @@ export class DashboardGrid extends PureComponent<Props> {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
       // used to allow overflowing content to show on top of the next panel
+      // requires parent create stacking context to prevent overlap with parent elements
       const descIndex = this.props.dashboard.panels.length - panelElements.length;
 
       panelElements.push(
@@ -230,6 +231,8 @@ export class DashboardGrid extends PureComponent<Props> {
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
      * properly working. For more information go here:
      * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     *
+     * pos: rel + z-index is required to create a new stacking context to contain the escalating z-indexes of the panels
      */
     return (
       <div
