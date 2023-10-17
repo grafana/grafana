@@ -2,16 +2,17 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR } from './shared';
 
-export interface AutoQueryResult {
-  variantName?: string;
+export interface AutoQueryDef {
+  variant: AutoQueryVariant;
   title: string;
-  visualization: string;
   unit: string;
   query: PromQuery;
 }
 
+export type AutoQueryVariant = 'graph' | 'heatmap' | 'p95';
+
 export function getAutoQueriesForMetric(metric: string) {
-  const queries: AutoQueryResult[] = [];
+  const queries: AutoQueryDef[] = [];
 
   let unit = 'short';
   let agg = 'sum';
@@ -35,7 +36,7 @@ export function getAutoQueriesForMetric(metric: string) {
 
   queries.push({
     title: `${title}`,
-    visualization: 'timeseries',
+    variant: 'graph',
     unit,
     query: {
       refId: 'A',
@@ -47,22 +48,31 @@ export function getAutoQueriesForMetric(metric: string) {
 }
 
 function getQueriesForBucketMetric(metric: string) {
-  const queries: AutoQueryResult[] = [];
+  const queries: AutoQueryDef[] = [];
   let unit = 'short';
 
   if (metric.endsWith('seconds_bucket')) {
     unit = 's';
   }
 
-  const title = `${metric} p95`;
-
   queries.push({
-    title,
-    visualization: 'timeseries',
+    title: metric,
+    variant: 'p95',
     unit,
     query: {
       refId: 'A',
       expr: `histogram_quantile(0.95, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+    },
+  });
+
+  queries.push({
+    title: metric,
+    variant: 'heatmap',
+    unit,
+    query: {
+      refId: 'A',
+      expr: `sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
+      format: 'heatmap',
     },
   });
 

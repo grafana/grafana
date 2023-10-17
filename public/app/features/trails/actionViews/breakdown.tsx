@@ -10,9 +10,9 @@ import {
   SceneQueryRunner,
 } from '@grafana/scenes';
 
-import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
-import { ByFrameRepeater } from './ByFrameRepeater';
-import { SplittableLayoutItem, VariableTabLayout } from './VariableTabLayout';
+import { AddToFiltersGraphAction } from '../AddToFiltersGraphAction';
+import { ByFrameRepeater } from '../ByFrameRepeater';
+import { SplittableLayoutItem, VariableTabLayout } from '../VariableTabLayout';
 
 export function buildBreakdownActionScene() {
   return new SceneFlexItem({

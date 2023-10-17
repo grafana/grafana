@@ -15,15 +15,18 @@ import {
 } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { buildBreakdownActionScene } from './ActionViewBreakdown';
-import { buildLogsScene } from './ActionViewLogs';
-import { buildRelatedMetricsScene } from './ActionViewRelatedMetrics';
-import { getAutoQueriesForMetric } from './AutoQueryEngine';
+import { AutoQueryDef, getAutoQueriesForMetric } from './AutoQueryEngine';
+import { AutoVizPanel } from './AutoVizPanel';
+import { buildBreakdownActionScene } from './actionViews/breakdown';
+import { buildLogsScene } from './actionViews/logs';
+import { buildRelatedMetricsScene } from './actionViews/relatedMetrics';
 import { getTrailFor } from './getUtils';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,
+  KEY_SQR_METRIC_VIZ_QUERY,
   MakeOptional,
   OpenEmbeddedTrailEvent,
   trailsDS,
@@ -145,7 +148,6 @@ function getGraphViewFor(model: SceneObject): GraphTrailView {
 
 function buildGraphScene(metric: string) {
   const queries = getAutoQueriesForMetric(metric);
-  const top = queries[0];
 
   return new SceneFlexLayout({
     direction: 'column',
@@ -153,22 +155,11 @@ function buildGraphScene(metric: string) {
       new SceneFlexItem({
         minHeight: 250,
         maxHeight: 400,
-        body: PanelBuilders.timeseries()
-          .setTitle(top.title)
-          .setUnit(top.unit)
-          .setOption('legend', { showLegend: false })
-          .setCustomFieldConfig('fillOpacity', 9)
-          .setData(
-            new SceneQueryRunner({
-              datasource: trailsDS,
-              queries: [top.query],
-            })
-          )
-          .build(),
+        body: new AutoVizPanel({ queries }),
       }),
       new SceneFlexItem({
         ySizing: 'content',
-        body: new QueryDebugView({ query: top.query.expr }),
+        body: new QueryDebugView({}),
       }),
       new SceneFlexItem({
         ySizing: 'content',
@@ -178,9 +169,7 @@ function buildGraphScene(metric: string) {
   });
 }
 
-export interface QueryDebugViewState extends SceneObjectState {
-  query: string;
-}
+export interface QueryDebugViewState extends SceneObjectState {}
 
 export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
   public static Component = ({ model }: SceneComponentProps<QueryDebugView>) => {
@@ -191,6 +180,12 @@ export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
       return null;
     }
 
-    return <div className="small">{sceneGraph.interpolate(model, model.state.query)}</div>;
+    const queryRunner = sceneGraph.findObject(model, (x) => x.state.key === KEY_SQR_METRIC_VIZ_QUERY);
+    if (!(queryRunner instanceof SceneQueryRunner)) {
+      return;
+    }
+
+    const query = queryRunner?.state.queries[0] as PromQuery;
+    return <div className="small">{sceneGraph.interpolate(model, query.expr)}</div>;
   };
 }

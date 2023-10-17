@@ -16,6 +16,8 @@ export const VAR_FILTERS_EXPR = '{${filters}}';
 export const VAR_METRIC = 'metric';
 export const VAR_METRIC_EXPR = '${metric}';
 
+export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
+
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export function getVariablesWithMetricConstant(metric: string) {
