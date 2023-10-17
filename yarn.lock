@@ -3433,7 +3433,7 @@ __metadata:
     process: ^0.11.10
     rc-cascader: 3.18.1
     rc-drawer: 6.5.2
-    rc-slider: 10.2.1
+    rc-slider: 10.3.1
     rc-time-picker: ^3.7.3
     rc-tooltip: 6.0.1
     react: 18.2.0
@@ -17991,7 +17991,7 @@ __metadata:
     pseudoizer: ^0.1.0
     rc-cascader: 3.18.1
     rc-drawer: 6.5.2
-    rc-slider: 10.2.1
+    rc-slider: 10.3.1
     rc-time-picker: 3.7.3
     rc-tree: 5.7.9
     re-resizable: 6.9.9
@@ -24869,9 +24869,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:10.2.1":
-  version: 10.2.1
-  resolution: "rc-slider@npm:10.2.1"
+"rc-slider@npm:10.3.1":
+  version: 10.3.1
+  resolution: "rc-slider@npm:10.3.1"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.2.5
@@ -24879,7 +24879,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 565eb55302c776a7a48bfbe6761f52bab6b0d3ea4f53fc10d32ae9958340708bc5072a9c254bb5ddfa822492093032b94cb03d5e52cdff774e076b90e20b9145
+  checksum: 67998137031ab0551538ba7aa038863ccd07c876d268f2ab05e408298105ab4e6136a532c97296231e91c6791442c2f7a495d9a604440bddaa094e73336705f2
   languageName: node
   linkType: hard
 
