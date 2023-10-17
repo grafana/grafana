@@ -40,7 +40,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForStop()
 
 		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
-		assert.Nil(t, serviceTest.serviceError, "Service should not return canceled error")
+		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {

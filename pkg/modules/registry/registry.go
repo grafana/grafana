@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 )
 
@@ -26,7 +25,6 @@ func ProvideRegistry(
 	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 	certGenerator certgenerator.ServiceInterface,
 	httpServer *api.HTTPServer,
-	provisioningService *provisioning.ProvisioningServiceImpl,
 	secretsMigrator *migrations.SecretMigrationProviderImpl,
 ) *registry {
 	return newRegistry(
@@ -36,7 +34,6 @@ func ProvideRegistry(
 		backgroundServiceRunner,
 		certGenerator,
 		httpServer,
-		provisioningService,
 		secretsMigrator,
 	)
 }

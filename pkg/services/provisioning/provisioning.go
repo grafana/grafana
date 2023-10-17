@@ -6,12 +6,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/modules"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -79,13 +77,11 @@ func ProvideService(
 		orgService:                   orgService,
 	}
 
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
-
 	return ps, nil
 }
 
 type ProvisioningService interface {
-	services.NamedService
+	registry.BackgroundService
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
@@ -106,7 +102,6 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 	}
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
 	return ps
 }
 
@@ -124,13 +119,10 @@ func newProvisioningServiceImpl(
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 	}
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
 	return ps
 }
 
 type ProvisioningServiceImpl struct {
-	*services.BasicService
-
 	Cfg                          *setting.Cfg
 	SQLStore                     db.DB
 	orgService                   org.Service
@@ -208,10 +200,8 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 			continue
 		case <-ctx.Done():
 			// Root server context was cancelled so cancel polling and leave.
-			ps.mutex.Lock()
 			ps.cancelPolling()
-			ps.mutex.Unlock()
-			return nil
+			return ctx.Err()
 		}
 	}
 }
