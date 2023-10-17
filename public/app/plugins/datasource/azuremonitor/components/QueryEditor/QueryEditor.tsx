@@ -142,6 +142,7 @@ const EditorForQueryType = ({
     case AzureQueryType.LogAnalytics:
       return (
         <LogsQueryEditor
+          data={data}
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}

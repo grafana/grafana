@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import { TimeRange } from '@grafana/data';
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert } from '@grafana/ui';
+import { PanelData, TimeRange } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Alert, LinkButton } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -27,6 +27,7 @@ interface LogsQueryEditorProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
   hideFormatAs?: boolean;
   timeRange?: TimeRange;
+  data?: PanelData;
 }
 
 const LogsQueryEditor = ({
@@ -38,6 +39,7 @@ const LogsQueryEditor = ({
   setError,
   hideFormatAs,
   timeRange,
+  data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
@@ -62,6 +64,26 @@ const LogsQueryEditor = ({
       });
     }
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
+
+  let portalLinkButton = null;
+
+  if (data?.series) {
+    const querySeries = data.series.find((result) => result.refId === query.refId);
+    if (querySeries && querySeries.meta?.custom?.azurePortalLink) {
+      portalLinkButton = (
+        <>
+          <LinkButton
+            size="md"
+            target="_blank"
+            style={{ marginTop: '22px' }}
+            href={querySeries.meta?.custom?.azurePortalLink}
+          >
+            View query in Azure Portal
+          </LinkButton>
+        </>
+      );
+    }
+  }
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -134,7 +156,7 @@ const LogsQueryEditor = ({
                 resultFormat={query.azureLogAnalytics?.resultFormat}
               />
             )}
-
+            {portalLinkButton}
             {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
           </EditorFieldGroup>
         </EditorRow>
