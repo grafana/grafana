@@ -1,8 +1,9 @@
 import { cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Spinner, useTheme2 } from '@grafana/ui';
+import { Button, Field, RadioButtonList, Spinner, TextArea, Toggletip, useTheme2 } from '@grafana/ui';
 
 import { buildVisualQueryFromString } from '../../parsing';
 import { PromVisualQuery } from '../../types';
@@ -18,18 +19,126 @@ export type Props = {
   onChange: (query: PromVisualQuery) => void;
   closeDrawer: () => void;
   last: boolean;
+  prompt: string;
+  allSuggestions: string | undefined;
 };
 
+const suggestionOptions: SelectableValue[] = [
+  { label: 'Yes', value: 'yes' },
+  { label: 'No', value: 'no' },
+];
+const explationOptions: SelectableValue[] = [
+  { label: 'Too vague', value: 'too vague' },
+  { label: 'Too technical', value: 'too technical' },
+  { label: 'Inaccurate', value: 'inaccurate' },
+  { label: 'Other', value: 'other' },
+];
+
 export function QuerySuggestionItem(props: Props) {
-  const { querySuggestion, order, queryExplain, historical, onChange, closeDrawer, last } = props;
+  const { querySuggestion, order, queryExplain, historical, onChange, closeDrawer, last, allSuggestions, prompt } =
+    props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const [gaveExplanationFeedback, updateGaveExplanationFeedback] = useState<boolean>(false);
+  const [gaveSuggestionFeedback, updateGaveSuggestionFeedback] = useState<boolean>(false);
+
+  const [suggestionFeedback, setSuggestionFeedback] = useState({
+    radioInput: '',
+    text: '',
+  });
+
+  const [explanationFeedback, setExplanationFeedback] = useState({
+    radioInput: '',
+    text: '',
+  });
 
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   const { query, explanation } = querySuggestion;
+
+  const feedbackToggleTip = (type: string) => {
+    const updateRadioFeedback = (value: string) => {
+      if (type === 'explanation') {
+        setExplanationFeedback({
+          ...explanationFeedback,
+          radioInput: value,
+        });
+      } else {
+        setSuggestionFeedback({
+          ...suggestionFeedback,
+          radioInput: value,
+        });
+      }
+    };
+
+    const updateTextFeedback = (e: FormEvent<HTMLTextAreaElement>) => {
+      if (type === 'explanation') {
+        setExplanationFeedback({
+          ...explanationFeedback,
+          text: e.currentTarget.value,
+        });
+      } else {
+        setSuggestionFeedback({
+          ...suggestionFeedback,
+          text: e.currentTarget.value,
+        });
+      }
+    };
+
+    return (
+      <div className={styles.suggestionFeedback}>
+        <Field label="Were the query suggestions helpful?">
+          <RadioButtonList
+            name="default"
+            options={type === 'explanation' ? explationOptions : suggestionOptions}
+            value={type === 'explanation' ? explanationFeedback.radioInput : suggestionFeedback.radioInput}
+            onChange={updateRadioFeedback}
+          />
+        </Field>
+        <Field label="How can we improve query suggestions?">
+          <TextArea
+            type="text"
+            aria-label="Promqail suggestion text"
+            placeholder="Enter your feedback"
+            value={type === 'explanation' ? explanationFeedback.text : suggestionFeedback.text}
+            onChange={updateTextFeedback}
+            cols={100}
+          />
+        </Field>
+        <div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              // submit the rudderstack event
+              if (type === 'explanation') {
+                explanationFeedbackEvent(
+                  explanationFeedback.radioInput,
+                  explanationFeedback.text,
+                  querySuggestion,
+                  historical,
+                  prompt
+                );
+                updateGaveExplanationFeedback(true);
+              } else {
+                suggestionFeedbackEvent(
+                  suggestionFeedback.radioInput,
+                  suggestionFeedback.text,
+                  allSuggestions ?? '',
+                  historical,
+                  prompt
+                );
+                updateGaveSuggestionFeedback(true);
+              }
+            }}
+          >
+            Submit
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -101,23 +210,22 @@ export function QuerySuggestionItem(props: Props) {
                         size="sm"
                         className={styles.leftButton}
                         onClick={() => {
-                          explanationFeedback(querySuggestion, true, historical);
+                          explanationFeedbackEvent('Yes', '', querySuggestion, historical, prompt);
                           updateGaveExplanationFeedback(true);
                         }}
                       >
                         Yes
                       </Button>
-                      <Button
-                        fill="outline"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          explanationFeedback(querySuggestion, false, historical);
-                          updateGaveExplanationFeedback(true);
-                        }}
+                      <Toggletip
+                        aria-label="Suggestion feedback"
+                        content={feedbackToggleTip('explanation')}
+                        placement="bottom-end"
+                        closeButton={true}
                       >
-                        No
-                      </Button>
+                        <Button fill="outline" variant="secondary" size="sm">
+                          No
+                        </Button>
+                      </Toggletip>
                     </>
                   ) : (
                     'Thank you!'
@@ -130,17 +238,24 @@ export function QuerySuggestionItem(props: Props) {
           </>
         )}
         {last && (
-          <div className={cx(styles.feedbackPadding)}>
-            <a
-              href="https://forms.gle/2EqJ4GqmgVcH2gkV7"
-              className={styles.floatRight}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              <Button fill="outline" variant="secondary" size="sm">
-                Give feedback on suggestions
+          <div className={cx(styles.feedbackStyle)}>
+            {!gaveSuggestionFeedback ? (
+              <Toggletip
+                aria-label="Suggestion feedback"
+                content={feedbackToggleTip('suggestion')}
+                placement="bottom-end"
+                closeButton={true}
+              >
+                <Button fill="outline" variant="secondary" size="sm">
+                  Give feedback on suggestions
+                </Button>
+              </Toggletip>
+            ) : (
+              // do this weird thing because the toggle tip doesn't allow an extra close function
+              <Button fill="outline" variant="secondary" size="sm" disabled={true}>
+                Thank you!
               </Button>
-            </a>
+            )}
           </div>
         )}
       </div>
@@ -148,13 +263,39 @@ export function QuerySuggestionItem(props: Props) {
   );
 }
 
-function explanationFeedback(querySuggestion: QuerySuggestion, helpful: boolean, historical: boolean) {
+function explanationFeedbackEvent(
+  radioInputFeedback: string,
+  textFeedback: string,
+  querySuggestion: QuerySuggestion,
+  historical: boolean,
+  prompt: string
+) {
   const event = 'grafana_prometheus_promqail_explanation_feedback';
 
   reportInteraction(event, {
-    helpful: helpful ? 'yes' : 'no',
+    helpful: radioInputFeedback,
+    textFeedback: textFeedback,
     suggestionType: historical ? 'historical' : 'AI',
     query: querySuggestion.query,
     explanation: querySuggestion.explanation,
+    prompt: prompt,
+  });
+}
+
+function suggestionFeedbackEvent(
+  radioInputFeedback: string,
+  textFeedback: string,
+  allSuggestions: string,
+  historical: boolean,
+  prompt: string
+) {
+  const event = 'grafana_prometheus_promqail_suggestion_feedback';
+
+  reportInteraction(event, {
+    helpful: radioInputFeedback,
+    textFeedback: textFeedback,
+    suggestionType: historical ? 'historical' : 'AI',
+    allSuggestions: allSuggestions,
+    prompt: prompt,
   });
 }

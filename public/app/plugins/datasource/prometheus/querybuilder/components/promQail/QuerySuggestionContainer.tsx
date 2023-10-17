@@ -16,10 +16,11 @@ export type Props = {
   nextInteraction: () => void;
   queryExplain: (idx: number) => void;
   onChange: (query: PromVisualQuery) => void;
+  prompt: string;
 };
 
 export function QuerySuggestionContainer(props: Props) {
-  const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain, onChange } = props;
+  const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain, onChange, prompt } = props;
 
   const [hasNextInteraction, updateHasNextInteraction] = useState<boolean>(false);
 
@@ -56,6 +57,11 @@ export function QuerySuggestionContainer(props: Props) {
                 onChange={onChange}
                 closeDrawer={closeDrawer}
                 last={idx === querySuggestions.length - 1}
+                // for feedback rudderstack events
+                allSuggestions={querySuggestions.reduce((acc: string, qs: QuerySuggestion) => {
+                  return acc + '$$' + qs.query;
+                }, '')}
+                prompt={prompt ?? ''}
               />
             );
           })}

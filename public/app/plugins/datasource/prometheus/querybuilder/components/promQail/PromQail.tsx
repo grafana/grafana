@@ -318,6 +318,7 @@ export const PromQail = (props: PromQailProps) => {
                             promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                           }
                           onChange={onChange}
+                          prompt={interaction.prompt ?? ''}
                         />
                       )}
                     </>
@@ -343,6 +344,7 @@ export const PromQail = (props: PromQailProps) => {
                         promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                       }
                       onChange={onChange}
+                      prompt={interaction.prompt ?? ''}
                     />
                   )}
                 </div>
@@ -464,7 +466,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'flex-end',
     }),
-    feedbackPadding: css({
+    feedbackStyle: css({
+      margin: 0,
+      textAlign: 'right',
       paddingTop: '22px',
       paddingBottom: '22px',
     }),
@@ -495,6 +499,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     useButton: css({
       marginLeft: 'auto',
+    }),
+    suggestionFeedback: css({
+      textAlign: 'left',
     }),
   };
 };
