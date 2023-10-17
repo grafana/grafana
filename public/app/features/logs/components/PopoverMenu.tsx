@@ -46,6 +46,18 @@ export const PopoverMenu = ({
   useEffect(() => {
     setKeyValueSelection(parseKeyValue(selection));
   }, [selection]);
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        close();
+      }
+    }
+    document.addEventListener('keyup', handleEscape);
+
+    return () => {
+      document.removeEventListener('keyup', handleEscape);
+    }
+  }, [close])
 
   const supported = onClickFilterLabel || onClickFilterOutLabel;
 
