@@ -123,8 +123,8 @@ func TestResourceConversion(t *testing.T) {
 		  "annotations": {
 			"grafana.com/createdBy": "user:10",
 			"grafana.com/folder": "folder:1234",
-			"grafana.com/origin/key": "plugin-xyz",
-			"grafana.com/origin/name": "plugin",
+			"grafana.com/originKey": "plugin-xyz",
+			"grafana.com/originName": "plugin",
 			"grafana.com/slug": "test-dash",
 			"grafana.com/updatedBy": "user:11",
 			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"

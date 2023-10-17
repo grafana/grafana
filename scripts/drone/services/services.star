@@ -54,6 +54,12 @@ def integration_test_services():
             "commands": ["docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"],
         },
         {
+            "name": "mimir",
+            "image": images["mimir"],
+            "environment": {},
+            "commands": ["/bin/mimir -target=backend"],
+        },
+        {
             "name": "redis",
             "image": images["redis_alpine"],
             "environment": {},

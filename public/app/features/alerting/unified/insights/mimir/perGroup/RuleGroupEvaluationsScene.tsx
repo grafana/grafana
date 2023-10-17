@@ -1,9 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
+
+export function getRuleGroupEvaluationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -20,15 +23,24 @@ export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasour
         legendFormat: 'failed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription('The number of successful and failed evaluations for the rule group')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor(overrideToFixedColor('success'))
+          .matchFieldsWithName('failed')
+          .overrideColor(overrideToFixedColor('failed'))
+      )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

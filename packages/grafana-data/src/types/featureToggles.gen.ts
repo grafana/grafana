@@ -30,6 +30,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
+  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -65,8 +66,6 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
-  timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -110,6 +109,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   traceViewDrawer?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -118,7 +118,6 @@ export interface FeatureToggles {
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
-  noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -126,6 +125,7 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
@@ -135,5 +135,14 @@ export interface FeatureToggles {
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
-  alertingModifiedExport?: boolean;
+  panelMonitoring?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  formatString?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
+  cachingOptimizeSerializationMemoryUsage?: boolean;
+  panelTitleSearchInV1?: boolean;
 }

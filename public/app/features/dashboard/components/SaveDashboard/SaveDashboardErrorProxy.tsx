@@ -3,8 +3,10 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
+
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardAsButton } from './SaveDashboardButton';
 import { SaveDashboardModalProps } from './types';
@@ -14,7 +16,7 @@ interface SaveDashboardErrorProxyProps {
   /** original dashboard */
   dashboard: DashboardModel;
   /** dashboard save model with applied modifications, i.e. title */
-  dashboardSaveModel: DashboardModel;
+  dashboardSaveModel: Dashboard;
   error: FetchError;
   onDismiss: () => void;
 }
@@ -25,7 +27,7 @@ export const SaveDashboardErrorProxy = ({
   error,
   onDismiss,
 }: SaveDashboardErrorProxyProps) => {
-  const { onDashboardSave } = useDashboardSave(dashboard);
+  const { onDashboardSave } = useDashboardSave();
 
   useEffect(() => {
     if (error.data && proxyHandlesError(error.data.status)) {
@@ -78,7 +80,7 @@ export const SaveDashboardErrorProxy = ({
 };
 
 const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboardModalProps) => {
-  const { onDashboardSave } = useDashboardSave(dashboard);
+  const { onDashboardSave } = useDashboardSave();
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (
