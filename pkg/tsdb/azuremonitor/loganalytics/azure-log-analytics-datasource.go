@@ -329,6 +329,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces && query.ResultFormat == dataquery.ResultFormatTrace {
 		frame.Meta.PreferredVisualization = data.VisTypeTrace
 	}
@@ -339,6 +344,10 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.ResultFormat == dataquery.ResultFormatLogs {
 		frame.Meta.PreferredVisualization = data.VisTypeLogs
+		frame.Meta.Custom = &LogAnalyticsMeta{
+			ColumnTypes:     frame.Meta.Custom.(*LogAnalyticsMeta).ColumnTypes,
+			AzurePortalLink: queryUrl,
+		}
 	}
 
 	if query.ResultFormat == types.TimeSeries {
@@ -351,11 +360,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
 			}
 		}
-	}
-
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
-	if err != nil {
-		return nil, err
 	}
 
 	// Use the parent span query for the parent span data link
@@ -731,7 +735,8 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 // LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
 type LogAnalyticsMeta struct {
-	ColumnTypes []string `json:"azureColumnTypes"`
+	ColumnTypes     []string `json:"azureColumnTypes"`
+	AzurePortalLink string   `json:"azurePortalLink,omitempty"`
 }
 
 // encodeQuery encodes the query in gzip so the frontend can build links.
