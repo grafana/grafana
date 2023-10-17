@@ -200,9 +200,14 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
     };
     prepare();
-    // There are a lot of dependencies that make this complicated, we only want to update the table when the columns or the data has changed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
+
+    // This is messy, the user can change the columns which changes the resulting dataFrame
+    // the query result can also change, which also changes the data frame
+
+    // Right now if the user changes the query, and it returns a different list of labels, the table will not have the transforms defined
+    // as we hit a race condition between the query result and the react application updating the new column filters
+    // This causes the table to briefly render columns that are not selected (before the next subsequent render)
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame, props.datasourceType]);
 
   if (!tableFrame) {
     return null;
@@ -223,14 +228,12 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
   };
 
   return (
-    tableFrame && (
-      <Table
-        data={tableFrame}
-        width={width}
-        onCellFilterAdded={onCellFilterAdded}
-        height={props.height}
-        footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
-      />
-    )
+    <Table
+      data={tableFrame}
+      width={width}
+      onCellFilterAdded={onCellFilterAdded}
+      height={props.height}
+      footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
+    />
   );
 };
