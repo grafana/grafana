@@ -10,11 +10,12 @@ import (
 var _ logr.LogSink = (*logAdapter)(nil)
 
 type logAdapter struct {
-	log log.Logger
+	level int
+	log   log.Logger
 }
 
-func newLogAdapter() *logAdapter {
-	return &logAdapter{log: log.New("k8s.apiserver")}
+func newLogAdapter(level int) *logAdapter {
+	return &logAdapter{log: log.New("grafana-apiserver"), level: level}
 }
 
 func (l *logAdapter) WithName(name string) logr.LogSink {
@@ -28,19 +29,21 @@ func (l *logAdapter) WithValues(keysAndValues ...any) logr.LogSink {
 }
 
 func (l *logAdapter) Init(_ logr.RuntimeInfo) {
-	// TODO: shrug emoji
+	// we aren't using the logr library for logging, so this is a no-op
 }
 
 func (l *logAdapter) Enabled(level int) bool {
-	return level <= 5
+	return level <= l.level
 }
 
 func (l *logAdapter) Info(level int, msg string, keysAndValues ...any) {
 	msg = strings.TrimSpace(msg)
-	if level < 1 {
+	// kubernetes uses level 0 for critical messages, so map that to Info
+	if level == 0 {
 		l.log.Info(msg, keysAndValues...)
 		return
 	}
+	// every other level is mapped to Debug
 	l.log.Debug(msg, keysAndValues...)
 }
 

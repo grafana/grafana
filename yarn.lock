@@ -2847,7 +2847,7 @@ __metadata:
     "@grafana/schema": 10.2.0-pre
     "@grafana/ui": 10.2.0-pre
     "@testing-library/react": 14.0.0
-    "@testing-library/user-event": 14.4.3
+    "@testing-library/user-event": 14.5.1
     "@types/jest": 29.5.4
     "@types/lodash": 4.14.195
     "@types/node": 18.16.16
@@ -2898,13 +2898,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.1.3":
-  version: 0.1.3
-  resolution: "@grafana/aws-sdk@npm:0.1.3"
+"@grafana/aws-sdk@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@grafana/aws-sdk@npm:0.2.0"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 9126354c52722c029ed3d597576577502e17566375e711aa64e8df39277092a3269aa45b1c66d0873736276535decdcbb4618b7afde21418dc0a60268f2e69c8
+  checksum: 0ca92f9661c4557344a3ed0b696d3ef655b8c69fa2299de1cc9fd3a8f77c566be832492827aedf4ea38c1a5e892d0e170b7bd1e86d2892644cc274ebd72d21a0
   languageName: node
   linkType: hard
 
@@ -3198,12 +3198,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.0":
-  version: 0.2.0
-  resolution: "@grafana/lezer-logql@npm:0.2.0"
+"@grafana/lezer-logql@npm:0.2.1":
+  version: 0.2.1
+  resolution: "@grafana/lezer-logql@npm:0.2.1"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 7f4382291f9f745b39fcd64aea146140723c5c30d1b86ba5418db2c3a5121bc12742c71129462bc0b78620f6a02598e1dafe555b437e4b4cacef7e2268a15b65
+  checksum: c964cec7ae846f480d6d8bbdc523e2063ebdd48ee2f168745b849be9a1cd6b36636980e777d62c13b7276715e90f8eb5adcdfd1112749fc1367f1bd9ca1c4e9b
   languageName: node
   linkType: hard
 
@@ -8412,15 +8412,6 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 4a54c8f56cc4a39b50803205f84f06280bb76521d6d5d4b3b36651d760c7c7752ef142d857d52aaf4fad4848ed7a8be49afc793a5dda105955d2f8bef24901ac
-  languageName: node
-  linkType: hard
-
-"@testing-library/user-event@npm:14.4.3":
-  version: 14.4.3
-  resolution: "@testing-library/user-event@npm:14.4.3"
-  peerDependencies:
-    "@testing-library/dom": ">=7.21.4"
-  checksum: 852c48ea6db1c9471b18276617c84fec4320771e466cd58339a732ca3fd73ad35e5a43ae14f51af51a8d0a150dcf60fcaab049ef367871207bea8f92c4b8195e
   languageName: node
   linkType: hard
 
@@ -17748,7 +17739,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
-    "@grafana/aws-sdk": 0.1.3
+    "@grafana/aws-sdk": 0.2.0
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.1
@@ -17758,7 +17749,7 @@ __metadata:
     "@grafana/faro-web-sdk": 1.2.1
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.2.0
+    "@grafana/lezer-logql": 0.2.1
     "@grafana/lezer-traceql": 0.0.7
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
