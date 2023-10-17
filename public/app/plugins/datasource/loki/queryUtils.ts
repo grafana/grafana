@@ -345,8 +345,11 @@ export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
   return returnVariables(formatted);
 }
 
-export function parseKeyValue(text: string) {
+export function parseKeyValue(text: string): { key: string; value: string } | null {
   const keyValue = text.split(/=|:/);
+  if (!keyValue || keyValue.length !== 2) {
+    return null;
+  }
   const key = keyValue[0].trim();
   const value = trim(keyValue[1], '"\'`');
   return { key, value };

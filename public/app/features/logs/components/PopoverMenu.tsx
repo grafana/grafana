@@ -14,6 +14,8 @@ interface PopoverMenuProps {
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  onClickFilterValue?: (value: string, refId?: string) => void;
+  onClickFilterOutValue?: (value: string, refId?: string) => void;
   row: LogRowModel;
   close: () => void;
 }
@@ -24,6 +26,8 @@ export const PopoverMenu = ({
   isFilterLabelActive,
   onClickFilterLabel,
   onClickFilterOutLabel,
+  onClickFilterValue,
+  onClickFilterOutValue,
   selection,
   row,
   close,
@@ -34,22 +38,18 @@ export const PopoverMenu = ({
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    if (!onClickFilterLabel || !keyValueSelection.key || !keyValueSelection.value) {
+    if (!onClickFilterLabel || !keyValueSelection?.key || !keyValueSelection?.value) {
       return;
     }
     isFilterLabelActive?.(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId).then(setIsFilterActive);
-  }, [isFilterLabelActive, onClickFilterLabel, keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId]);
+  }, [isFilterLabelActive, keyValueSelection?.key, keyValueSelection?.value, onClickFilterLabel, row.dataFrame.refId]);
   useEffect(() => {
     setKeyValueSelection(parseKeyValue(selection));
   }, [selection]);
 
-  const parsedKeyValue = useMemo(
-    () =>
-      keyValueSelection.key && keyValueSelection.value ? `${keyValueSelection.key}=${keyValueSelection.value}` : '',
-    [keyValueSelection]
-  );
+  const supported = onClickFilterLabel || onClickFilterOutLabel;
 
-  if (!onClickFilterLabel || !onClickFilterOutLabel) {
+  if (!supported) {
     return null;
   }
 
@@ -63,25 +63,32 @@ export const PopoverMenu = ({
             close();
           }}
         />
-        {parsedKeyValue && (
+        {keyValueSelection && onClickFilterLabel && (
           <Menu.Item
-            label={isFilterActive ? 'Remove from query' : `Filter for ${parsedKeyValue}`}
+            label={isFilterActive ? 'Remove from query' : `Filter for ${keyValueSelection.key}=${keyValueSelection.value}`}
             onClick={() => {
               onClickFilterLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
               close();
             }}
           />
         )}
-        {parsedKeyValue && (
+        {keyValueSelection && onClickFilterOutLabel && (
           <Menu.Item
-            label={`Filter out ${parsedKeyValue}`}
+            label={`Filter out ${keyValueSelection.key}!=${keyValueSelection.value}`}
             onClick={() => {
               onClickFilterOutLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
               close();
             }}
           />
         )}
-        <Menu.Item label="Add as line filter" onClick={() => {}} />
+        <Menu.Item label="Add as line contains filter" onClick={() => {
+          onClickFilterValue?.(selection, row.dataFrame.refId);
+          close();
+        }} />
+        <Menu.Item label="Add as line does not contain filter" onClick={() => {
+          onClickFilterOutValue?.(selection, row.dataFrame.refId);
+          close();
+        }} />
       </Menu>
     </div>
   );
