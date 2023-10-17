@@ -142,6 +142,7 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
