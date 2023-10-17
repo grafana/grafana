@@ -115,7 +115,6 @@ const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton
       content: '""',
       height: theme.spacing(4.75),
       position: 'absolute',
-      // left: 61,
       borderLeft: `1px solid ${theme.colors.text.secondary}`,
     },
   }),
