@@ -19,7 +19,7 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   DataFrame,
-  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
@@ -191,14 +191,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     // Crosshair layer
     const crosshairFeature = new Feature({});
     const crosshairRadius = (style.base.lineWidth || 6) + 2;
+    // TODO update crosshair style to match other panels
     const crosshairStyle = new Style({
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha(style.base.color, 0.4),
-          width: crosshairRadius + 2,
+          color: alpha(style.base.color, 1),
+          width: crosshairRadius * 2,
         }),
-        fill: new Fill({ color: style.base.color }),
+        fill: new Fill({ color: alpha(style.base.color, 1) }),
       }),
     });
 
@@ -226,7 +227,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             const frame: DataFrame = feature?.get('frame');
             const time: number = event.payload?.point?.time;
             if (frame && time) {
-              const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+              const timeField = frame.fields.find((f) => f.type === FieldType.time);
               if (timeField) {
                 const timestamps: number[] = timeField.values;
                 const pointIdx = findNearestTimeIndex(timestamps, time);
