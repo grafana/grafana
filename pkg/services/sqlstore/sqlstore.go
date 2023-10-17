@@ -568,10 +568,10 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-func (ss *SQLStore) migrationHasRun(migrationID string) (bool, migrator.MigrationLog, error) {
+func (ss *SQLStore) migrationHasRun(ctx context.Context, migrationID string) (bool, migrator.MigrationLog, error) {
 	var record migrator.MigrationLog
 	var exists bool
-	if err := ss.withDbSession(context.Background(), ss.engine, func(sess *DBSession) error {
+	if err := ss.withDbSession(ctx, ss.engine, func(sess *DBSession) error {
 		recordFound, err := sess.SQL(fmt.Sprintf("SELECT success, error FROM %s WHERE migration_id = ?", MIGRATION_LOG_TABLE), migrationID).Get(&record)
 		if err != nil {
 			return err
@@ -594,7 +594,7 @@ func (ss *SQLStore) registerMigrationExecution(sess *DBSession, record migrator.
 }
 
 func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID string, migrationFunc DBTransactionFunc) error {
-	hasRun, existingRecord, err := ss.migrationHasRun(migrationID)
+	hasRun, existingRecord, err := ss.migrationHasRun(ctx, migrationID)
 	if err != nil {
 		return err
 	}
