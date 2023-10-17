@@ -360,7 +360,7 @@ func TestSession_SyncOAuthTokenHook(t *testing.T) {
 
 			client := ProvideSession(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), sessionService, oauthTokenService, socialService)
 
-			err := client.syncOauthTokenHook(context.Background(), tt.identity, nil)
+			err := client.syncOAuthTokenHook(context.Background(), tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.Equal(t, tt.expectHasEntryCalled, hasEntryCalled)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)
