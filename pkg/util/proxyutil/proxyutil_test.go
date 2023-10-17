@@ -236,7 +236,7 @@ func TestApplyteamHTTPHeaders(t *testing.T) {
 			},
 		})
 
-		err = ApplyteamHTTPHeaders(req, ds, []int64{1, 2})
+		err = ApplyTeamHTTPHeaders(req, ds, []int64{1, 2})
 		require.NoError(t, err)
 		require.Contains(t, req.Header, "X-Team-Header")
 		require.Contains(t, req.Header, "X-Prom-Label-Policy")
@@ -263,7 +263,7 @@ func TestApplyteamHTTPHeaders(t *testing.T) {
 			},
 		})
 
-		err = ApplyteamHTTPHeaders(req, ds, []int64{1, 2})
+		err = ApplyTeamHTTPHeaders(req, ds, []int64{1, 2})
 		require.NoError(t, err)
 		require.Contains(t, req.Header, "X-Team-Header")
 		require.Contains(t, req.Header, "X-Prom-Label-Policy")

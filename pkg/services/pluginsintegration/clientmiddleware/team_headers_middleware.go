@@ -2,8 +2,6 @@ package clientmiddleware
 
 import (
 	"context"
-	"encoding/json"
-	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -11,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 // NewTeamHTTPHeaderMiddleware creates a new plugins.ClientMiddleware that will
@@ -108,7 +107,7 @@ func (m *TeamHTTPHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend
 		return nil // no user
 	}
 
-	teamHTTPHeaders, err := getTeamHTTPHeaders(ds, signedInUser.GetTeams())
+	teamHTTPHeaders, err := proxyutil.GetTeamHTTPHeaders(ds, signedInUser.GetTeams())
 	if err != nil {
 		return err
 	}
@@ -129,47 +128,4 @@ func (m *TeamHTTPHeadersMiddleware) setHeaders(ctx context.Context, pCtx backend
 	}
 
 	return nil
-}
-
-func getTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
-	teamHTTPHeaders := make(map[string]string)
-	teamHTTPHeadersJSON := datasources.TeamHTTPHeadersJSONData{}
-	if ds.JsonData != nil {
-		jsonData, err := ds.JsonData.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
-		if err != nil {
-			return nil, err
-		}
-
-		for teamID, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
-			id, err := strconv.ParseInt(teamID, 10, 64)
-			if err != nil {
-				// FIXME: logging here
-				continue
-			}
-			if !contains(teams, id) {
-				continue
-			}
-
-			for _, header := range headers {
-				// TODO: handle multiple header values
-				// add tests for these cases
-				teamHTTPHeaders[header.Header] = header.Value
-			}
-		}
-	}
-
-	return teamHTTPHeaders, nil
-}
-
-func contains(slice []int64, value int64) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }

@@ -1,7 +1,6 @@
 package proxyutil
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -134,40 +133,50 @@ func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
 	}
 }
 
-func ApplyteamHTTPHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) error {
-	teamHTTPHeadersJSON := datasources.TeamHTTPHeadersJSONData{}
-	if ds.JsonData != nil {
-		jsonData, err := ds.JsonData.MarshalJSON()
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
-		if err != nil {
-			return err
-		}
+func ApplyTeamHTTPHeaders(req *http.Request, ds *datasources.DataSource, teams []int64) error {
+	headers, err := GetTeamHTTPHeaders(ds, teams)
+	if err != nil {
+		return err
+	}
 
-		for teamID, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
-			id, err := strconv.ParseInt(teamID, 10, 64)
-			if err != nil {
-				// FIXME: logging here
-				continue
-			}
-
-			if !contains(teams, id) {
-				continue
-			}
-
-			for _, header := range headers {
-				// check if headerv is already set in req.Header
-				if req.Header.Get(header.Header) != "" {
-					req.Header.Add(header.Header, header.Value)
-					continue
-				}
-				req.Header.Set(header.Header, header.Value)
-			}
+	for header, value := range headers {
+		// check if headerv is already set in req.Header
+		if req.Header.Get(header) != "" {
+			req.Header.Add(header, value)
+		} else {
+			req.Header.Set(header, value)
 		}
 	}
+
 	return nil
+}
+
+func GetTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]string, error) {
+	teamHTTPHeadersMap := make(map[string]string)
+	teamHTTPHeaders, err := ds.TeamHTTPHeaders()
+	if err != nil {
+		return nil, err
+	}
+
+	for teamID, headers := range teamHTTPHeaders {
+		id, err := strconv.ParseInt(teamID, 10, 64)
+		if err != nil {
+			// FIXME: logging here
+			continue
+		}
+
+		if !contains(teams, id) {
+			continue
+		}
+
+		for _, header := range headers {
+			// TODO: handle multiple header values
+			// add tests for these cases
+			teamHTTPHeadersMap[header.Header] = header.Value
+		}
+	}
+
+	return teamHTTPHeadersMap, nil
 }
 
 func contains(slice []int64, value int64) bool {

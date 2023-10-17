@@ -229,8 +229,8 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	data := datasources.TeamHttpHeaders{
-		"1234": []datasources.TeamHttpHeader{
+	data := datasources.TeamHTTPHeaders{
+		"1234": []datasources.TeamHTTPHeader{
 			// Authorization is used by the auth proxy
 			// As part of
 			// contexthandler.AuthHTTPHeaderListFromContext(ctx)
