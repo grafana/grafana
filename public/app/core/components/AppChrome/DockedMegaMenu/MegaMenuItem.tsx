@@ -32,8 +32,12 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   return (
     <li>
       <div className={styles.menuItem}>
-        <Indent level={level} spacing={2} />
-        <div className={styles.collapseButtonWrapper}>
+        {level !== 0 && <Indent level={level === 1 ? 1.2 : 1.7} spacing={3} />}
+        <div
+          className={cx(styles.collapseButtonWrapper, {
+            [styles.thirdLevelItems]: level === 2,
+          })}
+        >
           {showExpandButton && (
             <IconButton
               aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
@@ -96,51 +100,40 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton: boolean) => ({
-  menuItem: css([
-    {
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(2),
-    },
-  ]),
+  menuItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
   collapseButtonWrapper: css({
     display: 'flex',
     alignItems: 'center',
     width: theme.spacing(3),
   }),
-  collapseButton: css([
-    {
-      color: theme.colors.text.disabled,
+  thirdLevelItems: css({
+    '&::before': {
+      content: '""',
+      height: theme.spacing(4.75),
+      position: 'absolute',
+      // left: 61,
+      borderLeft: `1px solid ${theme.colors.text.secondary}`,
     },
-  ]),
-  collapsibleSectionWrapper: css([
-    {
-      alignItems: 'center',
-      display: 'flex',
-    },
-    // level === 2 && {
-    //   marginLeft: theme.spacing(8.5),
-    //
-    //   '&::before': {
-    //     content: '""',
-    //     height: theme.spacing(4.75),
-    //     position: 'absolute',
-    //     width: 1,
-    //     left: 61,
-    //     borderLeft: `1px solid ${theme.colors.text.secondary}`,
-    //   },
-    // },
-  ]),
-  labelWrapper: css([
-    {
-      display: 'flex',
-      fontSize: theme.typography.pxToRem(14),
-      alignItems: 'center',
-      gap: theme.spacing(2),
-      fontWeight: theme.typography.fontWeightMedium,
-      paddingLeft: theme.spacing(1),
-    },
-  ]),
+  }),
+  collapseButton: css({
+    color: theme.colors.text.disabled,
+  }),
+  collapsibleSectionWrapper: css({
+    alignItems: 'center',
+    display: 'flex',
+  }),
+  labelWrapper: css({
+    display: 'flex',
+    fontSize: theme.typography.pxToRem(14),
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    fontWeight: theme.typography.fontWeightMedium,
+    paddingLeft: theme.spacing(1),
+  }),
   isActive: css({
     color: theme.colors.text.primary,
   }),
