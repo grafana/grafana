@@ -135,6 +135,9 @@ export function fillBySimilarity(
           continue;
         }
         if (val1 === val2) {
+          if (key === 'id') {
+            score += 1000; // Can probably be caught earlier in the call tree.
+          }
           score++;
         }
       }
@@ -169,11 +172,28 @@ export function fillBySimilarity(
   }
 }
 
-export function jsonSanitize(obj: Dashboard | DashboardModel | null) {
+function shortenDiff(diffS: string) {
+  const diffLines = diffS.split('\n');
+  let headerEnd = diffS[0].startsWith('Index') ? 4 : 3;
+  let ret = diffLines.slice(0, headerEnd);
+
+  const titleOrBracket = /("title"|Title|\{|\}|\[|\])/i;
+  for (let i = headerEnd; i < diffLines.length; i++) {
+    let line = diffLines[i];
+    if (titleOrBracket.test(line)) {
+      ret.push(line);
+    } else if (line[0] === '+' || line[0] === '-') {
+      ret.push(line);
+    }
+  }
+  return ret.join('\n') + '\n';
+}
+
+function jsonSanitize(obj: Dashboard | DashboardModel | null) {
   return JSON.parse(JSON.stringify(obj, null, 2));
 }
 
-export function getDashboardStringDiff(dashboard: DashboardModel) {
+export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDiff: string; userDiff: string } {
   const originalDashboard = jsonSanitize(dashboard.getOriginalDashboard());
   let dashboardAfterMigration = jsonSanitize(new DashboardModel(originalDashboard).getSaveModelClone());
   let currentDashboard = jsonSanitize(dashboard.getSaveModelClone());
@@ -181,25 +201,28 @@ export function getDashboardStringDiff(dashboard: DashboardModel) {
   dashboardAfterMigration = orderProperties(originalDashboard, dashboardAfterMigration);
   currentDashboard = orderProperties(dashboardAfterMigration, currentDashboard);
 
-  let migrationDiff = createTwoFilesPatch(
+  let migrationDiff: string = createTwoFilesPatch(
     originalDashboard.title ?? 'Before migration changes',
     dashboardAfterMigration.title ?? 'After migration changes',
     JSON.stringify(originalDashboard, null, 2),
     JSON.stringify(dashboardAfterMigration, null, 2),
     '',
     '',
-    { context: 5 }
+    { context: 40 }
   );
 
-  let userDiff = createTwoFilesPatch(
+  let userDiff: string = createTwoFilesPatch(
     dashboardAfterMigration.title ?? 'Before user changes',
     currentDashboard.title ?? 'After user changes',
     JSON.stringify(dashboardAfterMigration, null, 2),
     JSON.stringify(currentDashboard, null, 2),
     '',
     '',
-    { context: 5 }
+    { context: 40 }
   );
+
+  migrationDiff = shortenDiff(migrationDiff);
+  userDiff = shortenDiff(userDiff);
 
   return { migrationDiff, userDiff };
 }
