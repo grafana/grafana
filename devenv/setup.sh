@@ -59,6 +59,34 @@ devDatasources() {
 		ln -s -f ../../../devenv/datasources.yaml ../conf/provisioning/datasources/dev.yaml
 }
 
+undev() {
+    echo -e "\xE2\x9C\x94 Reverting all dev provisioning"
+
+    # Removing generated dashboard files for bulkDashboard
+    COUNTER=0
+    MAX=400
+    while [ $COUNTER -lt $MAX ]; do
+        rm -f "bulk-dashboards/dashboard${COUNTER}.json"
+        let COUNTER=COUNTER+1
+    done
+
+    # Removing generated dashboard and datasource files for bulkAlertingDashboard
+    COUNTER=0
+    MAX=1000
+    while [ $COUNTER -lt $MAX ]; do
+        rm -f "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json"
+        let COUNTER=COUNTER+1
+    done
+    rm -f "bulk_alerting_dashboards/bulk_alerting_datasources.yaml"
+
+    # Removing the symlinks
+    rm -f ../conf/provisioning/dashboards/custom.yaml
+    rm -f ../conf/provisioning/dashboards/bulk-folders.yaml
+    rm -f ../conf/provisioning/dashboards/dev.yaml
+    rm -f ../conf/provisioning/datasources/custom.yaml
+    rm -f ../conf/provisioning/datasources/dev.yaml
+}
+
 usage() {
 	echo -e "\n"
 	echo "Usage:"
@@ -84,6 +112,8 @@ main() {
 		bulkDashboard
 	elif [[ $cmd == "bulk-folders" ]]; then
 		bulkFolders "$arg1"
+	elif [[ $cmd == "undev" ]]; then
+ 	   undev
 	else
 		devDashboards
 		devDatasources
