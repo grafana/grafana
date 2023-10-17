@@ -48,6 +48,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     return (
       <Flex direction="column">
         <div>{step.type}</div>
+        {step.type === 'metric' && <div>{step.trailState.metric}</div>}
       </Flex>
     );
   }

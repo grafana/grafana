@@ -26,6 +26,8 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
   trailsDS,
+  VAR_FILTERS_EXPR,
+  VAR_METRIC_EXPR,
 } from './shared';
 
 export interface GraphTrailViewState extends SceneObjectState {
@@ -152,6 +154,14 @@ function getGraphViewFor(model: SceneObject): GraphTrailView {
 }
 
 function buildGraphScene(metric: string) {
+  let unit = 'short';
+  let agg = 'sum';
+
+  if (metric.endsWith('seconds_sum')) {
+    unit = 's';
+    agg = 'avg';
+  }
+
   return new SceneFlexLayout({
     direction: 'column',
     children: [
@@ -160,6 +170,7 @@ function buildGraphScene(metric: string) {
         maxHeight: 400,
         body: PanelBuilders.timeseries()
           .setTitle(metric)
+          .setUnit(unit)
           .setOption('legend', { showLegend: false })
           .setCustomFieldConfig('fillOpacity', 9)
           .setData(
@@ -168,7 +179,7 @@ function buildGraphScene(metric: string) {
               queries: [
                 {
                   refId: 'A',
-                  expr: 'sum(rate(${metric}{${filters}}[$__rate_interval]))',
+                  expr: `${agg}(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
                 },
               ],
             })

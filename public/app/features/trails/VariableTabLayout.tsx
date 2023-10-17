@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
+  AdHocFiltersVariable,
   QueryVariable,
   SceneComponentProps,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+
+import { VAR_FILTERS } from './shared';
 
 export interface VariableTabLayoutState extends SceneObjectState {
   variableName: string;
@@ -35,6 +39,26 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
     return { isSplit: false, splittable: false };
   }
 
+  public getLabelNamesFiltered(options: VariableValueOption[]) {
+    const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    const labelOptions: Array<SelectableValue<string>> = [];
+
+    if (!(labelFilters instanceof AdHocFiltersVariable)) {
+      return [];
+    }
+
+    const filters = labelFilters.state.set.state.filters;
+
+    for (const option of options) {
+      const filterExists = filters.find((f) => f.key === option.value);
+      if (!filterExists) {
+        labelOptions.push({ label: option.label, value: String(option.value) });
+      }
+    }
+
+    return labelOptions;
+  }
+
   public static Component = ({ model }: SceneComponentProps<VariableTabLayout>) => {
     const { variableName, body } = model.useState();
     const styles = useStyles2(getStyles);
@@ -57,8 +81,7 @@ export class VariableTabLayout extends SceneObjectBase<VariableTabLayoutState> {
     ];
 
     let { splittable, isSplit } = model.getSplitState();
-
-    const labelOptions = options.map((x) => ({ value: x.value, label: x.label }));
+    const labelOptions = model.getLabelNamesFiltered(options);
 
     return (
       <div className={styles.container}>

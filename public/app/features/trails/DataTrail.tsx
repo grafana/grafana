@@ -119,6 +119,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       topScene: new GraphTrailView({ metric: evt.payload }),
       metric: evt.payload,
     });
+
     this.state.history.addTrailStep(this, 'metric');
   }
 
