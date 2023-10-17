@@ -44,8 +44,9 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -84,6 +85,14 @@ var (
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -327,9 +336,10 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "clientTokenRotation",
@@ -818,6 +828,13 @@ var (
 			Owner:        hostedGrafanaTeam,
 		},
 		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
@@ -847,6 +864,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
+		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
 			Stage:        FeatureStageExperimental,
@@ -859,6 +883,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "panelTitleSearchInV1",
+			Description:     "Enable searching for dashboards using panel title in search v1",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaBackendPlatformSquad,
+		},
+		{
+			Name:         "pluginsInstrumentationStatusSource",
+			Description:  "Include a status source label for plugin request metrics and logs",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

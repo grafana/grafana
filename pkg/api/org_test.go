@@ -249,11 +249,11 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
-				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 0}}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: tt.permissions}
 			})
 			verify := func(path string) {
-				req := webtest.RequestWithSignedInUser(server.NewGetRequest(path), userWithPermissions(2, tt.permissions))
+				req := webtest.RequestWithSignedInUser(server.NewGetRequest(path), authedUserWithPermissions(1, 1, tt.permissions))
 				res, err := server.Send(req)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedCode, res.StatusCode)
