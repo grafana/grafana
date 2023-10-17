@@ -1,7 +1,4 @@
-import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
-import React, { ChangeEvent, useCallback, useState } from 'react';
-import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import React, { ChangeEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -13,32 +10,20 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
-  GrafanaTheme2,
-  EnumFieldConfig,
   getTimeZones,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
   ConvertFieldTypeTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import {
-  Button,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Select,
-  useStyles2,
-  VerticalGroup,
-} from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
-import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
 import { getTimezoneOptions } from '../utils';
+
+import { EnumMappingEditor } from './EnumMappingEditor';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
@@ -49,8 +34,6 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const styles = useStyles2(getStyles);
-
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
@@ -119,81 +102,6 @@ export const ConvertFieldTypeTransformerEditor = ({
     },
     [onChange, options]
   );
-
-  const [enumRows, updateEnumRows] = useState<string[]>([]);
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-
-    const copy = [...enumRows];
-    const element = copy[result.source.index];
-    copy.splice(result.source.index, 1);
-    copy.splice(result.destination.index, 0, element);
-    updateEnumRows(copy);
-  };
-
-  const generateEnumValues = () => {
-    const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
-
-    // create set of values for enum without any duplicate values (from targetField.values)
-    // TODO: this shouldn't be hardcoded and should only run on first time / via a button (to initialize / reset?)
-    const enumValues = new Set(targetField?.values);
-
-    if (enumRows.length > 0 && !isEqual(enumRows, Array.from(enumValues))) {
-      const confirmed = window.confirm(
-        'This action will overwrite the existing configuration. Are you sure you want to continue?'
-      );
-      if (!confirmed) {
-        return;
-      }
-    }
-
-    updateEnumRows([...enumValues]);
-  };
-
-  const onChangeEnumMapping = (index: number, enumRow: string) => {
-    const newList = [...enumRows];
-    newList.splice(index, 1, enumRow);
-    updateEnumRows(newList);
-  };
-
-  const onRemoveEnumRow = (index: number) => {
-    const newList = [...enumRows];
-    newList.splice(index, 1);
-    updateEnumRows(newList);
-  };
-
-  const onAddEnumRow = () => {
-    updateEnumRows([...enumRows, '']);
-  };
-
-  const onChangeEnumValue = (index: number, value: string) => {
-    onChangeEnumMapping(index, value);
-  };
-
-  // This current approach leads to sticky input (not dismissed when clicking outside input, and only through tabbing)
-  // This can be addressed via adding a outside click handler and keeping track of inputRefs of each row
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingValue, setEditingValue] = useState<string>('');
-  const setEditRow = (index: number, value: string) => {
-    setEditingIndex(index);
-    setEditingValue(value);
-  };
-
-  const applyEnumConfig = (index: number) => {
-    // Reverse the order of the enum values to match the order of the enum values in the table
-    const textValues = enumRows.map((value) => value).reverse();
-
-    const conversions = options.conversions;
-    const enumConfig: EnumFieldConfig = { text: textValues };
-    conversions[index] = { ...conversions[index], enumConfig };
-    onChange({
-      ...options,
-      conversions: conversions,
-    });
-  };
 
   const onTzChange = useCallback(
     (idx: number) => (value: SelectableValue<string>) => {
@@ -267,79 +175,8 @@ export const ConvertFieldTypeTransformerEditor = ({
                 aria-label={'Remove convert field type transformer'}
               />
             </InlineFieldRow>
-            {c.destinationType === FieldType.enum && hasAlphaPanels && (
-              <InlineFieldRow>
-                <HorizontalGroup>
-                  <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
-                    Generate enum values from data
-                  </Button>
-                  <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
-                    Add enum value
-                  </Button>
-                  <Button size="sm" icon="save" onClick={() => applyEnumConfig(idx)} className={styles.button}>
-                    Apply
-                  </Button>
-                </HorizontalGroup>
-
-                {/* TODO: break this out into separate component?  */}
-                <VerticalGroup>
-                  <table className={styles.compactTable}>
-                    <DragDropContext onDragEnd={onDragEnd}>
-                      <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
-                        {(provided) => (
-                          <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                            {enumRows.map((value: string, index: number) => (
-                              <Draggable key={value} draggableId={value} index={index}>
-                                {(provided) => (
-                                  <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
-                                    <td>
-                                      <div className={styles.dragHandle} {...provided.dragHandleProps}>
-                                        <Icon name="draggabledots" size="lg" />
-                                      </div>
-                                    </td>
-                                    {editingIndex === index ? (
-                                      <td>
-                                        <Input
-                                          type="text"
-                                          value={editingValue}
-                                          onChange={(event) => setEditingValue(event.currentTarget.value)}
-                                          onBlur={() => {
-                                            setEditingIndex(null);
-                                            onChangeEnumValue(index, editingValue);
-                                          }}
-                                        />
-                                      </td>
-                                    ) : (
-                                      <td
-                                        onClick={() => setEditRow(index, value)}
-                                        className={styles.clickableTableCell}
-                                      >
-                                        {value && value !== '' ? value : 'Click to edit'}
-                                      </td>
-                                    )}
-                                    <td className={styles.textAlignCenter}>
-                                      <HorizontalGroup spacing="sm">
-                                        <IconButton
-                                          name="trash-alt"
-                                          onClick={() => onRemoveEnumRow(index)}
-                                          data-testid="remove-enum-row"
-                                          aria-label="Delete enum row"
-                                          tooltip="Delete"
-                                        />
-                                      </HorizontalGroup>
-                                    </td>
-                                  </tr>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </tbody>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  </table>
-                </VerticalGroup>
-              </InlineFieldRow>
+            {c.destinationType === FieldType.enum && (
+              <EnumMappingEditor input={input} options={options} convertFieldTransformIndex={idx} onChange={onChange} />
             )}
           </div>
         );
@@ -365,37 +202,3 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  compactTable: css({
-    'tbody td': {
-      padding: theme.spacing(0.5),
-    },
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  }),
-  dragHandle: css({
-    cursor: 'grab',
-    // create focus ring around the whole row when the drag handle is tab-focused
-    // needs position: relative on the drag row to work correctly
-    '&:focus-visible&:after': {
-      bottom: 0,
-      content: '""',
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '-2px',
-    },
-  }),
-  button: css({
-    marginTop: theme.spacing(1),
-  }),
-  textAlignCenter: css({
-    textAlign: 'center',
-  }),
-  clickableTableCell: css({
-    cursor: 'pointer',
-  }),
-});
