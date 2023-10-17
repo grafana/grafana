@@ -663,7 +663,16 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
-      <TransformWrapper doubleClick={{ mode: 'reset' }} ref={this.transformComponentRef}>
+      <TransformWrapper
+        doubleClick={{ mode: 'reset' }}
+        ref={this.transformComponentRef}
+        onZoom={(r) => {
+          const scale = r.state.scale;
+          if (this.moveable && scale > 0) {
+            this.moveable.zoom = 1 / scale;
+          }
+        }}
+      >
         <TransformComponent>
           <div
             key={this.revId}
