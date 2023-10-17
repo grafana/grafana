@@ -14,6 +14,7 @@ import (
 const (
 	promIsInstant    = true
 	promIsNotInstant = false
+	promExternalDS   = "some-external-ds"
 )
 
 func TestCanBeInstant(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCanBeInstant(t *testing.T) {
 			name:                  "valid prom rule that can be migrated from range to instant",
 			expected:              true,
 			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
-			rule:                  createMigrateablePromRule(t),
+			rule:                  createMigratablePromRule(t),
 		},
 		{
 			name:                  "valid loki rule with external loki datasource",
@@ -44,11 +45,29 @@ func TestCanBeInstant(t *testing.T) {
 			}),
 		},
 		{
-			name:                  "valid prom rule with external loki prometheus",
+			name:                  "valid prom rule with external prometheus datasource",
 			expected:              true,
 			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
-			rule: createMigrateablePromRule(t, func(r *models.AlertRule) {
+			rule: createMigratablePromRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-external"
+			}),
+		},
+		{
+			name:                  "valid prom rule with missing datasource",
+			expected:              true,
+			expectedOptimizations: []optimization{{i: 0, t: datasources.DS_PROMETHEUS}},
+			rule:                  createMigratablePromRuleWithDefaultDS(t),
+		},
+		{
+			name:     "valid prom rule with missing datasource and instant query",
+			expected: false,
+			rule: createMigratablePromRuleWithDefaultDS(t, func(r *models.AlertRule) {
+				raw := make(map[string]any)
+				err := json.Unmarshal(r.Data[0].Model, &raw)
+				require.NoError(t, err)
+				raw["range"] = false
+				r.Data[0].Model, err = json.Marshal(raw)
+				require.NoError(t, err)
 			}),
 		},
 		{
@@ -182,9 +201,9 @@ func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 }
 
 func TestMigratePromQueryToInstant(t *testing.T) {
-	original := createMigrateablePromRule(t)
-	mirgrated := createMigrateablePromRule(t, func(r *models.AlertRule) {
-		r.Data[0] = prometheusQuery(t, "A", "grafanacloud-prom", promIsInstant)
+	original := createMigratablePromRule(t)
+	mirgrated := createMigratablePromRule(t, func(r *models.AlertRule) {
+		r.Data[0] = prometheusQuery(t, "A", promExternalDS, promIsInstant)
 	})
 
 	optimizableIndices, canBeOptimized := canBeInstant(original)
@@ -205,8 +224,8 @@ func TestMigratePromQueryToInstant(t *testing.T) {
 func TestMigrateMultiPromQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratablePromRule(t)
 	mirgrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
-		r.Data[0] = prometheusQuery(t, "TotalRequests", "grafanacloud-prom", promIsInstant)
-		r.Data[1] = prometheusQuery(t, "TotalErrors", "grafanacloud-prom", promIsInstant)
+		r.Data[0] = prometheusQuery(t, "TotalRequests", promExternalDS, promIsInstant)
+		r.Data[1] = prometheusQuery(t, "TotalErrors", promExternalDS, promIsInstant)
 	})
 
 	optimizableIndices, canBeOptimized := canBeInstant(original)
@@ -261,11 +280,25 @@ func createMultiQueryMigratableLokiRule(t *testing.T, muts ...func(*models.Alert
 	return r
 }
 
-func createMigrateablePromRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
+func createMigratablePromRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			prometheusQuery(t, "A", "grafanacloud-prom", promIsNotInstant),
+			prometheusQuery(t, "A", promExternalDS, promIsNotInstant),
+			reducer(t, "B", "A", "last"),
+		},
+	}
+	for _, m := range muts {
+		m(r)
+	}
+	return r
+}
+
+func createMigratablePromRuleWithDefaultDS(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
+	t.Helper()
+	r := &models.AlertRule{
+		Data: []models.AlertQuery{
+			prometheusQueryWithoutDS(t, "A", grafanaCloudProm, promIsNotInstant),
 			reducer(t, "B", "A", "last"),
 		},
 	}
@@ -279,8 +312,8 @@ func createMultiQueryMigratablePromRule(t *testing.T, muts ...func(*models.Alert
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			prometheusQuery(t, "TotalRequests", "grafanacloud-prom", promIsNotInstant),
-			prometheusQuery(t, "TotalErrors", "grafanacloud-prom", promIsNotInstant),
+			prometheusQuery(t, "TotalRequests", promExternalDS, promIsNotInstant),
+			prometheusQuery(t, "TotalErrors", promExternalDS, promIsNotInstant),
 			reducer(t, "TotalRequests_Last", "TotalRequests", "last"),
 			reducer(t, "TotalErrors_Last", "TotalErrors", "last"),
 		},
@@ -330,6 +363,23 @@ func prometheusQuery(t *testing.T, refID, datasourceUID string, isInstant bool) 
 					"maxDataPoints": 43200,
 					"refId": "%s"
 				}`, datasourceUID, isInstant, !isInstant, refID)),
+	}
+}
+
+func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
+	t.Helper()
+	return models.AlertQuery{
+		RefID:         refID,
+		DatasourceUID: datasourceUID,
+		Model: []byte(fmt.Sprintf(`{
+					"instant": %t,
+					"range": %t,
+					"editorMode": "code",
+					"expr": "1",
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"refId": "%s"
+				}`, isInstant, !isInstant, refID)),
 	}
 }
 

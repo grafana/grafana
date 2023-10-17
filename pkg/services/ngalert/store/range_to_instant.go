@@ -9,6 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+const (
+	grafanaCloudProm  = "grafanacloud-prom"
+	grafanaCloudUsage = "grafanacloud-usage"
+)
+
 // DSType can be used to check the datasource type if it's set in the model.
 type dsType struct {
 	DS struct {
@@ -50,7 +55,15 @@ func canBeInstant(r *models.AlertRule) ([]optimization, bool) {
 				continue
 			}
 		default:
-			continue
+			// The default datasource is not saved as datasource, this is why we need to check for the datasource name.
+			// Here we check the well-known grafana cloud datasources.
+			if r.Data[i].DatasourceUID != grafanaCloudProm && r.Data[i].DatasourceUID != grafanaCloudUsage {
+				continue
+			}
+			if !t.Range {
+				continue
+			}
+			t.DS.Type = datasources.DS_PROMETHEUS
 		}
 
 		var validReducers bool
