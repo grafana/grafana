@@ -2334,38 +2334,6 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
-kind: pipeline
-name: notify-drone-changes
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: slack-webhooks-test
-    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
-      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
-      truncate build.commit 8 }}>"
-    webhook:
-      from_secret: drone-changes-webhook
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - exclude
-    include:
-    - .drone.yml
-  repo:
-  - grafana/grafana
-type: docker
----
-clone:
-  retries: 3
 depends_on:
 - main-build-e2e-publish
 - main-integration-tests
@@ -4630,6 +4598,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8713a4d7924e053d6b27acf7beec75ab6c1a85dc279f19c1819f989f7b015861
+hmac: ff105572d451a06880931bc5d3abdb86e50161eb84091e09118d9bf6a229e39b
 
 ...
