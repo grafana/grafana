@@ -95,7 +95,7 @@ In this example, using the same data, with the min and max calculated for each i
 
 This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
 
-### New browse dashboards
+### New browse dashboards view
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 
