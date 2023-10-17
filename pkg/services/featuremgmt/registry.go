@@ -897,5 +897,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
+		},
 	}
 )
