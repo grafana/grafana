@@ -1,20 +1,19 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { TypedVariableModel } from '@grafana/data';
+import {
+  TypedVariableModel,
+  DashboardVariableModel,
+  OrgVariableModel,
+  UserVariableModel,
+  VariableHide,
+} from '@grafana/data';
 import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 import { DashboardState, StoreState } from '../../../types';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../constants';
-import {
-  DashboardVariableModel,
-  initialVariableModelState,
-  OrgVariableModel,
-  UserVariableModel,
-  VariableHide,
-  VariableModel,
-} from '../types';
+import { initialVariableModelState } from '../types';
 
 import { createQueryVariable } from './__tests__/fixtures';
 import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
@@ -112,7 +111,7 @@ export const getVariableTestContext = <Model extends TypedVariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
-  const defaults: Partial<VariableModel> = {
+  const defaults: Partial<TypedVariableModel> = {
     id: '0',
     rootStateKey: 'key',
     index: 0,

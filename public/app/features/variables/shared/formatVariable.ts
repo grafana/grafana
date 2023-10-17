@@ -1,8 +1,6 @@
-import { VariableModel } from '@grafana/data';
+import { TypedVariableModel, VariableWithOptions } from '@grafana/data';
 
-import { VariableWithOptions } from '../types';
-
-export const formatVariableLabel = (variable: VariableModel) => {
+export const formatVariableLabel = (variable: VariableWithOptions | TypedVariableModel) => {
   if (!isVariableWithOptions(variable)) {
     return variable.name;
   }
@@ -16,7 +14,7 @@ export const formatVariableLabel = (variable: VariableModel) => {
   return current.text;
 };
 
-const isVariableWithOptions = (variable: VariableModel): variable is VariableWithOptions => {
+const isVariableWithOptions = (variable: unknown): variable is VariableWithOptions => {
   return (
     Array.isArray((variable as VariableWithOptions)?.options) ||
     typeof (variable as VariableWithOptions)?.current === 'object'

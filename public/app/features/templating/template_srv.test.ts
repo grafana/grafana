@@ -1,4 +1,4 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime, TimeRange, TypedVariableModel } from '@grafana/data';
 import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
 import { ConstantVariable, EmbeddedScene, SceneCanvasText, SceneVariableSet, TestVariable } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
@@ -9,15 +9,14 @@ import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
-import { VariableModel } from '../variables/types';
 
 import { TemplateSrv } from './template_srv';
 
 const key = 'key';
 
 variableAdapters.setInit(() => [
-  createQueryVariableAdapter() as unknown as VariableAdapter<VariableModel>,
-  createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
+  createQueryVariableAdapter() as unknown as VariableAdapter<TypedVariableModel>,
+  createAdHocVariableAdapter() as unknown as VariableAdapter<TypedVariableModel>,
 ]);
 
 const interpolateMock = jest.fn();

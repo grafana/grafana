@@ -1,4 +1,12 @@
-import { LoadingState } from '@grafana/data';
+import {
+  LoadingState,
+  ConstantVariableModel,
+  CustomVariableModel,
+  DataSourceVariableModel,
+  QueryVariableModel,
+  IntervalVariableModel,
+  TypedVariableModel,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
@@ -374,7 +382,7 @@ describe('transformSaveModelToScene', () => {
 
   describe('when creating variables objects', () => {
     it('should migrate custom variable', () => {
-      const variable = {
+      const variable: CustomVariableModel = {
         current: {
           selected: false,
           text: 'a',
@@ -408,12 +416,12 @@ describe('transformSaveModelToScene', () => {
         ],
         query: 'a,b,c,d',
         skipUrlSync: false,
-        type: 'custom' as VariableType,
+        type: 'custom',
         rootStateKey: 'N4XLmH5Vz',
         id: 'query0',
         global: false,
         index: 0,
-        state: 'Done',
+        state: LoadingState.Done,
         error: null,
         description: null,
         allValue: null,
@@ -442,7 +450,7 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should migrate query variable', () => {
-      const variable = {
+      const variable: QueryVariableModel = {
         allValue: null,
         current: {
           text: 'America',
@@ -486,15 +494,12 @@ describe('transformSaveModelToScene', () => {
         regex: '',
         skipUrlSync: false,
         sort: 0,
-        tagValuesQuery: null,
-        tagsQuery: null,
-        type: 'query' as VariableType,
-        useTags: false,
+        type: 'query',
         rootStateKey: '000000002',
         id: 'datacenter',
         global: false,
         index: 0,
-        state: 'Done',
+        state: LoadingState.Done,
         error: null,
         description: null,
       };
@@ -529,16 +534,16 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should migrate datasource variable', () => {
-      const variable = {
+      const variable: DataSourceVariableModel = {
         id: 'query1',
         rootStateKey: 'N4XLmH5Vz',
         name: 'query1',
-        type: 'datasource' as VariableType,
+        type: 'datasource',
         global: false,
         index: 1,
         hide: 0,
         skipUrlSync: false,
-        state: 'Done',
+        state: LoadingState.Done,
         error: null,
         description: null,
         current: {
@@ -595,12 +600,12 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should migrate constant variable', () => {
-      const variable = {
+      const variable: ConstantVariableModel = {
         hide: 2,
         label: 'constant',
         name: 'constant',
         skipUrlSync: false,
-        type: 'constant' as VariableType,
+        type: 'constant',
         rootStateKey: 'N4XLmH5Vz',
         current: {
           selected: true,
@@ -618,7 +623,7 @@ describe('transformSaveModelToScene', () => {
         id: 'constant',
         global: false,
         index: 3,
-        state: 'Done',
+        state: LoadingState.Done,
         error: null,
         description: null,
       };
@@ -638,10 +643,10 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('should migrate interval variable', () => {
-      const variable = {
+      const variable: IntervalVariableModel = {
         name: 'intervalVar',
         label: 'Interval Label',
-        type: 'interval' as VariableType,
+        type: 'interval',
         rootStateKey: 'N4XLmH5Vz',
         auto: false,
         refresh: 2,
@@ -665,7 +670,7 @@ describe('transformSaveModelToScene', () => {
         index: 4,
         hide: 0,
         skipUrlSync: false,
-        state: 'Done',
+        state: LoadingState.Done,
         error: null,
         description: null,
       };
@@ -692,7 +697,7 @@ describe('transformSaveModelToScene', () => {
         type: type as VariableType,
       };
 
-      expect(() => createSceneVariableFromVariableModel(variable)).toThrow();
+      expect(() => createSceneVariableFromVariableModel(variable as TypedVariableModel)).toThrow();
     });
   });
 
