@@ -133,10 +133,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   labelWrapper: css({
     display: 'flex',
-    fontSize: theme.typography.pxToRem(14),
     alignItems: 'center',
     gap: theme.spacing(2),
-    fontWeight: theme.typography.fontWeightMedium,
     paddingLeft: theme.spacing(1),
     minWidth: 0,
   }),
