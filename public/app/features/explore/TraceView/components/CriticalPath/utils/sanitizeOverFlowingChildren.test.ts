@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceSpan } from '../../types';
 import test3 from '../testCases/test3';
 import test4 from '../testCases/test4';
 import test6 from '../testCases/test6';
@@ -23,7 +24,7 @@ import getChildOfSpans from './getChildOfSpans';
 import sanitizeOverFlowingChildren from './sanitizeOverFlowingChildren';
 
 // Function to make expected data for test6 and test7
-function getExpectedSanitizedData(spans, test) {
+function getExpectedSanitizedData(spans: TraceSpan[], test: 'test6' | 'test7' | 'test8') {
   const testSanitizedData = {
     test6: [spans[0], { ...spans[1], duration: 15 }, { ...spans[2], duration: 10, startTime: 15 }],
     test7: [spans[0], { ...spans[1], duration: 15 }, { ...spans[2], duration: 10 }],
@@ -45,12 +46,8 @@ describe.each([
   [test9, new Map().set(test9.trace.spans[0].spanID, { ...test9.trace.spans[0], childSpanIds: [] })],
 ])('sanitizeOverFlowingChildren', (testProps, expectedSanitizedData) => {
   it('Should sanitize the data(overflowing spans) correctly', () => {
-    const refinedSpanData = getChildOfSpans(testProps.trace.spans);
-    const spanMap = refinedSpanData.reduce((map, span) => {
-      map.set(span.spanID, span);
-      return map;
-    }, new Map());
-    const sanitizedSpanMap = sanitizeOverFlowingChildren(spanMap);
+    const refinedSpanData = getChildOfSpans(new Map(testProps.trace.spans.map((span) => [span.spanID, span])));
+    const sanitizedSpanMap = sanitizeOverFlowingChildren(refinedSpanData);
     expect(sanitizedSpanMap).toStrictEqual(expectedSanitizedData);
   });
 });

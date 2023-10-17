@@ -27,54 +27,68 @@
 
 Here +++++ are critical path sections
 */
-import { transformTraceData } from '../../index';
+import { Trace, TraceResponse, transformTraceData } from '../../index';
 
-const testTrace = {
+const testTrace: TraceResponse = {
   traceID: 'test1-trace',
   spans: [
     {
+      traceID: 'test1-trace',
       spanID: 'span-E',
       operationName: 'operation E',
       references: [
         {
           refType: 'CHILD_OF',
           spanID: 'span-C',
+          traceID: 'test1-trace',
         },
       ],
       startTime: 50,
       duration: 10,
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
     {
+      traceID: 'test1-trace',
+
       spanID: 'span-C',
       operationName: 'operation C',
       references: [],
       startTime: 1,
       duration: 100,
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
     {
+      traceID: 'test1-trace',
+
       spanID: 'span-D',
       operationName: 'operation D',
       references: [
         {
           refType: 'CHILD_OF',
           spanID: 'span-C',
+          traceID: 'test1-trace',
         },
       ],
       startTime: 20,
       duration: 20,
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
   ],
   processes: {
     p1: {
       serviceName: 'customers-service',
+      tags: [],
     },
   },
 };
 
-const transformedTrace = transformTraceData(testTrace);
+const transformedTrace: Trace = transformTraceData(testTrace)!;
 
 const criticalPathSections = [
   {

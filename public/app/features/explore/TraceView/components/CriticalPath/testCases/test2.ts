@@ -29,20 +29,24 @@
                                                          |
 Here ++++++ is critical path                             |
 */
-import { transformTraceData } from '../../index';
+import { TraceResponse, transformTraceData } from '../../index';
 
-const happyTrace = {
+const happyTrace: TraceResponse = {
   traceID: 'trace-123',
   spans: [
     {
+      traceID: 'trace-123',
       spanID: 'span-X',
       operationName: 'op1',
       startTime: 1,
       duration: 100,
       references: [],
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
     {
+      traceID: 'trace-123',
       spanID: 'span-A',
       operationName: 'op2',
       startTime: 10,
@@ -51,11 +55,15 @@ const happyTrace = {
         {
           refType: 'CHILD_OF',
           spanID: 'span-X',
+          traceID: 'trace-123',
         },
       ],
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
     {
+      traceID: 'trace-123',
       spanID: 'span-C',
       operationName: 'op3',
       startTime: 20,
@@ -64,19 +72,23 @@ const happyTrace = {
         {
           refType: 'CHILD_OF',
           spanID: 'span-X',
+          traceID: 'trace-123',
         },
       ],
       processID: 'p1',
+      logs: [],
+      flags: 0,
     },
   ],
   processes: {
     p1: {
       serviceName: 'service1',
+      tags: [],
     },
   },
 };
 
-const transformedTrace = transformTraceData(happyTrace);
+const transformedTrace = transformTraceData(happyTrace)!;
 
 const criticalPathSections = [
   {
