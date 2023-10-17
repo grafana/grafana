@@ -15,7 +15,7 @@ import {
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
-import { sortLogRows } from '../utils';
+import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
@@ -105,13 +105,22 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     return true;
   };
 
-  handleDeselection = () => {
+  handleDeselection = (e: Event) => {
+    if (targetIsElement(e.target) && e.target?.getAttribute('role') === 'menuitem') {
+      // Delegate closing the menu to the popover component.
+      return;
+    }
     if (document.getSelection()?.toString()) {
       return;
     }
+    this.closePopoverMenu();
+  }
+
+  closePopoverMenu = () => {
     this.setState({
       selection: '',
       menuCoordinates: { x: 0, y: 0 },
+      selectedRow: null,
     });
   }
 
@@ -126,11 +135,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
-    document.addEventListener('selectionchange', this.handleDeselection);
+    document.addEventListener('mouseup', this.handleDeselection, {
+      
+    });
   }
 
   componentWillUnmount() {
-    document.removeEventListener('selectionchange', this.handleDeselection);
+    document.removeEventListener('mouseup', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
@@ -167,7 +178,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     return (
       <>
-        {this.state.selection && this.state.selectedRow && (<PopoverMenu row={this.state.selectedRow} selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
+        {this.state.selection && this.state.selectedRow && (<PopoverMenu close={this.closePopoverMenu} row={this.state.selectedRow} selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&
