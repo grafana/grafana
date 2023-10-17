@@ -151,6 +151,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
 		Features:              e.features,
+		Logger:                logger,
 	}, nil
 }
 

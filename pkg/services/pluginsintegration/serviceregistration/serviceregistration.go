@@ -38,23 +38,26 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	self := extsvcauth.SelfCfg{}
-	if svc.Self != nil {
-		self.Permissions = toAccessControlPermissions(svc.Self.Permissions)
-		if svc.Self.Enabled != nil {
-			self.Enabled = *svc.Self.Enabled
-		} else {
-			self.Enabled = true
-		}
+	if len(svc.Permissions) > 0 {
+		self.Permissions = toAccessControlPermissions(svc.Permissions)
+		self.Enabled = true
 	}
 
-	extSvc, err := s.os.SaveExternalService(ctx, &extsvcauth.ExternalServiceRegistration{
-		Name:             svcName,
-		Impersonation:    impersonation,
-		Self:             self,
-		AuthProvider:     extsvcauth.OAuth2Server,
-		OAuthProviderCfg: &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}},
-	})
-	if err != nil {
+	registration := &extsvcauth.ExternalServiceRegistration{
+		Name:          svcName,
+		Impersonation: impersonation,
+		Self:          self,
+	}
+
+	// Default authProvider now is ServiceAccounts
+	registration.AuthProvider = extsvcauth.ServiceAccounts
+	if svc.Impersonation != nil {
+		registration.AuthProvider = extsvcauth.OAuth2Server
+		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
+	}
+
+	extSvc, err := s.os.SaveExternalService(ctx, registration)
+	if err != nil || extSvc == nil {
 		return nil, err
 	}
 
