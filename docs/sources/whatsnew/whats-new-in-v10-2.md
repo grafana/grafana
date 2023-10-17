@@ -63,9 +63,10 @@ With recorded queries, a single recorded query can now record multiple metrics.
 ### Generative AI features for dashboards
 
 // Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
-_Generally available in all editions of Grafana_
+_Generally available in of Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
+<!-- Cloud -->
 
 You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
 
@@ -111,9 +112,10 @@ To learn more, refer to the following video demo.
 
 ### New Canvas button element
 
-_Available in public preview in all editions of Grafana_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
+<!-- Cloud -->
 
 You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
@@ -123,9 +125,10 @@ TODO: Add image / gif / video
 
 ### Time series visualization now support y-axis zooming
 
-_Generally available in all editions of Grafana_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
+<!-- Cloud -->
 
 You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
 
@@ -135,9 +138,10 @@ TODO: Add image / gif / video
 
 ### Visualize enum data in Time series and State timeline visualizations
 
-_Generally available in all editions of Grafana_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
+<!-- Cloud -->
 
 You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
 
@@ -145,9 +149,10 @@ TODO: Add image / gif / video
 
 ### Data visualization quality of life improvements
 
-_Generally available in all editions of Grafana_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
+<!-- Cloud -->
 
 TBD / WIP - some high level thoughts
 
