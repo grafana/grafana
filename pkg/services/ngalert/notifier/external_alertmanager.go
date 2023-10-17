@@ -85,6 +85,12 @@ func (am *externalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) e
 }
 
 func (am *externalAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while creating silence: %v", r)
+		}
+	}()
+
 	params := amsilence.NewPostSilencesParamsWithContext(ctx).WithSilence(silence)
 	res, err := am.amClient.Silence.PostSilences(params)
 	if err != nil {
@@ -95,6 +101,12 @@ func (am *externalAlertmanager) CreateSilence(ctx context.Context, silence *apim
 }
 
 func (am *externalAlertmanager) DeleteSilence(ctx context.Context, silenceID string) error {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while deleting silence: %v", r)
+		}
+	}()
+
 	params := amsilence.NewDeleteSilenceParamsWithContext(ctx).WithSilenceID(strfmt.UUID(silenceID))
 	_, err := am.amClient.Silence.DeleteSilence(params)
 	if err != nil {
@@ -104,6 +116,12 @@ func (am *externalAlertmanager) DeleteSilence(ctx context.Context, silenceID str
 }
 
 func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string) (apimodels.GettableSilence, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting silence: %v", r)
+		}
+	}()
+
 	params := amsilence.NewGetSilenceParamsWithContext(ctx).WithSilenceID(strfmt.UUID(silenceID))
 	res, err := am.amClient.Silence.GetSilence(params)
 	if err != nil {
@@ -114,6 +132,12 @@ func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string
 }
 
 func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while listing silences: %v", r)
+		}
+	}()
+
 	params := amsilence.NewGetSilencesParamsWithContext(ctx).WithFilter(filter)
 	res, err := am.amClient.Silence.GetSilences(params)
 	if err != nil {
@@ -124,6 +148,12 @@ func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []strin
 }
 
 func (am *externalAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting alerts: %v", r)
+		}
+	}()
+
 	params := amalert.NewGetAlertsParamsWithContext(ctx).
 		WithActive(&active).
 		WithSilenced(&silenced).
@@ -140,6 +170,12 @@ func (am *externalAlertmanager) GetAlerts(ctx context.Context, active, silenced,
 }
 
 func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting alert groups: %v", r)
+		}
+	}()
+
 	params := amalertgroup.NewGetAlertGroupsParamsWithContext(ctx).
 		WithActive(&active).
 		WithSilenced(&silenced).
@@ -156,6 +192,12 @@ func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, sile
 }
 
 func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while putting alerts: %v", r)
+		}
+	}()
+
 	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
 	for _, pa := range postableAlerts.PostableAlerts {
 		alerts = append(alerts, &alertingNotify.PostableAlert{
