@@ -6,12 +6,15 @@ import { ResponsiveProp } from '../utils/responsiveness';
 
 import { Stack } from './Stack';
 
-export const HorizontalStack = React.forwardRef<
-  HTMLDivElement,
-  React.PropsWithChildren<{ gap?: ResponsiveProp<ThemeSpacingTokens> }>
->(({ children, gap = 1 }, ref) => (
-  <Stack ref={ref} direction="row" gap={gap}>
-    {children}
-  </Stack>
-));
+interface HorizontalStackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+  gap?: ResponsiveProp<ThemeSpacingTokens>;
+}
+
+export const HorizontalStack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<HorizontalStackProps>>(
+  ({ children, gap = 1, ...rest }, ref) => (
+    <Stack ref={ref} direction="row" gap={gap} {...rest}>
+      {children}
+    </Stack>
+  )
+);
 HorizontalStack.displayName = 'HorizontalStack';

@@ -28,7 +28,14 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
 
-import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import {
+  SpanBarOptionsData,
+  SpanLinkFunc,
+  Trace,
+  TracePageHeader,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from './components';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -60,10 +67,18 @@ type Props = {
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
   topOfViewRefType: TopOfViewRefType;
+  createSpanLink?: SpanLinkFunc;
 };
 
 export function TraceView(props: Props) {
-  const { traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
+  const {
+    traceProp,
+    datasource,
+    topOfViewRef,
+    topOfViewRefType,
+    exploreId,
+    createSpanLink: createSpanLinkFromProps,
+  } = props;
 
   const {
     detailStates,
@@ -122,6 +137,7 @@ export function TraceView(props: Props) {
 
   const createSpanLink = useMemo(
     () =>
+      createSpanLinkFromProps ??
       createSpanLinkFactory({
         splitOpenFn: props.splitOpenFn!,
         traceToLogsOptions,
@@ -139,6 +155,7 @@ export function TraceView(props: Props) {
       props.dataFrames,
       createFocusSpanLink,
       traceProp,
+      createSpanLinkFromProps,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));

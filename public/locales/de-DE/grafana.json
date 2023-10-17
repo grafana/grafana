@@ -374,6 +374,14 @@
       "placeholder": ""
     }
   },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "",
@@ -413,6 +421,16 @@
       "zoom-out-time-range": ""
     },
     "title": ""
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
   },
   "library-panel": {
     "add-modal": {

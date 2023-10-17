@@ -3,6 +3,7 @@ import {
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
+  IntervalVariableModel,
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
@@ -19,6 +20,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  IntervalVariable,
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
@@ -32,7 +34,6 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
 } from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -43,8 +44,13 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  getCurrentValueForOldIntervalModel,
+  getIntervalsFromOldIntervalModel,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 
@@ -59,9 +65,6 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
-
-  // Setting for built-in annotations query to run
-  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -200,9 +203,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   const controls: SceneObject[] = [
-    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     ...filtersSets,
+    new SceneDataLayerControls(),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
     new SceneRefreshPicker({
@@ -214,6 +217,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
+    id: oldModel.id,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -294,6 +298,21 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       isMulti: variable.multi,
       hide: variable.hide,
     });
+  } else if (isIntervalVariable(variable)) {
+    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    return new IntervalVariable({
+      ...commonProperties,
+      value: currentInterval,
+      description: variable.description,
+      intervals: intervals,
+      autoEnabled: variable.auto,
+      autoStepCount: variable.auto_count,
+      autoMinInterval: variable.auto_min,
+      refresh: variable.refresh,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
   } else if (isConstantVariable(variable)) {
     return new ConstantVariable({
       ...commonProperties,
@@ -325,6 +344,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     height: panel.gridPos.h,
   });
 }
+
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -340,6 +360,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
@@ -383,4 +404,5 @@ const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type 
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
 const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isIntervalVariable = (v: VariableModel): v is IntervalVariableModel => v.type === 'interval';
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
