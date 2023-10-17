@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.23.0",
-    "@babel/preset-env": "7.22.9",
+    "@babel/preset-env": "7.23.2",
     "@babel/preset-react": "7.22.5",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-node-resolve": "15.2.3",
