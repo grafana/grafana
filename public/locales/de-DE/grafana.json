@@ -339,6 +339,19 @@
   },
   "explore": {
     "add-to-dashboard": "",
+    "history": {
+      "field-label": "",
+      "multi-select-queriestab-placeholder": "",
+      "multi-select-starredtab-placeholder": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "queriestab-search-placeholder": "",
+      "query-history-label": "",
+      "settings-field-label": "",
+      "settings-label": "",
+      "starred-label": "",
+      "starredtab-search-placeholder": ""
+    },
     "table": {
       "no-data": "",
       "title": "",

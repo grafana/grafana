@@ -339,6 +339,19 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "history": {
+      "field-label": "Ħįşŧőřy ŧįmę şpäŉ",
+      "multi-select-queriestab-placeholder": "Fįľŧęř qūęřįęş ƒőř đäŧä şőūřčęş(ş)",
+      "multi-select-starredtab-placeholder": "Fįľŧęř qūęřįęş ƒőř đäŧä şőūřčęş(ş)",
+      "newest-first": "Ńęŵęşŧ ƒįřşŧ",
+      "oldest-first": "Øľđęşŧ ƒįřşŧ",
+      "queriestab-search-placeholder": "Ŝęäřčĥ qūęřįęş",
+      "query-history-label": "Qūęřy ĥįşŧőřy",
+      "settings-field-label": "Cĥäŉģę ŧĥę đęƒäūľŧ äčŧįvę ŧäþ ƒřőm “Qūęřy ĥįşŧőřy” ŧő “Ŝŧäřřęđ”",
+      "settings-label": "Ŝęŧŧįŉģş",
+      "starred-label": "Ŝŧäřřęđ",
+      "starredtab-search-placeholder": "Ŝęäřčĥ qūęřįęş"
+    },
     "table": {
       "no-data": "0 şęřįęş řęŧūřŉęđ",
       "title": "Ŧäþľę",

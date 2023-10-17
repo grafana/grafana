@@ -7,6 +7,7 @@ import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } f
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
+import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
@@ -89,12 +90,16 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           </div>
         </Field>
       ) : (
-        <Alert severity="info" title="History time span">
+        <Alert severity="info" title={t('explore.history.field-label', 'History time span')}>
           Grafana will keep entries up to {selectedOption?.label}. Starred entries won&apos;t be deleted.
         </Alert>
       )}
+
       <InlineField
-        label="Change the default active tab from “Query history” to “Starred”"
+        label={t(
+          'explore.history.settings-field-label',
+          'Change the default active tab from “Query history” to “Starred”'
+        )}
         className={styles.spaceBetween}
       >
         <InlineSwitch
@@ -103,6 +108,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           onChange={toggleStarredTabAsFirstTab}
         />
       </InlineField>
+
       {supportedFeatures().onlyActiveDataSource && (
         <InlineField
           label="Only show queries for data source currently active in Explore"

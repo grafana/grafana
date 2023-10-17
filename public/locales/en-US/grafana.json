@@ -339,6 +339,19 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "history": {
+      "field-label": "History time span",
+      "multi-select-queriestab-placeholder": "Filter queries for data sources(s)",
+      "multi-select-starredtab-placeholder": "Filter queries for data sources(s)",
+      "newest-first": "Newest first",
+      "oldest-first": "Oldest first",
+      "queriestab-search-placeholder": "Search queries",
+      "query-history-label": "Query history",
+      "settings-field-label": "Change the default active tab from “Query history” to “Starred”",
+      "settings-label": "Settings",
+      "starred-label": "Starred",
+      "starredtab-search-placeholder": "Search queries"
+    },
     "table": {
       "no-data": "0 series returned",
       "title": "Table",

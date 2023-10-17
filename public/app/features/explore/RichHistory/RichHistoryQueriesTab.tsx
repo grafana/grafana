@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -195,7 +196,10 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                 return { value: ds.name, label: ds.name };
               })}
               value={richHistorySearchFilters.datasourceFilters}
-              placeholder="Filter queries for data sources(s)"
+              placeholder={t(
+                'explore.history.multi-select-queriestab-placeholder',
+                'Filter queries for data sources(s)'
+              )}
               aria-label="Filter queries for data sources(s)"
               onChange={(options: SelectableValue[]) => {
                 updateFilters({ datasourceFilters: options.map((option) => option.value) });
@@ -205,7 +209,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
           <div className={styles.filterInput}>
             <FilterInput
               escapeRegex={false}
-              placeholder="Search queries"
+              placeholder={t('explore.history.queriestab-search-placeholder', 'Search queries')}
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
             />

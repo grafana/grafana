@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import {
   createDatasourcesList,
   SortOrder,
@@ -121,7 +122,10 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
                 return { value: ds.name, label: ds.name };
               })}
               value={richHistorySearchFilters.datasourceFilters}
-              placeholder="Filter queries for data sources(s)"
+              placeholder={t(
+                'explore.history.multi-select-starredtab-placeholder',
+                'Filter queries for data sources(s)'
+              )}
               aria-label="Filter queries for data sources(s)"
               onChange={(options: SelectableValue[]) => {
                 updateFilters({ datasourceFilters: options.map((option) => option.value) });
@@ -131,7 +135,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
           <div className={styles.filterInput}>
             <FilterInput
               escapeRegex={false}
-              placeholder="Search queries"
+              placeholder={t('explore.history.starredtab-search-placeholder', 'Search queries')}
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
             />
