@@ -64,7 +64,6 @@ trigger = {
 }
 
 def main_pipelines():
-
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
