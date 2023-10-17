@@ -1,3 +1,4 @@
+import { dateTime, LoadingState } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -210,5 +211,38 @@ describe('LogsQueryEditor', () => {
         }),
       })
     );
+  });
+
+  describe('azure portal link', () => {
+    it('should show the link button', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery();
+      const onChange = jest.fn();
+
+      const date = dateTime(new Date());
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          setError={() => {}}
+          data={{
+            state: LoadingState.Done,
+            timeRange: {
+              from: date,
+              to: date,
+              raw: {
+                from: date,
+                to: date,
+              },
+            },
+            series: [{ refId: query.refId, length: 0, meta: { custom: { azurePortalLink: 'test' } }, fields: [] }],
+          }}
+        />
+      );
+
+      expect(await screen.findByText('View query in Azure Portal')).toBeInTheDocument();
+    });
   });
 });
