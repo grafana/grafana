@@ -256,25 +256,24 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
   return fieldToTimeField(field, dateFormat);
 }
 
-function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
-  const enumConfig = { ...cfg };
+function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {
+  const enumConfig = { ...config };
   const enumValues = field.values.slice();
+
+  // Create lookup map based on existing enum config text values, if none exist return field as is
   const lookup = new Map<unknown, number>();
-  if (enumConfig.text) {
+  if (enumConfig.text && enumConfig.text.length > 0) {
     for (let i = 0; i < enumConfig.text.length; i++) {
       lookup.set(enumConfig.text[i], i);
     }
   } else {
-    enumConfig.text = [];
+    return field;
   }
 
+  // Convert field values to enum indexes
   for (let i = 0; i < enumValues.length; i++) {
-    const v = enumValues[i];
-    if (!lookup.has(v)) {
-      enumConfig.text[lookup.size] = v;
-      lookup.set(v, lookup.size);
-    }
-    enumValues[i] = lookup.get(v);
+    const value = enumValues[i];
+    enumValues[i] = lookup.get(value);
   }
 
   return {
