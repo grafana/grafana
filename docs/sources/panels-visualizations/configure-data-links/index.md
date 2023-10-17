@@ -50,7 +50,7 @@ These variables allow you to include the current time range in the data link URL
 
 ## Series variables
 
-Series specific variables are available under `__series` namespace:
+Series-specific variables are available under `__series` namespace:
 
 - `__series.name` - series name to the URL
 
@@ -70,6 +70,17 @@ Value-specific variables are available under `__value` namespace:
 - `__value.numeric` - numeric representation of a value
 - `__value.text` - text representation of a value
 - `__value.calc` - calculation name if the value is result of calculation
+
+Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
+
+## Data variables
+
+To access values and labels from other fields use:
+
+- `${__data.fields[i]}` - value of field `i` (on the same row)
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields[1].labels.cluster}` - access labels of another field
 
 ## Template variables
 

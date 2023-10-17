@@ -3,26 +3,22 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   children: React.ReactNode;
-  icon?: IconName;
   isActive?: boolean;
-  isChild?: boolean;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url?: string;
 }
 
-export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, isChild);
+  const styles = getStyles(theme, isActive);
 
   const linkContent = (
     <div className={styles.linkContent}>
-      {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
-
       {children}
 
       {target === '_blank' && (
@@ -71,7 +67,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   button: css({
     backgroundColor: 'unset',
     borderStyle: 'unset',
@@ -91,15 +87,9 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     boxSizing: 'border-box',
     position: 'relative',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
-    padding: theme.spacing(1, 1, 1, isChild ? 5 : 0),
-    ...(isChild && {
-      borderRadius: theme.shape.radius.default,
-    }),
+    padding: theme.spacing(1, 1, 1, 0),
     width: '100%',
     '&:hover, &:focus-visible': {
-      ...(isChild && {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-      }),
       textDecoration: 'underline',
       color: theme.colors.text.primary,
     },
@@ -127,8 +117,5 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     position: 'relative',
     display: 'flex',
     width: '100%',
-    ...(isChild && {
-      padding: theme.spacing(0, 2),
-    }),
   }),
 });

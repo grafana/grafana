@@ -3,6 +3,8 @@ package services
 import (
 	"sort"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -11,11 +13,13 @@ import (
 
 type RegionsService struct {
 	models.EC2APIProvider
+	log.Logger
 }
 
-func NewRegionsService(ec2client models.EC2APIProvider) models.RegionsAPIProvider {
+func NewRegionsService(ec2client models.EC2APIProvider, logger log.Logger) models.RegionsAPIProvider {
 	return &RegionsService{
 		ec2client,
+		logger,
 	}
 }
 
@@ -33,8 +37,11 @@ func (r *RegionsService) GetRegions() ([]resources.ResourceResponse[resources.Re
 	result := make([]resources.ResourceResponse[resources.Region], 0)
 
 	ec2Regions, err := r.DescribeRegions(&ec2.DescribeRegionsInput{})
+	// we ignore this error and always send default regions
+	// we only fetch incase a user has enabled additional regions
+	// but we still log it in case the user is expecting to fetch regions specific to their account and are unable to
 	if err != nil {
-		return nil, err
+		r.Error("Failed to get regions: ", "error", err)
 	}
 
 	mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
