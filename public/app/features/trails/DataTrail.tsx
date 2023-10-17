@@ -90,7 +90,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  public moveTooStep(step: DataTrailHistoryStep) {
+  public goBackToStep(step: DataTrailHistoryStep) {
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
     }

@@ -363,6 +363,13 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Url:  s.cfg.AppSubURL + "/scenes",
 			Icon: "apps",
 		})
+
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Data trails",
+			Id:   "data-trails",
+			Url:  s.cfg.AppSubURL + "/data-trails",
+			Icon: "code-branch",
+		})
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {

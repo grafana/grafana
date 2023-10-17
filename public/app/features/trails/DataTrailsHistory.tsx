@@ -39,11 +39,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     });
   }
 
-  public goToStep(step: DataTrailHistoryStep) {
-    const trail = getTrailFor(this);
-    trail.setState(step.trailState);
-  }
-
   renderStepTooltip(step: DataTrailHistoryStep) {
     return (
       <Flex direction="column">
@@ -56,14 +51,16 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public static Component = ({ model }: SceneComponentProps<DataTrailHistory>) => {
     const { steps } = model.useState();
     const styles = useStyles2(getStyles);
+    const trail = getTrailFor(model);
 
     return (
       <div className={styles.container}>
+        <div className={styles.heading}>Trail</div>
         {steps.map((step, index) => (
           <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
             <button
               className={cx(styles.step, styles.stepTypes[step.type])}
-              onClick={() => model.goToStep(step)}
+              onClick={() => trail.goBackToStep(step)}
             ></button>
           </Tooltip>
         ))}
@@ -79,8 +76,12 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: 10,
-      marginTop: -2,
+      marginTop: theme.spacing(1),
+      alignItems: 'center',
       opacity: 0.7,
+    }),
+    heading: css({
+      paddingRight: theme.spacing(1),
     }),
     step: css({
       flexGrow: 0,
