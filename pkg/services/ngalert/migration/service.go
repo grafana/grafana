@@ -51,7 +51,7 @@ func ProvideService(
 // If the migration status in the kvstore is set and both unified alerting is disabled and ForceMigration is set to true, the migration will be reverted.
 func (ms *MigrationService) Run(ctx context.Context) error {
 	var errMigration error
-	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
+	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
 		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
 			migrated, err := ms.migrationStore.IsMigrated(ctx)
@@ -110,11 +110,6 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 	return nil
 }
 
-// IsDisabled returns true if the cfg is nil.
-func (ms *MigrationService) IsDisabled() bool {
-	return ms.cfg == nil
-}
-
 // migrateAllOrgs executes the migration for all orgs.
 func (ms *MigrationService) migrateAllOrgs(ctx context.Context) error {
 	orgs, err := ms.migrationStore.GetAllOrgs(ctx)
@@ -130,7 +125,7 @@ func (ms *MigrationService) migrateAllOrgs(ctx context.Context) error {
 
 		err = om.migrationStore.SetOrgMigrationState(ctx, o.ID, om.state)
 		if err != nil {
-			return err
+			return fmt.Errorf("set org migration state: %w", err)
 		}
 	}
 	return nil
