@@ -74,9 +74,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: ${autoColor(theme, '#333')};
       }
     `,
-    logsButton: css`
-      margin-right: 10px;
-    `,
     AccordianWarnings: css`
       label: AccordianWarnings;
       background: ${autoColor(theme, '#fafafa')};
@@ -294,7 +291,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
         </div>
       </div>
-      <span className={styles.logsButton}>{logLinkButton}</span>
+      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
       {profileLinkButton}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>

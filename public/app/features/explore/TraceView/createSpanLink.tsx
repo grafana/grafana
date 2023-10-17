@@ -215,7 +215,7 @@ function legacyCreateSpanLinkFactory(
                 },
                 isSplunkDS
               ),
-              field: {} as Field,
+              field,
               onClickFn: splitOpenFn,
               replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
             });
