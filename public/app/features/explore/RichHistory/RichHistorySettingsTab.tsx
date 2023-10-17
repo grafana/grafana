@@ -7,7 +7,7 @@ import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } f
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
-import { t, Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
