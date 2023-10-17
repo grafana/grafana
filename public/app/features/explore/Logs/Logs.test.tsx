@@ -103,9 +103,6 @@ describe('Logs', () => {
     ];
 
     const testDataFrame = {
-      meta: {
-        // type: DataFrameType.LogLines,
-      },
       fields: [
         {
           config: {},
