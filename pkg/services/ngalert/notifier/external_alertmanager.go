@@ -191,6 +191,9 @@ func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, sile
 	return res.Payload, nil
 }
 
+// TODO: implement PutAlerts in a way that is similar to what Prometheus does.
+// This current implementation is only good for testing methods that retrieve alerts from the remote Alertmanager.
+// More details in issue https://github.com/grafana/grafana/issues/76692
 func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
 	defer func() {
 		if r := recover(); r != nil {
