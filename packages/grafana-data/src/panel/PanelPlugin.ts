@@ -117,7 +117,7 @@ export class PanelPlugin<
   noPadding?: boolean;
   dataSupport: PanelPluginDataSupport = {
     annotations: false,
-    alertStates: false,
+    alertStates: true,
   };
 
   /**
