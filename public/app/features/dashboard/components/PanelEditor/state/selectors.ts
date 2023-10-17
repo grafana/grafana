@@ -33,7 +33,7 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 
     tabs.push({
       id: PanelEditorTabId.Transform,
-      text: 'Transform',
+      text: 'Transform data',
       icon: 'process',
       active: false,
     });

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -126,7 +126,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     activeDatasourceInstance,
   } = props;
 
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, height), [height]));
+  const styles = useStyles2(getStyles, height);
 
   const listOfDatasources = createDatasourcesList();
 

@@ -32,7 +32,7 @@ func (fcs FakeCacheStorage) Count(_ context.Context, prefix string) (int64, erro
 	return int64(len(fcs.Storage)), nil
 }
 
-func NewFakeCacheStorage() CacheStorage {
+func NewFakeCacheStorage() FakeCacheStorage {
 	return FakeCacheStorage{
 		Storage: map[string][]byte{},
 	}

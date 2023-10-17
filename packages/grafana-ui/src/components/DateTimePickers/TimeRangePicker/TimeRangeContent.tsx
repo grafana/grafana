@@ -14,12 +14,13 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Icon, Tooltip } from '../..';
-import { useStyles2 } from '../../..';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
+import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
+import { Tooltip } from '../../Tooltip/Tooltip';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';

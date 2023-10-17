@@ -1,14 +1,5 @@
 import { css } from '@emotion/css';
-import React, {
-  createElement,
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { createElement, CSSProperties, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -18,7 +9,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { customWeight, customColor, customVariant } from './utils';
 
-export interface TextProps {
+export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   /** Defines what HTML element is defined underneath. "span" by default */
   element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
@@ -37,13 +28,8 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
-        [color, textAlignment, truncate, italic, weight, variant, element]
-      )
-    );
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children, ...restProps }, ref) => {
+    const styles = useStyles2(getTextStyles, element, variant, color, weight, truncate, italic, textAlignment);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const internalRef = useRef<HTMLElement>(null);
 
@@ -53,6 +39,8 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
     const childElement = createElement(
       element,
       {
+        ...restProps,
+        style: undefined, // remove style prop to avoid overriding the styles
         className: styles,
         // when overflowing, the internalRef is passed to the tooltip which forwards it on to the child element
         ref: isOverflowing ? undefined : internalRef,

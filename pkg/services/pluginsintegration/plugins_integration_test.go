@@ -79,7 +79,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
-	am := azuremonitor.ProvideService(cfg, hcp, features, tracer)
+	am := azuremonitor.ProvideService(cfg, hcp, features)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp, tracer)

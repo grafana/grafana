@@ -37,8 +37,6 @@ import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPost
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
 
-export const MAX_NUMBER_OF_TIME_SERIES = 20;
-
 interface Props {
   data: DataFrame[];
   height: number;
@@ -57,7 +55,6 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
-  showAllTimeSeries: boolean;
 }
 
 export function ExploreGraph({
@@ -78,7 +75,6 @@ export function ExploreGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
-  showAllTimeSeries,
 }: Props) {
   const theme = useTheme2();
 
@@ -103,6 +99,7 @@ export function ExploreGraph({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
+      unit: 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
@@ -125,14 +122,14 @@ export function ExploreGraph({
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
-      data: showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES),
+      data,
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
       dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
