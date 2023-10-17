@@ -21,6 +21,7 @@ import {
   useStyles2,
   Tooltip,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -76,17 +77,26 @@ export const GraphContainer = ({
 
   return (
     <PanelChrome
-      title="Graph"
+      title={t('graph.container.title', 'Graph')}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
-              <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
+            <span className={styles.warningMessage}>
+              <Icon name="exclamation-triangle" aria-hidden="true" />
+              <Trans i18nKey={'graph.container.show-only-series'}>
+                Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
+              </Trans>
+            </span>
+            <Tooltip
+              content={t(
+                'graph.container.content',
+                'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
+              )}
+            >
+              <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
+                <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
+              </Button>
             </Tooltip>
-
-            <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
-              Show all {data.length} series
-            </Button>
           </div>
         ),
       ].filter(Boolean)}
@@ -120,14 +130,15 @@ export const GraphContainer = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   timeSeriesDisclaimer: css({
     label: 'time-series-disclaimer',
-    textSlign: 'center',
-    fontSize: theme.typography.bodySmall.fontSize,
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
   }),
-  disclaimerIcon: css({
-    label: 'disclaimer-icon',
+  warningMessage: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
     color: theme.colors.warning.main,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });

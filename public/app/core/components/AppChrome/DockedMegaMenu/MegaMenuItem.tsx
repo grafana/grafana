@@ -2,30 +2,31 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { useStyles2, Text, IconButton } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
 
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';
-import { MegaMenuItemIcon } from './MegaMenuItemIcon';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
 interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  onClose?: () => void;
+  onClick?: () => void;
   level?: number;
 }
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
+const MAX_DEPTH = 2;
+
+export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
-  const showExpandButton = Boolean(linkHasChildren(link) || link.emptyMessage);
+  const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
 
   const styles = useStyles2(getStyles, level, showExpandButton);
 
@@ -53,7 +54,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
             isActive={isActive}
             onClick={() => {
               link.onClick?.();
-              onClose?.();
+              onClick?.();
             }}
             target={link.target}
             url={link.url}
@@ -68,7 +69,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
               TODO: Can we do this any better? */}
               {/*<div className={styles.iconWrapper}>*/}
               <FeatureHighlightWrapper>
-                <>{level === 0 && <MegaMenuItemIcon link={link} />}</>
+                <>{level === 0 && link.icon && <Icon name={toIconName(link.icon) ?? 'link'} size="lg" />}</>
               </FeatureHighlightWrapper>
               {/*</div>*/}
               <Text truncate>{link.text}</Text>
@@ -86,7 +87,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
                   key={`${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
-                  onClose={onClose}
+                  onClick={onClick}
                   level={level + 1}
                 />
               ))

@@ -4,13 +4,13 @@ on:
     - cron: '0 7 * * 1-5'
 jobs:
   main:
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Update procedure
-        if: github.repository != 'grafana/writers-toolkit'
         run: |
           curl -s -Lo docs/docs.mk https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk
           curl -s -Lo docs/make-docs https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs
@@ -22,6 +22,6 @@ jobs:
           git config --local user.name "grafanabot"
           git commit -m "Update \`make docs\` procedure"
           git push -v origin "refs/heads/${BRANCH}"
-          gh pr create --fill
+          gh pr create --fill --label no-changelog --label --no-backport --label type/docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

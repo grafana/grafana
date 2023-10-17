@@ -29,7 +29,7 @@ const setup = () => {
   ];
 
   const grafanaContext = getGrafanaContextMock();
-  grafanaContext.chrome.onToggleMegaMenu();
+  grafanaContext.chrome.setMegaMenu('open');
 
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
