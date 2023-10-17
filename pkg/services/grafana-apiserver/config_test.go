@@ -21,7 +21,7 @@ func TestProvideConfig(t *testing.T) {
 	section.Key("log_level").SetValue("5")
 	section.Key("etcd_servers").SetValue("http://localhost:2379")
 
-	actual := NewConfig(cfg)
+	actual := newConfig(cfg)
 
 	expected := &config{
 		enabled:     true,

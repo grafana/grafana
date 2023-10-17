@@ -109,7 +109,7 @@ func ProvideService(
 	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
-		config:     NewConfig(cfg),
+		config:     newConfig(cfg),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
