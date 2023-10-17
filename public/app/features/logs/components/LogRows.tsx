@@ -60,6 +60,8 @@ export interface Props extends Themeable2 {
    * Any overflowing content will be clipped at the table boundary.
    */
   overflowingContent?: boolean;
+  onClickFilterValue?: (value: string, refId?: string) => void;
+  onClickFilterOutValue?: (value: string, refId?: string) => void;
 }
 
 interface State {
@@ -114,7 +116,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       return;
     }
     this.closePopoverMenu();
-  }
+  };
 
   closePopoverMenu = () => {
     this.setState({
@@ -122,7 +124,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       menuCoordinates: { x: 0, y: 0 },
       selectedRow: null,
     });
-  }
+  };
 
   componentDidMount() {
     // Staged rendering
@@ -135,9 +137,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
-    document.addEventListener('mouseup', this.handleDeselection, {
-      
-    });
+    document.addEventListener('mouseup', this.handleDeselection, {});
   }
 
   componentWillUnmount() {
@@ -178,7 +178,19 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     return (
       <>
-        {this.state.selection && this.state.selectedRow && (<PopoverMenu close={this.closePopoverMenu} row={this.state.selectedRow} selection={this.state.selection} {...this.state.menuCoordinates} onClickFilterLabel={rest.onClickFilterLabel} onClickFilterOutLabel={rest.onClickFilterOutLabel} isFilterLabelActive={rest.isFilterLabelActive} />)}
+        {this.state.selection && this.state.selectedRow && (
+          <PopoverMenu
+            close={this.closePopoverMenu}
+            row={this.state.selectedRow}
+            selection={this.state.selection}
+            {...this.state.menuCoordinates}
+            onClickFilterLabel={rest.onClickFilterLabel}
+            onClickFilterOutLabel={rest.onClickFilterOutLabel}
+            isFilterLabelActive={rest.isFilterLabelActive}
+            onClickFilterValue={rest.onClickFilterValue}
+            onClickFilterOutValue={rest.onClickFilterOutValue}
+          />
+        )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
             {hasData &&
