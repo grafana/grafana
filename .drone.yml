@@ -3378,12 +3378,12 @@ steps:
   image: node:18.12.0-alpine
   name: test-frontend
 trigger:
+  cron:
+    include:
+    - nightly-release
   event:
     include:
-    - promote
-  target:
-    include:
-    - nightly
+    - cron
 type: docker
 volumes:
 - host:
@@ -3453,12 +3453,12 @@ steps:
   image: golang:1.20.10-alpine
   name: test-backend-integration
 trigger:
+  cron:
+    include:
+    - nightly-release
   event:
     include:
-    - promote
-  target:
-    include:
-    - nightly
+    - cron
 type: docker
 volumes:
 - host:
@@ -3559,12 +3559,12 @@ steps:
   image: google/cloud-sdk:alpine
   name: rgm-copy
 trigger:
+  cron:
+    include:
+    - nightly-release
   event:
     include:
-    - promote
-  target:
-    include:
-    - nightly
+    - cron
 type: docker
 volumes:
 - host:
@@ -3705,12 +3705,12 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 trigger:
+  cron:
+    include:
+    - nightly-release
   event:
     include:
-    - promote
-  target:
-    include:
-    - nightly
+    - cron
 type: docker
 volumes:
 - host:
@@ -4658,6 +4658,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9a0506f6007cfb8a323f7e6b13bf738bc604f17a545f32e43a0f720c6a0f32db
+hmac: 6e5f1daf2bccd012d6769f198ad9291b95cdbf459003c51b94a16c06dd338a83
 
 ...

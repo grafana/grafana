@@ -89,12 +89,12 @@ main_trigger = {
 nightly_trigger = {
     "event": {
         "include": [
-            "promote",
+            "cron",
         ],
     },
-    "target": {
+    "cron": {
         "include": [
-            "nightly",
+            "nightly-release",
         ],
     },
 }
