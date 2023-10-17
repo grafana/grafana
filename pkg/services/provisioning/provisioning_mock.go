@@ -2,10 +2,6 @@ package provisioning
 
 import (
 	"context"
-
-	"github.com/grafana/dskit/services"
-
-	"github.com/grafana/grafana/pkg/modules"
 )
 
 type Calls struct {
@@ -21,7 +17,6 @@ type Calls struct {
 }
 
 type ProvisioningServiceMock struct {
-	*services.BasicService
 	Calls                                   *Calls
 	RunInitProvisionersFunc                 func(ctx context.Context) error
 	ProvisionDatasourcesFunc                func(ctx context.Context) error
@@ -37,7 +32,6 @@ func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
 	s := &ProvisioningServiceMock{
 		Calls: &Calls{},
 	}
-	s.BasicService = services.NewBasicService(s.RunInitProvisioners, s.Run, nil).WithName(modules.Provisioning)
 	return s
 }
 
