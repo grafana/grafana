@@ -141,7 +141,9 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
 }

@@ -499,6 +499,10 @@ const (
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
 
+	// FlagTeamHttpHeaders
+	// Enables datasources to apply team headers to the client requests
+	FlagTeamHttpHeaders = "teamHttpHeaders"
+
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins
 	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
@@ -510,4 +514,8 @@ const (
 	// FlagPanelTitleSearchInV1
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
+
+	// FlagPluginsInstrumentationStatusSource
+	// Include a status source label for plugin request metrics and logs
+	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 )

@@ -215,8 +215,7 @@ var (
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
+			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -336,9 +335,10 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "clientTokenRotation",
@@ -863,6 +863,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
+		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
 			Stage:        FeatureStageExperimental,
@@ -882,6 +889,13 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaBackendPlatformSquad,
+		},
+		{
+			Name:         "pluginsInstrumentationStatusSource",
+			Description:  "Include a status source label for plugin request metrics and logs",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )
