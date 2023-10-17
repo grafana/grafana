@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"net"
 
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -71,17 +70,17 @@ var _ core.Driver = (*mssqlProxyDriver)(nil)
 // newMSSQLProxyDriver updates the dialer for a mssql connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new mssql driver to register
 func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, opts *sdkproxy.Options) (*mssqlProxyDriver, error) {
-	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
-	if err != nil {
-		return nil, err
-	}
+	// // // dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
+	// // // if err != nil {
+	// // // 	return nil, err
+	// // // }
 
-	contextDialer, ok := dialer.(proxy.ContextDialer)
-	if !ok {
-		return nil, errors.New("unable to cast socks proxy dialer to context proxy dialer")
-	}
+	// // contextDialer, ok := dialer.(proxy.ContextDialer)
+	// // if !ok {
+	// // 	return nil, errors.New("unable to cast socks proxy dialer to context proxy dialer")
+	// // }
 
-	connector.Dialer = HostTransportDialer{contextDialer, hostName}
+	// connector.Dialer = HostTransportDialer{contextDialer, hostName}
 	return &mssqlProxyDriver{c: connector}, nil
 }
 

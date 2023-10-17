@@ -40,7 +40,7 @@ type PyroscopeDatasource struct {
 
 // NewPyroscopeDatasource creates a new datasource instance.
 func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
-	opt, err := settings.HTTPClientOptions()
+	opt, err := settings.HTTPClientOptions(context.Background())
 	if err != nil {
 		return nil, err
 	}

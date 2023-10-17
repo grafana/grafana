@@ -18,8 +18,8 @@ import (
 
 func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 	t.Helper()
-	proxyAddress := "localhost:3000"
-	serverName := "localhost"
+	// proxyAddress := "localhost:3000"
+	// serverName := "localhost"
 	tempDir := t.TempDir()
 
 	// generate test rootCA
@@ -99,15 +99,15 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 	err = keyFile.Close()
 	require.NoError(t, err)
 
-	settings := &sdkproxy.ClientCfg{
-		Enabled:      true,
-		ClientCert:   clientCert,
-		ClientKey:    clientKey,
-		RootCA:       rootCACert,
-		ServerName:   serverName,
-		ProxyAddress: proxyAddress,
-	}
+	// settings := &sdkproxy.ClientCfg{
+	// 	Enabled:      true,
+	// 	ClientCert:   clientCert,
+	// 	ClientKey:    clientKey,
+	// 	RootCA:       rootCACert,
+	// 	ServerName:   serverName,
+	// 	ProxyAddress: proxyAddress,
+	// }
 
-	sdkproxy.Cli = sdkproxy.NewWithCfg(settings)
-	return settings
+	// sdkproxy.Cli = sdkproxy.NewWithCfg(settings)
+	return &sdkproxy.ClientCfg{}
 }

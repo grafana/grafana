@@ -44,7 +44,7 @@ type DsAccess string
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions()
+		opts, err := settings.HTTPClientOptions(context.Background())
 		if err != nil {
 			return nil, err
 		}

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	mssql "github.com/microsoft/go-mssqldb"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -110,18 +108,18 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			driverName = "azuresql"
 		}
 
-		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
-		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
-			URL, err := ParseURL(dsInfo.URL)
-			if err != nil {
-				return nil, err
-			}
-			driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), proxyOpts)
-			if err != nil {
-				return nil, err
-			}
-		}
+		// // register a new proxy driver if the secure socks proxy is enabled
+		// proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
+		// if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+		// 	URL, err := ParseURL(dsInfo.URL)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	driverName, err = createMSSQLProxyDriver(cnnstr, URL.Hostname(), proxyOpts)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// }
 
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        driverName,

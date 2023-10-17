@@ -33,7 +33,7 @@ type ParcaDatasource struct {
 
 // NewParcaDatasource creates a new datasource instance.
 func NewParcaDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	opt, err := settings.HTTPClientOptions()
+	opt, err := settings.HTTPClientOptions(context.Background())
 	if err != nil {
 		return nil, err
 	}

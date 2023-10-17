@@ -77,7 +77,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
+		httpCliOpts, err := settings.HTTPClientOptions(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}

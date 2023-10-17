@@ -11,14 +11,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 var logger = log.New("tsdb.postgres")
@@ -97,13 +95,13 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 
 		driverName := "postgres"
 		// register a proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
-		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
-			driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
-			if err != nil {
-				return "", nil
-			}
-		}
+		// proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
+		// if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+		// 	driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
+		// 	if err != nil {
+		// 		return "", nil
+		// 	}
+		// }
 
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        driverName,

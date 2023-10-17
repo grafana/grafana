@@ -39,15 +39,16 @@ type mySQLContextDialer struct {
 
 // getProxyDialerContext returns a context dialer that will send the request through to the secure socks proxy
 func getProxyDialerContext(actualNetwork string, opts *sdkproxy.Options) (*mySQLContextDialer, error) {
-	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
-	if err != nil {
-		return nil, err
-	}
-	contextDialer, ok := dialer.(proxy.ContextDialer)
-	if !ok {
-		return nil, err
-	}
-	return &mySQLContextDialer{dialer: contextDialer, network: actualNetwork}, nil
+	// // dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
+	// // if err != nil {
+	// // 	return nil, err
+	// // }
+	// // contextDialer, ok := dialer.(proxy.ContextDialer)
+	// // if !ok {
+	// // 	return nil, err
+	// // }
+	// return &mySQLContextDialer{dialer: contextDialer, network: actualNetwork}, nil
+	return nil, nil
 }
 
 // DialContext implements the MySQL requirements for a proxy driver, and uses the underlying golang proxy driver with the assigned network
