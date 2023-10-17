@@ -65,7 +65,7 @@ export const PopoverMenu = ({
         />
         {keyValueSelection && onClickFilterLabel && (
           <Menu.Item
-            label={isFilterActive ? 'Remove from query' : `Filter for ${keyValueSelection.key}=${keyValueSelection.value}`}
+            label={isFilterActive ? 'Remove from query' : `Filter for ${keyValueSelection.key} = ${keyValueSelection.value}`}
             onClick={() => {
               onClickFilterLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
               close();
@@ -74,7 +74,7 @@ export const PopoverMenu = ({
         )}
         {keyValueSelection && onClickFilterOutLabel && (
           <Menu.Item
-            label={`Filter out ${keyValueSelection.key}!=${keyValueSelection.value}`}
+            label={`Filter out ${keyValueSelection.key} != ${keyValueSelection.value}`}
             onClick={() => {
               onClickFilterOutLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
               close();
