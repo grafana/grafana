@@ -156,8 +156,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
-		clientmiddleware.NewInstrumentationMiddleware(promRegisterer, registry),
-		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
+		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
+		clientmiddleware.NewContextualLoggerMiddleware(),
+		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
@@ -176,6 +177,10 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
+	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		middlewares = append(middlewares, clientmiddleware.NewTeamHTTPHeadersMiddleware())
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())

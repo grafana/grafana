@@ -491,6 +491,22 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
     ],
   },
+  {
+    name: 'Microsoft Teams',
+    description: 'Sends notifications to Microsoft Teams',
+    type: 'msteams',
+    info: '',
+    heading: 'Microsoft Teams settings',
+    options: [
+      option('webhook_url', 'Webhook URL', 'The incoming webhook URL.'),
+      option('title', 'Title', 'Message title template.', {
+        placeholder: '{{ template "teams.default.title" . }}',
+      }),
+      option('text', 'Text', 'Message body template.', {
+        placeholder: '{{ template "teams.default.text" . }}',
+      }),
+    ],
+  },
 ];
 
 export const globalConfigOptions: NotificationChannelOption[] = [

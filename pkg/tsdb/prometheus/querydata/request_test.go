@@ -445,7 +445,7 @@ func setup() (*testContext, error) {
 
 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false}}
 
-	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {
 		return nil, err
 	}
