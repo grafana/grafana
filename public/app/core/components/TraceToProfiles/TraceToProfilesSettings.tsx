@@ -56,10 +56,11 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
   useEffect(() => {
     if (
       dataSource &&
-      dataSource.uid === options.jsonData.tracesToProfiles?.datasourceUid &&
-      supportedDataSourceTypes.includes(dataSource.type)
+      dataSource instanceof PyroscopeDataSource &&
+      supportedDataSourceTypes.includes(dataSource.type) &&
+      dataSource.uid === options.jsonData.tracesToProfiles?.datasourceUid
     ) {
-      (dataSource as PyroscopeDataSource).getProfileTypes().then((profileTypes) => {
+      dataSource.getProfileTypes().then((profileTypes) => {
         setProfileTypes(profileTypes);
       });
     } else {
