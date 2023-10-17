@@ -147,10 +147,6 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
-	// FlagFolderUIDMigration
-	// Enable folder_uid data migration
-	FlagFolderUIDMigration = "folderUIDMigration"
-
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"

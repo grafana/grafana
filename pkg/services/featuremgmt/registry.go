@@ -244,13 +244,6 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:         "folderUIDMigration",
-			Description:  "Enable folder_uid data migration",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendPlatformSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "nestedFolderPicker",
 			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
 			Stage:        FeatureStageGeneralAvailability,
