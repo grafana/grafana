@@ -95,10 +95,6 @@ export function useStateSync(params: ExploreQueryParams) {
 
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
-    if (isURLOutOfSync) {
-      console.log('url out of sunc', params.panes);
-    }
-
     const urlState = parseURL(params);
 
     async function sync() {

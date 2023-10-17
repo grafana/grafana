@@ -13,24 +13,19 @@ import {
 } from '@grafana/data/src';
 import { Field, Input, Themeable2 } from '@grafana/ui/src';
 
+// do we want to import from prom?
 import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
 
 import { LogsTable } from './LogsTable';
 import { LogsTableNavColumn } from './LogsTableNavColumn';
 
-// @todo do we want to import from prom?
-
-interface LogsTableProps {
+interface Props extends Themeable2 {
   logsFrames?: DataFrame[];
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-}
-
-interface Props extends Themeable2 {
-  logsTableProps: LogsTableProps;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
@@ -94,7 +89,7 @@ export const LOKI_TABLE_SPECIAL_FIELDS = ['labels', 'id', 'tsNs', 'Line', 'Time'
 export const ELASTIC_TABLE_SPECIAL_FIELDS = ['@timestamp', 'line'];
 
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
-  const { logsFrames } = props.logsTableProps;
+  const { logsFrames } = props;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(undefined);
 
@@ -207,7 +202,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
 
   const height = getTableHeight(logsFrames);
   const sidebarWidth = 220;
-  const totalWidth = props.logsTableProps.width;
+  const totalWidth = props.width;
   const tableWidth = totalWidth - sidebarWidth;
 
   const styles = getStyles(props.theme, height, sidebarWidth);
@@ -272,10 +267,10 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       <LogsTable
         onClickFilterLabel={props.onClickFilterLabel}
         onClickFilterOutLabel={props.onClickFilterOutLabel}
-        logsSortOrder={props.logsTableProps.logsSortOrder}
-        range={props.logsTableProps.range}
-        splitOpen={props.logsTableProps.splitOpen}
-        timeZone={props.logsTableProps.timeZone}
+        logsSortOrder={props.logsSortOrder}
+        range={props.range}
+        splitOpen={props.splitOpen}
+        timeZone={props.timeZone}
         width={tableWidth}
         logsFrames={logsFrames}
         labelCardinalityState={columnsWithMeta}

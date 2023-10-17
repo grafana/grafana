@@ -23,6 +23,11 @@ function getStyles(theme: GrafanaTheme2) {
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
     }),
+    empty: css({
+      marginBottom: theme.spacing(2),
+      marginLeft: theme.spacing(1.75),
+      fontSize: theme.typography.fontSize,
+    }),
   };
 }
 
@@ -53,5 +58,5 @@ export const LogsTableNavColumn = (props: {
     );
   }
 
-  return <div>No columns</div>;
+  return <div className={styles.empty}>No columns</div>;
 };

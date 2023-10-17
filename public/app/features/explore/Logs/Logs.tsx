@@ -709,14 +709,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logs navigation and padding */}
                 <LogsTableWrap
-                  logsTableProps={{
-                    logsSortOrder: this.state.logsSortOrder,
-                    range: this.props.range,
-                    splitOpen: this.props.splitOpen,
-                    timeZone: timeZone,
-                    width: width - 80,
-                    logsFrames: this.props.logsFrames,
-                  }}
+                  logsSortOrder={this.state.logsSortOrder}
+                  range={this.props.range}
+                  splitOpen={this.props.splitOpen}
+                  timeZone={timeZone}
+                  width={width - 80}
+                  logsFrames={this.props.logsFrames}
                   datasourceType={this.props.datasourceType}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}

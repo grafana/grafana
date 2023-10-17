@@ -70,8 +70,8 @@ describe('LogsTable', () => {
     };
     return (
       <LogsTable
+        height={400}
         labelCardinalityState={{}}
-        sparsityThreshold={100}
         logsSortOrder={LogsSortOrder.Descending}
         splitOpen={() => undefined}
         timeZone={'utc'}
