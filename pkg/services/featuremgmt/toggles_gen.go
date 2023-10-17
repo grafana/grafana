@@ -520,6 +520,6 @@ const (
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 
 	// FlagCostManagementUi
-	// Toggles the display of the new cost management ui plugin
+	// Toggles the display of the cost management ui plugin
 	FlagCostManagementUi = "costManagementUi"
 )

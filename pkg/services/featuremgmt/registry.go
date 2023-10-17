@@ -899,7 +899,7 @@ var (
 		},
 		{
 			Name:         "costManagementUi",
-			Description:  "Toggles the display of the new cost management ui plugin",
+			Description:  "Toggles the display of the cost management ui plugin",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatabasesFrontend,
