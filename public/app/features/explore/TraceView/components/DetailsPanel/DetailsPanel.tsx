@@ -1,18 +1,21 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, TimeZone, TraceLog } from '@grafana/data';
-import { Button, Tab, TabContent, TabsBar, TextArea, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, LinkModel, TimeZone, TraceLog } from '@grafana/data';
+import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { ExploreDrawer } from '../ExploreDrawer';
+import { autoColor, DetailState, TraceSpan } from '..';
+import { ExploreDrawer } from '../../../ExploreDrawer';
+import { getOverviewItems } from '../TraceTimelineViewer/SpanDetail';
+import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
+import TextList from '../TraceTimelineViewer/SpanDetail/TextList';
+import LabeledList from '../common/LabeledList';
+import { TraceSpanReference } from '../types/trace';
+import { ubTxRightAlign } from '../uberUtilityStyles';
 
-import { autoColor, DetailState, TraceSpan } from './components';
-import { getOverviewItems } from './components/TraceTimelineViewer/SpanDetail';
-import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
-import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
-import TextList from './components/TraceTimelineViewer/SpanDetail/TextList';
-import LabeledList from './components/common/LabeledList';
-import { ubTxRightAlign } from './components/uberUtilityStyles';
+import AccordianLogs from './AccordionLogs';
+import AccordianReferences from './AccordionReferences';
+import { StackTraces } from './StackTraces';
 
 type Props = {
   span?: TraceSpan;
@@ -22,6 +25,8 @@ type Props = {
   detailState: DetailState | undefined;
   traceStartTime: number;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
+  detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   setDetailsPanelOffset: (offset: number) => void;
   defaultDetailsPanelHeight: number;
 };
@@ -43,6 +48,8 @@ export function DetailsPanel(props: Props) {
     detailState,
     traceStartTime,
     detailLogItemToggle,
+    detailReferenceItemToggle,
+    createFocusSpanLink,
     setDetailsPanelOffset,
     defaultDetailsPanelHeight,
   } = props;
@@ -57,13 +64,49 @@ export function DetailsPanel(props: Props) {
     return null;
   }
 
-  let { operationName, process, tags, logs, warnings, stackTraces } = span;
-  const { logs: logsState } = detailState;
+  let { operationName, process, tags, logs, warnings, stackTraces, references } = span;
+  const { logs: logsState, references: referencesState } = detailState;
 
   const tabs = [TabLabels.Attributes];
   const tabsCounters: Record<string, number> = {};
   warnings = ['Testing the warning', 'And here is another', 'Two more', 'Last one!'];
   stackTraces = ['Testing the stack traces', 'And here is another', 'Two more', 'Last one!'];
+  references = [
+    {
+      refType: 'CHILD_OF',
+      span: {
+        spanID: 'span1',
+        traceID: 'trace1',
+        operationName: 'op1',
+        process: {
+          serviceName: 'service1',
+          tags: [],
+        },
+      } as unknown as TraceSpan,
+      spanID: 'span1',
+      traceID: 'trace1',
+    },
+    {
+      refType: 'CHILD_OF',
+      span: {
+        spanID: 'span3',
+        traceID: 'trace1',
+        operationName: 'op2',
+        process: {
+          serviceName: 'service2',
+          tags: [],
+        },
+      } as unknown as TraceSpan,
+      spanID: 'span3',
+      traceID: 'trace1',
+    },
+    {
+      refType: 'CHILD_OF',
+      spanID: 'span5',
+      traceID: 'trace2',
+    },
+  ];
+
   if (logs && logs.length > 0) {
     tabs.push(TabLabels.Events);
     tabsCounters[TabLabels.Events] = logs.length;
@@ -76,6 +119,10 @@ export function DetailsPanel(props: Props) {
     tabs.push(TabLabels.StackTraces);
     tabsCounters[TabLabels.StackTraces] = stackTraces.length;
   }
+  if (references && references.length > 0) {
+    tabs.push(TabLabels.References);
+    tabsCounters[TabLabels.References] = references.length;
+  }
 
   const linksGetter = () => [];
 
@@ -87,18 +134,6 @@ export function DetailsPanel(props: Props) {
         height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
       setDetailsPanelOffset(heightVal);
     }
-  };
-
-  const StackTraces = ({ stackTraces }: { stackTraces: string[] }) => {
-    let text;
-    if (stackTraces?.length > 1) {
-      text = stackTraces.map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`).join('\n');
-    } else {
-      text = stackTraces?.[0];
-    }
-    return (
-      <TextArea className={styles.stackTraces} style={{ cursor: 'unset' }} readOnly cols={10} rows={10} value={text} />
-    );
   };
 
   return (
@@ -172,7 +207,6 @@ export function DetailsPanel(props: Props) {
             <AccordianLogs
               linksGetter={linksGetter}
               logs={logs}
-              isOpen={true}
               openedItems={logsState.openedItems}
               onItemToggle={(logItem) => detailLogItemToggle(span.spanID, logItem)}
               timestamp={traceStartTime}
@@ -180,8 +214,14 @@ export function DetailsPanel(props: Props) {
           )}
           {activeTab === TabLabels.Warnings && <TextList data={warnings} />}
           {activeTab === TabLabels.StackTraces && <StackTraces stackTraces={stackTraces ?? []} />}
-          {/*tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
-          {tabsState[4] && tabsState[4].active && <div>References not yet implemented</div>} */}
+          {activeTab === TabLabels.References && (
+            <AccordianReferences
+              data={references}
+              openedItems={referencesState.openedItems}
+              onItemToggle={(reference) => detailReferenceItemToggle(span.spanID, reference)}
+              createFocusSpanLink={createFocusSpanLink}
+            />
+          )}
         </TabContent>
       </ExploreDrawer>
     </div>
@@ -250,9 +290,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   attributeValues: css`
     display: flex;
     flex-direction: column;
-  `,
-  stackTraces: css`
-    word-break: break-all;
-    white-space: pre;
   `,
 });

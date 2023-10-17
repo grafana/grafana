@@ -27,7 +27,6 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
 
-import { DetailsPanel } from './DetailsPanel';
 import {
   SpanBarOptionsData,
   SpanLinkFunc,
@@ -37,6 +36,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from './components';
+import { DetailsPanel } from './components/DetailsPanel/DetailsPanel';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -256,6 +256,8 @@ export function TraceView(props: Props) {
             detailState={detailStates.get(selectedSpan?.spanID ?? '')}
             traceStartTime={traceProp.startTime}
             detailLogItemToggle={detailLogItemToggle}
+            detailReferenceItemToggle={detailReferenceItemToggle}
+            createFocusSpanLink={createFocusSpanLink}
             setDetailsPanelOffset={setDetailsPanelOffset}
             defaultDetailsPanelHeight={defaultDetailsPanelHeight}
           />

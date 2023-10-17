@@ -17,12 +17,12 @@ import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { ubMb1 } from '../../uberUtilityStyles';
+import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -31,9 +31,25 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     AccordianLogs: css`
       label: AccordianLogs;
+      border: 1px solid ${autoColor(theme, '#d8d8d8')};
+      position: relative;
+      margin-bottom: 0.25rem;
+    `,
+    AccordianLogsHeader: css`
+      label: AccordianLogsHeader;
+      background: ${autoColor(theme, '#e4e4e4')};
+      color: inherit;
+      display: block;
+      padding: 0.25rem 0.5rem;
+      &:hover {
+        background: ${autoColor(theme, '#dadada')};
+      }
     `,
     AccordianLogsContent: css`
       label: AccordianLogsContent;
+      background: ${autoColor(theme, '#f0f0f0')};
+      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
+      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
     `,
     AccordianLogsFooter: css`
       label: AccordianLogsFooter;
@@ -54,11 +70,31 @@ export type AccordianLogsProps = {
 };
 
 export default function AccordianLogs(props: AccordianLogsProps) {
-  const { interactive, isOpen, linksGetter, logs, openedItems, onItemToggle, timestamp } = props;
+  const { interactive, isOpen, linksGetter, logs, openedItems, onItemToggle, onToggle, timestamp } = props;
+
+  let arrow: React.ReactNode | null = null;
+  let HeaderComponent: 'span' | 'a' = 'span';
+  let headerProps: {} | null = null;
+  if (interactive) {
+    arrow = isOpen ? (
+      <Icon name={'angle-down'} className={uAlignIcon} />
+    ) : (
+      <Icon name={'angle-right'} className="u-align-icon" />
+    );
+    HeaderComponent = 'a';
+    headerProps = {
+      'aria-checked': isOpen,
+      onClick: onToggle,
+      role: 'switch',
+    };
+  }
 
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.AccordianLogs}>
+      <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
+        {arrow} <strong>Events</strong> ({logs.length})
+      </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>
           {_sortBy(logs, 'timestamp').map((log, i) => (
