@@ -115,7 +115,7 @@ func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.R
 		return err
 	}
 
-	return s.syncOauthTokenHook(ctx, identity, r)
+	return s.syncOAuthTokenHook(ctx, identity, r)
 }
 
 func (s *Session) rotateTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
@@ -155,7 +155,7 @@ func (s *Session) rotateTokenHook(ctx context.Context, identity *authn.Identity,
 	return nil
 }
 
-func (s *Session) syncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *Session) syncOAuthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	if !s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
 		return nil
 	}
@@ -174,6 +174,23 @@ func (s *Session) syncOauthTokenHook(ctx context.Context, identity *authn.Identi
 	token, exists, _ := s.oauthTokenService.HasOAuthEntry(ctx, &user.SignedInUser{UserID: id})
 	// user is not authenticated through oauth so skip further checks
 	if !exists {
+		// if user is not authenticated through oauth we can skip this check by adding the id to the cache
+		s.cache.Set(identity.ID, struct{}{}, maxOAuthTokenCacheTTL)
+		return nil
+	}
+
+	// get the token's auth provider (f.e. azuread)
+	provider := strings.TrimPrefix(token.AuthModule, "oauth_")
+	currentOAuthInfo := s.socialService.GetOAuthInfoProvider(provider)
+	if currentOAuthInfo == nil {
+		s.log.Warn("OAuth provider not found", "provider", provider)
+		return nil
+	}
+
+	// if refresh token handling is disabled for this provider, we can skip the hook
+	if !currentOAuthInfo.UseRefreshToken {
+		// refresh token is not configured for provider so we can skip this check by adding the id to the cache
+		s.cache.Set(identity.ID, struct{}{}, maxOAuthTokenCacheTTL)
 		return nil
 	}
 
@@ -189,19 +206,6 @@ func (s *Session) syncOauthTokenHook(ctx context.Context, identity *authn.Identi
 		return nil
 	}
 
-	// get the token's auth provider (f.e. azuread)
-	provider := strings.TrimPrefix(token.AuthModule, "oauth_")
-	currentOAuthInfo := s.socialService.GetOAuthInfoProvider(provider)
-	if currentOAuthInfo == nil {
-		s.log.Warn("OAuth provider not found", "provider", provider)
-		return nil
-	}
-
-	// if refresh token handling is disabled for this provider, we can skip the hook
-	if !currentOAuthInfo.UseRefreshToken {
-		return nil
-	}
-
 	accessTokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 
 	hasIdTokenExpired := false
@@ -211,6 +215,7 @@ func (s *Session) syncOauthTokenHook(ctx context.Context, identity *authn.Identi
 		idTokenExpires = idTokenExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 		hasIdTokenExpired = idTokenExpires.Before(time.Now())
 	}
+
 	// token has not expired, so we don't have to refresh it
 	if !accessTokenExpires.Before(time.Now()) && !hasIdTokenExpired {
 		// cache the token check, so we don't perform it on every request
