@@ -3386,7 +3386,7 @@
         "tags": [
           "api_keys"
         ],
-        "summary": "Create an API key!!",
+        "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "deprecated": true,
         "parameters": [

@@ -15612,7 +15612,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create an API key!!",
+        "summary": "Creates an API key.",
         "tags": [
           "api_keys"
         ]
