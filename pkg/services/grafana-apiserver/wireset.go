@@ -7,7 +7,6 @@ import (
 )
 
 var WireSet = wire.NewSet(
-	ProvideConfig,
 	ProvideService,
 	wire.Bind(new(RestConfigProvider), new(*service)),
 	wire.Bind(new(Service), new(*service)),

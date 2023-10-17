@@ -20,7 +20,7 @@ type config struct {
 	logLevel int
 }
 
-func ProvideConfig(cfg *setting.Cfg) *config {
+func NewConfig(cfg *setting.Cfg) *config {
 	defaultLogLevel := 0
 	if cfg.Env == setting.Dev {
 		defaultLogLevel = 10

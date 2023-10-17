@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -103,12 +104,12 @@ type service struct {
 }
 
 func ProvideService(
-	cfg *config,
+	cfg *setting.Cfg,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
-		config:     cfg,
+		config:     NewConfig(cfg),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
