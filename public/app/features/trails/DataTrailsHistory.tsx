@@ -80,9 +80,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       opacity: 0.7,
     }),
-    heading: css({
-      paddingRight: theme.spacing(1),
-    }),
+    heading: css({}),
     step: css({
       flexGrow: 0,
       cursor: 'pointer',

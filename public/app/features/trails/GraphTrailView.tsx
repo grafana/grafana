@@ -12,22 +12,20 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
 } from '@grafana/scenes';
-import { ToolbarButton } from '@grafana/ui';
+import { ToolbarButton, Text } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 
-import { ActionViewBreakdown } from './ActionViewBreakdown';
-import { ActionViewLogs } from './ActionViewLogs';
-import { ActionViewRelatedMetrics } from './ActionViewRelatedMetrics';
+import { buildBreakdownActionScene } from './ActionViewBreakdown';
+import { buildLogsScene } from './ActionViewLogs';
+import { buildRelatedMetricsScene } from './ActionViewRelatedMetrics';
+import { getAutoQueriesForMetric } from './AutoQueryEngine';
 import { getTrailFor } from './getUtils';
 import {
   ActionViewDefinition,
-  DataTrailActionView,
   getVariablesWithMetricConstant,
   MakeOptional,
   OpenEmbeddedTrailEvent,
   trailsDS,
-  VAR_FILTERS_EXPR,
-  VAR_METRIC_EXPR,
 } from './shared';
 
 export interface GraphTrailViewState extends SceneObjectState {
@@ -56,7 +54,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
       if (this.state.actionView !== values.actionView) {
         const actionViewDef = actionViewsDefinitions.find((v) => v.value === values.actionView);
         if (actionViewDef) {
-          this.setActionView(actionViewDef?.getScene());
+          this.setActionView(actionViewDef);
         }
       }
     } else if (values.actionView === null) {
@@ -64,38 +62,29 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
     }
   }
 
-  private setActionView(actionView: DataTrailActionView | undefined) {
+  public setActionView(actionViewDef?: ActionViewDefinition) {
     const { body } = this.state;
-    if (actionView) {
+    if (actionViewDef) {
       body.setState({
-        children: [...body.state.children.slice(0, 2), actionView],
+        children: [...body.state.children.slice(0, 3), actionViewDef.getScene()],
       });
-      this.setState({ actionView: actionView.getName() });
+      this.setState({ actionView: actionViewDef.value });
     } else {
-      body.setState({ children: body.state.children.slice(0, 2) });
+      body.setState({ children: body.state.children.slice(0, 3) });
       this.setState({ actionView: undefined });
-    }
-  }
-
-  public toggleActionView(actionViewDef: ActionViewDefinition) {
-    if (this.state.actionView === actionViewDef.value) {
-      this.setActionView(undefined);
-    } else {
-      this.setActionView(actionViewDef.getScene());
     }
   }
 
   static Component = ({ model }: SceneComponentProps<GraphTrailView>) => {
     const { body } = model.useState();
-
     return <body.Component model={body} />;
   };
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
-  { displayName: 'Breakdown', value: 'breakdown', getScene: () => new ActionViewBreakdown({}) },
-  { displayName: 'Logs', value: 'logs', getScene: () => new ActionViewLogs({}) },
-  { displayName: 'Related metrics', value: 'related', getScene: () => new ActionViewRelatedMetrics({}) },
+  { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
+  { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
+  { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
 ];
 
 export interface MetricActionBarState extends SceneObjectState {}
@@ -121,7 +110,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton
               key={viewDef.value}
               variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => graphView.toggleActionView(viewDef)}
+              onClick={() => graphView.setActionView(viewDef)}
             >
               {viewDef.displayName}
             </ToolbarButton>
@@ -154,13 +143,8 @@ function getGraphViewFor(model: SceneObject): GraphTrailView {
 }
 
 function buildGraphScene(metric: string) {
-  let unit = 'short';
-  let agg = 'sum';
-
-  if (metric.endsWith('seconds_sum')) {
-    unit = 's';
-    agg = 'avg';
-  }
+  const queries = getAutoQueriesForMetric(metric);
+  const top = queries[0];
 
   return new SceneFlexLayout({
     direction: 'column',
@@ -169,22 +153,21 @@ function buildGraphScene(metric: string) {
         minHeight: 300,
         maxHeight: 400,
         body: PanelBuilders.timeseries()
-          .setTitle(metric)
-          .setUnit(unit)
+          .setTitle(top.title)
+          .setUnit(top.unit)
           .setOption('legend', { showLegend: false })
           .setCustomFieldConfig('fillOpacity', 9)
           .setData(
             new SceneQueryRunner({
               datasource: trailsDS,
-              queries: [
-                {
-                  refId: 'A',
-                  expr: `${agg}(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
-                },
-              ],
+              queries: [top.query],
             })
           )
           .build(),
+      }),
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: new QueryDebugView({ query: top.query.expr }),
       }),
       new SceneFlexItem({
         ySizing: 'content',
@@ -192,4 +175,21 @@ function buildGraphScene(metric: string) {
       }),
     ],
   });
+}
+
+export interface QueryDebugViewState extends SceneObjectState {
+  query: string;
+}
+
+export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
+  public static Component = ({ model }: SceneComponentProps<QueryDebugView>) => {
+    const trail = getTrailFor(model);
+    const { debug } = trail.useState();
+
+    if (!debug) {
+      return null;
+    }
+
+    return <div className="small">sceneGraph.interpolate(model, model.state.query)</div>;
+  };
 }

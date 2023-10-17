@@ -20,7 +20,7 @@ import {
   SceneVariableValueChangedEvent,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { GraphTrailView } from './GraphTrailView';
@@ -32,12 +32,11 @@ export interface DataTrailState extends SceneObjectState {
   embedded?: boolean;
   filters?: AdHocVariableFilter[];
   mainScene?: SceneObject;
-  actionScene?: SceneObject;
   controls: SceneObject[];
   history: DataTrailHistory;
+  debug?: boolean;
 
   // Sycned with url
-  actionView?: string;
   metric?: string;
 }
 
@@ -97,9 +96,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     this.setState(step.trailState);
 
-    if (!this.state.embedded) {
-      getUrlSyncManager().initSync(this);
-    }
+    // if (!this.state.embedded) {
+    //   getUrlSyncManager().initSync(this);
+    // }
   }
 
   private _handleSceneObjectStateChanged(evt: SceneObjectStateChangedEvent) {
@@ -124,7 +123,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric, actionView: this.state.actionView };
+    return { metric: this.state.metric };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -157,8 +156,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
   }
 
+  public onToggleDebug = () => {
+    this.setState({ debug: !this.state.debug });
+  };
+
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene: activeScene, actionScene, history } = model.useState();
+    const { controls, topScene, history, debug } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -169,11 +172,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <ToolbarButton icon="bug" onClick={model.onToggleDebug} variant={debug ? 'active' : 'canvas'} />
           </div>
         )}
         <div className={styles.body}>
-          <activeScene.Component model={activeScene} />
-          {actionScene && <actionScene.Component model={actionScene} />}
+          <topScene.Component model={topScene} />
         </div>
       </div>
     );

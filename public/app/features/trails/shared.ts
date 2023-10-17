@@ -1,17 +1,13 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
-import { ConstantVariable, SceneObject, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
+import { ConstantVariable, SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
 export const trailsDS = { uid: 'gdev-prometheus', type: 'prometheus' };
 
-export interface DataTrailActionView<T extends SceneObjectState = SceneObjectState> extends SceneObject<T> {
-  getName(): string;
-}
-
 export interface ActionViewDefinition {
   displayName: string;
   value: string;
-  getScene: () => DataTrailActionView;
+  getScene: () => SceneObject;
 }
 
 export const VAR_METRIC_NAMES = 'metricNames';

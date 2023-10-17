@@ -20,12 +20,12 @@ import { VariableHide } from '@grafana/schema';
 import { Button, Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
+import { getAutoQueriesForMetric } from './AutoQueryEngine';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
   trailsDS,
   VAR_FILTERS,
-  VAR_FILTERS_EXPR,
   VAR_METRIC_EXPR,
   VAR_METRIC_NAMES,
 } from './shared';
@@ -118,7 +118,6 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
     const { showHeading, searchQuery } = model.useState();
     const styles = useStyles2(getStyles);
 
-    console.log('showHadin', showHeading);
     return (
       <Flex direction="column">
         {showHeading && <Text variant="h4">Select a metric</Text>}
@@ -149,17 +148,19 @@ function getMetricNamesVariableSet() {
 }
 
 function getPanelForMetric(metric: string) {
+  const queries = getAutoQueriesForMetric(metric);
+  const topQuery = queries[0];
+
   return PanelBuilders.timeseries()
-    .setTitle('$metric')
+    .setTitle(topQuery.title)
     .setData(
       new SceneQueryRunner({
         datasource: trailsDS,
         maxDataPoints: 300,
-        queries: [
-          { expr: `sum(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`, range: true, refId: 'A' },
-        ],
+        queries: [topQuery.query],
       })
     )
+    .setUnit(topQuery.unit)
     .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9)
     .setHeaderActions(new SelectMetricAction({}))
