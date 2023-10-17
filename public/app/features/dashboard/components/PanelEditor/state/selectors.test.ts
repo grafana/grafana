@@ -65,7 +65,7 @@ describe('getPanelEditorTabs selector', () => {
             id: 'table',
           },
         } as PanelPlugin);
-        expect(tabs.length).toEqual(2);
+        expect(tabs.length).toEqual(3);
         expect(tabs[1].id).toEqual(PanelEditorTabId.Transform);
       });
     });
