@@ -368,7 +368,7 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 		for _, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
 			for _, header := range headers {
 				for _, name := range list.Items {
-					if header.Header == name {
+					if http.CanonicalHeaderKey(header.Header) == http.CanonicalHeaderKey(name) {
 						datasourcesLogger.Error("Cannot add a data source team header with a used by our proxy header", "headerName", header.Header)
 						return errors.New("validation error, invalid header name specified")
 					}
