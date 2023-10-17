@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestProvideConfig(t *testing.T) {
+func TestNewConfig(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Env = setting.Dev
 	cfg.DataPath = "/tmp/grafana"
