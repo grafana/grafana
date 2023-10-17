@@ -55,7 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowX: 'auto',
     overflowY: 'hidden',
     whiteSpace: 'nowrap',
-    // maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),
