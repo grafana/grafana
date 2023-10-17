@@ -199,10 +199,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.templateSrv.getVariables();
   }
 
-  modifyQuery(
-    query: AzureMonitorQuery,
-    action: QueryFixAction
-  ): AzureMonitorQuery {
+  modifyQuery(query: AzureMonitorQuery, action: QueryFixAction): AzureMonitorQuery {
     if (!action.options) {
       return query;
     }
