@@ -23,7 +23,7 @@ import {
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
-// import { StatusHistoryTooltip } from './StatusHistoryTooltip';
+import { StatusHistoryTooltip } from './StatusHistoryTooltip';
 import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
@@ -225,21 +225,31 @@ export const StatusHistoryPanel = ({
       }} */}
       {/* {props.options.tooltip.mode !== TooltipDisplayMode.None && ( */}
       {(config, alignedFrame) => (
-        <TooltipPlugin2
-          config={config}
-          render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
-            return (
-              <StatusHistoryTooltip2
-                data={frames ?? []}
-                dataIdxs={dataIdxs}
-                alignedData={alignedFrame}
-                seriesIdx={seriesIdx}
-                // datapointIdx={datapointIdx}
-                timeZone={timeZone}
-              />
-            );
-          }}
-        />
+        <>
+          <ZoomPlugin
+            config={config}
+            onZoom={({ from, to }) => {
+              onChangeTimeRange({ from, to });
+            }}
+          />
+          <TooltipPlugin2
+            config={config}
+            render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+              return (
+                <StatusHistoryTooltip2
+                  data={frames ?? []}
+                  dataIdxs={dataIdxs}
+                  alignedData={alignedFrame}
+                  seriesIdx={seriesIdx}
+                  // datapointIdx={datapointIdx}
+                  timeZone={timeZone}
+                  isPinned={isPinned}
+                />
+              );
+            }}
+          />
+          {/* <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} /> */}
+        </>
       )}
       {/* )} */}
     </TimelineChart>

@@ -16,7 +16,7 @@ import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
@@ -28,6 +28,7 @@ interface StatusHistoryTooltipProps {
   seriesIdx: number | null | undefined;
   // datapointIdx: number;
   timeZone: TimeZone;
+  isPinned: boolean;
 }
 
 function fmt(field: Field, val: number): string {
@@ -45,8 +46,8 @@ export const StatusHistoryTooltip2 = ({
   seriesIdx,
   // datapointIdx,
   timeZone,
+  isPinned,
 }: StatusHistoryTooltipProps) => {
-  console.log({ data, dataIdxs, alignedData, seriesIdx, timeZone });
   const styles = useStyles2(getStyles);
 
   // check other dataIdx, it can be undefined or null in array
@@ -77,58 +78,54 @@ export const StatusHistoryTooltip2 = ({
   }
 
   const xField = alignedData.fields[0];
-  console.log(xField);
   // const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
   // const xFieldFmt = xField.display;
-  const xFieldFmt = xField.display || getDisplayProcessor();
+  // const xFieldFmt = xField.display || getDisplayProcessor();
 
-  const dataFrameFieldIndex = field.state?.origin;
+  // const dataFrameFieldIndex = field.state?.origin;
   // const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
   const fieldFmt = field.display || getDisplayProcessor();
   // const fieldFmt = field.display;
   const value = field.values[datapointIdx!];
   const display = fieldFmt(value);
 
-  const fieldDisplayName = dataFrameFieldIndex
-    ? getFieldDisplayName(
-        data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex],
-        data[dataFrameFieldIndex.frameIndex],
-        data
-      )
-    : '';
+  // const fieldDisplayName = dataFrameFieldIndex
+  //   ? getFieldDisplayName(
+  //       data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex],
+  //       data[dataFrameFieldIndex.frameIndex],
+  //       data
+  //     )
+  //   : '';
 
   const getHeaderLabel = (): LabelValue => {
     return {
-      // label: getFieldDisplayName(xField, frame),
-      label: xField.name,
-      value: fmt(xField, xField.values[datapointIdx]),
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      // color: series.pointColor(frame) as string,
+      // label: fieldDisplayName,
+      label: getFieldDisplayName(field),
+      // value: display.text,
+      value: fmt(field, field.values[datapointIdx]),
+      color: display.color || (FALLBACK_COLOR as string),
     };
   };
 
-  const getLabelValue = (): LabelValue[] => {
+  const getContentLabelValue = (): LabelValue[] => {
     return [
       {
-        label: fieldDisplayName,
-        value: display.text,
+        // label: getFieldDisplayName(xField, frame),
+        // label: xField.name,
+        label: 'Time',
+        value: fmt(xField, xField.values[datapointIdx]),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        color: display.color || (FALLBACK_COLOR as string),
+        // color: series.pointColor(frame) as string,
+        // color: display.color || (FALLBACK_COLOR as string),
       },
     ];
   };
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} keyValuePairs={getLabelValue()} />
-      {/* 
-      <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-        <strong>{xFieldFmt(xField.values[datapointIdx]).text}</strong>
-        <br />
-        <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-        {fieldDisplayName}
-      </div>
-       */}
+      <VizTooltipHeader headerLabel={getHeaderLabel()} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} />
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
     </div>
   );
 };
