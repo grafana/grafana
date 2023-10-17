@@ -265,7 +265,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasToggleableQueryFiltersSupport(ds)) {
+      const toggleableFilters = ['ADD_FILTER', 'ADD_FILTER_OUT'];
+      if (hasToggleableQueryFiltersSupport(ds) && toggleableFilters.includes(modification.type)) {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
