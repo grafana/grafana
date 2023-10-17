@@ -11,8 +11,9 @@ import {
   SceneQueryRunner,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  sceneGraph,
 } from '@grafana/scenes';
-import { ToolbarButton, Text } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 
 import { buildBreakdownActionScene } from './ActionViewBreakdown';
@@ -64,7 +65,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
 
   public setActionView(actionViewDef?: ActionViewDefinition) {
     const { body } = this.state;
-    if (actionViewDef) {
+    if (actionViewDef && actionViewDef.value !== this.state.actionView) {
       body.setState({
         children: [...body.state.children.slice(0, 3), actionViewDef.getScene()],
       });
@@ -150,7 +151,7 @@ function buildGraphScene(metric: string) {
     direction: 'column',
     children: [
       new SceneFlexItem({
-        minHeight: 300,
+        minHeight: 250,
         maxHeight: 400,
         body: PanelBuilders.timeseries()
           .setTitle(top.title)
@@ -190,6 +191,6 @@ export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
       return null;
     }
 
-    return <div className="small">sceneGraph.interpolate(model, model.state.query)</div>;
+    return <div className="small">{sceneGraph.interpolate(model, model.state.query)}</div>;
   };
 }

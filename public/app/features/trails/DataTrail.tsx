@@ -197,10 +197,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-
-      '> div:first-child': {
-        flexGrow: 0,
-      },
     }),
     controls: css({
       display: 'flex',
