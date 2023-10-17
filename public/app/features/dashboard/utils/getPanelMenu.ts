@@ -217,20 +217,6 @@ export function getPanelMenu(
     locationService.push(ruleFormUrl);
   };
 
-  const navigateToAlertListView = async () => {
-    const alertListUrl = urlUtil.renderUrl('/alerting/list', {
-      returnTo: location.pathname + location.search,
-    });
-
-    locationService.push(alertListUrl);
-  };
-
-  const onNavigateToAlertListView = (event: React.MouseEvent) => {
-    event.preventDefault();
-    navigateToAlertListView();
-    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
-  };
-
   const onCreateAlert = (event: React.MouseEvent) => {
     event.preventDefault();
     createAlert();
@@ -283,6 +269,13 @@ export function getPanelMenu(
     }
   }
 
+  if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
+    subMenu.push({
+      text: t('panel.header-menu.create-alert', `Create alert`),
+      onClick: (e: React.MouseEvent) => onCreateAlert(e),
+    });
+  }
+
   // add old angular panel options
   if (angularComponent) {
     const scope = angularComponent.getScope();
@@ -319,39 +312,6 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
-  }
-
-  if (isAlertingAvailableForRead) {
-    // prepare Alerting submenu depending on permissions
-    const alertingSubMenu: PanelMenuItem[] = [];
-    if (hasRuleUpdatePermissions) {
-      alertingSubMenu.push({
-        text: t('panel.header-menu.create-alert', `Create alert`),
-        onClick: (e: React.MouseEvent) => onCreateAlert(e),
-      });
-    }
-    alertingSubMenu.push({
-      text: t('panel.header-menu.view-alerts', `View all alert rules`),
-      onClick: (e: React.MouseEvent) => onNavigateToAlertListView(e),
-    });
-
-    subMenu.push({
-      type: 'submenu',
-      text: t('panel.header-menu.alerting', `Alerting`),
-      onClick: (e: React.MouseEvent<HTMLElement>) => {
-        const currentTarget = e.currentTarget;
-        const target = e.target;
-
-        if (
-          target === currentTarget ||
-          (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
-        ) {
-          onInspectPanel();
-        }
-      },
-      shortcut: 'a',
-      subMenu: alertingSubMenu,
-    });
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {

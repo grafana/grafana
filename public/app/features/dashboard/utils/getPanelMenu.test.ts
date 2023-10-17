@@ -625,7 +625,7 @@ describe('getPanelMenu()', () => {
     });
   });
   describe('Alerting menu', () => {
-    it('should render alerting Menu with correct sub menu if user has permissions to read and update alerts ', () => {
+    it('should render Create alert menu item if user has permissions to read and update alerts ', () => {
       const panel = new PanelModel({});
 
       const dashboard = createDashboardModelFixture({});
@@ -633,13 +633,9 @@ describe('getPanelMenu()', () => {
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
       const menuItems = getPanelMenu(dashboard, panel);
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
-      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
 
-      expect(alertingSubMenu).toEqual(
+      expect(moreSubMenu).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({
-            text: 'View all alert rules',
-          }),
           expect.objectContaining({
             text: 'Create alert',
           }),
@@ -647,7 +643,7 @@ describe('getPanelMenu()', () => {
       );
     });
 
-    it('should not render create alert submenu item in the Alerting subMenu, if user does not have permissions to update alerts ', () => {
+    it('should not render Create alert menu item, if user does not have permissions to update alerts ', () => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
 
@@ -657,20 +653,16 @@ describe('getPanelMenu()', () => {
       const menuItems = getPanelMenu(dashboard, panel);
 
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
-      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
 
-      expect(alertingSubMenu).toEqual(
+      expect(moreSubMenu).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({
-            text: 'View all alert rules',
-          }),
           expect.not.objectContaining({
             text: 'Create alert',
           }),
         ])
       );
     });
-    it('should not render Alerting in menu, if user does not have permissions to read update alerts ', () => {
+    it('should not render Create alert menu item, if user does not have permissions to read update alerts ', () => {
       const panel = new PanelModel({});
 
       const dashboard = createDashboardModelFixture({});
@@ -680,9 +672,9 @@ describe('getPanelMenu()', () => {
       const menuItems = getPanelMenu(dashboard, panel);
 
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
-      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
+      const createAlertOption = moreSubMenu?.find((i) => i.text === 'Create alert')?.subMenu;
 
-      expect(alertingSubMenu).toBeUndefined();
+      expect(createAlertOption).toBeUndefined();
     });
   });
 });
