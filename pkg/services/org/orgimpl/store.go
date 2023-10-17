@@ -244,6 +244,8 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM team WHERE org_id = ?",
 			"DELETE FROM team_member WHERE org_id = ?",
 			"DELETE FROM team_role WHERE org_id = ?",
+			"DELETE FROM user_role WHERE org_id = ?",
+			"DELETE FROM builtin_role WHERE org_id = ?",
 		}
 
 		// Add registered deletes
