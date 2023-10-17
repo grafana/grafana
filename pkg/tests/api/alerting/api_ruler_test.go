@@ -42,6 +42,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -63,7 +64,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
 	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder2", "folder2")
+	apiClient.CreateFolder(t, "folder2", "folder2", "folder1")
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
 	require.NoError(t, err)
@@ -108,7 +109,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				"/folder1": []apimodels.GettableRuleGroupConfig{
 					group1,
 				},
-				"/folder2": []apimodels.GettableRuleGroupConfig{
+				"folder1/folder2": []apimodels.GettableRuleGroupConfig{
 					group2,
 				},
 			}
@@ -138,8 +139,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
 			}
-			for _, rule := range allRules["/folder2"][0].Rules {
-				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
+			for _, rule := range allRules["folder1/folder2"][0].Rules {
+				assert.Equal(t, "folder1/folder2", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
 			}
 		})
@@ -240,15 +241,15 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	t.Run("when permissions for folder2 removed", func(t *testing.T) {
-		// remove permissions from folder2
-		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
+		// reload permissions for folder1 (folder2 leaves under folder1 and inherite its permissions)
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 		apiClient.ReloadCachedPermissions(t)
 
 		t.Run("Get all returns all rules", func(t *testing.T) {
 			newAll, status, _ := apiClient.GetAllRulesWithStatus(t)
 			require.Equal(t, http.StatusOK, status)
-			require.NotContains(t, newAll, "/folder2")
-			require.Contains(t, newAll, "/folder1")
+			require.NotContains(t, newAll, "/folder1")
+			require.Contains(t, newAll, "folder1/folder2")
 		})
 
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
