@@ -28,7 +28,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
 
-  const styles = useStyles2(getStyles, level, showExpandButton);
+  const styles = useStyles2(getStyles);
 
   return (
     <li>
@@ -100,7 +100,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, level: Props['level'], showExpandButton: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
