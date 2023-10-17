@@ -63,7 +63,7 @@ describe('LogsTable', () => {
           typeInfo: {
             frame: 'json.RawMessage',
           },
-          values: ['{"foo":"bar"}', '{"foo":"bar"}', '{"foo":"bar"}'],
+          values: [{ foo: 'bar' }, { foo: 'bar' }, { foo: 'bar' }],
         },
       ],
       length: 3,
@@ -87,7 +87,15 @@ describe('LogsTable', () => {
     );
   };
   const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: DataFrame) => {
-    return render(getComponent(partialProps, logs));
+    return render(
+      getComponent(
+        {
+          datasourceType: 'loki',
+          ...partialProps,
+        },
+        logs
+      )
+    );
   };
 
   let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
@@ -121,8 +129,27 @@ describe('LogsTable', () => {
     });
   });
 
-  it('should render extracted labels as columns', async () => {
-    setup();
+  it('should render extracted labels as columns (elastic)', async () => {
+    setup({
+      datasourceType: 'elastic',
+    });
+
+    await waitFor(() => {
+      const columns = screen.getAllByRole('columnheader');
+
+      expect(columns[0].textContent).toContain('Time');
+      expect(columns[1].textContent).toContain('line');
+      expect(columns[2].textContent).toContain('labels');
+    });
+  });
+
+  it('should render extracted labels as columns (loki)', async () => {
+    setup({
+      datasourceType: 'loki',
+      labelCardinalityState: {
+        foo: { active: true, count: 3 },
+      },
+    });
 
     await waitFor(() => {
       const columns = screen.getAllByRole('columnheader');
@@ -138,6 +165,16 @@ describe('LogsTable', () => {
 
     await waitFor(() => {
       const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
+
+      expect(columns.length).toBe(0);
+    });
+  });
+
+  it('should not render `labels`', async () => {
+    setup();
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
 
       expect(columns.length).toBe(0);
     });
