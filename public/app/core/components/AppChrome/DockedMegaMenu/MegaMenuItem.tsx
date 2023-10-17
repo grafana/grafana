@@ -31,7 +31,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <li>
+    <li className={styles.listItem}>
       <div className={styles.menuItem}>
         {level !== 0 && <Indent level={level === 1 ? 1.2 : 1.7} spacing={3} />}
         <div
@@ -65,13 +65,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
                 [styles.hasActiveChild]: hasActiveChild,
               })}
             >
-              {/* This div is needed in order to ensure the text is placed in grid column 2
-              TODO: Can we do this any better? */}
-              {/*<div className={styles.iconWrapper}>*/}
               <FeatureHighlightWrapper>
                 <>{level === 0 && link.icon && <Icon name={toIconName(link.icon) ?? 'link'} size="lg" />}</>
               </FeatureHighlightWrapper>
-              {/*</div>*/}
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
@@ -101,6 +97,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  listItem: css({
+    flex: 1,
+    maxWidth: '100%',
+  }),
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
@@ -111,6 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     width: theme.spacing(3),
+    flexShrink: 0,
   }),
   itemConnector: css({
     '&::before': {
@@ -126,6 +127,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleSectionWrapper: css({
     alignItems: 'center',
     display: 'flex',
+    minWidth: 0,
   }),
   labelWrapper: css({
     display: 'flex',
@@ -134,6 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     fontWeight: theme.typography.fontWeightMedium,
     paddingLeft: theme.spacing(1),
+    minWidth: 0,
   }),
   isActive: css({
     color: theme.colors.text.primary,
