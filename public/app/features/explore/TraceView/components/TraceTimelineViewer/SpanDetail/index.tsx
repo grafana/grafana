@@ -17,7 +17,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
@@ -241,41 +241,46 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   const styles = useStyles2(getStyles);
 
-  let logLinkButton: JSX.Element | undefined = undefined;
-  if (createSpanLink) {
-    const links = createSpanLink(span);
-    const logLinks = links?.filter((link) => link.type === SpanLinkType.Logs);
-    if (links && logLinks && logLinks.length > 0) {
-      logLinkButton = (
-        <DataLinkButton
-          link={{
-            ...logLinks[0],
-            title: 'Logs for this span',
-            target: '_blank',
-            origin: logLinks[0].field,
-            onClick: (event: React.MouseEvent) => {
-              // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-              // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-              // this interaction will not be tracked with link right clicks
-              reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-                datasourceType: datasourceType,
-                grafana_version: config.buildInfo.version,
-                type: 'log',
-                location: 'spanDetails',
-              });
+  const createLinkButton = (type: SpanLinkType, title: string, icon: IconName) => {
+    if (createSpanLink) {
+      const links = createSpanLink(span);
+      const link = links?.filter((link) => link.type === type);
+      if (links && link && link.length > 0) {
+        return (
+          <DataLinkButton
+            link={{
+              ...link[0],
+              title: title,
+              target: '_blank',
+              origin: link[0].field,
+              onClick: (event: React.MouseEvent) => {
+                // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+                // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+                // this interaction will not be tracked with link right clicks
+                reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                  datasourceType: datasourceType,
+                  grafana_version: config.buildInfo.version,
+                  type,
+                  location: 'spanDetails',
+                });
 
-              if (logLinks?.[0].onClick) {
-                logLinks?.[0].onClick?.(event);
-              } else {
-                locationService.push(logLinks?.[0].href);
-              }
-            },
-          }}
-          buttonProps={{ icon: 'gf-logs' }}
-        />
-      );
+                if (link?.[0].onClick) {
+                  link?.[0].onClick?.(event);
+                } else {
+                  locationService.push(link?.[0].href);
+                }
+              },
+            }}
+            buttonProps={{ icon }}
+          />
+        );
+      }
     }
-  }
+    return null;
+  };
+
+  let logLinkButton = createLinkButton(SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
+  let profileLinkButton = createLinkButton(SpanLinkType.Profiles, 'Profiles for this span', 'link');
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
@@ -287,6 +292,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       {logLinkButton}
+      {profileLinkButton}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>
         <div>
