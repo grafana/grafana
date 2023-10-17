@@ -35,7 +35,7 @@ export function QuerySuggestionItem(props: Props) {
     <>
       <div className={styles.querySuggestion}>
         <div title={query} className={cx(styles.codeText, styles.longCode)}>
-          {`${order}  ${query}`}
+          {`${order}.  ${query}`}
         </div>
         <div className={styles.useButton}>
           <Button
@@ -66,7 +66,7 @@ export function QuerySuggestionItem(props: Props) {
         >
           Explainer
         </Button>
-        {historical && !showExp && order !== 5 && <div className={styles.textPadding}></div>}
+        {!showExp && order !== 5 && <div className={styles.textPadding}></div>}
 
         {showExp && !querySuggestion.explanation && (
           <div className={styles.center}>
