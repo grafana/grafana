@@ -64,23 +64,6 @@ trigger = {
 }
 
 def main_pipelines():
-    drone_change_trigger = {
-        "event": [
-            "push",
-        ],
-        "branch": "main",
-        "repo": [
-            "grafana/grafana",
-        ],
-        "paths": {
-            "include": [
-                ".drone.yml",
-            ],
-            "exclude": [
-                "exclude",
-            ],
-        },
-    }
 
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
