@@ -9,31 +9,35 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-// GroupName is the group name for this API.
-const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service playlist.Service
+	service    playlist.Service
+	namespacer namespaceMapper
 }
 
-func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+func RegisterAPIService(p playlist.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
+) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
-		service: p,
+		service:    p,
+		namespacer: getNamespaceMapper(cfg),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
+	return SchemeGroupVersion
 }
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -52,7 +56,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	legacyStore := newLegacyStorage(b.service)
+	legacyStore := &legacyStorage{
+		service:    b.service,
+		namespacer: b.namespacer,
+	}
 	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
@@ -72,9 +79,8 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 	return getOpenAPIDefinitions
 }
 
-// Register additional routes with the server
-func (b *PlaylistAPIBuilder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	return nil
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	return nil // no custom API routes
 }
 
 // SchemeGroupVersion is group version used to register these objects

@@ -17,7 +17,7 @@ export function LabelParamEditor({
   datasource,
 }: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
-    options?: Array<SelectableValue<any>>;
+    options?: SelectableValue[];
     isLoading?: boolean;
   }>({});
 
@@ -42,10 +42,7 @@ export function LabelParamEditor({
   );
 }
 
-async function loadGroupByLabels(
-  query: PromVisualQuery,
-  datasource: DataSourceApi
-): Promise<Array<SelectableValue<any>>> {
+async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceApi): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   // This function is used by both Prometheus and Loki and this the only difference.

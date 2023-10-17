@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ElementType } from 'react';
+import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
@@ -14,7 +14,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps {
+interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -68,34 +68,36 @@ interface BoxProps {
   element?: ElementType;
 }
 
-export const Box = ({
-  children,
-  margin,
-  marginX,
-  marginY,
-  marginTop,
-  marginBottom,
-  marginLeft,
-  marginRight,
-  padding,
-  paddingX,
-  paddingY,
-  paddingTop,
-  paddingBottom,
-  paddingLeft,
-  paddingRight,
-  display,
-  backgroundColor,
-  grow,
-  shrink,
-  borderColor,
-  borderStyle,
-  borderRadius,
-  justifyContent,
-  alignItems,
-  boxShadow,
-  element,
-}: React.PropsWithChildren<BoxProps>) => {
+export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
+  const {
+    children,
+    margin,
+    marginX,
+    marginY,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    padding,
+    paddingX,
+    paddingY,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    display,
+    backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
+    boxShadow,
+    element,
+    ...rest
+  } = props;
   const styles = useStyles2(
     getStyles,
     margin,
@@ -125,8 +127,12 @@ export const Box = ({
   );
   const Element = element ?? 'div';
 
-  return <Element className={styles.root}>{children}</Element>;
-};
+  return (
+    <Element ref={ref} className={styles.root} {...rest}>
+      {children}
+    </Element>
+  );
+});
 
 Box.displayName = 'Box';
 

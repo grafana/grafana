@@ -4,7 +4,8 @@ import React, { useCallback } from 'react';
 import { FieldConfigEditorBuilder, FieldConfigEditorProps } from '@grafana/data';
 import { HideableFieldConfig, HideSeriesConfig } from '@grafana/schema';
 
-import { FilterPill, HorizontalGroup } from '../../index';
+import { FilterPill } from '../../components/FilterPill/FilterPill';
+import { HorizontalGroup } from '../../components/Layout/Layout';
 
 const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeriesConfig, {}>) => {
   const onChangeToggle = useCallback(

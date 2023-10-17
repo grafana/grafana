@@ -8,7 +8,6 @@
       "interval": "10s",
       "rules": [
         {
-          "uid": "",
           "title": "prom query with SSE - 2",
           "condition": "condition",
           "data": [
@@ -69,7 +68,6 @@
           "isPaused": false
         },
         {
-          "uid": "",
           "title": "reduced testdata query - 2",
           "condition": "B",
           "data": [
