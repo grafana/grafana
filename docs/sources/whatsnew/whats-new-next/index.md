@@ -86,6 +86,8 @@ Previously, permissions were granted based on predefined sets of capabilities. N
 
 For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
+Note: To assign no basic role in the Grafana Cloud Stack Administration section. Ask support to enable `skip_org_role_sync` if users want to change their basic roles that are synced via GCom.
+
 ## Content outline
 
 <!-- Thanos Karachalios -->
