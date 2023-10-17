@@ -632,7 +632,8 @@ describe('getPanelMenu()', () => {
       config.unifiedAlertingEnabled = true;
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
       const menuItems = getPanelMenu(dashboard, panel);
-      const alertingSubMenu = menuItems.find((i) => i.text === 'Alerting')?.subMenu;
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
 
       expect(alertingSubMenu).toEqual(
         expect.arrayContaining([
@@ -640,7 +641,7 @@ describe('getPanelMenu()', () => {
             text: 'View all alert rules',
           }),
           expect.objectContaining({
-            text: 'Create alert rule from this panel',
+            text: 'Create alert',
           }),
         ])
       );
@@ -655,7 +656,8 @@ describe('getPanelMenu()', () => {
 
       const menuItems = getPanelMenu(dashboard, panel);
 
-      const alertingSubMenu = menuItems.find((i) => i.text === 'Alerting')?.subMenu;
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
 
       expect(alertingSubMenu).toEqual(
         expect.arrayContaining([
@@ -663,7 +665,7 @@ describe('getPanelMenu()', () => {
             text: 'View all alert rules',
           }),
           expect.not.objectContaining({
-            text: 'Create alert rule from this panel',
+            text: 'Create alert',
           }),
         ])
       );
@@ -677,7 +679,8 @@ describe('getPanelMenu()', () => {
 
       const menuItems = getPanelMenu(dashboard, panel);
 
-      const alertingSubMenu = menuItems.find((i) => i.text === 'Alerting')?.subMenu;
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const alertingSubMenu = moreSubMenu?.find((i) => i.text === 'Alerting')?.subMenu;
 
       expect(alertingSubMenu).toBeUndefined();
     });

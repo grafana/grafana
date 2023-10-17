@@ -237,48 +237,19 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
   };
 
-  const { unifiedAlertingEnabled } = getConfig();
-  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-  const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
-  const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
+  const getAlertingMenuAvailability = () => {
+    const { unifiedAlertingEnabled } = getConfig();
+    const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
+    const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
+    const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
 
-  const alertingMenuAvailable = isAlertingAvailableForRead;
-  if (alertingMenuAvailable) {
-    // prepare submenu depending on permissions
-    const subMenu: PanelMenuItem[] = [];
-    if (hasRuleUpdatePermissions) {
-      subMenu.push({
-        text: t('panel.header-menu.create-alert', `Create alert rule from this panel`),
-        onClick: (e: React.MouseEvent) => onCreateAlert(e),
-      });
-    }
-    subMenu.push({
-      text: t('panel.header-menu.view-alerts', `View all alert rules`),
-      onClick: (e: React.MouseEvent) => onNavigateToAlertListView(e),
-    });
-
-    menu.push({
-      type: 'submenu',
-      text: t('panel.header-menu.alerting', `Alerting`),
-      iconClassName: 'bell',
-      onClick: (e: React.MouseEvent<HTMLElement>) => {
-        const currentTarget = e.currentTarget;
-        const target = e.target;
-
-        if (
-          target === currentTarget ||
-          (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
-        ) {
-          onInspectPanel();
-        }
-      },
-      shortcut: 'a',
-      subMenu: subMenu,
-    });
-  }
+    return { isAlertingAvailableForRead, hasRuleUpdatePermissions };
+  };
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
+  const { isAlertingAvailableForRead, hasRuleUpdatePermissions } = getAlertingMenuAvailability();
+
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
       subMenu.push({
@@ -348,6 +319,39 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
+  }
+
+  if (isAlertingAvailableForRead) {
+    // prepare Alerting submenu depending on permissions
+    const alertingSubMenu: PanelMenuItem[] = [];
+    if (hasRuleUpdatePermissions) {
+      alertingSubMenu.push({
+        text: t('panel.header-menu.create-alert', `Create alert`),
+        onClick: (e: React.MouseEvent) => onCreateAlert(e),
+      });
+    }
+    alertingSubMenu.push({
+      text: t('panel.header-menu.view-alerts', `View all alert rules`),
+      onClick: (e: React.MouseEvent) => onNavigateToAlertListView(e),
+    });
+
+    subMenu.push({
+      type: 'submenu',
+      text: t('panel.header-menu.alerting', `Alerting`),
+      onClick: (e: React.MouseEvent<HTMLElement>) => {
+        const currentTarget = e.currentTarget;
+        const target = e.target;
+
+        if (
+          target === currentTarget ||
+          (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+        ) {
+          onInspectPanel();
+        }
+      },
+      shortcut: 'a',
+      subMenu: alertingSubMenu,
+    });
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {

@@ -774,7 +774,7 @@
     "header-menu": {
       "alerting": "Alerting",
       "copy": "Copy",
-      "create-alert": "Create alert rule from this panel",
+      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
