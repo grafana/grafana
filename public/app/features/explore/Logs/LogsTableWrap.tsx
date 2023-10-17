@@ -78,6 +78,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(undefined);
 
+  // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = React.useState<
     Record<fieldName, fieldNameMeta> | undefined
   >(undefined);
