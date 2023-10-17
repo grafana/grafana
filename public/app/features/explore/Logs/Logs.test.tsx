@@ -103,6 +103,9 @@ describe('Logs', () => {
     ];
 
     const testDataFrame = {
+      meta: {
+        // type: DataFrameType.LogLines,
+      },
       fields: [
         {
           config: {},
@@ -112,9 +115,21 @@ describe('Logs', () => {
         },
         {
           config: {},
-          name: 'line',
+          name: 'Line',
           type: FieldType.string,
           values: ['log message 1', 'log message 2', 'log message 3'],
+        },
+        {
+          config: {},
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1697561006608165746', '1697560998869868000', '1697561010006578474'],
+        },
+        {
+          config: {},
+          name: 'id',
+          type: FieldType.string,
+          values: ['1697561006608165746_b4cc4b72', '1697560998869868000_eeb96c0f', '1697561010006578474_ad5e2e5a'],
         },
         {
           config: {},
@@ -123,13 +138,18 @@ describe('Logs', () => {
           typeInfo: {
             frame: 'json.RawMessage',
           },
-          values: ['{"foo":"bar"}', '{"foo":"bar"}', '{"foo":"bar"}'],
+          values: [
+            { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins' },
+            { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins' },
+            { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins' },
+          ],
         },
       ],
       length: 3,
     };
     return (
       <Logs
+        datasourceType={'loki'}
         exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
@@ -463,7 +483,7 @@ describe('Logs', () => {
       await userEvent.click(linkButton);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
-        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22%7D%7D%7D'
+        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22,%22visualisationType%22:%22logs%22%7D%7D%7D'
       );
     });
   });
@@ -487,7 +507,20 @@ describe('Logs', () => {
     });
 
     it('should change visualisation to table on toggle', async () => {
-      setup();
+      setup({
+        datasourceType: 'loki',
+      });
+      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      await userEvent.click(logsSection);
+
+      const table = screen.getByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should change visualisation to table on toggle', async () => {
+      setup({
+        datasourceType: 'elastic',
+      });
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
 

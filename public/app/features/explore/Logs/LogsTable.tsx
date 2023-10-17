@@ -60,11 +60,11 @@ const isFieldFilterable = (field: Field, datasourceType?: string) => {
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, labelCardinalityState } = props;
-
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
+      // HERE IDIOT
       const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
@@ -186,6 +186,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
 
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
+
         const tableFrame = prepareTableFrame(transformedDataFrame);
         setTableFrame(tableFrame);
       } else {
