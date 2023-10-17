@@ -929,7 +929,7 @@ export class LokiDatasource
         break;
       }
       case 'ADD_LINE_FILTER': {
-        expression = addLineFilter(expression);
+        expression = addLineFilter(expression, action.options?.value);
         break;
       }
       default:
