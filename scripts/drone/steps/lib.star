@@ -1133,40 +1133,6 @@ def verify_gen_jsonnet_step():
         ],
     }
 
-def trigger_test_release():
-    return {
-        "name": "trigger-test-release",
-        "image": images["git"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-            "TEST_TAG": "v0.0.0-test",
-        },
-        "commands": [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
-            "cd grafana-enterprise",
-            'git fetch origin "refs/tags/*:refs/tags/*" --quiet',
-            "if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG}; fi",
-            "git tag $${TEST_TAG} && git push origin $${TEST_TAG}",
-            "cd -",
-            'git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*" --quiet && git fetch --quiet',
-            "if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}; fi",
-            "git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}",
-        ],
-        "failure": "ignore",
-        "when": {
-            "paths": {
-                "include": [
-                    ".drone.yml",
-                    "pkg/build/**",
-                ],
-            },
-            "repo": [
-                "grafana/grafana",
-            ],
-            "branch": "main",
-        },
-    }
-
 def end_to_end_tests_deps():
     return [
         "end-to-end-tests-dashboards-suite",
