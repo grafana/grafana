@@ -349,7 +349,6 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 		}
 	}
 
-	// This part
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
 	list := contexthandler.AuthHTTPHeaderListFromContext(ctx)
 	if list == nil {
