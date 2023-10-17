@@ -224,9 +224,9 @@ function legacyCreateSpanLinkFactory(
               href: link.href,
               title: 'Related profiles',
               onClick: link.onClick,
-              content: <Icon name="gf-logs" title="Explore the profiles for this in split view" />,
+              content: <Icon name="link" title="Explore the profiles for this in split view" />,
               field,
-              type: SpanLinkType.Logs,
+              type: SpanLinkType.Profiles,
             });
           }
         }

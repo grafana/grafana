@@ -23,7 +23,7 @@ import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '.
 
 export interface TraceToProfilesOptions {
   datasourceUid?: string;
-  tags?: Array<{ key: string; value: string }>;
+  tags?: Array<{ key: string; value?: string }>;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   query?: string;

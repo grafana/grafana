@@ -51,9 +51,6 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       />
 
       <Divider />
-      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
-
-      <Divider />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
@@ -63,6 +60,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <Divider />
         </>
       ) : null}
+
+      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider />
 
       <ConfigSection
         title="Additional settings"
