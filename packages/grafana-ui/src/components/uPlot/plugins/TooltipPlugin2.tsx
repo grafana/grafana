@@ -300,7 +300,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
-    padding: '8px',
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'absolute',
