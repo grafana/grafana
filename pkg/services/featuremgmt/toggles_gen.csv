@@ -125,3 +125,4 @@ recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,false
+pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false

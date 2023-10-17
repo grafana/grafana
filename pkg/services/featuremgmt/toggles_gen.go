@@ -510,4 +510,8 @@ const (
 	// FlagPanelTitleSearchInV1
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
+
+	// FlagPluginsInstrumentationStatusSource
+	// Include a status source label for plugin request metrics and logs
+	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 )
