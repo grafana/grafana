@@ -28,6 +28,7 @@ const config = async (env: any): Promise<Configuration> => {
       buildDependencies: {
         config: [__filename],
       },
+      cacheDirectory: path.resolve(__dirname, '../../.yarn/.cache/webpack', path.basename(process.cwd())),
     },
 
     context: process.cwd(),
