@@ -7,7 +7,6 @@ import {
   SceneObject,
   SceneFlexLayout,
   SceneFlexItem,
-  PanelBuilders,
   SceneQueryRunner,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
@@ -17,19 +16,19 @@ import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { AutoQueryDef, getAutoQueriesForMetric } from './AutoQueryEngine';
+import { getAutoQueriesForMetric } from './AutoQueryEngine';
 import { AutoVizPanel } from './AutoVizPanel';
 import { buildBreakdownActionScene } from './actionViews/breakdown';
 import { buildLogsScene } from './actionViews/logs';
 import { buildRelatedMetricsScene } from './actionViews/relatedMetrics';
 import { getTrailFor } from './getUtils';
+import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,
   KEY_SQR_METRIC_VIZ_QUERY,
   MakeOptional,
   OpenEmbeddedTrailEvent,
-  trailsDS,
 } from './shared';
 
 export interface GraphTrailViewState extends SceneObjectState {
@@ -159,6 +158,8 @@ function buildGraphScene(metric: string) {
       }),
       new SceneFlexItem({
         ySizing: 'content',
+        isHidden: true,
+        $behaviors: [onlyShowInDebugBehavior],
         body: new QueryDebugView({}),
       }),
       new SceneFlexItem({
@@ -173,13 +174,6 @@ export interface QueryDebugViewState extends SceneObjectState {}
 
 export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
   public static Component = ({ model }: SceneComponentProps<QueryDebugView>) => {
-    const trail = getTrailFor(model);
-    const { debug } = trail.useState();
-
-    if (!debug) {
-      return null;
-    }
-
     const queryRunner = sceneGraph.findObject(model, (x) => x.state.key === KEY_SQR_METRIC_VIZ_QUERY);
     if (!(queryRunner instanceof SceneQueryRunner)) {
       return;
