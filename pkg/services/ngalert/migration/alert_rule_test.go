@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -98,8 +99,8 @@ func TestAddMigrationInfo(t *testing.T) {
 		name                string
 		alert               *legacymodels.Alert
 		dashboard           string
-		expectedLabels      map[string]string
-		expectedAnnotations map[string]string
+		expectedLabels      data.Labels
+		expectedAnnotations data.Labels
 	}{
 		{
 			name: "when alert rule tags are a JSON array, they're ignored.",
@@ -107,16 +108,16 @@ func TestAddMigrationInfo(t *testing.T) {
 				"alertRuleTags": []string{"one", "two", "three", "four"},
 			})},
 			dashboard:           "dashboard",
-			expectedLabels:      map[string]string{migmodels.UseLegacyChannelsLabel: "true"},
-			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42", "message": "message"},
+			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true"},
+			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 		{
 			name: "when alert rule tags are a JSON object",
 			alert: &legacymodels.Alert{ID: 43, PanelID: 42, Message: "message", Settings: simplejson.NewFromAny(map[string]any{
 				"alertRuleTags": map[string]any{"key": "value", "key2": "value2"},
 			})}, dashboard: "dashboard",
-			expectedLabels:      map[string]string{migmodels.UseLegacyChannelsLabel: "true", "key": "value", "key2": "value2"},
-			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42", "message": "message"},
+			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true", "key": "value", "key2": "value2"},
+			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 	}
 

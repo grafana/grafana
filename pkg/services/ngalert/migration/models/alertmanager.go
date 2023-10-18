@@ -9,10 +9,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// UseLegacyChannelsLabel is a private label added to a rule's labels to enable routing to the nested route created
-// during migration.
-const UseLegacyChannelsLabel = "__use_legacy_channels__"
-
 // Alertmanager is a helper struct for creating migrated alertmanager configs.
 type Alertmanager struct {
 	Config      *apiModels.PostableUserConfig
@@ -75,7 +71,7 @@ func createDefaultRoute() (*apiModels.Route, *apiModels.Route) {
 // createNestedLegacyRoute creates a nested route that will contain all the migrated channels.
 // This route is matched on the UseLegacyChannelsLabel and mostly exists to keep the migrated channels separate and organized.
 func createNestedLegacyRoute() *apiModels.Route {
-	mat, _ := labels.NewMatcher(labels.MatchEqual, UseLegacyChannelsLabel, "true")
+	mat, _ := labels.NewMatcher(labels.MatchEqual, ngmodels.MigratedUseLegacyChannelsLabel, "true")
 	return &apiModels.Route{
 		ObjectMatchers: apiModels.ObjectMatchers{mat},
 		Continue:       true,

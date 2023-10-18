@@ -29,12 +29,12 @@ type dashAlertSettings struct {
 	ExecutionErrorState string               `json:"executionErrorState"`
 	Conditions          []dashAlertCondition `json:"conditions"`
 	AlertRuleTags       any                  `json:"alertRuleTags"`
-	Notifications       []dashAlertNot       `json:"notifications"`
+	Notifications       []notificationKey    `json:"notifications"`
 }
 
-// dashAlertNot is the object that represents the Notifications array in
-// dashAlertSettings
-type dashAlertNot struct {
+// notificationKey is the object that represents the Notifications array in legacymodels.Alert.Settings.
+// At least one of ID or UID should always be present, otherwise the legacy channel was invalid.
+type notificationKey struct {
 	UID string `json:"uid,omitempty"`
 	ID  int64  `json:"id,omitempty"`
 }
@@ -42,7 +42,7 @@ type dashAlertNot struct {
 // dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
 // includes the model property with the query.
 type dashAlertCondition struct {
-	Evaluator conditionEvalJSON `json:"evaluator"`
+	Evaluator evaluator `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`
@@ -60,7 +60,7 @@ type dashAlertCondition struct {
 	}
 }
 
-type conditionEvalJSON struct {
+type evaluator struct {
 	Params []float64 `json:"params"`
 	Type   string    `json:"type"` // e.g. "gt"
 }
@@ -244,10 +244,10 @@ func transConditions(ctx context.Context,  l log.Logger, set dashAlertSettings, 
 	}
 
 	// build the new classic condition pointing our new equivalent queries
-	conditions := make([]classicConditionJSON, len(set.Conditions))
+	conditions := make([]classicCondition, len(set.Conditions))
 	for i, cond := range set.Conditions {
-		newCond := classicConditionJSON{}
-		newCond.Evaluator = conditionEvalJSON{
+		newCond := classicCondition{}
+		newCond.Evaluator = evaluator{
 			Type:   cond.Evaluator.Type,
 			Params: cond.Evaluator.Params,
 		}
@@ -266,9 +266,9 @@ func transConditions(ctx context.Context,  l log.Logger, set dashAlertSettings, 
 	newCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                 `json:"type"`
-		RefID      string                 `json:"refId"`
-		Conditions []classicConditionJSON `json:"conditions"`
+		Type       string             `json:"type"`
+		RefID      string             `json:"refId"`
+		Conditions []classicCondition `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
@@ -324,7 +324,7 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 		}
 		return sR, nil
 	}
-	return "", fmt.Errorf("generate unique RefID")
+	return "", errors.New("failed to generate unique RefID")
 }
 
 // getRelativeDuration turns the alerting durations for dashboard conditions
@@ -375,8 +375,8 @@ func getTo(to string) (time.Duration, error) {
 	return -d, nil
 }
 
-type classicConditionJSON struct {
-	Evaluator conditionEvalJSON `json:"evaluator"`
+type classicCondition struct {
+	Evaluator evaluator `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`

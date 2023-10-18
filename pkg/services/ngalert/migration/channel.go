@@ -3,6 +3,7 @@ package migration
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -29,17 +31,20 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 	empty := true
 	// Create all newly migrated receivers from legacy notification channels.
 	for _, c := range channels {
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			om.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
-			continue
-		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			return nil, err
+			if errors.Is(err, ErrDiscontinued) {
+				om.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
+				continue
+			}
+			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
 		}
 
 		empty = false
-		route := createRoute(c, receiver.Name)
+		route, err := createRoute(c, receiver.Name)
+		if err != nil {
+			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+		}
 		amConfig.AddRoute(route)
 		amConfig.AddReceiver(receiver)
 	}
@@ -103,8 +108,14 @@ func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apim
 	}, nil
 }
 
+var ErrDiscontinued = errors.New("discontinued")
+
 // createReceiver creates a receiver from a legacy notification channel.
 func (om *OrgMigration) createReceiver(channel *legacymodels.AlertNotification) (*apimodels.PostableApiReceiver, error) {
+	if channel.Type == "hipchat" || channel.Type == "sensu" {
+		return nil, fmt.Errorf("'%s': %w", channel.Type, ErrDiscontinued)
+	}
+
 	notifier, err := om.createNotifier(channel)
 	if err != nil {
 		return nil, err
@@ -121,7 +132,7 @@ func (om *OrgMigration) createReceiver(channel *legacymodels.AlertNotification) 
 }
 
 // createRoute creates a route from a legacy notification channel, and matches using a label based on the channel UID.
-func createRoute(channel *legacymodels.AlertNotification, receiverName string) *apimodels.Route {
+func createRoute(channel *legacymodels.AlertNotification, receiverName string) (*apimodels.Route, error) {
 	// We create a matchers based on channel UID so that we only need a single route per channel.
 	// All routes are stored in a nested route under the root. This is so we can keep the migrated channels separate
 	// and organized.
@@ -136,8 +147,11 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) *
 	//
 	// These will match two routes as they are all defined with Continue=true.
 
-	label := fmt.Sprintf(ContactLabelTemplate, channel.UID)
-	mat, _ := labels.NewMatcher(labels.MatchEqual, label, "true")
+	label := fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, channel.UID)
+	mat, err := labels.NewMatcher(labels.MatchEqual, label, "true")
+	if err != nil {
+		return nil, err
+	}
 
 	// If the channel is default, we create a catch-all matcher instead so this always matches.
 	if channel.IsDefault {
@@ -154,7 +168,7 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) *
 		ObjectMatchers: apimodels.ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
 		RepeatInterval: &repeatInterval,
-	}
+	}, nil
 }
 
 var secureKeysToMigrate = map[string][]string{

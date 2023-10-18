@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -18,33 +19,27 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	// ContactLabelTemplate is a private label added to a rule's labels to route it to the correct migrated
-	// notification channel.
-	ContactLabelTemplate = "__contacts_%s__"
-)
-
-func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []string) (map[string]string, map[string]string) {
+func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []string) (data.Labels, data.Labels) {
 	tags := alert.GetTagsFromSettings()
-	lbls := make(map[string]string)
+	lbls := make(data.Labels, len(tags)+len(channels)+1)
 
 	for _, t := range tags {
 		lbls[t.Key] = t.Value
 	}
 
 	// Add a label for routing
-	lbls[migmodels.UseLegacyChannelsLabel] = "true"
+	lbls[ngmodels.MigratedUseLegacyChannelsLabel] = "true"
 	for _, c := range channels {
-		lbls[fmt.Sprintf(ContactLabelTemplate, c)] = "true"
+		lbls[fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, c)] = "true"
 	}
 
-	annotations := make(map[string]string, 4)
+	annotations := make(data.Labels, 4)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
 	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", alert.PanelID)
-	annotations["__alertId__"] = fmt.Sprintf("%v", alert.ID)
+	annotations[ngmodels.MigratedAlertIdAnnotation] = fmt.Sprintf("%v", alert.ID)
 
 	message := MigrateTmpl(l.New("field", "message"), alert.Message)
-	annotations["message"] = message
+	annotations[ngmodels.MigratedMessageAnnotation] = message
 
 	return lbls, annotations
 }

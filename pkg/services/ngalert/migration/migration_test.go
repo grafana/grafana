@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -180,12 +179,12 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier3", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier3"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier3", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -205,12 +204,12 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
 										{Receiver: "notifier6", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier4", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier4"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier5", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier5"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier4", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier5", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier5"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -239,10 +238,10 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -270,7 +269,7 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
 										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
@@ -306,11 +305,11 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -338,10 +337,10 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -370,10 +369,10 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -403,10 +402,10 @@ func TestAMConfigMigration(t *testing.T) {
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*apimodels.Route{
 								{
-									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -485,7 +484,7 @@ func TestDashAlertMigration(t *testing.T) {
 	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 
 	withDefaults := func(lbls map[string]string) map[string]string {
-		lbls[migmodels.UseLegacyChannelsLabel] = "true"
+		lbls[ngModels.MigratedUseLegacyChannelsLabel] = "true"
 		return lbls
 	}
 
@@ -509,14 +508,14 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
-				"alert1": {Labels: withDefaults(map[string]string{fmt.Sprintf(ContactLabelTemplate, "notifier1"): "true"})},
-				"alert2": {Labels: withDefaults(map[string]string{fmt.Sprintf(ContactLabelTemplate, "notifier2"): "true", fmt.Sprintf(ContactLabelTemplate, "notifier3"): "true"})},
-				"alert3": {Labels: withDefaults(map[string]string{fmt.Sprintf(ContactLabelTemplate, "notifier3"): "true"})},
+				"alert1": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"): "true"})},
+				"alert2": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"): "true", fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"): "true"})},
+				"alert3": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"): "true"})},
 			},
 			int64(2): {
 				// Don't include default channels.
-				"alert4": {Labels: withDefaults(map[string]string{fmt.Sprintf(ContactLabelTemplate, "notifier4"): "true"})},
-				"alert5": {Labels: withDefaults(map[string]string{fmt.Sprintf(ContactLabelTemplate, "notifier4"): "true", fmt.Sprintf(ContactLabelTemplate, "notifier5"): "true"})},
+				"alert4": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"): "true"})},
+				"alert5": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"): "true", fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier5"): "true"})},
 				"alert6": {Labels: withDefaults(map[string]string{})},
 			},
 		}
@@ -608,11 +607,11 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
 	}
 
-	createClassicConditionQuery := func(refId string, conditions []classicConditionJSON) ngModels.AlertQuery {
+	createClassicConditionQuery := func(refId string, conditions []classicCondition) ngModels.AlertQuery {
 		exprModel := struct {
-			Type       string                 `json:"type"`
-			RefID      string                 `json:"refId"`
-			Conditions []classicConditionJSON `json:"conditions"`
+			Type       string             `json:"type"`
+			RefID      string             `json:"refId"`
+			Conditions []classicCondition `json:"conditions"`
 		}{
 			"classic_conditions",
 			refId,
@@ -631,9 +630,9 @@ func TestDashAlertQueryMigration(t *testing.T) {
 		return q
 	}
 
-	cond := func(refId string, reducer string, evalType string, thresh float64) classicConditionJSON {
-		return classicConditionJSON{
-			Evaluator: conditionEvalJSON{Params: []float64{thresh}, Type: evalType},
+	cond := func(refId string, reducer string, evalType string, thresh float64) classicCondition {
+		return classicCondition{
+			Evaluator: evaluator{Params: []float64{thresh}, Type: evalType},
 			Operator: struct {
 				Type string `json:"type"`
 			}{Type: "and"},
@@ -666,7 +665,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			Annotations: map[string]string{
 				"message": "message",
 			},
-			Labels:   map[string]string{migmodels.UseLegacyChannelsLabel: "true"},
+			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
 			IsPaused: false,
 		}
 
@@ -702,7 +701,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				int64(1): {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 						}))
 					}),
@@ -713,7 +712,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.DashboardUID = pointer("dash3-2")
 						rule.NamespaceUID = "folder6-2"
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds3-2", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 						}))
 					}),
@@ -737,7 +736,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("B", "ds2-1", "3m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("C", "ds2-1", "3m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicCondition{
 							cond("A", "avg", "gt", 42),
 							cond("B", "max", "gt", 43),
 							cond("C", "min", "lt", 20),
@@ -760,7 +759,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Condition = "B"
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 							cond("A", "avg", "gt", 20),
 						}))
@@ -783,7 +782,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.Condition = "C"
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "3m", "now")) // Ordered by time range.
 						rule.Data = append(rule.Data, createAlertQuery("B", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("C", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("C", []classicCondition{
 							cond("B", "max", "gt", 42),
 							cond("A", "avg", "gt", 20),
 						}))
@@ -805,7 +804,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				int64(1): {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Condition = "A"
-						rule.Data = append(rule.Data, createClassicConditionQuery("A", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("A", []classicCondition{
 							cond("Q1", "avg", "gt", 42),
 							cond("Q2", "max", "gt", 43),
 							cond("Q3", "min", "lt", 20),
@@ -834,7 +833,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds2-1", "3m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("B", "ds1-1", "5m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("C", "ds2-1", "3m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicCondition{
 							cond("B", "avg", "gt", 42),
 							cond("C", "max", "gt", 43),
 							cond("A", "min", "lt", 20),
@@ -862,7 +861,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.Data = append(rule.Data, createAlertQuery("B", "ds2-1", "5m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("C", "ds1-1", "3m", "now"))
 						rule.Data = append(rule.Data, createAlertQuery("D", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("E", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("E", []classicCondition{
 							cond("D", "avg", "gt", 42),
 							cond("C", "max", "gt", 43),
 							cond("B", "min", "lt", 20),
@@ -882,7 +881,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				int64(1): {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Data = append(rule.Data, createAlertQuery("A", "", "5m", "now")) // Empty datasource UID.
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 						}))
 					}),
@@ -927,7 +926,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.NamespaceUID = "General Alerting"
 						rule.DashboardUID = pointer("dash-in-general-1")
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "avg", "gt", 42),
 						}))
 					}),
@@ -954,7 +953,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						rule.OrgID = 2
 						rule.DashboardUID = pointer("dash-in-general-2")
 						rule.Data = append(rule.Data, createAlertQuery("A", "ds3-2", "5m", "now"))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "avg", "gt", 42),
 						}))
 					}),
@@ -976,7 +975,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				int64(1): {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Data = append(rule.Data, createAlertQueryWithModel("A", "ds1-1", "5m", "now", fmt.Sprintf(newQueryModel, "1s", 1000, "A")))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 						}))
 					}),
@@ -998,7 +997,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				int64(1): {
 					genAlert(func(rule *ngModels.AlertRule) {
 						rule.Data = append(rule.Data, createAlertQueryWithModel("A", "ds1-1", "5m", "now", fmt.Sprintf(newQueryModel, "$min_interval", 1000, "A")))
-						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicCondition{
 							cond("A", "max", "gt", 42),
 						}))
 					}),
@@ -1038,8 +1037,8 @@ func TestDashAlertQueryMigration(t *testing.T) {
 					// Remove generated fields.
 					require.NotEqual(t, r.Labels["rule_uid"], "")
 					delete(r.Labels, "rule_uid")
-					require.NotEqual(t, r.Annotations["__alertId__"], "")
-					delete(r.Annotations, "__alertId__")
+					require.NotEqual(t, r.Annotations[ngModels.MigratedAlertIdAnnotation], "")
+					delete(r.Annotations, ngModels.MigratedAlertIdAnnotation)
 
 					// If folder is created, we check if separately
 					if tt.expectedFolder != nil {
@@ -1121,7 +1120,7 @@ var queryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"e
 
 func createCondition(refId string, reducer string, evalType string, thresh float64, datasourceId int64, from string, to string) dashAlertCondition {
 	return dashAlertCondition{
-		Evaluator: conditionEvalJSON{
+		Evaluator: evaluator{
 			Params: []float64{thresh},
 			Type:   evalType,
 		},

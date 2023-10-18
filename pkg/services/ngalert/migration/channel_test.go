@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +38,7 @@ func TestCreateRoute(t *testing.T) {
 			recv:    createPostableApiReceiver("uid1", "recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -52,7 +51,7 @@ func TestCreateRoute(t *testing.T) {
 			recv:    createPostableApiReceiver("uid1", `. ^ $ * + - ? ( ) [ ] { } \ |`, nil),
 			expected: &apimodels.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -65,7 +64,7 @@ func TestCreateRoute(t *testing.T) {
 			recv:    createPostableApiReceiver("uid1", "recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -78,7 +77,7 @@ func TestCreateRoute(t *testing.T) {
 			recv:    createPostableApiReceiver("uid1", "recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -89,7 +88,8 @@ func TestCreateRoute(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res := createRoute(tt.channel, tt.recv.Name)
+			res, err := createRoute(tt.channel, tt.recv.Name)
+			require.NoError(t, err)
 
 			// Order of nested routes is not guaranteed.
 			cOpt := []cmp.Option{
@@ -126,6 +126,13 @@ func createNotChannel(t *testing.T, uid string, id int64, name string, isDefault
 	}
 }
 
+func createBasicNotChannel(t *testing.T, notType string) *legacymodels.AlertNotification {
+	t.Helper()
+	a := createNotChannel(t, "uid1", int64(1), "name1", false, 0)
+	a.Type = notType
+	return a
+}
+
 func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
 		name    string
@@ -137,6 +144,16 @@ func TestCreateReceivers(t *testing.T) {
 			name:    "when given notification channels migrate them to receivers",
 			channel: createNotChannel(t, "uid1", int64(1), "name1", false, 0),
 			expRecv: createPostableApiReceiver("uid1", "name1", []string{"name1"}),
+		},
+		{
+			name:    "when given hipchat return discontinued error",
+			channel: createBasicNotChannel(t, "hipchat"),
+			expErr:  fmt.Errorf("'hipchat': %w", ErrDiscontinued),
+		},
+		{
+			name:    "when given sensu return discontinued error",
+			channel: createBasicNotChannel(t, "sensu"),
+			expErr:  fmt.Errorf("'sensu': %w", ErrDiscontinued),
 		},
 	}
 
@@ -354,11 +371,11 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 						GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						Routes: []*apimodels.Route{
 							{
-								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 								Continue:       true,
 								Routes: []*apimodels.Route{
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 								},
 							},
 						},
@@ -381,11 +398,11 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 						GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						Routes: []*apimodels.Route{
 							{
-								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 								Continue:       true,
 								Routes: []*apimodels.Route{
 									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 								},
 							},
 						},
@@ -408,11 +425,11 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 						GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 						Routes: []*apimodels.Route{
 							{
-								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: migmodels.UseLegacyChannelsLabel, Value: "true"}},
+								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 								Continue:       true,
 								Routes: []*apimodels.Route{
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
-									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
+									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
 								},
 							},
 						},

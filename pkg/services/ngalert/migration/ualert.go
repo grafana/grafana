@@ -22,7 +22,7 @@ func (om *OrgMigration) migrateAlerts(ctx context.Context, alerts []*legacymodel
 		al := log.New("ruleID", da.ID, "ruleName", da.Name)
 		alertRule, err := om.migrateAlert(ctx, al, da, info)
 		if err != nil {
-			return nil, fmt.Errorf("migrate alert: %w", err)
+			return nil, fmt.Errorf("migrate alert '%s': %w", da.Name, err)
 		}
 		rules = append(rules, *alertRule)
 	}

@@ -105,6 +105,15 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	// MigratedUseLegacyChannelsLabel is created during legacy migration to route to separate nested policies for migrated channels.
+	MigratedUseLegacyChannelsLabel = "__use_legacy_channels__"
+	// MigratedContactLabelTemplate is created during legacy migration to route a migrated alert rule to a specific migrated channel.
+	MigratedContactLabelTemplate = "__contacts_%s__"
+	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
+	MigratedAlertIdAnnotation = "__alertId__"
+	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.
+	MigratedMessageAnnotation = "message"
 )
 
 const (
