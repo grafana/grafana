@@ -31,16 +31,16 @@ import {
   OpenEmbeddedTrailEvent,
 } from './shared';
 
-export interface GraphTrailViewState extends SceneObjectState {
+export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
   metric: string;
   actionView?: string;
 }
 
-export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
+export class MetricScene extends SceneObjectBase<MetricSceneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<GraphTrailViewState, 'body'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
     super({
       $variables: getVariablesWithMetricConstant(state.metric),
       body: state.body ?? buildGraphScene(state.metric),
@@ -78,7 +78,7 @@ export class GraphTrailView extends SceneObjectBase<GraphTrailViewState> {
     }
   }
 
-  static Component = ({ model }: SceneComponentProps<GraphTrailView>) => {
+  static Component = ({ model }: SceneComponentProps<MetricScene>) => {
     const { body } = model.useState();
     return <body.Component model={body} />;
   };
@@ -119,10 +119,10 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             </ToolbarButton>
           ))}
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-          <ToolbarButton variant={'canvas'}>Bookmark trail</ToolbarButton>
+          <ToolbarButton variant={'canvas'} icon="bookmark" />
           {trail.state.embedded && (
             <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
-              Open trail
+              Open
             </ToolbarButton>
           )}
         </Flex>
@@ -131,8 +131,8 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 }
 
-function getGraphViewFor(model: SceneObject): GraphTrailView {
-  if (model instanceof GraphTrailView) {
+function getGraphViewFor(model: SceneObject): MetricScene {
+  if (model instanceof MetricScene) {
     return model;
   }
 

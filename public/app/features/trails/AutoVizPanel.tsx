@@ -32,7 +32,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   }
 
   private getQuerySelector(def: AutoQueryDef) {
-    if (this.state.queries.length === 0) {
+    if (this.state.queries.length < 2) {
       return;
     }
 

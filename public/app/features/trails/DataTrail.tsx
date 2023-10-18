@@ -23,8 +23,8 @@ import {
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
-import { GraphTrailView } from './GraphTrailView';
-import { MetricSelectLayout } from './MetricSelectLayout';
+import { MetricScene } from './MetricScene';
+import { MetricSelectScene } from './MetricSelectScene';
 import { MetricSelectedEvent, trailsDS, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
@@ -63,7 +63,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneRefreshPicker({}),
       ],
       history: new DataTrailHistory({}),
-      topScene: new MetricSelectLayout({ showHeading: true }),
+      topScene: new MetricSelectScene({ showHeading: true }),
       ...state,
     });
 
@@ -115,7 +115,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
     this.setState({
-      topScene: new GraphTrailView({ metric: evt.payload }),
+      topScene: new MetricScene({ metric: evt.payload }),
       metric: evt.payload,
     });
 
@@ -132,7 +132,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         stateUpdate.metric = values.metric;
-        stateUpdate.topScene = new GraphTrailView({ metric: values.metric });
+        stateUpdate.topScene = new MetricScene({ metric: values.metric });
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
@@ -146,7 +146,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     let topScene = this.state.topScene;
 
     if (this.state.metric) {
-      topScene = new GraphTrailView({ metric: this.state.metric });
+      topScene = new MetricScene({ metric: this.state.metric });
     } else {
       topScene = this._selectMetricView;
     }
@@ -172,7 +172,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
-            <ToolbarButton icon="bug" onClick={model.onToggleDebug} variant={debug ? 'active' : 'canvas'} />
+            <ToolbarButton
+              icon="eye"
+              onClick={model.onToggleDebug}
+              variant={debug ? 'active' : 'canvas'}
+              tooltip="Show more information"
+            />
           </div>
         )}
         <div className={styles.body}>

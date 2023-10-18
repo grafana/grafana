@@ -37,7 +37,7 @@ export interface MetricSelectLayoutState extends SceneObjectState {
   showPreviews?: boolean;
 }
 
-export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState> {
+export class MetricSelectScene extends SceneObjectBase<MetricSelectLayoutState> {
   constructor(state: Partial<MetricSelectLayoutState>) {
     super({
       $variables: getMetricNamesVariableSet(),
@@ -114,7 +114,7 @@ export class MetricSelectLayout extends SceneObjectBase<MetricSelectLayoutState>
     this.buildLayout();
   };
 
-  public static Component = ({ model }: SceneComponentProps<MetricSelectLayout>) => {
+  public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
     const { showHeading, searchQuery } = model.useState();
     const styles = useStyles2(getStyles);
 

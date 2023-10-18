@@ -1,9 +1,9 @@
 import { SceneFlexItem } from '@grafana/scenes';
 
-import { MetricSelectLayout } from '../MetricSelectLayout';
+import { MetricSelectScene } from '../MetricSelectScene';
 
 export function buildRelatedMetricsScene() {
   return new SceneFlexItem({
-    body: new MetricSelectLayout({}),
+    body: new MetricSelectScene({}),
   });
 }
