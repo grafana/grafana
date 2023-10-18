@@ -33,12 +33,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   return (
     <li className={styles.listItem}>
       <div className={styles.menuItem}>
-        {level !== 0 && <Indent level={level === 1 ? 1.2 : 1.7} spacing={3} />}
-        <div
-          className={cx(styles.collapseButtonWrapper, {
-            [styles.itemConnector]: level >= 2,
-          })}
-        >
+        {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
+        {level === MAX_DEPTH && <div className={styles.itemConnector} />}
+        <div className={styles.collapseButtonWrapper}>
           {showExpandButton && (
             <IconButton
               aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
@@ -63,10 +60,15 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               className={cx(styles.labelWrapper, {
                 [styles.isActive]: isActive,
                 [styles.hasActiveChild]: hasActiveChild,
+                [styles.hasIcon]: Boolean(level === 0 && link.icon),
               })}
             >
               <FeatureHighlightWrapper>
-                <>{level === 0 && link.icon && <Icon name={toIconName(link.icon) ?? 'link'} size="lg" />}</>
+                <>
+                  {level === 0 && link.icon && (
+                    <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
+                  )}
+                </>
               </FeatureHighlightWrapper>
               <Text truncate>{link.text}</Text>
             </div>
@@ -97,6 +99,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  icon: css({
+    width: theme.spacing(3),
+  }),
   listItem: css({
     flex: 1,
     maxWidth: '100%',
@@ -115,11 +120,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
   }),
   itemConnector: css({
+    position: 'relative',
+    height: '100%',
+    width: theme.spacing(1.5),
     '&::before': {
+      borderLeft: `1px solid ${theme.colors.border.medium}`,
       content: '""',
       height: '100%',
+      right: 0,
       position: 'absolute',
-      borderLeft: `1px solid ${theme.colors.border.medium}`,
+      transform: 'translateX(50%)',
     },
   }),
   collapseButton: css({
@@ -137,6 +147,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     paddingLeft: theme.spacing(1),
     minWidth: 0,
+  }),
+  hasIcon: css({
+    paddingLeft: theme.spacing(0),
   }),
   isActive: css({
     color: theme.colors.text.primary,

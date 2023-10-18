@@ -83,7 +83,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     width: '100%',
   }),
   linkContentActive: css({
-    borderRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
+    borderBottomRightRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.secondary,
     position: 'relative',
     '&::before': {
@@ -91,6 +92,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       content: '" "',
       height: '100%',
       position: 'absolute',
+      transform: 'translateX(-50%)',
       width: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,

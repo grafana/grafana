@@ -13,7 +13,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '300px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -115,6 +115,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   dockMenuButton: css({
+    color: theme.colors.text.disabled,
     display: 'none',
 
     [theme.breakpoints.up('md')]: {
