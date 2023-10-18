@@ -20,7 +20,7 @@ weight: 117
 
 You can use templates to include data from queries and expressions in labels and annotations. For example, you might want to set the severity label for an alert based on the value of the query, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
 
-All templates should be written in [text/template](https://pkg.go.dev/text/template). Regardless or whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This unfortunately means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.
+All templates should be written in [text/template](https://pkg.go.dev/text/template). Regardless of whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.
 
 Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should therefore avoid doing expensive computations in your templates as much as possible as high cardinality alert rules can execute a template hundreds or even thousands of times every time the alert rule is evaluated, depending on the number of time series.
 
