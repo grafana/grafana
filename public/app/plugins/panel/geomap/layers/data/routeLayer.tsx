@@ -190,16 +190,26 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     // Crosshair layer
     const crosshairFeature = new Feature({});
-    const crosshairRadius = (style.base.lineWidth || 6) + 2;
+    const hLineFeature = new Feature({});
+    const vLineFeature = new Feature({});
+    const crosshairRadius = (style.base.lineWidth || 6) + 3;
     // TODO update crosshair style to match other panels
     const crosshairStyle = new Style({
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha(style.base.color, 1),
-          width: crosshairRadius * 2,
+          color: alpha('#607D8B', 1),
+          width: 1,
         }),
-        fill: new Fill({ color: alpha(style.base.color, 1) }),
+        fill: new Fill({ color: alpha('#607D8B', 0.4) }),
+      }),
+    });
+    const lineStyle = new Style({
+      stroke: new Stroke({
+        color: '#607D8B',
+        width: 1,
+        lineDash: [3, 3],
+        lineCap: 'square',
       }),
     });
 
@@ -210,8 +220,22 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       style: crosshairStyle,
     });
 
+    const hLineLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [hLineFeature],
+      }),
+      style: lineStyle,
+    });
+
+    const vLineLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [vLineFeature],
+      }),
+      style: lineStyle,
+    });
+
     const layer = new LayerGroup({
-      layers: [vectorLayer, crosshairLayer],
+      layers: [vectorLayer, crosshairLayer, hLineLayer, vLineLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -223,6 +247,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         .pipe(throttleTime(8))
         .subscribe({
           next: (event) => {
+            const mapExtents = map.getView().calculateExtent(map.getSize());
             const feature = source.getFeatures()[0];
             const frame: DataFrame = feature?.get('frame');
             const time: number = event.payload?.point?.time;
@@ -234,8 +259,25 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);
                   if (out.field) {
-                    crosshairFeature.setGeometry(out.field.values[pointIdx]);
+                    const crosshairPoint: Point = out.field.values[pointIdx] as Point;
+                    const crosshairPointCoords = crosshairPoint.getCoordinates();
+                    crosshairFeature.setGeometry(crosshairPoint);
                     crosshairFeature.setStyle(crosshairStyle);
+                    // TODO consolidate horizontal and vertical lines
+                    hLineFeature.setGeometry(
+                      new LineString([
+                        [mapExtents[0], crosshairPointCoords[1]],
+                        [mapExtents[2], crosshairPointCoords[1]],
+                      ])
+                    );
+                    vLineFeature.setGeometry(
+                      new LineString([
+                        [crosshairPointCoords[0], mapExtents[1]],
+                        [crosshairPointCoords[0], mapExtents[3]],
+                      ])
+                    );
+                    hLineFeature.setStyle(lineStyle);
+                    vLineFeature.setStyle(lineStyle);
                   }
                 }
               }
@@ -247,6 +289,8 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         crosshairFeature.setStyle(new Style({}));
+        hLineFeature.setStyle(new Style({}));
+        vLineFeature.setStyle(new Style({}));
       })
     );
 
