@@ -62,8 +62,7 @@ With recorded queries, a single recorded query can now record multiple metrics.
 
 ### Generative AI features for dashboards
 
-// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
-_Generally available in of Grafana Open Source and Enterprise_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -232,7 +231,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 <!-- Thanos Karachalios -->
 
-_Generally Available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Open Source and Enterprise_
 
 Introducing Content Outline in Grafana **Explore**. We recognized that complex mixed queries, as well as lengthy logs and traces results led to to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
 
