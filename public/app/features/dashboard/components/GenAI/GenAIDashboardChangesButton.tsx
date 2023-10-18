@@ -45,8 +45,15 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }:
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {
-  const { userChanges, migrationChanges } = getDashboardChanges(dashboard);
-
+  let { userChanges, migrationChanges } = getDashboardChanges(dashboard);
+  if (userChanges.length > 4000) {
+    userChanges =
+      "User changes were too long, fill in the user changes section with 'User changes too long to auto-summarize'";
+  }
+  if (migrationChanges.length > 4000) {
+    migrationChanges =
+      "Migration changes were too long, fill in the migration changes section with 'User changes too long to auto-summarize'";
+  }
   return [
     {
       content: CHANGES_GENERATION_STANDARD_PROMPT,
