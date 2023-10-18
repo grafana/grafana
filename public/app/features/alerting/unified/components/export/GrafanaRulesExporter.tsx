@@ -33,7 +33,7 @@ interface GrafanaRulesExportPreviewProps {
 }
 
 function GrafanaRulesExportPreview({ exportFormat, onClose }: GrafanaRulesExportPreviewProps) {
-  const { currentData: rulesDefinition = '', isFetching } = alertRuleApi.useExportRulesQuery({
+  const { currentData: rulesDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
     format: exportFormat,
   });
 

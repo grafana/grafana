@@ -55,6 +55,8 @@ In addition to mapping field values to shorter variable names, more correlation 
 
 For more details, please see the example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}).
 
+Correlation creates a data link only if all variables have values in the selected data row. [Global variables]({{< relref "/docs/grafana/latest/dashboards/variables/add-template-variables#global-variables" >}}) are exception to this rule and are not required to be filled in from the returned data. These variables are interpolated automatically by data sources.
+
 ### Correlation Transformations
 
 Correlations provide a way to extract more variables out of field values. The output of transformations is a set of new variables that can be accessed as any other variable.

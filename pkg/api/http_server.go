@@ -170,7 +170,6 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
@@ -236,7 +235,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
-	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
+	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, basekinds *corekind.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
@@ -319,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		dsGuardian:                   dsGuardian,
-		teamPermissionsService:       teamsPermissionsService,
 		AlertNotificationService:     alertNotificationService,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
