@@ -81,7 +81,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		ctxLogger := m.logger.FromContext(ctx)
 		for refID, dr := range resp.Responses {
 			if dr.Error != nil {
-				ctxLogger.Error("Partial data response error", "ref_id", refID, "error", dr.Error)
+				ctxLogger.Error("Partial data response error", "refID", refID, "error", dr.Error)
 			}
 		}
 
