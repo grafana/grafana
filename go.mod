@@ -12,13 +12,12 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 
 // TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
 // will need bumps as we upgrade otel in Grafana
-replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // @grafana/backend-platform
-
-replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
-
-replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.16.0 // @grafana/backend-platform
-
-replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16.0 // @grafana/backend-platform
+replace (
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.19.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.19.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.19.0 // @grafana/backend-platform
+)
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
@@ -34,7 +33,7 @@ require (
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana/backend-platform
-	github.com/BurntSushi/toml v1.2.1 // @grafana/grafana-authnz-team
+	github.com/BurntSushi/toml v1.3.2 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
 	github.com/aws/aws-sdk-go v1.44.325 // @grafana/aws-datasources
@@ -62,11 +61,11 @@ require (
 	github.com/google/uuid v1.3.1 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20231005194306-939f55779e5f // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20231017091417-a53b5db2235d // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.180.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.185.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
@@ -104,20 +103,20 @@ require (
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
 	go.opentelemetry.io/collector/pdata v1.0.0-rc8 // @grafana/backend-platform
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.42.0 // @grafana/grafana-operator-experience-squad
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.45.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/sdk v1.16.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/trace v1.16.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.12.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/sdk v1.19.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/trace v1.19.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.14.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.14.0 // @grafana/grafana-bi-squad
+	golang.org/x/net v0.17.0 // @grafana/grafana-bi-squad
 	golang.org/x/oauth2 v0.10.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.3.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
 	golang.org/x/tools v0.12.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.126.0 // @grafana/backend-platform
-	google.golang.org/grpc v1.57.0 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.58.2 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.31.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-squad-backend
@@ -192,7 +191,7 @@ require (
 	github.com/miekg/dns v1.1.51 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-squad-backend
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
@@ -217,8 +216,8 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.2.1 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.12.0 // @grafana/backend-platform
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230731193218-e0aa005b6bdf // indirect; @grafana/backend-platform
@@ -244,11 +243,11 @@ require (
 	github.com/huandu/xstrings v1.3.1 // @grafana/partner-datasources
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/backend-platform
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
-	github.com/urfave/cli v1.22.12 // @grafana/backend-platform
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0 // @grafana/plugins-platform-backend
-	go.opentelemetry.io/contrib/propagators/jaeger v1.17.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0 // @grafana/backend-platform
+	github.com/urfave/cli v1.22.14 // @grafana/backend-platform
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0 // @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/propagators/jaeger v1.20.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0 // @grafana/backend-platform
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
 )
 
@@ -277,7 +276,7 @@ require (
 
 require (
 	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d // @grafana/grafana-app-platform-squad
-	go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel v1.19.0 // @grafana/backend-platform
 	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
@@ -400,12 +399,12 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.7 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.7 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.16.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
+	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230731193218-e0aa005b6bdf // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731193218-e0aa005b6bdf // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
@@ -480,7 +479,6 @@ require (
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/backend-platform
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
@@ -502,8 +500,5 @@ replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38a
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230918083811-3513be6760b7
-
-// grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
-replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible

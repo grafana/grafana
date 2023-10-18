@@ -51,7 +51,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 }
 
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
@@ -87,8 +87,8 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		}
 
 		// register the secure socks proxy dialer context, if enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
-		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
 			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, proxyOpts)
@@ -109,7 +109,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			cnnstr += "&allowCleartextPasswords=true"
 		}
 
-		opts, err := settings.HTTPClientOptions()
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
 		}

@@ -39,7 +39,7 @@ type mySQLContextDialer struct {
 
 // getProxyDialerContext returns a context dialer that will send the request through to the secure socks proxy
 func getProxyDialerContext(actualNetwork string, opts *sdkproxy.Options) (*mySQLContextDialer, error) {
-	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
+	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
 	if err != nil {
 		return nil, err
 	}
