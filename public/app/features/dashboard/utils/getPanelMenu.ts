@@ -8,12 +8,10 @@ import {
 } from '@grafana/data';
 import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
-import config, { getConfig } from 'app/core/config';
+import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -32,6 +30,7 @@ import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
+import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -223,18 +222,9 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
   };
 
-  const getAlertingMenuAvailability = () => {
-    const { unifiedAlertingEnabled } = getConfig();
-    const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-    const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
-    const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
-
-    return { isAlertingAvailableForRead, hasRuleUpdatePermissions };
-  };
-
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
-  const { isAlertingAvailableForRead, hasRuleUpdatePermissions } = getAlertingMenuAvailability();
+  const { isAlertingAvailableForRead, hasRuleUpdatePermissions } = getCreateAlertInMenuAvailability();
 
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
@@ -272,7 +262,7 @@ export function getPanelMenu(
   if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
     subMenu.push({
       text: t('panel.header-menu.create-alert', `Create alert`),
-      onClick:  onCreateAlert,
+      onClick: onCreateAlert,
     });
   }
 
