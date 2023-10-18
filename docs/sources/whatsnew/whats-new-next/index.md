@@ -26,7 +26,7 @@ October 30, 2023
 
 _Generally available in Grafana Cloud_
 
-Provides a way to export alerting resources such as rules, contact points, notification policies as a Terraform resources. A new mode "Modify export" for alert rules provides a convenient way of editing provisioned alert rules and export the modified version.   
+This feature provides a way to export alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.   
 
 ## Alerting insights
 
