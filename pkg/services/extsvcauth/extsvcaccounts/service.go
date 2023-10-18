@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
@@ -21,15 +22,17 @@ type ExtSvcAccountsService struct {
 	logger   log.Logger
 	saSvc    sa.Service
 	skvStore kvstore.SecretsKVStore
+	tracer   tracing.Tracer
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	return &ExtSvcAccountsService{
 		acSvc:    acSvc,
 		logger:   logger,
 		saSvc:    saSvc,
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
+		tracer:   tracer,
 	}
 }
 
@@ -51,6 +54,9 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.SaveExternalServiceAccount")
+	defer span.End()
+
 	if cmd == nil {
 		esa.logger.Warn("Received no input")
 		return nil, nil
@@ -91,6 +97,9 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *extsvcauth.ManageExtSvcAccountCmd) (int64, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.ManageExtSvcAccount")
+	defer span.End()
+
 	if cmd == nil {
 		esa.logger.Warn("Received no input")
 		return 0, nil
@@ -137,7 +146,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveCmd) (int64, error) {
 	if cmd.SaID <= 0 {
 		// Create a service account
-		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
+		esa.logger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       cmd.ExtSvcSlug,
 			Role:       newRole(roletype.RoleNone),
@@ -178,6 +187,9 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 
 // getExtSvcAccountToken get or create the token of an External Service
 func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.getExtSvcAccountToken")
+	defer span.End()
+
 	// Get credentials from store
 	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
 	if err != nil && !errors.Is(err, extsvcauth.ErrCredentialsNotFound) {
