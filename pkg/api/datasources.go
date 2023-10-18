@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -334,7 +335,7 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg) error {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
 	if jsonData == nil || !cfg.AuthProxyEnabled {
 		return nil
 	}
@@ -354,9 +355,12 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 	if list == nil {
 		return nil
 	}
-	teamHTTPHeadersJSON := datasources.TeamHTTPHeadersJSONData{}
-	if jsonData != nil {
-		jsonData, err := jsonData.MarshalJSON()
+	if !features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		return nil
+	}
+	teamHTTPHeadersJSON := datasources.TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
 		if err != nil {
 			return err
 		}
@@ -364,7 +368,7 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 		if err != nil {
 			return err
 		}
-		for _, headers := range teamHTTPHeadersJSON.TeamHTTPHeaders {
+		for _, headers := range teamHTTPHeadersJSON {
 			for _, header := range headers {
 				for _, name := range list.Items {
 					if http.CanonicalHeaderKey(header.Header) == http.CanonicalHeaderKey(name) {
@@ -416,7 +420,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return resp
 		}
 	}
-	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
@@ -481,7 +485,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
@@ -521,7 +525,7 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
