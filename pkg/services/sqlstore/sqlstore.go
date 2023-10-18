@@ -38,11 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	CODE_MIGRATION_SQL  = "code_migration"
-	MIGRATION_LOG_TABLE = "migration_log"
-)
-
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
