@@ -2,6 +2,9 @@ package parca
 
 import (
 	"context"
+	"fmt"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -32,10 +35,28 @@ type Service struct {
 
 var logger = log.New("tsdb.parca")
 
+// Return the file, line, and (full-path) function name of the caller
+func getRunContext() (string, int, string) {
+	pc := make([]uintptr, 10)
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	return file, line, f.Name()
+}
+
+// Return a formatted string representing the execution context for the logger
+func logEntrypoint() string {
+	file, line, pathToFunction := getRunContext()
+	parts := strings.Split(pathToFunction, "/")
+	functionName := parts[len(parts)-1]
+	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
+}
+
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*ParcaDatasource, error) {
+	ctxLogger := s.logger.FromContext(ctx)
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		logger.Error("Failed to get instance", "error", err, "pluginID", pluginCtx.PluginID)
+		ctxLogger.Error("Failed to get instance", "error", err, "pluginID", pluginCtx.PluginID, "function", logEntrypoint())
 		return nil, err
 	}
 	in := i.(*ParcaDatasource)
@@ -56,8 +77,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	loggerWithContext := s.logger.FromContext(ctx)
-	loggerWithContext.Debug("Processing queries", "queryLength", len(req.Queries))
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
@@ -66,16 +87,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	data, err := i.QueryData(ctx, req)
 	if err != nil {
-		loggerWithContext.Error("Received error from Parca", "error", err)
+		ctxLogger.Error("Received error from Parca", "error", err, "function", logEntrypoint())
 	} else {
-		loggerWithContext.Debug("All queries processed")
+		ctxLogger.Debug("All queries processed", "function", logEntrypoint())
 	}
 	return data, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	loggerWithContext := s.logger.FromContext(ctx)
-	loggerWithContext.Debug("Calling resource", "path", req.Path)
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Calling resource", "path", req.Path, "function", logEntrypoint())
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
@@ -84,16 +105,16 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	err = i.CallResource(ctx, req, sender)
 	if err != nil {
-		loggerWithContext.Error("Failed to call resource", "error", err)
+		ctxLogger.Error("Failed to call resource", "error", err, "function", logEntrypoint())
 	} else {
-		loggerWithContext.Debug("Resource called")
+		ctxLogger.Debug("Resource called", "function", logEntrypoint())
 	}
 	return err
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	loggerWithContext := s.logger.FromContext(ctx)
-	loggerWithContext.Debug("Checking health")
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Checking health", "function", logEntrypoint())
 
 	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
@@ -102,9 +123,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	check, err := i.CheckHealth(ctx, req)
 	if err != nil {
-		loggerWithContext.Error("Health check failed", "error", err)
+		ctxLogger.Error("Health check failed", "error", err, "function", logEntrypoint())
 	} else {
-		loggerWithContext.Debug("Health check succeeded")
+		ctxLogger.Debug("Health check succeeded", "function", logEntrypoint())
 	}
 	return check, err
 }

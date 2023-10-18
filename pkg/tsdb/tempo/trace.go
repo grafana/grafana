@@ -18,7 +18,8 @@ import (
 )
 
 func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	logger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Getting trace", "function", logEntrypoint())
 
 	result := &backend.DataResponse{}
 	refID := query.RefID
@@ -31,25 +32,25 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(query.JSON, model)
 	if err != nil {
-		logger.Error("Failed to unmarshall Tempo query model", "error", err)
+		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
 		return result, err
 	}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
-		logger.Error("Failed to get datasource information", "error", err)
+		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 
 	if model.Query == nil || *model.Query == "" {
 		err := fmt.Errorf("trace id is required")
-		logger.Error("Failed to validate model query", "error", err)
+		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
 		return result, err
 	}
 
 	request, err := s.createRequest(ctx, dsInfo, *model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
-		logger.Error("Failed to create request", "error", err)
+		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return result, err
@@ -57,7 +58,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	resp, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		logger.Error("Failed to send request to Tempo", "error", err)
+		ctxLogger.Error("Failed to send request to Tempo", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return result, fmt.Errorf("failed get to tempo: %w", err)
@@ -65,18 +66,18 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
 		}
 	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("Failed to read response body", "error", err)
+		ctxLogger.Error("Failed to read response body", "error", err, "function", logEntrypoint())
 		return &backend.DataResponse{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		logger.Error("Failed to get trace", "error", err)
+		ctxLogger.Error("Failed to get trace", "error", err, "function", logEntrypoint())
 		result.Error = fmt.Errorf("failed to get trace with id: %v Status: %s Body: %s", model.Query, resp.Status, string(body))
 		span.RecordError(result.Error)
 		span.SetStatus(codes.Error, result.Error.Error())
@@ -87,7 +88,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	otTrace, err := pbUnmarshaler.UnmarshalTraces(body)
 
 	if err != nil {
-		logger.Error("Failed to convert tempo response to Otlp", "error", err)
+		ctxLogger.Error("Failed to convert tempo response to Otlp", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
@@ -95,7 +96,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		logger.Error("Failed to transform trace to data frame", "error", err)
+		ctxLogger.Error("Failed to transform trace to data frame", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
@@ -104,11 +105,12 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	frame.RefID = refID
 	frames := []*data.Frame{frame}
 	result.Frames = frames
+	ctxLogger.Debug("Successfully got trace", "function", logEntrypoint())
 	return result, nil
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID string, start int64, end int64) (*http.Request, error) {
-	logger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx)
 	var tempoQuery string
 
 	if start == 0 || end == 0 {
@@ -119,7 +121,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID
 
 	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
 	if err != nil {
-		logger.Error("Failed to create request", "error", err)
+		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 

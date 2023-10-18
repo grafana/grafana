@@ -27,7 +27,7 @@ var logger = log.New("tsdb.tempo")
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
-		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL)
+		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
 	}
 
@@ -52,7 +52,7 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	clientConn, err := grpc.Dial(onlyHost, dialOps...)
 	if err != nil {
-		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL)
+		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
 	}
 

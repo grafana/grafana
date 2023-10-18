@@ -36,14 +36,15 @@ type ParcaDatasource struct {
 
 // NewParcaDatasource creates a new datasource instance.
 func NewParcaDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	ctxLogger := logger.FromContext(ctx)
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
-		logger.Error("Failed to get HTTP options", "error", err)
+		ctxLogger.Error("Failed to get HTTP options", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
-		logger.Error("Failed to create HTTP client", "error", err)
+		ctxLogger.Error("Failed to create HTTP client", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 
@@ -60,7 +61,8 @@ func (d *ParcaDatasource) Dispose() {
 }
 
 func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body, "function", logEntrypoint())
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
 	defer span.End()
 
@@ -71,7 +73,7 @@ func (d *ParcaDatasource) CallResource(ctx context.Context, req *backend.CallRes
 		return d.callLabelNames(ctx, req, sender)
 	}
 	if req.Path == "labelValues" {
-		logger.Debug("CallResource completed")
+		ctxLogger.Debug("CallResource completed", "function", logEntrypoint())
 		return d.callLabelValues(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
@@ -104,6 +106,7 @@ func (d *ParcaDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctxLogger := logger.FromContext(ctx)
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
@@ -112,7 +115,7 @@ func (d *ParcaDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealt
 		message = err.Error()
 	}
 
-	logger.Debug("CheckHealth completed")
+	ctxLogger.Debug("CheckHealth completed", "function", logEntrypoint())
 	return &backend.CheckHealthResult{
 		Status:  status,
 		Message: message,
