@@ -159,7 +159,7 @@ ${transformationDocsContent['filterByValue'].helperDocs}
 ${`### ${transformationDocsContent['filterFieldsByName'].name}
 ${transformationDocsContent['filterFieldsByName'].helperDocs}
 
-In the example below, I removed the Min field from the results.
+In the example below, we removed the Min field from the results.
 
 Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
 
