@@ -11,6 +11,7 @@ import { NodeDatum } from './types';
 import { statToString } from './utils';
 
 export const nodeR = 40;
+export const highlightedNodeColor = '#a00';
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css`
@@ -22,6 +23,10 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
 
   mainCircle: css`
     fill: ${theme.components.panel.background};
+  `,
+
+  filledCircle: css`
+    fill: ${highlightedNodeColor};
   `,
 
   hoverCircle: css`
@@ -87,7 +92,7 @@ export const Node = memo(function Node(props: {
     <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
       <circle
         data-testid={`node-circle-${node.id}`}
-        className={styles.mainCircle}
+        className={node.highlighted ? styles.filledCircle : styles.mainCircle}
         r={nodeRadius}
         cx={node.x}
         cy={node.y}

@@ -42,6 +42,7 @@ export type NodeFields = {
   color?: Field;
   icon?: Field;
   nodeRadius?: Field;
+  highlighted?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -61,6 +62,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
     nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
   };
 }
 
@@ -71,6 +73,7 @@ export type EdgeFields = {
   mainStat?: Field;
   secondaryStat?: Field;
   details: Field[];
+  highlighted?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -86,6 +89,7 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
   };
 }
 
@@ -215,6 +219,7 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
+      highlighted: edgeFields.highlighted?.values[index] || false,
     };
   });
 }
@@ -286,6 +291,7 @@ function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
     dataFrameRowIndex: index,
     incoming: 0,
     arcSections: [],
+    highlighted: false,
   };
 }
 
@@ -302,6 +308,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     color: nodeFields.color,
     icon: nodeFields.icon?.values[index] || '',
     nodeRadius: nodeFields.nodeRadius,
+    highlighted: nodeFields.highlighted?.values[index] || false,
   };
 }
 

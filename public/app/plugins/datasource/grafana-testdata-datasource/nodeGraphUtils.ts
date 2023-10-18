@@ -105,6 +105,10 @@ export function generateRandomNodes(count = 10) {
       values: [],
       type: FieldType.number,
     },
+    [NodeGraphDataFrameFieldNames.highlighted]: {
+      values: [],
+      type: FieldType.boolean,
+    },
   };
 
   const nodeFrame = new MutableDataFrame({
@@ -123,6 +127,7 @@ export function generateRandomNodes(count = 10) {
       { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string, config: {} },
       { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
       { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
+      { name: NodeGraphDataFrameFieldNames.highlighted, values: [], type: FieldType.number, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
     length: 0,
@@ -140,6 +145,7 @@ export function generateRandomNodes(count = 10) {
     const rnd = Math.random();
     nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
     nodeFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(rnd > 0.5 ? 30 : 40);
+    nodeFields[NodeGraphDataFrameFieldNames.highlighted].values.push(Math.random() > 0.5);
 
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
@@ -152,6 +158,7 @@ export function generateRandomNodes(count = 10) {
       edgesFrame.fields[1].values.push(node.id);
       edgesFrame.fields[2].values.push(edge);
       edgesFrame.fields[3].values.push(Math.random() * 100);
+      edgesFrame.fields[4].values.push(Math.random() > 0.5);
     }
   }
   edgesFrame.length = edgesFrame.fields[0].values.length;
@@ -171,6 +178,7 @@ function makeRandomNode(index: number) {
     stat1: Math.random(),
     stat2: Math.random(),
     edges: [],
+    highlighted: Math.random() > 0.5,
   };
 }
 

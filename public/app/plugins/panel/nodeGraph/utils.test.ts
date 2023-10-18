@@ -346,5 +346,6 @@ function makeNodeFromEdgeDatum(options: Partial<NodeDatum> = {}): NodeDatum {
     subTitle: '',
     title: 'service:0',
     ...options,
+    highlighted: false,
   };
 }

@@ -27,4 +27,7 @@ export enum NodeGraphDataFrameFieldNames {
   detail = 'detail__',
 
   nodeRadius = 'noderadius',
+
+  // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
+  highlighted = 'highlighted',
 }

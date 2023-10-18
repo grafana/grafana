@@ -4,6 +4,8 @@ import { nodeR } from './Node';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
+export const highlightedEdgeColor = '#a00';
+
 interface Props {
   edge: EdgeDatum;
   hovering: boolean;
@@ -41,13 +43,13 @@ export const Edge = memo(function Edge(props: Props) {
       aria-label={`Edge from: ${source.id} to: ${target.id}`}
     >
       <line
-        strokeWidth={hovering ? 2 : 1}
-        stroke={'#999'}
+        strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + 1}
+        stroke={edge.highlighted ? '#a00' : '#999'}
         x1={line.x1}
         y1={line.y1}
         x2={line.x2}
         y2={line.y2}
-        markerEnd="url(#triangle)"
+        markerEnd={edge.highlighted ? 'url(#triangle-colored)' : 'url(#triangle)'}
       />
       <line
         stroke={'transparent'}
