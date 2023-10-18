@@ -1,4 +1,4 @@
-import { findByRole, findByText, findByTitle, queryByText, render } from '@testing-library/react';
+import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -297,6 +297,36 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[1]).toHaveTextContent('3');
     });
   });
+});
+
+it('should render warning icon for panels of type other than graph and timeseries', async function () {
+  mockSearchApiResponse(server, [
+    mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+  ]);
+
+  mockGetDashboardResponse(
+    mockDashboardDto({
+      title: 'My dashboard',
+      uid: 'dash-test-uid',
+      panels: [
+        { id: 1, title: 'First panel', type: 'bar' },
+        { id: 2, title: 'Second panel', type: 'graph' },
+      ],
+    })
+  );
+
+  const user = userEvent.setup();
+
+  render(<FormWrapper formValues={{ annotations: [] }} />);
+
+  const { dialog } = ui.dashboardPicker;
+
+  await user.click(ui.setDashboardButton.get());
+  await user.click(await findByTitle(dialog.get(), 'My dashboard'));
+
+  const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+
+  expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
 });
 
 function mockGetDashboardResponse(dashboard: DashboardDTO) {

@@ -312,6 +312,12 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
+    if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
+      subMenu.push({
+        text: t('panel.header-menu.create-alert', `Create alert`),
+        onClick: (e: React.MouseEvent) => onCreateAlert(e),
+      });
+    }
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
