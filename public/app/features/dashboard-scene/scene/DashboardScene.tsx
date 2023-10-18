@@ -218,6 +218,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ overlay: undefined });
   }
 
+  public async onStarDashboard() {
+    const { meta, uid } = this.state;
+    if (!uid) {
+      return;
+    }
+    try {
+      const result = await getDashboardSrv().starDashboard(uid, Boolean(meta.isStarred));
+
+      this.setState({
+        meta: {
+          ...meta,
+          isStarred: result,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to star dashboard', err);
+    }
+  }
+
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */

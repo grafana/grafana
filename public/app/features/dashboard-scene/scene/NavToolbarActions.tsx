@@ -16,10 +16,28 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelKey, isDirty, uid } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelKey, isDirty, uid, meta } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
+    if (meta.canStar) {
+      let desc = meta.isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+
+      toolbarActions.push(
+        <DashNavButton
+          key="star-dashboard-button"
+          tooltip={desc}
+          icon={meta.isStarred ? 'favorite' : 'star'}
+          iconType={meta.isStarred ? 'mono' : 'default'}
+          iconSize="lg"
+          onClick={() => {
+            dashboard.onStarDashboard();
+          }}
+        />
+      );
+    }
     toolbarActions.push(
       <DashNavButton
         key="share-dashboard-button"
