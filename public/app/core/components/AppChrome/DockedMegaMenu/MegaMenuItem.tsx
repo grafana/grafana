@@ -46,7 +46,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={sectionExpanded ? 'angle-down' : 'angle-right'}
-              size="xl"
+              size="md"
             />
           )}
         </div>
@@ -66,13 +66,11 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
                 [styles.hasIcon]: Boolean(level === 0 && link.icon),
               })}
             >
-              <FeatureHighlightWrapper>
-                <>
-                  {level === 0 && link.icon && (
-                    <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
-                  )}
-                </>
-              </FeatureHighlightWrapper>
+              {level === 0 && link.icon && (
+                <FeatureHighlightWrapper>
+                  <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
+                </FeatureHighlightWrapper>
+              )}
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
@@ -118,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   collapseButtonWrapper: css({
     display: 'flex',
-    alignItems: 'center',
+    justifyContent: 'center',
     width: theme.spacing(3),
     flexShrink: 0,
   }),
@@ -137,6 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   collapseButton: css({
     color: theme.colors.text.disabled,
+    margin: 0,
   }),
   collapsibleSectionWrapper: css({
     alignItems: 'center',
