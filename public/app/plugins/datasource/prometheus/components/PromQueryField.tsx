@@ -1,23 +1,9 @@
 import { cx } from '@emotion/css';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
-import { Plugin } from 'slate';
-import { Editor } from 'slate-react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import {
-  BracesPlugin,
-  DOMUtil,
-  Icon,
-  SlatePrism,
-  SuggestionsState,
-  TypeaheadInput,
-  TypeaheadOutput,
-  Themeable2,
-  withTheme2,
-  clearButtonStyles,
-} from '@grafana/ui';
+import { DOMUtil, Icon, SuggestionsState, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
   CancelablePromise,
@@ -90,22 +76,10 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: Array<Plugin<Editor>>;
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
-
-    this.plugins = [
-      BracesPlugin(),
-      SlatePrism(
-        {
-          onlyIn: (node) => 'type' in node && node.type === 'code_block',
-          getSyntax: (node) => 'promql',
-        },
-        { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
-      ),
-    ];
 
     this.state = {
       labelBrowserVisible: false,
@@ -252,26 +226,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     this.setState({ syntaxLoaded: true });
-  };
-
-  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const {
-      datasource: { languageProvider },
-    } = this.props;
-
-    if (!languageProvider) {
-      return { suggestions: [] };
-    }
-
-    const { history } = this.props;
-    const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
-
-    const result = await languageProvider.provideCompletionItems(
-      { text, value, prefix, wrapperClasses, labelKey },
-      { history }
-    );
-
-    return result;
   };
 
   render() {

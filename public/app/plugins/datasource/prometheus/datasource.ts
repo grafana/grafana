@@ -476,15 +476,15 @@ export class PrometheusDatasource
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-      const hasInstantQuery = request.targets.some((target) => target.instant);
+      // const hasInstantQuery = request.targets.some((target) => target.instant);
 
-      // Don't cache instant queries
+      /*      // Don't cache instant queries
       if (this.hasIncrementalQuery && !hasInstantQuery) {
         requestInfo = this.cache.requestInfo(request);
         fullOrPartialRequest = requestInfo.requests[0];
-      } else {
-        fullOrPartialRequest = request;
-      }
+      } else {*/
+      fullOrPartialRequest = request;
+      // }
 
       const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
       const startTime = new Date();
