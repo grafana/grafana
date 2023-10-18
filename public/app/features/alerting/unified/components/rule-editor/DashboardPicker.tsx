@@ -146,6 +146,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
     const isSelected = panel.id && selectedPanelId === panel.id?.toString();
+    const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
     const disabled = !isValidPanelIdentifier(panel);
 
     return (
@@ -162,6 +163,11 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
+        {!isAlertingCompatible && !disabled && (
+          <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
+            <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
+          </Tooltip>
+        )}
         {disabled && (
           <Tooltip content="This panel does not have a valid identifier.">
             <Icon name="info-circle" data-testid="info-icon" />
