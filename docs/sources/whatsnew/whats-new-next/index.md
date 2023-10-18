@@ -72,20 +72,6 @@ To learn more, refer to our [Time series documentation](https://grafana.com/docs
 
 TODO: Add image / gif / video
 
-## Visualize enum data in Time series and State timeline visualizations
-
-<!-- Nathan Marrs -->
-<!-- OSS, Enterprise -->
-<!-- already in on-prem release notes -->
-
-<Release date>
-
-_Available in public preview in Grafana Cloud_
-
-You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
-
-TODO: Add image / gif / video
-
 ## Data visualization quality of life improvements
 
 <!-- Nathan Marrs -->
