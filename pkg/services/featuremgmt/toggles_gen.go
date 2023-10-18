@@ -514,4 +514,8 @@ const (
 	// FlagPluginsInstrumentationStatusSource
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+
+	// FlagDashboardSceneForViewers
+	// Enables dashboard rendering using Scenes for viewer roles
+	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 )

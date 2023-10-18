@@ -890,5 +890,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "dashboardSceneForViewers",
+			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
 	}
 )
