@@ -114,7 +114,7 @@ func (s *Service) DBMigration(db db.DB) {
 		// populate folder_uid column
 		// for dashboards the source of truth is the dashboard table
 		// for folders the source of truth is the folder table
-		q := `UPDATE dashboard SET folder_uid = (SELECT derived.uid FROM (SELECT d.uid FROM dashboard AS d WHERE d.id = dashboard.folder_id) AS derived) WHERE is_folder = ?`
+		q := `UPDATE dashboard SET folder_uid = (SELECT derived.uid FROM (SELECT d.uid FROM dashboard AS d WHERE d.id = dashboard.folder_id) AS derived) WHERE is_folder = ? AND folder_uid IS NULL`
 		r, err := sess.Exec(q, s.db.GetDialect().BooleanStr(false))
 		if err != nil {
 			s.log.Error("Failed to migrate dashboard folder_uid for dashboards", "error", err)
@@ -125,7 +125,7 @@ func (s *Service) DBMigration(db db.DB) {
 			s.log.Error("Failed to get dashboard rows affected", "error", dashboardRowsAffectedErr)
 		}
 
-		q = `UPDATE dashboard SET folder_uid = (SELECT f.parent_uid FROM folder f WHERE f.org_id = dashboard.org_id AND f.uid = dashboard.uid) WHERE is_folder = ?`
+		q = `UPDATE dashboard SET folder_uid = (SELECT f.parent_uid FROM folder f WHERE f.org_id = dashboard.org_id AND f.uid = dashboard.uid) WHERE is_folder = ? AND folder_uid IS NULL`
 		r, err = sess.Exec(q, s.db.GetDialect().BooleanStr(true))
 		if err != nil {
 			s.log.Error("Failed to migrate dashboard folder_uid for folders", "error", err)
@@ -324,7 +324,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if !hasAccess {
 			return nil, dashboards.ErrFolderAccessDenied
 		}
-		dashFolder.FolderUID = cmd.ParentUID
+		dashFolder.FolderUID = &cmd.ParentUID
 	}
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
@@ -455,9 +455,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	dashFolder := queryResult
-	if cmd.NewParentUID != nil {
-		dashFolder.FolderUID = *cmd.NewParentUID
-	}
+	dashFolder.FolderUID = cmd.NewParentUID
 
 	currentTitle := dashFolder.Title
 
@@ -869,9 +867,11 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID,
-		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
+	}
+	if dash.FolderUID != nil {
+		cmd.FolderUID = *dash.FolderUID
 	}
 
 	if !dto.UpdatedAt.IsZero() {

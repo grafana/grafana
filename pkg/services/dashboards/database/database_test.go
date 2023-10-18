@@ -884,9 +884,10 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	folderId int64, folderUID string, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgId,
-		FolderID: folderId,
-		IsFolder: isFolder,
+		OrgID:     orgId,
+		FolderID:  folderId,
+		FolderUID: folderUID,
+		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,

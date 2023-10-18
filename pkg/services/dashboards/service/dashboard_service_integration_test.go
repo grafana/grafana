@@ -203,9 +203,11 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"title": "Dash",
 						}),
 						FolderID:  sc.savedDashInGeneralFolder.FolderID,
-						FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
+					}
+					if sc.savedDashInGeneralFolder.FolderUID != nil {
+						cmd.FolderUID = *sc.savedDashInGeneralFolder.FolderUID
 					}
 
 					err := callSaveWithError(t, cmd, sc.sqlStore)
@@ -228,9 +230,11 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"title": "Dash",
 						}),
 						FolderID:  sc.savedDashInFolder.FolderID,
-						FolderUID: sc.savedDashInFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
+					}
+					if sc.savedDashInGeneralFolder.FolderUID != nil {
+						cmd.FolderUID = *sc.savedDashInGeneralFolder.FolderUID
 					}
 
 					err := callSaveWithError(t, cmd, sc.sqlStore)
@@ -576,8 +580,10 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInFolder.Title,
 							}),
 							FolderID:  sc.savedDashInFolder.FolderID,
-							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
+						}
+						if sc.savedDashInFolder.FolderUID != nil {
+							cmd.FolderUID = *sc.savedDashInFolder.FolderUID
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
@@ -593,8 +599,10 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							FolderID:  sc.savedDashInGeneralFolder.FolderID,
-							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
+						}
+						if sc.savedDashInFolder.FolderUID != nil {
+							cmd.FolderUID = *sc.savedDashInFolder.FolderUID
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
@@ -716,8 +724,10 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInFolder.Title,
 							}),
 							FolderID:  sc.savedDashInFolder.FolderID,
-							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
+						}
+						if sc.savedDashInFolder.FolderUID != nil {
+							cmd.FolderUID = *sc.savedDashInFolder.FolderUID
 						}
 
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
@@ -741,8 +751,10 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							FolderID:  sc.savedDashInGeneralFolder.FolderID,
-							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
+						}
+						if sc.savedDashInFolder.FolderUID != nil {
+							cmd.FolderUID = *sc.savedDashInFolder.FolderUID
 						}
 
 						res := callSaveWithResult(t, cmd, sc.sqlStore)

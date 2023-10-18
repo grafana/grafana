@@ -1080,7 +1080,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 	// nolint:staticcheck
 	saveCmd.FolderID = dash.FolderID
-	saveCmd.FolderUID = dash.FolderUID
+	if dash.FolderUID != nil {
+		saveCmd.FolderUID = *dash.FolderUID
+	}
 
 	return hs.postDashboard(c, saveCmd)
 }
