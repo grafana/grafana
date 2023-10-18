@@ -1,34 +1,75 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
-        "type": "dashboard"
-      }
-    ]
-  },
+  "__inputs": [],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.5.2"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
   "editable": true,
-  "gnetId": null,
-  "graphTooltip": 0,
   "id": null,
-  "iteration": 1644348036942,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["Azure-AppInsights-Perf"],
+      "targetBlank": true,
+      "title": "Performance",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["Azure-AppInsights-Failures"],
+      "targetBlank": true,
+      "title": "Failures",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -41,7 +82,6 @@
       "type": "row"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 5,
@@ -50,14 +90,22 @@
       },
       "id": 10,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/overview\" target=\"_blank\">\n  <div>\n    <h3 style=\"color: #a16feb\"> ${res} </h1>\n    <h5 style=\"margin-bottom: 0px;\"> Application Insights  </h5>\n  </div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -121,18 +169,9 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.7",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -148,12 +187,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -165,7 +201,6 @@
       "type": "stat"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -175,20 +210,18 @@
       "id": 44,
       "links": [],
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#blade/AppInsightsExtension/ProactiveDetectionFeedBlade/ComponentId/%7B%22Name%22%3A%22${res}%22%2C%22SubscriptionId%22%3A%22${sub}%22%2C%22ResourceGroup%22%3A%22${rg}%22%7D/TimeContext/%7B%22durationMs%22%3A604800000%2C%22endTime%22%3Anull%2C%22createdTime%22%3A%222021-10-18T19%3A26%3A58.876Z%22%2C%22isInitialTime%22%3Atrue%2C%22grain%22%3A1%2C%22useDashboardTimeRange%22%3Afalse%7D\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #4d99b8; font-size:18px;\">Smart detection</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
         "w": 3,
@@ -198,20 +231,18 @@
       "id": 46,
       "links": [],
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/quickPulse\" target=\"_blank\">\n<div style=\"padding-top: 20px\">\n  <center><p style=\"color: #2272b9; font-size:18px;\">Live Metrics</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           \n           ",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 3,
@@ -220,21 +251,23 @@
       },
       "id": 42,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<a style=\"color: inherit;\" href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/applicationMap\" target=\"_blank\">\n<div style=\"padding-top: 20px;\">\n  <center><p style=\"position:center; color: #ff8c00; font-size:18px\">App map</p></center>\n  <center><p style=\"margin-top:0px;\">${res}</p></center>\n</div>\n</a>\n           ",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
       "collapsed": false,
-      "datasource": null,
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -243,11 +276,10 @@
       },
       "id": 54,
       "panels": [],
-      "title": "Application Insights",
+      "title": "Application Insights Overview",
       "type": "row"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -256,20 +288,22 @@
       },
       "id": 12,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<h1 style=\"font-size: 20px; color:#73bf69;\"> Usage </h1>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -336,41 +370,17 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.7",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "union\n    (traces\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (requests\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (pageViews\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (dependencies\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (customEvents\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (availabilityResults\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (exceptions\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (customMetrics\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (browserTimings\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo)\n| where notempty(user_Id)\n| summarize ['users/count_unique'] = dcount(user_Id) by bin(timestamp, 1m)\n| order by timestamp desc",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resultFormat": "time_series"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "aggregation": "Count",
-            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "microsoft.insights/components",
-            "metricName": "requests/count",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "50"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "B",
@@ -382,7 +392,6 @@
       "type": "stat"
     },
     {
-      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -391,50 +400,18 @@
       },
       "id": 14,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<h1 style=\"font-size:20px; color:#ec008c;\">Reliability</h1>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "Microsoft.Insights/components",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": []
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 2,
@@ -444,20 +421,18 @@
       "id": 36,
       "links": [],
       "options": {
-        "content": "<a href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/failures\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<a href=\"/d/Azure-AppInsights-Failures-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
         "w": 3,
@@ -466,50 +441,18 @@
       },
       "id": 17,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<h1 style=\"font-size:20px; color:#7e58ff;\">Responsiveness</h1>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "Microsoft.Insights/components",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": []
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 3,
@@ -519,20 +462,18 @@
       "id": 38,
       "links": [],
       "options": {
-        "content": "<a href=\"https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/performance\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<a href=\"/d/Azure-AppInsights-Perf-Operations?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": "Azure Monitor",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -541,50 +482,18 @@
       },
       "id": 18,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<h1 style=\"font-size:20px; color:#3274d9;\">Browser</h1>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "Microsoft.Insights/components",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "queryType": "Azure Monitor",
-          "refId": "A",
-          "subscription": "$sub",
-          "subscriptions": []
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "type": "text"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 3,
         "w": 2,
@@ -593,21 +502,23 @@
       },
       "id": 50,
       "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
         "content": "<a style=\"color: #ffffff;\" href=\"https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/ResourceId/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/id/%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}/detailBlade/MetricsExplorerBlade/sourceExtension/AppInsightsExtension/TimeContext/%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D/Chart/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Browsers%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22dependencies%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22dependencies%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22dependency%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Have%20AJAX%20calls%20been%20slow%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fcount%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22pageViews%2Fcount%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22operation%2Fname%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22Has%20page%20view%20traffic%20changed%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-g2%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A2%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22When%20are%20script%20errors%20occurring%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%2C%22color%22%3A%22msportalfx-bgcolor-g0%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22pageViews%2Fduration%22%7D%2C%22name%22%3A%22pageViews%2Fduration%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A4%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3Afalse%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20slowest%20pages%3F%22%7D%2C%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F${sub}%2FresourceGroups%2F${rg}%2Fproviders%2Fmicrosoft.insights%2Fcomponents%2F${res}%22%2C%22sku%22%3A%7B%22name%22%3A%22${res}%22%7D%7D%2C%22metricVisualization%22%3A%7B%22resourceDisplayName%22%3A%22exceptions%2Fbrowser%22%2C%22color%22%3A%22msportalfx-bgcolor-d0%22%7D%2C%22name%22%3A%22exceptions%2Fbrowser%22%2C%22namespace%22%3A%22microsoft.insights%2Fcomponents%2Fkusto%22%2C%22aggregationType%22%3A1%7D%5D%2C%22visualization%22%3A%7B%22chartType%22%3A5%2C%22axisVisualization%22%3A%7B%22y%22%3A%7B%22isVisible%22%3Atrue%7D%7D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22exception%2FproblemId%22%7D%2C%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22client%2Ftype%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22Browser%22%5D%7D%5D%7D%2C%22title%22%3A%22What%20are%20my%20most%20common%20script%20errors%3F%22%2C%22timespan%22%3A%7B%22relative%22%3A%7B%22duration%22%3A86400000%7D%2C%22grain%22%3A1%2C%22options%22%3A%7B%22grain%22%3A1%2C%22showUTCTime%22%3Afalse%7D%7D%7D%5D%7D/openInEditMode/\" target=\"_blank\">\n<div style=\"padding-top: 35px; background-color: #3274d9; width: 100%; height: 100%\">\n  <center><p style=\"font-size:16px; margin-bottom:0px;\"> Browsers </p></center>\n</div>\n</a>",
         "mode": "html"
       },
-      "pluginVersion": "8.2.7",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "9.5.2",
       "transparent": true,
       "type": "text"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
@@ -616,6 +527,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
@@ -714,45 +627,24 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "union\n    (traces\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (requests\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (pageViews\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (dependencies\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (customEvents\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (availabilityResults\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (exceptions\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (customMetrics\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo),\n    (browserTimings\n    | where timestamp >= $__timeFrom and timestamp < $__timeTo)\n| where notempty(user_Id)\n| summarize ['users/count_unique'] = dcount(user_Id) by bin(timestamp, $__interval)\n| order by timestamp desc",
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resultFormat": "time_series"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "microsoft.insights/components",
-            "metricName": "requests/count",
-            "metricNamespace": "microsoft.insights/components",
-            "resourceGroup": "$rg",
-            "resourceName": "$res",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "50"
-          },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -765,8 +657,9 @@
             "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
             "resultFormat": "time_series"
           },
-          "azureMonitor": {
-            "timeGrain": "auto"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "hide": false,
           "queryType": "Azure Log Analytics",
@@ -774,13 +667,15 @@
           "subscription": ""
         }
       ],
-      "timeShift": null,
       "title": "Users",
       "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -788,6 +683,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -851,23 +748,16 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -883,12 +773,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Failed requests",
@@ -900,7 +787,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -908,6 +798,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
@@ -976,23 +868,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1004,16 +889,14 @@
             "metricNamespace": "microsoft.insights/components",
             "resourceGroup": "$rg",
             "resourceName": "$res",
+            "resourceUri": "/subscriptions/$sub/resourceGroups/$rg/providers/microsoft.insights/components/$res",
             "timeGrain": "auto",
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -1026,7 +909,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1034,6 +920,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1101,23 +989,16 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -1133,12 +1014,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -1150,7 +1028,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1158,6 +1039,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisWidth": 50,
@@ -1241,23 +1124,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1273,12 +1149,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -1290,7 +1163,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1298,6 +1174,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1389,23 +1267,16 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -1422,13 +1293,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Server Exceptions",
@@ -1436,15 +1303,6 @@
           "subscriptions": []
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -1461,13 +1319,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Dependency failures",
@@ -1480,7 +1334,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1488,6 +1345,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMax": -6,
@@ -1555,23 +1414,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1587,12 +1439,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Processor",
@@ -1600,15 +1449,6 @@
           "subscriptions": []
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1624,13 +1464,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Process CPU",
@@ -1642,7 +1478,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1650,6 +1489,8 @@
             "mode": "continuous-BlPu"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1775,23 +1616,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1807,12 +1641,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Page load network connect time",
@@ -1820,15 +1651,6 @@
           "subscriptions": []
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1844,13 +1666,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Client processing time",
@@ -1858,15 +1676,6 @@
           "subscriptions": []
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1882,13 +1691,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Send request time",
@@ -1896,15 +1701,6 @@
           "subscriptions": []
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -1920,13 +1716,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "Receiving response time",
@@ -1938,13 +1730,18 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
@@ -1979,8 +1776,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2010,23 +1806,16 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -2042,12 +1831,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2059,7 +1845,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2067,6 +1856,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -2100,8 +1891,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2131,23 +1921,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -2163,12 +1946,9 @@
             "timeGrains": [],
             "top": "100"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2180,7 +1960,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2188,6 +1971,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
@@ -2223,8 +2008,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2254,23 +2038,16 @@
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Average",
@@ -2286,12 +2063,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2303,7 +2077,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${ds}",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2311,6 +2088,8 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMin": 0,
@@ -2346,8 +2125,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2377,23 +2155,16 @@
         "legend": {
           "calcs": ["sum"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series"
-          },
           "azureMonitor": {
             "aggOptions": [],
             "aggregation": "Count",
@@ -2409,12 +2180,9 @@
             "timeGrains": [],
             "top": "50"
           },
-          "azureResourceGraph": {
-            "resultFormat": "table"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
@@ -2427,14 +2195,14 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 32,
+  "revision": 1,
+  "schemaVersion": 38,
+  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {},
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
@@ -2449,32 +2217,39 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
-        "definition": "Subscriptions()",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Subscription",
         "multi": false,
         "name": "sub",
         "options": [],
-        "query": "Subscriptions()",
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "SubscriptionsQuery",
+            "rawQuery": "Subscriptions()"
+          },
+          "queryType": "Azure Subscriptions",
+          "refId": "A"
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 5,
+        "sort": 0,
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
@@ -2482,26 +2257,28 @@
         "name": "rg",
         "options": [],
         "query": {
-          "azureResourceGraph": {
-            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Insights/components\"\r\n| distinct resourceGroup"
+          "grafanaTemplateVariableFn": {
+            "kind": "ResourceGroupsQuery",
+            "rawQuery": "ResourceGroups($sub)",
+            "subscription": "$sub"
           },
-          "queryType": "Azure Resource Graph",
+          "queryType": "Azure Resource Groups",
           "refId": "A",
-          "subscriptions": ["$sub"]
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 5,
+        "sort": 0,
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 2,
         "includeAll": false,
         "label": "Namespace",
@@ -2509,26 +2286,30 @@
         "name": "ns",
         "options": [],
         "query": {
-          "azureResourceGraph": {
-            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Insights/components\" and resourceGroup =~ \"$rg\"\r\n| distinct [\"type\"]"
+          "grafanaTemplateVariableFn": {
+            "kind": "MetricNamespaceQuery",
+            "rawQuery": "Namespaces($sub, $rg)",
+            "resourceGroup": "$rg",
+            "subscription": "$sub"
           },
-          "queryType": "Azure Resource Graph",
+          "queryType": "Azure Namespaces",
           "refId": "A",
-          "subscriptions": ["$sub"]
+          "resourceGroup": "$rg",
+          "subscription": "$sub"
         },
         "refresh": 1,
-        "regex": "",
+        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
         "skipUrlSync": false,
-        "sort": 5,
+        "sort": 0,
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${ds}",
-        "definition": "",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "ResourceNames($sub, $rg, $ns)",
         "hide": 0,
         "includeAll": false,
         "label": "Resource",
@@ -2545,38 +2326,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 5,
-        "type": "query"
-      },
-      {
-        "current": {},
-        "datasource": {
-          "type": "grafana-azure-monitor-datasource",
-          "uid": "${ds}"
-        },
-        "definition": "resources\n| project tenantId",
-        "hide": 2,
-        "includeAll": false,
-        "label": "tenantId",
-        "multi": false,
-        "name": "tenant",
-        "options": [],
-        "query": {
-          "azureLogAnalytics": {
-            "query": "",
-            "resource": ""
-          },
-          "azureResourceGraph": {
-            "query": "Resources\r\n|project tenantId"
-          },
-          "queryType": "Azure Resource Graph",
-          "refId": "A",
-          "subscriptions": ["$sub"]
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 5,
+        "sort": 0,
         "type": "query"
       }
     ]
@@ -2587,7 +2337,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "uid": "Yo38mcvnz",
-  "title": "Azure / Insights / Applications",
-  "version": 10
+  "title": "Azure / Insights / Applications - Overview",
+  "uid": "Azure-AppInsights-Overview",
+  "version": 83
 }
