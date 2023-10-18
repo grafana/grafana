@@ -30,6 +30,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 
   const styles = useStyles2(getStyles);
 
+  if (!link.url) {
+    return null;
+  }
+
   return (
     <li className={styles.listItem}>
       <div className={styles.menuItem}>
