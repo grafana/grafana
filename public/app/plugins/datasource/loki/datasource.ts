@@ -932,6 +932,10 @@ export class LokiDatasource
         expression = addLineFilter(expression, action.options?.value);
         break;
       }
+      case 'ADD_LINE_FILTER_OUT': {
+        expression = addLineFilter(expression, action.options?.value, '!=');
+        break;
+      }
       default:
         break;
     }

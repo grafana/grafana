@@ -3,6 +3,7 @@ import { SyntaxNode } from '@lezer/common';
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
+  addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
   NodePosition,
@@ -304,5 +305,20 @@ describe('removeLabelFromQuery', () => {
     ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
   ])('should remove a negative label matcher from the query', (query: string, value: string, expected: string) => {
     expect(removeLabelFromQuery(query, 'job', '!=', value)).toBe(expected);
+  });
+});
+
+describe.each(['|=', '!='])('addLineFilter type %s', (op: string) => {
+  it('Adds a line filter to a log query', () => {
+    expect(addLineFilter('{place="earth"}', undefined, op)).toBe(`{place="earth"} ${op} \`\``);
+  });
+  it('Adds a line filter with a value to a log query', () => {
+    expect(addLineFilter('{place="earth"}', 'content', op)).toBe(`{place="earth"} ${op} \`content\``);
+  });
+  it('Adds a line filter to a metric query', () => {
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', undefined, op)).toBe(`avg_over_time({place="earth"} ${op} \`\` [1m])`);
+  });
+  it('Adds a line filter with a value to a metric query', () => {
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', 'content', op)).toBe(`avg_over_time({place="earth"} ${op} \`content\` [1m])`);
   });
 });
