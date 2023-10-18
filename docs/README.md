@@ -32,8 +32,8 @@ Instead, navigate to the appropriate typescript source file and edit the content
   - Auto-generated markdown location:
     - docs/sources/panels-visualizations/query-transform-data/transform-data/index.md
   - Typescript location for editing and instructions:
-    - scripts/docs/generate-transformations.ts
-    - public/app/features/transformers/docs/content.ts
+    - scripts/docs/generate-transformations.ts - Includes all content not specific to a transformation.
+    - public/app/features/transformers/docs/content.ts - Transformation-specific content.
 
 ### [Contributing](/contribute/documentation/README.md)
 
