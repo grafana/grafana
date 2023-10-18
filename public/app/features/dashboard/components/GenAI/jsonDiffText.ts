@@ -182,7 +182,7 @@ function shortenDiff(diffS: string) {
     let line = diffLines[i];
     if (titleOrBracket.test(line)) {
       ret.push(line);
-    } else if (line[0] === '+' || line[0] === '-') {
+    } else if (line.startsWith('+') || line.startsWith('-')) {
       ret.push(line);
     }
   }
