@@ -272,7 +272,7 @@ export function getPanelMenu(
   if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
     subMenu.push({
       text: t('panel.header-menu.create-alert', `Create alert`),
-      onClick: (e: React.MouseEvent) => onCreateAlert(e),
+      onClick:  onCreateAlert,
     });
   }
 
