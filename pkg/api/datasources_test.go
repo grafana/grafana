@@ -21,6 +21,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -226,6 +227,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
 		Cfg:                setting.NewCfg(),
+		Features:           featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -243,7 +245,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 
 	hs.Cfg.AuthProxyEnabled = true
 	jsonData := simplejson.New()
-	jsonData.Set("teamHTTPHeaders", data)
+	jsonData.Set("teamHttpHeaders", data)
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
