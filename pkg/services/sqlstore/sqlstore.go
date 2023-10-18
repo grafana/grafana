@@ -568,66 +568,6 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-func (ss *SQLStore) migrationHasRun(ctx context.Context, migrationID string) (bool, migrator.MigrationLog, error) {
-	var record migrator.MigrationLog
-	var exists bool
-	if err := ss.withDbSession(ctx, ss.engine, func(sess *DBSession) error {
-		recordFound, err := sess.SQL(fmt.Sprintf("SELECT success, error FROM %s WHERE migration_id = ?", MIGRATION_LOG_TABLE), migrationID).Get(&record)
-		if err != nil {
-			return err
-		}
-
-		exists = recordFound
-		return nil
-	}); err != nil {
-		return false, record, err
-	}
-
-	return exists, record, nil
-}
-
-func (ss *SQLStore) registerMigrationExecution(sess *DBSession, record migrator.MigrationLog) error {
-	if _, err := sess.Table(MIGRATION_LOG_TABLE).Insert(&record); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ss *SQLStore) RunAndRegisterCodeMigration(ctx context.Context, migrationID string, migrationFunc DBTransactionFunc) error {
-	hasRun, existingRecord, err := ss.migrationHasRun(ctx, migrationID)
-	if err != nil {
-		return err
-	}
-
-	if hasRun && existingRecord.Success {
-		ss.log.Info("Code migration has already run", "migration_id", migrationID)
-		return nil
-	}
-
-	record := migrator.MigrationLog{
-		MigrationID: migrationID,
-		SQL:         CODE_MIGRATION_SQL,
-		Timestamp:   time.Now(),
-	}
-
-	if err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		ss.log.Info("Executing code migration", "migration_id", migrationID)
-		migrationErr := migrationFunc(sess)
-
-		if migrationErr != nil {
-			record.Error = migrationErr.Error()
-		}
-		record.Success = true
-		registrationErr := ss.registerMigrationExecution(sess, record)
-		err := errors.Join(migrationErr, registrationErr)
-		return err
-	}); err != nil {
-		ss.log.Error("Failed to execute code migration", "migration_id", migrationID, "err", err)
-		return err
-	}
-	return nil
-}
-
 // ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()

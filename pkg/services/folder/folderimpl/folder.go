@@ -24,9 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// This value should not change, as it is used to determine whether the folder_uid data migration has been run.
-const folder_uid_migration_id = "Populate dashboard folder_uid"
-
 type Service struct {
 	store                store
 	db                   db.DB
@@ -108,38 +105,6 @@ func (s *Service) DBMigration(db db.DB) {
 	})
 	if err != nil {
 		s.log.Error("DB migration on folder service start failed.", "err", err)
-	}
-
-	if err := db.RunAndRegisterCodeMigration(context.Background(), folder_uid_migration_id, func(sess *sqlstore.DBSession) error {
-		// populate folder_uid column
-		// for dashboards the source of truth is the dashboard table
-		// for folders the source of truth is the folder table
-		q := `UPDATE dashboard SET folder_uid = (SELECT derived.uid FROM (SELECT d.uid FROM dashboard AS d WHERE d.id = dashboard.folder_id) AS derived) WHERE is_folder = ? AND folder_uid IS NULL`
-		r, err := sess.Exec(q, s.db.GetDialect().BooleanStr(false))
-		if err != nil {
-			s.log.Error("Failed to migrate dashboard folder_uid for dashboards", "error", err)
-			return err
-		}
-		dashboardRowsAffected, dashboardRowsAffectedErr := r.RowsAffected()
-		if dashboardRowsAffectedErr != nil {
-			s.log.Error("Failed to get dashboard rows affected", "error", dashboardRowsAffectedErr)
-		}
-
-		q = `UPDATE dashboard SET folder_uid = (SELECT f.parent_uid FROM folder f WHERE f.org_id = dashboard.org_id AND f.uid = dashboard.uid) WHERE is_folder = ? AND folder_uid IS NULL`
-		r, err = sess.Exec(q, s.db.GetDialect().BooleanStr(true))
-		if err != nil {
-			s.log.Error("Failed to migrate dashboard folder_uid for folders", "error", err)
-			return err
-		}
-		folderRowsAffected, folderRowsAffectedErr := r.RowsAffected()
-		if folderRowsAffectedErr != nil {
-			s.log.Error("Failed to get folder rows affected", "error", folderRowsAffectedErr)
-		}
-
-		s.log.Debug("Migrating dashboard data", "dashboards rows", dashboardRowsAffected, "folder rows", folderRowsAffected)
-		return nil
-	}); err != nil {
-		s.log.Error("Failed to run folder_uid migration", "error", err)
 	}
 }
 
