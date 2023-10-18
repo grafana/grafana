@@ -224,7 +224,7 @@ export function getPanelMenu(
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
-  const { isAlertingAvailableForRead, hasRuleUpdatePermissions } = getCreateAlertInMenuAvailability();
+  const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
 
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
@@ -259,7 +259,7 @@ export function getPanelMenu(
     }
   }
 
-  if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
+  if (isCreateAlertMenuOptionAvailable) {
     subMenu.push({
       text: t('panel.header-menu.create-alert', `Create alert`),
       onClick: onCreateAlert,
@@ -302,7 +302,7 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
-    if (isAlertingAvailableForRead && hasRuleUpdatePermissions) {
+    if (isCreateAlertMenuOptionAvailable) {
       subMenu.push({
         text: t('panel.header-menu.create-alert', `Create alert`),
         onClick: onCreateAlert,
