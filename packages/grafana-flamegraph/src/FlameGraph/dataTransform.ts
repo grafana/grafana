@@ -67,9 +67,7 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       children: [],
     };
 
-    // if the label value is something like 'toString' then checking its position in the array will return 'ƒ toString() { [native code] }'
-    // which results in a TypeError when we try to push to it. So we also have to check if the array already has at least one value
-    if (uniqueLabels[container.getLabel(i)] && uniqueLabels[container.getLabel(i)].length > 0) {
+    if (uniqueLabels[container.getLabel(i)]) {
       uniqueLabels[container.getLabel(i)].push(newItem);
     } else {
       uniqueLabels[container.getLabel(i)] = [newItem];

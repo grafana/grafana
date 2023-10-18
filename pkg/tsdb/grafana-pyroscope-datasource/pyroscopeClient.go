@@ -172,25 +172,12 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 		return nil, nil
 	}
 
-	levels := make([]*Level, len(resp.Msg.Flamegraph.Levels))
-	for i, level := range resp.Msg.Flamegraph.Levels {
-		levels[i] = &Level{
-			Values: level.Values,
-		}
-	}
-
-	return &ProfileResponse{
-		Flamebearer: &Flamebearer{
-			Names:   resp.Msg.Flamegraph.Names,
-			Levels:  levels,
-			Total:   resp.Msg.Flamegraph.Total,
-			MaxSelf: resp.Msg.Flamegraph.MaxSelf,
-		},
-		Units: getUnits(profileTypeID),
-	}, nil
+	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
 }
 
 func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSpanProfile", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector), attribute.String("spanSelector", strings.Join(spanSelector, ","))))
+	defer span.End()
 	req := &connect.Request[querierv1.SelectMergeSpanProfileRequest]{
 		Msg: &querierv1.SelectMergeSpanProfileRequest{
 			ProfileTypeID: profileTypeID,
@@ -204,11 +191,22 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 
 	resp, err := c.connectClient.SelectMergeSpanProfile(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	levels := make([]*Level, len(resp.Msg.Flamegraph.Levels))
-	for i, level := range resp.Msg.Flamegraph.Levels {
+	if resp.Msg.Flamegraph == nil {
+		// Not an error, can happen when querying data oout of range.
+		return nil, nil
+	}
+
+	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
+}
+
+func profileQuery(ctx context.Context, err error, span trace.Span, flamegraph *querierv1.FlameGraph, profileTypeID string) (*ProfileResponse, error) {
+	levels := make([]*Level, len(flamegraph.Levels))
+	for i, level := range flamegraph.Levels {
 		levels[i] = &Level{
 			Values: level.Values,
 		}
@@ -216,10 +214,10 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
-			Names:   resp.Msg.Flamegraph.Names,
+			Names:   flamegraph.Names,
 			Levels:  levels,
-			Total:   resp.Msg.Flamegraph.Total,
-			MaxSelf: resp.Msg.Flamegraph.MaxSelf,
+			Total:   flamegraph.Total,
+			MaxSelf: flamegraph.MaxSelf,
 		},
 		Units: getUnits(profileTypeID),
 	}, nil

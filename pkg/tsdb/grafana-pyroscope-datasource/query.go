@@ -97,8 +97,9 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		if len(qm.SpanSelector) > 0 {
-			g.Go(func() error {
+		g.Go(func() error {
+			var profileResp *ProfileResponse
+			if len(qm.SpanSelector) > 0 {
 				logger.Debug("Calling GetSpanProfile", "queryModel", qm)
 				prof, err := d.client.GetSpanProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
@@ -107,14 +108,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Error GetSpanProfile()", "err", err)
 					return err
 				}
-				frame := responseToDataFrames(prof)
-				responseMutex.Lock()
-				response.Frames = append(response.Frames, frame)
-				responseMutex.Unlock()
-				return nil
-			})
-		} else {
-			g.Go(func() error {
+				profileResp = prof
+			} else {
 				logger.Debug("Calling GetProfile", "queryModel", qm)
 				prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
@@ -123,33 +118,34 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Error GetProfile()", "err", err)
 					return err
 				}
+				profileResp = prof
+			}
 
-				var frame *data.Frame
-				if prof != nil {
-					frame = responseToDataFrames(prof)
+			var frame *data.Frame
+			if profileResp != nil {
+				frame = responseToDataFrames(profileResp)
 
-					// If query called with streaming on then return a channel
-					// to subscribe on a client-side and consume updates from a plugin.
-					// Feel free to remove this if you don't need streaming for your datasource.
-					if qm.WithStreaming {
-						channel := live.Channel{
-							Scope:     live.ScopeDatasource,
-							Namespace: pCtx.DataSourceInstanceSettings.UID,
-							Path:      "stream",
-						}
-						frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				// If query called with streaming on then return a channel
+				// to subscribe on a client-side and consume updates from a plugin.
+				// Feel free to remove this if you don't need streaming for your datasource.
+				if qm.WithStreaming {
+					channel := live.Channel{
+						Scope:     live.ScopeDatasource,
+						Namespace: pCtx.DataSourceInstanceSettings.UID,
+						Path:      "stream",
 					}
-				} else {
-					// We still send empty data frame to give feedback that query really run, just didn't return any data.
-					frame = getEmptyDataFrame()
+					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
 				}
-				responseMutex.Lock()
-				response.Frames = append(response.Frames, frame)
-				responseMutex.Unlock()
+			} else {
+				// We still send empty data frame to give feedback that query really run, just didn't return any data.
+				frame = getEmptyDataFrame()
+			}
+			responseMutex.Lock()
+			response.Frames = append(response.Frames, frame)
+			responseMutex.Unlock()
 
-				return nil
-			})
-		}
+			return nil
+		})
 	}
 
 	if err := g.Wait(); err != nil {
