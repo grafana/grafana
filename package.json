@@ -399,7 +399,7 @@
     "react-window-infinite-loader": "1.0.9",
     "redux": "4.2.1",
     "redux-thunk": "2.4.2",
-    "regenerator-runtime": "0.13.11",
+    "regenerator-runtime": "0.14.0",
     "reselect": "4.1.8",
     "rxjs": "7.8.1",
     "sass": "link:./public/sass",
