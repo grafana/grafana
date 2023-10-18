@@ -165,7 +165,7 @@ Here is the original query table. (This is streaming data, so numbers change ove
 
 {{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-Here is the table after I applied the transformation to remove the Min field.
+Here's the table after we applied the transformation to remove the Min field.
 
 {{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
