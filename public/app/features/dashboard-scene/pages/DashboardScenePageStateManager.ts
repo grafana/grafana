@@ -81,10 +81,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
-      if (uid === DashboardRoutes.Home) {
-        scene.isHomeDashboard = true;
-      }
-
       this.cache[uid] = scene;
       return scene;
     }

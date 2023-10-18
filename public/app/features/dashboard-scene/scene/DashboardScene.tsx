@@ -61,7 +61,6 @@ export interface DashboardSceneState extends SceneObjectState {
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
-  private _isHomeDashboard = false;
   /**
    * Handles url sync
    */
@@ -252,17 +251,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
   }
 
-  public set isHomeDashboard(value: boolean) {
-    this._isHomeDashboard = value;
-  }
-
   canEditDashboard() {
     const { meta } = this.state;
-
-    // Default home dash is not editable.
-    if (this._isHomeDashboard) {
-      return false;
-    }
 
     return (
       contextSrv.hasPermission(AccessControlAction.DashboardsWrite) && Boolean(meta.canEdit || meta.canMakeEditable)
