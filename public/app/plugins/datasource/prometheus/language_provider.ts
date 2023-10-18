@@ -1,9 +1,8 @@
 import { once } from 'lodash';
 import Prism from 'prismjs';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, dateTime, LanguageProvider } from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, LanguageProvider } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
-import { CompletionItem } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
@@ -19,7 +18,6 @@ import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
-const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
 
@@ -30,24 +28,6 @@ const buildCacheHeaders = (durationInSeconds: number) => {
     },
   };
 };
-
-export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
-  const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query === item.label);
-  const count = historyForItem.length;
-  const recent = historyForItem[0];
-  let hint = `Queried ${count} times in the last 24h.`;
-
-  if (recent) {
-    const lastQueried = dateTime(recent.ts).fromNow();
-    hint = `${hint} Last queried ${lastQueried}.`;
-  }
-
-  return {
-    ...item,
-    documentation: hint,
-  };
-}
 
 export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
   if (!metadata[metric]) {
