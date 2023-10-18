@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator" // #TODO change this import
 )
 
 func addDashboardPanelMigrations(mg *Migrator) {
@@ -9,8 +9,6 @@ func addDashboardPanelMigrations(mg *Migrator) {
 		Name: "panel_titles", Type: DB_NVarchar, Length: 255, Nullable: true,
 	}))
 
-	mg.AddMigration("Add index for dashboard_panel_titles", NewAddIndexMigration(DashboardV2, &Index{
-		Cols: []string{"panel_titles"},
-		Type: IndexType,
-	}))
+	mg.AddMigration("Add full text column panel_titles in dashboard", NewRawSQLMigration("").
+		Mysql(`ALTER TABLE dashboard ADD FULLTEXT(panel_titles);`))
 }
