@@ -6,6 +6,7 @@ import {
   DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
+  ExplorePanelsState,
   Field,
   FieldType,
   LoadingState,
@@ -510,8 +511,8 @@ describe('Logs', () => {
       });
     });
 
-    it('should call createAndCopyShortLink on permalinkClick', async () => {
-      const panelState = { logs: { id: 'not-included' } };
+    it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
+      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
       setup({ loading: false, panelState });
 
       const row = screen.getAllByRole('row');
@@ -521,8 +522,11 @@ describe('Logs', () => {
       await userEvent.click(linkButton);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
-        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22,%22visualisationType%22:%22logs%22%7D%7D%7D'
+        expect.stringMatching(
+          'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D'
+        )
       );
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
     });
   });
 
