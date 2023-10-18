@@ -56,12 +56,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import {
-  addAddHocFilter,
-  addFilterToQuery,
-  queryHasFilter,
-  removeFilterFromQuery,
-} from './modifyQuery';
+import { addAddHocFilter, addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,

@@ -108,16 +108,16 @@ export function addAddHocFilter(query: string, filter: AdHocVariableFilter): str
   switch (filter.operator) {
     case '=~':
       addHocFilter = `${key}:/${value}/`;
-    break;
+      break;
     case '!~':
       addHocFilter = `-${key}:/${value}/`;
-    break;
+      break;
     case '>':
       addHocFilter = `${key}:>${value}`;
-    break;
+      break;
     case '<':
       addHocFilter = `${key}:<${value}`;
-    break;
+      break;
   }
   return concatenate(query, addHocFilter);
 }
