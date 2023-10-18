@@ -18,6 +18,16 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Export Alert rules and notification resources to Terraform
+<!-- Yuri Tseretyan -->
+<!-- OSS, Enterprise -->
+
+October 30, 2023
+
+_Generally available in Grafana Cloud_
+
+Provides a way to export alerting resources such as rules, contact points, notification policies as a Terraform resources. A new mode "Modify export" for alert rules provides a convenient way of editing provisioned alert rules and export the modified version.   
+
 ## Alerting insights
 
 <!-- George Robinson -->
