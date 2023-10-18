@@ -379,7 +379,6 @@ export const Table = memo((props: Props) => {
           {footerItems && (
             <FooterRow
               isPaginationVisible={Boolean(enablePagination)}
-              isSticky={footerOptions?.isSticky ?? false}
               footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}

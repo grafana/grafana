@@ -14,7 +14,7 @@ export interface FooterRowProps {
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
   tableStyles: TableStyles;
-  isSticky: boolean;
+  isSticky?: boolean;
 }
 
 export function FooterRow(props: FooterRowProps) {
