@@ -18,6 +18,19 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Visualize enum data in Time series and State timeline visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+
+<Release date>
+
+_Available in public preview in Grafana Cloud_
+
+You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
+
+TODO: Add image / gif / video
+
 ## Export alert rules and notification resources to Terraform
 
 <!-- Yuri Tseretyan -->
