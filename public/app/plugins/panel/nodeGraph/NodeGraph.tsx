@@ -6,7 +6,7 @@ import useMeasure from 'react-use/lib/useMeasure';
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 
-import { Edge, highlightedEdgeColor } from './Edge';
+import { coloredMarkerId, Edge, highlightedEdgeColor, markerId } from './Edge';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { EdgeLabel } from './EdgeLabel';
 import { Legend } from './Legend';
@@ -208,8 +208,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             className={styles.mainGroup}
             style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
           >
-            <EdgeArrowMarker />
-            <EdgeArrowMarker id="triangle-colored" fill={highlightedEdgeColor} />
+            <EdgeArrowMarker id={markerId} />
+            <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} />
             {!config.gridLayout && (
               <Edges
                 edges={edges}

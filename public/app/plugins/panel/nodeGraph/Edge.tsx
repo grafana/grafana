@@ -5,6 +5,8 @@ import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
 export const highlightedEdgeColor = '#a00';
+export const markerId = 'triangle';
+export const coloredMarkerId = 'triangle-colored';
 
 interface Props {
   edge: EdgeDatum;
@@ -44,12 +46,12 @@ export const Edge = memo(function Edge(props: Props) {
     >
       <line
         strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + 1}
-        stroke={edge.highlighted ? '#a00' : '#999'}
+        stroke={edge.highlighted ? highlightedEdgeColor : '#999'}
         x1={line.x1}
         y1={line.y1}
         x2={line.x2}
         y2={line.y2}
-        markerEnd={edge.highlighted ? 'url(#triangle-colored)' : 'url(#triangle)'}
+        markerEnd={`url(#${edge.highlighted ? 'triangle-colored' : 'triangle'})`}
       />
       <line
         stroke={'transparent'}
