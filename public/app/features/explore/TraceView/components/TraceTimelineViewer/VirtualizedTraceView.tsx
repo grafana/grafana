@@ -23,7 +23,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
@@ -110,6 +110,7 @@ type TVirtualizedTraceViewOwnProps = {
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
   headerHeight: number;
+  criticalPath: CriticalPathSection[];
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -361,7 +362,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     attrs: {},
     visibleSpanIds: string[]
   ) {
-    const { spanID } = span;
+    const { spanID, childSpanIds } = span;
     const { serviceName } = span.process;
     const {
       childrenHiddenIDs,
@@ -381,6 +382,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       showSpanFilterMatchesOnly,
       theme,
       datasourceType,
+      criticalPath,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -422,6 +424,25 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
     const prevSpan = spanIndex > 0 ? trace.spans[spanIndex - 1] : null;
 
+    const criticalPathSections = criticalPath?.filter((each) => {
+      if (isCollapsed) {
+        const allChildSpanIds = [spanID, ...childSpanIds];
+        // This function called recursively to find all descendants of a span
+        const findAllDescendants = (currentChildSpanIds: string[]) => {
+          currentChildSpanIds.forEach((eachId) => {
+            const currentChildSpan = trace.spans.find((a) => a.spanID === eachId)!;
+            if (currentChildSpan.hasChildren) {
+              allChildSpanIds.push(...currentChildSpan.childSpanIds);
+              findAllDescendants(currentChildSpan.childSpanIds);
+            }
+          });
+        };
+        findAllDescendants(childSpanIds);
+        return allChildSpanIds.includes(each.spanId);
+      }
+      return each.spanId === spanID;
+    });
+
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
@@ -452,6 +473,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           datasourceType={datasourceType}
           showServiceName={prevSpan === null || prevSpan.process.serviceName !== span.process.serviceName}
           visibleSpanIds={visibleSpanIds}
+          criticalPath={criticalPathSections}
         />
       </div>
     );

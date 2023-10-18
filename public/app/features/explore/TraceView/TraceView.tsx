@@ -35,6 +35,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from './components';
+import memoizedTraceCriticalPath from './components/CriticalPath';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -159,6 +160,8 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
+  const criticalPath = memoizedTraceCriticalPath(traceProp);
+
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
@@ -222,6 +225,7 @@ export function TraceView(props: Props) {
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
+            criticalPath={criticalPath}
           />
         </>
       ) : (

@@ -19,11 +19,11 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import { TraceSpan, TNil } from '../types';
+import { TraceSpan, TNil, CriticalPathSection } from '../types';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
@@ -89,6 +89,38 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: 0;
       }
     `,
+    criticalPath: css`
+      position: absolute;
+      top: 45%;
+      height: 11%;
+      z-index: 2;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        width: 10%;
+        height: 100%;
+        visibility: hidden;
+        background-color: white;
+        border: 1px solid white;
+      }
+
+      &:hover::before {
+        visibility: visible;
+        animation: runOnce 2s forwards;
+      }
+
+      @keyframes runOnce {
+        0% {
+          left: 0;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+    `,
   };
 };
 
@@ -111,13 +143,21 @@ export type Props = {
   labelClassName?: string;
   longLabel: string;
   shortLabel: string;
+  criticalPath: CriticalPathSection[];
+  isChildrenExpanded: boolean;
 };
 
 function toPercent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function toPercentInDecimal(value: number) {
+  return `${value * 100}%`;
+}
+
 function SpanBar({
+  criticalPath,
+  isChildrenExpanded,
   viewEnd,
   viewStart,
   getViewedBounds,
@@ -142,6 +182,23 @@ function SpanBar({
     return toPercent(Math.round(posPercent * 500) / 500);
   });
   const styles = useStyles2(getStyles);
+
+  let criticalPathWhenParentCollapsed = {
+    ViewStart: Infinity,
+    ViewEnd: -Infinity,
+  };
+  if (!isChildrenExpanded && criticalPath) {
+    criticalPathWhenParentCollapsed = criticalPath.reduce((accumulator, each) => {
+      const critcalPathViewBounds = getViewedBounds(each.section_start, each.section_end);
+      const criticalPathViewStart = critcalPathViewBounds.start;
+      const criticalPathViewEnd = critcalPathViewBounds.end;
+
+      accumulator.ViewStart = Math.min(accumulator.ViewStart, criticalPathViewStart);
+      accumulator.ViewEnd = Math.max(accumulator.ViewEnd, criticalPathViewEnd);
+
+      return accumulator;
+    }, criticalPathWhenParentCollapsed);
+  }
 
   return (
     <div
@@ -188,6 +245,57 @@ function SpanBar({
             width: toPercent(rpc.viewEnd - rpc.viewStart),
           }}
         />
+      )}
+      {criticalPath &&
+        (!span.hasChildren || isChildrenExpanded) &&
+        criticalPath.map((each, index) => {
+          const critcalPathViewBounds = getViewedBounds(each.section_start, each.section_end);
+          const criticalPathViewStart = critcalPathViewBounds.start;
+          const criticalPathViewEnd = critcalPathViewBounds.end;
+          const key = `${each.spanId}-${index}`;
+          return (
+            <Tooltip
+              key={key}
+              placement="top"
+              content={
+                <div>
+                  A segment on the <em>critical path</em> of the overall trace/request/workflow.
+                </div>
+              }
+            >
+              <div
+                data-testid="SpanBar--criticalPath"
+                className={styles.criticalPath}
+                style={{
+                  background: 'black',
+                  left: toPercentInDecimal(criticalPathViewStart),
+                  width: toPercentInDecimal(criticalPathViewEnd - criticalPathViewStart),
+                }}
+              />
+            </Tooltip>
+          );
+        })}
+      {criticalPath && span.hasChildren && !isChildrenExpanded && (
+        <Tooltip
+          placement="top"
+          content={
+            <div>
+              A segment on the <em>critical path</em> of the overall trace/request/workflow.
+            </div>
+          }
+        >
+          <div
+            data-testid="SpanBar--criticalPath"
+            className={styles.criticalPath}
+            style={{
+              background: 'black',
+              left: toPercentInDecimal(criticalPathWhenParentCollapsed.ViewStart),
+              width: toPercentInDecimal(
+                criticalPathWhenParentCollapsed.ViewEnd - criticalPathWhenParentCollapsed.ViewStart
+              ),
+            }}
+          />
+        </Tooltip>
       )}
     </div>
   );

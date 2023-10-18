@@ -41,9 +41,9 @@ export const TREE_ROOT_ID = '__root__';
  * @return {TreeNode}    A tree of spanIDs derived from the relationships
  *                       between spans in the trace.
  */
-export function getTraceSpanIdsAsTree(trace: TraceResponse) {
+export function getTraceSpanIdsAsTree(trace: TraceResponse, spanMap: Map<string, TraceSpanData> | null = null) {
   const nodesById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, new TreeNode(span.spanID)]));
-  const spansById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
+  const spansById = spanMap ?? new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
   trace.spans.forEach((span: TraceSpanData) => {
     const node = nodesById.get(span.spanID)!;

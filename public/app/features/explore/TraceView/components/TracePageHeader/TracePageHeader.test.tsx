@@ -86,6 +86,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
     {
       traceID: '164afda25df92413',
@@ -125,6 +126,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
     {
       traceID: '164afda25df92413',
@@ -164,6 +166,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
   ],
   traceID: '8bb35a31-eb64-512d-aaed-ddd61887bb2b',

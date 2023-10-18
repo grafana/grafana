@@ -27,7 +27,7 @@ const sanitizeOverFlowingChildren = (spanMap: Map<string, TraceSpan>): Map<strin
 
   spanIds.forEach((spanId) => {
     const span = spanMap.get(spanId)!;
-    if (!(span && span.references.length)) {
+    if (!(span && span.references.length && span.depth)) {
       return;
     }
     // parentSpan will be undefined when its parentSpan is dropped previously

@@ -22,7 +22,7 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanBarOptions } from '../settings/SpanBarSettings';
-import { SpanLinkFunc, TNil } from '../types';
+import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
@@ -106,6 +106,7 @@ export type TProps = {
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
+  criticalPath: CriticalPathSection[];
 };
 
 type State = {

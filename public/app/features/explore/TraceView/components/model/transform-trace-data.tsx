@@ -129,11 +129,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   }
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
-  const tree = getTraceSpanIdsAsTree(data);
+  const tree = getTraceSpanIdsAsTree(data, spanMap);
   const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
 
-  tree.walk((spanID: string, node: TreeNode<string>, depth: number = 0) => {
+  tree.walk((spanID: string, node: TreeNode<string>, depth = 0) => {
     if (spanID === '__root__') {
       return;
     }
