@@ -24,7 +24,7 @@ import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetrricSelectScene } from './MetricSelectScene';
 import { MetricSelectedEvent, trailsDS, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
@@ -63,7 +63,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneRefreshPicker({}),
       ],
       history: new DataTrailHistory({}),
-      topScene: new MetricSelectScene({ showHeading: true }),
+      topScene: new MetrricSelectScene({ showHeading: true }),
       ...state,
     });
 

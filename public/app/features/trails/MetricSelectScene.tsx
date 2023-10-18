@@ -30,15 +30,15 @@ import {
   VAR_METRIC_NAMES,
 } from './shared';
 
-export interface MetricSelectLayoutState extends SceneObjectState {
+export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout;
   showHeading?: boolean;
   searchQuery?: string;
   showPreviews?: boolean;
 }
 
-export class MetricSelectScene extends SceneObjectBase<MetricSelectLayoutState> {
-  constructor(state: Partial<MetricSelectLayoutState>) {
+export class MetrricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
+  constructor(state: Partial<MetricSelectSceneState>) {
     super({
       $variables: getMetricNamesVariableSet(),
       body: state.body ?? new SceneFlexLayout({ children: [], wrap: 'wrap' }),
@@ -114,7 +114,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectLayoutState> 
     this.buildLayout();
   };
 
-  public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
+  public static Component = ({ model }: SceneComponentProps<MetrricSelectScene>) => {
     const { showHeading, searchQuery } = model.useState();
     const styles = useStyles2(getStyles);
 
