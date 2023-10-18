@@ -294,7 +294,8 @@ func (om *OrgMigration) extractChannelUIDs(ctx context.Context, l log.Logger, or
 		if ui.ID > 0 {
 			uid, err := om.migrationStore.GetAlertNotificationUidWithId(ctx, orgID, ui.ID)
 			if err != nil {
-				l.Error("Failed to get alert notification UID", "notificationId", ui.ID, "err", err)
+				l.Warn("Failed to get alert notification UID, skipping", "notificationId", ui.ID, "err", err)
+				continue
 			}
 			channelUids = append(channelUids, uid)
 		} else if ui.UID != "" {
