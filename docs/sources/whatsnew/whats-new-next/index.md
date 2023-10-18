@@ -23,14 +23,13 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- Kyle Cunningham -->
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
+October 24, 2023
 
 _Available in public preview in Grafana Cloud_
 
 We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
 
 {{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
-
-If you have the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. If you'd like to try it, enable this feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 
 ## Alerting insights
 
