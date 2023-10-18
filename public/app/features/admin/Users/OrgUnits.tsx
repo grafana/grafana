@@ -1,15 +1,13 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import React, { forwardRef, PropsWithChildren } from 'react';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { IconName } from '@grafana/data';
+import { Icon, Tooltip } from '@grafana/ui';
+import { Box, Flex } from '@grafana/ui/src/unstable';
 import { Unit } from 'app/types';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
 
 export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
-  const styles = useStyles2(getStyles);
-
   if (!units?.length) {
     return null;
   }
@@ -17,39 +15,25 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={
-        <div className={styles.unitTooltip}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</div>
-      }
+      content={<Flex direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Flex>}
     >
-      <div className={styles.unitItem}>
-        <Icon name={icon} /> <span>{units.length}</span>
-      </div>
+      <Content icon={icon}>{units.length}</Content>
     </Tooltip>
   ) : (
-    <span className={styles.unitItem}>
-      <Icon name={icon} /> {units[0].name}
-    </span>
+    <Content icon={icon}>{units[0].name}</Content>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    unitTooltip: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    unitItem: css`
-      padding: ${theme.spacing(0.5)} 0;
-      margin-right: ${theme.spacing(1)};
+interface ContentProps extends PropsWithChildren {
+  icon: IconName;
+}
 
-      svg {
-        margin-bottom: ${theme.spacing(0.25)};
-      }
-    `,
-    link: css`
-      color: inherit;
-      cursor: pointer;
-      text-decoration: underline;
-    `,
-  };
-};
+export const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
+  return (
+    <Box ref={ref} display={'flex'} alignItems={'center'} marginRight={1}>
+      <Icon name={icon} /> <Box marginLeft={1}>{children}</Box>
+    </Box>
+  );
+});
+
+Content.displayName = 'TooltipContent';
