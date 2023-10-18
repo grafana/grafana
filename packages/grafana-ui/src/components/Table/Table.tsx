@@ -383,6 +383,7 @@ export const Table = memo((props: Props) => {
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
               tableStyles={tableStyles}
+              isSticky={footerOptions?.isSticky ?? false}
             />
           )}
         </div>

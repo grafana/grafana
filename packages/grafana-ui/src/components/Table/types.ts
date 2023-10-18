@@ -64,6 +64,7 @@ export interface TableFooterCalc {
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
+  isSticky?: boolean;
 }
 
 export interface GrafanaTableState extends TableState {

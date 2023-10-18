@@ -14,16 +14,17 @@ export interface FooterRowProps {
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
   tableStyles: TableStyles;
+  isSticky: boolean;
 }
 
 export function FooterRow(props: FooterRowProps) {
-  const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
+  const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles, isSticky } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
     <div
       style={{
-        position: isPaginationVisible ? 'relative' : 'absolute',
+        position: isPaginationVisible ? 'relative' : isSticky ? 'sticky' : 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
         bottom: '0px',
       }}
