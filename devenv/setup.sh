@@ -62,22 +62,19 @@ devDatasources() {
 undev() {
     echo -e "\xE2\x9C\x94 Reverting all dev provisioning"
 
-    # Removing generated dashboard files for bulkDashboard
-    COUNTER=0
-    MAX=400
-    while [ $COUNTER -lt $MAX ]; do
-        rm -f "bulk-dashboards/dashboard${COUNTER}.json"
-        let COUNTER=COUNTER+1
-    done
+    # Removing generated dashboard files from bulk-dashboards
+    rm -f bulk-dashboards/dashboard*.json
+    echo -e "    \xE2\x9C\x94 Reverting bulk-dashboards provisioning"
 
-    # Removing generated dashboard and datasource files for bulkAlertingDashboard
-    COUNTER=0
-    MAX=1000
-    while [ $COUNTER -lt $MAX ]; do
-        rm -f "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json"
-        let COUNTER=COUNTER+1
-    done
+    # Removing generated folders from bulk-folders
+    rm -rf bulk-folders/Bulk\ Folder*
+    echo -e "    \xE2\x9C\x94 Reverting bulk-folders provisioning"
+
+
+    # Removing generated dashboard and datasource files from bulk-alerting-dashboards
+    rm -f bulk_alerting_dashboards/alerting_dashboard*.json
     rm -f "bulk_alerting_dashboards/bulk_alerting_datasources.yaml"
+    echo -e "    \xE2\x9C\x94 Reverting bulk-alerting-dashboards provisioning"
 
     # Removing the symlinks
     rm -f ../conf/provisioning/dashboards/custom.yaml
