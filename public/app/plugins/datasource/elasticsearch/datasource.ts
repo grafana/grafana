@@ -949,11 +949,11 @@ export class ElasticDatasource
         expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
         break;
       }
-      case 'ADD_LINE_FILTER': {
+      case 'ADD_STRING_FILTER': {
         expression = addStringFilterToQuery(expression, action.options.value);
         break;
       }
-      case 'ADD_LINE_FILTER_OUT': {
+      case 'ADD_STRING_FILTER_OUT': {
         expression = addStringFilterToQuery(expression, action.options.value, false);
         break;
       }
