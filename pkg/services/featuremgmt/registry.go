@@ -215,8 +215,7 @@ var (
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
+			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -336,9 +335,10 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "clientTokenRotation",
@@ -863,6 +863,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
+		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
 			Stage:        FeatureStageExperimental,
@@ -889,6 +896,20 @@ var (
 			FrontendOnly: false,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
+		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins directly from plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaPluginsPlatformSquad,
 		},
 	}
 )
