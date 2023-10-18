@@ -540,14 +540,14 @@ function addLabelFormat(
   return newQuery;
 }
 
-export function addLineFilter(query: string, value = ''): string {
+export function addLineFilter(query: string, value = '', operator = '|='): string {
   const streamSelectorPositions = getStreamSelectorPositions(query);
   if (!streamSelectorPositions.length) {
     return query;
   }
   const streamSelectorEnd = streamSelectorPositions[0].to;
 
-  const newQueryExpr = query.slice(0, streamSelectorEnd) + ` |= \`${value}\`` + query.slice(streamSelectorEnd);
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ` ${operator} \`${value}\`` + query.slice(streamSelectorEnd);
   return newQueryExpr;
 }
 
