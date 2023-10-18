@@ -90,7 +90,9 @@ func (root *NavTreeRoot) RemoveSection(node *NavLink) {
 func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
 }
-
+func (root *NavTreeRoot) FindByURL(url string) *NavLink {
+	return FindByURL(root.Children, url)
+}
 func (root *NavTreeRoot) Sort() {
 	Sort(root.Children)
 }
@@ -192,6 +194,26 @@ func (root *NavTreeRoot) ApplyAdminIA(navAdminSubsectionsEnabled bool) {
 				authenticationNode.IsSection = true
 				adminNodeLinks = append(adminNodeLinks, authenticationNode)
 			}
+
+			costManagementNode := root.FindById("plugin-page-grafana-costmanagementui-app")
+
+			if costManagementNode != nil {
+				adminNodeLinks = append(adminNodeLinks, costManagementNode)
+			}
+
+			costManagementMetricsNode := root.FindByURL("/a/grafana-costmanagementui-app/metrics")
+			adaptiveMetricsNode := root.FindById("plugin-page-grafana-adaptive-metrics-app")
+
+			if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
+				costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
+			}
+
+			costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
+			logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
+
+			if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
+				costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
+			}
 		} else {
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
 			adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
@@ -238,6 +260,20 @@ func FindById(nodes []*NavLink, id string) *NavLink {
 			return child
 		} else if len(child.Children) > 0 {
 			if found := FindById(child.Children, id); found != nil {
+				return found
+			}
+		}
+	}
+
+	return nil
+}
+
+func FindByURL(nodes []*NavLink, url string) *NavLink {
+	for _, child := range nodes {
+		if child.Url == url {
+			return child
+		} else if len(child.Children) > 0 {
+			if found := FindByURL(child.Children, url); found != nil {
 				return found
 			}
 		}

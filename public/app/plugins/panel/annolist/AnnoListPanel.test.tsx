@@ -269,7 +269,7 @@ describe('AnnoListPanel', () => {
           'anno-list-panel-1'
         );
         expect(screen.getByText(/filter:/i)).toBeInTheDocument();
-        expect(screen.getByText(/result email/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /result email/i })).toBeInTheDocument();
       });
     });
 

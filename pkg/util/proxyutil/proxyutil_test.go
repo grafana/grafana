@@ -207,14 +207,15 @@ func TestApplyUserHeader(t *testing.T) {
 }
 
 func TestApplyteamHTTPHeaders(t *testing.T) {
-	t.Run("Should not apply team headers for users that are not part of the teams", func(t *testing.T) {
+	t.Run("Should apply team headers for users teams", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 		ds := &datasources.DataSource{
 			JsonData: simplejson.New(),
 		}
+		userTeams := []int64{1, 2}
 		// add team headers
-		ds.JsonData.Set("teamHTTPHeaders", map[string]interface{}{
+		ds.JsonData.Set("teamHttpHeaders", map[string]interface{}{
 			"1": []map[string]interface{}{
 				{
 					"header": "X-Team-Header",
@@ -236,36 +237,10 @@ func TestApplyteamHTTPHeaders(t *testing.T) {
 			},
 		})
 
-		err = ApplyTeamHTTPHeaders(req, ds, []int64{1, 2})
+		err = ApplyTeamHTTPHeaders(req, ds, userTeams)
 		require.NoError(t, err)
 		require.Contains(t, req.Header, "X-Team-Header")
 		require.Contains(t, req.Header, "X-Prom-Label-Policy")
 		require.NotContains(t, req.Header, "X-Custom-Label-Policy")
-	})
-	t.Run("Should apply team headers", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		ds := &datasources.DataSource{
-			JsonData: simplejson.New(),
-		}
-		ds.JsonData.Set("teamHTTPHeaders", map[string]interface{}{
-			"1": []map[string]interface{}{
-				{
-					"header": "X-Team-Header",
-					"value":  "1",
-				},
-			},
-			"2": []map[string]interface{}{
-				{
-					"header": "X-Prom-Label-Policy",
-					"value":  "2",
-				},
-			},
-		})
-
-		err = ApplyTeamHTTPHeaders(req, ds, []int64{1, 2})
-		require.NoError(t, err)
-		require.Contains(t, req.Header, "X-Team-Header")
-		require.Contains(t, req.Header, "X-Prom-Label-Policy")
 	})
 }
