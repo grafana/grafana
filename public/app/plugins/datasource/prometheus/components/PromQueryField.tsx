@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { DOMUtil, Icon, SuggestionsState, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
+import { Icon, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
   CancelablePromise,
@@ -18,7 +18,6 @@ import { PromOptions, PromQuery } from '../types';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
-export const RECORDING_RULES_GROUP = '__recording_rules__';
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
@@ -35,33 +34,6 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasM
   }
 
   return 'Metrics browser';
-}
-
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
-  // Modify suggestion based on context
-  switch (typeaheadContext) {
-    case 'context-labels': {
-      const nextChar = DOMUtil.getNextCharacter();
-      if (!nextChar || nextChar === '}' || nextChar === ',') {
-        suggestion += '=';
-      }
-      break;
-    }
-
-    case 'context-label-values': {
-      // Always add quotes and remove existing ones instead
-      if (!typeaheadText.match(/^(!?=~?"|")/)) {
-        suggestion = `"${suggestion}`;
-      }
-      if (DOMUtil.getNextCharacter() !== '"') {
-        suggestion = `${suggestion}"`;
-      }
-      break;
-    }
-
-    default:
-  }
-  return suggestion;
 }
 
 interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
