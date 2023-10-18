@@ -155,9 +155,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   hasIcon: css({
     paddingLeft: theme.spacing(0),
   }),
-  iconWrapper: css({
-    width: theme.spacing(5),
-  }),
   hasActiveChild: css({
     color: theme.colors.text.primary,
   }),
