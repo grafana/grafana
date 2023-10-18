@@ -8,7 +8,6 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -16,6 +15,7 @@ import (
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type externalAlertmanager struct {
@@ -26,6 +26,8 @@ type externalAlertmanager struct {
 	amClient      *amclient.AlertmanagerAPI
 	httpClient    *http.Client
 	defaultConfig string
+
+	manager *Manager
 }
 
 type externalAlertmanagerConfig struct {
@@ -61,14 +63,27 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 		return nil, err
 	}
 
+	logger := log.New("ngalert.notifier.external-alertmanager")
+	amClient := amclient.New(transport, nil)
+
+	manager := NewManager(
+		// Injecting a new registry here means these metrics are not exported.
+		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		logger,
+		amClient.Alert,
+		defaultTimeout,
+	)
+
 	return &externalAlertmanager{
-		amClient:      amclient.New(transport, nil),
+		amClient:      amClient,
 		httpClient:    &client,
-		log:           log.New("ngalert.notifier.external-alertmanager"),
+		log:           logger,
 		url:           cfg.URL,
 		tenantID:      cfg.TenantID,
 		orgID:         orgID,
 		defaultConfig: cfg.DefaultConfig,
+		manager:       manager,
 	}, nil
 }
 
@@ -191,29 +206,26 @@ func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, sile
 	return res.Payload, nil
 }
 
-// TODO: implement PutAlerts in a way that is similar to what Prometheus does.
-// This current implementation is only good for testing methods that retrieve alerts from the remote Alertmanager.
-// More details in issue https://github.com/grafana/grafana/issues/76692
-func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
+func (am *externalAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while putting alerts", "err", r)
 		}
 	}()
 
-	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
-	for _, pa := range postableAlerts.PostableAlerts {
-		alerts = append(alerts, &alertingNotify.PostableAlert{
-			Annotations: pa.Annotations,
-			EndsAt:      pa.EndsAt,
-			StartsAt:    pa.StartsAt,
-			Alert:       pa.Alert,
-		})
+	if len(alerts.PostableAlerts) == 0 {
+		return nil
 	}
 
-	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(alerts)
-	_, err := am.amClient.Alert.PostAlerts(params)
-	return err
+	// TODO(santiago): is this really necessary?
+	as := make([]*Alert, 0, len(alerts.PostableAlerts))
+	for _, a := range alerts.PostableAlerts {
+		na := am.alertToNotifierAlert(a)
+		as = append(as, na)
+	}
+
+	am.manager.Send(as...)
+	return nil
 }
 
 func (am *externalAlertmanager) GetStatus() apimodels.GettableStatus {
