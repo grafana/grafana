@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -44,6 +45,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		logger:   log.New("extsvcaccounts.test"),
 		saSvc:    env.SaSvc,
 		skvStore: env.SkvStore,
+		tracer:   tracing.InitializeTracerForTest(),
 	}
 	return env
 }
