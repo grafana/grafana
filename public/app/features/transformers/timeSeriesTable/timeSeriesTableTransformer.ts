@@ -13,6 +13,27 @@ import {
   reduceField,
 } from '@grafana/data';
 
+/**
+ * Map the name of a label field to an array of values for that field.
+ */
+interface LabelValueMap {
+  [index: string]: Set<string>;
+}
+
+/**
+ * Maps a label to a corresponding field.
+ */
+interface LabelFieldMap {
+  [index: string]: Field<string>;
+}
+
+/**
+ * Maps a refId to a LabelFieldMap
+ */
+interface RefLabelFieldMap {
+  [index: string]: LabelFieldMap;
+}
+
 export interface TimeSeriesTableTransformerOptions {
   refIdToStat?: Record<string, ReducerID>;
 }
@@ -62,6 +83,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     const refId = frame.refId ?? '';
 
     const labelFields = refId2LabelFields[refId] ?? {};
+    
     // initialize a new frame for this refId with fields per label and a Trend frame field, if it doesn't exist yet
     let frameField = refId2frameField[refId];
     if (!frameField) {
@@ -73,6 +95,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       };
       refId2frameField[refId] = frameField;
 
+      
       const table = new MutableDataFrame();
       for (const label of Object.values(labelFields)) {
         table.addField(label);
@@ -86,7 +109,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     const labels = frame.fields[1].labels;
     for (const labelKey of Object.keys(labelFields)) {
       const labelValue = labels?.[labelKey] ?? null;
-      labelFields[labelKey].values.push(labelValue!);
+      // labelFields[labelKey].values.push(labelValue!);
     }
     const reducerId = options.refIdToStat?.[refId] ?? ReducerID.lastNotNull;
     const valueField = frame.fields.find((f) => f.type === FieldType.number);
@@ -99,39 +122,67 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   return result;
 }
 
-// For each refId, initialize a field for each label name
-function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Field<string>>> {
-  // refId -> label name -> field
-  const labelFields: Record<string, Record<string, Field<string>>> = {};
 
+// For each refId, initialize a field for each label name
+function getLabelFields(frames: DataFrame[]): RefLabelFieldMap {
+  // A mapping with the following structure
+  // refId -> label name -> field
+  const labelFields: RefLabelFieldMap = {};
+
+  // A map of label field names to it's respective values
+  const labelValues: LabelValueMap = {}
+
+  // Iterate through all frames and begin
+  // to fill in label fields with refIds
+  // and otherwise get all possible values
+  // of each label and place those in the 
+  // 'labelValues' map
   for (const frame of frames) {
     if (!isTimeSeriesFrame(frame)) {
       continue;
     }
 
     const refId = frame.refId ?? '';
-
     if (!labelFields[refId]) {
       labelFields[refId] = {};
     }
 
     for (const field of frame.fields) {
-      if (!field.labels) {
-        continue;
-      }
-
-      for (const labelName of Object.keys(field.labels)) {
-        if (!labelFields[refId][labelName]) {
-          labelFields[refId][labelName] = {
-            name: labelName,
-            type: FieldType.string,
-            config: {},
-            values: [],
-          };
+      if (field.labels !== undefined) {
+        for (const [labelName, labelValue] of Object.entries(field.labels)) {
+          
+          // If we don't yet have a set then create a new one
+          if (labelValues[labelName] === undefined) {
+            labelValues[labelName] = new Set<string>();
+            labelValues[labelName].add(labelValue);
+          }
+          else {
+            labelValues[labelName].add(labelValue);
+          }
         }
       }
     }
   }
 
+  // Go through each refId of labelFields
+  // For each refId add key with the 
+  // labelName and a field containing 
+  // all the values of that label
+  for (const refId of Object.keys(labelFields)) {
+    for (const labelName of Object.keys(labelValues)) {
+      let values = [];
+      for (const labelValue of labelValues[labelName].values()) {
+        values.push(labelValue);
+      }
+
+      labelFields[refId][labelName] = {
+        name: labelName,
+        type: FieldType.string,
+        config: {},
+        values: values,
+      }
+    }
+  }
+  
   return labelFields;
 }

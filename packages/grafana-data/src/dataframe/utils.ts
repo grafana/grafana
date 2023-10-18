@@ -3,7 +3,7 @@ import { DataFrame, FieldType } from '../types/dataFrame';
 import { getTimeField } from './processDataFrame';
 
 export function isTimeSeriesFrame(frame: DataFrame) {
-  if (frame.fields.length > 2) {
+  if (frame.fields.length < 2) {
     return false;
   }
   return Boolean(frame.fields.find((field) => field.type === FieldType.time));
