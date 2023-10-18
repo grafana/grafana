@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     boxSizing: 'border-box',
     position: 'relative',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
-    height: theme.spacing(4),
+    height: '100%',
     width: '100%',
     '&:hover, &:focus-visible': {
       textDecoration: 'underline',
@@ -121,8 +121,9 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   }),
   wrapper: css({
     boxSizing: 'border-box',
-    position: 'relative',
     display: 'flex',
+    height: '100%',
+    position: 'relative',
     width: '100%',
   }),
 });
