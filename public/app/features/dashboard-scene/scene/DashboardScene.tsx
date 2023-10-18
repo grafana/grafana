@@ -14,8 +14,9 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardMeta } from 'app/types';
+import { AccessControlAction, DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
@@ -60,6 +61,7 @@ export interface DashboardSceneState extends SceneObjectState {
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
+  private _isHomeDashboard = false;
   /**
    * Handles url sync
    */
@@ -250,7 +252,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
   }
 
+  public set isHomeDashboard(value: boolean) {
+    this._isHomeDashboard = value;
+  }
+
   canEditDashboard() {
-    return Boolean(this.state.meta.canEdit || this.state.meta.canMakeEditable);
+    const { meta } = this.state;
+
+    // Default home dash is not editable.
+    if (this._isHomeDashboard) {
+      return false;
+    }
+
+    return (
+      contextSrv.hasPermission(AccessControlAction.DashboardsWrite) && Boolean(meta.canEdit || meta.canMakeEditable)
+    );
   }
 }

@@ -1,6 +1,8 @@
+import { getBackendSrv } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -55,10 +57,34 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     this.setState({ isLoading: true });
 
-    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+    let rsp: DashboardDTO | undefined;
 
-    if (rsp.dashboard) {
+    if (uid === DashboardRoutes.Home) {
+      rsp = await getBackendSrv().get('/api/dashboards/home');
+
+      // TODO
+      // if user specified a custom home dashboard redirect to that
+      // if (rsp?.redirectUri) {
+      //   const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      //   locationService.replace(newUrl);
+      // }
+
+      if (rsp?.meta) {
+        rsp.meta.canSave = false;
+        rsp.meta.canShare = false;
+        rsp.meta.canStar = false;
+      }
+    } else {
+      rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+    }
+
+    if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
+
+      if (uid === DashboardRoutes.Home) {
+        scene.isHomeDashboard = true;
+      }
+
       this.cache[uid] = scene;
       return scene;
     }
