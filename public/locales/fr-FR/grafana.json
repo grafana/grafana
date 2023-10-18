@@ -779,6 +779,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copier",
+      "create-alert": "",
       "create-library-panel": "Créer un panneau Bibliothèque",
       "duplicate": "Dupliquer",
       "edit": "Modifier",

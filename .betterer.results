@@ -689,6 +689,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
+    "packages/grafana-plugin-configs/webpack.config.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1755,11 +1760,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/admin/UserSessions.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/admin/Users/OrgUnits.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/alerting/AlertTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5186,9 +5186,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Do not use any type assertions.", "15"]
-    ],
-    "public/app/features/transformers/FilterByValueTransformer/FilterByValueTransformerEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/BasicMatcherEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import {
   LinkButton,
   FilterInput,
@@ -13,11 +11,10 @@ import {
   Icon,
   Tooltip,
   Column,
-  HorizontalGroup,
   Pagination,
-  VerticalGroup,
-  useStyles2,
+  Avatar,
 } from '@grafana/ui';
+import { Stack, Flex } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -25,7 +22,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { Avatar } from '../admin/Users/Avatar';
+import { TableWrapper } from '../admin/Users/TableWrapper';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -50,7 +47,6 @@ export const TeamList = ({
   changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadTeams(true);
@@ -70,7 +66,7 @@ export const TeamList = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'name',
@@ -165,47 +161,29 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <VerticalGroup spacing={'md'}>
-              <div className={styles.wrapper}>
+            <Stack gap={2}>
+              <TableWrapper>
                 <InteractiveTable
                   columns={columns}
                   data={teams}
                   getRowId={(team) => String(team.id)}
                   fetchData={changeSort}
                 />
-                <HorizontalGroup justify="flex-end">
+                <Flex justifyContent="flex-end">
                   <Pagination
                     hideWhenSinglePage
                     currentPage={page}
                     numberOfPages={totalPages}
                     onNavigate={changePage}
                   />
-                </HorizontalGroup>
-              </div>
-            </VerticalGroup>
+                </Flex>
+              </TableWrapper>
+            </Stack>
           </>
         )}
       </Page.Contents>
     </Page>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    // Enable RolePicker overflow
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      minHeight: '100vh',
-      width: '100%',
-      '& > div': {
-        overflowX: 'unset',
-        marginBottom: theme.spacing(2),
-      },
-    }),
-  };
 };
 
 function shouldDisplayRolePicker(): boolean {

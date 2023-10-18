@@ -4,6 +4,7 @@
 PACKAGES=$(ls -d ./packages/*/)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
+SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs")
 
 # Loop through the packages
 while IFS=" " read -r -a package; do
@@ -16,7 +17,7 @@ while IFS=" " read -r -a package; do
     CURRENT="./pr/$PACKAGE_PATH"
 
     # Temporarily skipping these packages as they don't have any exposed static typing
-    if [[ "$PACKAGE_PATH" == 'grafana-eslint-rules' ]]; then
+    if [[ ${SKIP_PACKAGES[@]} =~ "$PACKAGE_PATH" ]]; then
         continue
     fi
 
