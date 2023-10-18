@@ -41,7 +41,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
-              name={sectionExpanded ? 'angle-up' : 'angle-down'}
+              name={sectionExpanded ? 'angle-down' : 'angle-right'}
               size="xl"
             />
           )}
@@ -58,7 +58,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
           >
             <div
               className={cx(styles.labelWrapper, {
-                [styles.isActive]: isActive,
                 [styles.hasActiveChild]: hasActiveChild,
                 [styles.hasIcon]: Boolean(level === 0 && link.icon),
               })}
@@ -151,9 +150,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hasIcon: css({
     paddingLeft: theme.spacing(0),
-  }),
-  isActive: css({
-    color: theme.colors.text.primary,
   }),
   iconWrapper: css({
     width: theme.spacing(5),
