@@ -25,6 +25,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -156,6 +157,9 @@ func (s *service) RegisterAPI(builder APIGroupBuilder) {
 func (s *service) start(ctx context.Context) error {
 	logger := logr.New(newLogAdapter(s.config.logLevel))
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
+	if _, err := logs.GlogSetter(strconv.Itoa(s.config.logLevel)); err != nil {
+		logger.Error(err, "failed to set log level")
+	}
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
 	o.Authentication.RemoteKubeConfigFileOptional = true
