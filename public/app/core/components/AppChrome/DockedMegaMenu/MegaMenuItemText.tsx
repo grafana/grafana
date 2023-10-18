@@ -19,7 +19,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 
   const linkContent = (
-    <div className={cx(styles.linkContent, { [styles.linkContentActive]: isActive })}>
+    <div className={styles.linkContent}>
       {children}
 
       {
@@ -32,7 +32,9 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
   return (
     <LinkComponent
       data-testid={selectors.components.NavMenu.item}
-      className={styles.element}
+      className={cx(styles.container, {
+        [styles.containerActive]: isActive,
+      })}
       href={url}
       target={target}
       onClick={onClick}
@@ -45,31 +47,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
-  linkContent: css({
-    alignItems: 'center',
-    display: 'flex',
-    gap: '0.5rem',
-    height: '100%',
-    width: '100%',
-  }),
-  linkContentActive: css({
-    backgroundColor: theme.colors.background.secondary,
-    borderTopRightRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
-    position: 'relative',
-
-    '&::before': {
-      backgroundImage: theme.colors.gradients.brandVertical,
-      borderRadius: theme.shape.radius.default,
-      content: '" "',
-      display: 'block',
-      height: '100%',
-      position: 'absolute',
-      transform: 'translateX(-50%)',
-      width: theme.spacing(0.5),
-    },
-  }),
-  element: css({
+  container: css({
     alignItems: 'center',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     height: '100%',
@@ -87,5 +65,29 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       outlineOffset: '-2px',
       transition: 'none',
     },
+  }),
+  containerActive: css({
+    backgroundColor: theme.colors.background.secondary,
+    borderTopRightRadius: theme.shape.radius.default,
+    borderBottomRightRadius: theme.shape.radius.default,
+    position: 'relative',
+
+    '&::before': {
+      backgroundImage: theme.colors.gradients.brandVertical,
+      borderRadius: theme.shape.radius.default,
+      content: '" "',
+      display: 'block',
+      height: '100%',
+      position: 'absolute',
+      transform: 'translateX(-50%)',
+      width: theme.spacing(0.5),
+    },
+  }),
+  linkContent: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: '0.5rem',
+    height: '100%',
+    width: '100%',
   }),
 });
