@@ -51,9 +51,9 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   **Query A:**
 
-  | Temp  | Uptime    
-  | ----- | --------- 
-  | 15.4  | 1230233   
+  | Temp  | Uptime    |
+  | ----- | --------- |
+  | 15.4  | 1230233   |
 
   Query B:
 
