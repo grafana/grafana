@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Export Alert rules and notification resources to Terraform
+## Export alert rules and notification resources to Terraform
 
 <!-- Yuri Tseretyan -->
 <!-- OSS, Enterprise -->
