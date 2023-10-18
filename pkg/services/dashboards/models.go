@@ -41,8 +41,8 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	FolderID  int64   `xorm:"folder_id"`
-	FolderUID *string `xorm:"folder_uid"`
+	FolderID  int64  `xorm:"folder_id"`
+	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
@@ -187,9 +187,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderID = cmd.FolderID
-	if cmd.FolderUID != "" {
-		dash.FolderUID = &cmd.FolderUID
-	}
+	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
 	return dash
 }

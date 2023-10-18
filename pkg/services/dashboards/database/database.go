@@ -468,7 +468,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
 		metrics.MApiDashboardInsert.Inc()
-		affectedRows, err = sess.Insert(dash)
+		affectedRows, err = sess.Nullable("folder_uid").Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)
 
@@ -480,7 +480,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		dash.UpdatedBy = userId
 
-		affectedRows, err = sess.MustCols("folder_id").ID(dash.ID).Update(dash)
+		affectedRows, err = sess.MustCols("folder_id", "folder_uid").Nullable("folder_uid").ID(dash.ID).Update(dash)
 	}
 
 	if err != nil {

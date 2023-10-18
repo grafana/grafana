@@ -289,7 +289,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if !hasAccess {
 			return nil, dashboards.ErrFolderAccessDenied
 		}
-		dashFolder.FolderUID = &cmd.ParentUID
+		dashFolder.FolderUID = cmd.ParentUID
 	}
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
@@ -420,7 +420,9 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	dashFolder := queryResult
-	dashFolder.FolderUID = cmd.NewParentUID
+	if cmd.NewParentUID != nil {
+		dashFolder.FolderUID = *cmd.NewParentUID
+	}
 
 	currentTitle := dashFolder.Title
 
@@ -832,11 +834,9 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID,
+		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
-	}
-	if dash.FolderUID != nil {
-		cmd.FolderUID = *dash.FolderUID
 	}
 
 	if !dto.UpdatedAt.IsZero() {
