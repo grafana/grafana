@@ -157,7 +157,13 @@ export const OrgUsersTable = ({
                     <div>
                       This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
                       the&nbsp;
-                      <a href={'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'} rel="noreferrer" target="_blank">
+                      <a
+                        href={
+                          'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
+                        }
+                        rel="noreferrer"
+                        target="_blank"
+                      >
                         Grafana authentication docs
                       </a>
                       &nbsp;for details.
