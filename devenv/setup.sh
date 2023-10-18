@@ -92,6 +92,7 @@ usage() {
 	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
 	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
 	echo "  no args                              - provision core datasources and dev dashboards"
+	echo "  undev                                - removes any provisioning done by the setup.sh"
 }
 
 main() {
