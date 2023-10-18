@@ -19,29 +19,6 @@ load(
     "from_secret",
 )
 
-def clone_pr_branch(ver_mode):
-    """Clones the PR branch, in contrast to the default cloning which checks out the target branch main and merges the changes on top.
-
-    Args:
-        ver_mode: ?
-
-    Returns:
-      Drone step.
-    """
-    if ver_mode != "pr":
-        return None
-
-    source = "${DRONE_SOURCE_BRANCH}"
-    return {
-        "name": "clone-pr-branch",
-        "image": images["go"],
-        "commands": [
-            "apk add --update git",
-            "git clone https://github.com/grafana/grafana.git",
-            "git checkout {}".format(source),
-        ],
-    }
-
 def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
         return None
