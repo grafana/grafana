@@ -366,13 +366,13 @@ Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect al
 
 To learn more, refer to the [Grafana OnCall integration for Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/configure-oncall/).
 
-### Export Alert rules and notification resources to Terraform
+### Export alert rules and notification resources to Terraform
 
 <!-- Yuri Tseretyan -->
 
 _Generally available in Grafana Open Source and Enterprise_
 
-This feature provides a way to export alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
 
 ## Authentication and authorization
 
