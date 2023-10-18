@@ -149,19 +149,19 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     });
 
     // get existing labels from url
-    // const previouslySelected = props.panelState?.columns;
-    // if (previouslySelected) {
-    //   Object.values(previouslySelected).forEach((key) => {
-    //     if (pendingLabelState[key]) {
-    //       pendingLabelState[key].active = true;
-    //     }
-    //   });
-    // }
+    const previouslySelected = props.panelState?.columns;
+    if (previouslySelected) {
+      Object.values(previouslySelected).forEach((key) => {
+        if (pendingLabelState[key]) {
+          pendingLabelState[key].active = true;
+        }
+      });
+    }
 
     setColumnsWithMeta(pendingLabelState);
     // Query changed, reset the local search state.
     setFilteredColumnsWithMeta(undefined);
-  }, [props.datasourceType, logsKey]);
+  }, [props.datasourceType, logsKey, props.panelState?.columns]);
 
   if (!columnsWithMeta) {
     return null;
@@ -184,14 +184,14 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
-      // columns: Object.assign(
-      //   {},
-      //   // Get the keys of the object as an array
-      //   Object.keys(pendingLabelState)
-      //     // Only include active filters
-      //     .filter((key) => pendingLabelState[key]?.active)
-      // ),
-      // visualisationType: 'table',
+      columns: Object.assign(
+        {},
+        // Get the keys of the object as an array
+        Object.keys(pendingLabelState)
+          // Only include active filters
+          .filter((key) => pendingLabelState[key]?.active)
+      ),
+      visualisationType: 'table',
     };
 
     // Update url state

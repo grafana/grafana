@@ -1,5 +1,7 @@
 import { DataQuery } from '@grafana/schema';
 
+import { LogsVisualisationType } from '../../../../public/app/features/explore/Logs/Logs';
+
 import { PreferredVisualisationType } from './data';
 import { TimeRange } from './time';
 
@@ -46,6 +48,8 @@ export interface ExploreTracePanelState {
 
 export interface ExploreLogsPanelState {
   id?: string;
+  columns?: Record<number, string>;
+  visualisationType?: LogsVisualisationType;
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
