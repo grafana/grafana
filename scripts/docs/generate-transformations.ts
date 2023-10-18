@@ -147,7 +147,7 @@ ${transformationDocsContent['fieldLookup'].helperDocs}
 ${`### ${transformationDocsContent['filterByRefId'].name}
 ${transformationDocsContent['filterByRefId'].helperDocs}
 
-In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
+In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
 
 {{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 `}
