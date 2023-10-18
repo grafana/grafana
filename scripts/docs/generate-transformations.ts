@@ -119,7 +119,7 @@ You can perform the following transformations on your data.
 ${`### ${transformationDocsContent['calculateField'].name}
 ${transformationDocsContent['calculateField'].helperDocs}
 
-In the example below, I added two fields together and named them Sum.
+In the example below, we added two fields together and named them Sum.
 
 {{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 `}
