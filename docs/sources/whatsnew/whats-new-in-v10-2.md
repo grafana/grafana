@@ -411,7 +411,7 @@ This is useful if you want to limit the access service accounts have to your Gra
 
 <!-- Jo Guerreiro -->
 
-_Available in Grafana Enterprise_
+_Generally vailable in Grafana Enterprise_
 
 Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources.
 However, without proper access controls, service accounts can pose a security risk to your Grafana instance.
