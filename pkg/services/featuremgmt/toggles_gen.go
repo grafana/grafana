@@ -518,4 +518,8 @@ const (
 	// FlagPluginsInstrumentationStatusSource
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+
+	// FlagCostManagementUi
+	// Toggles the display of the cost management ui plugin
+	FlagCostManagementUi = "costManagementUi"
 )

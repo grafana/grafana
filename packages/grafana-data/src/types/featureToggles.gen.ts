@@ -146,4 +146,5 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
 }

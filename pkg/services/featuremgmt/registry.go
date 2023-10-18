@@ -215,8 +215,7 @@ var (
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
+			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -897,6 +896,13 @@ var (
 			FrontendOnly: false,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
 		},
 	}
 )
