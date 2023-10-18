@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -10,13 +10,12 @@ import {
 import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
-  Alert,
+  Collapse,
   Divider,
   Field,
   Icon,
   Input,
   Label,
-  Link,
   SecretInput,
   SecureSocksProxySettings,
   Switch,
@@ -29,6 +28,8 @@ import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/co
 import { MySQLOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
+  const [isOpen, setIsOpen] = useState(true);
+
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
@@ -59,6 +60,17 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         docsLink="https://grafana.com/docs/grafana/latest/datasources/mysql/"
         hasRequiredFields={true}
       />
+
+      <Divider />
+
+      <Collapse collapsible label="User Permission" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
+        query. <br />
+        Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
+        statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. <br />
+        To protect against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted
+        permissions. Check out the docs for more information.
+      </Collapse>
 
       <Divider />
 
@@ -223,20 +235,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </ConfigSection>
-
-      <Divider />
-
-      <Alert title="User Permission" severity="info">
-        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
-        query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-        statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
-        Check out the{' '}
-        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
-          MySQL Data Source Docs
-        </Link>{' '}
-        for more information.
-      </Alert>
     </>
   );
 };
