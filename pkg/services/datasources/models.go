@@ -78,9 +78,13 @@ type TeamHTTPHeader struct {
 }
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
 	teamHTTPHeadersJSON := TeamHTTPHeaders{}
-	if ds.JsonData != nil && ds.JsonData.Get("teamHttpHeaders") != nil {
-		jsonData, err := ds.JsonData.Get("teamHttpHeaders").MarshalJSON()
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
