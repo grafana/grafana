@@ -17,7 +17,7 @@ weight: -39
 
 # What’s new in Grafana v10.2
 
-Welcome to Grafana 10.2! Read on to learn about changes to ...
+Welcome to Grafana 10.2! Read on to learn about changes to dashboards and visualizations, data sources, security and authentication, and more. We’re particularly excited about the addition of generative AI features for dashboards, a new kind of basic role, and improvements to visualization transformations.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.2/).
 
@@ -39,16 +39,6 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
-
-## Public dashboards
-
-<!-- Thanos Karachalios -->
-
-_Generally Available in Grafana Open Source and Enterprise_
-
-Public dashboards allow you to share your visualizations and insights to a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
-
-{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
 ## Recorded queries: Record multiple metrics from a single query
 
@@ -84,6 +74,7 @@ TODO: Add image / gif / video
 _Generally available in Grafana Open Source and Enterprise_
 
 When visualizing multiple fields with a wide spread of values, calculating the min or max value of the visualization based on all fields can hide useful details.
+
 {{< figure src="/media/docs/grafana/panels-visualizations/globalminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated from all fields" >}}
 
 In this example in the stat visualization, it's hard to get an idea of how the values of each series relate to the historical values of that series. The threshold of 10% is exceeded by the A-series even though the A-series is below 10% of its historical maximum.
@@ -91,9 +82,10 @@ In this example in the stat visualization, it's hard to get an idea of how the v
 Now, you can automatically calculate the min or max of each visualized field based on the lowest and highest value of the individual field. This setting is available in the standard options of most visualizations.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated per field" >}}
+
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
-This is not only useful in the stat visualization; gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
+This isn't only useful in the stat visualization&mdash;gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
 
 ### New browse dashboards view
 
@@ -101,9 +93,9 @@ This is not only useful in the stat visualization; gauge, bar gauge, and status 
 
 _Generally available in Grafana Open Source and Enterprise_
 
-The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage for your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
+The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
 
-To make using folders easier and more consistent, there is no longer a special **General** folder. Dashboards without a folder, or dashboards previously in **General**, are now shown at the root level.
+To make using folders easier and more consistent, there's no longer a special **General** folder. Dashboards without a folder, or dashboards previously in the **General** folder, are now shown at the root level.
 
 To learn more, refer to the following video demo.
 
@@ -135,17 +127,6 @@ To learn more, refer to our [Time series documentation](https://grafana.com/docs
 
 TODO: Add image / gif / video
 
-### Visualize enum data in Time series and State timeline visualizations
-
-_Available in public preview in Grafana Open Source and Enterprise_
-
-<!-- Nathan Marrs -->
-<!-- Cloud -->
-
-You can now visualize enum data in the Time series and State timeline visualizations. To visualize enum data you must first convert the field to an enum field via the Convert field type transformation.
-
-TODO: Add image / gif / video
-
 ### Data visualization quality of life improvements
 
 _Available in public preview in Grafana Open Source and Enterprise_
@@ -171,7 +152,7 @@ TODO: Add image / gif / video (maybe not for this one)
 
 _Experimental in Grafana Open Source and Enterprise_
 
-(Requires Tempo or Grafana Enterprise Traces (GET) v2.2 or greater)
+Requires Tempo or Grafana Enterprise Traces (GET) v2.2 or greater.
 
 We've added an **Aggregate By** option to the [TraceQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#write-traceql-queries-using-search) to leverage Tempo's [metrics summary API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/metrics-summary/). You can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` received in the last hour that match your filter criteria, grouped by whatever attributes you specify.
 
@@ -225,6 +206,18 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 {{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-tempo-query-type-template-variables.mp4" >}}
 
+## Sharing
+
+### Public dashboards
+
+<!-- Thanos Karachalios -->
+
+_Generally Available in Grafana Open Source and Enterprise_
+
+Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
+
+{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+
 ## Explore
 
 ### Content outline
@@ -233,7 +226,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 _Generally available in Grafana Open Source and Enterprise_
 
-Introducing Content Outline in Grafana **Explore**. We recognized that complex mixed queries, as well as lengthy logs and traces results led to to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
+Introducing Content Outline in Grafana Explore. We recognized that complex mixed queries, as well as lengthy logs and traces results led to to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
 
 {{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
 
@@ -257,9 +250,9 @@ Previously, the only transformation that supported [dashboard variables](https:/
 
 _Generally available in Grafana Open Source and Enterprise_
 
-The **Add field from calculation** transformation has a couple updates.
+The **Add field from calculation** transformation has been updated.
 
-**Unary operations** is a new mode that lets you apply mathematical operations to a field. The currently supported operations are:
+**Unary operation** is a new mode that lets you apply mathematical operations to a field. The currently supported operations are:
 
 - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
 - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
@@ -317,7 +310,7 @@ We've added support for setting timezones manually when formatting times as stri
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
-Creating correlations has just become easier. Try out our new correlations editor in **Explore** by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
 To try out **Correlations**, enable the `correlations` feature toggle.
 
@@ -349,13 +342,13 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceq
 
 _Generally available in Grafana Open Source and Enterprise_
 
-The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the following `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
+The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
 {{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
 ## Alerting
 
-### Additional contact points for External Alertmanager
+### Additional contact points for external Alertmanager
 
 <!-- Alexander Weaver -->
 
@@ -372,6 +365,14 @@ _Generally available in Grafana Open Source and Enterprise_
 Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect alerts generated by Grafana Alerting with Grafana OnCall. From there, you can route them according to defined escalation chains and schedules.
 
 To learn more, refer to the [Grafana OnCall integration for Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/configure-oncall/).
+
+### Export Alert rules and notification resources to Terraform
+
+<!-- Yuri Tseretyan -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+This feature provides a way to export alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
 
 ## Authentication and authorization
 
