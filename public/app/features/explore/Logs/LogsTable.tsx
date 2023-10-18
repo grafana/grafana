@@ -233,7 +233,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       width={width}
       onCellFilterAdded={onCellFilterAdded}
       height={props.height}
-      footerOptions={{ show: true, reducer: ['count'], countRows: true, isSticky: true }}
+      footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
   );
 };
