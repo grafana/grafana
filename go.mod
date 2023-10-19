@@ -42,7 +42,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-delivery
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
-	github.com/crewjam/saml v0.4.13 // @grafana/backend-platform
+	github.com/crewjam/saml v0.4.13 // @grafana/grafana-authnz-team
 	github.com/fatih/color v1.15.0 // @grafana/backend-platform
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/backend-platform
 	github.com/go-git/go-git/v5 v5.4.2 // @grafana/grafana-app-platform-squad
