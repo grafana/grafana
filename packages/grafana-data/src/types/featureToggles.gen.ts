@@ -131,7 +131,6 @@ export interface FeatureToggles {
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
-<<<<<<< HEAD
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
@@ -149,7 +148,5 @@ export interface FeatureToggles {
   pluginsInstrumentationStatusSource?: boolean;
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
-=======
->>>>>>> ed0a6e3cd5 (promqail feature toggle: fix re-order)
   prometheusPromQAIL?: boolean;
 }
