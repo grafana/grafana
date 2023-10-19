@@ -503,6 +503,20 @@ export const getStyles = (theme: GrafanaTheme2) => {
     suggestionFeedback: css({
       textAlign: 'left',
     }),
+    feedbackQuestion: css({
+      display: 'flex',
+      padding: '8px 0px',
+      h6: { marginBottom: 0 },
+      i: {
+        marginTop: '1px',
+      },
+    }),
+    explationTextInput: css({
+      paddingLeft: '24px',
+    }),
+    submitFeedback: css({
+      padding: '16px 0',
+    }),
   };
 };
 

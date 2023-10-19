@@ -89,17 +89,29 @@ export function QuerySuggestionItem(props: Props) {
     const disabledButton = () =>
       type === 'explanation' ? !explanationFeedback.radioInput : !suggestionFeedback.radioInput;
 
+    const questionOne =
+      type === 'explanation' ? 'Why was the explanation not helpful?' : 'Were the query suggestions helpful?';
+
     return (
       <div className={styles.suggestionFeedback}>
-        <Field label="Were the query suggestions helpful?">
+        <div>
+          <div className={styles.feedbackQuestion}>
+            <h6>{questionOne}</h6>
+            <i>(Required)</i>
+          </div>
           <RadioButtonList
             name="default"
             options={type === 'explanation' ? explationOptions : suggestionOptions}
             value={type === 'explanation' ? explanationFeedback.radioInput : suggestionFeedback.radioInput}
             onChange={updateRadioFeedback}
           />
-        </Field>
-        <Field label="How can we improve query suggestions?">
+        </div>
+        <div className={cx(type === 'explanation' && styles.explationTextInput)}>
+          {type !== 'explanation' && (
+            <div className={styles.feedbackQuestion}>
+              <h6>How can we improve the query suggestions?</h6>
+            </div>
+          )}
           <TextArea
             type="text"
             aria-label="Promqail suggestion text"
@@ -108,8 +120,9 @@ export function QuerySuggestionItem(props: Props) {
             onChange={updateTextFeedback}
             cols={100}
           />
-        </Field>
-        <div>
+        </div>
+
+        <div className={styles.submitFeedback}>
           <Button
             variant="primary"
             size="sm"
@@ -232,7 +245,7 @@ export function QuerySuggestionItem(props: Props) {
                       </Toggletip>
                     </>
                   ) : (
-                    'Thank you!'
+                    'Thank you for your feedback!'
                   )}
                 </div>
               </div>
@@ -257,7 +270,7 @@ export function QuerySuggestionItem(props: Props) {
             ) : (
               // do this weird thing because the toggle tip doesn't allow an extra close function
               <Button fill="outline" variant="secondary" size="sm" disabled={true}>
-                Thank you!
+                Thank you for your feedback!
               </Button>
             )}
           </div>
