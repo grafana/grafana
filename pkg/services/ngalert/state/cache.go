@@ -190,6 +190,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		Values:             values,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
+		ResultFingerprint:  result.Instance.Fingerprint(),
 	}
 	return newState
 }

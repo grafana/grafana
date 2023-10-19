@@ -34,6 +34,9 @@ type State struct {
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
 
+	// ResultFingerprint is a hash of labels of the result before it is processed by
+	ResultFingerprint data.Fingerprint
+
 	// Results contains the result of the current and previous evaluations.
 	Results []Evaluation
 
