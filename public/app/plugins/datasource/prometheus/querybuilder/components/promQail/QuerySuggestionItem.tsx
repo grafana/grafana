@@ -86,6 +86,9 @@ export function QuerySuggestionItem(props: Props) {
       }
     };
 
+    const disabledButton = () =>
+      type === 'explanation' ? !explanationFeedback.radioInput : !suggestionFeedback.radioInput;
+
     return (
       <div className={styles.suggestionFeedback}>
         <Field label="Were the query suggestions helpful?">
@@ -110,6 +113,7 @@ export function QuerySuggestionItem(props: Props) {
           <Button
             variant="primary"
             size="sm"
+            disabled={disabledButton()}
             onClick={() => {
               // submit the rudderstack event
               if (type === 'explanation') {
@@ -222,7 +226,7 @@ export function QuerySuggestionItem(props: Props) {
                         placement="bottom-end"
                         closeButton={true}
                       >
-                        <Button fill="outline" variant="secondary" size="sm">
+                        <Button variant="success" size="sm">
                           No
                         </Button>
                       </Toggletip>
