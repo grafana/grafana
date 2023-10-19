@@ -75,7 +75,8 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
   const handleIntervalTypeChange = useCallback(({ value }: SelectableValue<string>) => {
     setIntervalType(value || 'fixed');
-  }, []);
+    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: '' }))
+  }, [bucketAgg, dispatch]);
 
   return (
     <>
