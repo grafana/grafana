@@ -2,11 +2,14 @@ package notifier
 
 import (
 	"context"
+	"math/rand"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	amfake "github.com/grafana/grafana/pkg/services/ngalert/notifier/fake"
+	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/stretchr/testify/require"
 )
@@ -85,29 +88,25 @@ func TestNewExternalAlertmanager(t *testing.T) {
 	}
 }
 
-func TestSilences(t *testing.T) {
-	const (
-		tenantID = "1"
-		password = "password"
-	)
-	fakeAm := amfake.NewFakeExternalAlertmanager(t, tenantID, password)
+func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
-	// Using a wrong password should cause an error.
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
 	cfg := externalAlertmanagerConfig{
-		URL:               fakeAm.Server.URL + "/alertmanager",
+		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
-		BasicAuthPassword: "wrongpassword",
+		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
 	am, err := newExternalAlertmanager(cfg, 1)
-	require.NoError(t, err)
-
-	_, err = am.ListSilences(context.Background(), []string{})
-	require.NotNil(t, err)
-
-	// Using the correct password should make the request succeed.
-	cfg.BasicAuthPassword = password
-	am, err = newExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -116,57 +115,76 @@ func TestSilences(t *testing.T) {
 	require.Equal(t, 0, len(silences))
 
 	// Creating a silence should succeed.
-	testSilence := createSilence("test comment", "1", amv2.Matchers{}, strfmt.NewDateTime(), strfmt.NewDateTime())
-	silenceID, err := am.CreateSilence(context.Background(), &testSilence)
+	testSilence := genSilence("test")
+	id, err := am.CreateSilence(context.Background(), &testSilence)
 	require.NoError(t, err)
-	require.NotEmpty(t, silenceID)
+	require.NotEmpty(t, id)
+	testSilence.ID = id
 
 	// We should be able to retrieve a specific silence.
-	silence, err := am.GetSilence(context.Background(), silenceID)
+	silence, err := am.GetSilence(context.Background(), testSilence.ID)
 	require.NoError(t, err)
-	require.Equal(t, *testSilence.Comment, *silence.Comment)
-	require.Equal(t, *testSilence.CreatedBy, *silence.CreatedBy)
-	require.Equal(t, *testSilence.StartsAt, *silence.StartsAt)
-	require.Equal(t, *testSilence.EndsAt, *silence.EndsAt)
-	require.Equal(t, testSilence.Matchers, silence.Matchers)
+	require.Equal(t, testSilence.ID, *silence.ID)
 
 	// Trying to retrieve a non-existing silence should fail.
-	_, err = am.GetSilence(context.Background(), "invalid")
+	_, err = am.GetSilence(context.Background(), util.GenerateShortUID())
 	require.Error(t, err)
 
 	// After creating another silence, the total amount should be 2.
-	testSilence2 := createSilence("another test comment", "1", amv2.Matchers{}, strfmt.NewDateTime(), strfmt.NewDateTime())
-	silenceID2, err := am.CreateSilence(context.Background(), &testSilence2)
+	testSilence2 := genSilence("test")
+	id, err = am.CreateSilence(context.Background(), &testSilence2)
 	require.NoError(t, err)
-	require.NotEmpty(t, silenceID2)
+	require.NotEmpty(t, id)
+	testSilence2.ID = id
 
 	silences, err = am.ListSilences(context.Background(), []string{})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(silences))
-	require.True(t, *silences[0].ID == silenceID || *silences[0].ID == silenceID2)
-	require.True(t, *silences[1].ID == silenceID || *silences[1].ID == silenceID2)
+	require.True(t, *silences[0].ID == testSilence.ID || *silences[0].ID == testSilence2.ID)
+	require.True(t, *silences[1].ID == testSilence.ID || *silences[1].ID == testSilence2.ID)
 
-	// After deleting one of those silences, the total amount should be 2.
-	err = am.DeleteSilence(context.Background(), silenceID)
+	// After deleting one of those silences, the total amount should be 2 but one of those should be expired.
+	err = am.DeleteSilence(context.Background(), testSilence.ID)
 	require.NoError(t, err)
 
 	silences, err = am.ListSilences(context.Background(), []string{})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(silences))
 
-	// Trying to delete the same error should fail.
-	err = am.DeleteSilence(context.Background(), silenceID)
-	require.NotNil(t, err)
+	for _, s := range silences {
+		if *s.ID == testSilence.ID {
+			require.Equal(t, *s.Status.State, "expired")
+		} else {
+			require.Equal(t, *s.Status.State, "pending")
+		}
+	}
+
+	// When deleting the other silence, both should be expired.
+	err = am.DeleteSilence(context.Background(), testSilence2.ID)
+	require.NoError(t, err)
+
+	silences, err = am.ListSilences(context.Background(), []string{})
+	require.NoError(t, err)
+	require.Equal(t, *silences[0].Status.State, "expired")
+	require.Equal(t, *silences[1].Status.State, "expired")
 }
 
-func createSilence(comment, createdBy string, matchers amv2.Matchers, startsAt, endsAt strfmt.DateTime) apimodels.PostableSilence {
+func genSilence(createdBy string) apimodels.PostableSilence {
+	starts := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
+	ends := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+10) * time.Second))
+	comment := "test comment"
+	isEqual := true
+	name := "test"
+	value := "test"
+	isRegex := false
+	matchers := amv2.Matchers{&amv2.Matcher{IsEqual: &isEqual, Name: &name, Value: &value, IsRegex: &isRegex}}
+
 	return apimodels.PostableSilence{
 		Silence: amv2.Silence{
 			Comment:   &comment,
 			CreatedBy: &createdBy,
 			Matchers:  matchers,
-			StartsAt:  &startsAt,
-			EndsAt:    &endsAt,
+			StartsAt:  &starts,
+			EndsAt:    &ends,
 		},
 	}
 }
