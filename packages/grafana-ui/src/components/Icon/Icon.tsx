@@ -9,7 +9,7 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
-export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
@@ -18,16 +18,14 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {
-    // line-height: 0; is needed for correct icon alignment in Safari
-    container: css({
-      label: 'Icon',
-      display: 'inline-block',
-      lineHeight: 0,
-    }),
     icon: css({
-      verticalAlign: 'middle',
       display: 'inline-block',
       fill: 'currentColor',
+      flexShrink: 0,
+      label: 'Icon',
+      // line-height: 0; is needed for correct icon alignment in Safari
+      lineHeight: 0,
+      verticalAlign: 'middle',
     }),
     orange: css({
       fill: theme.v1.palette.orange,
@@ -35,13 +33,13 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
+export const Icon = React.forwardRef<SVGElement, IconProps>(
+  ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
     const styles = useStyles2(getIconStyles);
 
     /* Temporary solution to display also font awesome icons */
     if (name?.startsWith('fa fa-')) {
-      return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
+      return <i role="img" className={getFontAwesomeIconStyles(name, className)} {...rest} style={style} />;
     }
 
     if (!isIconName(name)) {
@@ -49,7 +47,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     }
 
     if (!name || name.includes('..')) {
-      return <div ref={ref}>invalid icon name</div>;
+      return <div>invalid icon name</div>;
     }
 
     const iconRoot = getIconRoot();
@@ -60,16 +58,16 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 
     return (
-      <div className={styles.container} {...divElementProps} ref={ref}>
-        <SVG
-          src={svgPath}
-          width={svgWid}
-          height={svgHgt}
-          title={title}
-          className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
-          style={style}
-        />
-      </div>
+      <SVG
+        innerRef={ref}
+        src={svgPath}
+        width={svgWid}
+        height={svgHgt}
+        title={title}
+        className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
+        style={style}
+        {...rest}
+      />
     );
   }
 );
