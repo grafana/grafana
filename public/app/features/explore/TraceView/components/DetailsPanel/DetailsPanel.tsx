@@ -80,7 +80,7 @@ export function DetailsPanel(props: Props) {
         operationName: 'op1',
         process: {
           serviceName: 'service1',
-          tags: [],
+          tags: [{ key: 'tag1', value: 'value1' }],
         },
       } as unknown as TraceSpan,
       spanID: 'span1',

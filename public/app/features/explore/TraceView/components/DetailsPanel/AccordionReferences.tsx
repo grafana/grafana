@@ -18,7 +18,6 @@ import * as React from 'react';
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import { TraceSpanReference } from '../types/trace';
 import { ubMb1 } from '../uberUtilityStyles';
@@ -26,22 +25,16 @@ import ReferenceLink from '../url/ReferenceLink';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    AccordianReferenceItem: css`
-      border-bottom: 1px solid ${autoColor(theme, '#d8d8d8')};
-    `,
     AccordianKeyValues: css`
       margin-left: 10px;
     `,
     AccordianReferences: css`
       label: AccordianReferences;
-      border: 1px solid ${autoColor(theme, '#d8d8d8')};
       position: relative;
       margin-bottom: 0.25rem;
     `,
     AccordianReferencesContent: css`
       label: AccordianReferencesContent;
-      background: ${autoColor(theme, '#f0f0f0')};
-      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
       padding: 0.5rem 0.5rem 0.25rem 0.5rem;
     `,
     itemContent: css`
@@ -105,7 +98,7 @@ export function References(props: ReferenceItemProps) {
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
-        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
+        <div key={i}>
           <div className={styles.item} key={`${reference.spanID}`}>
             <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
               <span className={styles.itemContent}>
