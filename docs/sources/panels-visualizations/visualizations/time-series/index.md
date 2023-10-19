@@ -232,7 +232,7 @@ Set the Y-axis values scale.
 
 ### Centered zero
 
-Set the Y-axis to be centered on zero.
+Set the y-axis to be centered on zero.
 
 ### Soft min and soft max
 
