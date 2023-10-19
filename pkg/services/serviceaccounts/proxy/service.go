@@ -42,7 +42,7 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 		return err
 	}
 
-	if strings.HasPrefix(sa.Login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtsvcPrefix) {
+	if isExternalServiceAccount(sa.Login) {
 		return extsvcaccounts.ErrExtServiceAccountCannotBeDeleted
 	}
 
@@ -63,4 +63,8 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 
 func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
+}
+
+func isExternalServiceAccount(login string) bool {
+	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtsvcPrefix)
 }
