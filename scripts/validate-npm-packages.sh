@@ -31,7 +31,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 	done
 
   # @grafana/toolkit structure is different to the other packages
-  if [[ "$dir_name" == "grafana-toolkit" ]]; then
+  if [[ "$dir_name" == "@grafana-toolkit" ]]; then
     if [ ! -d bin ] || [ ! -f bin/grafana-toolkit.js ]; then
       echo -e "❌ Failed: Missing 'bin' directory or required files in package $dir_name.\n"
       exit 1
