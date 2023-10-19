@@ -16,10 +16,6 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-const (
-	extsvcPrefix = "extsvc"
-)
-
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
 	logger   log.Logger
@@ -100,7 +96,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, nil
 	}
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, cmd.ExtSvcSlug)
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, extsvcPrefix+cmd.ExtSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return 0, errRetrieve
 	}
