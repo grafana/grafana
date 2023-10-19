@@ -15,11 +15,11 @@ import { loadUsersTeams } from './state/actions';
 type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
 export interface OwnProps {}
 
-export const UserTeamsList = ({ teams, noTeams, hasFetched, loadUsersTeams }: Props) => {
+export const UserTeamsList = ({ teams, hasFetched, loadUsersTeams }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    loadUsersTeams(true);
+    loadUsersTeams();
   }, [loadUsersTeams]);
 
   const columns: Array<Column<Team>> = useMemo(
@@ -38,21 +38,15 @@ export const UserTeamsList = ({ teams, noTeams, hasFetched, loadUsersTeams }: Pr
     []
   );
 
-  if (noTeams) {
-    return (
-      <Page navId="profile/teams">
-        <div className={styles.noTeamsWrapper}>
-          <Icon name="users-alt" size="xxl" />
-          <span>You are currently not a member of any teams.</span>
-        </div>
-      </Page>
-    );
-  }
-
   return (
-    <Page navId="profile/teams">
+    <Page navId="profile/teams" subTitle="Teams that you are a member of">
       <Page.Contents isLoading={!hasFetched}>
-        {
+        {teams.length === 0 ? (
+          <div className={styles.noTeamsWrapper}>
+            <Icon name="users-alt" size="xxl" />
+            <span>You are currently not a member of any teams.</span>
+          </div>
+        ) : (
           <>
             <Stack gap={2}>
               <TableWrapper>
@@ -60,7 +54,7 @@ export const UserTeamsList = ({ teams, noTeams, hasFetched, loadUsersTeams }: Pr
               </TableWrapper>
             </Stack>
           </>
-        }
+        )}
       </Page.Contents>
     </Page>
   );

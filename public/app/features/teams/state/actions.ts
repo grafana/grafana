@@ -44,7 +44,7 @@ export function loadTeams(initial = false): ThunkResult<void> {
   };
 }
 
-export function loadUsersTeams(initial = false): ThunkResult<void> {
+export function loadUsersTeams(): ThunkResult<void> {
   return async (dispatch) => {
     // Early return if the user cannot list teams
     if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
@@ -54,11 +54,7 @@ export function loadUsersTeams(initial = false): ThunkResult<void> {
     }
 
     const response = await getBackendSrv().get('/api/user/teams');
-    let noTeams = false;
-    if (initial) {
-      noTeams = response.length === 0;
-    }
-    dispatch(userTeamsLoaded({ noTeams, ...response }));
+    dispatch(userTeamsLoaded({ ...response }));
   };
 }
 
