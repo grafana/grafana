@@ -26,6 +26,8 @@ import {
 } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
+export const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
+
 export class ElasticQueryBuilder {
   timeField: string;
 
@@ -100,7 +102,6 @@ export class ElasticQueryBuilder {
   getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
-    const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
     esAgg.field = aggDef.field || this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
