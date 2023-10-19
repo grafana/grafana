@@ -16,6 +16,10 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
+const (
+	extsvcPrefix = "extsvc"
+)
+
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
 	logger   log.Logger
@@ -139,7 +143,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
-			Name:       cmd.ExtSvcSlug,
+			Name:       extsvcPrefix + cmd.ExtSvcSlug,
 			Role:       newRole(roletype.RoleNone),
 			IsDisabled: newBool(false),
 		})
