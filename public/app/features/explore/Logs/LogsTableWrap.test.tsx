@@ -1,4 +1,4 @@
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, waitFor, screen, fireEvent } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import {
@@ -44,7 +44,11 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
         typeInfo: {
           frame: 'json.RawMessage',
         },
-        values: [{ foo: 'bar' }, { foo: 'bar' }, { foo: 'bar' }],
+        values: [
+          { foo: 'bar', boo: 'hoo' },
+          { foo: 'bar', boo: 'hoo2' },
+          { foo: 'bar', boo: 'hoo3' },
+        ],
       },
     ],
     length: 3,
@@ -133,6 +137,28 @@ describe('LogsTableWrap', () => {
         visualisationType: 'table',
         columns: {},
       });
+    });
+  });
+
+  it('search input should search matching columns', async () => {
+    const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
+    setup({
+      panelState: {
+        visualisationType: 'table',
+        columns: undefined,
+      },
+      updatePanelState: updatePanelState,
+    });
+
+    expect(screen.getByLabelText('foo')).toBeInTheDocument();
+    expect(screen.getByLabelText('boo')).toBeInTheDocument();
+
+    const searchInput = screen.getByPlaceholderText('Search columns by name');
+    fireEvent.change(searchInput, { target: { value: 'boo' } });
+
+    expect(screen.getByLabelText('boo')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByLabelText('foo')).not.toBeInTheDocument();
     });
   });
 });
