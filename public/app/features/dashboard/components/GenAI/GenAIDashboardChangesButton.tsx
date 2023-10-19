@@ -39,13 +39,7 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
 ].join('.\n');
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }: GenAIDashboardChangesButtonProps) => {
-  const messages = useMemo(() => {
-    const messages = getMessages(dashboard);
-    for (let message of messages) {
-      console.log(message.content);
-    }
-    return messages;
-  }, [dashboard]);
+  const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
   return (
     <GenAIButton
