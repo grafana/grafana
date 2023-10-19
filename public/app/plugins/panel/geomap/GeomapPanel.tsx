@@ -149,7 +149,7 @@ export class GeomapPanel extends Component<Props, State> {
   optionsChanged(options: Options) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
-      const [updatedSharedView, view] = this.initMapView(options.view, sharedView);
+      const [updatedSharedView, view] = this.initMapView(options.view);
       sharedView = updatedSharedView;
 
       if (this.map && view) {
@@ -250,7 +250,7 @@ export class GeomapPanel extends Component<Props, State> {
     pointerMoveListener(evt, this);
   };
 
-  initMapView = (config: MapViewConfig, sharedView?: View | undefined): Array<View | undefined> => {
+  initMapView = (config: MapViewConfig): Array<View | undefined> => {
     let view = new View({
       center: [0, 0],
       zoom: 1,
