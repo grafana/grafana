@@ -15,6 +15,10 @@ var (
 )
 
 const (
+	ServiceAccountPrefix = "sa-"
+)
+
+const (
 	ActionRead             = "serviceaccounts:read"
 	ActionWrite            = "serviceaccounts:write"
 	ActionCreate           = "serviceaccounts:create"
