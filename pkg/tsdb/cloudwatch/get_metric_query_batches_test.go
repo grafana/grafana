@@ -18,6 +18,10 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		MetricQueryType: models.MetricQueryTypeQuery,
 		Id:              "i2",
 	}
+	insight3 := models.CloudWatchQuery{
+		MetricQueryType: models.MetricQueryTypeQuery,
+		Id:              "i3",
+	}
 	metricStat := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
 		MetricEditorMode: models.MetricEditorModeBuilder,
@@ -46,6 +50,12 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		MetricEditorMode: models.MetricEditorModeRaw,
 		Expression:       "SUM(s1)",
 		Id:               "m4",
+	}
+	math5 := models.CloudWatchQuery{
+		MetricQueryType:  models.MetricQueryTypeSearch,
+		MetricEditorMode: models.MetricEditorModeRaw,
+		Expression:       "PERIOD(i1) * RATE(i3)",
+		Id:               "m5",
 	}
 
 	t.Run("zero insight queries should not batch", func(t *testing.T) {
@@ -117,5 +127,20 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &math1, &math2, &math3}, result[1])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat, &math4}, result[2])
+	})
+	t.Run("a math query with multiple insight queries should get both", func(t *testing.T) {
+		batch := []*models.CloudWatchQuery{
+			&insight1,
+			&insight2,
+			&insight3,
+			&math1,
+			&math5,
+		}
+
+		result := getMetricQueryBatches(batch, logger)
+		assert.Len(t, result, 3)
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &math1}, result[1])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &insight3, &math5}, result[2])
 	})
 }
