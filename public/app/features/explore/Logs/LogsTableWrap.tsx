@@ -15,13 +15,14 @@ import { Themeable2 } from '@grafana/ui/src';
 
 // do we want to import from prom?
 import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
+import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
 import { LogsTableMultiSelect } from './LogsTableMultiSelect';
 
 interface Props extends Themeable2 {
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[];
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -69,10 +70,6 @@ const normalize = (value: number, total: number): number => {
   return Math.floor((100 * value) / total);
 };
 
-// @todo this is a hack to get the other Fields that are used as columns, but we should have a better way to do this?
-export const LOKI_TABLE_SPECIAL_FIELDS = ['labels', 'id', 'tsNs', 'Line', 'Time'];
-export const ELASTIC_TABLE_SPECIAL_FIELDS = ['@timestamp', 'line'];
-
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   const { logsFrames } = props;
   // Save the normalized cardinality of each label
@@ -83,22 +80,17 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     Record<fieldName, fieldNameMeta> | undefined
   >(undefined);
 
-  const logsKey = logsFrames ? logsFrames[0] : undefined;
+  const dataFrame = logsFrames[0];
+  const logsFrame = parseLogsFrame(dataFrame);
 
   useEffect(() => {
-    const labelsField = logsKey ? logsKey.fields.find((field) => field.name === 'labels') : undefined;
-    const numberOfLogLines = logsKey ? logsKey.length : 0;
+    const labelsField = dataFrame ? dataFrame.fields.find((field) => field.name === 'labels') : undefined;
+    const numberOfLogLines = dataFrame ? dataFrame.length : 0;
 
-    const otherFields = logsKey
-      ? logsKey.fields.filter((field) => {
-          if (props.datasourceType === 'loki') {
-            return !LOKI_TABLE_SPECIAL_FIELDS.includes(field.name);
-          } else if (props.datasourceType === 'elasticsearch') {
-            return !ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name);
-          }
-          return true;
-        })
-      : [];
+    const otherFields = logsFrame ? logsFrame.extraFields : [];
+    if (logsFrame?.severityField) {
+      otherFields.push(logsFrame?.severityField);
+    }
 
     // Use a map to dedupe labels and count their occurrences in the logs
     const labelCardinality = new Map<fieldName, fieldNameMeta>();
@@ -161,7 +153,9 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     setColumnsWithMeta(pendingLabelState);
     // Query changed, reset the local search state.
     setFilteredColumnsWithMeta(undefined);
-  }, [props.datasourceType, logsKey, props.panelState?.columns]);
+    // including dataFrame and logsFrame will cause infinite loop
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.datasourceType, dataFrame]);
 
   if (!columnsWithMeta) {
     return null;
@@ -180,6 +174,15 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
 
     // Set local state
     setColumnsWithMeta(pendingLabelState);
+
+    // If user is currently filtering, update filtered state
+    if (filteredColumnsWithMeta) {
+      const pendingFilteredLabelState = {
+        ...filteredColumnsWithMeta,
+        [columnName]: { ...filteredColumnsWithMeta[columnName], active: !filteredColumnsWithMeta[columnName]?.active },
+      };
+      setFilteredColumnsWithMeta(pendingFilteredLabelState);
+    }
 
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
