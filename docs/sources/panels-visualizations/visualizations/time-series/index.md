@@ -240,7 +240,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a specific point.
 
-To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options][].
+To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options][].
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
