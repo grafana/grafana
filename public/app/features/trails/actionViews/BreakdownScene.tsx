@@ -26,6 +26,7 @@ import { AddToFiltersGraphAction } from '../AddToFiltersGraphAction';
 import { ByFrameRepeater } from '../ByFrameRepeater';
 import { LayoutSwitcher } from '../LayoutSwitcher';
 import { trailsDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { getColorByIndex } from '../utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -304,13 +305,6 @@ export function buildBreakdownActionScene() {
   return new SceneFlexItem({
     body: new BreakdownScene({}),
   });
-}
-
-export function builAllScene(variable: QueryVariable) {}
-
-function getColorByIndex(index: number) {
-  const visTheme = config.theme2.visualization;
-  return visTheme.getColorByName(visTheme.palette[index % 5]);
 }
 
 interface SelectLabelActionState extends SceneObjectState {

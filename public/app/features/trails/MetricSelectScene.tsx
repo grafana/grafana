@@ -29,6 +29,7 @@ import {
   VAR_METRIC_EXPR,
   VAR_METRIC_NAMES,
 } from './shared';
+import { getColorByIndex } from './utils';
 
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -86,7 +87,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const metricNames = variable.state.options;
     const children: SceneFlexItem[] = [];
 
-    for (const metric of metricNames) {
+    for (let index = 0; index < metricNames.length; index++) {
+      const metric = metricNames[index];
+
       const metricName = String(metric.value);
       if (!metricName.match(searchRegex)) {
         continue;
@@ -97,7 +100,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           minHeight: 150,
           minWidth: 370,
           $variables: getVariablesWithMetricConstant(metricName),
-          body: getPanelForMetric(metricName),
+          body: getPanelForMetric(metricName, index),
         })
       );
 
@@ -147,7 +150,7 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getPanelForMetric(metric: string) {
+function getPanelForMetric(metric: string, index: number) {
   const queries = getAutoQueriesForMetric(metric);
   const topQuery = queries[0];
 
@@ -163,6 +166,7 @@ function getPanelForMetric(metric: string) {
     .setUnit(topQuery.unit)
     .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9)
+    .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({}))
     .build();
 }

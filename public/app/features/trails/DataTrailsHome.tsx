@@ -101,10 +101,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
-      // gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-      // gridAutoRows: '200px',
-      // columnGap: theme.spacing(2),
-      // rowGap: theme.spacing(2),
     }),
   };
 }

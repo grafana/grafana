@@ -1,4 +1,5 @@
 import { urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getUrlSyncManager, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
@@ -57,4 +58,9 @@ export function getMetricSceneFor(model: SceneObject): MetricScene {
   console.error('Unable to find graph view for', model);
 
   throw new Error('Unable to find trail');
+}
+
+export function getColorByIndex(index: number) {
+  const visTheme = config.theme2.visualization;
+  return visTheme.getColorByName(visTheme.palette[index % 8]);
 }
