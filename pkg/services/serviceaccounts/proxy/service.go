@@ -33,6 +33,9 @@ func ProvideServiceAccountsProxy(
 var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
 func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	if isExternalServiceAccount(saForm.Name) {
+		return nil, extsvcaccounts.ErrExtServiceAccountCannotBeCreated
+	}
 	return s.proxiedService.CreateServiceAccount(ctx, orgID, saForm)
 }
 
