@@ -1293,7 +1293,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Profiles);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637175000","to":"1602637226000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", service_namespace=\\"namespace1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", service_namespace=\\"namespace1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
         )}`
       );
     });
@@ -1323,7 +1323,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Profiles);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637175000","to":"1602637226000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
         )}`
       );
     });
@@ -1353,7 +1353,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Profiles);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637175000","to":"1602637226000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
         )}`
       );
     });
@@ -1412,7 +1412,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Profiles);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637175000","to":"1602637226000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
         )}`
       );
     });
@@ -1446,7 +1446,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Profiles);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637175000","to":"1602637226000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
+          '{"range":{"from":"1602637140000","to":"1602637261000"},"datasource":"pyroscopeUid","queries":[{"labelSelector":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","groupBy":[],"profileTypeId":"","queryType":"profile","spanSelector":["6605c7b08e715d6c"],"refId":""}]}'
         )}`
       );
     });
