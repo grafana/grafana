@@ -17,15 +17,10 @@ import { ProfileTypesCascader } from 'app/plugins/datasource/grafana-pyroscope-d
 import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { ProfileTypeMessage } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
-import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
-import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
-
 export interface TraceToProfilesOptions {
   datasourceUid?: string;
   tags?: Array<{ key: string; value?: string }>;
-  spanStartTimeShift?: string;
-  spanEndTimeShift?: string;
   query?: string;
   profileTypeId?: string;
   customQuery: boolean;
@@ -91,36 +86,6 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
             }}
           />
         </InlineField>
-      </InlineFieldRow>
-
-      <InlineFieldRow>
-        <IntervalInput
-          label={getTimeShiftLabel('start')}
-          tooltip={getTimeShiftTooltip('start', '0')}
-          value={options.jsonData.tracesToProfiles?.spanStartTimeShift || ''}
-          onChange={(v) => {
-            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
-              ...options.jsonData.tracesToProfiles,
-              spanStartTimeShift: v,
-            });
-          }}
-          isInvalidError={invalidTimeShiftError}
-        />
-      </InlineFieldRow>
-
-      <InlineFieldRow>
-        <IntervalInput
-          label={getTimeShiftLabel('end')}
-          tooltip={getTimeShiftTooltip('end', '0')}
-          value={options.jsonData.tracesToProfiles?.spanEndTimeShift || ''}
-          onChange={(v) => {
-            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
-              ...options.jsonData.tracesToProfiles,
-              spanEndTimeShift: v,
-            });
-          }}
-          isInvalidError={invalidTimeShiftError}
-        />
       </InlineFieldRow>
 
       <InlineFieldRow>

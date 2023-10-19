@@ -560,8 +560,8 @@ function getTimeRangeFromSpan(
   if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
     adjustedEndTime = adjustedStartTime + 1000;
   } else if (shouldCreatePyroscopeLink) {
-    adjustedStartTime = adjustedStartTime - 25000;
-    adjustedEndTime = adjustedEndTime + 25000;
+    adjustedStartTime = adjustedStartTime - 60000;
+    adjustedEndTime = adjustedEndTime + 60000;
   } else if (adjustedStartTime === adjustedEndTime) {
     // Because we can only pass milliseconds in the url we need to check if they equal.
     // We need end time to be later than start time
