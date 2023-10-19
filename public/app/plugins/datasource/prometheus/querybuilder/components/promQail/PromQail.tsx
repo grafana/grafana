@@ -185,7 +185,7 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                         //CHECK THIS???
-                        promQailSuggest(dispatch, 0, query, labelNames);
+                        promQailSuggest(dispatch, 0, query, labelNames, datasource);
                       }}
                     >
                       No
@@ -272,7 +272,7 @@ export const PromQail = (props: PromQailProps) => {
                                     };
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, labelNames, newInteraction);
+                                    promQailSuggest(dispatch, idx, query, labelNames, datasource, newInteraction);
                                   }}
                                 >
                                   Suggest queries instead
@@ -294,7 +294,7 @@ export const PromQail = (props: PromQailProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, labelNames, interaction);
+                                    promQailSuggest(dispatch, idx, query, labelNames, datasource, interaction);
                                   }}
                                 >
                                   Submit
@@ -315,7 +315,7 @@ export const PromQail = (props: PromQailProps) => {
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
                           queryExplain={(suggIdx: number) =>
-                            promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                            interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
                           }
                           onChange={onChange}
                           prompt={interaction.prompt ?? ''}
@@ -340,8 +340,8 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
-                      queryExplain={(suggIdx: number) =>
-                        promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                      queryExplain={(suggIdx: number) => 
+                        interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
                       }
                       onChange={onChange}
                       prompt={interaction.prompt ?? ''}

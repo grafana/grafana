@@ -3,7 +3,7 @@ import React, { FormEvent, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Field, RadioButtonList, Spinner, TextArea, Toggletip, useTheme2 } from '@grafana/ui';
+import { Button, RadioButtonList, Spinner, TextArea, Toggletip, useTheme2 } from '@grafana/ui';
 
 import { buildVisualQueryFromString } from '../../parsing';
 import { PromVisualQuery } from '../../types';
