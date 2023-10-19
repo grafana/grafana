@@ -1,11 +1,9 @@
-import { render, waitFor, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import {
   createTheme,
-  DataFrame,
   ExploreLogsPanelState,
-  FieldType,
   LogsSortOrder,
   standardTransformersRegistry,
   toUtc,
@@ -15,44 +13,9 @@ import { organizeFieldsTransformer } from '@grafana/data/src/transformations/tra
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
+import { getMockLokiFrame } from './utils/testMocks.test';
 
-const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>, logs?: DataFrame) => {
-  const testDataFrame = {
-    fields: [
-      {
-        config: {},
-        name: 'Time',
-        type: FieldType.time,
-        values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
-      },
-      {
-        config: {},
-        name: 'line',
-        type: FieldType.string,
-        values: ['log message 1', 'log message 2', 'log message 3'],
-      },
-      {
-        config: {},
-        name: 'tsNs',
-        type: FieldType.string,
-        values: ['ts1', 'ts2', 'ts3'],
-      },
-      {
-        config: {},
-        name: 'labels',
-        type: FieldType.other,
-        typeInfo: {
-          frame: 'json.RawMessage',
-        },
-        values: [
-          { foo: 'bar', boo: 'hoo' },
-          { foo: 'bar', boo: 'hoo2' },
-          { foo: 'bar', boo: 'hoo3' },
-        ],
-      },
-    ],
-    length: 3,
-  };
+const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
   return (
     <LogsTableWrap
       range={{
@@ -69,14 +32,14 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       splitOpen={() => undefined}
       timeZone={'utc'}
       width={50}
-      logsFrames={[logs ?? testDataFrame]}
+      logsFrames={[getMockLokiFrame()]}
       theme={createTheme()}
       {...partialProps}
     />
   );
 };
-const setup = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>, logs?: DataFrame) => {
-  return render(getComponent(partialProps, logs));
+const setup = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
+  return render(getComponent(partialProps));
 };
 
 describe('LogsTableWrap', () => {
@@ -118,7 +81,7 @@ describe('LogsTableWrap', () => {
 
     expect.assertions(3);
 
-    const checkboxLabel = screen.getByLabelText('foo');
+    const checkboxLabel = screen.getByLabelText('app');
     expect(checkboxLabel).toBeInTheDocument();
 
     // Add a new column
@@ -126,7 +89,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'foo' },
+        columns: { 0: 'app' },
       });
     });
 
@@ -150,15 +113,17 @@ describe('LogsTableWrap', () => {
       updatePanelState: updatePanelState,
     });
 
-    expect(screen.getByLabelText('foo')).toBeInTheDocument();
-    expect(screen.getByLabelText('boo')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText('app')).toBeInTheDocument();
+      expect(screen.getByLabelText('cluster')).toBeInTheDocument();
+    });
 
     const searchInput = screen.getByPlaceholderText('Search columns by name');
-    fireEvent.change(searchInput, { target: { value: 'boo' } });
+    fireEvent.change(searchInput, { target: { value: 'app' } });
 
-    expect(screen.getByLabelText('boo')).toBeInTheDocument();
+    expect(screen.getByLabelText('app')).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.queryByLabelText('foo')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('cluster')).not.toBeInTheDocument();
     });
   });
 });

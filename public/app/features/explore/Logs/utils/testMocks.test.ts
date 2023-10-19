@@ -2,8 +2,26 @@ import { DataFrame, Field, FieldType } from '@grafana/data/src';
 
 export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
   const testDataFrame: DataFrame = {
-    meta: {},
+    meta: {
+      custom: {
+        frameType: 'LabeledTimeValues',
+      },
+    },
     fields: [
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      {
+        config: {},
+        name: 'labels',
+        type: FieldType.other,
+        typeInfo: {
+          frame: 'json.RawMessage',
+        },
+        values: [
+          { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins' },
+          { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins' },
+          { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins' },
+        ],
+      } as Field,
       {
         config: {},
         name: 'Time',
@@ -28,20 +46,6 @@ export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
         type: FieldType.string,
         values: ['1697561006608165746_b4cc4b72', '1697560998869868000_eeb96c0f', '1697561010006578474_ad5e2e5a'],
       },
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      {
-        config: {},
-        name: 'labels',
-        type: FieldType.other,
-        typeInfo: {
-          frame: 'json.RawMessage',
-        },
-        values: [
-          { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins' },
-          { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins' },
-          { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins' },
-        ],
-      } as Field,
     ],
     length: 3,
   };

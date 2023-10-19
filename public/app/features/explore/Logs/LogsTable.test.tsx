@@ -132,7 +132,7 @@ describe('LogsTable', () => {
 
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
-      datasourceType: 'elastic',
+      datasourceType: 'elasticsearch',
       logsFrames: [getMockElasticFrame()],
     });
 
