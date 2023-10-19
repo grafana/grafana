@@ -59,7 +59,7 @@ The server element enables you to easily represent a single server, a stack of s
 
 ### Button
 
-The button element enables you to add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. API settings are found in the button element editor. You can pass template variables in the API editor.
+The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. API settings are found in the button element editor. You can also pass template variables in the API editor.
 
 {{% admonition type="note" %}}
 To trigger an API call when clicking on a button in the canvas, [inline editing](#inline-editing) must be disabled.
