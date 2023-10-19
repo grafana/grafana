@@ -9,9 +9,10 @@ import { t } from 'app/core/internationalization';
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { ShareExportTab } from './ShareExportTab';
 import { ShareLinkTab } from './ShareLinkTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
-import { SceneShareTab } from './types';
+import { ModalSceneObjectLike, SceneShareTab } from './types';
 
 interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -23,7 +24,7 @@ interface ShareModalState extends SceneObjectState {
 /**
  * Used for full dashboard share modal and the panel level share modal
  */
-export class ShareModal extends SceneObjectBase<ShareModalState> {
+export class ShareModal extends SceneObjectBase<ShareModalState> implements ModalSceneObjectLike {
   static Component = SharePanelModalRenderer;
 
   constructor(state: Omit<ShareModalState, 'activeTab'>) {
@@ -38,10 +39,14 @@ export class ShareModal extends SceneObjectBase<ShareModalState> {
   private buildTabs() {
     const { dashboardRef, panelRef } = this.state;
 
-    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef })];
+    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef: this.getRef() })];
+
+    if (!panelRef) {
+      tabs.push(new ShareExportTab({ dashboardRef, modalRef: this.getRef() }));
+    }
 
     if (contextSrv.isSignedIn && config.snapshotEnabled) {
-      tabs.push(new ShareSnapshotTab({ panelRef }));
+      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
     }
 
     this.setState({ tabs });
@@ -74,7 +79,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> {
     // }
   }
 
-  onClose = () => {
+  onDismiss = () => {
     const dashboard = getDashboardSceneFor(this);
     dashboard.closeModal();
   };
@@ -110,7 +115,7 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
   const currentTab = tabs.find((t) => t.getTabLabel() === activeTab);
 
   return (
-    <Modal isOpen={true} title={header} onDismiss={model.onClose}>
+    <Modal isOpen={true} title={header} onDismiss={model.onDismiss}>
       <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
     </Modal>
   );

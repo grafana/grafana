@@ -44,5 +44,5 @@ var newRegionsService = func(ctx context.Context, pluginCtx backend.PluginContex
 		return nil, err
 	}
 
-	return services.NewRegionsService(reqCtx.EC2APIProvider), nil
+	return services.NewRegionsService(reqCtx.EC2APIProvider, reqCtx.Logger), nil
 }

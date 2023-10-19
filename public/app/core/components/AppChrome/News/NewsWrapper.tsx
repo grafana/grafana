@@ -49,13 +49,13 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    innerWrapper: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
+    innerWrapper: css({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
     grot: css({
       display: `flex`,
       alignItems: `center`,

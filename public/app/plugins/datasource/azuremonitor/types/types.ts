@@ -6,6 +6,7 @@ import {
   DataSourceSettings,
   PanelData,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 
 import Datasource from '../datasource';
@@ -32,7 +33,7 @@ export enum AzureCloud {
   None = '',
 }
 
-export type AzureAuthType = 'msi' | 'clientsecret';
+export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
 
 export type ConcealedSecret = symbol;
 
@@ -44,6 +45,10 @@ export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }
 
+export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
+  authType: 'workloadidentity';
+}
+
 export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   authType: 'clientsecret';
   azureCloud?: string;
@@ -52,7 +57,10 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   clientSecret?: string | ConcealedSecret;
 }
 
-export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+export type AzureCredentials =
+  | AzureManagedIdentityCredentials
+  | AzureClientSecretCredentials
+  | AzureWorkloadIdentityCredentials;
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
@@ -135,6 +143,7 @@ export interface AzureQueryEditorFieldProps {
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
   schema?: EngineSchema;
+  range?: TimeRange;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
@@ -411,3 +420,41 @@ interface MetricMetadataValue {
   name: AzureMonitorLocalizedValue;
   value: string;
 }
+
+export type Category = {
+  displayName: string;
+  id: string;
+  related: {
+    queries: string[];
+    tables: string[];
+  };
+};
+
+export type CheatsheetQuery = {
+  body: string;
+  description: string;
+  displayName: string;
+  id: string;
+  properties: {
+    ExampleQuery: boolean;
+    QueryAttributes: {
+      isMultiResource: boolean;
+    };
+  };
+  related: {
+    categories: string[];
+    resourceTypes: string[];
+    tables: string[];
+  };
+  tags: {
+    Topic: string[];
+  };
+};
+
+export type CheatsheetQueries = {
+  [key: string]: CheatsheetQuery[];
+};
+
+export type DropdownCategories = {
+  [key: string]: boolean;
+};

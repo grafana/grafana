@@ -1,23 +1,21 @@
-import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import {
   InteractiveTable,
   CellProps,
   Tooltip,
   Icon,
-  useStyles2,
   Tag,
   Pagination,
   Column,
-  VerticalGroup,
-  HorizontalGroup,
+  FetchDataFunc,
+  Text,
+  Avatar,
 } from '@grafana/ui';
+import { Flex, Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
-import { Avatar } from './Avatar';
 import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
@@ -28,50 +26,79 @@ interface UsersTableProps {
   totalPages: number;
   onChangePage: (page: number) => void;
   currentPage: number;
+  fetchData?: FetchDataFunc<UserDTO>;
 }
 
-export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
+export const UsersTable = ({
+  users,
+  showPaging,
+  totalPages,
+  onChangePage,
+  currentPage,
+  fetchData,
+}: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
-  const enableSort = totalPages === 1;
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt={'User avatar'} />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt={'User avatar'} />,
       },
       {
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'orgs',
         header: 'Belongs to',
-        cell: OrgUnitsCell,
-        sortType: enableSort ? (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0) : undefined,
+        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
+          return (
+            <Flex alignItems={'center'}>
+              <OrgUnits units={value} icon={'building'} />
+              {row.original.isAdmin && (
+                <Tooltip placement="top" content="Grafana Admin">
+                  <Icon name="shield" />
+                </Tooltip>
+              )}
+            </Flex>
+          );
+        },
+        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
       },
       ...(showLicensedRole
         ? [
             {
               id: 'licensedRole',
               header: 'Licensed role',
-              cell: LicensedRoleCell,
+              cell: ({ cell: { value } }: Cell<'licensedRole'>) => {
+                return value === 'None' ? (
+                  <Text color={'disabled'}>
+                    Not assigned{' '}
+                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                      <Icon name="question-circle" />
+                    </Tooltip>
+                  </Text>
+                ) : (
+                  value
+                );
+              },
               // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: enableSort ? ('string' as const) : undefined,
+              sortType: 'string' as const,
             },
           ]
         : []),
@@ -82,10 +109,10 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: LastSeenAtCell,
-        sortType: enableSort
-          ? (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime()
-          : undefined,
+        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+        },
+        sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
       {
         id: 'authLabels',
@@ -113,65 +140,16 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         },
       },
     ],
-    [showLicensedRole, enableSort]
+    [showLicensedRole]
   );
   return (
-    <VerticalGroup spacing={'md'}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} />
+    <Stack gap={2}>
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
-        <HorizontalGroup justify={'flex-end'}>
+        <Flex justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
-        </HorizontalGroup>
+        </Flex>
       )}
-    </VerticalGroup>
+    </Stack>
   );
-};
-
-const OrgUnitsCell = ({ cell: { value, row } }: Cell<'orgs'>) => {
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.row}>
-      <OrgUnits units={value} icon={'building'} />
-      {row.original.isAdmin && (
-        <Tooltip placement="top" content="Grafana Admin">
-          <Icon name="shield" />
-        </Tooltip>
-      )}
-    </div>
-  );
-};
-
-const LicensedRoleCell = ({ cell: { value } }: Cell<'licensedRole'>) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <>
-      {value === 'None' ? (
-        <span className={styles.disabled}>
-          Not assigned{' '}
-          <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-            <Icon name="question-circle" />
-          </Tooltip>
-        </span>
-      ) : (
-        value
-      )}
-    </>
-  );
-};
-
-const LastSeenAtCell = ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-  const styles = useStyles2(getStyles);
-
-  return <>{value && <>{value === '10 years' ? <span className={styles.disabled}>Never</span> : value}</>}</>;
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    disabled: css({ color: theme.colors.text.disabled }),
-    row: css({
-      display: 'flex',
-      alignItems: 'center',
-    }),
-  };
 };

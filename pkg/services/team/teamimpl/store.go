@@ -30,11 +30,13 @@ type store interface {
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
+	RegisterDelete(query string)
 }
 
 type xormStore struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db      db.DB
+	cfg     *setting.Cfg
+	deletes []string
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -142,6 +144,8 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
 		}
 
+		deletes = append(deletes, ss.deletes...)
+
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
 			if err != nil {
@@ -215,7 +219,17 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		sql.WriteString(` and` + acFilter.Where)
 		params = append(params, acFilter.Args...)
 
-		sql.WriteString(` order by team.name asc`)
+		if len(query.SortOpts) > 0 {
+			orderBy := ` order by `
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					orderBy += query.SortOpts[i].Filter[j].OrderBy() + ","
+				}
+			}
+			sql.WriteString(orderBy[:len(orderBy)-1])
+		} else {
+			sql.WriteString(` order by team.name asc`)
+		}
 
 		if query.Limit != 0 {
 			offset := query.Limit * (query.Page - 1)
@@ -556,4 +570,9 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		return nil, err
 	}
 	return queryResult, nil
+}
+
+// RegisterDelete registers a delete query to be executed when the transaction is committed
+func (ss *xormStore) RegisterDelete(query string) {
+	ss.deletes = append(ss.deletes, query)
 }

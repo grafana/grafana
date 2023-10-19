@@ -70,7 +70,7 @@ func (s *httpEntityStore) getGRNFromRequest(c *contextmodel.ReqContext) (*grn.GR
 		}
 	}
 	return &grn.GRN{
-		TenantID:           c.OrgID,
+		TenantID:           c.SignedInUser.GetOrgID(),
 		ResourceKind:       params[":kind"],
 		ResourceIdentifier: params[":uid"],
 	}, params, nil
@@ -267,7 +267,7 @@ func (s *httpEntityStore) doUpload(c *contextmodel.ReqContext) response.Response
 			grn := &grn.GRN{
 				ResourceIdentifier: uid,
 				ResourceKind:       kind.ID,
-				TenantID:           c.OrgID,
+				TenantID:           c.SignedInUser.GetOrgID(),
 			}
 
 			if !overwriteExistingFile {

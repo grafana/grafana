@@ -31,10 +31,14 @@ func getAuthType(cfg *setting.Cfg, jsonData *types.AzureClientSettings) string {
 			return azcredentials.AzureAuthClientSecret
 		}
 
-		// For newly created datasource with no configuration, managed identity is the default authentication type
-		// if they are enabled in Grafana config
+		// For newly created datasource with no configuration the order is as follows:
+		// Managed identity is the default if enabled
+		// Workload identity is the next option if enabled
+		// Client secret is the final fallback
 		if cfg.Azure.ManagedIdentityEnabled {
 			return azcredentials.AzureAuthManagedIdentity
+		} else if cfg.Azure.WorkloadIdentityEnabled {
+			return azcredentials.AzureAuthWorkloadIdentity
 		} else {
 			return azcredentials.AzureAuthClientSecret
 		}
@@ -84,8 +88,8 @@ func normalizeAzureCloud(cloudName string) (string, error) {
 func getAzureCloud(cfg *setting.Cfg, jsonData *types.AzureClientSettings) (string, error) {
 	authType := getAuthType(cfg, jsonData)
 	switch authType {
-	case azcredentials.AzureAuthManagedIdentity:
-		// In case of managed identity, the cloud is always same as where Grafana is hosted
+	case azcredentials.AzureAuthManagedIdentity, azcredentials.AzureAuthWorkloadIdentity:
+		// In case of managed identity and workload identity, the cloud is always same as where Grafana is hosted
 		return getDefaultAzureCloud(cfg)
 	case azcredentials.AzureAuthClientSecret:
 		if cloud := jsonData.CloudName; cloud != "" {
@@ -106,7 +110,9 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *types.AzureClientSettings, 
 	case azcredentials.AzureAuthManagedIdentity:
 		credentials := &azcredentials.AzureManagedIdentityCredentials{}
 		return credentials, nil
-
+	case azcredentials.AzureAuthWorkloadIdentity:
+		credentials := &azcredentials.AzureWorkloadIdentityCredentials{}
+		return credentials, nil
 	case azcredentials.AzureAuthClientSecret:
 		cloud, err := getAzureCloud(cfg, jsonData)
 		if err != nil {

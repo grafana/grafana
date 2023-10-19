@@ -54,10 +54,12 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 
 ## Add new nested policy
 
+To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you will always be adding a new **nested** policy under either the default policy, or under a already nested policy.
+
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. To add a top level specific policy, go to the Specific routing section and click **+New specific policy**.
+1. To add a top level specific policy, go to the Specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New nested policy**.
 1. In the Matching labels section, add one or more rules for matching alert labels.
 1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.

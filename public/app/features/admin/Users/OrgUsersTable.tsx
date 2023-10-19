@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
   Button,
@@ -9,14 +8,14 @@ import {
   Icon,
   Tooltip,
   CellProps,
-  useStyles2,
   Tag,
   InteractiveTable,
   Column,
+  FetchDataFunc,
   Pagination,
-  HorizontalGroup,
-  VerticalGroup,
+  Avatar,
 } from '@grafana/ui';
+import { Flex, Stack, Box } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -26,12 +25,12 @@ import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
-import { Avatar } from './Avatar';
+import { TableWrapper } from './TableWrapper';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
 const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
-  Refer to the Grafana authentication docs for details.`;
+Refer to the Grafana authentication docs for details.`;
 
 const getBasicRoleDisabled = (user: OrgUser) => {
   let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
@@ -53,15 +52,24 @@ export interface Props {
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
+  fetchData?: FetchDataFunc<OrgUser>;
   changePage: (page: number) => void;
   page: number;
   totalPages: number;
 }
 
-export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, changePage, page, totalPages }: Props) => {
+export const OrgUsersTable = ({
+  users,
+  orgId,
+  onRoleChange,
+  onRemoveUser,
+  fetchData,
+  changePage,
+  page,
+  totalPages,
+}: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const enableSort = totalPages === 1;
 
   useEffect(() => {
     async function fetchOptions() {
@@ -84,33 +92,31 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-        sortType: enableSort
-          ? (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime()
-          : undefined,
+        sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
       {
         id: 'role',
@@ -140,7 +146,36 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
       {
         id: 'info',
         header: '',
-        cell: InfoCell,
+        cell: ({ row: { original } }: Cell) => {
+          const basicRoleDisabled = getBasicRoleDisabled(original);
+          return (
+            basicRoleDisabled && (
+              <Box display={'flex'} alignItems={'center'} marginLeft={1}>
+                <Tooltip
+                  interactive={true}
+                  content={
+                    <div>
+                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                      the&nbsp;
+                      <a
+                        href={
+                          'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
+                        }
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Grafana authentication docs
+                      </a>
+                      &nbsp;for details.
+                    </div>
+                  }
+                >
+                  <Icon name="question-circle" />
+                </Tooltip>
+              </Box>
+            )
+          );
+        },
       },
       {
         id: 'authLabels',
@@ -174,15 +209,22 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange, enableSort]
+    [orgId, roleOptions, onRoleChange]
   );
 
   return (
-    <VerticalGroup spacing="md" data-testid={selectors.container}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
-      <HorizontalGroup justify="flex-end">
-        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-      </HorizontalGroup>
+    <Stack gap={2} data-testid={selectors.container}>
+      <TableWrapper>
+        <InteractiveTable
+          columns={columns}
+          data={users}
+          getRowId={(user) => String(user.userId)}
+          fetchData={fetchData}
+        />
+        <Flex justifyContent="flex-end">
+          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+        </Flex>
+      </TableWrapper>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
@@ -201,30 +243,6 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
           }}
         />
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
-
-const InfoCell = ({ row: { original } }: Cell) => {
-  const styles = useStyles2(getStyles);
-  const basicRoleDisabled = getBasicRoleDisabled(original);
-  return (
-    basicRoleDisabled && (
-      <div className={styles.row}>
-        <Tooltip content={disabledRoleMessage}>
-          <Icon name="question-circle" className={styles.icon} />
-        </Tooltip>
-      </div>
-    )
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    alignItems: 'center',
-  }),
-  icon: css({
-    marginLeft: theme.spacing(1),
-  }),
-});

@@ -448,6 +448,10 @@
             {
               "text": "Malaysian Ringgit (RM)",
               "value": "currencyMYR"
+            },
+	    {
+              "text": "CFP franc (XPF)",
+              "value": "currencyXPF"
             }
           ],
           "text": "currency"

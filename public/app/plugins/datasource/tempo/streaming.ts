@@ -18,7 +18,7 @@ import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { SearchStreamingState } from './dataquery.gen';
 import { DEFAULT_SPSS, TempoDatasource } from './datasource';
-import { createTableFrameFromTraceQlQuery } from './resultTransformer';
+import { formatTraceQLResponse } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
 export async function getLiveStreamKey(): Promise<string> {
   return uuidv4();
@@ -76,7 +76,7 @@ export function doTempoChannelStream(
 
               frames = [
                 metricsDataFrame(metrics, frameState, elapsedTime),
-                ...createTableFrameFromTraceQlQuery(traces, instanceSettings),
+                ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
               ];
             }
             return {

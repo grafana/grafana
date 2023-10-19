@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -43,6 +44,7 @@ type Service struct {
 	ac                 accesscontrol.AccessControl
 	logger             log.Logger
 	db                 db.DB
+	pluginStore        pluginstore.Store
 
 	ptc proxyTransportCache
 }
@@ -60,7 +62,7 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service,
+	quotaService quota.Service, pluginStore pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger}
@@ -77,6 +79,7 @@ func ProvideService(
 		ac:                 ac,
 		logger:             dslogger,
 		db:                 db,
+		pluginStore:        pluginStore,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -173,6 +176,14 @@ func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetA
 }
 
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	if query.AliasIDs == nil {
+		// Populate alias IDs from plugin store
+		p, found := s.pluginStore.Plugin(ctx, query.Type)
+		if !found {
+			return nil, fmt.Errorf("plugin %s not found", query.Type)
+		}
+		query.AliasIDs = p.AliasIDs
+	}
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
@@ -485,6 +496,13 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 				Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
+			ClientCfg: &sdkproxy.ClientCfg{
+				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+			},
 		}
 
 		if val, exists, err := s.DecryptedValue(ctx, ds, "secureSocksProxyPassword"); err == nil && exists {

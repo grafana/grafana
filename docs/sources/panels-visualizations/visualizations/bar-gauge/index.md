@@ -55,7 +55,7 @@ Adjust how the bar gauge is displayed.
 
 Choose a stacking direction.
 
-- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Auto -** Grafana determines the best orientation.
 - **Horizontal -** Bars stretch horizontally, left to right.
 - **Vertical -** Bars stretch vertically, bottom to top.
 
@@ -66,6 +66,26 @@ Choose a display mode.
 - **Gradient -** Threshold levels define a gradient.
 - **Retro LCD -** The gauge is split into small cells that are lit or unlit.
 - **Basic -** Single color based on the matching threshold.
+
+### Value display
+
+Choose a value display mode.
+
+- **Value color -** Value color is determined by value.
+- **Text color -** Value color is default text color.
+- **Hidden -** Values are hidden.
+
+### Name placement
+
+Choose a name placement mode.
+
+{{% admonition type="note" %}}
+This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, names are always placed at the bottom of each bar gauge.
+{{% /admonition %}}
+
+- **Auto -** Grafana determines the best placement.
+- **Top -** Names are placed on top of each bar gauge.
+- **Left -** Names are placed to the left of each bar gauge.
 
 ### Show unfilled area
 

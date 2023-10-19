@@ -17,6 +17,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { DashboardDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
 
@@ -47,6 +48,18 @@ interface DashboardPickerProps {
   onDismiss: () => void;
 }
 
+export function mergePanels(dashboardResult: DashboardDTO | undefined) {
+  const panels = dashboardResult?.dashboard?.panels?.filter((panel) => panel.type !== 'row') || [];
+  const nestedPanels =
+    dashboardResult?.dashboard?.panels
+      ?.filter((row: { collapsed: boolean }) => row.collapsed)
+      .map((collapsedRow: { panels: PanelDTO[] }) => collapsedRow.panels) || [];
+
+  const allDashboardPanels = [...panels, ...nestedPanels.flat()];
+
+  return allDashboardPanels;
+}
+
 export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDismiss }: DashboardPickerProps) => {
   const styles = useStyles2(getPickerStyles);
 
@@ -72,12 +85,14 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     setSelectedPanelId(undefined);
   }, []);
 
+  const allDashboardPanels = mergePanels(dashboardResult);
+
   const filteredPanels =
-    dashboardResult?.dashboard?.panels
+    allDashboardPanels
       ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
-  const currentPanel: PanelDTO | undefined = dashboardResult?.dashboard?.panels?.find(
+  const currentPanel: PanelDTO | undefined = allDashboardPanels.find(
     (panel: PanelDTO) => isValidPanelIdentifier(panel) && panel.id?.toString() === selectedPanelId
   );
 

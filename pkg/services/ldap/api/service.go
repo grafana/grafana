@@ -326,11 +326,11 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 		AuthID:          user.AuthId,
 		Groups:          user.Groups,
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeams:           true,
-			EnableDisabledUsers: true,
-			SyncOrgRoles:        !s.cfg.LDAPSkipOrgRoleSync,
-			AllowSignUp:         s.cfg.LDAPAllowSignup,
+			SyncUser:     true,
+			SyncTeams:    true,
+			EnableUser:   true,
+			SyncOrgRoles: !s.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:  s.cfg.LDAPAllowSignup,
 			LookUpParams: login.UserLookupParams{
 				UserID: &user.UserId,
 			},

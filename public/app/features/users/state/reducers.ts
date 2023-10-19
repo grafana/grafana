@@ -9,7 +9,6 @@ export const initialState: UsersState = {
   page: 0,
   perPage: 30,
   totalPages: 1,
-  canInvite: !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
@@ -51,6 +50,10 @@ const usersSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    sortChanged: (state, action: PayloadAction<UsersState['sort']>) => ({
+      ...state,
+      sort: action.payload,
+    }),
     usersFetchBegin: (state) => {
       return { ...state, isLoading: true };
     },
@@ -60,8 +63,15 @@ const usersSlice = createSlice({
   },
 });
 
-export const { searchQueryChanged, setUsersSearchPage, usersLoaded, usersFetchBegin, usersFetchEnd, pageChanged } =
-  usersSlice.actions;
+export const {
+  searchQueryChanged,
+  setUsersSearchPage,
+  usersLoaded,
+  usersFetchBegin,
+  usersFetchEnd,
+  pageChanged,
+  sortChanged,
+} = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;
 

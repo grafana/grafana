@@ -244,6 +244,17 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/:id/modify-export',
+    pageClass: 'page-alerting',
+    roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+    component: SafeDynamicImport(
+      () =>
+        import(
+          /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
+        )
+    ),
+  },
+  {
     path: '/alerting/:sourceName/:id/view',
     pageClass: 'page-alerting',
     roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),

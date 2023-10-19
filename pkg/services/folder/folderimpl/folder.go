@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -77,16 +76,35 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT OR IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
-			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
 		} else {
-			_, err = sess.Exec("INSERT IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+			`)
 		}
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+		`)
 		return err
 	})
 	if err != nil {
-		s.log.Error("DB migration on folder service start failed.")
+		s.log.Error("DB migration on folder service start failed.", "err", err)
 	}
 }
 
@@ -410,9 +428,17 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
-	user := cmd.SignedInUser
 
-	prepareForUpdate(dashFolder, cmd.OrgID, cmd.SignedInUser.UserID, cmd)
+	var userID int64
+	namespace, id := cmd.SignedInUser.GetNamespacedID()
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		userID, err = identity.IntIdentifier(namespace, id)
+		if err != nil {
+			logger.Error("failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
+		}
+	}
+
+	prepareForUpdate(dashFolder, cmd.OrgID, userID, cmd)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
@@ -445,7 +471,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 			UID:       dash.UID,
 			OrgID:     cmd.OrgID,
 		}); err != nil {
-			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
+			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
 		}
 	}
 	return foldr, nil
@@ -537,7 +563,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	for _, v := range s.registry {
 		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
 			return err

@@ -4,7 +4,23 @@
  * This file doesn't require any compilation
  */
 define(['react', '@grafana/data'], function (React, grafanaData) {
-  const HelloWorld = () => {
+  // This would be a custom editor component
+  function Editor() {
+    const onChangeInternal = (event) => {
+      const outsideEl =
+        event.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement
+          .parentElement.parentElement;
+      outsideEl.dataset.sandboxTest = 'panel-editor';
+    };
+    return React.createElement('input', {
+      type: 'text',
+      onChange: onChangeInternal,
+      'data-testid': 'panel-editor-custom-editor-input',
+    });
+  }
+
+  const PanelComponent = () => {
+    const [testedGlobals, setTestedGlobals] = React.useState([]);
     const createIframe = () => {
       // direct iframe creation
       const iframe = document.createElement('iframe');
@@ -107,6 +123,41 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
       outsideEl.dataset.sandboxTest = 'true';
     };
 
+    // a function for each global we want to test
+    const globalTests = [
+      function () {
+        try {
+          console.log(window.Prism.languages);
+          return 'Prism';
+        } catch (e) {}
+      },
+      function () {
+        try {
+          console.log(window.jQuery.fn.jquery);
+          console.log(window.$.fn.jquery);
+          return 'jQuery';
+        } catch (e) {}
+      },
+      function () {
+        try {
+          console.log(window.locationSandbox);
+          return 'location';
+        } catch (e) {}
+      },
+    ];
+
+    // it'll assign a variable with one attribute of the Globals
+    // and create a new element with the name of the global.
+    const testGlobals = () => {
+      const results = globalTests.map((test) => test());
+      setTestedGlobals(results);
+    };
+
+    const elements = testedGlobals.map((item) => {
+      const attributes = { 'data-sandbox-global': `${item}` };
+      return React.createElement('div', attributes, item);
+    });
+
     return React.createElement(
       'div',
       { className: 'frontend-sandbox-test' },
@@ -115,11 +166,23 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
         { onClick: createIframe, 'data-testid': 'button-create-iframes' },
         'Create iframes'
       ),
-      React.createElement('button', { onClick: reachOut, 'data-testid': 'button-reach-out' }, 'Reach out')
+      React.createElement('button', { onClick: reachOut, 'data-testid': 'button-reach-out' }, 'Reach out'),
+      React.createElement('button', { onClick: testGlobals, 'data-testid': 'button-test-globals' }, 'Test Globals'),
+      React.createElement('div', null, elements)
     );
   };
 
-  const plugin = new grafanaData.PanelPlugin(HelloWorld);
+  const plugin = new grafanaData.PanelPlugin(PanelComponent);
+
+  plugin.setPanelOptions((builder) => {
+    builder.addCustomEditor({
+      id: 'buttons',
+      path: 'buttons',
+      name: 'Button Configuration',
+      defaultValue: [{ text: '', datasource: '', query: '' }],
+      editor: (props) => React.createElement(Editor, { onChange: props.onChange }),
+    });
+  });
 
   return { plugin };
 });

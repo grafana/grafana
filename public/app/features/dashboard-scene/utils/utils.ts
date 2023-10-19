@@ -1,4 +1,4 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { IntervalVariableModel, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import {
   MultiValueVariable,
@@ -8,6 +8,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -150,6 +151,58 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
   };
 }
 
+// Transform old interval model to new interval model from scenes
+export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+  // separate intervals by quotes either single or double
+  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+
+  // If no intervals are found in query, return the initial state of the interval reducer.
+  if (!matchIntervals) {
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
+  }
+  const uniqueIntervals = new Set<string>();
+
+  // when options are defined in variable.query
+  const intervals = matchIntervals.reduce((uniqueIntervals: Set<string>, text: string) => {
+    // Remove surrounding quotes from the interval value.
+    const intervalValue = text.replace(/["']+/g, '');
+
+    // Skip intervals that start with "$__auto_interval_",scenes will handle them.
+    if (intervalValue.startsWith('$__auto_interval_')) {
+      return uniqueIntervals;
+    }
+
+    // Add the interval if it's not already in the Set.
+    uniqueIntervals.add(intervalValue);
+    return uniqueIntervals;
+  }, uniqueIntervals);
+
+  return Array.from(intervals);
+}
+
+// Transform new interval scene model to old interval core model
+export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
+  const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
+  return variableQuery;
+}
+
+export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
+  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+
+  // If the interval is the old auto format, return the new auto interval from scenes.
+  if (selectedInterval.startsWith('$__auto_interval_')) {
+    return '$__auto';
+  }
+
+  // Check if the selected interval is valid.
+  if (intervals.includes(selectedInterval)) {
+    return selectedInterval;
+  }
+
+  // If the selected interval is not valid, return the first valid interval.
+  return intervals[0];
+}
+
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
   if (!sceneObject) {
     return undefined;
@@ -173,4 +226,16 @@ export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   }
 
   throw new Error('SceneObject root is not a DashboardScene');
+}
+
+export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
+  if (sceneObject instanceof VizPanel) {
+    return sceneObject;
+  }
+
+  if (sceneObject.parent) {
+    return getClosestVizPanel(sceneObject.parent);
+  }
+
+  return null;
 }

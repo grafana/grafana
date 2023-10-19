@@ -4,7 +4,7 @@ const flakyTimeout = 10000;
 
 describe('Panel edit tests - queries', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests various Panel edit queries scenarios', () => {

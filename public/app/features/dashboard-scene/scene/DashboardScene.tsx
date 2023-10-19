@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -14,21 +14,38 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { findVizPanelByKey, forceRenderChildren, getDashboardUrl } from '../utils/utils';
+import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import {
+  findVizPanelByKey,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getDashboardUrl,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
 export interface DashboardSceneState extends SceneObjectState {
+  /** The title */
   title: string;
+  /** A uid when saved */
   uid?: string;
+  /** @deprecated */
+  id?: number | null;
+  /** Layout of panels */
   body: SceneObject;
+  /** NavToolbar actions */
   actions?: SceneObject[];
+  /** Fixed row at the top of the canvas with for example variables and time range controls */
   controls?: SceneObject[];
+  /** True when editing */
   isEditing?: boolean;
+  /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
   meta: DashboardMeta;
@@ -72,14 +89,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    window.__grafanaSceneContext = this;
+
     if (this.state.isEditing) {
       this.startTrackingChanges();
     }
 
+    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
+
+    // @ts-expect-error
+    getDashboardSrv().setCurrent(oldDashboardWrapper);
+
     // Deactivation logic
     return () => {
+      window.__grafanaSceneContext = undefined;
       this.stopTrackingChanges();
       this.stopUrlSync();
+      oldDashboardWrapper.destroy();
     };
   }
 
@@ -190,5 +216,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public closeModal() {
     this.setState({ overlay: undefined });
+  }
+
+  /**
+   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   */
+  public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
+    const panel = getClosestVizPanel(sceneObject);
+
+    return {
+      app: CoreApp.Dashboard,
+      dashboardUID: this.state.uid,
+      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+    };
+  }
+
+  canEditDashboard() {
+    return Boolean(this.state.meta.canEdit || this.state.meta.canMakeEditable);
   }
 }

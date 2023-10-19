@@ -12,13 +12,13 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/.changelog-archive @grafana/docs-grafana
+/.changelog-archive @grafana/grafana-delivery
 /.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-delivery
-/CODE_OF_CONDUCT.md @grafana/docs-grafana
-/CONTRIBUTING.md @grafana/docs-grafana
+/CODE_OF_CONDUCT.md @grafana/grafana-community-support
+/CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
-/HALL_OF_FAME.md @grafana/docs-grafana
+/HALL_OF_FAME.md @grafana/grafana-community-support
 /ISSUE_TRIAGE.md @grafana/grafana-community-support
 /LICENSE @torkelo
 /LICENSING.md @torkelo
@@ -30,7 +30,7 @@
 /SUPPORT.md @torkelo
 /UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
-/contribute/ @grafana/docs-grafana
+/contribute/ @grafana/grafana-community-support
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
@@ -42,7 +42,7 @@
 /docs/sources/alerting/                                                      @brendamuir
 /docs/sources/dashboards/                                                    @imatwawana
 /docs/sources/datasources/                                                   @lwandz13
-/docs/sources/explore/                                                       @Eve832 @GrafanaWriter
+/docs/sources/explore/                                                       @grafana/explore-squad
 /docs/sources/fundamentals                                                   @chri2547
 /docs/sources/getting-started/                                               @chri2547
 /docs/sources/introduction/                                                  @chri2547
@@ -53,7 +53,6 @@
 /docs/sources/upgrade-guide/                                                 @imatwawana
 /docs/sources/whatsnew/                                                      @imatwawana
 /docs/sources/developers/plugins/                                            @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
 /go.mod @grafana/backend-platform
@@ -115,7 +114,7 @@
 /pkg/services/navtree/ @grafana/backend-platform
 /pkg/services/notifications/ @grafana/backend-platform
 /pkg/services/org/ @grafana/backend-platform
-/pkg/services/playlist/ @grafana/backend-platform
+/pkg/services/playlist/ @grafana/grafana-app-platform-squad
 /pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
@@ -188,6 +187,7 @@
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
+/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend-product
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_arm64/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_tests/ @grafana/grafana-bi-squad
@@ -209,6 +209,7 @@
 /devenv/docker/blocks/tempo/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/webdav/ @grafana/alerting-backend-product
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/backend-platform
 /devenv/docker/debtest/ @bergquist
@@ -323,6 +324,7 @@
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
+/packages/grafana-data/src/transformations/ @grafana/grafana-bi-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
@@ -342,7 +344,6 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-/.linguirc @grafana/grafana-frontend-platform
 /babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
@@ -506,6 +507,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-delivery
+scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
@@ -563,7 +565,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /pkg/services/ldap/ @grafana/grafana-authnz-team
 /pkg/services/login/ @grafana/grafana-authnz-team
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
-/pkg/services/oauthserver/ @grafana/grafana-authnz-team
+/pkg/services/extsvcauth/ @grafana/grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
 
@@ -647,6 +649,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
 
 
 # Generated files not requiring owner approval

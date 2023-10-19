@@ -72,7 +72,6 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
@@ -80,6 +79,7 @@ export interface UsersState {
   page: number;
   perPage: number;
   totalPages: number;
+  sort?: string;
 }
 
 export interface UserSession {
@@ -124,4 +124,5 @@ export interface UserListAdminState {
   showPaging: boolean;
   filters: UserFilter[];
   isLoading: boolean;
+  sort?: string;
 }
