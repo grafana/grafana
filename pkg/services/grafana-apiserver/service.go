@@ -3,7 +3,9 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net"
+	"net/http"
 	"path"
 	"strconv"
 
@@ -35,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -89,11 +90,9 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	restConfig   *clientrest.Config
-	etcd_servers []string
+	config     *config
+	restConfig *clientrest.Config
 
-	enabled   bool
-	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -110,13 +109,11 @@ func ProvideService(
 	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
-		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
-		enabled:      cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:           rr,
-		dataPath:     path.Join(cfg.DataPath, "k8s"),
-		stopCh:       make(chan struct{}),
-		builders:     []APIGroupBuilder{},
-		authorizer:   authz,
+		config:     newConfig(cfg),
+		rr:         rr,
+		stopCh:     make(chan struct{}),
+		builders:   []APIGroupBuilder{},
+		authorizer: authz,
 	}
 
 	// This will be used when running as a dskit service
@@ -153,7 +150,7 @@ func (s *service) GetRestConfig() *clientrest.Config {
 }
 
 func (s *service) IsDisabled() bool {
-	return !s.enabled
+	return !s.config.enabled
 }
 
 // Run is an adapter for the BackgroundService interface.
@@ -169,15 +166,14 @@ func (s *service) RegisterAPI(builder APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
-	logger := logr.New(newLogAdapter())
-	logger.V(9)
+	logger := logr.New(newLogAdapter(s.config.logLevel))
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
+	o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 
 	o.Admission = nil
 	o.CoreAPI = nil
@@ -187,7 +183,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
-		K8sDataPath: s.dataPath,
+		K8sDataPath: s.config.dataPath,
 	}
 
 	if err := certUtil.InitializeCACertPKI(); err != nil {
@@ -248,7 +244,23 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
 	serverConfig.SkipOpenAPIInstallation = false
+	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		requestHandler, err := getAPIHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
+		}
+		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
@@ -338,7 +350,7 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
 }
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {

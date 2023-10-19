@@ -1,6 +1,6 @@
 import { DashboardModel, PanelModel } from '../../state';
-import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
+import { getDashboardStringDiff } from './jsonDiffText';
 import { openai } from './llms';
 
 export enum Role {
@@ -25,6 +25,13 @@ export enum QuickFeedbackType {
 export const OPEN_AI_MODEL = 'gpt-4';
 
 /**
+ * Sanitize the reply from OpenAI by removing the leading and trailing quotes.
+ */
+export const sanitizeReply = (reply: string) => {
+  return reply.replace(/^"|"$/g, '');
+};
+
+/**
  * Diff the current dashboard with the original dashboard and the dashboard after migration
  * to split the changes into user changes and migration changes.
  * * User changes: changes made by the user
@@ -34,17 +41,14 @@ export const OPEN_AI_MODEL = 'gpt-4';
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: Diffs;
-  migrationChanges: Diffs;
+  userChanges: string;
+  migrationChanges: string;
 } {
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
+  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
 
   return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+    userChanges: userDiff,
+    migrationChanges: migrationDiff,
   };
 }
 

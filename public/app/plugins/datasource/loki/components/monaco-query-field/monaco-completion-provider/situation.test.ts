@@ -97,85 +97,124 @@ describe('situation', () => {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('{level="info"} | logfmt --strict ^', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt --strict',
     });
     assertSituation('{level="info"} | logfmt --strict --keep-empty^', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: true,
+      trailingComma: false,
+      trailingSpace: false,
       logQuery: '{level="info"} | logfmt --strict --keep-empty',
     });
     assertSituation('{level="info"} | logfmt --strict label, label1="expression"^', {
       type: 'IN_LOGFMT',
       otherLabels: ['label', 'label1'],
       flags: false,
+      trailingSpace: false,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt --strict label, label1="expression"',
     });
     assertSituation('{level="info"} | logfmt --strict label, label1="expression",^', {
       type: 'IN_LOGFMT',
       otherLabels: ['label', 'label1'],
       flags: false,
+      trailingComma: true,
+      trailingSpace: false,
       logQuery: '{level="info"} | logfmt --strict label, label1="expression",',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^)', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^ [$__auto])', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty^)', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: false,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt --keep-empty',
     });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty label1, label2^)', {
       type: 'IN_LOGFMT',
       otherLabels: ['label1', 'label2'],
       flags: false,
+      trailingSpace: false,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt --keep-empty label1, label2',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt ^))', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label ^))', {
       type: 'IN_LOGFMT',
       otherLabels: ['label'],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt label',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label,^))', {
       type: 'IN_LOGFMT',
       otherLabels: ['label'],
       flags: false,
+      trailingComma: true,
+      trailingSpace: false,
       logQuery: '{level="info"} | logfmt label,',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
       type: 'IN_LOGFMT',
       otherLabels: [],
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       logQuery: '{level="info"} | logfmt --strict',
+    });
+  });
+
+  it('identifies AFTER_LOGFMT autocomplete situations when the cursor is not at the end', () => {
+    assertSituation('{level="info"} | logfmt ^ label1, label2', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label1', 'label2'],
+      flags: false,
+      trailingSpace: true,
+      trailingComma: false,
+      logQuery: '{level="info"} | logfmt  label1, label2',
     });
   });
 
@@ -246,6 +285,98 @@ describe('situation', () => {
     assertSituation('{one="val\\"1\\"",^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val"1"', op: '=' }],
+    });
+  });
+
+  it('identifies all labels from queries when cursor is at start', () => {
+    assertSituation('{^,one="val1",two!="val2",three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
+
+  describe('tests that should return IN_LABEL_SELECTOR_NO_LABEL_NAME, but currently are null', () => {
+    it('fails to identify when cursor is before any labels with no comma before first label', () => {
+      assertSituation('{^ one="val1",two!="val2",three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing space within label list', () => {
+      assertSituation('{one="val1",two!="val2"^ three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing comma within label list', () => {
+      assertSituation('{one="val1",two!="val2" ^ three=~"val3",four!~"val4"}', null);
+    });
+
+    it('fails to identify situation when missing comma at end of label list', () => {
+      assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4" ^ }', null);
+    });
+    it('fails to identify situation when attempting to insert before first label', () => {
+      assertSituation('{^one="val1",two!="val2",three=~"val3",four!~"val4"}', null);
+    });
+  });
+
+  it('identifies all labels correctly when error node is from missing comma within label list', () => {
+    assertSituation('{one="val1",two!="val2",^ three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
+
+  it('identifies labels when inserting before last, no space, size 2', () => {
+    assertSituation('{one="val1",^two!="val2"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+      ],
+    });
+  });
+
+  it('identifies labels when inserting before last, no space, size 3', () => {
+    assertSituation('{one="val1",two!="val2",^three="val3"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=' },
+      ],
+    });
+  });
+
+  it('identifies all labels from queries when cursor is in middle', () => {
+    // Note the extra whitespace, if the cursor is after whitespace, the situation will fail to resolve
+    assertSituation('{one="val1", ^,two!="val2",three=~"val3",four!~"val4"}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
+    });
+  });
+
+  it('identifies all labels from queries when cursor is at end', () => {
+    // Note the extra whitespace, if the cursor is after whitespace, the situation will fail to resolve
+    assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [
+        { name: 'one', value: 'val1', op: '=' },
+        { name: 'two', value: 'val2', op: '!=' },
+        { name: 'three', value: 'val3', op: '=~' },
+        { name: 'four', value: 'val4', op: '!~' },
+      ],
     });
   });
 

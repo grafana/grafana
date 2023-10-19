@@ -35,16 +35,18 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 		expectedStatus  int
 	}{
 		{
-			name: "should authorize user with global org ID - no fetch",
+			name: "should authorize user with global org ID - fetch",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return accesscontrol.GlobalOrgID, nil
 			},
 			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:   ac,
-			acService:       &actest.FakeService{},
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
-			expectedStatus:  http.StatusOK,
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			},
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "should authorize user with non-global org ID - no fetch",
@@ -67,6 +69,30 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			userCache:       &usertest.FakeUserService{},
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}},
+			acService:       &actest.FakeService{},
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			name: "should return 200 when user has permissions for a global org",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return accesscontrol.GlobalOrgID, nil
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
+			acService:       &actest.FakeService{},
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			name: "should return 403 when user has no permissions for a global org",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return accesscontrol.GlobalOrgID, nil
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
 			acService:       &actest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
 		},

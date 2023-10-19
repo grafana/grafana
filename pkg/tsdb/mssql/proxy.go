@@ -71,7 +71,7 @@ var _ core.Driver = (*mssqlProxyDriver)(nil)
 // newMSSQLProxyDriver updates the dialer for a mssql connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new mssql driver to register
 func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, opts *sdkproxy.Options) (*mssqlProxyDriver, error) {
-	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
+	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
 	if err != nil {
 		return nil, err
 	}

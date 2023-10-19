@@ -2,40 +2,42 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
 import { Button, Icon, useStyles2, Text } from '@grafana/ui';
 
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';
-import { MegaMenuItemIcon } from './MegaMenuItemIcon';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
 interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  onClose?: () => void;
+  onClick?: () => void;
   level?: number;
 }
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
+// max level depth to render
+const MAX_DEPTH = 2;
+
+export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
-  const showExpandButton = linkHasChildren(link) || link.emptyMessage;
+  const showExpandButton = level < MAX_DEPTH && (linkHasChildren(link) || link.emptyMessage);
 
   return (
-    <li>
+    <li className={styles.listItem}>
       <div className={styles.collapsibleSectionWrapper}>
         <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
             link.onClick?.();
-            onClose?.();
+            onClick?.();
           }}
           target={link.target}
           url={link.url}
@@ -43,11 +45,12 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
           <div
             className={cx(styles.labelWrapper, {
               [styles.isActive]: isActive,
-              [styles.hasActiveChild]: hasActiveChild,
             })}
           >
             <FeatureHighlightWrapper>
-              <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
+              <div className={styles.iconWrapper}>
+                {level === 0 && link.icon && <Icon name={toIconName(link.icon) ?? 'link'} size="xl" />}
+              </div>
             </FeatureHighlightWrapper>
             <Indent level={Math.max(0, level - 1)} spacing={2} />
             <Text truncate>{link.text}</Text>
@@ -75,7 +78,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
                   key={`${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
-                  onClose={onClose}
+                  onClick={onClick}
                   level={level + 1}
                 />
               ))
@@ -121,6 +124,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
   }),
+  listItem: css({
+    flex: 1,
+  }),
   isActive: css({
     color: theme.colors.text.primary,
 
@@ -136,9 +142,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,
     },
-  }),
-  hasActiveChild: css({
-    color: theme.colors.text.primary,
   }),
 });
 

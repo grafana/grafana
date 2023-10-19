@@ -90,7 +90,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
+		s.RegisterClient(clients.ProvideSession(cfg, features, sessionService, oauthTokenService, socialService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -157,14 +157,9 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
-
-	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
-	}
-
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
 	return s
 }
@@ -226,17 +221,12 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		log := s.log.FromContext(ctx).Warn
-		if errors.Is(err, authn.ErrTokenNeedsRotation) {
-			log = s.log.FromContext(ctx).Debug
-		}
-
-		log("Failed to authenticate request", "client", c.Name(), "error", err)
+		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
-		s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+		s.errorLogFunc(ctx, err)("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 		return nil, err
 	}
 
@@ -246,7 +236,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	if hc, ok := c.(authn.HookClient); ok {
 		if err := hc.Hook(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+			s.errorLogFunc(ctx, err)("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 			return nil, err
 		}
 	}
@@ -353,6 +343,17 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	// hack to not update last seen on external syncs
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	return s.runPostAuthHooks(ctx, identity, r)
+}
+
+func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	l := s.log.FromContext(ctx)
+
+	var grfErr errutil.Error
+	if errors.As(err, &grfErr) {
+		return grfErr.LogLevel.LogFunc(l)
+	}
+
+	return l.Warn
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {
