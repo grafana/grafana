@@ -14,7 +14,6 @@ import {
 } from '@grafana/data/src';
 import { Themeable2 } from '@grafana/ui/src';
 
-// do we want to import from prom?
 import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -36,53 +35,29 @@ interface Props extends Themeable2 {
   datasourceType?: string;
 }
 
-function getStyles(theme: GrafanaTheme2, height: number, width: number) {
-  return {
-    wrapper: css({
-      display: 'flex',
-    }),
-    sidebar: css({
-      height: height,
-      fontSize: theme.typography.pxToRem(11),
-      overflowY: 'hidden',
-      width: width,
-      paddingRight: theme.spacing(1.5),
-    }),
-
-    labelCount: css({}),
-    checkbox: css({}),
-  };
-}
-
 export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
 type fieldName = string;
-const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-  const largestFrameLength = dataFrames?.reduce((length, frame) => {
-    return frame.length > length ? frame.length : length;
-  }, 0);
-  // from TableContainer.tsx
-  return Math.min(600, Math.max(largestFrameLength ?? 0, 300) + 40 + 46);
-});
-
-const normalize = (value: number, total: number): number => {
-  return Math.floor((100 * value) / total);
-};
+type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   const { logsFrames } = props;
   // Save the normalized cardinality of each label
-  const [columnsWithMeta, setColumnsWithMeta] = React.useState<Record<fieldName, fieldNameMeta> | undefined>(undefined);
+  const [columnsWithMeta, setColumnsWithMeta] = React.useState<fieldNameMetaStore | undefined>(undefined);
 
   // Filtered copy of columnsWithMeta that only includes matching results
-  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = React.useState<
-    Record<fieldName, fieldNameMeta> | undefined
-  >(undefined);
+  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = React.useState<fieldNameMetaStore | undefined>(
+    undefined
+  );
 
   const dataFrame = logsFrames[0];
 
   /**
    * when the query results change, we need to update the columnsWithMeta state
    * and reset any local search state
+   * @todo refactor
+   *
+   * This will also find all the unique labels, and calculate how many log lines have each label into the labelCardinality Map
+   * Then it normalizes the counts
    *
    */
   useEffect(() => {
@@ -99,31 +74,32 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     const labelCardinality = new Map<fieldName, fieldNameMeta>();
 
     // What the label state will look like
-    let pendingLabelState: Record<fieldName, fieldNameMeta> = {};
+    let pendingLabelState: fieldNameMetaStore = {};
 
     // If we have labels and log lines
     if (labels?.length && numberOfLogLines) {
-      // Iterate through all of labels
+      // Iterate through all of Labels
       labels.forEach((labels: Labels) => {
         const labelsArray = Object.keys(labels);
-        // Iterate through the labels
+        // Iterate through the label values
         labelsArray.forEach((label) => {
+          // If it's already in our map, increment the count
           if (labelCardinality.has(label)) {
             const value = labelCardinality.get(label);
             if (value) {
-              // extra conditional to appease typescript, we know we have the value with has above? @todo there has to be a better pattern
               labelCardinality.set(label, {
-                percentOfLinesWithLabel: (value.percentOfLinesWithLabel ?? 0) + 1,
+                percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
                 active: value?.active,
               });
             }
+            // Otherwise add it
           } else {
             labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: undefined });
           }
         });
       });
 
-      // Converting the Map to an Object will be expensive, hoping the savings from deduping with set/map above will make up for it
+      // Converting the map to an object
       pendingLabelState = Object.fromEntries(labelCardinality);
 
       // Convert count to percent of log lines
@@ -156,6 +132,11 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     setColumnsWithMeta(pendingLabelState);
     // Query changed, reset the local search state.
     setFilteredColumnsWithMeta(undefined);
+
+    // The panel state is updated when the user interacts with the multi-select sidebar
+    // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.datasourceType, dataFrame]);
 
   if (!columnsWithMeta) {
@@ -205,7 +186,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   // uFuzzy search dispatcher, adds any matches to the local state
   const dispatcher = (data: string[][]) => {
     const matches = data[0];
-    let newColumnsWithMeta: Record<fieldName, fieldNameMeta> = {};
+    let newColumnsWithMeta: fieldNameMetaStore = {};
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
@@ -265,3 +246,33 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     </div>
   );
 };
+
+const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
+  const largestFrameLength = dataFrames?.reduce((length, frame) => {
+    return frame.length > length ? frame.length : length;
+  }, 0);
+  // from TableContainer.tsx
+  return Math.min(600, Math.max(largestFrameLength ?? 0, 300) + 40 + 46);
+});
+
+const normalize = (value: number, total: number): number => {
+  return Math.floor((100 * value) / total);
+};
+
+function getStyles(theme: GrafanaTheme2, height: number, width: number) {
+  return {
+    wrapper: css({
+      display: 'flex',
+    }),
+    sidebar: css({
+      height: height,
+      fontSize: theme.typography.pxToRem(11),
+      overflowY: 'hidden',
+      width: width,
+      paddingRight: theme.spacing(1.5),
+    }),
+
+    labelCount: css({}),
+    checkbox: css({}),
+  };
+}
