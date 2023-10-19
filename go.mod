@@ -102,7 +102,7 @@ require (
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
-	go.opentelemetry.io/collector/pdata v1.0.0-rc8 // @grafana/backend-platform
+	go.opentelemetry.io/collector/pdata v1.0.0-rcv0016 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.45.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.19.0 // @grafana/backend-platform
@@ -164,7 +164,7 @@ require (
 	github.com/go-openapi/validate v0.22.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // @grafana/backend-platform
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
-	github.com/golang/glog v1.1.0 // indirect
+	github.com/golang/glog v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // @grafana/backend-platform
 	github.com/google/btree v1.1.2 // indirect
@@ -286,9 +286,9 @@ require (
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 
-require github.com/grafana/pyroscope/api v0.2.0 // @grafana/observability-traces-and-profiling
-
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
+
+require github.com/grafana/pyroscope/api v0.2.1
 
 require (
 	cloud.google.com/go v0.110.6 // indirect
@@ -402,7 +402,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230731193218-e0aa005b6bdf // indirect
