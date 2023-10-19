@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
+import { ConfirmModal } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
 import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
@@ -17,6 +18,7 @@ export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQ
 
 export const QueryEditor = (props: Props) => {
   const { datasource, query: oldQ, onRunQuery, onChange } = props;
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   // Migrate query if needed
   const [migrated, setMigrated] = useState(false);
   const query = useMemo(() => {
@@ -29,6 +31,7 @@ export const QueryEditor = (props: Props) => {
     }
     return oldQ;
   }, [oldQ, datasource, onChange, migrated]);
+  const [selectedQuery, setSelectedQuery] = useState<CloudMonitoringQuery>(query);
 
   const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
   const onSLOQueryChange = (q: SLOQuery) => {
@@ -60,9 +63,31 @@ export const QueryEditor = (props: Props) => {
   });
   const queryType = query.queryType;
 
+  const checkForModalDisplay = (q: CloudMonitoringQuery) => {
+    if (selectedQuery.queryType !== q.queryType) {
+      setSelectedQuery(q);
+      setModalIsOpen(true);
+    }
+  };
+
   return (
     <EditorRows>
-      <QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />
+      <ConfirmModal
+        data-testid="switch-query-type-modal"
+        title="Warning"
+        body="By switching your query type, your current query will be lost. Confirm to continue."
+        isOpen={modalIsOpen}
+        onConfirm={() => {
+          setModalIsOpen(false);
+          onChange(selectedQuery);
+        }}
+        confirmText="Confirm"
+        onDismiss={() => {
+          setModalIsOpen(false);
+          setSelectedQuery(query);
+        }}
+      ></ConfirmModal>
+      <QueryHeader query={query} onChange={(q) => checkForModalDisplay(q)} onRunQuery={onRunQuery} />
 
       {queryType === QueryType.PROMQL && (
         <PromQLQueryEditor
