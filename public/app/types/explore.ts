@@ -28,6 +28,7 @@ export type ExploreQueryParams = UrlQueryMap;
 export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_PANE,
   CHANGE_DATASOURCE,
+  CLOSE_EDITOR,
 }
 
 export interface CorrelationEditorDetails {

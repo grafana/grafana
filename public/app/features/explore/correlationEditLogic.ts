@@ -21,6 +21,7 @@ export const showModalMessage = (
   );
   let actionStr = '';
   let consequenceStr = '';
+
   // dirty correlation message always takes priority over dirty query
   if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
     actionStr = 'Closing the pane';
@@ -57,6 +58,15 @@ export const showModalMessage = (
       } else {
         return undefined;
       }
+    }
+  } else if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR) {
+    actionStr = 'Closing the editor';
+    if (dirtyCorrelation) {
+      consequenceStr = CONSEQUENCES.FULL_CORR_LOSS;
+    } else if (dirtyQueryEditor) {
+      consequenceStr = CONSEQUENCES.FULL_QUERY_LOSS;
+    } else {
+      return undefined;
     }
   }
   return messageTemplate({ actionStr, consequenceStr });

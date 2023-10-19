@@ -33,34 +33,57 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
 
   // decide if we are displaying prompt, perform action if not
   useEffect(() => {
-    if (correlationDetails?.isExiting && correlationDetails.postConfirmAction) {
+    if (correlationDetails?.isExiting) {
       const { correlationDirty, queryEditorDirty } = correlationDetails;
-      const { isActionLeft, action } = correlationDetails.postConfirmAction;
-      const modalMessage = showModalMessage(
-        action,
-        isActionLeft,
-        correlationDirty && isHelperShowing,
-        queryEditorDirty && isHelperShowing
-      );
+      let isActionLeft = undefined;
+      let action = undefined;
+      if (correlationDetails.postConfirmAction) {
+        isActionLeft = correlationDetails.postConfirmAction.isActionLeft;
+        action = correlationDetails.postConfirmAction.action;
+      } else {
+        // closing the editor only
+        action = CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR;
+        isActionLeft = false;
+      }
+
+      const modalMessage = showModalMessage(action, isActionLeft, correlationDirty, queryEditorDirty);
       if (modalMessage !== undefined) {
         setSaveMessage(modalMessage);
       } else {
         // if no prompt, perform action
-        if (correlationDetails.postConfirmAction?.action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE) {
+        if (
+          action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
+          correlationDetails.postConfirmAction
+        ) {
           const { exploreId, changeDatasourceUid } = correlationDetails?.postConfirmAction;
           if (exploreId && changeDatasourceUid) {
             dispatch(changeDatasource(exploreId, changeDatasourceUid, { importQueries: true }));
+            dispatch(
+              changeCorrelationEditorDetails({
+                isExiting: false,
+              })
+            );
           }
-        } else if (correlationDetails.postConfirmAction?.action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
+        } else if (
+          action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE &&
+          correlationDetails.postConfirmAction
+        ) {
           const { exploreId } = correlationDetails?.postConfirmAction;
           if (exploreId !== undefined) {
             dispatch(splitClose(exploreId));
+            dispatch(
+              changeCorrelationEditorDetails({
+                isExiting: false,
+              })
+            );
           }
+        } else if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR) {
+          dispatch(
+            changeCorrelationEditorDetails({
+              editorMode: false,
+            })
+          );
         }
-
-        changeCorrelationEditorDetails({
-          isExiting: false,
-        });
       }
     }
   }, [correlationDetails, dispatch, isHelperShowing]);
