@@ -238,7 +238,7 @@ Set the y-axis to be centered on zero.
 
 Set a **Soft min** or **soft max** option for better control of y-axis limits. By default, Grafana sets the range for the y-axis automatically based on the dataset.
 
-**Soft min** and **soft max** settings can prevent magnifying small variations in the data when it is mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
+**Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
 
 To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options][].
 
