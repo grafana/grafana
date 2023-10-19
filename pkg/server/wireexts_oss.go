@@ -95,6 +95,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	idimpl.ProvideLocalSigner,
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
+	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
