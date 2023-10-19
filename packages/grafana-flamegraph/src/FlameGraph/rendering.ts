@@ -23,7 +23,11 @@ const ufuzzy = new uFuzzy();
 type RenderOptions = {
   canvasRef: RefObject<HTMLCanvasElement>;
   data: FlameGraphDataContainer;
-  levels: LevelItem[][];
+  root: LevelItem;
+  direction: 'children' | 'parents';
+
+  // Depth in number of levels
+  depth: number;
   wrapperWidth: number;
 
   // If we are rendering only zoomed in part of the graph.
@@ -48,7 +52,9 @@ export function useFlameRender(options: RenderOptions) {
   const {
     canvasRef,
     data,
-    levels,
+    root,
+    depth,
+    direction,
     wrapperWidth,
     rangeMin,
     rangeMax,
@@ -60,7 +66,130 @@ export function useFlameRender(options: RenderOptions) {
     colorScheme,
     focusedItemData,
   } = options;
-  const foundLabels = useMemo(() => {
+  const foundLabels = useFoundLabels(search, data);
+  const ctx = useSetupCanvas(canvasRef, wrapperWidth, depth);
+  const theme = useTheme2();
+
+  // There is a bit of dependency injections here that does not add readability, mainly to prevent recomputing some
+  // common stuff for all the nodes in the graph when only once is enough. perf/readability tradeoff.
+
+  const getBarColor = useColorFunction(
+    totalColorTicks,
+    totalTicksRight,
+    colorScheme,
+    theme,
+    rangeMin,
+    rangeMax,
+    foundLabels,
+    focusedItemData ? focusedItemData.item.level : 0
+  );
+  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign);
+
+  useEffect(() => {
+    if (!ctx) {
+      return;
+    }
+
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, renderFunc);
+  }, [ctx, data, root, wrapperWidth, rangeMin, rangeMax, totalViewTicks, direction, renderFunc]);
+}
+
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  // Collapsed means the width is too small to show the label, and we group collapsed siblings together.
+  collapsed: boolean
+) => void;
+
+function useRenderFunc(
+  ctx: CanvasRenderingContext2D | undefined,
+  data: FlameGraphDataContainer,
+  getBarColor: (item: LevelItem, label: string, collapsed: boolean) => string,
+  textAlign: TextAlign
+): RenderFunc {
+  return useMemo(() => {
+    if (!ctx) {
+      return () => {};
+    }
+
+    return (item, x, y, width, height, label, collapsed) => {
+      ctx.beginPath();
+      ctx.rect(x + (collapsed ? 0 : BAR_BORDER_WIDTH), y, width, height);
+      ctx.fillStyle = getBarColor(item, label, collapsed);
+
+      if (collapsed) {
+        // Only fill the collapsed rects
+        ctx.fill();
+      } else {
+        ctx.stroke();
+        ctx.fill();
+
+        if (width >= LABEL_THRESHOLD) {
+          renderLabel(ctx, data, label, item, width, x, y, textAlign);
+        }
+      }
+    };
+  }, [ctx, getBarColor, textAlign, data]);
+}
+
+/**
+ * Exported for testing don't use directly
+ * Walks the tree and computes coordinates, dimensions and other data needed for rendering. For each item in the tree
+ * it defers the rendering to the renderFunc.
+ */
+export function walkTree(
+  root: LevelItem,
+  // In sandwich view we use parents direction to show all callers.
+  direction: 'children' | 'parents',
+  data: FlameGraphDataContainer,
+  totalViewTicks: number,
+  rangeMin: number,
+  rangeMax: number,
+  wrapperWidth: number,
+  renderFunc: RenderFunc
+) {
+  const stack: LevelItem[] = [];
+  stack.push(root);
+
+  const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
+
+  while (stack.length > 0) {
+    const item = stack.shift()!;
+    let curBarTicks = item.value;
+    // Multiple collapsed items are shown as a single gray bar
+    const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
+    const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
+    const height = PIXELS_PER_LEVEL;
+
+    if (width < HIDE_THRESHOLD) {
+      // We don't render nor it's children
+      continue;
+    }
+
+    const barX = getBarX(item.start, totalViewTicks, rangeMin, pixelsPerTick);
+    const barY = item.level * PIXELS_PER_LEVEL;
+
+    let label = data.getLabel(item.itemIndexes[0]);
+
+    renderFunc(item, barX, barY, width, height, label, collapsed);
+
+    const nextList = direction === 'children' ? item.children : item.parents;
+    if (nextList) {
+      stack.unshift(...nextList);
+    }
+  }
+}
+
+/**
+ * Based on the search string it does a fuzzy search over all the unique labels so we can highlight them later.
+ */
+function useFoundLabels(search: string | undefined, data: FlameGraphDataContainer): Set<string> | undefined {
+  return useMemo(() => {
     if (search) {
       const foundLabels = new Set<string>();
       let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
@@ -76,58 +205,50 @@ export function useFlameRender(options: RenderOptions) {
     // In this case undefined means there was no search so no attempt to highlighting anything should be made.
     return undefined;
   }, [search, data]);
+}
 
-  const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
-  const theme = useTheme2();
+function useColorFunction(
+  totalTicks: number,
+  totalTicksRight: number | undefined,
+  colorScheme: ColorScheme | ColorSchemeDiff,
+  theme: GrafanaTheme2,
+  rangeMin: number,
+  rangeMax: number,
+  foundNames: Set<string> | undefined,
+  topLevel: number
+) {
+  return useMemo(() => {
+    // We use the same color for all muted bars so let's do it just once and reuse the result in the closure of the
+    // returned function.
+    const barMutedColor = color(theme.colors.background.secondary);
+    const barMutedColorHex = theme.isLight
+      ? barMutedColor.darken(10).toHexString()
+      : barMutedColor.lighten(10).toHexString();
 
-  useEffect(() => {
-    if (!ctx) {
-      return;
-    }
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
-
-    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-      const level = levels[levelIndex];
-      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-      // sometimes we collapse multiple bars into single rect.
-      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalViewTicks, rangeMin, pixelsPerTick);
-      for (const rect of dimensions) {
-        const focusedLevel = focusedItemData ? focusedItemData.level : 0;
-        // Render each rectangle based on the computed dimensions
-        renderRect(
-          ctx,
-          rect,
-          totalColorTicks,
-          totalTicksRight,
-          rangeMin,
-          rangeMax,
-          levelIndex,
-          focusedLevel,
-          foundLabels,
-          textAlign,
-          colorScheme,
-          theme
-        );
+    return function getColor(item: LevelItem, label: string, collapsed: boolean) {
+      // If collapsed and no search we can quickly return the muted color
+      if (collapsed && !foundNames) {
+        // Collapsed are always grayed
+        return barMutedColorHex;
       }
-    }
-  }, [
-    ctx,
-    data,
-    levels,
-    wrapperWidth,
-    rangeMin,
-    rangeMax,
-    search,
-    focusedItemData,
-    foundLabels,
-    textAlign,
-    totalViewTicks,
-    totalColorTicks,
-    totalTicksRight,
-    colorScheme,
-    theme,
-  ]);
+
+      const barColor =
+        item.valueRight !== undefined &&
+        (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+          ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
+          : colorScheme === ColorScheme.ValueBased
+          ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
+          : getBarColorByPackage(label, theme);
+
+      if (foundNames) {
+        // Means we are searching, we use color for matches and gray the rest
+        return foundNames.has(label) ? barColor.toHslString() : barMutedColorHex;
+      }
+
+      // Mute if we are above the focused symbol
+      return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
+    };
+  }, [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, foundNames, topLevel]);
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
@@ -153,146 +274,31 @@ function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: n
   return ctx;
 }
 
-type RectData = {
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  collapsed: boolean;
-  ticks: number;
-  ticksRight?: number;
-  label: string;
-  unitLabel: string;
-  itemIndex: number;
-};
-
-/**
- * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
- * into bigger rects.
- */
-export function getRectDimensionsForLevel(
-  data: FlameGraphDataContainer,
-  level: LevelItem[],
-  levelIndex: number,
-  totalTicks: number,
-  rangeMin: number,
-  pixelsPerTick: number
-): RectData[] {
-  const coordinatesLevel = [];
-  for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
-    const item = level[barIndex];
-    const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = item.value;
-
-    // merge very small blocks into big "collapsed" ones for performance
-    const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
-    if (collapsed) {
-      while (
-        barIndex < level.length - 1 &&
-        item.start + curBarTicks === level[barIndex + 1].start &&
-        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
-      ) {
-        barIndex += 1;
-        curBarTicks += level[barIndex].value;
-      }
-    }
-
-    const displayValue = data.valueDisplayProcessor(item.value);
-    let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
-
-    const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
-    coordinatesLevel.push({
-      width,
-      height: PIXELS_PER_LEVEL,
-      x: barX,
-      y: levelIndex * PIXELS_PER_LEVEL,
-      collapsed,
-      ticks: curBarTicks,
-      // When collapsed this does not make that much sense but then we don't really use it anyway.
-      ticksRight: item.valueRight,
-      label: data.getLabel(item.itemIndexes[0]),
-      unitLabel: unit,
-      itemIndex: item.itemIndexes[0],
-    });
-  }
-  return coordinatesLevel;
-}
-
-export function renderRect(
-  ctx: CanvasRenderingContext2D,
-  rect: RectData,
-  totalTicks: number,
-  totalTicksRight: number | undefined,
-  rangeMin: number,
-  rangeMax: number,
-  levelIndex: number,
-  topLevelIndex: number,
-  foundNames: Set<string> | undefined,
-  textAlign: TextAlign,
-  colorScheme: ColorScheme | ColorSchemeDiff,
-  theme: GrafanaTheme2
-) {
-  if (rect.width < HIDE_THRESHOLD) {
-    return;
-  }
-
-  ctx.beginPath();
-  ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
-
-  const barColor =
-    rect.ticksRight !== undefined &&
-    (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
-      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
-      : colorScheme === ColorScheme.ValueBased
-      ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
-      : getBarColorByPackage(rect.label, theme);
-
-  const barMutedColor = color(theme.colors.background.secondary);
-  const barMutedColorHex = theme.isLight
-    ? barMutedColor.darken(10).toHexString()
-    : barMutedColor.lighten(10).toHexString();
-
-  if (foundNames) {
-    // Means we are searching, we use color for matches and gray the rest
-    ctx.fillStyle = foundNames.has(rect.label) ? barColor.toHslString() : barMutedColorHex;
-  } else {
-    // No search
-    if (rect.collapsed) {
-      // Collapsed are always grayed
-      ctx.fillStyle = barMutedColorHex;
-    } else {
-      // Mute if we are above the focused symbol
-      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
-    }
-  }
-
-  if (rect.collapsed) {
-    // Only fill the collapsed rects
-    ctx.fill();
-    return;
-  }
-
-  ctx.stroke();
-  ctx.fill();
-
-  if (rect.width >= LABEL_THRESHOLD) {
-    renderLabel(ctx, rect.label, rect, textAlign);
-  }
-}
-
 // Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
 // when text is too long to fit in the rectangle.
-function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData, textAlign: TextAlign) {
+function renderLabel(
+  ctx: CanvasRenderingContext2D,
+  data: FlameGraphDataContainer,
+  label: string,
+  item: LevelItem,
+  width: number,
+  x: number,
+  y: number,
+  textAlign: TextAlign
+) {
   ctx.save();
   ctx.clip(); // so text does not overflow
   ctx.fillStyle = '#222';
 
-  // We only measure name here instead of full label because of how we deal with the units and aligning later.
-  const measure = ctx.measureText(name);
-  const spaceForTextInRect = rect.width - BAR_TEXT_PADDING_LEFT;
+  const displayValue = data.valueDisplayProcessor(item.value);
+  const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
-  let label = `${name} (${rect.unitLabel})`;
-  let labelX = Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT;
+  // We only measure name here instead of full label because of how we deal with the units and aligning later.
+  const measure = ctx.measureText(label);
+  const spaceForTextInRect = width - BAR_TEXT_PADDING_LEFT;
+
+  let fullLabel = `${label} (${unit})`;
+  let labelX = Math.max(x, 0) + BAR_TEXT_PADDING_LEFT;
 
   // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
   // that will already show full text.
@@ -301,12 +307,12 @@ function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData
     // If aligned to the right we don't want to take the space with the unit label as the assumption is user wants to
     // mainly see the name. This also reflects how pyro/flamegraph works.
     if (textAlign === 'right') {
-      label = name;
-      labelX = rect.x + rect.width - BAR_TEXT_PADDING_LEFT;
+      fullLabel = label;
+      labelX = x + width - BAR_TEXT_PADDING_LEFT;
     }
   }
 
-  ctx.fillText(label, labelX, rect.y + PIXELS_PER_LEVEL / 2);
+  ctx.fillText(fullLabel, labelX, y + PIXELS_PER_LEVEL / 2);
   ctx.restore();
 }
 

@@ -153,6 +153,7 @@ Experimental features might be changed or removed without prior notice.
 | `cachingOptimizeSerializationMemoryUsage`   | If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses. |
 | `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                                                                                                                                                                                                 |
 | `costManagementUi`                          | Toggles the display of the cost management ui plugin                                                                                                                                                                                                                              |
+| `managedPluginsInstall`                     | Install managed plugins directly from plugins catalog                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

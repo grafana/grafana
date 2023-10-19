@@ -904,5 +904,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaDatabasesFrontend,
 		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins directly from plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaPluginsPlatformSquad,
+		},
 	}
 )
