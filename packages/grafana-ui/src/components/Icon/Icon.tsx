@@ -58,9 +58,10 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
     const subDir = getIconSubDir(name, type);
     const svgPath = `${iconRoot}${subDir}/${name}.svg`;
+    const ariaLabel = divElementProps['aria-label'] || `${name} icon`;
 
     return (
-      <div className={styles.container} role="img" {...divElementProps} ref={ref}>
+      <div className={styles.container} role="img" aria-label={ariaLabel} {...divElementProps} ref={ref}>
         <SVG
           src={svgPath}
           width={svgWid}
