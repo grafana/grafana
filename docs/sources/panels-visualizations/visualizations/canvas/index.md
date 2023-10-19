@@ -39,6 +39,10 @@ The text element enables you to easily add text to the canvas. The element also 
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
+### Ellipse
+
+The ellipse element enables you to add a basic ellipse to the canvas. Ellipse elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
+
 ### Rectangle
 
 The rectangle element enables you to add a basic rectangle to the canvas. Rectangle elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
@@ -52,6 +56,16 @@ The icon element enables you to add a supported icon to the canvas. Icons can ha
 The server element enables you to easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
 
 {{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="750px" caption="Canvas server element" >}}
+
+### Button
+
+The button element enables you to add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. API settings are found in the button element editor. You can pass template variables in the API editor.
+
+{{% admonition type="note" %}}
+To trigger an API call when clicking on a button in the canvas, [inline editing](#inline-editing) must be disabled.
+{{% /admonition %}}
+
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
 ## Connections
 
