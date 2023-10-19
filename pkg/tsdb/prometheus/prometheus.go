@@ -14,7 +14,6 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
 )
 
-var plog = log.New("tsdb.prometheus")
+var plog = backend.NewLoggerWith("logger", "tsdb.prometheus")
 
 type Service struct {
 	im       instancemgmt.InstanceManager
