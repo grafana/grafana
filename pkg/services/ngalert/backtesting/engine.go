@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -34,6 +35,7 @@ type backtestingEvaluator interface {
 
 type stateManager interface {
 	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
+	schedule.RuleStateProvider
 }
 
 type Engine struct {
@@ -73,12 +75,15 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	}
 	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition())
+	stateManager := e.createStateManager()
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition(), &schedule.AlertingResultsFromRuleState{
+		Manager: stateManager,
+		Rule:    rule,
+	})
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
-
-	stateManager := e.createStateManager()
 
 	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
 
@@ -125,7 +130,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	return result, nil
 }
 
-func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition) (backtestingEvaluator, error) {
+func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
 	for _, q := range condition.Data {
 		if q.DatasourceUID == "__data__" || q.QueryType == "__data__" {
 			if len(condition.Data) != 1 {
@@ -151,9 +156,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 		}
 	}
 
-	evaluator, err := evalFactory.Create(eval.EvaluationContext{Ctx: ctx,
-		User: user,
-	}, condition)
+	evaluator, err := evalFactory.Create(eval.NewContextWithPreviousResults(ctx, user, reader), condition)
 
 	if err != nil {
 		return nil, err

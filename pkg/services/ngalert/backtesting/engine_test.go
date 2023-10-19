@@ -144,7 +144,7 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				e, err := newBacktestingEvaluator(context.Background(), evalFactory, nil, testCase.condition)
+				e, err := newBacktestingEvaluator(context.Background(), evalFactory, nil, testCase.condition, nil)
 				if testCase.error {
 					require.Error(t, err)
 					return
@@ -174,7 +174,7 @@ func TestEvaluatorTest(t *testing.T) {
 	}
 	manager := &fakeStateManager{}
 
-	backtestingEvaluatorFactory = func(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition) (backtestingEvaluator, error) {
+	backtestingEvaluatorFactory = func(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition, r eval.AlertingResultsReader) (backtestingEvaluator, error) {
 		return evaluator, nil
 	}
 
@@ -383,6 +383,10 @@ type fakeStateManager struct {
 
 func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels) []state.StateTransition {
 	return f.stateCallback(evaluatedAt)
+}
+
+func (f *fakeStateManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State {
+	return nil
 }
 
 type fakeBacktestingEvaluator struct {
