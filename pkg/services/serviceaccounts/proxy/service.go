@@ -75,6 +75,15 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 }
 
 func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if isExternalServiceAccount(sa.Login) {
+		return nil, extsvcaccounts.ErrExtServiceAccountCannotCreateToken
+	}
+
 	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
 }
 

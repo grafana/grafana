@@ -14,9 +14,10 @@ const (
 )
 
 var (
-	ErrExtServiceAccountCannotBeDeleted = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
-	ErrExtServiceAccountCannotBeCreated = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeCreated", errutil.WithPublicMessage("external service account cannot be created"))
-	ErrExtServiceAccountCannotBeUpdated = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
+	ErrExtServiceAccountCannotBeDeleted   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
+	ErrExtServiceAccountCannotBeCreated   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeCreated", errutil.WithPublicMessage("external service account cannot be created"))
+	ErrExtServiceAccountCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
+	ErrExtServiceAccountCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotCreateToken", errutil.WithPublicMessage("external service account cannot create token"))
 )
 
 // Credentials represents the credentials associated to an external service
