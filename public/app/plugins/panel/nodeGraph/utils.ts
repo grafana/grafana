@@ -15,9 +15,9 @@ import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions }
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
 /**
- * Makes line shorter while keeping the middle in he same place.
+ * Makes line shorter while keeping its middle in the same place.
  */
-export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, s = 0): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
@@ -26,8 +26,8 @@ export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadi
   return {
     x1: line.x1 + cosine * (sourceNodeRadius + 5),
     y1: line.y1 + sine * (sourceNodeRadius + 5),
-    x2: line.x2 - cosine * (targetNodeRadius + 5),
-    y2: line.y2 - sine * (targetNodeRadius + 5),
+    x2: line.x2 - cosine * (targetNodeRadius + 2 + s - s / 10),
+    y2: line.y2 - sine * (targetNodeRadius + 2 + s - s / 10),
   };
 }
 
@@ -74,6 +74,7 @@ export type EdgeFields = {
   secondaryStat?: Field;
   details: Field[];
   highlighted?: Field;
+  edgeThickness?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -90,6 +91,7 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
+    edgeThickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.edgeThickness.toLowerCase()),
   };
 }
 
@@ -220,6 +222,7 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
       highlighted: edgeFields.highlighted?.values[index] || false,
+      edgeThickness: edgeFields.edgeThickness?.values[index] || 1,
     };
   });
 }

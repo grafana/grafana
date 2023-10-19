@@ -127,7 +127,8 @@ export function generateRandomNodes(count = 10) {
       { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string, config: {} },
       { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
       { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
-      { name: NodeGraphDataFrameFieldNames.highlighted, values: [], type: FieldType.number, config: {} },
+      { name: NodeGraphDataFrameFieldNames.highlighted, values: [], type: FieldType.boolean, config: {} },
+      { name: NodeGraphDataFrameFieldNames.edgeThickness, values: [], type: FieldType.number, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
     length: 0,
@@ -159,6 +160,7 @@ export function generateRandomNodes(count = 10) {
       edgesFrame.fields[2].values.push(edge);
       edgesFrame.fields[3].values.push(Math.random() * 100);
       edgesFrame.fields[4].values.push(Math.random() > 0.5);
+      edgesFrame.fields[5].values.push(Math.ceil(Math.random() * 15));
     }
   }
   edgesFrame.length = edgesFrame.fields[0].values.length;

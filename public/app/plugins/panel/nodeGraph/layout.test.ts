@@ -89,5 +89,6 @@ function makeEdge(source: number, target: number): EdgeDatum {
     sourceNodeRadius: 40,
     targetNodeRadius: 40,
     highlighted: false,
+    edgeThickness: 1,
   };
 }

@@ -15,6 +15,9 @@ interface Props {
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
+
+export const sFoo = (e: EdgeDatum) => 10 + e.edgeThickness * 2;
+
 export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
 
@@ -35,7 +38,8 @@ export const Edge = memo(function Edge(props: Props) {
       y2: target.y!,
     },
     sourceNodeRadius || nodeR,
-    targetNodeRadius || nodeR
+    targetNodeRadius || nodeR,
+    sFoo(edge)
   );
 
   return (
@@ -45,13 +49,13 @@ export const Edge = memo(function Edge(props: Props) {
       aria-label={`Edge from: ${source.id} to: ${target.id}`}
     >
       <line
-        strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + 1}
+        strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.edgeThickness}
         stroke={edge.highlighted ? highlightedEdgeColor : '#999'}
         x1={line.x1}
         y1={line.y1}
         x2={line.x2}
         y2={line.y2}
-        markerEnd={`url(#${edge.highlighted ? 'triangle-colored' : 'triangle'})`}
+        markerEnd={`url(#${edge.highlighted ? `${coloredMarkerId}-${sFoo(edge)}` : `${markerId}-${sFoo(edge)}`})`}
       />
       <line
         stroke={'transparent'}

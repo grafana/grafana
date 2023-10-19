@@ -4,17 +4,25 @@ import React from 'react';
  * In SVG you need to supply this kind of marker that can be then referenced from a line segment as an ending of the
  * line turning in into arrow. Needs to be included in the svg element and then referenced as markerEnd="url(#triangle)"
  */
-export function EdgeArrowMarker({ id = 'triangle', fill = '#999' }: { id?: string; fill?: string }) {
+export function EdgeArrowMarker({
+  id = 'triangle',
+  fill = '#999',
+  size = 10,
+}: {
+  id?: string;
+  fill?: string;
+  size?: number;
+}) {
   return (
     <defs>
       <marker
         id={id}
         viewBox="0 0 10 10"
-        refX="8"
+        refX="1"
         refY="5"
         markerUnits="userSpaceOnUse"
-        markerWidth="10"
-        markerHeight="10"
+        markerWidth={size}
+        markerHeight={size}
         orient="auto"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" fill={fill} />
