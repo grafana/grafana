@@ -329,6 +329,7 @@
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
+/packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 
 
 # root files, mostly frontend
