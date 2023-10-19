@@ -16,6 +16,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { PanelModel } from 'app/features/dashboard/state';
+import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
@@ -337,6 +338,21 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <EntityNotFound entity="Dashboard" />
         </Page>
       );
+    }
+
+    if (config.featureToggles.dashboardSceneForViewers) {
+      if (dashboard && !dashboard.meta.canEdit) {
+        return (
+          <DashboardScenePage
+            history={this.props.history}
+            location={this.props.location}
+            match={this.props.match}
+            queryParams={this.props.queryParams}
+            route={this.props.route}
+            preloadedDashboard={dashboard}
+          />
+        );
+      }
     }
 
     return (

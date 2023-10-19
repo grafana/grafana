@@ -2,11 +2,15 @@ import { getBackendSrv } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  createDashboardSceneFromDashboardModel,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
@@ -86,6 +90,22 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     throw new Error('Dashboard not found');
+  }
+
+  public loadSceneFromDashboardModel(model: DashboardModel, isHome?: boolean) {
+    const uid = isHome ? 'home' : model.uid;
+    if (!uid) {
+      return;
+    }
+
+    let dashboard: DashboardScene = this.cache[uid];
+    if (!dashboard) {
+      dashboard = createDashboardSceneFromDashboardModel(model);
+      this.cache[uid] = dashboard;
+    }
+
+    this.setState({ dashboard, isLoading: false });
+    dashboard.startUrlSync();
   }
 
   public clearState() {

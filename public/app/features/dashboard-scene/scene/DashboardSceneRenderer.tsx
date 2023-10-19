@@ -17,15 +17,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location);
   const bodyToRender = model.getBodyToRender(viewPanelId);
 
-  const hasControls = model.canEditDashboard() && controls;
-
   return (
     <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
           <NavToolbarActions dashboard={model} />
 
-          {hasControls && (
+          {controls && (
             <div className={styles.controls}>
               {controls.map((control) => (
                 <control.Component key={control.state.key} model={control} />
@@ -33,7 +31,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <SceneDebugger scene={model} key={'scene-debugger'} />
             </div>
           )}
-          <div className={cx(styles.body, !hasControls && styles.bodyNoControls)}>
+          <div className={cx(styles.body)}>
             <bodyToRender.Component model={bodyToRender} />
           </div>
         </div>
@@ -60,9 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '8px',
       marginBottom: theme.spacing(2),
     }),
-    bodyNoControls: css({
-      paddingTop: theme.spacing(2),
-    }),
+
     controls: css({
       display: 'flex',
       flexWrap: 'wrap',
