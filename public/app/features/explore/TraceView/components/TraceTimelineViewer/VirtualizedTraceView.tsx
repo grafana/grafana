@@ -424,20 +424,20 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
     const prevSpan = spanIndex > 0 ? trace.spans[spanIndex - 1] : null;
 
+    const allChildSpanIds = [spanID, ...childSpanIds];
+    // This function called recursively to find all descendants of a span
+    const findAllDescendants = (currentChildSpanIds: string[]) => {
+      currentChildSpanIds.forEach((eachId) => {
+        const currentChildSpan = trace.spans.find((a) => a.spanID === eachId)!;
+        if (currentChildSpan.hasChildren) {
+          allChildSpanIds.push(...currentChildSpan.childSpanIds);
+          findAllDescendants(currentChildSpan.childSpanIds);
+        }
+      });
+    };
+    findAllDescendants(childSpanIds);
     const criticalPathSections = criticalPath?.filter((each) => {
       if (isCollapsed) {
-        const allChildSpanIds = [spanID, ...childSpanIds];
-        // This function called recursively to find all descendants of a span
-        const findAllDescendants = (currentChildSpanIds: string[]) => {
-          currentChildSpanIds.forEach((eachId) => {
-            const currentChildSpan = trace.spans.find((a) => a.spanID === eachId)!;
-            if (currentChildSpan.hasChildren) {
-              allChildSpanIds.push(...currentChildSpan.childSpanIds);
-              findAllDescendants(currentChildSpan.childSpanIds);
-            }
-          });
-        };
-        findAllDescendants(childSpanIds);
         return allChildSpanIds.includes(each.spanId);
       }
       return each.spanId === spanID;
