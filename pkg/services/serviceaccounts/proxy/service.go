@@ -61,6 +61,9 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Contex
 }
 
 func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if isExternalServiceAccount(*saForm.Name) {
+		return nil, extsvcaccounts.ErrExtServiceAccountCannotBeUpdated
+	}
 	return s.proxiedService.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
