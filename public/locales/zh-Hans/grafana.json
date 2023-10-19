@@ -767,6 +767,7 @@
   "panel": {
     "header-menu": {
       "copy": "复制",
+      "create-alert": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",

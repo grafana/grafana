@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	OAuth2Server AuthProvider = "OAuth2Server"
+	OAuth2Server    AuthProvider = "OAuth2Server"
+	ServiceAccounts AuthProvider = "ServiceAccounts"
 
 	// TmpOrgID is the orgID we use while global service accounts are not supported.
 	TmpOrgID int64 = 1

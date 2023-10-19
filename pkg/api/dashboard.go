@@ -1283,7 +1283,7 @@ type PostDashboardResponse struct {
 		// ID The unique identifier (id) of the created/updated dashboard.
 		// required: true
 		// example: 1
-		ID string `json:"id"`
+		ID int64 `json:"id"`
 
 		// UID The unique identifier (uid) of the created/updated dashboard.
 		// required: true

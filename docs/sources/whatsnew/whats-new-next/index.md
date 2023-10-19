@@ -18,6 +18,17 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Export alert rules and notification resources to Terraform
+
+<!-- Yuri Tseretyan -->
+<!-- OSS, Enterprise -->
+
+October 30, 2023
+
+_Generally available in Grafana Cloud_
+
+This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+
 ## Alerting insights
 
 <!-- George Robinson -->
@@ -78,6 +89,8 @@ For more information, refer to the [documentation](https://grafana.com/docs/graf
 <!-- Eric Leijonmarck -->
 <!-- OSS, Enterprise -->
 
+October 12, 2023
+
 _Generally available in Grafana Cloud_
 
 We're excited to introduce the "No basic role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
@@ -85,6 +98,8 @@ We're excited to introduce the "No basic role," a new basic role with no permiss
 Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
 
 For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+
+To assign the "No basic role" in your Grafana Cloud stack, contact Grafana Support and ask them to enable the `skip_org_role_sync` feature toggle. You'll be able to change basic roles that are synced using GCom.
 
 ## Content outline
 
