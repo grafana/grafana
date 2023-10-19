@@ -127,6 +127,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
 
       // create extract JSON transformation for every field that is `json.RawMessage`
       // TODO: explore if `logsFrame.ts` can help us with getting the right fields
+      // TODO Why is typeInfo not defined on the Field interface?
       const transformations = dataFrame.fields
         .filter((field: Field & { typeInfo?: { frame: string } }) => {
           return field.typeInfo?.frame === 'json.RawMessage' && props.datasourceType === 'loki';
@@ -186,13 +187,10 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         });
       });
 
-      const stuffWeAdded: string[] = [];
-
       // Check if there are labels in the data, that aren't yet in the labelFilters, and set them to be hidden by the transform
       Object.keys(labelFilters).forEach((label) => {
         if (!uniqueLabels.has(label)) {
           labelFilters[label] = true;
-          stuffWeAdded.push(label);
         }
       });
 
@@ -201,7 +199,6 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       Array.from(uniqueLabels).forEach((label) => {
         if (label in columnsWithMeta && !columnsWithMeta[label]?.active) {
           labelFilters[label] = true;
-          stuffWeAdded.push(label);
         } else if (!labelFilters[label] && !(label in columnsWithMeta)) {
           labelFilters[label] = true;
         }
