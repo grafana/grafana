@@ -15,3 +15,16 @@ func getGitSha() string {
 	}
 	return string(v)
 }
+
+func getGitEnterpriseSha() string {
+	// supporting the old way of dev setup
+	v, err := runError("git", "-C", "../grafana-enterprise", "rev-parse", "--short", "HEAD")
+	if err != nil {
+		// supporting the new way of dev setup
+		v, err = runError("git", "-C", "..", "rev-parse", "--short", "HEAD")
+		if err != nil {
+			return ""
+		}
+	}
+	return string(v)
+}
