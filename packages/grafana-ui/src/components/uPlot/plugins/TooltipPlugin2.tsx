@@ -5,14 +5,13 @@ import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
-  // or via .children() render prop callback?
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -67,7 +66,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const className = useStyles2(getStyles).tooltipWrapper;
+  const styles = useStyles2(getStyles);
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -108,8 +107,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
+    let pendingPinned = false;
 
-    const scheduleRender = () => {
+    const scheduleRender = (setPinned = false) => {
       if (!pendingRender) {
         // defer unrender for 100ms to reduce flickering in small gaps
         if (!_isHovering) {
@@ -120,10 +120,42 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
         pendingRender = true;
       }
+
+      if (setPinned) {
+        pendingPinned = true;
+      }
+    };
+
+    // in some ways this is similar to ClickOutsideWrapper.tsx
+    const downEventOutside = (e: Event) => {
+      let isOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
+
+      if (isOutside) {
+        dismiss();
+      }
     };
 
     const _render = () => {
       pendingRender = false;
+
+      if (pendingPinned) {
+        _style = { pointerEvents: _isPinned ? 'all' : 'none' };
+
+        domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+
+        // @ts-ignore
+        _plot!.cursor._lock = _isPinned;
+
+        if (_isPinned) {
+          document.addEventListener('mousedown', downEventOutside, true);
+          document.addEventListener('keydown', downEventOutside, true);
+        } else {
+          document.removeEventListener('mousedown', downEventOutside, true);
+          document.removeEventListener('keydown', downEventOutside, true);
+        }
+
+        pendingPinned = false;
+      }
 
       let state: TooltipContainerState = {
         style: _style,
@@ -139,35 +171,18 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     const dismiss = () => {
       _isPinned = false;
       _isHovering = false;
-      _style = { pointerEvents: 'none' };
-
-      // @ts-ignore
-      _plot!.cursor._lock = _isPinned;
-
-      scheduleRender();
+      _plot!.setCursor({ left: -10, top: -10 });
+      scheduleRender(true);
     };
 
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
-      // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
+      // this handles pinning
       u.over.addEventListener('click', (e) => {
-        if (_isHovering) {
-          if (e.target === u.over) {
-            _isPinned = !_isPinned;
-            _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-            scheduleRender();
-          }
-
-          // @ts-ignore
-          u.cursor._lock = _isPinned;
-
-          // hack to trigger cursor to new position after unlock
-          // (should not be necessary after using the cursor.lock API)
-          if (!_isPinned) {
-            u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
-            _isHovering = false;
-          }
+        if (_isHovering && !_isPinned && e.target === u.over) {
+          _isPinned = true;
+          scheduleRender(true);
         }
       });
     });
@@ -268,7 +283,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={className} style={style} ref={domRef}>
+      <div className={styles.tooltipWrapper} style={style} ref={domRef}>
         {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
         {contents}
       </div>,
@@ -290,5 +305,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    userSelect: 'text',
   }),
 });

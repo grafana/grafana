@@ -2,15 +2,20 @@ import { map } from 'rxjs/operators';
 
 import {
   DataFrame,
+  DataFrameWithValue,
   DataTransformerID,
   DataTransformerInfo,
   Field,
   FieldType,
   MutableDataFrame,
   isTimeSeriesFrame,
+  ReducerID,
+  reduceField,
 } from '@grafana/data';
 
-export interface TimeSeriesTableTransformerOptions {}
+export interface TimeSeriesTableTransformerOptions {
+  refIdToStat?: Record<string, ReducerID>;
+}
 
 export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
   id: DataTransformerID.timeSeriesTable,
@@ -44,7 +49,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // initialize fields from labels for each refId
   const refId2LabelFields = getLabelFields(data);
 
-  const refId2frameField: Record<string, Field<DataFrame>> = {};
+  const refId2frameField: Record<string, Field<DataFrameWithValue>> = {};
 
   const result: DataFrame[] = [];
 
@@ -83,8 +88,13 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       const labelValue = labels?.[labelKey] ?? null;
       labelFields[labelKey].values.push(labelValue!);
     }
-
-    frameField.values.push(frame);
+    const reducerId = options.refIdToStat?.[refId] ?? ReducerID.lastNotNull;
+    const valueField = frame.fields.find((f) => f.type === FieldType.number);
+    const value = (valueField && reduceField({ field: valueField, reducers: [reducerId] })[reducerId]) || null;
+    frameField.values.push({
+      ...frame,
+      value,
+    });
   }
   return result;
 }

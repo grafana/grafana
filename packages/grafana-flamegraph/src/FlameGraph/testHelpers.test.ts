@@ -10,16 +10,16 @@ describe('textToDataContainer', () => {
          [6]
     `)!;
 
-    const n6: LevelItem = { itemIndexes: [5], start: 3, children: [], value: 3 };
+    const n6: LevelItem = { itemIndexes: [5], start: 3, children: [], value: 3, level: 3 };
 
-    const n5: LevelItem = { itemIndexes: [4], start: 3, children: [n6], value: 3 };
-    const n3: LevelItem = { itemIndexes: [2], start: 0, children: [], value: 3 };
+    const n5: LevelItem = { itemIndexes: [4], start: 3, children: [n6], value: 3, level: 2 };
+    const n3: LevelItem = { itemIndexes: [2], start: 0, children: [], value: 3, level: 2 };
 
-    const n7: LevelItem = { itemIndexes: [6], start: 8, children: [], value: 6 };
-    const n4: LevelItem = { itemIndexes: [3], start: 3, children: [n5], value: 5 };
-    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [n3], value: 3 };
+    const n7: LevelItem = { itemIndexes: [6], start: 8, children: [], value: 6, level: 1 };
+    const n4: LevelItem = { itemIndexes: [3], start: 3, children: [n5], value: 5, level: 1 };
+    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [n3], value: 3, level: 1 };
 
-    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n4, n7], value: 17 };
+    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n4, n7], value: 17, level: 0 };
 
     n2.parents = [n1];
     n4.parents = [n1];

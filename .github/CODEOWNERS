@@ -187,6 +187,7 @@
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
+/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend-product
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_arm64/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_tests/ @grafana/grafana-bi-squad
@@ -506,6 +507,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-delivery
+scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
