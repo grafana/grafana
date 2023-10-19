@@ -37,21 +37,19 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
     const styles = useStyles2(getIconStyles);
 
-    /* Temporary solution to display also font awesome icons */
-    if (name?.startsWith('fa fa-')) {
-      return <i role="img" className={getFontAwesomeIconStyles(name, className)} {...rest} style={style} />;
-    }
-
     if (!isIconName(name)) {
       console.warn('Icon component passed an invalid icon name', name);
     }
+
+    // handle the deprecated 'fa fa-spinner'
+    const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
 
     const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
     const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-    const subDir = getIconSubDir(name, type);
-    const svgPath = `${iconRoot}${subDir}/${name}.svg`;
+    const subDir = getIconSubDir(iconName, type);
+    const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
 
     return (
       <SVG
@@ -60,7 +58,14 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
         width={svgWid}
         height={svgHgt}
         title={title}
-        className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
+        className={cx(
+          styles.icon,
+          {
+            'fa-spin': iconName === 'spinner',
+          },
+          className,
+          type === 'mono' ? { [styles.orange]: name === 'favorite' } : ''
+        )}
         style={style}
         {...rest}
       />
@@ -69,13 +74,3 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
 );
 
 Icon.displayName = 'Icon';
-
-function getFontAwesomeIconStyles(iconName: string, className?: string): string {
-  return cx(
-    iconName,
-    {
-      'fa-spin': iconName === 'fa fa-spinner',
-    },
-    className
-  );
-}
