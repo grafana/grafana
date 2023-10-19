@@ -392,14 +392,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
 
-### [Oracle Cloud Infrastructure Logs](https://grafana.com/grafana/plugins/oci-logs-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
-
-### [Oracle Cloud Infrastructure Metrics](https://grafana.com/grafana/plugins/oci-metrics-datasource/)
-
-Latest Version: 4.0.1 | Signature: Commercial | Last Updated: 2023
-
 ### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
 
 Latest Version: 2.2.1 | Signature: Community | Last Updated: 2021
