@@ -4,11 +4,14 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 )
+
+var testLogger = log.New("test logger")
 
 func TestRegions(t *testing.T) {
 	t.Run("returns regions from the api and merges them with default regions", func(t *testing.T) {
@@ -21,7 +24,7 @@ func TestRegions(t *testing.T) {
 		}
 		ec2Mock := &mocks.EC2Mock{}
 		ec2Mock.On("DescribeRegions").Return(mockRegions, nil)
-		regions, err := NewRegionsService(ec2Mock).GetRegions()
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegions()
 		assert.NoError(t, err)
 		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
 			Value: resources.Region{
@@ -35,10 +38,18 @@ func TestRegions(t *testing.T) {
 		})
 	})
 
-	t.Run("forwards error if DescribeRegions errors out", func(t *testing.T) {
+	t.Run("always returns default regions, even if fetch fails", func(t *testing.T) {
 		ec2Mock := &mocks.EC2Mock{}
-		ec2Mock.On("DescribeRegions").Return((*ec2.DescribeRegionsOutput)(nil), assert.AnError)
-		_, err := NewRegionsService(ec2Mock).GetRegions()
-		assert.Error(t, err)
+		mockRegions := &ec2.DescribeRegionsOutput{
+			Regions: []*ec2.Region{},
+		}
+		ec2Mock.On("DescribeRegions").Return(mockRegions, assert.AnError)
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegions()
+		assert.NoError(t, err)
+		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
+			Value: resources.Region{
+				Name: "us-east-2",
+			},
+		})
 	})
 }
