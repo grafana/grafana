@@ -208,7 +208,7 @@ export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDi
     JSON.stringify(dashboardAfterMigration, null, 2),
     '',
     '',
-    { context: 40 }
+    { context: 20 }
   );
 
   let userDiff: string = createTwoFilesPatch(
@@ -218,7 +218,7 @@ export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDi
     JSON.stringify(currentDashboard, null, 2),
     '',
     '',
-    { context: 40 }
+    { context: 20 }
   );
 
   migrationDiff = shortenDiff(migrationDiff);

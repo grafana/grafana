@@ -12,25 +12,24 @@ interface GenAIDashboardChangesButtonProps {
   disabled?: boolean;
 }
 
-const DIFF_DESCRIPTION_EXAMPLE = `User changes:
-- <First user change>
-- <Second user change>
-
-Migration changes:
-- <First migration change>
-- <Second migration change>`;
-
-const CHANGES_GENERATION_STANDARD_PROMPT = [
+const CHANGES_GENERATION_PREFIX_PROMPT = [
   'You are an expert in Grafana Dashboards',
   'Your goal is to write a description of the changes for a dashboard to display to the user',
   'You will be given human-readable diffs with most irrelevant lines filtered out',
-  'Lines beginning with - are removed, and lines beginning with + are added. Lines with neither are included for context.',
+].join('.\n');
+
+const CHANGES_GENERATION_POSTFIX_PROMPT = [
+  `Respond only with the diff description, which is meant to be loaded directly into the application for the user.`,
+  `If there are no substantial user or migration changes, the correct description is "Minor changes only"`,
+  `If there are too many changes of either kind, and those changes have a message saying 'too long', the correct response for that section is "Too many changes to auto-summarize"`,
+  'In a diff, lines beginning with - are removed, and lines beginning with + are added.',
+  'Lines with neither + nor - are included for context. Be careful not to mark them as added or removed if they do not start with + or -.',
   'If a line is changed, it will show a previous version removed and a new version added',
   'When referring to panel changes, use the panel title',
   'When using panel title, wrap it with double quotes',
   'When the panel changes position, just mention that the panel has changed position',
   'When an entire panel is added or removed, use the panel title and only say it was added or removed and disregard the rest of the changes for that panel',
-  'Group changes when all panels are affected',
+  'Group together similar changes into one line when multiple panels are affected',
   'Do not mention line number',
   'Refer to templating elements as variables',
   'Ignore and never mention changes about plugin version',
@@ -71,7 +70,7 @@ function getMessages(dashboard: DashboardModel): Message[] {
 
   return [
     {
-      content: CHANGES_GENERATION_STANDARD_PROMPT,
+      content: CHANGES_GENERATION_PREFIX_PROMPT,
       role: Role.system,
     },
     {
@@ -97,12 +96,7 @@ function getMessages(dashboard: DashboardModel): Message[] {
       role: Role.system,
     },
     {
-      content:
-        `Respond only with the diff description, which is meant to be loaded directly into the application for the user.\n` +
-        `If there are no substantial user or migration changes, the correct description is "Minor changes only"\n` +
-        `If there are too many changes of either kind, and those changes have a message saying 'too long', the correct response for that section is "Too many changes to auto-summarize"\n` +
-        'A description of the changes should be formatted like this:' +
-        DIFF_DESCRIPTION_EXAMPLE,
+      content: CHANGES_GENERATION_POSTFIX_PROMPT,
       role: Role.system,
     },
   ];
