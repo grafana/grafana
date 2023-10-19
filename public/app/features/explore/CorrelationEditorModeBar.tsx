@@ -58,7 +58,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           }
         }
 
-        // todo do
         changeCorrelationEditorDetails({
           isExiting: false,
         });
