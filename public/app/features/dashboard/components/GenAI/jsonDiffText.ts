@@ -202,8 +202,8 @@ export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDi
   currentDashboard = orderProperties(dashboardAfterMigration, currentDashboard);
 
   let migrationDiff: string = createTwoFilesPatch(
-    originalDashboard.title ?? 'Before migration changes',
-    dashboardAfterMigration.title ?? 'After migration changes',
+    'Before migration changes',
+    'After migration changes',
     JSON.stringify(originalDashboard, null, 2),
     JSON.stringify(dashboardAfterMigration, null, 2),
     '',
@@ -212,8 +212,8 @@ export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDi
   );
 
   let userDiff: string = createTwoFilesPatch(
-    dashboardAfterMigration.title ?? 'Before user changes',
-    currentDashboard.title ?? 'After user changes',
+    'Before user changes',
+    'After user changes',
     JSON.stringify(dashboardAfterMigration, null, 2),
     JSON.stringify(currentDashboard, null, 2),
     '',
