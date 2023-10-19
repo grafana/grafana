@@ -213,7 +213,7 @@ Set the axis grid line visibility.
 
 ### Color
 
-Set the color of the axis
+Set the color of the axis.
 
 - **Text:** Set the color based on theme text color.
 - **Series:** Set the color based on the series color.
