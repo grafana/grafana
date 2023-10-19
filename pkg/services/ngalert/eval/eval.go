@@ -745,7 +745,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		case expr.TypeCMDNode:
 		}
 	}
-	_, err = e.create(condition, req)
+	_, err = e.create(ctx, condition, req)
 	return err
 }
 
@@ -760,10 +760,10 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	return e.create(condition, req)
+	return e.create(ctx, condition, req)
 }
 
-func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
+func (e *evaluatorImpl) create(ctx EvaluationContext, condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
 	pipeline, err := e.expressionService.BuildPipeline(req)
 	if err != nil {
 		return nil, err
@@ -772,10 +772,11 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 	for _, node := range pipeline {
 		if node.RefID() == condition.Condition {
 			return &conditionEvaluator{
-				pipeline:          pipeline,
-				expressionService: e.expressionService,
-				condition:         condition,
-				evalTimeout:       e.evaluationTimeout,
+				pipeline:            pipeline,
+				expressionService:   e.expressionService,
+				condition:           condition,
+				evalTimeout:         e.evaluationTimeout,
+				loadedMetricsReader: ctx.AlertingResultsReader,
 			}, nil
 		}
 		conditions = append(conditions, node.RefID())
