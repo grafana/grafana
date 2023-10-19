@@ -49,7 +49,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
       throw new Error('Rule ID is required');
     }
 
-    return ruleId.parse(id, true);
+    return ruleId.parse(id, false);
   }, [id]);
 
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });

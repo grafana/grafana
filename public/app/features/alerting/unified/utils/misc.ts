@@ -25,8 +25,8 @@ import { createAbsoluteUrl, createUrl } from './url';
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(sourceName);
+  const paramId = encodeURI(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURI(sourceName);
 
   return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
 }
