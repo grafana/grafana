@@ -250,25 +250,23 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   initMapView = (config: MapViewConfig): View | undefined => {
-    const view = new View({
+    let view = new View({
       center: [0, 0],
       zoom: 1,
       showFullExtent: true, // allows zooming so the full range is visible
     });
+
     // With shared views, all panels use the same view instance
     if (config.shared) {
       if (!sharedView) {
         sharedView = view;
-        this.initViewExtent(view, config);
-        return view;
       } else {
-        this.initViewExtent(sharedView, config);
-        return sharedView;
+        view = sharedView;
       }
-    } else {
-      this.initViewExtent(view, config);
-      return view;
     }
+
+    this.initViewExtent(view, config);
+    return view;
   };
 
   initViewExtent(view: View, config: MapViewConfig) {
