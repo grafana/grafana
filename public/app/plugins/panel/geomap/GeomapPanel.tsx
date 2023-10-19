@@ -149,8 +149,7 @@ export class GeomapPanel extends Component<Props, State> {
   optionsChanged(options: Options) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
-      const [updatedSharedView, view] = this.initMapView(options.view);
-      sharedView = updatedSharedView;
+      const view = this.initMapView(options.view);
 
       if (this.map && view) {
         this.map.setView(view);
@@ -176,7 +175,7 @@ export class GeomapPanel extends Component<Props, State> {
     // Because data changed, check map view and change if needed (data fit)
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
     if (v && v.id === MapCenterID.Fit) {
-      const [, view] = this.initMapView(this.props.options.view);
+      const view = this.initMapView(this.props.options.view);
 
       if (this.map && view) {
         this.map.setView(view);
@@ -250,24 +249,26 @@ export class GeomapPanel extends Component<Props, State> {
     pointerMoveListener(evt, this);
   };
 
-  initMapView = (config: MapViewConfig): Array<View | undefined> => {
-    let view = new View({
+  initMapView = (config: MapViewConfig): View | undefined => {
+    const view = new View({
       center: [0, 0],
       zoom: 1,
       showFullExtent: true, // allows zooming so the full range is visible
     });
-
     // With shared views, all panels use the same view instance
     if (config.shared) {
       if (!sharedView) {
         sharedView = view;
+        this.initViewExtent(view, config);
+        return view;
       } else {
-        view = sharedView;
+        this.initViewExtent(sharedView, config);
+        return sharedView;
       }
+    } else {
+      this.initViewExtent(view, config);
+      return view;
     }
-    this.initViewExtent(view, config);
-
-    return [sharedView, view];
   };
 
   initViewExtent(view: View, config: MapViewConfig) {
