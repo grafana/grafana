@@ -4,7 +4,6 @@ import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  SceneObject,
   SceneFlexLayout,
   SceneFlexItem,
   SceneQueryRunner,
@@ -29,7 +28,7 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getMetricSceneFor, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -102,7 +101,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
-    const graphView = getGraphViewFor(model);
+    const graphView = getMetricSceneFor(model);
     const trail = getTrailFor(model);
     const { actionView } = graphView.useState();
 
@@ -129,20 +128,6 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       </Box>
     );
   };
-}
-
-function getGraphViewFor(model: SceneObject): MetricScene {
-  if (model instanceof MetricScene) {
-    return model;
-  }
-
-  if (model.parent) {
-    return getGraphViewFor(model.parent);
-  }
-
-  console.error('Unable to find graph view for', model);
-
-  throw new Error('Unable to find trail');
 }
 
 function buildGraphScene(metric: string) {

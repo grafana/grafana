@@ -10,6 +10,8 @@ import {
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
+import { getMetricSceneFor } from './utils';
+
 export interface AddToFiltersGraphActionState extends SceneObjectState {
   frame: DataFrame;
 }
@@ -25,6 +27,10 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
     if (Object.keys(labels).length !== 1) {
       return;
     }
+
+    // close action view
+    const metricScene = getMetricSceneFor(this);
+    metricScene.setActionView(undefined);
 
     const labelName = Object.keys(labels)[0];
 

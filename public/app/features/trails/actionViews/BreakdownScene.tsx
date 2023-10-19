@@ -4,6 +4,7 @@ import React from 'react';
 import { getFrameDisplayName, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -18,13 +19,13 @@ import {
   SceneQueryRunner,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { AddToFiltersGraphAction } from '../AddToFiltersGraphAction';
 import { ByFrameRepeater } from '../ByFrameRepeater';
 import { LayoutSwitcher } from '../LayoutSwitcher';
-import { trailsDS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { trailsDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -73,46 +74,46 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   }
 
   private updateBody(variable: QueryVariable) {
-    const options = variable.getOptionsForSelect();
+    const options = this.getLabelOptions(variable);
 
     const stateUpdate: Partial<BreakdownSceneState> = {
       loading: variable.state.loading,
       value: String(variable.state.value),
-      labels: options.map((v) => ({ label: v.label, value: String(v.value) })),
+      labels: options,
     };
 
-    if (!this.state.body) {
-      stateUpdate.body = variable.hasAllValue() ? buildAllLayout(variable) : buildNormalLayout();
+    if (!this.state.body && !variable.state.loading) {
+      stateUpdate.body = variable.hasAllValue() ? buildAllLayout(options) : buildNormalLayout();
     }
 
     this.setState(stateUpdate);
   }
 
-  // public getLabelNamesFiltered(options: VariableValueOption[]) {
-  //   const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
-  //   const labelOptions: Array<SelectableValue<string>> = [];
+  private getLabelOptions(variable: QueryVariable) {
+    const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    const labelOptions: Array<SelectableValue<string>> = [];
 
-  //   if (!(labelFilters instanceof AdHocFiltersVariable)) {
-  //     return [];
-  //   }
+    if (!(labelFilters instanceof AdHocFiltersVariable)) {
+      return [];
+    }
 
-  //   const filters = labelFilters.state.set.state.filters;
+    const filters = labelFilters.state.set.state.filters;
 
-  //   for (const option of options) {
-  //     const filterExists = filters.find((f) => f.key === option.value);
-  //     if (!filterExists) {
-  //       labelOptions.push({ label: option.label, value: String(option.value) });
-  //     }
-  //   }
+    for (const option of variable.getOptionsForSelect()) {
+      const filterExists = filters.find((f) => f.key === option.value);
+      if (!filterExists) {
+        labelOptions.push({ label: option.label, value: String(option.value) });
+      }
+    }
 
-  //   return labelOptions;
-  // }
+    return labelOptions;
+  }
 
   public onChange = (value: string) => {
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
-      this.setState({ body: buildAllLayout(variable) });
+      this.setState({ body: buildAllLayout(this.getLabelOptions(variable)) });
     } else if (variable.hasAllValue()) {
       this.setState({ body: buildNormalLayout() });
     }
@@ -174,16 +175,20 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function buildAllLayout(variable: QueryVariable) {
+export function buildAllLayout(options: Array<SelectableValue<string>>) {
   const children: SceneFlexItemLike[] = [];
 
-  for (const option of variable.state.options) {
+  for (const option of options) {
+    if (option.value === ALL_VARIABLE_VALUE) {
+      continue;
+    }
+
     children.push(
       new SceneFlexItem({
         minHeight: 250,
         minWidth: 450,
         body: PanelBuilders.timeseries()
-          .setTitle(option.label)
+          .setTitle(option.label!)
           .setData(
             new SceneQueryRunner({
               queries: [
@@ -195,6 +200,7 @@ export function buildAllLayout(variable: QueryVariable) {
               ],
             })
           )
+          .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
           .build(),
       })
     );
@@ -305,4 +311,33 @@ export function builAllScene(variable: QueryVariable) {}
 function getColorByIndex(index: number) {
   const visTheme = config.theme2.visualization;
   return visTheme.getColorByName(visTheme.palette[index % 5]);
+}
+
+interface SelectLabelActionState extends SceneObjectState {
+  labelName: string;
+}
+export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
+  public onClick = () => {
+    getBreakdownSceneFor(this).onChange(this.state.labelName);
+  };
+
+  public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
+    return (
+      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+        Select
+      </Button>
+    );
+  };
+}
+
+function getBreakdownSceneFor(model: SceneObject): BreakdownScene {
+  if (model instanceof BreakdownScene) {
+    return model;
+  }
+
+  if (model.parent) {
+    return getBreakdownSceneFor(model.parent);
+  }
+
+  throw new Error('Unable to find breakdown scene');
 }

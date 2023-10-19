@@ -3,6 +3,7 @@ import { getUrlSyncManager, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsApp } from './DataTrailsApp';
+import { MetricScene } from './MetricScene';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   if (model instanceof DataTrail) {
@@ -42,4 +43,18 @@ export function newEmptyTrail(): DataTrail {
 export function getUrlForTrail(trail: DataTrail) {
   const params = getUrlSyncManager().getUrlState(trail);
   return urlUtil.renderUrl('/data-trails/trail', params);
+}
+
+export function getMetricSceneFor(model: SceneObject): MetricScene {
+  if (model instanceof MetricScene) {
+    return model;
+  }
+
+  if (model.parent) {
+    return getMetricSceneFor(model.parent);
+  }
+
+  console.error('Unable to find graph view for', model);
+
+  throw new Error('Unable to find trail');
 }
