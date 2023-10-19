@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
 type ExtSvcAccountsService struct {
@@ -23,7 +24,7 @@ type ExtSvcAccountsService struct {
 	skvStore kvstore.SecretsKVStore
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc *manager.ServiceAccountsService, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	return &ExtSvcAccountsService{
 		acSvc:    acSvc,
