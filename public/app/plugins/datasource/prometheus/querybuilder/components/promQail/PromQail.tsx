@@ -41,7 +41,7 @@ export const PromQail = (props: PromQailProps) => {
 
   const scrollToBottom = () => {
     if (responsesEndRef) {
-      // @ts-ignore
+      // @ts-ignore for React.MutableRefObject
       responsesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -315,7 +315,9 @@ export const PromQail = (props: PromQailProps) => {
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
                           queryExplain={(suggIdx: number) =>
-                            interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
+                            interaction.suggestions[suggIdx].explanation === ''
+                              ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                              : interaction.suggestions[suggIdx].explanation
                           }
                           onChange={onChange}
                           prompt={interaction.prompt ?? ''}
@@ -340,8 +342,10 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
-                      queryExplain={(suggIdx: number) => 
-                        interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
+                      queryExplain={(suggIdx: number) =>
+                        interaction.suggestions[suggIdx].explanation === ''
+                          ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                          : interaction.suggestions[suggIdx].explanation
                       }
                       onChange={onChange}
                       prompt={interaction.prompt ?? ''}

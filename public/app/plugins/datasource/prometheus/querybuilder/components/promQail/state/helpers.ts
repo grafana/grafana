@@ -150,9 +150,10 @@ export async function promQailSuggest(
   query: PromVisualQuery,
   labelNames: string[],
   datasource: PrometheusDatasource,
-  interaction?: Interaction,
+  interaction?: Interaction
 ) {
   // when you're not running promqail
+  // @ts-ignore llms types issue
   const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
 
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
@@ -162,10 +163,10 @@ export async function promQailSuggest(
       return setTimeout(() => {
         let metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!) ?? '';
         const suggestions = getTemplateSuggestions(
-          query.metric, 
+          query.metric,
           metricType,
           promQueryModeller.renderLabels(query.labels)
-        )
+        );
 
         const payload = {
           idx,
@@ -187,11 +188,13 @@ export async function promQailSuggest(
       labels: promQueryModeller.renderLabels(query.labels),
     };
 
+    // @ts-ignore llms types issue
     let results: Array<llms.vector.SearchResult<TemplateSearchResult>> = [];
     if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
 
       // TODO: filter by metric type
+      // @ts-ignore llms types issue
       results = await llms.vector.search<TemplateSearchResult>({
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
