@@ -207,7 +207,7 @@ By setting the width of the axis, data with different axes types can share the s
 
 Set the axis grid line visibility.
 
-- **Auto:** Automatically shows grid lines based on the density of the data.
+- **Auto:** Automatically show grid lines based on the density of the data.
 - **On:** Always show grid lines.
 - **Off:** Never show grid lines.
 
