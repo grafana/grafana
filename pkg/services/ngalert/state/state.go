@@ -268,7 +268,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.StateReason = "error"
+		state.StateReason = models.StateReasonError
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
@@ -326,7 +326,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.Alerting:
 		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
 		resultAlerting(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	case models.NoData:
 		if state.State == eval.NoData {
 			prevEndsAt := state.EndsAt
@@ -355,7 +355,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.OK:
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
 		resultNormal(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
