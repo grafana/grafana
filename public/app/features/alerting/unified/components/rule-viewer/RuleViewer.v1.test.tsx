@@ -68,9 +68,7 @@ const ui = {
   loadingIndicator: byText(/Loading rule/i),
 };
 
-const renderRuleViewer = async (ruleId: string) => {
-  locationService.push(`/alerting/grafana/${ruleId}/view`);
-
+const renderRuleViewer = async (ruleId?: string) => {
   render(
     <TestProvider>
       <RuleViewer {...mockRoute(ruleId)} />
@@ -155,7 +153,7 @@ describe('RuleViewer', () => {
 
   it('should render page with grafana alert', async () => {
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-    await renderRuleViewer('test1');
+    await renderRuleViewer();
 
     expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
@@ -197,7 +195,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer('test1');
+      await renderRuleViewer();
 
       // Assert
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
@@ -236,7 +234,7 @@ describe('RuleDetails RBAC', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
-      await renderRuleViewer('test1');
+      await renderRuleViewer();
 
       // Assert
       await waitFor(() => {
@@ -258,7 +256,7 @@ describe('RuleDetails RBAC', () => {
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
 
       // Act
-      await renderRuleViewer('test1');
+      await renderRuleViewer();
 
       // Assert
       await waitFor(() => {
@@ -323,7 +321,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer('test1');
+      await renderRuleViewer();
 
       // Assert
       expect(ui.actionButtons.edit.query()).toBeInTheDocument();
