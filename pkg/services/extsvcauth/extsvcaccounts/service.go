@@ -14,20 +14,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
 	logger   log.Logger
+	metrics  *metrics
 	saSvc    sa.Service
 	skvStore kvstore.SecretsKVStore
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc sa.Service, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, db db.DB, reg prometheus.Registerer, saSvc sa.Service, secretsSvc secrets.Service) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	return &ExtSvcAccountsService{
 		acSvc:    acSvc,
 		logger:   logger,
+		metrics:  newMetrics(reg),
 		saSvc:    saSvc,
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
@@ -110,6 +113,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 					"error", err.Error())
 				return 0, err
 			}
+			esa.metrics.extSvcAccDelCount.Inc()
 		}
 		esa.logger.Info("Skipping service account creation",
 			"service", cmd.ExtSvcSlug,
@@ -129,6 +133,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		esa.logger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
 		return 0, errSave
 	}
+	esa.metrics.extSvcAccSavedCount.Inc()
 
 	return saID, nil
 }
