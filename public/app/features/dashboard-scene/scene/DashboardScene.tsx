@@ -14,8 +14,9 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardMeta } from 'app/types';
+import { AccessControlAction, DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
@@ -253,6 +254,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   canEditDashboard() {
     const { meta } = this.state;
 
-    return Boolean(meta.canEdit || meta.canMakeEditable);
+    return (
+      contextSrv.hasPermission(AccessControlAction.DashboardsWrite) && Boolean(meta.canEdit || meta.canMakeEditable)
+    );
   }
 }
