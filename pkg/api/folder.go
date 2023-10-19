@@ -177,7 +177,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	var userID int64
 
 	namespace, id := user.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
 		var errID error
 		userID, errID = identity.IntIdentifier(namespace, id)
 		if errID != nil {

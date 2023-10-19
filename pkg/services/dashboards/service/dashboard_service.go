@@ -493,7 +493,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		return err
 	}
 
-	if !provisioned && namespaceID == identity.NamespaceUser {
+	if !provisioned && (namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount) {
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 		})
