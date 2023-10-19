@@ -149,4 +149,5 @@ export interface FeatureToggles {
   pluginsInstrumentationStatusSource?: boolean;
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
 }
