@@ -26,7 +26,7 @@ import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
-import { SpanLinkType } from '../../types/links';
+import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { TopOfViewRefType } from '../VirtualizedTraceView';
@@ -241,46 +241,52 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   const styles = useStyles2(getStyles);
 
-  const createLinkButton = (type: SpanLinkType, title: string, icon: IconName) => {
-    if (createSpanLink) {
-      const links = createSpanLink(span);
-      const link = links?.filter((link) => link.type === type);
-      if (links && link && link.length > 0) {
-        return (
-          <DataLinkButton
-            link={{
-              ...link[0],
-              title: title,
-              target: '_blank',
-              origin: link[0].field,
-              onClick: (event: React.MouseEvent) => {
-                // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-                // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-                // this interaction will not be tracked with link right clicks
-                reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-                  datasourceType: datasourceType,
-                  grafana_version: config.buildInfo.version,
-                  type,
-                  location: 'spanDetails',
-                });
+  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
+    return (
+      <DataLinkButton
+        link={{
+          ...link,
+          title: title,
+          target: '_blank',
+          origin: link.field,
+          onClick: (event: React.MouseEvent) => {
+            // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+            // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+            // this interaction will not be tracked with link right clicks
+            reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+              datasourceType: datasourceType,
+              grafana_version: config.buildInfo.version,
+              type,
+              location: 'spanDetails',
+            });
 
-                if (link?.[0].onClick) {
-                  link?.[0].onClick?.(event);
-                } else {
-                  locationService.push(link?.[0].href);
-                }
-              },
-            }}
-            buttonProps={{ icon }}
-          />
-        );
-      }
-    }
-    return null;
+            if (link.onClick) {
+              link.onClick?.(event);
+            } else {
+              locationService.push(link.href);
+            }
+          },
+        }}
+        buttonProps={{ icon }}
+      />
+    );
   };
 
-  let logLinkButton = createLinkButton(SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
-  let profileLinkButton = createLinkButton(SpanLinkType.Profiles, 'Profiles for this span', 'link');
+  let logLinkButton: JSX.Element | null = null;
+  let profileLinkButton: JSX.Element | null = null;
+  if (createSpanLink) {
+    const links = createSpanLink(span);
+    const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
+    if (links && logsLink && logsLink.length > 0) {
+      logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
+    }
+    const profilesLink = links?.filter(
+      (link) => link.type === SpanLinkType.Profiles && link.title === 'Related profiles'
+    );
+    if (links && profilesLink && profilesLink.length > 0) {
+      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
+    }
+  }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
