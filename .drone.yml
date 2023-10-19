@@ -439,11 +439,6 @@ steps:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.20.10-alpine
   name: validate-modfile
-- commands:
-  - apk add --update make
-  - make swagger-validate
-  image: golang:1.20.10-alpine
-  name: validate-openapi-spec
 trigger:
   event:
   - pull_request
@@ -1628,11 +1623,6 @@ steps:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.20.10-alpine
   name: validate-modfile
-- commands:
-  - apk add --update make
-  - make swagger-validate
-  image: golang:1.20.10-alpine
-  name: validate-openapi-spec
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -4607,6 +4597,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a7032573772937b59787f5c01c113b02afb07a9febf15664a68cbcee1458acc9
+hmac: 6902e2345a71b70a8e051aa8caf053188deeb2bcaac1a92dae561a0d56653ffc
 
 ...
