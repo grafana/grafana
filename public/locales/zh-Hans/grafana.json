@@ -257,6 +257,7 @@
       "query-deleted": ""
     },
     "rich-history-queries-tab": {
+      "displaying-partial-queries": "",
       "displaying-queries": "",
       "filter-aria-label": "",
       "filter-history": "",
@@ -315,11 +316,11 @@
     },
     "secondary-actions": {
       "query-add-button": "",
+      "query-add-button-aria-label": "",
+      "query-history-button": "",
+      "query-history-button-aria-label": "",
       "query-inspector-button": "",
-      "queryadd-button-label": "",
-      "queryhistory-button": "",
-      "queryhistory-button-label": "",
-      "queryinspector-button-label": ""
+      "query-inspector-button-aria-label": ""
     }
   },
   "folder-picker": {

@@ -170,9 +170,16 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>
-            <Trans i18nKey="explore.rich-history-starred-tab.showing-queries">
-              Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
-            </Trans>
+            <Trans
+              i18nKey="explore.rich-history-starred-tab.showing-queries"
+              defaults="Showing {{ shown }} of {{ total }} <0>Load more</0>"
+              values={{ shown: queries.length, total: totalQueries }}
+              components={[
+                <Button onClick={loadMoreRichHistory} key="loadMoreButton">
+                  Load more
+                </Button>,
+              ]}
+            />
           </div>
         ) : null}
         <div className={styles.footer}>

@@ -35,7 +35,7 @@ export function SecondaryActions(props: Props) {
         {!props.addQueryRowButtonHidden && (
           <ToolbarButton
             variant="canvas"
-            aria-label={t('explore.secondary-actions.queryadd-button-label', 'Add query')}
+            aria-label={t('explore.secondary-actions.query-add-button-aria-label', 'Add query')}
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"
@@ -46,17 +46,17 @@ export function SecondaryActions(props: Props) {
         {!props.richHistoryRowButtonHidden && (
           <ToolbarButton
             variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
-            aria-label={t('explore.secondary-actions.queryhistory-button-label', 'Query history')}
+            aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
             onClick={props.onClickRichHistoryButton}
             data-testid={Components.QueryTab.queryHistoryButton}
             icon="history"
           >
-            <Trans i18nKey="explore.secondary-actions.queryhistory-button">Query history</Trans>
+            <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
           </ToolbarButton>
         )}
         <ToolbarButton
           variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
-          aria-label={t('explore.secondary-actions.queryinspector-button-label', 'Query inspector')}
+          aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >

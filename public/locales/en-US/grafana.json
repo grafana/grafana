@@ -262,7 +262,8 @@
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
-      "displaying-queries": "Displaying {{ count }} queries",
+      "displaying-partial-queries": "Displaying {{ count }} queries",
+      "displaying-queries": "{{ count }} queries",
       "filter-aria-label": "Filter queries for data sources(s)",
       "filter-history": "Filter history",
       "filter-placeholder": "Filter queries for data sources(s)",
@@ -301,7 +302,7 @@
       "loading-results": "Loading results...",
       "local-history-message": "The history is local to your browser and is not shared with others.",
       "search-queries-placeholder": "Search queries",
-      "showing-queries": "Showing {queries.length} of {totalQueries} <5>Load more</5>",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
       "sort-queries-aria-label": "Sort queries",
       "sort-queries-placeholder": "Sort queries by"
     },
@@ -320,11 +321,11 @@
     },
     "secondary-actions": {
       "query-add-button": "Add query",
+      "query-add-button-aria-label": "Add query",
+      "query-history-button": "Query history",
+      "query-history-button-aria-label": "Query history",
       "query-inspector-button": "Query inspector",
-      "queryadd-button-label": "Add query",
-      "queryhistory-button": "Query history",
-      "queryhistory-button-label": "Query history",
-      "queryinspector-button-label": "Query inspector"
+      "query-inspector-button-aria-label": "Query inspector"
     }
   },
   "folder-picker": {

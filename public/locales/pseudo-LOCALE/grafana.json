@@ -262,7 +262,8 @@
       "query-deleted": "Qūęřy đęľęŧęđ"
     },
     "rich-history-queries-tab": {
-      "displaying-queries": "Đįşpľäyįŉģ {{ count }} qūęřįęş",
+      "displaying-partial-queries": "Đįşpľäyįŉģ {{ count }} qūęřįęş",
+      "displaying-queries": "{{ count }} qūęřįęş",
       "filter-aria-label": "Fįľŧęř qūęřįęş ƒőř đäŧä şőūřčęş(ş)",
       "filter-history": "Fįľŧęř ĥįşŧőřy",
       "filter-placeholder": "Fįľŧęř qūęřįęş ƒőř đäŧä şőūřčęş(ş)",
@@ -301,7 +302,7 @@
       "loading-results": "Ŀőäđįŉģ řęşūľŧş...",
       "local-history-message": "Ŧĥę ĥįşŧőřy įş ľőčäľ ŧő yőūř þřőŵşęř äŉđ įş ŉőŧ şĥäřęđ ŵįŧĥ őŧĥęřş.",
       "search-queries-placeholder": "Ŝęäřčĥ qūęřįęş",
-      "showing-queries": "Ŝĥőŵįŉģ {qūęřįęş.ľęŉģŧĥ} őƒ {ŧőŧäľQūęřįęş} <5>Ŀőäđ mőřę</5>",
+      "showing-queries": "Ŝĥőŵįŉģ {{ shown }} őƒ {{ total }} <0>Ŀőäđ mőřę</0>",
       "sort-queries-aria-label": "Ŝőřŧ qūęřįęş",
       "sort-queries-placeholder": "Ŝőřŧ qūęřįęş þy"
     },
@@ -320,11 +321,11 @@
     },
     "secondary-actions": {
       "query-add-button": "Åđđ qūęřy",
+      "query-add-button-aria-label": "Åđđ qūęřy",
+      "query-history-button": "Qūęřy ĥįşŧőřy",
+      "query-history-button-aria-label": "Qūęřy ĥįşŧőřy",
       "query-inspector-button": "Qūęřy įŉşpęčŧőř",
-      "queryadd-button-label": "Åđđ qūęřy",
-      "queryhistory-button": "Qūęřy ĥįşŧőřy",
-      "queryhistory-button-label": "Qūęřy ĥįşŧőřy",
-      "queryinspector-button-label": "Qūęřy įŉşpęčŧőř"
+      "query-inspector-button-aria-label": "Qūęřy įŉşpęčŧőř"
     }
   },
   "folder-picker": {

@@ -248,14 +248,17 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                   <span className={styles.queries}>
                     {partialResults ? (
                       <Trans
-                        i18nKey="explore.rich-history-queries-tab.displaying-queries"
+                        i18nKey="explore.rich-history-queries-tab.displaying-partial-queries"
                         defaults="Displaying {{ count }} queries"
                         values={{ count: mappedQueriesToHeadings[heading].length }}
                       />
                     ) : (
-                      ''
+                      <Trans
+                        i18nKey="explore.rich-history-queries-tab.displaying-queries"
+                        defaults="{{ count }} queries"
+                        values={{ count: mappedQueriesToHeadings[heading].length }}
+                      />
                     )}
-                    {mappedQueriesToHeadings[heading].length} queries
                   </span>
                 </div>
                 {mappedQueriesToHeadings[heading].map((q) => {
