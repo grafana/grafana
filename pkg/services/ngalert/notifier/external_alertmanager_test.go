@@ -168,6 +168,61 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Equal(t, *silences[1].Status.State, "expired")
 }
 
+func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := externalAlertmanagerConfig{
+		URL:               amURL + "/alertmanager",
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     validConfig,
+	}
+	am, err := newExternalAlertmanager(cfg, 1)
+	require.NoError(t, err)
+
+	// We should have no alerts and no groups at first.
+	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 0, len(alerts))
+
+	alertGroups, err := am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 0, len(alertGroups))
+
+	// Let's create two active alerts and one expired one.
+	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
+	alert2 := genAlert(true, map[string]string{"test_2": "test_2"})
+	alert3 := genAlert(false, map[string]string{"test_3": "test_3"})
+	postableAlerts := apimodels.PostableAlerts{
+		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
+	}
+	err = am.PutAlerts(context.Background(), postableAlerts)
+	require.NoError(t, err)
+
+	// We should have two alerts and one group now.
+	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 2, len(alerts))
+
+	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(alertGroups))
+
+	// Filtering by `test_1=test_1` should return one alert.
+	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(alerts))
+}
+
 func genSilence(createdBy string) apimodels.PostableSilence {
 	starts := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
 	ends := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+10) * time.Second))
@@ -185,6 +240,23 @@ func genSilence(createdBy string) apimodels.PostableSilence {
 			Matchers:  matchers,
 			StartsAt:  &starts,
 			EndsAt:    &ends,
+		},
+	}
+}
+
+func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
+	endsAt := time.Now()
+	if active {
+		endsAt = time.Now().Add(1 * time.Minute)
+	}
+
+	return amv2.PostableAlert{
+		Annotations: amv2.LabelSet(map[string]string{"test_annotation": "test_annotation_value"}),
+		StartsAt:    strfmt.DateTime(time.Now()),
+		EndsAt:      strfmt.DateTime(endsAt),
+		Alert: amv2.Alert{
+			GeneratorURL: strfmt.URI("http://localhost:8080"),
+			Labels:       amv2.LabelSet(labels),
 		},
 	}
 }
