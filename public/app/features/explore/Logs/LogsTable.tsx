@@ -119,7 +119,6 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         return;
       }
 
-      // Tables currently only support one frame
       let dataFrame = logFrameRaw;
 
       const timeIndex = logsFrame?.timeField.index;
