@@ -79,7 +79,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
   return (
     <>
-      <InlineField label="Interval type" {...inlineFieldProps}>
+      <InlineField label="Interval type" {...inlineFieldProps} tooltip={"Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes."}>
           <Select
             inputId={uniqueId('es-date_histogram-interval-type')}
             options={intervalTypeOptions}
