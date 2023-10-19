@@ -7,6 +7,7 @@ import {
   DataFrame,
   ExploreLogsPanelState,
   GrafanaTheme2,
+  Labels,
   LogsSortOrder,
   SplitOpen,
   TimeRange,
@@ -55,9 +56,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
 
 export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
 type fieldName = string;
-type labelName = string;
-type labelValue = string;
-
 const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
   const largestFrameLength = dataFrames?.reduce((length, frame) => {
     return frame.length > length ? frame.length : length;
@@ -81,11 +79,16 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   >(undefined);
 
   const dataFrame = logsFrames[0];
-  const logsFrame = parseLogsFrame(dataFrame);
 
+  /**
+   * when the query results change, we need to update the columnsWithMeta state
+   * and reset any local search state
+   *
+   */
   useEffect(() => {
-    const labelsField = dataFrame ? dataFrame.fields.find((field) => field.name === 'labels') : undefined;
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
+    const logsFrame = parseLogsFrame(dataFrame);
+    const labels = logsFrame?.getAttributesAsLabels();
 
     const otherFields = logsFrame ? logsFrame.extraFields : [];
     if (logsFrame?.severityField) {
@@ -99,9 +102,9 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     let pendingLabelState: Record<fieldName, fieldNameMeta> = {};
 
     // If we have labels and log lines
-    if (labelsField?.values.length && numberOfLogLines) {
+    if (labels?.length && numberOfLogLines) {
       // Iterate through all of labels
-      labelsField?.values.forEach((labels: Array<Record<labelName, labelValue>>) => {
+      labels.forEach((labels: Labels) => {
         const labelsArray = Object.keys(labels);
         // Iterate through the labels
         labelsArray.forEach((label) => {
@@ -110,7 +113,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
             if (value) {
               // extra conditional to appease typescript, we know we have the value with has above? @todo there has to be a better pattern
               labelCardinality.set(label, {
-                percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
+                percentOfLinesWithLabel: (value.percentOfLinesWithLabel ?? 0) + 1,
                 active: value?.active,
               });
             }
@@ -126,7 +129,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       // Convert count to percent of log lines
       Object.keys(pendingLabelState).forEach((key) => {
         pendingLabelState[key].percentOfLinesWithLabel = normalize(
-          pendingLabelState[key].percentOfLinesWithLabel,
+          pendingLabelState[key].percentOfLinesWithLabel ?? 0,
           numberOfLogLines
         );
       });
@@ -153,8 +156,6 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
     setColumnsWithMeta(pendingLabelState);
     // Query changed, reset the local search state.
     setFilteredColumnsWithMeta(undefined);
-    // including dataFrame and logsFrame will cause infinite loop
-    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.datasourceType, dataFrame]);
 
   if (!columnsWithMeta) {
