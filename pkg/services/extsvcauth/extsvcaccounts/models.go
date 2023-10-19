@@ -3,13 +3,18 @@ package extsvcaccounts
 import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
-	extsvcPrefix = "extsvc-"
+	ExtsvcPrefix = "extsvc-"
 	kvStoreType  = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"
+)
+
+var (
+	ErrExtServiceAccountCannotBeDeleted = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
 )
 
 // Credentials represents the credentials associated to an external service

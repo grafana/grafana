@@ -2,9 +2,11 @@ package proxy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
@@ -35,6 +37,15 @@ func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID i
 }
 
 func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(sa.Login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtsvcPrefix) {
+		return extsvcaccounts.ErrExtServiceAccountCannotBeDeleted
+	}
+
 	return s.proxiedService.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
