@@ -24,10 +24,9 @@ type externalAlertmanager struct {
 	tenantID      string
 	orgID         int64
 	amClient      *amclient.AlertmanagerAPI
+	manager       *Manager
 	httpClient    *http.Client
 	defaultConfig string
-
-	manager *Manager
 }
 
 type externalAlertmanagerConfig struct {
@@ -69,10 +68,13 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	manager := NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&options{
+			queueCapacity: defaultMaxQueueCapacity,
+			registerer:    prometheus.NewRegistry(),
+			timeout:       defaultTimeout,
+		},
 		logger,
 		amClient.Alert,
-		defaultTimeout,
 	)
 
 	return &externalAlertmanager{
@@ -218,7 +220,7 @@ func (am *externalAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.
 	}
 
 	// TODO(santiago): is this really necessary?
-	as := make([]*Alert, 0, len(alerts.PostableAlerts))
+	as := make([]*alert, 0, len(alerts.PostableAlerts))
 	for _, a := range alerts.PostableAlerts {
 		na := am.alertToNotifierAlert(a)
 		as = append(as, na)
@@ -245,6 +247,7 @@ func (am *externalAlertmanager) TestTemplate(ctx context.Context, c apimodels.Te
 }
 
 func (am *externalAlertmanager) StopAndWait() {
+	am.manager.Stop()
 }
 
 func (am *externalAlertmanager) Ready() bool {

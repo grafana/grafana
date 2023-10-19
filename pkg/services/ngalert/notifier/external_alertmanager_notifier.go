@@ -44,7 +44,7 @@ const (
 )
 
 // Alert is a generic representation of an alert in the Prometheus eco-system.
-type Alert struct {
+type alert struct {
 	// Label value pairs for purpose of aggregation, matching, and disposition
 	// dispatching. This must minimally include an "alertname" label.
 	Labels labels.Labels `json:"labels"`
@@ -61,20 +61,17 @@ type Alert struct {
 // Manager is responsible for dispatching alert notifications to an
 // alert manager service.
 type Manager struct {
-	queue []*Alert
-	opts  *Options
-
+	logger  log.Logger
 	metrics *alertMetrics
+	opts    *options
+	timeout time.Duration
 
+	cancel func()
+	client postAlertsClient
+	ctx    context.Context
+	queue  []*alert
 	more   chan struct{}
 	mtx    sync.RWMutex
-	ctx    context.Context
-	cancel func()
-
-	logger log.Logger
-
-	client  postAlertsClient
-	timeout time.Duration
 }
 
 type postAlertsClient interface {
@@ -82,12 +79,12 @@ type postAlertsClient interface {
 }
 
 // Options are the configurable parameters of a Handler.
-type Options struct {
-	QueueCapacity  int
-	ExternalLabels labels.Labels
-	RelabelConfigs []*relabel.Config
-
-	Registerer prometheus.Registerer
+type options struct {
+	queueCapacity  int
+	externalLabels labels.Labels
+	relabelConfigs []*relabel.Config
+	registerer     prometheus.Registerer
+	timeout        time.Duration
 }
 
 type alertMetrics struct {
@@ -163,90 +160,88 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen func() floa
 	return m
 }
 
-func NewManager(o *Options, logger log.Logger, c postAlertsClient, timeout time.Duration) *Manager {
-	ctx, cancel := context.WithCancel(context.Background())
-
+func NewManager(o *options, logger log.Logger, c postAlertsClient) *Manager {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	n := &Manager{
-		queue:   make([]*Alert, 0, o.QueueCapacity),
+		queue:   make([]*alert, 0, o.queueCapacity),
 		ctx:     ctx,
 		cancel:  cancel,
 		more:    make(chan struct{}, 1),
 		opts:    o,
 		logger:  logger,
 		client:  c,
-		timeout: timeout,
+		timeout: o.timeout,
 	}
 
 	queueLenFunc := func() float64 { return float64(n.queueLen()) }
 
 	n.metrics = newAlertMetrics(
-		o.Registerer,
-		o.QueueCapacity,
+		o.registerer,
+		o.queueCapacity,
 		queueLenFunc,
 	)
 
 	return n
 }
 
-func (n *Manager) queueLen() int {
-	n.mtx.RLock()
-	defer n.mtx.RUnlock()
+func (m *Manager) queueLen() int {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 
-	return len(n.queue)
+	return len(m.queue)
 }
 
-func (n *Manager) nextBatch() []*Alert {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
+func (m *Manager) nextBatch() []*alert {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 
-	var alerts []*Alert
+	var alerts []*alert
 
-	if len(n.queue) > maxBatchSize {
-		alerts = append(make([]*Alert, 0, maxBatchSize), n.queue[:maxBatchSize]...)
-		n.queue = n.queue[maxBatchSize:]
+	if len(m.queue) > maxBatchSize {
+		alerts = append(make([]*alert, 0, maxBatchSize), m.queue[:maxBatchSize]...)
+		m.queue = m.queue[maxBatchSize:]
 	} else {
-		alerts = append(make([]*Alert, 0, len(n.queue)), n.queue...)
-		n.queue = n.queue[:0]
+		alerts = append(make([]*alert, 0, len(m.queue)), m.queue...)
+		m.queue = m.queue[:0]
 	}
 
 	return alerts
 }
 
 // Run dispatches notifications continuously.
-func (n *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) {
+func (m *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) {
 	for {
 		select {
-		case <-n.ctx.Done():
+		case <-m.ctx.Done():
 			return
-		case <-n.more:
-		}
-		alerts := n.nextBatch()
-
-		if err := n.send(alerts...); err != nil {
-			n.metrics.dropped.Add(float64(len(alerts)))
-		}
-		// If the queue still has items left, kick off the next iteration.
-		if n.queueLen() > 0 {
-			n.setMore()
+		case <-m.more:
+			alerts := m.nextBatch()
+			if err := m.send(alerts...); err != nil {
+				m.metrics.dropped.Add(float64(len(alerts)))
+			}
+			// If the queue still has items left, kick off the next iteration.
+			if m.queueLen() > 0 {
+				m.setMore()
+			}
 		}
 	}
 }
 
 // Send queues the given notification requests for processing.
 // Panics if called on a handler that is not running.
-func (n *Manager) Send(alerts ...*Alert) {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
+func (m *Manager) Send(alerts ...*alert) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 
-	// Attach external labels before relabelling and sending.
+	// Attach external labels before relabeling and sending.
 	for _, a := range alerts {
 		lb := labels.NewBuilder(a.Labels)
 
-		n.opts.ExternalLabels.Range(func(l labels.Label) {
+		m.opts.externalLabels.Range(func(l labels.Label) {
 			if a.Labels.Get(l.Name) == "" {
 				lb.Set(l.Name, l.Value)
 			}
@@ -255,39 +250,39 @@ func (n *Manager) Send(alerts ...*Alert) {
 		a.Labels = lb.Labels(a.Labels)
 	}
 
-	alerts = n.relabelAlerts(alerts)
+	alerts = m.relabelAlerts(alerts)
 	if len(alerts) == 0 {
 		return
 	}
 
 	// Queue capacity should be significantly larger than a single alert
 	// batch could be.
-	if d := len(alerts) - n.opts.QueueCapacity; d > 0 {
+	if d := len(alerts) - m.opts.queueCapacity; d > 0 {
 		alerts = alerts[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
-		n.metrics.dropped.Add(float64(d))
+		level.Warn(m.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
+		m.metrics.dropped.Add(float64(d))
 	}
 
 	// If the queue is full, remove the oldest alerts in favor
 	// of newer ones.
-	if d := (len(n.queue) + len(alerts)) - n.opts.QueueCapacity; d > 0 {
-		n.queue = n.queue[d:]
+	if d := (len(m.queue) + len(alerts)) - m.opts.queueCapacity; d > 0 {
+		m.queue = m.queue[d:]
 
-		level.Warn(n.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
-		n.metrics.dropped.Add(float64(d))
+		level.Warn(m.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
+		m.metrics.dropped.Add(float64(d))
 	}
-	n.queue = append(n.queue, alerts...)
+	m.queue = append(m.queue, alerts...)
 
 	// Notify sending goroutine that there are alerts to be processed.
-	n.setMore()
+	m.setMore()
 }
 
-func (n *Manager) relabelAlerts(alerts []*Alert) []*Alert {
-	var relabeledAlerts []*Alert
+func (m *Manager) relabelAlerts(alerts []*alert) []*alert {
+	var relabeledAlerts []*alert
 
 	for _, alert := range alerts {
-		labels, keep := relabel.Process(alert.Labels, n.opts.RelabelConfigs...)
+		labels, keep := relabel.Process(alert.Labels, m.opts.relabelConfigs...)
 		if keep {
 			alert.Labels = labels
 			relabeledAlerts = append(relabeledAlerts, alert)
@@ -297,23 +292,21 @@ func (n *Manager) relabelAlerts(alerts []*Alert) []*Alert {
 }
 
 // setMore signals that the alert queue has items.
-func (n *Manager) setMore() {
+func (m *Manager) setMore() {
 	// If we cannot send on the channel, it means the signal already exists
 	// and has not been consumed yet.
 	select {
-	case n.more <- struct{}{}:
+	case m.more <- struct{}{}:
 	default:
 	}
 }
 
-// NOTE(santiago): necessary?
-func alertsToOpenAPIAlerts(alerts []*Alert) models.PostableAlerts {
+func alertsToOpenAPIAlerts(alerts []*alert) models.PostableAlerts {
 	openAPIAlerts := models.PostableAlerts{}
 	for _, a := range alerts {
 		start := strfmt.DateTime(a.StartsAt)
 		end := strfmt.DateTime(a.EndsAt)
 		openAPIAlerts = append(openAPIAlerts, &models.PostableAlert{
-			// NOTE(santiago): use
 			Annotations: labelsToOpenAPILabelSet(a.Annotations),
 			EndsAt:      end,
 			StartsAt:    start,
@@ -337,12 +330,12 @@ func labelsToOpenAPILabelSet(modelLabelSet labels.Labels) models.LabelSet {
 }
 
 // Stop shuts down the notification handler.
-func (n *Manager) Stop() {
-	level.Info(n.logger).Log("msg", "Stopping notification manager...")
-	n.cancel()
+func (m *Manager) Stop() {
+	level.Info(m.logger).Log("msg", "Stopping notification manager...")
+	m.cancel()
 }
 
-func (m *Manager) send(alerts ...*Alert) error {
+func (m *Manager) send(alerts ...*alert) error {
 	if len(alerts) == 0 {
 		return nil
 	}

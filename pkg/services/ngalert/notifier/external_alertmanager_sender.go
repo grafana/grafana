@@ -19,14 +19,14 @@ const (
 )
 
 // TODO(santiago): check restrictions on labels and annotations
-func (am *externalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
+func (am *externalAlertmanager) alertToNotifierAlert(a models.PostableAlert) *alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
-	return &Alert{
-		Labels:       am.sanitizeLabelSet(alert.Alert.Labels),
-		Annotations:  am.sanitizeLabelSet(alert.Annotations),
-		StartsAt:     time.Time(alert.StartsAt),
-		EndsAt:       time.Time(alert.EndsAt),
-		GeneratorURL: alert.Alert.GeneratorURL.String(),
+	return &alert{
+		Labels:       am.sanitizeLabelSet(a.Alert.Labels),
+		Annotations:  am.sanitizeLabelSet(a.Annotations),
+		StartsAt:     time.Time(a.StartsAt),
+		EndsAt:       time.Time(a.EndsAt),
+		GeneratorURL: a.Alert.GeneratorURL.String(),
 	}
 }
 
