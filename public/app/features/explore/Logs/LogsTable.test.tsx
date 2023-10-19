@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { LogsTable } from './LogsTable';
+import { getMockElasticFrame } from './utils/testMocks';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -17,44 +18,6 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
-
-function getElasticFrame(timestamp: number): DataFrame {
-  return {
-    fields: [
-      {
-        name: '@timestamp',
-        type: FieldType.time,
-        values: [timestamp, timestamp + 1000, timestamp + 2000],
-        config: {},
-      },
-      {
-        name: 'line',
-        type: FieldType.string,
-        values: ['log message 1', 'log message 2', 'log message 3'],
-        config: {},
-      },
-      {
-        name: 'counter',
-        type: FieldType.string,
-        values: ['1', '2', '3'],
-        config: {},
-      },
-      {
-        name: 'level',
-        type: FieldType.string,
-        values: ['info', 'info', 'info'],
-        config: {},
-      },
-      {
-        name: 'id',
-        type: FieldType.string,
-        values: ['1', '2', '3'],
-        config: {},
-      },
-    ],
-    length: 3,
-  };
-}
 
 describe('LogsTable', () => {
   beforeAll(() => {
@@ -170,7 +133,7 @@ describe('LogsTable', () => {
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
       datasourceType: 'elastic',
-      logsFrames: [getElasticFrame(1697732037084)],
+      logsFrames: [getMockElasticFrame()],
     });
 
     await waitFor(() => {

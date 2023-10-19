@@ -48,27 +48,39 @@ export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
   return { ...testDataFrame, ...override };
 };
 
-export const getMockElasticFrame = (override?: Partial<DataFrame>) => {
+export const getMockElasticFrame = (override?: Partial<DataFrame>, timestamp = 1697732037084) => {
   const testDataFrame: DataFrame = {
     meta: {},
     fields: [
       {
-        config: {},
         name: '@timestamp',
         type: FieldType.time,
-        values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
+        values: [timestamp, timestamp + 1000, timestamp + 2000],
+        config: {},
       },
       {
-        config: {},
         name: 'line',
         type: FieldType.string,
         values: ['log message 1', 'log message 2', 'log message 3'],
+        config: {},
       },
       {
-        config: {},
-        name: 'tsNs',
+        name: 'counter',
         type: FieldType.string,
-        values: ['1697561006608165746', '1697560998869868000', '1697561010006578474'],
+        values: ['1', '2', '3'],
+        config: {},
+      },
+      {
+        name: 'level',
+        type: FieldType.string,
+        values: ['info', 'info', 'info'],
+        config: {},
+      },
+      {
+        name: 'id',
+        type: FieldType.string,
+        values: ['1', '2', '3'],
+        config: {},
       },
     ],
     length: 3,

@@ -184,7 +184,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  //
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
