@@ -41,7 +41,6 @@ type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
 export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
   const { logsFrames } = props;
-  console.log('logsFrames', logsFrames);
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = React.useState<fieldNameMetaStore | undefined>(undefined);
 
