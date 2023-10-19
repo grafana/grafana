@@ -60,12 +60,17 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 }
 
 func transformRows(rows []models.Row, query models.Query) data.Frames {
-	// pre-allocate frames - this can save many allocations
-	cols := 0
-	for _, row := range rows {
-		cols += len(row.Columns)
-	}
-	frames := make([]*data.Frame, 0, len(rows)+cols)
+	const timeColumn = "time"
+	const timeColumnName = "Time"
+	const valueColumnName = "Value"
+
+	// Preallocate for the worst-case scenario
+	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
+
+	var timeArray []time.Time
+	var floatArray []*float64
+	var stringArray []*string
+	var boolArray []*bool
 
 	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
@@ -73,9 +78,11 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 
 	for _, row := range rows {
 		var hasTimeCol = false
+		lowerCasedColumns := make([]string, len(row.Columns))
 
-		for _, column := range row.Columns {
-			if strings.ToLower(column) == "time" {
+		for i, column := range row.Columns {
+			lowerCasedColumns[i] = strings.ToLower(column)
+			if !hasTimeCol && lowerCasedColumns[i] == timeColumn {
 				hasTimeCol = true
 			}
 		}
@@ -85,24 +92,25 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
-				if column == "time" {
+				if column == timeColumn {
 					continue
 				}
 
-				var timeArray []time.Time
-				var floatArray []*float64
-				var stringArray []*string
-				var boolArray []*bool
+				timeArray = timeArray[:0]
+				floatArray = floatArray[:0]
+				stringArray = stringArray[:0]
+				boolArray = boolArray[:0]
+
 				valType := typeof(row.Values, colIndex)
 
 				for _, valuePair := range row.Values {
 					timestamp, timestampErr := parseTimestamp(valuePair[0])
-					// we only add this row if the timestamp is valid
 					if timestampErr != nil {
 						continue
 					}
 
 					timeArray = append(timeArray, timestamp)
+
 					switch valType {
 					case "string":
 						value, ok := valuePair[colIndex].(string)
@@ -126,19 +134,19 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 					}
 				}
 
-				timeField := data.NewField("Time", nil, timeArray)
+				timeField := data.NewField(timeColumnName, nil, timeArray)
 
 				var valueField *data.Field
 
 				switch valType {
 				case "string":
-					valueField = data.NewField("Value", row.Tags, stringArray)
+					valueField = data.NewField(valueColumnName, row.Tags, stringArray)
 				case "json.Number":
-					valueField = data.NewField("Value", row.Tags, floatArray)
+					valueField = data.NewField(valueColumnName, row.Tags, floatArray)
 				case "bool":
-					valueField = data.NewField("Value", row.Tags, boolArray)
+					valueField = data.NewField(valueColumnName, row.Tags, boolArray)
 				case "null":
-					valueField = data.NewField("Value", row.Tags, floatArray)
+					valueField = data.NewField(valueColumnName, row.Tags, floatArray)
 				}
 
 				name := string(formatFrameName(row, column, query, frameName[:]))
