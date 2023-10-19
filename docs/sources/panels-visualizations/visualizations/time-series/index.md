@@ -178,6 +178,10 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 Options under the axis category change how the X and Y axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
+### Time zone
+
+Set the desired time zone(s) to display along the X-axis.
+
 ### Placement
 
 Select the placement of the Y-axis.
@@ -199,6 +203,37 @@ Set a fixed width of the axis. By default, Grafana dynamically calculates the wi
 
 By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.
 
+### Show grid lines
+
+Set the axis grid line visibility.
+
+- **Auto:** Automatically shows grid lines based on the density of the data.
+- **On:** Always show grid lines.
+- **Off:** Never show grid lines.
+
+### Color
+
+Set the color of the axis
+
+- **Text:** Set the color based on theme text color.
+- **Series:** Set the color based on the series color.
+
+### Show border
+
+Set the axis border visibility.
+
+### Scale
+
+Set the Y-axis values scale.
+
+- **Linear:** Divides the scale into equal parts.
+- **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
+- **Symlog:** Use a symmetrical logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale. The linear threshold option allows you to set the threshold at which the scale changes from linear to logarithmic.
+
+### Centered zero
+
+Set the Y-axis to be centered on zero.
+
 ### Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
@@ -208,13 +243,6 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options][].
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
-
-### Scale
-
-Set the Y-axis values scale.
-
-- **Linear:** Divides the scale into equal parts.
-- **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
 
 ### Transform
 
