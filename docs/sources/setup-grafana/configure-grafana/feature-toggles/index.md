@@ -154,6 +154,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                                                                                                                                                                                                 |
 | `costManagementUi`                          | Toggles the display of the cost management ui plugin                                                                                                                                                                                                                              |
 | `managedPluginsInstall`                     | Install managed plugins directly from plugins catalog                                                                                                                                                                                                                             |
+| `prometheusPromQAIL`                        | Prometheus and AI/ML to assist users in creating a query                                                                                                                                                                                                                          |
 
 ## Development feature toggles
 
