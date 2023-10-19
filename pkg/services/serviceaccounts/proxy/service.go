@@ -53,7 +53,14 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 }
 
 func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	sa.IsExternal = isExternalServiceAccount(sa.Login)
+
+	return sa, nil
 }
 
 func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {

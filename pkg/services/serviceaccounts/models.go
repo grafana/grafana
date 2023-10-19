@@ -150,7 +150,10 @@ type ServiceAccountProfileDTO struct {
 	// example: Editor
 	Role string `json:"role" xorm:"role"`
 	// example: []
-	Teams         []string        `json:"teams" xorm:"-"`
+	Teams []string `json:"teams" xorm:"-"`
+	// example: false
+	IsExternal bool
+
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
