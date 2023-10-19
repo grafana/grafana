@@ -88,8 +88,62 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 				if column == "time" {
 					continue
 				}
-				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
-				frames = append(frames, newFrame)
+
+				var timeArray []time.Time
+				var floatArray []*float64
+				var stringArray []*string
+				var boolArray []*bool
+				valType := typeof(row.Values, colIndex)
+
+				for _, valuePair := range row.Values {
+					timestamp, timestampErr := parseTimestamp(valuePair[0])
+					// we only add this row if the timestamp is valid
+					if timestampErr != nil {
+						continue
+					}
+
+					timeArray = append(timeArray, timestamp)
+					switch valType {
+					case "string":
+						value, ok := valuePair[colIndex].(string)
+						if ok {
+							stringArray = append(stringArray, &value)
+						} else {
+							stringArray = append(stringArray, nil)
+						}
+					case "json.Number":
+						value := parseNumber(valuePair[colIndex])
+						floatArray = append(floatArray, value)
+					case "bool":
+						value, ok := valuePair[colIndex].(bool)
+						if ok {
+							boolArray = append(boolArray, &value)
+						} else {
+							boolArray = append(boolArray, nil)
+						}
+					case "null":
+						floatArray = append(floatArray, nil)
+					}
+				}
+
+				timeField := data.NewField("Time", nil, timeArray)
+
+				var valueField *data.Field
+
+				switch valType {
+				case "string":
+					valueField = data.NewField("Value", row.Tags, stringArray)
+				case "json.Number":
+					valueField = data.NewField("Value", row.Tags, floatArray)
+				case "bool":
+					valueField = data.NewField("Value", row.Tags, boolArray)
+				case "null":
+					valueField = data.NewField("Value", row.Tags, floatArray)
+				}
+
+				name := string(formatFrameName(row, column, query, frameName[:]))
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 			}
 		}
 	}
