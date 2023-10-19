@@ -174,6 +174,9 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 	vars := []string{
 		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
 		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", s.cfg.Tracing.OpenTelemetry.Sampler),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
