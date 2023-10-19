@@ -90,6 +90,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
           >
             <div
               className="css-1j2891d-Icon"
+              role="img"
             />
           </div>
         </div>
