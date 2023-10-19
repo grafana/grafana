@@ -1359,9 +1359,9 @@ describe('addAdhocFilters', () => {
     });
 
     it('should not fail if the filter value is a number', () => {
-      // @ts-expect-error
       jest
         .mocked(templateSrvMock.getAdhocFilters)
+        // @ts-expect-error
         .mockReturnValue([{ key: 'key', operator: '=', value: 1, condition: '' }]);
       expect(ds.addAdHocFilters('')).toBe('key:"1"');
     });
