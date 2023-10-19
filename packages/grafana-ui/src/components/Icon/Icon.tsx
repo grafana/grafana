@@ -46,10 +46,6 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
       console.warn('Icon component passed an invalid icon name', name);
     }
 
-    if (!name || name.includes('..')) {
-      return <div>invalid icon name</div>;
-    }
-
     const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
