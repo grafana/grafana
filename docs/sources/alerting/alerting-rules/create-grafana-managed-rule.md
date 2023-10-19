@@ -196,6 +196,16 @@ An alert instance is considered stale if its dimension or series has disappeared
 
 Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
 
+### Create alert from any panel
+
+You can create an alert from any panel type. That means you will be able to re-use the queries in this panel and create a new alert based on these qeries.
+
+1. Navigate to your desired dashboard in the **Dashboards** section.
+2. In the top right corner of the panel, click on the three dots (ellipses).
+3. From the dropdown menu, select **More...** and then choose **Create alert**.
+
+This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
+
 {{% docs/reference %}}
 [add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
