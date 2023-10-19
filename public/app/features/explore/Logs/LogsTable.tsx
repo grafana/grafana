@@ -16,11 +16,11 @@ import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { separateVisibleFields } from 'app/features/logs/components/logParser';
-import { parseLogsFrame } from 'app/features/logs/logsFrame';
+import { LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { ELASTIC_TABLE_SPECIAL_FIELDS, fieldNameMeta, LOKI_TABLE_SPECIAL_FIELDS } from './LogsTableWrap';
+import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   logsFrames?: DataFrame[];
@@ -36,24 +36,17 @@ interface Props {
   datasourceType?: string;
 }
 
-const isFieldFilterable = (field: Field, datasourceType?: string) => {
-  if (field.config.links && field.config.links.length > 0) {
-    // If we have derived fields (links) we don't want to filter on them?
-    // But wait, with correlations anything can be a link?
-    // I think we need a better way of determining when a field is synthetic/derived
+const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
+  if (!logsFrame) {
     return false;
   }
-
-  if (datasourceType === 'loki') {
-    // Special fields are also not filterable
-    if (LOKI_TABLE_SPECIAL_FIELDS.includes(field.name)) {
-      return false;
-    }
-  } else if (datasourceType === 'elasticsearch') {
-    if (ELASTIC_TABLE_SPECIAL_FIELDS.includes(field.name)) {
-      return false;
-    }
+  if (logsFrame.bodyField.name === field.name) {
+    return false;
   }
+  if (logsFrame.timeField.name === field.name) {
+    return false;
+  }
+  // @todo not currently excluding derived fields from filtering
 
   return true;
 };
@@ -62,13 +55,14 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
-  // Can't convert the dataFrame fields to a string easily because the contain circular references, using the time values,
+  // Only a single frame (query) is supported currently
   const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
 
-  // Prepare field overrides specific to the table context
+  // Parse the dataframe to a logFrame
+  const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
+
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
-      const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
@@ -103,13 +97,15 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
-          filterable: isFieldFilterable(field, props.datasourceType),
+          filterable: isFieldFilterable(field, logsFrame ?? undefined),
         };
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, range, splitOpen, timeZone, props.datasourceType]
+    // We dont want to re-render whenever the splitOpen function changes, so it's being purposefully excluded from the deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [logsSortOrder, timeZone, props.datasourceType, range]
   );
 
   /**
@@ -118,7 +114,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
    */
   useEffect(() => {
     const prepare = async () => {
-      if (!logFrameRaw) {
+      if (!logFrameRaw || !logsFrame) {
         setTableFrame(undefined);
         return;
       }
@@ -126,8 +122,6 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       // Tables currently only support one frame
       let dataFrame = logFrameRaw;
 
-      // Parse into log frame
-      const logsFrame = parseLogsFrame(dataFrame);
       const timeIndex = logsFrame?.timeField.index;
       dataFrame = sortDataFrame(dataFrame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
@@ -181,7 +175,39 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
           labelFilters[key] = true;
         });
 
-      // Add one transform to remove the fields that are not currently selected
+      // We could be getting fresh data
+      const uniqueLabels = new Set<string>();
+      const logFrameLabels = logsFrame?.getAttributesAsLabels();
+
+      // Populate the set with all labels from latest dataframe
+      logFrameLabels?.forEach((labels) => {
+        Object.keys(labels).forEach((label) => {
+          uniqueLabels.add(label);
+        });
+      });
+
+      const stuffWeAdded: string[] = [];
+
+      // Check if there are labels in the data, that aren't yet in the labelFilters, and set them to be hidden by the transform
+      Object.keys(labelFilters).forEach((label) => {
+        if (!uniqueLabels.has(label)) {
+          labelFilters[label] = true;
+          stuffWeAdded.push(label);
+        }
+      });
+
+      // Check if there are labels in the label filters that aren't yet in the data, and set those to also be hidden
+      // The next time the column filters are synced any extras will be removed
+      Array.from(uniqueLabels).forEach((label) => {
+        if (label in columnsWithMeta && !columnsWithMeta[label]?.active) {
+          labelFilters[label] = true;
+          stuffWeAdded.push(label);
+        } else if (!labelFilters[label] && !(label in columnsWithMeta)) {
+          labelFilters[label] = true;
+        }
+      });
+
+      // Add one transform to remove everything we added above
       if (Object.keys(labelFilters).length > 0) {
         transformations.push({
           id: 'organize',
@@ -201,13 +227,11 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
     };
     prepare();
 
-    // This is messy, the user can change the columns which changes the resulting dataFrame
-    // the query result can also change, which also changes the data frame
-
-    // Right now if the user changes the query, and it returns a different list of labels, the table will not have the transforms defined
-    // as we hit a race condition between the query result and the react application updating the new column filters
-    // This causes the table to briefly render columns that are not selected (before the next subsequent render)
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame, props.datasourceType]);
+    // This is messy: this is triggered either by user action of adding/removing columns, or from the dataframe (query result) changing
+    // We have to be careful and make sure not to assume that the columnsWithMeta is "recent", it is also updated when the dataframe changes, but it doesn't always happen first!
+    // Also if you add both the logFrame and the logFrameRaw as dependencies it will cause an infinite re-render: adding the eslint ignore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, props.datasourceType, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
