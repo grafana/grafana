@@ -988,7 +988,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Item"
+                "$ref": "#/components/schemas/PlaylistItemDTO"
               },
               "type": "array"
             }
@@ -1000,7 +1000,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
             }
           }
         },
@@ -1286,6 +1286,24 @@
         },
         "description": "InternalServerError is a general error indicating something went wrong internally."
       },
+      "jwksResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "keys": {
+                  "items": {
+                    "$ref": "#/components/schemas/JSONWebKey"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listBuiltinRolesResponse": {
         "content": {
           "application/json": {
@@ -1480,8 +1498,9 @@
               "properties": {
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
-                  "example": "1",
-                  "type": "string"
+                  "example": 1,
+                  "format": "int64",
+                  "type": "integer"
                 },
                 "status": {
                   "description": "Status status of the response.",
@@ -1773,7 +1792,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
             }
           }
         },
@@ -2451,7 +2470,7 @@
             "type": "string"
           },
           "relativeTimeRange": {
-            "$ref": "#/components/schemas/RelativeTimeRange"
+            "$ref": "#/components/schemas/RelativeTimeRangeExport"
           }
         },
         "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -2869,6 +2888,9 @@
           "for": {
             "type": "string"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -2878,6 +2900,16 @@
           "record": {
             "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "AttributeTypeAndValue": {
+        "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+        "properties": {
+          "Type": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {}
         },
         "type": "object"
       },
@@ -2999,6 +3031,247 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "Certificate": {
+        "properties": {
+          "AuthorityKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "BasicConstraintsValid": {
+            "description": "BasicConstraintsValid indicates whether IsCA, MaxPathLen,\nand MaxPathLenZero are valid.",
+            "type": "boolean"
+          },
+          "CRLDistributionPoints": {
+            "description": "CRL Distribution Points",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "DNSNames": {
+            "description": "Subject Alternate Name values. (Note that these values may not be valid\nif invalid values were contained within a parsed certificate. For\nexample, an element of DNSNames may not be a valid DNS domain name.)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "EmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "ExcludedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ExtKeyUsage"
+            },
+            "type": "array"
+          },
+          "Extensions": {
+            "description": "Extensions contains raw X.509 extensions. When parsing certificates,\nthis can be used to extract non-critical extensions that are not\nparsed by this package. When marshaling certificates, the Extensions\nfield is ignored, see ExtraExtensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "ExtraExtensions": {
+            "description": "ExtraExtensions contains extensions to be copied, raw, into any\nmarshaled certificates. Values override any extensions that would\notherwise be produced based on the other fields. The ExtraExtensions\nfield is not populated when parsing certificates, see Extensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "IPAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "IsCA": {
+            "type": "boolean"
+          },
+          "Issuer": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "IssuingCertificateURL": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "KeyUsage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          },
+          "MaxPathLen": {
+            "description": "MaxPathLen and MaxPathLenZero indicate the presence and\nvalue of the BasicConstraints' \"pathLenConstraint\".\n\nWhen parsing a certificate, a positive non-zero MaxPathLen\nmeans that the field was specified, -1 means it was unset,\nand MaxPathLenZero being true mean that the field was\nexplicitly set to zero. The case of MaxPathLen==0 with MaxPathLenZero==false\nshould be treated equivalent to -1 (unset).\n\nWhen generating a certificate, an unset pathLenConstraint\ncan be requested with either MaxPathLen == -1 or using the\nzero value for both MaxPathLen and MaxPathLenZero.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "MaxPathLenZero": {
+            "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
+            "type": "boolean"
+          },
+          "NotBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "OCSPServer": {
+            "description": "RFC 5280, 4.2.2.1 (Authority Information Access)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomainsCritical": {
+            "description": "Name constraints",
+            "type": "boolean"
+          },
+          "PermittedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "PermittedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PolicyIdentifiers": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "PublicKey": {},
+          "PublicKeyAlgorithm": {
+            "$ref": "#/components/schemas/PublicKeyAlgorithm"
+          },
+          "Raw": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawIssuer": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubject": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubjectPublicKeyInfo": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawTBSCertificate": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "Signature": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SignatureAlgorithm": {
+            "$ref": "#/components/schemas/SignatureAlgorithm"
+          },
+          "Subject": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "SubjectKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "URIs": {
+            "items": {
+              "$ref": "#/components/schemas/URL"
+            },
+            "type": "array"
+          },
+          "UnhandledCriticalExtensions": {
+            "description": "UnhandledCriticalExtensions contains a list of extension IDs that\nwere not (fully) processed when parsing. Verify will fail if this\nslice is non-empty, unless verification is delegated to an OS\nlibrary which understands all the critical extensions.\n\nUsers can access these extensions using Extensions and can remove\nelements from this slice if they believe that they have been\nhandled.",
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "UnknownExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "Version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "A Certificate represents an X.509 certificate.",
         "type": "object"
       },
       "ChangeUserPasswordCommand": {
@@ -4045,6 +4318,9 @@
             "description": "Error is a property to be set if the corresponding DataQuery has an error.",
             "type": "string"
           },
+          "ErrorSource": {
+            "$ref": "#/components/schemas/ErrorSource"
+          },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
           },
@@ -4505,6 +4781,10 @@
         ],
         "type": "object"
       },
+      "ErrorSource": {
+        "description": "ErrorSource type defines the source of the error",
+        "type": "string"
+      },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
         "type": "string"
@@ -4564,6 +4844,12 @@
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
+      "ExtKeyUsage": {
+        "description": "Each of the ExtKeyUsage* constants define a unique action.",
+        "format": "int64",
+        "title": "ExtKeyUsage represents an extended set of actions that are valid for a given key.",
+        "type": "integer"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -4592,6 +4878,25 @@
           },
           "wechat_configs": {
             "$ref": "#/components/schemas/WechatConfig"
+          }
+        },
+        "type": "object"
+      },
+      "Extension": {
+        "description": "Extension represents the ASN.1 structure of the same name. See RFC\n5280, section 4.2.",
+        "properties": {
+          "Critical": {
+            "type": "boolean"
+          },
+          "Id": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -5075,6 +5380,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -5106,12 +5417,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -5167,6 +5472,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/GettableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -5615,6 +5923,27 @@
         "title": "HostPort represents a \"host:port\" network address.",
         "type": "object"
       },
+      "IPMask": {
+        "description": "See type IPNet and func ParseCIDR for details.",
+        "items": {
+          "format": "uint8",
+          "type": "integer"
+        },
+        "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
+        "type": "array"
+      },
+      "IPNet": {
+        "properties": {
+          "IP": {
+            "type": "string"
+          },
+          "Mask": {
+            "$ref": "#/components/schemas/IPMask"
+          }
+        },
+        "title": "An IPNet represents an IP network.",
+        "type": "object"
+      },
       "ImportDashboardInput": {
         "properties": {
           "name": {
@@ -5784,23 +6113,6 @@
         },
         "type": "object"
       },
-      "Item": {
-        "properties": {
-          "title": {
-            "description": "Title is an unused property -- it will be removed in the future",
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ItemType"
-          },
-          "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
-            "type": "string"
-          }
-        },
-        "title": "Item defines model for Item.",
-        "type": "object"
-      },
       "ItemDTO": {
         "properties": {
           "alertId": {
@@ -5875,12 +6187,60 @@
         },
         "type": "object"
       },
-      "ItemType": {
-        "title": "Type of the item.",
-        "type": "string"
+      "JSONWebKey": {
+        "properties": {
+          "Algorithm": {
+            "description": "Key algorithm, parsed from `alg` header.",
+            "type": "string"
+          },
+          "CertificateThumbprintSHA1": {
+            "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "CertificateThumbprintSHA256": {
+            "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Certificates": {
+            "description": "X.509 certificate chain, parsed from `x5c` header.",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "CertificatesURL": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "Key": {
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          },
+          "KeyID": {
+            "description": "Key identifier, parsed from `kid` header.",
+            "type": "string"
+          },
+          "Use": {
+            "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
+        "type": "object"
       },
       "Json": {
         "type": "object"
+      },
+      "KeyUsage": {
+        "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
+        "format": "int64",
+        "type": "integer"
       },
       "Label": {
         "properties": {
@@ -6352,6 +6712,47 @@
         },
         "type": "array"
       },
+      "Name": {
+        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+        "properties": {
+          "Country": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtraNames": {
+            "description": "ExtraNames contains attributes to be copied, raw, into any marshaled\ndistinguished names. Values override any attributes with the same OID.\nThe ExtraNames field is not populated when parsing, see Names.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "Locality": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "Names": {
+            "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "StreetAddress": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "NamespaceConfigResponse": {
         "additionalProperties": {
           "items": {
@@ -6536,6 +6937,14 @@
         },
         "title": "OAuth2 is the oauth2 client configuration.",
         "type": "object"
+      },
+      "ObjectIdentifier": {
+        "items": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
+        "type": "array"
       },
       "ObjectMatchers": {
         "$ref": "#/components/schemas/Matchers"
@@ -6983,6 +7392,30 @@
         },
         "type": "object"
       },
+      "PlaylistDTO": {
+        "properties": {
+          "interval": {
+            "description": "Interval sets the time between switching views in a playlist.",
+            "type": "string"
+          },
+          "items": {
+            "description": "The ordered list of items that the playlist will iterate over.",
+            "items": {
+              "$ref": "#/components/schemas/PlaylistItemDTO"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the playlist.",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PlaylistDashboard": {
         "properties": {
           "id": {
@@ -7035,6 +7468,23 @@
             "type": "string"
           },
           "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PlaylistItemDTO": {
+        "properties": {
+          "title": {
+            "description": "Title is an unused property -- it will be removed in the future",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of the item.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
@@ -7175,6 +7625,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -7206,12 +7662,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -7267,6 +7717,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/PostableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -7615,6 +8068,10 @@
         },
         "type": "object"
       },
+      "PublicKeyAlgorithm": {
+        "format": "int64",
+        "type": "integer"
+      },
       "PushoverConfig": {
         "properties": {
           "device": {
@@ -7651,6 +8108,9 @@
             "$ref": "#/components/schemas/Secret"
           },
           "token_file": {
+            "type": "string"
+          },
+          "ttl": {
             "type": "string"
           },
           "url": {
@@ -7892,6 +8352,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -7923,12 +8389,6 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "teams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -8042,6 +8502,19 @@
           },
           "to": {
             "$ref": "#/components/schemas/Duration"
+          }
+        },
+        "type": "object"
+      },
+      "RelativeTimeRangeExport": {
+        "properties": {
+          "from": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -8933,6 +9406,10 @@
           }
         },
         "type": "object"
+      },
+      "SignatureAlgorithm": {
+        "format": "int64",
+        "type": "integer"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -9899,6 +10376,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9934,7 +10412,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -10307,6 +10785,32 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRuleGroupResponse": {
+        "properties": {
+          "created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -10743,7 +11247,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10767,6 +11270,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -10927,14 +11431,12 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11170,6 +11672,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -18029,6 +18532,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
@@ -18114,6 +18620,9 @@
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"
@@ -21367,6 +21876,24 @@
         ]
       }
     },
+    "/signing-keys/keys": {
+      "get": {
+        "description": "Required permissions\nNone",
+        "operationId": "retrieveJWKS",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/jwksResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)",
+        "tags": [
+          "signing_keys"
+        ]
+      }
+    },
     "/snapshot/shared-options": {
       "get": {
         "operationId": "getSharingOptions",
@@ -21747,56 +22274,6 @@
           }
         },
         "summary": "Add External Group.",
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ]
-      }
-    },
-    "/teams/{teamId}/groups/{groupId}": {
-      "delete": {
-        "deprecated": true,
-        "operationId": "removeTeamGroupApi",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "groupId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "teamId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Remove External Group.",
         "tags": [
           "sync_team_groups",
           "enterprise"
