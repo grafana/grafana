@@ -79,3 +79,11 @@ func WithLabels(labels data.Labels) ResultMutator {
 		r.Instance = labels
 	}
 }
+
+type FakeLoadedMetricsReader struct {
+	fingerprints map[data.Fingerprint]struct{}
+}
+
+func (f FakeLoadedMetricsReader) Read() map[data.Fingerprint]struct{} {
+	return f.fingerprints
+}
