@@ -180,7 +180,7 @@ Options under the axis category change how the X and Y axes are rendered. Some o
 
 ### Time zone
 
-Set the desired time zone(s) to display along the X-axis.
+Set the desired time zone(s) to display along the x-axis.
 
 ### Placement
 
