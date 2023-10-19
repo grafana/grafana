@@ -176,7 +176,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ## Axis options
 
-Options under the axis category change how the X and Y axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
+Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
 ### Time zone
 
@@ -187,8 +187,8 @@ Set the desired time zone(s) to display along the x-axis.
 Select the placement of the y-axis.
 
 - **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
-- **Left:** Display all Y-axes on the left side.
-- **Right:** Display all Y-axes on the right side.
+- **Left:** Display all y-axes on the left side.
+- **Right:** Display all y-axes on the right side.
 - **Hidden:** Hide all axes.
 
 To selectively hide axes, [Add a field override][] that targets specific fields.
