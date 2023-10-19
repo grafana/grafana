@@ -131,7 +131,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{},
 	}
 
 	datasourcesWriterRole := ac.RoleRegistration{
