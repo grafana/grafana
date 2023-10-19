@@ -246,6 +246,10 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
+	children = append(children, &navtree.NavLink{
+		Text: "My teams", Id: "profile/teams", Url: s.cfg.AppSubURL + "/profile/teams", Icon: "users-alt",
+	})
+
 	if s.cfg.AddChangePasswordLink() {
 		children = append(children, &navtree.NavLink{
 			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",

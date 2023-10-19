@@ -150,6 +150,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.profile/notifications.title', 'Notification history');
     case 'profile/password':
       return t('nav.profile/password.title', 'Change password');
+    case 'profile/teams':
+      return t('nav.profile/teams.title', 'My teams');
     case 'sign-out':
       return t('nav.sign-out.title', 'Sign out');
     case 'search':

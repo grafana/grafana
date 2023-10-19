@@ -80,6 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/profile/", reqSignedInNoAnonymous, hs.Index)
 	r.Get("/profile/password", reqSignedInNoAnonymous, hs.Index)
+	r.Get("/profile/teams", reqSignedInNoAnonymous, hs.Index)
 	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", authorize(ac.OrgPreferencesAccessEvaluator), hs.Index)

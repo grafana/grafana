@@ -29,6 +29,13 @@ const teamsSlice = createSlice({
       const totalPages = Math.ceil(totalCount / perPage);
       return { ...state, ...rest, totalPages, perPage, hasFetched: true };
     },
+    userTeamsLoaded: (state, action: PayloadAction<Team[]>): TeamsState => {
+      const teams = [];
+      for (const key in action.payload) {
+        teams.push(action.payload[key]);
+      }
+      return { ...state, teams: teams, hasFetched: true };
+    },
     queryChanged: (state, action: PayloadAction<string>): TeamsState => {
       return { ...state, page: 1, query: action.payload };
     },
@@ -41,7 +48,7 @@ const teamsSlice = createSlice({
   },
 });
 
-export const { teamsLoaded, queryChanged, pageChanged, sortChanged } = teamsSlice.actions;
+export const { teamsLoaded, userTeamsLoaded, queryChanged, pageChanged, sortChanged } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 

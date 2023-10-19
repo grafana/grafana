@@ -16,6 +16,7 @@ import {
   teamMembersLoaded,
   teamsLoaded,
   sortChanged,
+  userTeamsLoaded,
 } from './reducers';
 
 export function loadTeams(initial = false): ThunkResult<void> {
@@ -40,6 +41,24 @@ export function loadTeams(initial = false): ThunkResult<void> {
     }
 
     dispatch(teamsLoaded({ noTeams, ...response }));
+  };
+}
+
+export function loadUsersTeams(initial = false): ThunkResult<void> {
+  return async (dispatch) => {
+    // Early return if the user cannot list teams
+    if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
+      let noTeams: Team[] = [];
+      dispatch(userTeamsLoaded(noTeams));
+      return;
+    }
+
+    const response = await getBackendSrv().get('/api/user/teams');
+    let noTeams = false;
+    if (initial) {
+      noTeams = response.length === 0;
+    }
+    dispatch(userTeamsLoaded({ noTeams, ...response }));
   };
 }
 

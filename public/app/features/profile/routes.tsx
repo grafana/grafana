@@ -29,6 +29,12 @@ const profileRoutes: RouteDescriptor[] = [
       () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
     ),
   },
+  {
+    path: '/profile/teams',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "UserTeamsPage"*/ 'app/features/teams/UserTeamsList')
+    ),
+  },
 ];
 
 export function getProfileRoutes(cfg = config): RouteDescriptor[] {
