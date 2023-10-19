@@ -6,8 +6,7 @@ import useMeasure from 'react-use/lib/useMeasure';
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 
-import { coloredMarkerId, Edge, highlightedEdgeColor, markerId, sFoo } from './Edge';
-import { EdgeArrowMarker } from './EdgeArrowMarker';
+import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
 import { Legend } from './Legend';
 import { Marker } from './Marker';
@@ -341,22 +340,18 @@ const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
       {props.edges.map((e) => (
-        <>
-          <EdgeArrowMarker id={`${markerId}-${sFoo(e)}`} size={sFoo(e)} />
-          <EdgeArrowMarker id={`${coloredMarkerId}-${sFoo(e)}`} fill={highlightedEdgeColor} size={sFoo(e)} />
-          <Edge
-            key={e.id}
-            edge={e}
-            hovering={
-              (e.source as NodeDatum).id === props.nodeHoveringId ||
-              (e.target as NodeDatum).id === props.nodeHoveringId ||
-              props.edgeHoveringId === e.id
-            }
-            onClick={props.onClick}
-            onMouseEnter={props.onMouseEnter}
-            onMouseLeave={props.onMouseLeave}
-          />
-        </>
+        <Edge
+          key={e.id}
+          edge={e}
+          hovering={
+            (e.source as NodeDatum).id === props.nodeHoveringId ||
+            (e.target as NodeDatum).id === props.nodeHoveringId ||
+            props.edgeHoveringId === e.id
+          }
+          onClick={props.onClick}
+          onMouseEnter={props.onMouseEnter}
+          onMouseLeave={props.onMouseLeave}
+        />
       ))}
     </>
   );

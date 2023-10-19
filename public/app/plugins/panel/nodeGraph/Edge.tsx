@@ -1,12 +1,11 @@
 import React, { MouseEvent, memo } from 'react';
 
+import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { nodeR } from './Node';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
 export const highlightedEdgeColor = '#a00';
-export const markerId = 'triangle';
-export const coloredMarkerId = 'triangle-colored';
 
 interface Props {
   edge: EdgeDatum;
@@ -16,7 +15,7 @@ interface Props {
   onMouseLeave: (id: string) => void;
 }
 
-export const sFoo = (e: EdgeDatum) => 10 + e.edgeThickness * 2;
+export const scaledEdgeThickness = (e: EdgeDatum) => 10 + e.thickness * 2;
 
 export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
@@ -39,38 +38,45 @@ export const Edge = memo(function Edge(props: Props) {
     },
     sourceNodeRadius || nodeR,
     targetNodeRadius || nodeR,
-    sFoo(edge)
+    scaledEdgeThickness(edge)
   );
 
+  const markerId = `triangle-${edge.id}`;
+  const coloredMarkerId = `triangle-colored-${edge.id}`;
+
   return (
-    <g
-      onClick={(event) => onClick(event, edge)}
-      style={{ cursor: 'pointer' }}
-      aria-label={`Edge from: ${source.id} to: ${target.id}`}
-    >
-      <line
-        strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.edgeThickness}
-        stroke={edge.highlighted ? highlightedEdgeColor : '#999'}
-        x1={line.x1}
-        y1={line.y1}
-        x2={line.x2}
-        y2={line.y2}
-        markerEnd={`url(#${edge.highlighted ? `${coloredMarkerId}-${sFoo(edge)}` : `${markerId}-${sFoo(edge)}`})`}
-      />
-      <line
-        stroke={'transparent'}
-        x1={line.x1}
-        y1={line.y1}
-        x2={line.x2}
-        y2={line.y2}
-        strokeWidth={20}
-        onMouseEnter={() => {
-          onMouseEnter(edge.id);
-        }}
-        onMouseLeave={() => {
-          onMouseLeave(edge.id);
-        }}
-      />
-    </g>
+    <>
+      <EdgeArrowMarker id={markerId} size={scaledEdgeThickness(edge)} />
+      <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} size={scaledEdgeThickness(edge)} />
+      <g
+        onClick={(event) => onClick(event, edge)}
+        style={{ cursor: 'pointer' }}
+        aria-label={`Edge from: ${source.id} to: ${target.id}`}
+      >
+        <line
+          strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}
+          stroke={edge.highlighted ? highlightedEdgeColor : '#999'}
+          x1={line.x1}
+          y1={line.y1}
+          x2={line.x2}
+          y2={line.y2}
+          markerEnd={`url(#${edge.highlighted ? coloredMarkerId : markerId})`}
+        />
+        <line
+          stroke={'transparent'}
+          x1={line.x1}
+          y1={line.y1}
+          x2={line.x2}
+          y2={line.y2}
+          strokeWidth={20}
+          onMouseEnter={() => {
+            onMouseEnter(edge.id);
+          }}
+          onMouseLeave={() => {
+            onMouseLeave(edge.id);
+          }}
+        />
+      </g>
+    </>
   );
 });

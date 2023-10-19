@@ -128,7 +128,7 @@ export function generateRandomNodes(count = 10) {
       { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
       { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
       { name: NodeGraphDataFrameFieldNames.highlighted, values: [], type: FieldType.boolean, config: {} },
-      { name: NodeGraphDataFrameFieldNames.edgeThickness, values: [], type: FieldType.number, config: {} },
+      { name: NodeGraphDataFrameFieldNames.thickness, values: [], type: FieldType.number, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
     length: 0,

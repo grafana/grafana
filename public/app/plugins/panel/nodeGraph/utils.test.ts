@@ -336,7 +336,7 @@ function makeEdgeDatum(id: string, index: number, mainStat = '', secondaryStat =
     sourceNodeRadius: 40,
     targetNodeRadius: 40,
     highlighted: false,
-    edgeThickness: 1,
+    thickness: 1,
   };
 }
 

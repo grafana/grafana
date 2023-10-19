@@ -26,8 +26,8 @@ export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadi
   return {
     x1: line.x1 + cosine * (sourceNodeRadius + 5),
     y1: line.y1 + sine * (sourceNodeRadius + 5),
-    x2: line.x2 - cosine * (targetNodeRadius + 2 + s - s / 10),
-    y2: line.y2 - sine * (targetNodeRadius + 2 + s - s / 10),
+    x2: line.x2 - cosine * (targetNodeRadius + 3 + s - s / 10),
+    y2: line.y2 - sine * (targetNodeRadius + 3 + s - s / 10),
   };
 }
 
@@ -74,7 +74,7 @@ export type EdgeFields = {
   secondaryStat?: Field;
   details: Field[];
   highlighted?: Field;
-  edgeThickness?: Field;
+  thickness?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -91,7 +91,7 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
-    edgeThickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.edgeThickness.toLowerCase()),
+    thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
   };
 }
 
@@ -222,7 +222,7 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
       highlighted: edgeFields.highlighted?.values[index] || false,
-      edgeThickness: edgeFields.edgeThickness?.values[index] || 1,
+      thickness: edgeFields.thickness?.values[index] || 1,
     };
   });
 }

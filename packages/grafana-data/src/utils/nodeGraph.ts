@@ -29,8 +29,8 @@ export enum NodeGraphDataFrameFieldNames {
   // Radius of the node [nodes]
   nodeRadius = 'noderadius',
 
-  // Thickness of the edge line [edges]
-  edgeThickness = 'edgethickness',
+  // Thickness of the edge [edges]
+  thickness = 'thickness',
 
   // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
   highlighted = 'highlighted',
