@@ -110,18 +110,18 @@ _Available in public preview in Grafana Open Source and Enterprise_
 
 You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
-To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
 
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-### Time series visualization now support y-axis zooming
+### Time series and candlestick visualizations now support y-axis zooming
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values.
 
 To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
 
@@ -134,15 +134,17 @@ _Available in public preview in Grafana Open Source and Enterprise_
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-TBD / WIP - some high level thoughts
+We've made a number of improvements to the data visualization experience in Grafana. These include:
 
-- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
-- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
-- Gauge styling updates?
-- Exemplar tooltip config (if it makes it for 10.2)
-- ?
+#### Geomap marker symbol alignment options
+
+TODO: Add image / gif / video
+
+#### Gauge styling updates
 
 TODO: Add image / gif / video (maybe not for this one)
+
+#### Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
 
 ## Data sources
 
