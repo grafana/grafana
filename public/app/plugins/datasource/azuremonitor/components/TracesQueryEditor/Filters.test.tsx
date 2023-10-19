@@ -402,10 +402,8 @@ describe(`Traces Filters`, () => {
         ],
       },
     };
-    const removeLabel = screen.getAllByLabelText(`Remove`);
-    await act(async () => {
-      await userEvent.click(removeLabel[1]);
-    });
+    const removeLabel = screen.getAllByLabelText(/Remove/);
+    await userEvent.click(removeLabel[1]);
 
     rerender(
       <Filters
