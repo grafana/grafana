@@ -3431,7 +3431,7 @@ __metadata:
     ol: 7.4.0
     prismjs: 1.29.0
     process: ^0.11.10
-    rc-cascader: 3.18.1
+    rc-cascader: 3.19.0
     rc-drawer: 6.5.2
     rc-slider: 10.3.1
     rc-time-picker: ^3.7.3
@@ -17986,7 +17986,7 @@ __metadata:
     prismjs: 1.29.0
     prop-types: 15.8.1
     pseudoizer: ^0.1.0
-    rc-cascader: 3.18.1
+    rc-cascader: 3.19.0
     rc-drawer: 6.5.2
     rc-slider: 10.3.1
     rc-time-picker: 3.7.3
@@ -24754,20 +24754,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.18.1":
-  version: 3.18.1
-  resolution: "rc-cascader@npm:3.18.1"
+"rc-cascader@npm:3.19.0":
+  version: 3.19.0
+  resolution: "rc-cascader@npm:3.19.0"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
     rc-select: ~14.9.0
-    rc-tree: ~5.7.0
-    rc-util: ^5.35.0
+    rc-tree: ~5.8.0
+    rc-util: ^5.37.0
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 4a3ecee7385a8814b1a78c1e8921dd3194f052352a2d08d0c931f3edd83ee3ae4864eb535f9dd243dd9699e601372309ea5fb64c715d1c79231e309da703abf0
+  checksum: d4afadd601f652a9ce1679ea0f069eb53bed608ba8b89dab7d815faee65cbb47f45325378f36941e3d30424ea407dd48d79db6b06ca8f1f258856b0471e0bcec
   languageName: node
   linkType: hard
 
@@ -24891,7 +24891,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.0":
+"rc-tree@npm:5.8.0, rc-tree@npm:~5.8.0":
   version: 5.8.0
   resolution: "rc-tree@npm:5.8.0"
   dependencies:
@@ -24904,22 +24904,6 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 69ed9f2adc2271b2789ec95159c6cfb5435e57ff1554f729934297512bfa73f2158054c7d80e2daa426ed3987d42b13a02ff2e3c882f6336d8458442053897ee
-  languageName: node
-  linkType: hard
-
-"rc-tree@npm:~5.7.0":
-  version: 5.7.9
-  resolution: "rc-tree@npm:5.7.9"
-  dependencies:
-    "@babel/runtime": ^7.10.1
-    classnames: 2.x
-    rc-motion: ^2.0.1
-    rc-util: ^5.16.1
-    rc-virtual-list: ^3.5.1
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: ece66a1c56883da5a3412d524e2fb66e3ddb7c463a0d91e15062f023e590bf738431d70a8697d6799db758cf2f9752c875b89d7d60d5903ab41a5d4185a6600b
   languageName: node
   linkType: hard
 
@@ -24951,7 +24935,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.35.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0":
+"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0":
   version: 5.38.0
   resolution: "rc-util@npm:5.38.0"
   dependencies:
