@@ -45,7 +45,7 @@ The ellipse element lets you add a basic ellipse to the canvas. An ellipse eleme
 
 ### Rectangle
 
-The rectangle element lets you add a basic rectangle to the canvas. Rectangle elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
+The rectangle element lets you add a basic rectangle to the canvas. A rectangle element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Icon
 
