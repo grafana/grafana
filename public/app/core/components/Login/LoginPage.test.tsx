@@ -102,7 +102,7 @@ describe('Login Page', () => {
 
     render(<LoginPage />);
 
-    expect(screen.getByRole('link', { name: 'Sign in with Okta Test' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'signin icon Sign in with Okta Test' })).toBeInTheDocument();
   });
 
   it('shows oauth errors', async () => {

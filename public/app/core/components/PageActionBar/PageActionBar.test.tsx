@@ -27,6 +27,6 @@ describe('Render', () => {
   it('should render button when text is present', () => {
     setup({ searchQuery: 'test query' });
 
-    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'times icon Clear' })).toBeInTheDocument();
   });
 });

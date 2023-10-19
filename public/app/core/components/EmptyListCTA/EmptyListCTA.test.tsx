@@ -7,12 +7,12 @@ describe('EmptyListCTA', () => {
   it('should return a button element if there is no buttonLink prop', () => {
     render(<EmptyListCTA title="title" buttonIcon="plus" buttonTitle="button title" />);
 
-    expect(screen.getByRole('button', { name: 'button title' }));
+    expect(screen.getByRole('button', { name: 'plus icon button title' }));
   });
 
   it('should return an anchor element if there is a buttonLink prop', () => {
     render(<EmptyListCTA title="title" buttonIcon="plus" buttonLink="href" buttonTitle="button title" />);
 
-    expect(screen.getByRole('link', { name: 'button title' }));
+    expect(screen.getByRole('link', { name: 'plus icon button title' }));
   });
 });
