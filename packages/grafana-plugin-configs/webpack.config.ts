@@ -29,6 +29,12 @@ const config = async (env: any): Promise<Configuration> => {
         config: [__filename],
       },
       cacheDirectory: path.resolve(__dirname, '../../.yarn/.cache/webpack', path.basename(process.cwd())),
+      cacheLocation: path.resolve(
+        __dirname,
+        '../../.yarn/.cache/eslint-webpack-plugin',
+        path.basename(process.cwd()),
+        '.eslintcache'
+      ),
     },
 
     context: process.cwd(),
