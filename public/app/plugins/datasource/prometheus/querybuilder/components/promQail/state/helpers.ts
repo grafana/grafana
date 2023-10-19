@@ -32,9 +32,8 @@ interface TemplateSearchResult {
 export function getExplainMessage(
   query: string,
   metric: string,
-  datasource: PrometheusDatasource,
+  datasource: PrometheusDatasource
 ): llms.openai.Message[] {
-
   let metricMetadata = '';
   let metricType = '';
 
@@ -45,25 +44,35 @@ export function getExplainMessage(
     metricMetadata = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata) ?? '';
   }
 
-  const documentationBody = pvq.query.operations.map((op) => {
-    const def = promQueryModeller.getOperationDef(op.id);
-    if (!def) {
-      return '';
-    }
-    const title = def.renderer(op, def, '<expr>');
-    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation;
+  const documentationBody = pvq.query.operations
+    .map((op) => {
+      const def = promQueryModeller.getOperationDef(op.id);
+      if (!def) {
+        return '';
+      }
+      const title = def.renderer(op, def, '<expr>');
+      const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation;
 
-    if (!body) {
-      return '';
-    }
-    return `### ${title}:\n${body}`;
-  }).filter(item => item !== '').join('\n');
+      if (!body) {
+        return '';
+      }
+      return `### ${title}:\n${body}`;
+    })
+    .filter((item) => item !== '')
+    .join('\n');
 
   return [
     { role: 'system', content: ExplainSystemPrompt },
-    { role: 'user', content: GetExplainUserPrompt(
-      { documentation: documentationBody, metricName: metric, metricType: metricType, metricMetadata: metricMetadata, query: query }
-    )},
+    {
+      role: 'user',
+      content: GetExplainUserPrompt({
+        documentation: documentationBody,
+        metricName: metric,
+        metricType: metricType,
+        metricMetadata: metricMetadata,
+        query: query,
+      }),
+    },
   ];
 }
 

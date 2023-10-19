@@ -35,6 +35,8 @@ export const PromQail = (props: PromQailProps) => {
 
   const [labelNames, setLabelNames] = useState<string[]>([]);
 
+  const suggestions = state.interactions.reduce((acc, int) => acc + int.suggestions.length, 0);
+
   const responsesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -45,8 +47,9 @@ export const PromQail = (props: PromQailProps) => {
   };
 
   useEffect(() => {
+    // only scroll when an interaction has been added or the suggestions have been updated
     scrollToBottom();
-  }, [state.interactions]);
+  }, [state.interactions.length, suggestions]);
 
   useEffect(() => {
     const fetchLabels = async () => {
@@ -315,6 +318,7 @@ export const PromQail = (props: PromQailProps) => {
                             interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
                           }
                           onChange={onChange}
+                          prompt={interaction.prompt ?? ''}
                         />
                       )}
                     </>
@@ -340,6 +344,7 @@ export const PromQail = (props: PromQailProps) => {
                         interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
                       }
                       onChange={onChange}
+                      prompt={interaction.prompt ?? ''}
                     />
                   )}
                 </div>
@@ -417,7 +422,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
     }),
     metricTableButton: css({
-      marginLeft: '10px',
+      float: 'right',
     }),
     queryQuestion: css({
       textAlign: 'end',
@@ -461,7 +466,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'flex-end',
     }),
-    feedbackPadding: css({
+    feedbackStyle: css({
+      margin: 0,
+      textAlign: 'right',
       paddingTop: '22px',
       paddingBottom: '22px',
     }),
@@ -491,8 +498,24 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     useButton: css({
-      width: '10%',
-      marginLeft: '12px',
+      marginLeft: 'auto',
+    }),
+    suggestionFeedback: css({
+      textAlign: 'left',
+    }),
+    feedbackQuestion: css({
+      display: 'flex',
+      padding: '8px 0px',
+      h6: { marginBottom: 0 },
+      i: {
+        marginTop: '1px',
+      },
+    }),
+    explationTextInput: css({
+      paddingLeft: '24px',
+    }),
+    submitFeedback: css({
+      padding: '16px 0',
     }),
   };
 };
