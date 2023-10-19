@@ -64,6 +64,14 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 	const timeColumnName = "Time"
 	const valueColumnName = "Value"
 
+	// Create a map for faster column name lookups
+	columnToLowerCase := make(map[string]string)
+	for _, row := range rows {
+		for _, column := range row.Columns {
+			columnToLowerCase[column] = strings.ToLower(column)
+		}
+	}
+
 	// Preallocate for the worst-case scenario
 	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
 
@@ -78,13 +86,9 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 
 	for _, row := range rows {
 		var hasTimeCol = false
-		lowerCasedColumns := make([]string, len(row.Columns))
 
-		for i, column := range row.Columns {
-			lowerCasedColumns[i] = strings.ToLower(column)
-			if !hasTimeCol && lowerCasedColumns[i] == timeColumn {
-				hasTimeCol = true
-			}
+		if _, ok := columnToLowerCase[timeColumn]; ok {
+			hasTimeCol = true
 		}
 
 		if !hasTimeCol {
@@ -92,7 +96,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
-				if column == timeColumn {
+				if columnToLowerCase[column] == timeColumn {
 					continue
 				}
 
