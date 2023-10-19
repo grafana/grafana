@@ -1,5 +1,6 @@
 import { uniq } from 'lodash';
 import React from 'react';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -301,7 +302,32 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   if (cfg.unifiedAlertingEnabled) {
     return unifiedRoutes;
   } else if (cfg.alertingEnabled) {
-    return legacyRoutes;
+    // Redirect old overlapping legacy routes to new separate ones to minimize unintended 404s.
+    const redirects = [
+      {
+        path: '/alerting',
+        component: () => <Redirect to={'/alerting-legacy'} />,
+      },
+      {
+        path: '/alerting/list',
+        component: () => <Redirect to={'/alerting-legacy/list'} />,
+      },
+      {
+        path: '/alerting/notifications',
+        component: () => <Redirect to={'/alerting-legacy/notifications'} />,
+      },
+      {
+        path: '/alerting/notification/new',
+        component: () => <Redirect to={'/alerting-legacy/notification/new'} />,
+      },
+      {
+        path: '/alerting/notification/:id/edit',
+        component: (props: RouteComponentProps<{ id: string }>) => (
+          <Redirect to={'/alerting-legacy/notification/:id/edit'.replace(':id', props.match.params.id)} />
+        ),
+      },
+    ];
+    return [...legacyRoutes, ...redirects];
   }
 
   const uniquePaths = uniq([...legacyRoutes, ...unifiedRoutes].map((route) => route.path));
