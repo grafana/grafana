@@ -18,7 +18,7 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { getAutoQueriesForMetric } from './AutoQueryEngine';
 import { AutoVizPanel } from './AutoVizPanel';
-import { buildBreakdownActionScene } from './actionViews/breakdown';
+import { buildBreakdownActionScene } from './actionViews/BreakdownScene';
 import { buildLogsScene } from './actionViews/logs';
 import { buildRelatedMetricsScene } from './actionViews/relatedMetrics';
 import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
@@ -152,8 +152,8 @@ function buildGraphScene(metric: string) {
     direction: 'column',
     children: [
       new SceneFlexItem({
-        minHeight: 250,
-        maxHeight: 400,
+        minHeight: 350,
+        maxHeight: 350,
         body: new AutoVizPanel({ queries }),
       }),
       new SceneFlexItem({

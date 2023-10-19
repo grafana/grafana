@@ -15,6 +15,8 @@ export const VAR_FILTERS = 'filters';
 export const VAR_FILTERS_EXPR = '{${filters}}';
 export const VAR_METRIC = 'metric';
 export const VAR_METRIC_EXPR = '${metric}';
+export const VAR_GROUP_BY = 'groupby';
+export const VAR_GROUP_BY_EXP = '${groupby}';
 
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
 

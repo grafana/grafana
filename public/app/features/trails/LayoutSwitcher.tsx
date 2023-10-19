@@ -6,25 +6,19 @@ import { Field, RadioButtonGroup } from '@grafana/ui';
 
 export interface LayoutSwitcherState extends SceneObjectState {
   active: LayoutType;
-  single: SceneObject;
-  grid: SceneObject;
-  rows: SceneObject;
+  layouts: SceneObject[];
+  options: Array<SelectableValue<LayoutType>>;
 }
 
 export type LayoutType = 'single' | 'grid' | 'rows';
 
 export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { active } = model.useState();
-    const radioOptions: Array<SelectableValue<LayoutType>> = [
-      { value: 'single', label: 'Single' },
-      { value: 'grid', label: 'Grid' },
-      { value: 'rows', label: 'Rows' },
-    ];
+    const { active, options } = model.useState();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={radioOptions} value={active} onChange={model.onLayoutChange} />
+        <RadioButtonGroup options={options} value={active} onChange={model.onLayoutChange} />
       </Field>
     );
   }
@@ -34,16 +28,15 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { single, grid, rows, active } = model.useState();
+    const { layouts, options, active } = model.useState();
 
-    switch (active) {
-      case 'grid':
-        return <grid.Component model={grid} />;
-      case 'rows':
-        return <rows.Component model={rows} />;
-      case 'single':
-      default:
-        return <single.Component model={single} />;
+    const index = options.findIndex((o) => o.value === active);
+    if (index === -1) {
+      return null;
     }
+
+    const layout = layouts[index];
+
+    return <layout.Component model={layout} />;
   };
 }
