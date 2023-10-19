@@ -21,7 +21,6 @@ import { AutoVizPanel } from './AutoVizPanel';
 import { buildBreakdownActionScene } from './actionViews/breakdown';
 import { buildLogsScene } from './actionViews/logs';
 import { buildRelatedMetricsScene } from './actionViews/relatedMetrics';
-import { getTrailFor } from './getUtils';
 import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
 import {
   ActionViewDefinition,
@@ -30,6 +29,7 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
+import { getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -42,7 +42,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
     super({
-      $variables: getVariablesWithMetricConstant(state.metric),
+      $variables: state.$variables ?? getVariablesWithMetricConstant(state.metric),
       body: state.body ?? buildGraphScene(state.metric),
       ...state,
     });

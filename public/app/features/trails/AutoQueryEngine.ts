@@ -16,7 +16,6 @@ export function getAutoQueriesForMetric(metric: string) {
 
   let unit = 'short';
   let agg = 'sum';
-  let rateInterval = false;
   //let rate = false;
   let title = metric;
 
@@ -29,7 +28,6 @@ export function getAutoQueriesForMetric(metric: string) {
   } else if (metric.endsWith('seconds_count')) {
     unit = 's';
     agg = 'avg';
-    rateInterval = true;
   } else if (metric.endsWith('bucket')) {
     return getQueriesForBucketMetric(metric);
   }

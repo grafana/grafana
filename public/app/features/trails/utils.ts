@@ -1,4 +1,5 @@
-import { SceneObject } from '@grafana/scenes';
+import { urlUtil } from '@grafana/data';
+import { getUrlSyncManager, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsApp } from './DataTrailsApp';
@@ -29,4 +30,16 @@ export function getTrailsAppFor(model: SceneObject): DataTrailsApp {
   console.error('Unable to find data trails app for', model);
 
   throw new Error('Unable to find trails app');
+}
+
+export function newEmptyTrail(): DataTrail {
+  return new DataTrail({
+    filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+    embedded: false,
+  });
+}
+
+export function getUrlForTrail(trail: DataTrail) {
+  const params = getUrlSyncManager().getUrlState(trail);
+  return urlUtil.renderUrl('/data-trails/trail', params);
 }

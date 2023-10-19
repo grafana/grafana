@@ -1,6 +1,6 @@
 import { SceneFlexItem } from '@grafana/scenes';
 
-import { getTrailFor } from './getUtils';
+import { getTrailFor } from './utils';
 
 export function onlyShowInDebugBehavior(obj: SceneFlexItem) {
   const trail = getTrailFor(obj);

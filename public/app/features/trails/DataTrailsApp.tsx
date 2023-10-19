@@ -3,12 +3,14 @@ import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { getUrlForTrail, newEmptyTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
@@ -18,6 +20,11 @@ export interface DataTrailsAppState extends SceneObjectState {
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   public constructor(state: DataTrailsAppState) {
     super(state);
+  }
+
+  goToUrlForTrail(trail: DataTrail) {
+    this.setState({ trail });
+    locationService.push(getUrlForTrail(trail));
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrailsApp>) => {
@@ -41,7 +48,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path="/data-trails/trail"
           render={() => (
-            <Page navId="data-trails" pageNav={{ text: 'New trail' }} layout={PageLayoutType.Custom}>
+            <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
                 <trail.Component model={trail} />
               </div>
@@ -53,27 +60,35 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   };
 }
 
-export const dataTrailsApp = new DataTrailsApp({
-  trail: new DataTrail({ embedded: false }),
-  home: new DataTrailsHome({
-    recent: [
-      new DataTrail({
-        metric: 'grafana_http_request_duration_seconds_count',
-        filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+let dataTrailsApp: DataTrailsApp;
+
+export function getDataTrailsApp() {
+  if (!dataTrailsApp) {
+    dataTrailsApp = new DataTrailsApp({
+      trail: newEmptyTrail(),
+      home: new DataTrailsHome({
+        recent: [
+          new DataTrail({
+            metric: 'grafana_http_request_duration_seconds_count',
+            filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+          }),
+          new DataTrail({
+            metric: 'go_memstats_alloc_bytes_total',
+            filters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
+          }),
+        ],
       }),
-      new DataTrail({
-        metric: 'go_memstats_alloc_bytes_total',
-        filters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
-      }),
-    ],
-  }),
-});
+    });
+  }
+
+  return dataTrailsApp;
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     customPage: css({
       padding: theme.spacing(1, 3),
-      background: theme.colors.background.primary,
+      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',

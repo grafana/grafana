@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
@@ -9,7 +8,7 @@ import { PromVisualQuery } from 'app/plugins/datasource/prometheus/querybuilder/
 import { getDashboardSceneFor } from '../dashboard-scene/utils/utils';
 
 import { DataTrail } from './DataTrail';
-import { dataTrailsApp } from './DataTrailsApp';
+import { getDataTrailsApp } from './DataTrailsApp';
 import { OpenEmbeddedTrailEvent } from './shared';
 
 interface DataTrailDrawerState extends SceneObjectState {
@@ -32,8 +31,7 @@ export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
   }
 
   onOpenTrail = () => {
-    dataTrailsApp.setState({ trail: this.trail.clone({ embedded: false }) });
-    locationService.push('/data-trails');
+    getDataTrailsApp().goToUrlForTrail(this.trail.clone({ embedded: false }));
   };
 
   onClose = () => {

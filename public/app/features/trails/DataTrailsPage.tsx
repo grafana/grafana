@@ -1,10 +1,11 @@
 // Libraries
 import React from 'react';
 
-import { dataTrailsApp } from './DataTrailsApp';
+import { getDataTrailsApp } from './DataTrailsApp';
 
 export function DataTrailsPage() {
-  return <dataTrailsApp.Component model={dataTrailsApp} />;
+  const app = getDataTrailsApp();
+  return <app.Component model={app} />;
 }
 
 export default DataTrailsPage;

@@ -7,7 +7,7 @@ import { useStyles2, Tooltip } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail, DataTrailState } from './DataTrail';
-import { getTrailFor } from './getUtils';
+import { getTrailFor } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   steps: DataTrailHistoryStep[];

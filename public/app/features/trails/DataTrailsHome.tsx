@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
@@ -10,7 +9,7 @@ import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
-import { getTrailsAppFor } from './getUtils';
+import { getTrailsAppFor, newEmptyTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recent: DataTrail[];
@@ -23,10 +22,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
   public onStartNew = () => {
     const app = getTrailsAppFor(this);
+    const trail = newEmptyTrail();
 
     this.setState({ recent: [...this.state.recent, app.state.trail] });
-    app.setState({ trail: new DataTrail({ embedded: false }) });
-    locationService.push('/data-trails/trail');
+    app.goToUrlForTrail(trail);
   };
 
   public onSelectTrail = (trail: DataTrail) => {
@@ -38,8 +37,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       this.setState({ recent: [...this.state.recent, currentTrail] });
     }
 
-    app.setState({ trail: trail });
-    locationService.push('/data-trails/trail');
+    app.goToUrlForTrail(trail);
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {

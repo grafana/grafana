@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   getUrlSyncManager,
@@ -24,14 +25,14 @@ import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetrricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelectScene';
 import { MetricSelectedEvent, trailsDS, VAR_FILTERS } from './shared';
+import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene: SceneObject;
   embedded?: boolean;
   filters?: AdHocVariableFilter[];
-  mainScene?: SceneObject;
   controls: SceneObject[];
   history: DataTrailHistory;
   debug?: boolean;
@@ -42,7 +43,6 @@ export interface DataTrailState extends SceneObjectState {
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
-  private _selectMetricView: SceneObject;
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -63,12 +63,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneRefreshPicker({}),
       ],
       history: new DataTrailHistory({}),
-      topScene: new MetrricSelectScene({ showHeading: true }),
+      topScene: state.topScene ?? getTopSceneFor(state),
       ...state,
     });
 
-    this._selectMetricView = this.state.topScene;
-    this.syncSceneWithState();
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
@@ -95,10 +93,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     this.setState(step.trailState);
+    locationService.replace(getUrlForTrail(this));
 
-    // if (!this.state.embedded) {
-    //   getUrlSyncManager().initSync(this);
-    // }
+    if (!this.state.embedded) {
+      getUrlSyncManager().initSync(this);
+    }
   }
 
   private _handleSceneObjectStateChanged(evt: SceneObjectStateChangedEvent) {
@@ -114,10 +113,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
-    this.setState({
-      topScene: new MetricScene({ metric: evt.payload }),
-      metric: evt.payload,
-    });
+    if (this.state.embedded) {
+      this.setState({
+        topScene: new MetricScene({ metric: evt.payload }),
+        metric: evt.payload,
+      });
+    } else {
+      locationService.partial({ metric: evt.payload, actionView: null });
+    }
 
     this.state.history.addTrailStep(this, 'metric');
   }
@@ -136,24 +139,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = this._selectMetricView;
+      stateUpdate.topScene = new MetricSelectScene({ showHeading: true });
     }
 
     this.setState(stateUpdate);
-  }
-
-  private syncSceneWithState() {
-    let topScene = this.state.topScene;
-
-    if (this.state.metric) {
-      topScene = new MetricScene({ metric: this.state.metric });
-    } else {
-      topScene = this._selectMetricView;
-    }
-
-    if (topScene !== this.state.topScene) {
-      this.setState({ topScene });
-    }
   }
 
   public onToggleDebug = () => {
@@ -186,6 +175,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       </div>
     );
   };
+}
+
+function getTopSceneFor(state: Partial<DataTrailState>) {
+  if (state.metric) {
+    return new MetricScene({ metric: state.metric });
+  } else {
+    return new MetricSelectScene({ showHeading: true });
+  }
 }
 
 function getStyles(theme: GrafanaTheme2) {
