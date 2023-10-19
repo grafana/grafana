@@ -41,7 +41,7 @@ The text element enables you to easily add text to the canvas. The element also 
 
 ### Ellipse
 
-The ellipse element enables you to add a basic ellipse to the canvas. Ellipse elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
+The ellipse element lets you add a basic ellipse to the canvas. An ellipse element can display text (both fixed and field data) and its background color can be changed based on data thresholds.
 
 ### Rectangle
 
