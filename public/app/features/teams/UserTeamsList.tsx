@@ -3,27 +3,19 @@ import React, { useEffect, useMemo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, InlineField, CellProps, InteractiveTable, Icon, Column, Avatar, useStyles2 } from '@grafana/ui';
+import { CellProps, InteractiveTable, Icon, Column, Avatar, useStyles2 } from '@grafana/ui';
 import { Stack } from '@grafana/ui/src/unstable';
 import { StoreState, Team } from 'app/types';
 
 import { Page } from '../../core/components/Page/Page';
 import { TableWrapper } from '../admin/Users/TableWrapper';
 
-import { changeQuery, changeSort, loadUsersTeams } from './state/actions';
+import { loadUsersTeams } from './state/actions';
 
 type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
 export interface OwnProps {}
 
-export const UserTeamsList = ({
-  teams,
-  query,
-  noTeams,
-  hasFetched,
-  changeQuery,
-  loadUsersTeams,
-  changeSort,
-}: Props) => {
+export const UserTeamsList = ({ teams, noTeams, hasFetched, loadUsersTeams }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -41,7 +33,6 @@ export const UserTeamsList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: 'string',
       },
     ],
     []
@@ -63,19 +54,9 @@ export const UserTeamsList = ({
       <Page.Contents isLoading={!hasFetched}>
         {
           <>
-            <div className="page-action-bar">
-              <InlineField grow>
-                <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
-              </InlineField>
-            </div>
             <Stack gap={2}>
               <TableWrapper>
-                <InteractiveTable
-                  columns={columns}
-                  data={teams}
-                  getRowId={(team) => String(team.id)}
-                  fetchData={changeSort}
-                />
+                <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
               </TableWrapper>
             </Stack>
           </>
@@ -99,7 +80,6 @@ function getStyles(theme: GrafanaTheme2) {
 function mapStateToProps(state: StoreState) {
   return {
     teams: state.teams.teams,
-    query: state.teams.query,
     noTeams: state.teams.noTeams,
     hasFetched: state.teams.hasFetched,
   };
@@ -107,8 +87,6 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadUsersTeams,
-  changeQuery,
-  changeSort,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
