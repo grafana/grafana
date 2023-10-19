@@ -49,7 +49,7 @@ type Alertmanager interface {
 	PutAlerts(context.Context, apimodels.PostableAlerts) error
 
 	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
+	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
