@@ -12,13 +12,23 @@ interface GenAIDashboardChangesButtonProps {
   disabled?: boolean;
 }
 
+const DIFF_DESCRIPTION_EXAMPLE = `User changes:
+- <First user change>
+- <Second user change>
+
+Migration changes:
+- <First migration change>
+- <Second migration change>`;
+
 const CHANGES_GENERATION_STANDARD_PROMPT = [
   'You are an expert in Grafana Dashboards',
   'Your goal is to write a description of the changes for a dashboard to display to the user',
-  'You will be given human-readable diffs with irrelevant lines filtered out',
+  'You will be given human-readable diffs with most irrelevant lines filtered out',
+  'Lines beginning with - are removed, and lines beginning with + are added. Lines with neither are included for context.',
+  'If a line is changed, it will show a previous version removed and a new version added',
   'When referring to panel changes, use the panel title',
   'When using panel title, wrap it with double quotes',
-  'When the panel changes the position, just mention the panel has changed position',
+  'When the panel changes position, just mention that the panel has changed position',
   'When an entire panel is added or removed, use the panel title and only say it was added or removed and disregard the rest of the changes for that panel',
   'Group changes when all panels are affected',
   'Do not mention line number',
@@ -29,7 +39,13 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
 ].join('.\n');
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }: GenAIDashboardChangesButtonProps) => {
-  const messages = useMemo(() => getMessages(dashboard), [dashboard]);
+  const messages = useMemo(() => {
+    const messages = getMessages(dashboard);
+    for (let message of messages) {
+      console.log(message.content);
+    }
+    return messages;
+  }, [dashboard]);
 
   return (
     <GenAIButton
@@ -37,6 +53,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }:
       onGenerate={onGenerate}
       loadingText={'Generating changes summary'}
       temperature={0}
+      model={'gpt-3.5-turbo-16k'}
       eventTrackingSrc={EventTrackingSrc.dashboardChanges}
       toggleTipTitle={'Improve your dashboard changes summary'}
       disabled={disabled}
@@ -46,36 +63,39 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }:
 
 function getMessages(dashboard: DashboardModel): Message[] {
   let { userChanges, migrationChanges } = getDashboardChanges(dashboard);
-  if (userChanges.length > 4000) {
+  if (userChanges.length > 8000) {
     userChanges =
       "User changes were too long, fill in the user changes section with 'User changes too long to auto-summarize'";
   }
-  if (migrationChanges.length > 4000) {
+
+  if (migrationChanges.split('\n').length < 10) {
+    migrationChanges = 'No significant migration changes';
+  } else if (migrationChanges.length > 8000) {
     migrationChanges =
-      "Migration changes were too long, fill in the migration changes section with 'User changes too long to auto-summarize'";
+      "Migration changes were too long, fill in the migration changes section with 'Migration changes too long to auto-summarize'";
   }
+
   return [
     {
       content: CHANGES_GENERATION_STANDARD_PROMPT,
       role: Role.system,
     },
     {
-      content: `Summarize the following user changes diff under "User Changes":\n${userChanges}`,
+      content: `Summarize the following user changes diff under "User changes":\n${userChanges}`,
       role: Role.system,
     },
     {
       content:
         `Be sure to only include substantial user changes, such as adding or removing entire panels, changing panel titles or descriptions, etc.\n` +
-        `Ignore other changes and do not include them in the summary. Do not include "User Changes" section if there are no substantial user changes to report.`,
+        `Do not include "User Changes" section if there are no substantial user changes to report.`,
       role: Role.system,
     },
     {
-      content: `Summarize the following migration changes diff under "Migration Changes":\n${migrationChanges}`,
+      content: `Summarize the following migration changes diff under "Migration changes":\n${migrationChanges}`,
       role: Role.system,
     },
     {
       content:
-        `Ignore the entire migration diff if it is less than 10 lines long.\n` +
         `Be sure to only include substantial migration changes, such as adding or removing entire panels, changing panel titles or descriptions, etc.\n` +
         `Ignore any threshold step changes or templating list changes.\n` +
         `Ignore other changes and do not include them in the summary. Do not include "Migration Changes" section if there are no substantial migration changes to report.\n` +
@@ -85,7 +105,10 @@ function getMessages(dashboard: DashboardModel): Message[] {
     {
       content:
         `Respond only with the diff description, which is meant to be loaded directly into the application for the user.\n` +
-        `If there are no substantial user or migration changes, the correct description is "Minor changes only"`,
+        `If there are no substantial user or migration changes, the correct description is "Minor changes only"\n` +
+        `If there are too many changes of either kind, and those changes have a message saying 'too long', the correct response for that section is "Too many changes to auto-summarize"\n` +
+        'A description of the changes should be formatted like this:' +
+        DIFF_DESCRIPTION_EXAMPLE,
       role: Role.system,
     },
   ];
