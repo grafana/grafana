@@ -13,7 +13,7 @@ import ConfigPublicDashboard from './ConfigPublicDashboard/ConfigPublicDashboard
 import CreatePublicDashboard from './CreatePublicDashboard/CreatePublicDashboard';
 interface Props extends ShareModalTabProps {}
 
-const Loader = () => {
+export const Loader = () => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -43,13 +43,13 @@ export const SharePublicDashboard = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loadingContainer: css`
-    height: 280px;
-    align-items: center;
-    justify-content: center;
-    gap: ${theme.spacing(1)};
-  `,
-  spinner: css`
-    margin-bottom: ${theme.spacing(0)};
-  `,
+  loadingContainer: css({
+    height: '280px',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(1),
+  }),
+  spinner: css({
+    marginBottom: theme.spacing(0),
+  }),
 });
