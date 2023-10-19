@@ -93,7 +93,7 @@ Use opacity to specify the series area fill color.
 Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme][].
 
 - **None:** No gradient fill. This is the default setting.
-- **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
+- **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
 - **Scheme:** A color gradient defined by your [Color scheme][]. This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
@@ -184,9 +184,9 @@ Set the desired time zone(s) to display along the x-axis.
 
 ### Placement
 
-Select the placement of the Y-axis.
+Select the placement of the y-axis.
 
-- **Auto:** Automatically assigns the Y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
+- **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
 - **Left:** Display all Y-axes on the left side.
 - **Right:** Display all Y-axes on the right side.
 - **Hidden:** Hide all axes.
@@ -195,7 +195,7 @@ To selectively hide axes, [Add a field override][] that targets specific fields.
 
 ### Label
 
-Set a Y-axis text label. If you have more than one Y-axis, then you can assign different labels using an override.
+Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.
 
 ### Width
 
@@ -224,7 +224,7 @@ Set the axis border visibility.
 
 ### Scale
 
-Set the Y-axis values scale.
+Set the y-axis values scale.
 
 - **Linear:** Divides the scale into equal parts.
 - **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
