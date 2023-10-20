@@ -64,6 +64,7 @@ type Alertmanager interface {
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
+	factory   orgAlertmanagerFactory
 
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]Alertmanager
@@ -83,7 +84,6 @@ type MultiOrgAlertmanager struct {
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
-	factory orgAlertmanagerFactory
 }
 
 type orgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
@@ -101,8 +101,9 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service, opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
-		Crypto:        NewCrypto(s, configStore, l),
-		ProvStore:     provStore,
+		Crypto:    NewCrypto(s, configStore, l),
+		ProvStore: provStore,
+
 		logger:        l,
 		settings:      cfg,
 		alertmanagers: map[int64]Alertmanager{},
