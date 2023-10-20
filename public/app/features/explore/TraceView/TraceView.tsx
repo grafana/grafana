@@ -260,6 +260,8 @@ export function TraceView(props: Props) {
             createFocusSpanLink={createFocusSpanLink}
             setDetailsPanelOffset={setDetailsPanelOffset}
             defaultDetailsPanelHeight={defaultDetailsPanelHeight}
+            createSpanLink={createSpanLink}
+            datasourceType={datasourceType}
           />
         </>
       ) : (

@@ -10,9 +10,9 @@ import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 import { TraceSpan } from '../types/trace';
 
-import { DetailsPanel, Props } from './DetailsPanel';
+import { DetailsPanel } from './DetailsPanel';
 
-const setup = (propOverrides?: Props) => {
+const setup = () => {
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
   const detailState = new DetailState();
   const traceStartTime = 5;
@@ -92,7 +92,7 @@ const setup = (propOverrides?: Props) => {
     },
     setDetailsPanelOffset: jest.fn(),
     defaultDetailsPanelHeight: 200,
-    ...propOverrides,
+    datasourceType: 'unknown'
   };
 
   return {

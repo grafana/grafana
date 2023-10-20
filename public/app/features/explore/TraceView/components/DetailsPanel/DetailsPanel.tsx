@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone, TraceLog } from '@grafana/data';
-import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Button, DataLinkButton, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { autoColor, DetailState, TraceSpan } from '..';
 import { ExploreDrawer } from '../../../ExploreDrawer';
@@ -10,6 +11,7 @@ import { getOverviewItems } from '../TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import TextList from '../TraceTimelineViewer/SpanDetail/TextList';
 import LabeledList from '../common/LabeledList';
+import { SpanLinkFunc, SpanLinkType } from '../types/links';
 import { TraceSpanReference } from '../types/trace';
 import { ubTxRightAlign } from '../uberUtilityStyles';
 
@@ -17,7 +19,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import { StackTraces } from './StackTraces';
 
-export type Props = {
+type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
   width: number;
@@ -29,6 +31,8 @@ export type Props = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   setDetailsPanelOffset: (offset: number) => void;
   defaultDetailsPanelHeight: number;
+  createSpanLink?: SpanLinkFunc;
+  datasourceType: string;
 };
 
 enum TabLabels {
@@ -52,6 +56,8 @@ export function DetailsPanel(props: Props) {
     createFocusSpanLink,
     setDetailsPanelOffset,
     defaultDetailsPanelHeight,
+    createSpanLink,
+    datasourceType,
   } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
@@ -85,6 +91,42 @@ export function DetailsPanel(props: Props) {
   if (references && references.length > 0) {
     tabs.push(TabLabels.References);
     tabsCounters[TabLabels.References] = references.length;
+  }
+
+  let logLinkButton: JSX.Element | undefined = undefined;
+  if (createSpanLink) {
+    const links = createSpanLink(span);
+    const logLinks = links?.filter((link) => link.type === SpanLinkType.Logs);
+    if (links && logLinks && logLinks.length > 0) {
+      logLinkButton = (
+        <DataLinkButton
+          link={{
+            ...logLinks[0],
+            title: 'Logs for this span',
+            target: '_blank',
+            origin: logLinks[0].field,
+            onClick: (event: React.MouseEvent) => {
+              // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+              // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+              // this interaction will not be tracked with link right clicks
+              reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                datasourceType: datasourceType,
+                grafana_version: config.buildInfo.version,
+                type: 'log',
+                location: 'detailsPanel',
+              });
+
+              if (logLinks?.[0].onClick) {
+                logLinks?.[0].onClick?.(event);
+              } else {
+                locationService.push(logLinks?.[0].href);
+              }
+            },
+          }}
+          buttonProps={{ icon: 'gf-logs' }}
+        />
+      );
+    }
   }
 
   const linksGetter = () => [];
@@ -121,6 +163,10 @@ export function DetailsPanel(props: Props) {
             <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
           </div>
           <Button icon={'times'} variant={'secondary'} onClick={clearSelectedSpan} size={'sm'} />
+        </div>
+        
+        <div className={styles.linkContainer}>
+          {logLinkButton}
         </div>
 
         <TabsBar>
@@ -253,5 +299,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   attributeValues: css`
     display: flex;
     flex-direction: column;
+  `,
+  linkContainer: css`
+    label: DetailsPanelLinkContainer;
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    padding-right: 0.6rem;
+    margin-bottom: -25px;
   `,
 });
