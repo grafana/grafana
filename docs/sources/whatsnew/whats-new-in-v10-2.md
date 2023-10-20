@@ -59,13 +59,12 @@ _Available in public preview in Grafana Open Source and Enterprise_
 
 You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
 
-- **Generate panel titles and descriptions** - You can now generate a title and description for your panel based on the data you've added to it. This is useful when you want to quickly create a panel and don't want to spend time coming up with a title or description.
-- **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
-- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
+- **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
 
-TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+To try it out, look for the "✨ Auto generate" option next to the Title and Description settings for your dashboard, or when you press the "Save" button.
 
-TODO: Add image / gif / video
+{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="300px" caption="Auto-generate a panel description using AI" >}}
 
 ### Calculate visualization min/max individually per field
 
