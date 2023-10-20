@@ -47,13 +47,11 @@ export const UserTeamsList = ({ teams, hasFetched, loadUsersTeams }: Props) => {
             <span>You are currently not a member of any teams.</span>
           </div>
         ) : (
-          <>
-            <Stack gap={2}>
-              <TableWrapper>
-                <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
-              </TableWrapper>
-            </Stack>
-          </>
+          <Stack gap={2}>
+            <TableWrapper>
+              <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
+            </TableWrapper>
+          </Stack>
         )}
       </Page.Contents>
     </Page>
