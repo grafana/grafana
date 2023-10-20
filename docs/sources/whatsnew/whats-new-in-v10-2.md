@@ -51,7 +51,7 @@ Public dashboards allow you to share your visualizations and insights with a bro
 {{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
 
-## Navigate lengthy, mixed data faster with Content Outline in Explore
+## Navigate lengthy, mixed data in Explore with Content Outline
 
 <!-- Thanos Karachalios -->
 _Generally available in all editions of Grafana_
@@ -87,7 +87,6 @@ In previous versions of Grafana, if a data source was provisioned, the only way 
 To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
 
 ## Dashboards and visualizations
-
 ### Use AI to generate titles, descriptions, and change summaries
 
 _Available in public preview in Grafana Open Source and Enterprise_
@@ -104,7 +103,7 @@ To try it out, look for the "✨ Auto generate" option next to the Title and Des
 
 {{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="300px" caption="Auto-generate a panel description using AI" >}}
 
-### Find the dashboard you're looking faster, with the new Dashboard Browse screen
+### Find your dashboard faster with the new Dashboard Browse screen
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 
@@ -127,22 +126,20 @@ _Available in public preview in all editions of Grafana_
 
 You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
-To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
 
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-### Zoom in on the Y-axis of the Time Series panel
+### Zoom in on the Y-axis of the Time Series and Candlestick panels
 
-_Available in public preview in all editions of Grafana_
+_Generally available in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis, hold the shift key while clicking and dragging on supported visualizations. Double click to reset the zoom.
 
-To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
-
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
 
 ### Calculate visualization min/max individually per field
 
@@ -166,20 +163,30 @@ This isn't only useful in the stat visualization&mdash;gauge, bar gauge, and sta
 
 ### Data visualization quality of life improvements
 
-_Available in public preview in all editions of Grafana_
+_Generally available in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-TBD / WIP - some high level thoughts
+We've made a number of smaller improvements to the data visualization experience in Grafana. Notable changes include:
 
-- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
-- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
-- Gauge styling updates?
-- Exemplar tooltip config (if it makes it for 10.2)
-- ?
+#### Geomap marker symbol alignment options
 
-TODO: Add image / gif / video (maybe not for this one)
+You can now offset Geomap marker symbols from the underlying data point.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
+
+#### Gauge visualization overflow support
+
+You can now visualize gauges in vertical and horizontal orientations with overflow. This resolves an issue where the design would break when the number of gauges exceeded the available space.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-gauge-overflow.gif" max-width="750px" caption="Gauge overflow" >}}
+
+#### Bar chart axes improvements
+
+You can now center bar chart axes on zero and configure axes border and color settings.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
 
 ## Data sources and querying
 
@@ -317,7 +324,7 @@ With the new **Format string** transformation, you can manipulate string fields 
 
 Learn more in the [Format string documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
 
-### Detect unusable transformations
+### See which transformations will work with your data
 
 <!-- Kyle Cunningham -->
 
@@ -341,14 +348,6 @@ We've added support for setting timezones manually when formatting times as stri
 
 ## Alerting
 
-### Additional contact points for external Alertmanager
-
-<!-- Alexander Weaver -->
-
-_Generally available in all editions of Grafana_
-
-We've added support for the Microsoft Teams contact points when using an external Alertmanager.
-
 ### Grafana OnCall integration for Alerting
 
 <!-- Brenda Muir -->
@@ -367,7 +366,75 @@ _Generally available in all editions of Grafana_
 
 This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
 
+### Additional contact points for external Alertmanager
+
+<!-- Alexander Weaver -->
+
+_Generally available in all editions of Grafana_
+
+We've added support for the Microsoft Teams contact points when using an external Alertmanager.
+
 ## Authentication and authorization
+
+### No basic role
+
+<!-- Eric Leijonmarck -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud_
+
+We're excited to introduce the "No basic role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
+
+Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
+
+For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+
+### New Service Account permissions
+
+[Service accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) allow you to create tokens to access Grafana's API and dashboards. Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources. However, without proper access controls, service accounts can pose a security risk to your Grafana instance. In Grafana 10.2, we've added new tools to limit Service Accounts to just the resources they need to access.
+
+#### Add dashboard and folder permissions to service accounts
+
+<!-- Jo Guerreiro -->
+
+_Generally available in all editions of Grafana_
+
+In this release, we've added the ability to assign dashboard and folder permissions to service accounts.
+This means that you can now create a service account that can be used to access a specific dashboard and nothing else.
+
+This is useful if you want to limit the access service accounts have to your Grafana instance.
+
+Learn more in our [dashboard and folder permissions documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/#manage-dashboard-permissions).
+
+#### Add data source permissions to service accounts
+
+<!-- Jo Guerreiro -->
+
+_Generally available in Grafana Cloud and Grafana Enterprise_
+
+Grafana 10.2 also introduces the ability to assign *data source* permissions to service accounts, for Grafana CLoud and Enterprise users.
+With this feature, you can create a service account that has access to a specific data source and nothing else.
+This is useful in scenarios where you want to limit the access service accounts have to your Grafana instance.
+
+For example, imagine you have a team of developers who need to access a specific data source to develop a new feature.
+Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
+This way, you can limit the potential damage that could be caused by a compromised service account.
+
+Learn more in our [data source permissions documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#data-source-permissions).
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" max-width="600px" caption="Data source permissions in 10.2" >}}
+
+### Role mapping support for Google OIDC
+
+<!-- Jo Guerreiro -->
+
+_Generally available in all editions of Grafana_
+
+You can now map Google groups to Grafana organizational roles when using Google OIDC.
+This is useful if you want to limit the access users have to your Grafana instance.
+
+We've also added support for controlling allowed groups when using Google OIDC.
+
+Refer to the [Google Authentication documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
 
 ### Configure refresh token handling separately for OAuth providers
 
@@ -387,52 +454,6 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
 
-### Add dashboard and folder permissions to service accounts
-
-<!-- Jo Guerreiro -->
-
-_Generally available in all editions of Grafana_
-
-Service accounts allow you to create a token that can be used to authenticate with Grafana.
-You can use this token to access Grafana's API, as well as dashboards that the service account has access to.
-
-In this release, we've added the ability to assign dashboard and folder permissions to service accounts.
-This means that you can now create a service account that can be used to access a specific dashboard and nothing else.
-
-This is useful if you want to limit the access service accounts have to your Grafana instance.
-
-### Add data source permissions to service accounts
-
-<!-- Jo Guerreiro -->
-
-_Generally available in Grafana Cloud and Grafana Enterprise_
-
-Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources.
-However, without proper access controls, service accounts can pose a security risk to your Grafana instance.
-
-To address this issue, Grafana 10.2 introduces the ability to assign data source permissions to service accounts.
-With this feature, you can create a service account that has access to a specific data source and nothing else.
-This is useful in scenarios where you want to limit the access service accounts have to your Grafana instance.
-
-For example, imagine you have a team of developers who need to access a specific data source to develop a new feature.
-Instead of giving them full access to your Grafana instance, you can create a service account that has access only to that data source.
-This way, you can limit the potential damage that could be caused by a compromised service account.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-sa-managed-permissions.png" max-width="600px" caption="Data source permissions in 10.2" >}}
-
-### Role mapping support for Google OIDC
-
-<!-- Jo Guerreiro -->
-
-_Generally available in all editions of Grafana_
-
-You can now map Google groups to Grafana organizational roles when using Google OIDC.
-This is useful if you want to limit the access users have to your Grafana instance.
-
-We've also added support for controlling allowed groups when using Google OIDC.
-
-Refer to the [Google Authentication documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/) to learn how to use these new options.
-
 ### Permission validation on custom role creation and update
 
 <!-- Mihaly Gyongyosi -->
@@ -440,18 +461,6 @@ Refer to the [Google Authentication documentation](http://grafana.com/docs/grafa
 _Generally available in Grafana Enterprise and Grafana Cloud_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
-
-### No basic role
-
-<!-- Eric Leijonmarck -->
-
-_Generally available in Grafana Enterprise and Grafana Cloud_
-
-We're excited to introduce the "No basic role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
-
-Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
-
-For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
 ## Recorded queries: Record multiple metrics from a single query
 
