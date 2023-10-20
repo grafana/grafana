@@ -36,7 +36,11 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 
   return (
     <li className={styles.listItem}>
-      <div className={styles.menuItem}>
+      <div
+        className={cx(styles.menuItem, {
+          [styles.hasIcon]: Boolean(level === 0 && link.icon),
+        })}
+      >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapseButtonWrapper}>
@@ -63,7 +67,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.hasIcon]: Boolean(level === 0 && link.icon),
               })}
             >
               {level === 0 && link.icon && (
@@ -112,6 +115,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     height: theme.spacing(4),
+    paddingLeft: theme.spacing(1),
     position: 'relative',
   }),
   collapseButtonWrapper: css({
@@ -148,7 +152,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(2),
-    paddingLeft: theme.spacing(1),
     minWidth: 0,
   }),
   hasIcon: css({
