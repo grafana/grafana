@@ -249,7 +249,7 @@
     "@grafana/aws-sdk": "0.2.0",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.7.0",
+    "@grafana/experimental": "1.7.4",
     "@grafana/faro-core": "1.2.1",
     "@grafana/faro-web-sdk": "1.2.1",
     "@grafana/flamegraph": "workspace:*",
