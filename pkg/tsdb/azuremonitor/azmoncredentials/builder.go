@@ -1,13 +1,13 @@
-package azuremonitor
+package azmoncredentials
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -18,7 +18,23 @@ const (
 	azureMonitorCustomized   = "customizedazuremonitor"
 )
 
-func getAuthType(cfg *setting.Cfg, jsonData *types.AzureClientSettings) string {
+type azureClientSettings struct {
+	AzureAuthType string
+	CloudName     string
+	TenantId      string
+	ClientId      string
+}
+
+func FromDatasourceData(cfg *setting.Cfg, jsonDataRaw json.RawMessage, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
+	azClientSettings := azureClientSettings{}
+	err := json.Unmarshal(jsonDataRaw, &azClientSettings)
+	if err != nil {
+		return nil, fmt.Errorf("error reading settings: %w", err)
+	}
+	return getAzureCredentials(cfg, &azClientSettings, secureJsonData)
+}
+
+func getAuthType(cfg *setting.Cfg, jsonData *azureClientSettings) string {
 	if azureAuthType := jsonData.AzureAuthType; azureAuthType != "" {
 		return azureAuthType
 	} else {
@@ -61,7 +77,7 @@ func normalizeAzureCloud(cloudName string) (string, error) {
 	}
 }
 
-func getAzureCloud(cfg *setting.Cfg, jsonData *types.AzureClientSettings) (string, error) {
+func getAzureCloud(cfg *setting.Cfg, jsonData *azureClientSettings) (string, error) {
 	authType := getAuthType(cfg, jsonData)
 	switch authType {
 	case azcredentials.AzureAuthManagedIdentity, azcredentials.AzureAuthWorkloadIdentity:
@@ -79,7 +95,7 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *types.AzureClientSettings) (strin
 	}
 }
 
-func getAzureCredentials(cfg *setting.Cfg, jsonData *types.AzureClientSettings, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
+func getAzureCredentials(cfg *setting.Cfg, jsonData *azureClientSettings, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
 	authType := getAuthType(cfg, jsonData)
 
 	switch authType {

@@ -1,16 +1,15 @@
-package azuremonitor
+package azmoncredentials
 
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestCredentials_getAuthType(t *testing.T) {
@@ -22,7 +21,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
 
 		t.Run("should be client secret if auth type is set to client secret", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthClientSecret,
 			}
 
@@ -32,7 +31,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be managed identity if datasource not configured", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 			}
 
@@ -42,7 +41,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be client secret if auth type not specified but credentials configured", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 				TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
 				ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
@@ -58,7 +57,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = false
 
 		t.Run("should be managed identity if auth type is set to managed identity", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthManagedIdentity,
 			}
 
@@ -68,7 +67,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 			}
 
@@ -82,7 +81,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		cfg.Azure.WorkloadIdentityEnabled = true
 
 		t.Run("should be client secret if auth type is set to client secret", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthClientSecret,
 			}
 
@@ -92,7 +91,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be workload identity if datasource not configured and managed identity is disabled", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 			}
 
@@ -102,7 +101,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be client secret if auth type not specified but credentials configured", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 				TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
 				ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
@@ -118,7 +117,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		cfg.Azure.WorkloadIdentityEnabled = false
 
 		t.Run("should be workload identity if auth type is set to workload identity", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthWorkloadIdentity,
 			}
 
@@ -128,7 +127,7 @@ func TestCredentials_getAuthType(t *testing.T) {
 		})
 
 		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: "",
 			}
 
@@ -147,7 +146,7 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 	}
 
 	t.Run("when auth type is managed identity", func(t *testing.T) {
-		jsonData := &types.AzureClientSettings{
+		jsonData := &azureClientSettings{
 			AzureAuthType: azcredentials.AzureAuthManagedIdentity,
 			CloudName:     azureMonitorUSGovernment,
 		}
@@ -175,7 +174,7 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 
 	t.Run("when auth type is client secret", func(t *testing.T) {
 		t.Run("should be from datasource value normalized to known cloud name", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthClientSecret,
 				CloudName:     azureMonitorUSGovernment,
 			}
@@ -187,7 +186,7 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 		})
 
 		t.Run("should be from server configuration if not set in datasource", func(t *testing.T) {
-			jsonData := &types.AzureClientSettings{
+			jsonData := &azureClientSettings{
 				AzureAuthType: azcredentials.AzureAuthClientSecret,
 				CloudName:     "",
 			}
@@ -212,7 +211,7 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 	}
 
 	t.Run("when auth type is managed identity", func(t *testing.T) {
-		jsonData := &types.AzureClientSettings{
+		jsonData := &azureClientSettings{
 			AzureAuthType: azcredentials.AzureAuthManagedIdentity,
 			CloudName:     azureMonitorUSGovernment,
 			TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
@@ -231,7 +230,7 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 	})
 
 	t.Run("when auth type is client secret", func(t *testing.T) {
-		jsonData := &types.AzureClientSettings{
+		jsonData := &azureClientSettings{
 			AzureAuthType: azcredentials.AzureAuthClientSecret,
 			CloudName:     azureMonitorUSGovernment,
 			TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",

@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
@@ -84,13 +85,13 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		azSettings := types.AzureSettings{}
-		err = json.Unmarshal(settings.JSONData, &azSettings)
+		azMonitorSettings := types.AzureMonitorSettings{}
+		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
+		credentials, err := azmoncredentials.FromDatasourceData(cfg, settings.JSONData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -108,7 +109,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		model := types.DatasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
-			Settings:                azSettings.AzureMonitorSettings,
+			Settings:                azMonitorSettings,
 			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
