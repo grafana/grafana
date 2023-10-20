@@ -298,7 +298,11 @@ func (am *externalAlertmanager) postConfig(ctx context.Context, rawConfig string
 		return fmt.Errorf("config not found")
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error while closing body", "err", err)
+		}
+	}()
 
 	_, err = io.ReadAll(res.Body)
 	if err != nil {
