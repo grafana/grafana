@@ -1,7 +1,6 @@
 import { Story, Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
@@ -15,7 +14,6 @@ import mdx from './AutoSaveField.mdx';
 const meta: Meta = {
   title: 'Forms/AutoSaveField',
   component: AutoSaveField,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

@@ -105,7 +105,9 @@ Should explain what happened, what was expected and how to reproduce it together
 
 #### Enhancement requests
 
-Enhancement requests (aka. feature requests) should be created as a [Github discussion](https://github.com/grafana/grafana/discussions). When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate this we recommend using the following template:
+Prior to August, 2023, community-submitted feature requests were submitted as [Github discussions](https://github.com/grafana/grafana/discussions). These are now submitted using the [feature request issue template](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
+
+When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate this the feature requests template includes the following:
 
 - What would you like to be added?:
 - Why is this needed (describe your use case and goals)\*\*?:
@@ -193,8 +195,8 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 
 ### Enhancement/feature?
 
-1. Remind the contributor that enhancement/feature request should be created as a GitHub discussion. See [Enhancements requests.](https://github.com/grafana/grafana/blob/main/ISSUE_TRIAGE.md#enhancement-requests)
-2. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label.
+1. Label the issue `type/feature-request` and add at least one `area/*` or `datasource/*` label.
+2. Make sure the submitter has justified why this feature requests is important.
 
 ### Documentation issue?
 

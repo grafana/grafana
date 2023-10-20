@@ -50,6 +50,7 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 			continue
 		}
 
+		logger.Info(fmt.Sprintf("InfluxDB executing SQL: %s", qm.RawSQL))
 		info, err := r.client.Execute(ctx, qm.RawSQL)
 		if err != nil {
 			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))

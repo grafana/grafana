@@ -1,83 +1,150 @@
 import * as H from 'history';
+import { Unsubscribable } from 'rxjs';
 
-import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
+  SceneFlexLayout,
   SceneGridItem,
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
-  SceneObjectUrlSyncHandler,
-  SceneObjectUrlValues,
+  sceneUtils,
 } from '@grafana/scenes';
-import appEvents from 'app/core/app_events';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardMeta } from 'app/types';
 
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { findVizPanel } from '../utils/findVizPanel';
-import { forceRenderChildren } from '../utils/utils';
+import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import {
+  findVizPanelByKey,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getDashboardUrl,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
+
+import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
 export interface DashboardSceneState extends SceneObjectState {
+  /** The title */
   title: string;
+  /** A uid when saved */
   uid?: string;
+  /** @deprecated */
+  id?: number | null;
+  /** Layout of panels */
   body: SceneObject;
+  /** NavToolbar actions */
   actions?: SceneObject[];
+  /** Fixed row at the top of the canvas with for example variables and time range controls */
   controls?: SceneObject[];
+  /** True when editing */
   isEditing?: boolean;
+  /** True when user made a change */
   isDirty?: boolean;
-  /** Scene object key for object to inspect */
+  /** meta flags */
+  meta: DashboardMeta;
+  /** Panel to inspect */
   inspectPanelKey?: string;
-  /** Scene object key for object to view in fullscreen */
+  /** Panel to view in full screen */
   viewPanelKey?: string;
-  /** Scene object that handles the current drawer */
-  drawer?: SceneObject;
+  /** Scene object that handles the current drawer or modal */
+  overlay?: SceneObject;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
+  /**
+   * Handles url sync
+   */
   protected _urlSync = new DashboardSceneUrlSync(this);
+  /**
+   * State before editing started
+   */
+  private _initialState?: DashboardSceneState;
+  /**
+   * Url state before editing started
+   */
+  private _initiallUrlState?: UrlQueryMap;
+  /**
+   * change tracking subscription
+   */
+  private _changeTrackerSub?: Unsubscribable;
 
-  constructor(state: DashboardSceneState) {
-    super(state);
-
-    this.addActivationHandler(() => {
-      return () => {
-        getUrlSyncManager().cleanUp(this);
-      };
+  public constructor(state: Partial<DashboardSceneState>) {
+    super({
+      title: 'Dashboard',
+      meta: {},
+      body: state.body ?? new SceneFlexLayout({ children: [] }),
+      ...state,
     });
 
-    this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
+    this.addActivationHandler(() => this._activationHandler());
   }
 
-  public onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
-    // Temporary hacky way to detect changes
-    if (event.payload.changedObject instanceof SceneGridItem) {
-      this.setState({ isDirty: true });
-    }
-  };
+  private _activationHandler() {
+    window.__grafanaSceneContext = this;
 
-  initUrlSync() {
+    if (this.state.isEditing) {
+      this.startTrackingChanges();
+    }
+
+    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
+
+    // @ts-expect-error
+    getDashboardSrv().setCurrent(oldDashboardWrapper);
+
+    // Deactivation logic
+    return () => {
+      window.__grafanaSceneContext = undefined;
+      this.stopTrackingChanges();
+      this.stopUrlSync();
+      oldDashboardWrapper.destroy();
+    };
+  }
+
+  public startUrlSync() {
     getUrlSyncManager().initSync(this);
   }
 
-  onEnterEditMode = () => {
+  public stopUrlSync() {
+    getUrlSyncManager().cleanUp(this);
+  }
+
+  public onEnterEditMode = () => {
+    // Save this state
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initiallUrlState = locationService.getSearchObject();
+
+    // Switch to edit mode
     this.setState({ isEditing: true });
 
-    // Make grid draggable
+    // Propagate change edit mode change to children
     if (this.state.body instanceof SceneGridLayout) {
       this.state.body.setState({ isDraggable: true, isResizable: true });
       forceRenderChildren(this.state.body, true);
     }
+
+    this.startTrackingChanges();
   };
 
-  onDiscard = () => {
-    // TODO open confirm modal if dirty
-    // TODO actually discard changes
-    this.setState({ isEditing: false });
+  public onDiscard = () => {
+    // No need to listen to changes anymore
+    this.stopTrackingChanges();
+    // Stop url sync before updating url
+    this.stopUrlSync();
+    // Now we can update url
+    locationService.partial(this._initiallUrlState!, true);
+    // Update state and disable editing
+    this.setState({ ...this._initialState, isEditing: false });
+    // and start url sync again
+    this.startUrlSync();
 
     // Disable grid dragging
     if (this.state.body instanceof SceneGridLayout) {
@@ -86,10 +153,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   };
 
-  getPageNav(location: H.Location) {
+  public onSave = () => {
+    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
+  };
+
+  public getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
-      url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
+      url: getDashboardUrl({
+        uid: this.state.uid,
+        currentQueryParams: location.search,
+        updateQuery: { viewPanel: null, inspect: null },
+      }),
     };
 
     if (this.state.viewPanelKey) {
@@ -105,60 +180,58 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  getBodyToRender(viewPanelKey?: string): SceneObject {
-    const viewPanel = findVizPanel(this, viewPanelKey);
+  public getBodyToRender(viewPanelKey?: string): SceneObject {
+    const viewPanel = findVizPanelByKey(this, viewPanelKey);
     return viewPanel ?? this.state.body;
   }
-}
 
-class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
-  constructor(private _scene: DashboardScene) {}
-
-  getKeys(): string[] {
-    return ['inspect', 'viewPanel'];
+  private startTrackingChanges() {
+    this._changeTrackerSub = this.subscribeToEvent(
+      SceneObjectStateChangedEvent,
+      (event: SceneObjectStateChangedEvent) => {
+        if (event.payload.changedObject instanceof SceneGridItem) {
+          this.setIsDirty();
+        }
+      }
+    );
   }
 
-  getUrlState(): SceneObjectUrlValues {
-    const state = this._scene.state;
-    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
+  private setIsDirty() {
+    if (!this.state.isDirty) {
+      this.setState({ isDirty: true });
+    }
   }
 
-  updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelKey } = this._scene.state;
-    const update: Partial<DashboardSceneState> = {};
+  private stopTrackingChanges() {
+    this._changeTrackerSub?.unsubscribe();
+  }
 
-    // Handle inspect object state
-    if (typeof values.inspect === 'string') {
-      const panel = findVizPanel(this._scene, values.inspect);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ inspect: null });
-        return;
-      }
+  public getInitialState(): DashboardSceneState | undefined {
+    return this._initialState;
+  }
 
-      update.inspectPanelKey = values.inspect;
-      update.drawer = new PanelInspectDrawer(panel);
-    } else if (inspectPanelKey) {
-      update.inspectPanelKey = undefined;
-      update.drawer = undefined;
-    }
+  public showModal(modal: SceneObject) {
+    this.setState({ overlay: modal });
+  }
 
-    // Handle view panel state
-    if (typeof values.viewPanel === 'string') {
-      const panel = findVizPanel(this._scene, values.viewPanel);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ viewPanel: null });
-        return;
-      }
+  public closeModal() {
+    this.setState({ overlay: undefined });
+  }
 
-      update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelKey) {
-      update.viewPanelKey = undefined;
-    }
+  /**
+   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   */
+  public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
+    const panel = getClosestVizPanel(sceneObject);
 
-    if (Object.keys(update).length > 0) {
-      this._scene.setState(update);
-    }
+    return {
+      app: CoreApp.Dashboard,
+      dashboardUID: this.state.uid,
+      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+    };
+  }
+
+  canEditDashboard() {
+    return Boolean(this.state.meta.canEdit || this.state.meta.canMakeEditable);
   }
 }

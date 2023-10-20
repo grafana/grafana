@@ -5,44 +5,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-// FilterWhere limits the set of dashboard IDs to the dashboards for
-// which the filter is applicable. Results where the first value is
-// an empty string are discarded.
-type FilterWhere interface {
-	Where() (string, []interface{})
-}
-
-// FilterWith returns any recursive CTE queries (if supported)
-// and their parameters
-type FilterWith interface {
-	With() (string, []interface{})
-}
-
-// FilterGroupBy should be used after performing an outer join on the
-// search result to ensure there is only one of each ID in the results.
-// The id column must be present in the result.
-type FilterGroupBy interface {
-	GroupBy() (string, []interface{})
-}
-
-// FilterOrderBy provides an ordering for the search result.
-type FilterOrderBy interface {
-	OrderBy() string
-}
-
-// FilterLeftJoin adds the returned string as a "LEFT OUTER JOIN" to
-// allow for fetching extra columns from a table outside of the
-// dashboard column.
-type FilterLeftJoin interface {
-	LeftJoin() string
-}
-
-type FilterSelect interface {
-	Select() string
-}
 
 const (
 	TypeFolder      = "dash-folder"
@@ -55,7 +20,7 @@ type TypeFilter struct {
 	Type    string
 }
 
-func (f TypeFilter) Where() (string, []interface{}) {
+func (f TypeFilter) Where() (string, []any) {
 	if f.Type == TypeFolder || f.Type == TypeAlertFolder {
 		return "dashboard.is_folder = " + f.Dialect.BooleanStr(true), nil
 	}
@@ -71,8 +36,8 @@ type OrgFilter struct {
 	OrgId int64
 }
 
-func (f OrgFilter) Where() (string, []interface{}) {
-	return "dashboard.org_id=?", []interface{}{f.OrgId}
+func (f OrgFilter) Where() (string, []any) {
+	return "dashboard.org_id=?", []any{f.OrgId}
 }
 
 type TitleFilter struct {
@@ -80,15 +45,15 @@ type TitleFilter struct {
 	Title   string
 }
 
-func (f TitleFilter) Where() (string, []interface{}) {
-	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []interface{}{"%" + f.Title + "%"}
+func (f TitleFilter) Where() (string, []any) {
+	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []any{"%" + f.Title + "%"}
 }
 
 type FolderFilter struct {
 	IDs []int64
 }
 
-func (f FolderFilter) Where() (string, []interface{}) {
+func (f FolderFilter) Where() (string, []any) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 
@@ -98,12 +63,12 @@ type FolderUIDFilter struct {
 	UIDs    []string
 }
 
-func (f FolderUIDFilter) Where() (string, []interface{}) {
+func (f FolderUIDFilter) Where() (string, []any) {
 	if len(f.UIDs) < 1 {
 		return "", nil
 	}
 
-	params := []interface{}{}
+	params := []any{}
 	includeGeneral := false
 	for _, uid := range f.UIDs {
 		if uid == folder.GeneralFolderUID {
@@ -119,11 +84,11 @@ func (f FolderUIDFilter) Where() (string, []interface{}) {
 		// do nothing
 	case len(params) == 1:
 		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)"
-		params = append([]interface{}{f.OrgID}, params...)
+		params = append([]any{f.OrgID}, params...)
 	default:
 		sqlArray := "(?" + strings.Repeat(",?", len(params)-1) + ")"
 		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN " + sqlArray + ")"
-		params = append([]interface{}{f.OrgID}, params...)
+		params = append([]any{f.OrgID}, params...)
 	}
 
 	if includeGeneral {
@@ -142,7 +107,7 @@ type DashboardIDFilter struct {
 	IDs []int64
 }
 
-func (f DashboardIDFilter) Where() (string, []interface{}) {
+func (f DashboardIDFilter) Where() (string, []any) {
 	return sqlIDin("dashboard.id", f.IDs)
 }
 
@@ -150,7 +115,7 @@ type DashboardFilter struct {
 	UIDs []string
 }
 
-func (f DashboardFilter) Where() (string, []interface{}) {
+func (f DashboardFilter) Where() (string, []any) {
 	return sqlUIDin("dashboard.uid", f.UIDs)
 }
 
@@ -162,12 +127,12 @@ func (f TagsFilter) LeftJoin() string {
 	return `dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id`
 }
 
-func (f TagsFilter) GroupBy() (string, []interface{}) {
-	return `dashboard.id HAVING COUNT(dashboard.id) >= ?`, []interface{}{len(f.Tags)}
+func (f TagsFilter) GroupBy() (string, []any) {
+	return `dashboard.id HAVING COUNT(dashboard.id) >= ?`, []any{len(f.Tags)}
 }
 
-func (f TagsFilter) Where() (string, []interface{}) {
-	params := make([]interface{}, len(f.Tags))
+func (f TagsFilter) Where() (string, []any) {
+	params := make([]any, len(f.Tags))
 	for i, tag := range f.Tags {
 		params[i] = tag
 	}
@@ -186,7 +151,7 @@ func (s TitleSorter) OrderBy() string {
 	return "dashboard.title ASC"
 }
 
-func sqlIDin(column string, ids []int64) (string, []interface{}) {
+func sqlIDin(column string, ids []int64) (string, []any) {
 	length := len(ids)
 	if length < 1 {
 		return "", nil
@@ -194,14 +159,14 @@ func sqlIDin(column string, ids []int64) (string, []interface{}) {
 
 	sqlArray := "(?" + strings.Repeat(",?", length-1) + ")"
 
-	params := []interface{}{}
+	params := []any{}
 	for _, id := range ids {
 		params = append(params, id)
 	}
 	return fmt.Sprintf("%s IN %s", column, sqlArray), params
 }
 
-func sqlUIDin(column string, uids []string) (string, []interface{}) {
+func sqlUIDin(column string, uids []string) (string, []any) {
 	length := len(uids)
 	if length < 1 {
 		return "", nil
@@ -209,7 +174,7 @@ func sqlUIDin(column string, uids []string) (string, []interface{}) {
 
 	sqlArray := "(?" + strings.Repeat(",?", length-1) + ")"
 
-	params := []interface{}{}
+	params := []any{}
 	for _, id := range uids {
 		params = append(params, id)
 	}
@@ -220,8 +185,8 @@ func sqlUIDin(column string, uids []string) (string, []interface{}) {
 type FolderWithAlertsFilter struct {
 }
 
-var _ FilterWhere = &FolderWithAlertsFilter{}
+var _ model.FilterWhere = &FolderWithAlertsFilter{}
 
-func (f FolderWithAlertsFilter) Where() (string, []interface{}) {
+func (f FolderWithAlertsFilter) Where() (string, []any) {
 	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }

@@ -262,19 +262,19 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates non-registered (custom) claims for equality", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 123}, nil))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-str": "foo", "my-number": 123}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "bar", "my-number": 123}, nil))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-str": "bar", "my-number": 123}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 100}, nil))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-str": "foo", "my-number": 100}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo"}, nil))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-str": "foo"}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-number": 123}, nil))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-number": 123}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
 		cfg.JWTAuthExpectClaims = `{"my-str": "foo", "my-number": 123}`

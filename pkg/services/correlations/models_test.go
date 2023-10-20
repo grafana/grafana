@@ -13,7 +13,7 @@ func TestCorrelationModels(t *testing.T) {
 			targetUid := "targetUid"
 			config := &CorrelationConfig{
 				Field:  "field",
-				Target: map[string]interface{}{},
+				Target: map[string]any{},
 				Type:   ConfigTypeQuery,
 			}
 			cmd := &CreateCorrelationCommand{
@@ -29,7 +29,7 @@ func TestCorrelationModels(t *testing.T) {
 		t.Run("Fails if target UID is not set and config type = query", func(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
-				Target: map[string]interface{}{},
+				Target: map[string]any{},
 				Type:   ConfigTypeQuery,
 			}
 			cmd := &CreateCorrelationCommand{
@@ -44,7 +44,7 @@ func TestCorrelationModels(t *testing.T) {
 		t.Run("Fails if config type is unknown", func(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
-				Target: map[string]interface{}{},
+				Target: map[string]any{},
 				Type:   "unknown config type",
 			}
 			cmd := &CreateCorrelationCommand{

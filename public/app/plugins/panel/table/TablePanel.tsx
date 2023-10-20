@@ -2,12 +2,21 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView, reportInteraction } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
+
+export const INTERACTION_EVENT_NAME = 'table_panel_usage';
+export const INTERACTION_ITEM = {
+  COLUMN_RESIZE: 'column_resize',
+  SORT_BY: 'sort_by',
+  TABLE_SELECTION_CHANGE: 'table_selection_change',
+  ERROR_VIEW: 'error_view',
+  CELL_TYPE_CHANGE: 'cell_type_change',
+};
 
 interface Props extends PanelProps<Options> {}
 
@@ -27,6 +36,8 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   if (!count || !hasFields) {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ERROR_VIEW });
+
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
@@ -106,6 +117,8 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
     });
   }
 
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.COLUMN_RESIZE });
+
   props.onFieldConfigChange({
     ...fieldConfig,
     overrides,
@@ -113,6 +126,8 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
 }
 
 function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SORT_BY });
+
   props.onOptionsChange({
     ...props.options,
     sortBy,
@@ -120,6 +135,8 @@ function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
 }
 
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.TABLE_SELECTION_CHANGE });
+
   props.onOptionsChange({
     ...props.options,
     frameIndex: val.value || 0,

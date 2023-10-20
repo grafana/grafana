@@ -247,7 +247,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, opt
 		}
 
 		if err != nil {
-			c.log.Error("force folder delete: failed to retrieve next object", "err", err)
+			c.log.Error("Force folder delete: failed to retrieve next object", "err", err)
 			return err
 		}
 
@@ -266,7 +266,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, opt
 
 	for _, path := range pathsToDelete {
 		if !options.AccessFilter.IsAllowed(path) {
-			c.log.Error("force folder delete: unauthorized access", "path", path)
+			c.log.Error("Force folder delete: unauthorized access", "path", path)
 			return fmt.Errorf("force folder delete error, unauthorized access to %s", path)
 		}
 	}
@@ -274,7 +274,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, opt
 	var lastErr error
 	for _, path := range pathsToDelete {
 		if err := c.bucket.Delete(ctx, path); err != nil {
-			c.log.Error("force folder delete: failed while deleting a file", "err", err, "path", path)
+			c.log.Error("Force folder delete: failed while deleting a file", "err", err, "path", path)
 			lastErr = err
 			// keep going and delete remaining files
 		}

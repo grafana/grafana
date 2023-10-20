@@ -31,13 +31,14 @@ You have the option to use several different variable types, but variables of th
 
 Select a Prometheus data source query type and enter the required inputs:
 
-| Query Type     | Input(\* required)        | Description                                                                           | Used API endpoints                             |
-| -------------- | ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`  | `metric`                  | Returns a list of all label names matching the specified `metric` regex.              | /api/v1/labels                                 |
-| `Label values` | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric. | /api/v1/label/`label`/values or /api/v1/series |
-| `Metrics`      | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                      | /api/v1/label/\_\_name\_\_/values              |
-| `Query result` | `query`                   | Returns a list of Prometheus query result for the `query`.                            | /api/v1/query                                  |
-| `Series query` | `metric`, `label` or both | Returns a list of time series associated with the entered data.                       | /api/v1/series                                 |
+| Query Type      | Input(\* required)        | Description                                                                                                                                                   | Used API endpoints                             |
+| --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `Label names`   | `metric`                  | Returns a list of all label names matching the specified `metric` regex.                                                                                      | /api/v1/labels                                 |
+| `Label values`  | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric.                                                                         | /api/v1/label/`label`/values or /api/v1/series |
+| `Metrics`       | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                                                                                              | /api/v1/label/\_\_name\_\_/values              |
+| `Query result`  | `query`                   | Returns a list of Prometheus query result for the `query`.                                                                                                    | /api/v1/query                                  |
+| `Series query`  | `metric`, `label` or both | Returns a list of time series associated with the entered data.                                                                                               | /api/v1/series                                 |
+| `Classic query` | classic query string      | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
 
 For details on _metric names_, _label names_, and _label values_, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

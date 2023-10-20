@@ -96,7 +96,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			TokenType:    "Bearer",
 		}
 		idToken := "testidtoken"
-		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
+		token = token.WithExtra(map[string]any{"id_token": idToken})
 		userlogin := "loginuser"
 		query := &login.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: login.UserLookupParams{Login: &userlogin}}
 		cmd := &login.UpdateAuthInfoCommand{

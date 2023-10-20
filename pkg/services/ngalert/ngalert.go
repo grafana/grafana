@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -25,10 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -65,9 +67,13 @@ func ProvideService(
 	bus bus.Bus,
 	accesscontrolService accesscontrol.Service,
 	annotationsRepo annotations.Repository,
-	pluginsStore plugins.Store,
+	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
+	upgradeService migration.UpgradeService,
+
+	// This is necessary to ensure the guardian provider is initialized before we run the migration.
+	_ *guardian.Provider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -94,9 +100,17 @@ func ProvideService(
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
+		upgradeService:       upgradeService,
 	}
 
-	if ng.IsDisabled() {
+	// Migration is called even if UA is disabled. If UA is disabled, this will do nothing except handle logic around
+	// reverting the migration.
+	err := ng.upgradeService.Run(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	if !ng.shouldRun() {
 		return ng, nil
 	}
 
@@ -140,8 +154,10 @@ type AlertNG struct {
 	store                *store.DBstore
 
 	bus          bus.Bus
-	pluginsStore plugins.Store
+	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
+
+	upgradeService migration.UpgradeService
 }
 
 func (ng *AlertNG) init() error {
@@ -202,6 +218,7 @@ func (ng *AlertNG) init() error {
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
+		Log:                  log.New("ngalert.scheduler"),
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -222,6 +239,7 @@ func (ng *AlertNG) init() error {
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
+		Log:                            log.New("ngalert.state.manager"),
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -314,16 +332,21 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 	})
 }
 
+// shouldRun determines if AlertNG should init or run anything more than just the migration.
+func (ng *AlertNG) shouldRun() bool {
+	return ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
+	if !ng.shouldRun() {
+		return nil
+	}
 	ng.Log.Debug("Starting")
+
 	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
-
-	children.Go(func() error {
-		return ng.stateManager.Run(subCtx)
-	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
@@ -342,10 +365,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
 func (ng *AlertNG) IsDisabled() bool {
-	if ng.Cfg == nil {
-		return true
-	}
-	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+	return ng.Cfg == nil
 }
 
 // GetHooks returns a facility for replacing handlers for paths. The handler hook for a path

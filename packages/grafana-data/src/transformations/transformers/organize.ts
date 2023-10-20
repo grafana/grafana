@@ -1,4 +1,4 @@
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataFrame, DataTransformerInfo, TransformationApplicabilityLevels } from '../../types';
 
 import { filterFieldsByNameTransformer } from './filterByName';
 import { DataTransformerID } from './ids';
@@ -20,7 +20,11 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     indexByName: {},
     renameByName: {},
   },
-
+  isApplicable: (data: DataFrame[]) => {
+    return data.length > 1
+      ? TransformationApplicabilityLevels.NotPossible
+      : TransformationApplicabilityLevels.Applicable;
+  },
   /**
    * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series

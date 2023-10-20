@@ -7,9 +7,12 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -28,17 +31,23 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
+	origNewEC2Client := NewEC2Client
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
 
 	var logApi mocks.LogsAPI
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return &logApi
 	}
-
+	ec2Mock := &mocks.EC2Mock{}
+	ec2Mock.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
+	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
+		return ec2Mock
+	}
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
 		NewLogsAPI = origNewLogsAPI
+		NewEC2Client = origNewEC2Client
 	})
 
 	var api mocks.FakeMetricsAPI
@@ -46,9 +55,13 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &api
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
-	})
+	im := datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
+	}))
 
 	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
 		pageLimit := 100
@@ -238,5 +251,68 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Equal(t, http.StatusOK, sent.Status)
 		require.Nil(t, err)
 		assert.JSONEq(t, `[{"value":{"name":"field1","percent":50}},{"value":{"name":"field2","percent":50}}]`, string(sent.Body))
+	})
+
+	t.Run("Should handle region requests and return regions from the api", func(t *testing.T) {
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, true))
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/regions`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		require.Nil(t, err)
+		assert.Contains(t, string(sent.Body), `"name":"us-east-1"`)
+	})
+
+	t.Run("Should handle legacy region requests and feature toggle is turned off", func(t *testing.T) {
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, false))
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/regions`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		require.Nil(t, err)
+		assert.Contains(t, string(sent.Body), `"text":"us-east-1"`)
+	})
+
+	t.Run("Should error for any request when a default region is not selected", func(t *testing.T) {
+		imWithoutDefaultRegion := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{},
+			}}, nil
+		})
+
+		executor := newExecutor(imWithoutDefaultRegion, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, false))
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/regions`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusBadRequest, sent.Status)
+		require.Nil(t, err)
+		assert.Contains(t, string(sent.Body), "unexpected error missing default region")
 	})
 }

@@ -20,6 +20,7 @@ const (
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
+	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -78,6 +79,7 @@ type UnifiedAlertingSettings struct {
 	HARedisUsername                string
 	HARedisPassword                string
 	HARedisDB                      int
+	HARedisMaxConns                int
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -93,8 +95,18 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	RemoteAlertmanager            RemoteAlertmanagerSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+}
+
+// RemoteAlertmanagerSettings contains the configuration needed
+// to disable the internal Alertmanager and use an external one instead.
+type RemoteAlertmanagerSettings struct {
+	Enable   bool
+	URL      string
+	TenantID string
+	Password string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -240,6 +252,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
 	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
 	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
+	uaCfg.HARedisMaxConns = ua.Key("ha_redis_max_conns").MustInt(alertmanagerRedisDefaultMaxConns)
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
@@ -333,6 +346,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	remoteAlertmanager := iniFile.Section("remote.alertmanager")
+	uaCfgRemoteAM := RemoteAlertmanagerSettings{
+		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
+		URL:      remoteAlertmanager.Key("url").MustString(""),
+		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
+		Password: remoteAlertmanager.Key("password").MustString(""),
+	}
+	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots

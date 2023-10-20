@@ -15,7 +15,7 @@ type logWrapper struct {
 	logger log.Logger
 }
 
-func (lw *logWrapper) Println(v ...interface{}) {
+func (lw *logWrapper) Println(v ...any) {
 	lw.logger.Info("graphite metric bridge", v...)
 }
 

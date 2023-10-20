@@ -19,10 +19,10 @@ jobs:
         working-directory: './pr'
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: './pr'
-    - uses: actions/setup-node@v3.5.1
+    - uses: actions/setup-node@v3.8.1
       with:
         node-version: 16.16.0
 
@@ -65,12 +65,12 @@ jobs:
         working-directory: './base'
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: './base'
         ref: ${{ github.event.pull_request.base.ref }}
 
-    - uses: actions/setup-node@v3.5.1
+    - uses: actions/setup-node@v3.8.1
       with:
         node-version: 16.16.0
 
@@ -113,7 +113,7 @@ jobs:
       GITHUB_STEP_NUMBER: 8
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v3

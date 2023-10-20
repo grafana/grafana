@@ -7,17 +7,17 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 //go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter
 
 type PluginContextGetter interface {
-	GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error)
+	GetPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error)
 }
 
 // PluginRunner can handle streaming operations for channels belonging to plugins.
@@ -63,10 +63,10 @@ type PluginPathRunner struct {
 }
 
 // OnSubscribe passes control to a plugin.
-func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *user.SignedInUser, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	pCtx, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			logger.Error("Plugin context not found", "path", r.path)
 			return model.SubscribeReply{}, 0, centrifuge.ErrorInternal
 		}
@@ -86,7 +86,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *user.SignedInU
 		return model.SubscribeReply{}, resp.Status, nil
 	}
 
-	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.OrgID, e.Channel), r.path, e.Data, pCtx, r.handler, false)
+	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.GetOrgID(), e.Channel), r.path, e.Data, pCtx, r.handler, false)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 		return model.SubscribeReply{}, 0, centrifuge.ErrorInternal
@@ -107,10 +107,10 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *user.SignedInU
 }
 
 // OnPublish passes control to a plugin.
-func (r *PluginPathRunner) OnPublish(ctx context.Context, user *user.SignedInUser, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+func (r *PluginPathRunner) OnPublish(ctx context.Context, user identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	pCtx, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			logger.Error("Plugin context not found", "path", r.path)
 			return model.PublishReply{}, 0, centrifuge.ErrorInternal
 		}

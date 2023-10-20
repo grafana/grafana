@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // when memory-profiling these benchmarks these commands are recommended
@@ -17,7 +19,7 @@ func BenchmarkMatrixJson(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &lokiQuery{}, ResponseOpts{})
+		_, _ = runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &lokiQuery{}, ResponseOpts{}, log.New("test"))
 	}
 }
 

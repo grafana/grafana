@@ -220,11 +220,11 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     if (e.key !== 'Enter') {
       return;
     }
-    this.checkAndUpdateValue('buffer', (e.target as any).value);
+    this.checkAndUpdateValue('buffer', e.currentTarget.value);
   };
 
   handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    this.checkAndUpdateValue('buffer', e.target.value);
+    this.checkAndUpdateValue('buffer', e.currentTarget.value);
   };
 
   renderMeasurementsQuery() {

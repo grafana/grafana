@@ -4,10 +4,10 @@ import "context"
 
 // Calls is a mock implementation of the provisioner interface
 type calls struct {
-	Provision                   []interface{}
-	PollChanges                 []interface{}
-	GetProvisionerResolvedPath  []interface{}
-	GetAllowUIUpdatesFromConfig []interface{}
+	Provision                   []any
+	PollChanges                 []any
+	GetProvisionerResolvedPath  []any
+	GetAllowUIUpdatesFromConfig []any
 }
 
 // ProvisionerMock is a mock implementation of `Provisioner`

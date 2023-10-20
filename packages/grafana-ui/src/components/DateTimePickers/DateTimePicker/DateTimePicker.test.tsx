@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -27,17 +27,29 @@ describe('Date time picker', () => {
 
   it('input should have a value', () => {
     renderDatetimePicker();
-
     expect(screen.queryByDisplayValue('2021-05-05 12:00:00')).toBeInTheDocument();
   });
 
-  it('should update date onblur', () => {
-    renderDatetimePicker();
+  it('should update date onblur', async () => {
+    const onChangeInput = jest.fn();
+    render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId('date-time-input');
-    fireEvent.change(dateTimeInput, { target: { value: '2021-07-31 12:30:30' } });
-    fireEvent.blur(dateTimeInput);
-
+    await userEvent.clear(dateTimeInput);
+    await userEvent.type(dateTimeInput, '2021-07-31 12:30:30');
     expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
+    await userEvent.click(document.body);
+    expect(onChangeInput).toHaveBeenCalled();
+  });
+
+  it('should not update onblur if invalid date', async () => {
+    const onChangeInput = jest.fn();
+    render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
+    const dateTimeInput = screen.getByTestId('date-time-input');
+    await userEvent.clear(dateTimeInput);
+    await userEvent.type(dateTimeInput, '2021:05:05 12-00-00');
+    expect(dateTimeInput).toHaveDisplayValue('2021:05:05 12-00-00');
+    await userEvent.click(document.body);
+    expect(onChangeInput).not.toHaveBeenCalled();
   });
 
   it('should be able to select values in TimeOfDayPicker without blurring the element', async () => {

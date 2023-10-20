@@ -65,7 +65,7 @@ groups:
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:
-      # <string, required> unique identifier for the rule
+      # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: my_id_1
         # <string, required> title of the rule that will be displayed in the UI
         title: my_first_rule
@@ -138,7 +138,7 @@ deleteRules:
 Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
-1. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your contact point.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -158,7 +158,7 @@ contactPoints:
     # <string, required> name of the contact point
     name: cp_1
     receivers:
-      # <string, required> unique identifier for the receiver
+      # <string, required> unique identifier for the receiver. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
@@ -247,7 +247,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-##### Google Hangouts Chat
+##### Google Chat
 
 ```yaml
 type: googlechat
@@ -497,12 +497,12 @@ settings:
 Create or reset the notification policy tree in your Grafana instance(s).
 
 1. Create a notification policy in Grafana.
-2. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your notification policy.
-3. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your notification policy.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-4. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
+1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating notification policies.
 

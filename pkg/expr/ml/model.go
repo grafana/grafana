@@ -20,11 +20,11 @@ type OutlierCommandConfiguration struct {
 
 	// If Query is empty it should be contained in a datasource specific format
 	// inside of QueryParms.
-	Query       string                 `json:"query,omitempty"`
-	QueryParams map[string]interface{} `json:"query_params,omitempty"`
+	Query       string         `json:"query,omitempty"`
+	QueryParams map[string]any `json:"query_params,omitempty"`
 
-	Algorithm    map[string]interface{} `json:"algorithm"`
-	ResponseType string                 `json:"response_type"`
+	Algorithm    map[string]any `json:"algorithm"`
+	ResponseType string         `json:"response_type"`
 }
 
 // outlierAttributes is outlier command configuration that is sent to Machine learning API

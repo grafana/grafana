@@ -31,7 +31,7 @@ export interface TempoQuery extends common.DataQuery {
   /**
    * TraceQL query or trace ID
    */
-  query: string;
+  query?: string;
   /**
    * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */
@@ -52,6 +52,14 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Query traces by span name
    */
   spanName?: string;
+  /**
+   * Defines the maximum number of spans per spanset that are returned from Tempo
+   */
+  spss?: number;
+  /**
+   * The type of the table that is used to display the search results
+   */
+  tableType?: SearchTableType;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
@@ -72,6 +80,14 @@ export enum SearchStreamingState {
   Error = 'error',
   Pending = 'pending',
   Streaming = 'streaming',
+}
+
+/**
+ * The type of the table that is used to display the search results
+ */
+export enum SearchTableType {
+  Spans = 'spans',
+  Traces = 'traces',
 }
 
 /**

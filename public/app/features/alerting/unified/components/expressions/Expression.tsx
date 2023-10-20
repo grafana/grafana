@@ -23,7 +23,7 @@ import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
-import { AlertConditionIndicator } from './AlertConditionIndicator';
+import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
@@ -302,11 +302,11 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={alertCondition}
+        <ExpressionStatusIndicator
           error={error}
           warning={warning}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={alertCondition}
         />
         <IconButton
           name="trash-alt"

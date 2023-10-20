@@ -12,7 +12,7 @@ import (
 func TestService_getUsageStats(t *testing.T) {
 	svc := setupTests(t, func(svc *Service) {
 		svc.RegisterClient(
-			&authntest.FakeClient{ExpectedErr: nil, ExpectedName: "test", ExpectedPriority: 1, ExpectedStats: map[string]interface{}{"stats.test.enabled.count": 1}})
+			&authntest.FakeClient{ExpectedErr: nil, ExpectedName: "test", ExpectedPriority: 1, ExpectedStats: map[string]any{"stats.test.enabled.count": 1}})
 		svc.RegisterClient(
 			&authntest.FakeClient{ExpectedErr: errCantAuthenticateReq, ExpectedName: "failing", ExpectedPriority: 1, ExpectedStats: nil})
 	})
@@ -28,7 +28,7 @@ func TestService_getUsageStats(t *testing.T) {
 
 	got, err := svc.getUsageStats(context.Background())
 	require.NoError(t, err)
-	want := map[string]interface{}{"stats.auth_enabled.anonymous.count": 0,
+	want := map[string]any{"stats.auth_enabled.anonymous.count": 0,
 		"stats.auth_enabled.auth_proxy.count":       1,
 		"stats.auth_enabled.basic_auth.count":       1,
 		"stats.auth_enabled.grafana_password.count": 1,

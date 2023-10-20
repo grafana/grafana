@@ -18,9 +18,9 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		alertInstances := make([]*models.AlertInstance, 0)
 
 		s := strings.Builder{}
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
-		addToQuery := func(stmt string, p ...interface{}) {
+		addToQuery := func(stmt string, p ...any) {
 			s.WriteString(stmt)
 			params = append(params, p...)
 		}
@@ -54,7 +54,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 		if err != nil {
 			return err
 		}
-		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+		params := append(make([]any, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
@@ -74,9 +74,9 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		s := strings.Builder{}
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
-		addToQuery := func(stmt string, p ...interface{}) {
+		addToQuery := func(stmt string, p ...any) {
 			s.WriteString(stmt)
 			params = append(params, p...)
 		}
@@ -101,7 +101,7 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	type data struct {
 		ruleOrgID   int64
 		ruleUID     string
-		labelHashes []interface{}
+		labelHashes []any
 	}
 
 	// Sort by org and rule UID. Most callers will have grouped already, but it's
@@ -122,7 +122,7 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 
 	maxRows := 200
 	rowData := data{
-		0, "", make([]interface{}, 0, maxRows),
+		0, "", make([]any, 0, maxRows),
 	}
 	placeholdersBuilder := strings.Builder{}
 	placeholdersBuilder.WriteString("(")
@@ -140,7 +140,7 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 			placeholders,
 		)
 
-		execArgs := make([]interface{}, 0, 3+len(rd.labelHashes))
+		execArgs := make([]any, 0, 3+len(rd.labelHashes))
 		execArgs = append(execArgs, queryString, rd.ruleOrgID, rd.ruleUID)
 		execArgs = append(execArgs, rd.labelHashes...)
 		_, err := s.Exec(execArgs...)

@@ -2,12 +2,15 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
@@ -24,8 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -46,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -53,11 +55,11 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	config.ProvideConfig,
-	store.ProvideService,
-	wire.Bind(new(plugins.Store), new(*store.Service)),
-	wire.Bind(new(plugins.RendererManager), new(*store.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
+	pluginstore.ProvideService,
+	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,
@@ -113,7 +115,7 @@ var WireSet = wire.NewSet(
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
-	wire.Bind(new(oauth.ExternalServiceRegistry), new(*serviceregistration.Service)),
+	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -134,25 +136,29 @@ func ProvideClientDecorator(
 	tracer tracing.Tracer,
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
+	promRegisterer prometheus.Registerer,
 ) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features)
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
 }
 
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
-
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
+		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
+		clientmiddleware.NewContextualLoggerMiddleware(),
+		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
@@ -165,8 +171,16 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
+	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
+	}
+
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
+	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		middlewares = append(middlewares, clientmiddleware.NewTeamHTTPHeadersMiddleware())
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())

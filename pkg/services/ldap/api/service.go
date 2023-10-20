@@ -302,7 +302,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
 	}
 
-	s.log.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
+	s.log.Debug("Mapping org roles", "orgsRoles", u.OrgRoles)
 	if err := u.fetchOrgs(c.Req.Context(), s.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
@@ -326,11 +326,11 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 		AuthID:          user.AuthId,
 		Groups:          user.Groups,
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeams:           true,
-			EnableDisabledUsers: true,
-			SyncOrgRoles:        !s.cfg.LDAPSkipOrgRoleSync,
-			AllowSignUp:         s.cfg.LDAPAllowSignup,
+			SyncUser:     true,
+			SyncTeams:    true,
+			EnableUser:   true,
+			SyncOrgRoles: !s.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:  s.cfg.LDAPAllowSignup,
 			LookUpParams: login.UserLookupParams{
 				UserID: &user.UserId,
 			},

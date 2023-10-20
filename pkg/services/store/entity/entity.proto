@@ -1,25 +1,14 @@
 syntax = "proto3";
 package entity;
 
-option go_package = "./;entity";
+option go_package = "github.com/grafana/grafana/pkg/services/store/entity";
 
-message GRN {
-  // the tenant/org id
-  int64 tenant_id = 1;
-
-  // Identify the entity kind.  This kind will be used to apply a schema to the body and
-  // will trigger additional indexing behavior.
-  string kind = 3;
-
-  // Unique ID
-  // 40 characters or less, no slashes or other special characters
-  string UID = 4;
-}
+import "pkg/infra/grn/grn.proto";
 
 // The canonical entity/document data -- this represents the raw bytes and storage level metadata
 message Entity {
-  // Entity identifier
-  GRN GRN = 1;
+  // Entity identifier -- tenant_id, kind, uid
+  grn.GRN GRN = 1;
 
   // The version will change when the entity is saved. It is not necessarily sortable
   string version = 2;
@@ -109,7 +98,7 @@ message EntityVersionInfo {
 
 message ReadEntityRequest {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Fetch an explicit version
   string version = 2;
@@ -139,7 +128,7 @@ message BatchReadEntityResponse {
 
 message WriteEntityRequest {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Where to save the entity (empty will leave it unchanged)
   string folder = 2;
@@ -159,7 +148,7 @@ message WriteEntityRequest {
 // This process can bypass the forced checks that 
 message AdminWriteEntityRequest {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Where to save the entity (empty will leave it unchanged)
   string folder = 2;
@@ -207,7 +196,7 @@ message WriteEntityResponse {
   EntityErrorInfo error = 1;
 
   // Entity identifier
-  GRN GRN = 2;
+  grn.GRN GRN = 2;
 
   // Entity details with the body removed
   EntityVersionInfo entity = 3; 
@@ -233,7 +222,7 @@ message WriteEntityResponse {
 
 message DeleteEntityRequest {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   string previous_version = 3;
@@ -249,7 +238,7 @@ message DeleteEntityResponse {
 
 message EntityHistoryRequest {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Maximum number of items to return
   int64 limit = 3; 
@@ -260,7 +249,7 @@ message EntityHistoryRequest {
 
 message EntityHistoryResponse {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // Entity metadata without the raw bytes
   repeated EntityVersionInfo versions = 2;
@@ -309,7 +298,7 @@ message EntitySearchRequest {
 // Search result metadata for each entity
 message EntitySearchResult {
   // Entity identifier
-  GRN GRN = 1;
+  grn.GRN GRN = 1;
 
   // The current version of this entity
   string version = 2;
@@ -368,7 +357,7 @@ message EntityWatchRequest {
   int64 since = 1; 
   
   // Watch sppecific entities
-  repeated GRN GRN = 2;
+  repeated grn.GRN GRN = 2;
 
   // limit to a specific kind (empty is all)
   repeated string kind = 3;

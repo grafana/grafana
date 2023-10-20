@@ -33,7 +33,7 @@ export function getOperationParamEditor(
 function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <AutoSizeInput
-      id={getOperationParamId(props.operationIndex, props.index)}
+      id={getOperationParamId(props.operationId, props.index)}
       defaultValue={props.value?.toString()}
       minWidth={props.paramDef.minWidth}
       placeholder={props.paramDef.placeholder}
@@ -52,8 +52,8 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
 function BoolInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Checkbox
-      id={getOperationParamId(props.operationIndex, props.index)}
-      value={props.value as boolean}
+      id={getOperationParamId(props.operationId, props.index)}
+      value={Boolean(props.value)}
       onChange={(evt) => props.onChange(props.index, evt.currentTarget.checked)}
     />
   );
@@ -63,16 +63,16 @@ function SelectInputParamEditor({
   paramDef,
   value,
   index,
-  operationIndex,
+  operationId,
   onChange,
 }: QueryBuilderOperationParamEditorProps) {
   const styles = useStyles2(getStyles);
-  let selectOptions = paramDef.options as Array<SelectableValue<any>>;
+  let selectOptions = paramDef.options as SelectableValue[];
 
   if (!selectOptions[0]?.label) {
     selectOptions = paramDef.options!.map((option) => ({
       label: option.toString(),
-      value: option as string,
+      value: option,
     }));
   }
 
@@ -99,7 +99,7 @@ function SelectInputParamEditor({
   return (
     <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
       <Select
-        id={getOperationParamId(operationIndex, index)}
+        id={getOperationParamId(operationId, index)}
         value={valueOption}
         options={selectOptions}
         placeholder={paramDef.placeholder}

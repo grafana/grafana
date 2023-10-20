@@ -12,12 +12,12 @@ import (
 
 type Pair struct {
 	key   string
-	value interface{}
+	value any
 }
 
-func selectLibraryElementByParam(params []Pair) (string, []interface{}) {
+func selectLibraryElementByParam(params []Pair) (string, []any) {
 	conditions := make([]string, 0, len(params))
-	values := make([]interface{}, 0, len(params))
+	values := make([]any, 0, len(params))
 	for _, p := range params {
 		conditions = append(conditions, "le."+p.key+"=?")
 		values = append(values, p.value)
@@ -48,7 +48,7 @@ func writeKindSQL(query model.SearchLibraryElementsQuery, builder *db.SQLBuilder
 func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	if len(typeFilter) > 0 {
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 		sql.WriteString(` AND le.type IN (?` + strings.Repeat(",?", len(typeFilter)-1) + ")")
 		for _, filter := range typeFilter {
 			params = append(params, filter)
@@ -129,7 +129,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 
 func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQLBuilder) error {
 	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	for _, filter := range f.folderIDs {
 		folderID, err := strconv.ParseInt(filter, 10, 64)
 		if err != nil {
@@ -145,7 +145,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQL
 		builder.Write(sql.String(), params...)
 	}
 
-	paramsUIDs := make([]interface{}, 0)
+	paramsUIDs := make([]any, 0)
 	for _, folderUID := range f.folderUIDs {
 		if !includeGeneral && isUIDGeneralFolder(folderUID) {
 			continue

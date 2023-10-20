@@ -4,7 +4,6 @@ import { FieldValues } from 'react-hook-form';
 
 import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 
 import { FieldArray } from './FieldArray';
@@ -13,7 +12,7 @@ import mdx from './FieldArray.mdx';
 export default {
   title: 'Forms/FieldArray',
   component: FieldArray,
-  decorators: [withStoryContainer, withCenteredStory],
+  decorators: [withStoryContainer],
   parameters: {
     docs: {
       page: mdx,

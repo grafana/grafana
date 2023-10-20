@@ -135,14 +135,15 @@ func (c *mockEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput, f
 	return args.Error(0)
 }
 
-type fakeEC2Client struct {
+// Please use mockEC2Client above, we are slowly migrating towards using testify's mocks only
+type oldEC2Client struct {
 	ec2iface.EC2API
 
 	regions      []string
 	reservations []*ec2.Reservation
 }
 
-func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+func (c oldEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
 	regions := []*ec2.Region{}
 	for _, region := range c.regions {
 		regions = append(regions, &ec2.Region{
@@ -154,7 +155,7 @@ func (c fakeEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.Describe
 	}, nil
 }
 
-func (c fakeEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
+func (c oldEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
 	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
 	reservations := []*ec2.Reservation{}
 	for _, r := range c.reservations {

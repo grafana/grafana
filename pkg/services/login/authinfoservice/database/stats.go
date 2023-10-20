@@ -86,8 +86,8 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, er
 	return stats, nil
 }
 
-func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	loginStats, err := s.GetLoginStats(ctx)
 	if err != nil {

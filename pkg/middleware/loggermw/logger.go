@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -125,6 +126,11 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 
 	if handler, exist := middleware.RouteOperationName(c.Req); exist {
 		logParams = append(logParams, "handler", handler)
+	}
+
+	if l.flags.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
+		rmd := requestmeta.GetRequestMetaData(c.Req.Context())
+		logParams = append(logParams, "status_source", rmd.StatusSource)
 	}
 
 	logParams = append(logParams, errorLogParams(c.Error)...)

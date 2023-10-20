@@ -32,7 +32,7 @@ type TestReceiverConfigResult struct {
 	Error  error
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
+func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
@@ -91,7 +91,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}, err
 }
 
-func (am *Alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
+func (am *alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
 	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
 	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.

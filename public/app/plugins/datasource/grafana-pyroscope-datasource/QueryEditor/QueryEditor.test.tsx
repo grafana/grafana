@@ -4,7 +4,7 @@ import React from 'react';
 
 import { CoreApp, PluginType } from '@grafana/data';
 
-import { PhlareDataSource } from '../datasource';
+import { PyroscopeDataSource } from '../datasource';
 import { ProfileTypeMessage } from '../types';
 
 import { Props, QueryEditor } from './QueryEditor';
@@ -13,7 +13,27 @@ describe('QueryEditor', () => {
   it('should render without error', async () => {
     setup();
 
-    expect(await screen.findByText('process_cpu - cpu')).toBeDefined();
+    expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
+  });
+
+  it('should render without error if empty profileTypes', async () => {
+    const ds = setupDs();
+    ds.getProfileTypes = jest.fn().mockResolvedValue([]);
+    setup({
+      props: {
+        datasource: ds,
+        query: {
+          queryType: 'both',
+          labelSelector: '',
+          profileTypeId: '',
+          refId: 'A',
+          maxNodes: 1000,
+          groupBy: [],
+        },
+      },
+    });
+
+    expect(await screen.findByPlaceholderText('No profile types found')).toBeDefined();
   });
 
   it('should render options', async () => {
@@ -41,9 +61,8 @@ async function openOptions() {
   await userEvent.click(options);
 }
 
-function setup(options: { props: Partial<Props> } = { props: {} }) {
-  const onChange = jest.fn();
-  const ds = new PhlareDataSource({
+function setupDs() {
+  const ds = new PyroscopeDataSource({
     name: 'test',
     uid: 'test',
     type: PluginType.datasource,
@@ -85,6 +104,11 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
     },
   ] as ProfileTypeMessage[]);
 
+  return ds;
+}
+
+function setup(options: { props: Partial<Props> } = { props: {} }) {
+  const onChange = jest.fn();
   const utils = render(
     <QueryEditor
       query={{
@@ -95,7 +119,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         maxNodes: 1000,
         groupBy: [],
       }}
-      datasource={ds}
+      datasource={setupDs()}
       onChange={onChange}
       onRunQuery={() => {}}
       app={CoreApp.Explore}

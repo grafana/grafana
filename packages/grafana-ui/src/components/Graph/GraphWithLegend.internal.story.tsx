@@ -4,14 +4,11 @@ import React from 'react';
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
 export default {
   title: 'Visualizations/Graph/GraphWithLegend',
   component: GraphWithLegend,
-  decorator: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['className', 'ariaLabel', 'legendDisplayMode', 'series'],

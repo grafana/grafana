@@ -1,36 +1,89 @@
-import { lastValueFrom } from 'rxjs';
+import { FetchError, isFetchError } from '@grafana/runtime';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
-export interface OnCallIntegration {
+
+export interface NewOnCallIntegrationDTO {
+  id: string;
+  connected_escalations_chains_count: number;
+  integration: string;
+  integration_url: string;
+  verbal_name: string;
+}
+
+export interface OnCallPaginatedResult<T> {
+  results: T[];
+}
+
+export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
+type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
+
+type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
+
+export interface OnCallIntegrationDTO {
+  value: string;
+  display_name: string;
   integration_url: string;
 }
-export type OnCallIntegrationsResponse = OnCallIntegration[];
-export type OnCallIntegrationsUrls = string[];
+
+export interface CreateIntegrationDTO {
+  integration: typeof GRAFANA_ONCALL_INTEGRATION_TYPE; // The only one supported right now
+  verbal_name: string;
+}
+
+const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.OnCall}${path}`;
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    getOnCallIntegrations: build.query<OnCallIntegrationsUrls, void>({
-      queryFn: async () => {
-        const integrations = await fetchOnCallIntegrations();
-        return { data: integrations };
+    grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
+        // legacy_grafana_alerting is necessary for OnCall.
+        // We do NOT need to differentiate between these two on our side
+        params: { filters: true, integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'] },
+      }),
+      transformResponse: (response: AlertReceiveChannelsResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
       },
+      providesTags: ['OnCallIntegrations'],
+    }),
+    validateIntegrationName: build.query<boolean, string>({
+      query: (name) => ({
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/validate_name/'),
+        params: { verbal_name: name },
+        showErrorAlert: false,
+      }),
+    }),
+    createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO>({
+      query: (integration) => ({
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
+        data: integration,
+        method: 'POST',
+        showErrorAlert: true,
+      }),
+      invalidatesTags: ['OnCallIntegrations'],
+    }),
+    features: build.query<OnCallFeature[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/api/internal/v1/features/'),
+      }),
     }),
   }),
 });
-export async function fetchOnCallIntegrations(): Promise<OnCallIntegrationsUrls> {
-  try {
-    const response = await lastValueFrom(
-      getBackendSrv().fetch<OnCallIntegrationsResponse>({
-        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/',
-        showErrorAlert: false,
-        showSuccessAlert: false,
-      })
-    );
-    return response.data.map((result) => result.integration_url);
-  } catch (error) {
-    return [];
-  }
+
+function isPaginatedResponse(
+  response: AlertReceiveChannelsResult
+): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
+  return 'results' in response && Array.isArray(response.results);
 }
-export const { useGetOnCallIntegrationsQuery } = onCallApi;
+
+export const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+
+export function isOnCallFetchError(error: unknown): error is FetchError<{ detail: string }> {
+  return isFetchError(error) && 'detail' in error.data;
+}

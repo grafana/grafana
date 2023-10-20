@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 // This is where the tests for the datasource backend live.
 func Test_query(t *testing.T) {
 	client := &FakeClient{}
-	ds := &PhlareDatasource{
+	ds := &PyroscopeDatasource{
 		client: client,
 	}
 
@@ -272,7 +272,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 }
 
 type FakeClient struct {
-	Args []interface{}
+	Args []any
 }
 
 func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
@@ -288,11 +288,11 @@ func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
@@ -313,7 +313,7 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 }
 
 func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
-	f.Args = []interface{}{profileTypeID, labelSelector, start, end, groupBy, step}
+	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{
 			{

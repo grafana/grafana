@@ -59,4 +59,8 @@ func addCorrelationsMigrations(mg *Migrator) {
 		"description": "description",
 		"config":      "config",
 	})
+
+	mg.AddMigration("add provisioning column", NewAddColumnMigration(correlationsV2, &Column{
+		Name: "provisioned", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }

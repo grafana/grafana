@@ -70,7 +70,7 @@ const StateHistory = ({ alertId }: Props) => {
           <header className={styles.tableGroupKey}>
             <code>{groupKey}</code>
           </header>
-          <DynamicTable cols={columns} items={tableItems} />
+          <DynamicTable cols={columns} items={tableItems} pagination={{ itemsPerPage: 25 }} />
         </div>
       );
     });

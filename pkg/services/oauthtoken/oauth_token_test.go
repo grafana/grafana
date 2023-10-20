@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
@@ -40,7 +41,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:           "returns false and an error in case GetAuthInfo returns an error",
-			user:           &user.SignedInUser{},
+			user:           &user.SignedInUser{UserID: 1},
 			want:           nil,
 			wantExist:      false,
 			wantErr:        true,
@@ -48,7 +49,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:           "returns false without an error in case auth entry is not found",
-			user:           &user.SignedInUser{},
+			user:           &user.SignedInUser{UserID: 1},
 			want:           nil,
 			wantExist:      false,
 			wantErr:        false,
@@ -56,7 +57,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:            "returns false without an error in case the auth entry is not oauth",
-			user:            &user.SignedInUser{},
+			user:            &user.SignedInUser{UserID: 1},
 			want:            nil,
 			wantExist:       false,
 			wantErr:         false,
@@ -64,7 +65,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:            "returns true when the auth entry is found",
-			user:            &user.SignedInUser{},
+			user:            &user.SignedInUser{UserID: 1},
 			want:            &login.UserAuth{AuthModule: "oauth_generic_oauth"},
 			wantExist:       true,
 			wantErr:         false,
@@ -72,6 +73,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			srv, authInfoStore, _ := setupOAuthTokenService(t)
 			authInfoStore.ExpectedOAuth = &tc.getAuthInfoUser
@@ -230,10 +232,11 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	authInfoStore := &FakeAuthInfoStore{}
 	authInfoService := authinfoservice.ProvideAuthInfoService(nil, authInfoStore, &usagestats.UsageStatsMock{})
 	return &Service{
-		Cfg:               setting.NewCfg(),
-		SocialService:     socialService,
-		AuthInfoService:   authInfoService,
-		singleFlightGroup: &singleflight.Group{},
+		Cfg:                  setting.NewCfg(),
+		SocialService:        socialService,
+		AuthInfoService:      authInfoService,
+		singleFlightGroup:    &singleflight.Group{},
+		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
 	}, authInfoStore, socialConnector
 }
 

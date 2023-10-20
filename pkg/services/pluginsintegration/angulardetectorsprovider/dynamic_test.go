@@ -92,18 +92,19 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("fetch", func(t *testing.T) {
 		t.Run("returns value from gcom api", func(t *testing.T) {
-			r, err := svc.fetch(context.Background())
+			r, err := svc.fetch(context.Background(), "")
 			require.NoError(t, err)
 
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
-			require.Equal(t, mockGCOMPatterns, r)
+			require.Equal(t, mockGCOMPatterns, r.Patterns)
+			require.Empty(t, r.ETag)
 		})
 
 		t.Run("handles timeout", func(t *testing.T) {
 			// ctx that expired in the past
 			ctx, canc := context.WithDeadline(context.Background(), time.Now().Add(time.Second*-30))
 			defer canc()
-			_, err := svc.fetch(ctx)
+			_, err := svc.fetch(ctx, "")
 			require.ErrorIs(t, err, context.DeadlineExceeded)
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
@@ -119,8 +120,59 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			errSrv := errScenario.newHTTPTestServer()
 			t.Cleanup(errSrv.Close)
 			svc := provideDynamic(t, errSrv.URL)
-			_, err := svc.fetch(context.Background())
+			_, err := svc.fetch(context.Background(), "")
 			require.Error(t, err)
+		})
+
+		t.Run("etag", func(t *testing.T) {
+			for _, tc := range []struct {
+				name       string
+				clientEtag string
+
+				serverEtag string
+				expError   error
+			}{
+				{name: "no client etag", clientEtag: "", serverEtag: "etag", expError: nil},
+				{name: "no server etag", clientEtag: `"abcdef"`, serverEtag: "", expError: nil},
+				{name: "client different etag than server", clientEtag: `"abcdef"`, serverEtag: "etag", expError: nil},
+				{name: "same client and server etag returns errNotModified", clientEtag: `"etag"`, serverEtag: `"etag"`, expError: errNotModified},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					callback := make(chan struct{})
+					gcom := newDefaultGCOMScenario(func(writer http.ResponseWriter, request *http.Request) {
+						const headerIfNoneMatch = "If-None-Match"
+						if tc.clientEtag == "" {
+							require.Empty(t, request.Header.Values(headerIfNoneMatch))
+						} else {
+							require.Equal(t, tc.clientEtag, request.Header.Get(headerIfNoneMatch))
+						}
+						if tc.serverEtag != "" {
+							writer.Header().Add("ETag", tc.serverEtag)
+							if tc.serverEtag == tc.clientEtag {
+								writer.WriteHeader(http.StatusNotModified)
+							}
+						}
+						close(callback)
+					})
+					srv := gcom.newHTTPTestServer()
+					t.Cleanup(srv.Close)
+					svc := provideDynamic(t, srv.URL)
+
+					_, err := svc.fetch(context.Background(), tc.clientEtag)
+					if tc.expError != nil {
+						require.ErrorIs(t, err, tc.expError)
+					} else {
+						require.NoError(t, err)
+					}
+					select {
+					case <-callback:
+						break
+					case <-time.After(time.Second * 10):
+						t.Fatal("timeout")
+					}
+					require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
+				})
+			}
 		})
 	})
 
@@ -141,7 +193,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
 
 			// Fetch and store value
-			err = svc.updateDetectors(context.Background())
+			err = svc.updateDetectors(context.Background(), "")
 			require.NoError(t, err)
 			checkMockDetectors(t, svc)
 
@@ -178,7 +230,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			// Try to update from GCOM, but it returns an error
-			err = svc.updateDetectors(context.Background())
+			err = svc.updateDetectors(context.Background(), "")
 			require.Error(t, err)
 			require.True(t, scenario.httpCalls.calledOnce(), "gcom api should be called once")
 
@@ -194,6 +246,45 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 			// Same for in-memory detectors
 			checkMockDetectors(t, svc)
+		})
+
+		t.Run("etag", func(t *testing.T) {
+			const serverEtag = "hit"
+			gcom := newEtagGCOMScenario(serverEtag)
+			srv := gcom.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+
+			t.Run("etag is saved in underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+
+				err := svc.updateDetectors(context.Background(), "old")
+				require.NoError(t, err)
+
+				etag, ok, err := svc.store.GetETag(context.Background())
+				require.NoError(t, err)
+				require.True(t, ok)
+				require.Equal(t, serverEtag, etag)
+
+				lastUpdate, err := svc.store.GetLastUpdated(context.Background())
+				require.NoError(t, err)
+				require.WithinDuration(t, lastUpdate, time.Now(), time.Second*10)
+			})
+
+			t.Run("same etag does not modify underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+				require.NoError(t, svc.updateDetectors(context.Background(), serverEtag))
+				_, ok, err := svc.store.Get(context.Background())
+				require.NoError(t, err)
+				require.False(t, ok)
+			})
+
+			t.Run("different etag modified underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+				require.NoError(t, svc.updateDetectors(context.Background(), "old"))
+				_, ok, err := svc.store.Get(context.Background())
+				require.NoError(t, err)
+				require.True(t, ok)
+			})
 		})
 	})
 
@@ -444,12 +535,23 @@ func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
 	}))
 }
 
+func newEtagGCOMScenario(etag string) *gcomScenario {
+	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+		if req.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Add("ETag", etag)
+		mockGCOMHTTPHandlerFunc(w, req)
+	}}
+}
+
 func newDefaultGCOMScenario(middlewares ...http.HandlerFunc) *gcomScenario {
 	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
-		mockGCOMHTTPHandlerFunc(w, req)
 		for _, f := range middlewares {
 			f(w, req)
 		}
+		mockGCOMHTTPHandlerFunc(w, req)
 	}}
 }
 

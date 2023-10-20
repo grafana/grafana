@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
-func (fm *FeatureManager) GetUsageStats(ctx context.Context) map[string]interface{} {
+func (fm *FeatureManager) GetUsageStats(ctx context.Context) map[string]any {
 	enabled := fm.GetEnabled(ctx)
-	stats := make(map[string]interface{}, len(enabled))
+	stats := make(map[string]any, len(enabled))
 	for featureName := range enabled {
 		stats[asMetricName(featureName)] = 1
 	}

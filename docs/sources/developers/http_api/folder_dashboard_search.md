@@ -39,7 +39,7 @@ Query parameters:
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)
 - **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
 
-**Example request for retrieving folders and dashboards of the general folder**:
+**Example request for retrieving folders and dashboards at the root level**:
 
 ```http
 GET /api/search?folderIds=0&query=&starred=false HTTP/1.1
@@ -48,7 +48,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response for retrieving folders and dashboards of the general folder**:
+**Example response for retrieving folders and dashboards at the root level**:
 
 ```http
 HTTP/1.1 200

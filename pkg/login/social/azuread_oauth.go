@@ -23,7 +23,6 @@ type SocialAzureAD struct {
 	*SocialBase
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
-	allowedGroups        []string
 	forceUseGraphAPI     bool
 	skipOrgRoleSync      bool
 }
@@ -99,7 +98,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
-	if !s.IsGroupMember(groups) {
+	if !s.isGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -109,7 +108,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 
 	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return &BasicUserInfo{
@@ -182,22 +181,6 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	return nil, &Error{"AzureAD OAuth: signing key not found"}
 }
 
-func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.allowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
@@ -260,7 +243,7 @@ type getAzureGroupResponse struct {
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
-		s.log.Debug("checking the claim for groups")
+		s.log.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
 			return claims.Groups, nil
 		}

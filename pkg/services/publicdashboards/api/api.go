@@ -101,7 +101,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	}
 
 	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -123,7 +123,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
-	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
+	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -149,10 +149,22 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
+	//validate uid
+	uid := pdDTO.Uid
+	if uid != "" && !validation.IsValidShortUID(uid) {
+		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", uid))
+	}
+
+	//validate accessToken
+	accessToken := pdDTO.AccessToken
+	if accessToken != "" && !validation.IsValidAccessToken(accessToken) {
+		return response.Err(ErrInvalidAccessToken.Errorf("CreatePublicDashboard: invalid Access Token %s", accessToken))
+	}
+
 	// Always set the orgID and userID from the session
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -189,7 +201,7 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	dto := SavePublicDashboardDTO{
 		Uid:             uid,
 		UserId:          c.UserID,
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -208,10 +220,15 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if !validation.IsValidShortUID(dashboardUid) {
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
+	}
+
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}

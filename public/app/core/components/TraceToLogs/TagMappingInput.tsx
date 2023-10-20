@@ -28,7 +28,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
                 onChange(
                   values.map((v, i) => {
                     if (i === idx) {
-                      v.key = String(e);
+                      return { ...v, key: String(e) };
                     }
                     return v;
                   })
@@ -46,7 +46,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
                 onChange(
                   values.map((v, i) => {
                     if (i === idx) {
-                      v.value = String(e);
+                      return { ...v, value: String(e) };
                     }
                     return v;
                   })

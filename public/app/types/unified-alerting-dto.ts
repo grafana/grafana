@@ -174,6 +174,7 @@ export interface RulerRecordingRuleDTO extends RulerRuleBaseDTO {
 export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   alert: string;
   for?: string;
+  keep_firing_for?: string;
   annotations?: Annotations;
 }
 

@@ -47,10 +47,9 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
         loading,
       };
     }
-    const rbacDisabledFallback = folder.canSave;
 
-    const canEditGrafanaRules = contextSrv.hasAccessInMetadata(rulePermission.update, folder, rbacDisabledFallback);
-    const canRemoveGrafanaRules = contextSrv.hasAccessInMetadata(rulePermission.delete, folder, rbacDisabledFallback);
+    const canEditGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.update, folder);
+    const canRemoveGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.delete, folder);
 
     return {
       isEditable: canEditGrafanaRules,
@@ -62,8 +61,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   const isRulerAvailable =
     Boolean(dataSources[rulesSourceName]?.result?.rulerConfig) || Boolean(dsFeatures?.rulerConfig);
-  const canEditCloudRules = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
-  const canRemoveCloudRules = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
+  const canEditCloudRules = contextSrv.hasPermission(rulePermission.update);
+  const canRemoveCloudRules = contextSrv.hasPermission(rulePermission.delete);
 
   return {
     isEditable: canEditCloudRules && isRulerAvailable,

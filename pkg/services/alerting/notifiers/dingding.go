@@ -109,7 +109,7 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
 	messageURL = "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
-	dd.log.Info("messageUrl:" + messageURL)
+	dd.log.Info("MessageUrl:" + messageURL)
 
 	message := evalContext.Rule.Message
 	picURL := evalContext.ImagePublicURL
@@ -122,14 +122,14 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 		message += fmt.Sprintf("\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
-	var bodyMsg map[string]interface{}
+	var bodyMsg map[string]any
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
 		if dd.NeedsImage() && picURL != "" {
 			message = "![](" + picURL + ")\n\n" + message
 		}
 
-		bodyMsg = map[string]interface{}{
+		bodyMsg = map[string]any{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
 				"text":        message,
@@ -149,7 +149,7 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 			link["picUrl"] = picURL
 		}
 
-		bodyMsg = map[string]interface{}{
+		bodyMsg = map[string]any{
 			"msgtype": "link",
 			"link":    link,
 		}

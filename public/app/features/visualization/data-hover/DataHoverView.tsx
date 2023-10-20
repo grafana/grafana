@@ -11,7 +11,7 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 export interface Props {
@@ -60,8 +60,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
       continue;
     }
+
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
     if (field.getLinks) {
       field.getLinks({ calculatedValue: fieldDisplay, valueRowIndex: rowIndex }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
@@ -72,8 +74,11 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
+    // Sanitize field by removing hovered property to fix unique display name issue
+    const { hovered, ...sanitizedField } = field;
+
     displayValues.push({
-      name: getFieldDisplayName(field, data),
+      name: getFieldDisplayName(sanitizedField, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
       highlight: field.hovered,
@@ -83,29 +88,6 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   if (sortOrder && sortOrder !== SortOrder.None) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
-
-  const renderLinks = () =>
-    links.length > 0 && (
-      <tr>
-        <td colSpan={2}>
-          <VerticalGroup>
-            {links.map((link, i) => (
-              <LinkButton
-                key={i}
-                icon={'external-link-alt'}
-                target={link.target}
-                href={link.href}
-                onClick={link.onClick}
-                fill="text"
-                style={{ width: '100%' }}
-              >
-                {link.title}
-              </LinkButton>
-            ))}
-          </VerticalGroup>
-        </td>
-      </tr>
-    );
 
   return (
     <div className={styles.wrapper}>
@@ -117,37 +99,41 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((displayValue, i) => (
-            <tr key={`${i}/${rowIndex}`} className={displayValue.highlight ? styles.highlight : ''}>
-              <th>{displayValue.name}:</th>
+            <tr key={`${i}/${rowIndex}`}>
+              <th>{displayValue.name}</th>
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
           ))}
-          {renderLinks()}
+          {links.map((link, i) => (
+            <tr key={i}>
+              <th>Link</th>
+              <td colSpan={2}>
+                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                  {link.title}
+                </TextLink>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
 };
-
 const getStyles = (theme: GrafanaTheme2) => {
-  const bg = theme.isDark ? theme.v1.palette.dark2 : theme.v1.palette.white;
-  const headerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray5;
-  const tableBgOdd = theme.isDark ? theme.v1.palette.dark3 : theme.v1.palette.gray6;
-
   return {
     wrapper: css`
-      background: ${bg};
-      border: 1px solid ${headerBg};
+      background: ${theme.components.tooltip.background};
       border-radius: ${theme.shape.borderRadius(2)};
     `,
     header: css`
-      background: ${headerBg};
-      padding: 6px 10px;
+      background: ${theme.colors.background.secondary};
+      align-items: center;
+      align-content: center;
       display: flex;
+      padding-bottom: ${theme.spacing(1)};
     `,
     title: css`
       font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(2)};
       overflow: hidden;
       display: inline-block;
       white-space: nowrap;
@@ -155,24 +141,24 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-grow: 1;
     `,
     infoWrap: css`
-      padding: 8px;
+      padding: ${theme.spacing(1)};
+      background: transparent;
+      border: none;
       th {
         font-weight: ${theme.typography.fontWeightMedium};
-        padding: ${theme.spacing(0.25, 2)};
+        padding: ${theme.spacing(0.25, 2, 0.25, 0)};
       }
+
       tr {
-        background-color: ${theme.colors.background.primary};
-        &:nth-child(even) {
-          background-color: ${tableBgOdd};
+        border-bottom: 1px solid ${theme.colors.border.weak};
+        &:last-child {
+          border-bottom: none;
         }
       }
     `,
-    highlight: css`
-      /* !important is required to overwrite default table styles */
-      background: ${theme.colors.action.hover} !important;
-    `,
+    highlight: css``,
     link: css`
-      color: #6e9fff;
+      color: ${theme.colors.text.link};
     `,
   };
 };

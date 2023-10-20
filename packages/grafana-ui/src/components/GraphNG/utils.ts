@@ -29,7 +29,7 @@ export function getRefField(frame: DataFrame, refFieldName?: string | null) {
 function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null) {
   const refField = getRefField(frame, refFieldName);
 
-  let refValues = refField?.values as any[];
+  let refValues = refField?.values;
 
   for (let i = 0; i < frame.fields.length; i++) {
     let field = frame.fields[i];
@@ -41,7 +41,7 @@ function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null
     let spanNulls = field.config.custom?.spanNulls;
 
     if (typeof spanNulls === 'number') {
-      if (spanNulls !== -1) {
+      if (spanNulls !== -1 && refValues) {
         field.values = nullToUndefThreshold(refValues, field.values, spanNulls);
       }
     }

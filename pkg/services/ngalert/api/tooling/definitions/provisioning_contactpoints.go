@@ -81,6 +81,10 @@ type ContactPoints []EmbeddedContactPoint
 type EmbeddedContactPoint struct {
 	// UID is the unique identifier of the contact point. The UID can be
 	// set by the user.
+	// required: false
+	// minLength: 1
+	// maxLength: 40
+	// pattern: ^[a-zA-Z0-9\-\_]+$
 	// example: my_external_reference
 	UID string `json:"uid"`
 	// Name is used as grouping key in the UI. Contact points with the

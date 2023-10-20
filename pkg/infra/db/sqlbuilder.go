@@ -3,11 +3,11 @@ package db
 import (
 	"bytes"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,16 +19,16 @@ type SQLBuilder struct {
 	cfg                          *setting.Cfg
 	features                     featuremgmt.FeatureToggles
 	sql                          bytes.Buffer
-	params                       []interface{}
+	params                       []any
 	leftJoin                     string
 	recQry                       string
-	recQryParams                 []interface{}
+	recQryParams                 []any
 	recursiveQueriesAreSupported bool
 
 	dialect migrator.Dialect
 }
 
-func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
+func (sb *SQLBuilder) Write(sql string, params ...any) {
 	sb.sql.WriteString(sql)
 
 	if len(params) > 0 {
@@ -50,7 +50,7 @@ func (sb *SQLBuilder) GetSQLString() string {
 	return bf.String()
 }
 
-func (sb *SQLBuilder) GetParams() []interface{} {
+func (sb *SQLBuilder) GetParams() []any {
 	if len(sb.recQryParams) == 0 {
 		return sb.params
 	}
@@ -59,16 +59,16 @@ func (sb *SQLBuilder) GetParams() []interface{} {
 	return sb.params
 }
 
-func (sb *SQLBuilder) AddParams(params ...interface{}) {
+func (sb *SQLBuilder) AddParams(params ...any) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user identity.Requester, permission dashboards.PermissionType, queryType string) {
 	var (
 		sql          string
-		params       []interface{}
+		params       []any
 		recQry       string
-		recQryParams []interface{}
+		recQryParams []any
 		leftJoin     string
 	)
 

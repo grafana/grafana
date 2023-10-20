@@ -1,11 +1,13 @@
-// package jsonitere wraps json-iterator/go's Iterator methods with error returns
+// Package jsonitere wraps json-iterator/go's Iterator methods with error returns
 // so linting can catch unchecked errors.
 // The underlying iterator's Error property is returned and not reset.
 // See json-iterator/go for method documentation and additional methods that
 // can be added to this library.
 package jsonitere
 
-import j "github.com/json-iterator/go"
+import (
+	j "github.com/json-iterator/go"
+)
 
 type Iterator struct {
 	// named property instead of embedded so there is no
@@ -17,7 +19,7 @@ func NewIterator(i *j.Iterator) *Iterator {
 	return &Iterator{i}
 }
 
-func (iter *Iterator) Read() (interface{}, error) {
+func (iter *Iterator) Read() (any, error) {
 	return iter.i.Read(), iter.i.Error
 }
 
@@ -46,7 +48,11 @@ func (iter *Iterator) Skip() error {
 	return iter.i.Error
 }
 
-func (iter *Iterator) ReadVal(obj interface{}) error {
+func (iter *Iterator) SkipAndReturnBytes() []byte {
+	return iter.i.SkipAndReturnBytes()
+}
+
+func (iter *Iterator) ReadVal(obj any) error {
 	iter.i.ReadVal(obj)
 	return iter.i.Error
 }

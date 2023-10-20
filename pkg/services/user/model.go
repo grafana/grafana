@@ -1,10 +1,12 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type HelpFlags1 uint64
@@ -15,18 +17,6 @@ func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
 const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
-)
-
-// Typed errors
-var (
-	ErrCaseInsensitive   = errors.New("case insensitive conflict")
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
-	ErrProtectedUser     = errors.New("cannot adopt protected user")
-	ErrNoUniqueID        = errors.New("identifying id not found")
-	ErrLastSeenUpToDate  = errors.New("last seen is already up to date")
-	ErrUpdateInvalidID   = errors.New("unable to update invalid id")
 )
 
 type User struct {
@@ -104,12 +94,13 @@ type SetUsingOrgCommand struct {
 }
 
 type SearchUsersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
 	Query        string
 	Page         int
 	Limit        int
 	AuthModule   string
+	SortOpts     []model.SortOption
 	Filters      []Filter
 
 	IsDisabled *bool
@@ -254,12 +245,12 @@ type Filter interface {
 
 type WhereCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type InCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type JoinCondition struct {

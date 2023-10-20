@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
@@ -21,6 +22,7 @@ export interface ChangeRangePayload {
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
+
 export const changeRangeAction = createAction<ChangeRangePayload>('explore/changeRange');
 
 /**
@@ -30,6 +32,7 @@ export interface ChangeRefreshIntervalPayload {
   exploreId: string;
   refreshInterval: string;
 }
+
 export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 export const updateTimeRange = (options: {
@@ -78,6 +81,13 @@ export const updateTime = (config: {
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
+    // @deprecated - set because some internal plugins read the range this way; please use QueryEditorProps.range instead
+    getTimeSrv().init({
+      timepicker: {},
+      getTimezone: () => timeZone,
+      timeRangeUpdated(timeRange) {},
+      time: range.raw,
+    });
     // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
     // of __from and __to variables
     getTemplateSrv().updateTimeRange(range);

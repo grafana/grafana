@@ -87,7 +87,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		if entry, err := c.cache.Get(ctx, cacheKey); err == nil {
 			uid, err := strconv.ParseInt(string(entry), 10, 64)
 			if err != nil {
-				c.log.FromContext(ctx).Warn("failed to parse user id from cache", "error", err, "userId", string(entry))
+				c.log.FromContext(ctx).Warn("Failed to parse user id from cache", "error", err, "userId", string(entry))
 			} else {
 				usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 					UserID: uid,
@@ -142,7 +142,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	bytes := []byte(strconv.FormatInt(id, 10))
 	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
-		c.log.Warn("failed to cache proxy user", "error", err, "userId", id)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id)
 	}
 
 	return nil

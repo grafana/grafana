@@ -101,7 +101,7 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 
 	hashes, hashMap := s.filterCheckableTokens(tokens)
 	if len(hashes) == 0 {
-		s.logger.Debug("no active tokens to check")
+		s.logger.Debug("No active tokens to check")
 
 		return nil
 	}
@@ -121,7 +121,7 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 		if s.revoke {
 			if err := s.store.RevokeServiceAccountToken(
 				ctx, leakedToken.OrgID, *leakedToken.ServiceAccountId, leakedToken.ID); err != nil {
-				s.logger.Error("failed to delete leaked token. Revoke manually.",
+				s.logger.Error("Failed to delete leaked token. Revoke manually.",
 					"error", err, "url", secretscanToken.URL, "reported_at", secretscanToken.ReportedAt,
 					"token_id", leakedToken.ID, "token", leakedToken.Name, "org", leakedToken.OrgID,
 					"serviceAccount", *leakedToken.ServiceAccountId)
@@ -130,11 +130,11 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 
 		if s.webHookNotify {
 			if err := s.webHookClient.Notify(ctx, &secretscanToken, leakedToken.Name, s.revoke); err != nil {
-				s.logger.Warn("failed to call token leak webhook", "error", err)
+				s.logger.Warn("Failed to call token leak webhook", "error", err)
 			}
 		}
 
-		s.logger.Warn("found leaked token",
+		s.logger.Warn("Found leaked token",
 			"url", secretscanToken.URL, "reported_at", secretscanToken.ReportedAt,
 			"token_id", leakedToken.ID, "token", leakedToken.Name, "org", leakedToken.OrgID,
 			"serviceAccount", *leakedToken.ServiceAccountId, "revoked", s.revoke)

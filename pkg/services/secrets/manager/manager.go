@@ -112,8 +112,8 @@ func (s *SecretsService) InitProviders() (err error) {
 }
 
 func (s *SecretsService) registerUsageMetrics() {
-	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		usageMetrics := make(map[string]interface{})
+	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
+		usageMetrics := make(map[string]any)
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0

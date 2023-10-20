@@ -39,27 +39,20 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       />
 
       <Divider />
-
-      <ConnectionSettings config={options} onChange={onOptionsChange} />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3200" />
 
       <Divider />
-
       <Auth
         {...convertLegacyAuthProps({
           config: options,
           onChange: onOptionsChange,
         })}
       />
-      {config.secureSocksDSProxyEnabled && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
 
       <Divider />
-
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
-
       {config.featureToggles.traceToMetrics ? (
         <>
           <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
@@ -75,14 +68,20 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       >
         <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
-        <Divider hideLine={true} />
+        {config.secureSocksDSProxyEnabled && (
+          <>
+            <Divider hideLine />
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          </>
+        )}
 
+        <Divider hideLine />
         <ConfigSubSection
           title="Service graph"
           description={
             <ConfigDescriptionLink
               description="Select a Prometheus data source that contains the service graph data."
-              suffix="tempo/#service-graph"
+              suffix="tempo/configure-tempo-data-source/#service-graph"
               feature="the service graph"
             />
           }
@@ -90,17 +89,16 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
-        <Divider hideLine={true} />
 
+        <Divider hideLine />
         <ConfigSubSection
           title="Tempo search"
           description={
             <ConfigDescriptionLink
               description="Modify how traces are searched."
-              suffix="tempo/#tempo-search"
+              suffix="tempo/configure-tempo-data-source/#tempo-search"
               feature="Tempo search"
             />
           }
@@ -108,14 +106,13 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <ConfigSubSection
           title="Loki search"
           description={
             <ConfigDescriptionLink
               description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
-              suffix="tempo/#loki-search"
+              suffix="tempo/configure-tempo-data-source/#loki-search"
               feature="Loki search"
             />
           }
@@ -123,14 +120,13 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <ConfigSubSection
           title="TraceID query"
           description={
             <ConfigDescriptionLink
               description="Modify how TraceID queries are run."
-              suffix="tempo/#traceid-query"
+              suffix="tempo/configure-tempo-data-source/#traceid-query"
               feature="the TraceID query"
             />
           }
@@ -138,8 +134,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <QuerySettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
     </div>

@@ -10,7 +10,7 @@ import (
 
 type noneSigner struct{}
 
-func sign(t *testing.T, key interface{}, claims interface{}, opts *jose.SignerOptions) string {
+func sign(t *testing.T, key any, claims any, opts *jose.SignerOptions) string {
 	t.Helper()
 
 	if opts == nil {
@@ -35,7 +35,7 @@ func (s noneSigner) SignPayload(payload []byte, alg jose.SignatureAlgorithm) ([]
 	return nil, nil
 }
 
-func signNone(t *testing.T, claims interface{}) string {
+func signNone(t *testing.T, claims any) string {
 	t.Helper()
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: "none", Key: noneSigner{}}, (&jose.SignerOptions{}).WithType("JWT"))

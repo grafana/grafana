@@ -30,6 +30,10 @@ export enum ReducerID {
   uniqueValues = 'uniqueValues',
 }
 
+export function isReducerID(id: string): id is ReducerID {
+  return Object.keys(ReducerID).includes(id);
+}
+
 // Internal function
 type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
@@ -88,7 +92,9 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     return (field.state.calcs = calcs);
   }
 
-  const { nullValueMode } = field.config;
+  // Default to Ignore for nullValueMode.
+  const { nullValueMode = NullValueMode.Ignore } = field.config;
+
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
@@ -252,7 +258,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values }),
+    reduce: (field: Field) => ({ allValues: [...field.values] }),
   },
   {
     id: ReducerID.uniqueValues,
@@ -291,9 +297,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   };
 
   const data = field.values;
-  calcs.count = ignoreNulls ? data.length : data.filter((val) => val != null).length;
 
-  const isNumberField = field.type === FieldType.number || FieldType.time;
+  const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
   for (let i = 0; i < data.length; i++) {
     let currentValue = data[i];
@@ -304,7 +309,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     calcs.last = currentValue;
 
-    if (currentValue === null) {
+    if (currentValue == null) {
       if (ignoreNulls) {
         continue;
       }
@@ -312,6 +317,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
         currentValue = 0;
       }
     }
+
+    calcs.count++;
 
     if (currentValue != null) {
       // null || undefined

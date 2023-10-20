@@ -10,6 +10,8 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  PluginMeta,
+  PluginType,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
@@ -593,14 +595,6 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
   };
 };
 
-export const enableRBAC = () => {
-  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-};
-
-export const disableRBAC = () => {
-  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(false);
-};
-
 export const grantUserPermissions = (permissions: AccessControlAction[]) => {
   jest
     .spyOn(contextSrv, 'hasPermission')
@@ -689,3 +683,23 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }
+
+export const onCallPluginMetaMock: PluginMeta = {
+  name: 'Grafana OnCall',
+  id: 'grafana-oncall-app',
+  type: PluginType.app,
+  module: 'plugins/grafana-oncall-app/module',
+  baseUrl: 'public/plugins/grafana-oncall-app',
+  info: {
+    author: { name: 'Grafana Labs' },
+    description: 'Grafana OnCall',
+    updated: '',
+    version: '',
+    links: [],
+    logos: {
+      small: '',
+      large: '',
+    },
+    screenshots: [],
+  },
+};

@@ -38,6 +38,16 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("create user should fail when username and email are empty", func(t *testing.T) {
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "",
+			Login: "",
+			Name:  "name",
+		})
+
+		require.ErrorIs(t, err, user.ErrEmptyUsernameAndEmail)
+	})
+
 	t.Run("get user by ID", func(t *testing.T) {
 		userService.cfg = setting.NewCfg()
 		userService.cfg.CaseInsensitiveLogin = false
@@ -86,6 +96,16 @@ func TestUserService(t *testing.T) {
 	t.Run("delete user successfully", func(t *testing.T) {
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.NoError(t, err)
+	})
+
+	t.Run("update user should fail with empty username and password", func(t *testing.T) {
+		err := userService.Update(context.Background(), &user.UpdateUserCommand{
+			Email: "",
+			Login: "",
+			Name:  "name",
+		})
+
+		require.ErrorIs(t, err, user.ErrEmptyUsernameAndEmail)
 	})
 
 	t.Run("GetByID - email conflict", func(t *testing.T) {

@@ -1,7 +1,9 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import {
   SceneDataProvider,
+  SceneDataProviderResult,
   SceneDataState,
   SceneDataTransformer,
   SceneDeactivationHandler,
@@ -19,6 +21,7 @@ export interface ShareQueryDataProviderState extends SceneDataState {
 export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProviderState> implements SceneDataProvider {
   private _querySub: Unsubscribable | undefined;
   private _sourceDataDeactivationHandler?: SceneDeactivationHandler;
+  private _results = new ReplaySubject<SceneDataProviderResult>();
 
   constructor(state: ShareQueryDataProviderState) {
     super(state);
@@ -38,6 +41,10 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
         }
       };
     });
+  }
+
+  public getResultsStream(): Observable<SceneDataProviderResult> {
+    return this._results;
   }
 
   private _subscribeToSource() {
@@ -78,7 +85,18 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       }
     }
 
-    this._querySub = sourceData.subscribeToState((state) => this.setState({ data: state.data }));
+    this._querySub = sourceData.subscribeToState((state) => {
+      this._results.next({
+        origin: this,
+        data: state.data || {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+        },
+      });
+
+      this.setState({ data: state.data });
+    });
 
     // Copy the initial state
     this.setState({ data: sourceData.state.data });

@@ -82,7 +82,7 @@ func TestUnmarshalCommand(t *testing.T) {
 						"data": 1,
 					}
 				}),
-				err: "failed to unmarshall Machine learning command",
+				err: "failed to unmarshal Machine learning command",
 			},
 			{
 				name: "field 'config' is missing",
@@ -96,7 +96,7 @@ func TestUnmarshalCommand(t *testing.T) {
 				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
 					cmd["intervalMs"] = "test"
 				}),
-				err: "failed to unmarshall Machine learning command",
+				err: "failed to unmarshal Machine learning command",
 			},
 			{
 				name: "field 'config.datasource_uid' is not specified",

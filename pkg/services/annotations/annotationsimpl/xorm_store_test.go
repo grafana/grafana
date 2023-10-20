@@ -73,7 +73,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		testDashboard1 := dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": "Dashboard 1",
 			}),
 		}
@@ -84,7 +84,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		testDashboard2 := dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": "Dashboard 2",
 			}),
 		}
@@ -99,7 +99,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       10,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+			Data:        simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
 		}
 		err = repo.Add(context.Background(), annotation)
 		require.NoError(t, err)
@@ -338,7 +338,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, "something new", items[0].Text)
 			data, err := items[0].Data.Map()
 			assert.NoError(t, err)
-			assert.Equal(t, data, map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"})
+			assert.Equal(t, data, map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"})
 		})
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
@@ -411,7 +411,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			annotationId := items[0].ID
-			data := simplejson.NewFromAny(map[string]interface{}{"data": "I am a data", "data2": "I am also a data"})
+			data := simplejson.NewFromAny(map[string]any{"data": "I am a data", "data2": "I am also a data"})
 			err = repo.Update(context.Background(), &annotations.Item{
 				ID:    annotationId,
 				OrgID: 1,
@@ -543,7 +543,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "Dashboard 1",
 		}),
 	}
@@ -554,7 +554,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	testDashboard2 := dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "Dashboard 2",
 		}),
 	}
@@ -738,7 +738,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				UserID:   usr.UserID,
 				OrgID:    orgID,
 				IsFolder: false,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": fmt.Sprintf("Dashboard under %s", f.UID),
 				}),
 				FolderID:  f.ID,
@@ -910,7 +910,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
-			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+			Data:        simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
 		})
 		newTags = append(newTags, tag.Tag{
 			Id:  int64(i),
@@ -948,7 +948,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 		Type:        "alert",
 		Epoch:       10,
 		Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-		Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+		Data:        simplejson.NewFromAny(map[string]any{"data1": "I am a cool data", "data2": "I am another cool data"}),
 	}
 	err = repo.Add(context.Background(), &annotationWithTheTag)
 	require.NoError(b, err)

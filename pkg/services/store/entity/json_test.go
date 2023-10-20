@@ -5,19 +5,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/grn"
 )
 
 func TestRawEncoders(t *testing.T) {
-	body, err := json.Marshal(map[string]interface{}{
+	body, err := json.Marshal(map[string]any{
 		"hello": "world",
 		"field": 1.23,
 	})
 	require.NoError(t, err)
 
 	raw := &Entity{
-		GRN: &GRN{
-			UID:  "a",
-			Kind: "b",
+		GRN: &grn.GRN{
+			ResourceIdentifier: "a",
+			ResourceKind:       "b",
 		},
 		Version: "c",
 		ETag:    "d",
@@ -31,8 +33,8 @@ func TestRawEncoders(t *testing.T) {
 
 	require.JSONEq(t, `{
 		"GRN": {
-		  "kind": "b",
-		  "UID": "a"
+		  "ResourceKind":       "b",
+		  "ResourceIdentifier": "a"
 		},
 		"version": "c",
 		"body": {

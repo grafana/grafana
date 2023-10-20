@@ -71,7 +71,7 @@ afterAll(() => {
 
 const ui = {
   inputs: {
-    name: byRole('textbox', { name: /rule name name for the alert rule\./i }),
+    name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
@@ -164,7 +164,9 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
-      await waitForElementToBeRemoved(within(ui.inputs.group.get()).getByTestId('Spinner'));
+      await waitFor(() => {
+        expect(within(ui.inputs.group.get()).queryByTestId('Spinner')).not.toBeInTheDocument();
+      });
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');

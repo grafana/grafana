@@ -7,6 +7,13 @@ import { ExploreItemState } from 'app/types';
 import { createDefaultInitialState } from './helpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';
 
+const mockTimeSrv = {
+  init: jest.fn(),
+};
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
+  getTimeSrv: () => mockTimeSrv,
+}));
 const mockTemplateSrv = {
   updateTimeRange: jest.fn(),
 };
@@ -21,6 +28,8 @@ describe('Explore item reducer', () => {
       const state = createDefaultInitialState().defaultInitialState as any;
       const { dispatch } = configureStore(state);
       dispatch(updateTime({ exploreId: 'left' }));
+      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
+      expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
     });
   });

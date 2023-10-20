@@ -19,18 +19,62 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-| Provider                                          | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
-| ------------------------------------------------- | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
-| [Auth Proxy]({{< relref "./auth-proxy" >}})       |  v2.1+  |      -       |               v6.3+               |                  -                  |
-| [Azure AD OAuth]({{< relref "./azuread" >}})      |  v6.7+  |    v6.7+     |               v6.7+               |                  -                  |
-| [Generic OAuth]({{< relref "./generic-oauth" >}}) |  v4.0+  |    v6.5+     |                 -                 |                  -                  |
-| [GitHub OAuth]({{< relref "./github" >}})         |  v2.0+  |      -       |               v6.3+               |                  -                  |
-| [GitLab OAuth]({{< relref "./gitlab" >}})         |  v5.3+  |      -       |               v6.4+               |                  -                  |
-| [Google OAuth]({{< relref "./google" >}})         |  v2.0+  |      -       |                 -                 |                  -                  |
-| [JWT]({{< relref "./jwt" >}})                     |  v8.0+  |      -       |                 -                 |                  -                  |
-| [LDAP]({{< relref "./ldap" >}})                   |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
-| [Okta OAuth]({{< relref "./okta" >}})             |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
-| [SAML]({{< relref "./saml" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
+| Provider                                            | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
+| :-------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
+| [Auth Proxy]({{< relref "./auth-proxy" >}})         | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
+| [Azure AD OAuth]({{< relref "./azuread" >}})        | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Generic OAuth]({{< relref "./generic-oauth" >}})   | no                | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
+| [GitHub OAuth]({{< relref "./github" >}})           | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [GitLab OAuth]({{< relref "./gitlab" >}})           | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Google OAuth]({{< relref "./google" >}})           | no                | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
+| [Grafana.com OAuth]({{< relref "./grafana-com" >}}) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
+| [Okta OAuth]({{< relref "./okta" >}})               | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [SAML]({{< relref "./saml" >}}) (Enterprise only)   | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [LDAP]({{< relref "./ldap" >}})                     | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
+| [JWT Proxy]({{< relref "./jwt" >}})                 | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+
+N/A = Not applicable
+
+## Auth Proxy
+
+| Feature           | Supported? |
+| :---------------- | :--------- |
+| Multi Org Mapping | no         |
+| Enforce Sync      | N/A        |
+| Role Mapping      | yes        |
+
+**Multi Org Mapping:** Able to add a user and role map him to multiple orgs
+
+**Enforce Sync:** If the information provided by the identity provider is empty, does the integration skip setting that user’s field or does it enforce a default.
+
+**Role Mapping:** Able to map a user’s role in the default org
+
+**Grafana Admin Mapping:** Able to map a user’s admin role in the default org
+
+**Team Sync:** Able to sync teams from a predefined group/team in a your IdP
+
+**Allowed Groups:** Only allow members of certain groups to login
+
+**Active Sync:** Add users to teams and update their profile without requiring them to log in
+
+**Skip OrgRole Sync:** Able to modify org role for users and not sync it back to the IdP
+
+**Auto Login:** Automatically redirects to provider login page if user is not logged in \* for OAuth; Only works if it's the only configured provider
+
+**Single Logout:** Logging out from Grafana also logs you out of provider session
+
+## Configuring multiple identity providers
+
+Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
+For example, you can have [SAML]({{< relref "./saml" >}}) (Enterprise only) and [Generic OAuth]({{< relref "./generic-oauth" >}}) configured, but you can not have two different [Generic OAuth]({{< relref "./generic-oauth" >}}) configurations.
+
+> Note: Grafana does not support multiple identity providers resolving the same user. Ensure there are no user account overlaps between the different providers
+
+In scenarios where you have multiple identity providers of the same type, there are a couple of options:
+
+- Use different Grafana instances each configured with a given identity provider.
+- Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
+- If SAML is supported by the identity provider, you can configure one [Generic OAuth]({{< relref "./generic-oauth" >}}) and one [SAML]({{< relref "./saml" >}}) (Enterprise only).
 
 ## Grafana Auth
 

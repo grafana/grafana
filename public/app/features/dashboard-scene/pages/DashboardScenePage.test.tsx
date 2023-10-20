@@ -13,6 +13,16 @@ import { setupLoadDashboardMock } from '../utils/test-utils';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
+
 function setup() {
   const context = getGrafanaContextMock();
   const props: Props = {
@@ -133,7 +143,7 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
-    act(() => locationService.partial({ viewPanel: 'panel-2' }));
+    act(() => locationService.partial({ viewPanel: '2' }));
 
     expect(screen.queryByTitle('Panel A')).not.toBeInTheDocument();
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();

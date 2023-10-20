@@ -622,6 +622,8 @@ const prepConfig = (
     scaleKey: 'x',
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+    grid: { show: customConfig?.axisGridShow },
+    border: { show: customConfig?.axisBorderShow },
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -659,21 +661,23 @@ const prepConfig = (
       decimals: config.decimals,
     });
 
-    if (customConfig?.axisPlacement !== AxisPlacement.Hidden) {
-      // why does this fall back to '' instead of null or undef?
-      let yAxisLabel = customConfig?.axisLabel;
+    // why does this fall back to '' instead of null or undef?
+    let yAxisLabel = customConfig?.axisLabel;
 
-      builder.addAxis({
-        scaleKey,
-        theme,
-        placement: customConfig?.axisPlacement,
-        label:
-          yAxisLabel == null || yAxisLabel === ''
-            ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
-            : yAxisLabel,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
-      });
-    }
+    builder.addAxis({
+      scaleKey,
+      theme,
+      placement: customConfig?.axisPlacement === AxisPlacement.Auto ? AxisPlacement.Left : customConfig?.axisPlacement,
+      show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+      grid: { show: customConfig?.axisGridShow },
+      border: { show: customConfig?.axisBorderShow },
+      size: customConfig?.axisWidth,
+      label:
+        yAxisLabel == null || yAxisLabel === ''
+          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+          : yAxisLabel,
+      formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+    });
 
     builder.addSeries({
       facets: [

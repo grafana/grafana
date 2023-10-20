@@ -182,7 +182,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-  builder.addHook('setCursor', coreConfig.setCursor);
 
   // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
   // which fires after the above setCursor hook, so can take advantage of hoveringOver

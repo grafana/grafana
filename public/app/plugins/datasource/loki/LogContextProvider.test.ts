@@ -77,12 +77,13 @@ describe('LogContextProvider', () => {
         },
         {
           expr: '{bar="baz"}',
-        } as LokiQuery
+          refId: 'A',
+        }
       );
       expect(logContextProvider.getInitContextFilters).toBeCalled();
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
         { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
-        { expr: '{bar="baz"}' }
+        { expr: '{bar="baz"}', refId: 'A' }
       );
       expect(logContextProvider.appliedContextFilters).toHaveLength(1);
     });
@@ -135,7 +136,8 @@ describe('LogContextProvider', () => {
     describe('query with no parser', () => {
       const query = {
         expr: '{bar="baz"}',
-      } as LokiQuery;
+        refId: 'A',
+      };
       it('returns empty expression if no appliedContextFilters', async () => {
         logContextProvider.appliedContextFilters = [];
         const result = await logContextProvider.prepareLogRowContextQueryTarget(
@@ -176,7 +178,8 @@ describe('LogContextProvider', () => {
           LogRowContextQueryDirection.Backward,
           {
             expr: '{bar="baz"} | logfmt',
-          } as LokiQuery
+            refId: 'A',
+          }
         );
 
         expect(contextQuery.query.expr).toEqual('{bar="baz",xyz="abc"} | logfmt');
@@ -194,7 +197,8 @@ describe('LogContextProvider', () => {
           LogRowContextQueryDirection.Backward,
           {
             expr: '{bar="baz"} | logfmt',
-          } as LokiQuery
+            refId: 'A',
+          }
         );
 
         expect(contextQuery.query.expr).toEqual('{bar="baz",xyz="abc"} | logfmt | foo=`uniqueParsedLabel`');
@@ -212,7 +216,8 @@ describe('LogContextProvider', () => {
         LogRowContextQueryDirection.Backward,
         {
           expr: '{bar="baz"} | logfmt | json',
-        } as unknown as LokiQuery
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
@@ -225,8 +230,9 @@ describe('LogContextProvider', () => {
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo"',
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt`);
@@ -240,8 +246,9 @@ describe('LogContextProvider', () => {
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt  | line_format = "foo"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt  | line_format "foo"',
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt`);
@@ -255,11 +262,12 @@ describe('LogContextProvider', () => {
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo"',
+          refId: 'A',
+        }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format = "foo"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
     });
 
     it('should not apply line filters if flag is set', async () => {
@@ -270,44 +278,48 @@ describe('LogContextProvider', () => {
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo" |= "bar"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo" |= "bar"',
+          refId: 'A',
+        }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format = "foo"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
 
       contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo" |~ "bar"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo" |~ "bar"',
+          refId: 'A',
+        }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format = "foo"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
 
       contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo" !~ "bar"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo" !~ "bar"',
+          refId: 'A',
+        }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format = "foo"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
 
       contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
         10,
         LogRowContextQueryDirection.Backward,
         {
-          expr: '{bar="baz"} | logfmt | line_format = "foo" != "bar"',
-        } as unknown as LokiQuery
+          expr: '{bar="baz"} | logfmt | line_format "foo" != "bar"',
+          refId: 'A',
+        }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format = "foo"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
     });
 
     it('should not apply line filters if nested between two operations', async () => {
@@ -319,7 +331,8 @@ describe('LogContextProvider', () => {
         LogRowContextQueryDirection.Backward,
         {
           expr: '{bar="baz"} | logfmt | line_format "foo" |= "bar" | label_format a="baz"',
-        } as unknown as LokiQuery
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo" | label_format a="baz"`);
@@ -334,7 +347,8 @@ describe('LogContextProvider', () => {
         LogRowContextQueryDirection.Backward,
         {
           expr: '{bar="baz"} | logfmt | line_format "foo" | bar > 1 | label_format a="baz"',
-        } as unknown as LokiQuery
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo" | label_format a="baz"`);
@@ -349,7 +363,8 @@ describe('LogContextProvider', () => {
         LogRowContextQueryDirection.Backward,
         {
           expr: '{bar="baz"} | logfmt | line_format "foo" | json | label_format a="baz"',
-        } as unknown as LokiQuery
+          refId: 'A',
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
@@ -358,9 +373,10 @@ describe('LogContextProvider', () => {
 
   describe('getInitContextFiltersFromLabels', () => {
     describe('query with no parser', () => {
-      const queryWithoutParser = {
+      const queryWithoutParser: LokiQuery = {
         expr: '{bar="baz"}',
-      } as LokiQuery;
+        refId: 'A',
+      };
 
       it('should correctly create contextFilters', async () => {
         const filters = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithoutParser);
@@ -383,9 +399,10 @@ describe('LogContextProvider', () => {
     });
 
     describe('query with parser', () => {
-      const queryWithParser = {
+      const queryWithParser: LokiQuery = {
         expr: '{bar="baz"} | logfmt',
-      } as LokiQuery;
+        refId: 'A',
+      };
 
       it('should correctly create contextFilters', async () => {
         const filters = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
@@ -408,9 +425,10 @@ describe('LogContextProvider', () => {
     });
 
     describe('with preserved labels', () => {
-      const queryWithParser = {
+      const queryWithParser: LokiQuery = {
         expr: '{bar="baz"} | logfmt',
-      } as LokiQuery;
+        refId: 'A',
+      };
 
       it('should correctly apply preserved labels', async () => {
         window.localStorage.setItem(
@@ -465,24 +483,24 @@ describe('LogContextProvider', () => {
   describe('queryContainsValidPipelineStages', () => {
     it('should return true if query contains a line_format stage', () => {
       expect(
-        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | line_format "foo"' } as LokiQuery)
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | line_format "foo"', refId: 'A' })
       ).toBe(true);
     });
 
     it('should return true if query contains a label_format stage', () => {
       expect(
-        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | label_format a="foo"' } as LokiQuery)
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | label_format a="foo"', refId: 'A' })
       ).toBe(true);
     });
 
     it('should return false if query contains a parser', () => {
-      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | json' } as LokiQuery)).toBe(
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | json', refId: 'A' })).toBe(
         false
       );
     });
 
     it('should return false if query contains a line filter', () => {
-      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} |= "test"' } as LokiQuery)).toBe(
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} |= "test"', refId: 'A' })).toBe(
         false
       );
     });
@@ -491,7 +509,8 @@ describe('LogContextProvider', () => {
       expect(
         logContextProvider.queryContainsValidPipelineStages({
           expr: '{foo="bar"} |= "test" | label_format a="foo"',
-        } as LokiQuery)
+          refId: 'A',
+        })
       ).toBe(true);
     });
   });

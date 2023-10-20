@@ -5,10 +5,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Trans } from 'app/core/internationalization';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { FolderDTO } from 'app/types';
 
 import { getGrafanaSearcher } from '../../service';
@@ -149,7 +149,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     folderDTO &&
     // With nested folders, SearchView doesn't know if it's fetched all children
     // of a folder so don't show empty state here.
-    !config.featureToggles.nestedFolders &&
+    !newBrowseDashboardsEnabled() &&
     !state.loading &&
     !state.result?.totalRows &&
     !stateManager.hasSearchFilters()

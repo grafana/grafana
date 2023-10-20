@@ -31,7 +31,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		setting.SecretKey = origSecret
 	})
 	secretsService := fakes.NewFakeSecretsService()
-	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
+	dashboard := simplejson.NewFromAny(map[string]any{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {
 		rawDashboard, err := dashboard.Encode()
@@ -72,7 +72,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Run("And the user has the admin role", func(t *testing.T) {
 			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgID:        1,
-				SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 			}
 			queryResult, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
@@ -115,7 +115,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"hello": "mupp",
 				}),
 				UserID: 0,
@@ -168,7 +168,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 
 		query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgID:        1,
-			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 		}
 		queryResult, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
@@ -181,7 +181,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 
 		query = dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgID:        1,
-			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 		}
 		queryResult, err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
@@ -195,7 +195,7 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"hello": "mupp",
 		}),
 		UserID:  1000,

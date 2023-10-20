@@ -34,7 +34,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.parameters.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-	requestBody := map[string]interface{}{
+	requestBody := map[string]any{
 		"query": timeSeriesQuery.parameters.Query,
 	}
 	return runTimeSeriesRequest(ctx, timeSeriesQuery.logger, req, s, dsInfo, tracer, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
@@ -61,7 +61,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 
 			seriesLabels["metric.name"] = d.Key
 
-			customFrameMeta := map[string]interface{}{}
+			customFrameMeta := map[string]any{}
 			customFrameMeta["labels"] = seriesLabels
 			frameMeta := &data.FrameMeta{
 				ExecutedQueryString: executedQueryString,
@@ -88,7 +88,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
-	dataSets := []map[string]interface{}{
+	dataSets := []map[string]any{
 		{
 			"timeSeriesQuery": timeSeriesQuery.parameters.Query,
 			"targetAxis":      "Y1",

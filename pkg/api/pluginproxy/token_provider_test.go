@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	token map[string]interface{}
+	token map[string]any
 )
 
 func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
@@ -68,8 +68,8 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 	t.Run("Should parse token, with different fields and types", func(t *testing.T) {
 		type tokenTestDescription struct {
 			desc              string
-			expiresIn         interface{}
-			expiresOn         interface{}
+			expiresIn         any
+			expiresOn         any
 			expectedExpiresOn int64
 		}
 
@@ -115,7 +115,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 				// reset the httphandler counter
 				authCalls = 0
 
-				token = map[string]interface{}{
+				token = map[string]any{
 					"access_token":  "2YotnFZFEjr1zCsicMWpAA",
 					"token_type":    "example",
 					"refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
@@ -159,7 +159,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 		defer resetTimeNow()
 		provider := newGenericAccessTokenProvider(DSInfo{}, pluginRoute, authParams)
 
-		token = map[string]interface{}{
+		token = map[string]any{
 			"access_token":  "2YotnFZFEjr1zCsicMWpAA",
 			"token_type":    "3600",
 			"refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
@@ -181,7 +181,7 @@ func clearTokenCache() {
 	tokenCache.Lock()
 	defer tokenCache.Unlock()
 	tokenCache.cache = map[string]*jwtToken{}
-	token = map[string]interface{}{}
+	token = map[string]any{}
 }
 
 func mockTimeNow(timeSeed time.Time) {

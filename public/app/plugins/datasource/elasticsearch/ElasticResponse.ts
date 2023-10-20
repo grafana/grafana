@@ -124,7 +124,7 @@ export class ElasticResponse {
               };
               for (let i = 0; i < esAgg.buckets.length; i++) {
                 const bucket = esAgg.buckets[i];
-                const stats = bucket[metric.id] as TopMetricBucket;
+                const stats: TopMetricBucket = bucket[metric.id];
                 const values = stats.top.map((hit) => {
                   if (hit.metrics[metricField]) {
                     return hit.metrics[metricField];
@@ -239,7 +239,7 @@ export class ElasticResponse {
                 // If we selected more than one metric we also add each metric name
                 const metricName = metric.settings.metrics.length > 1 ? `${baseName} ${metricField}` : baseName;
 
-                const stats = bucket[metric.id] as TopMetricBucket;
+                const stats: TopMetricBucket = bucket[metric.id];
 
                 // Size of top_metrics is fixed to 1.
                 addMetricValue(values, metricName, stats.top[0].metrics[metricField]);

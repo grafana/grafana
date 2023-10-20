@@ -16,8 +16,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -25,7 +25,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
-  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
 interface State {
@@ -75,12 +75,11 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       align-items: center;
       line-height: 22px;
 
-      .show-on-hover {
-        display: inline;
+      .log-details-value-copy {
         visibility: hidden;
       }
       &:hover {
-        .show-on-hover {
+        .log-details-value-copy {
           visibility: visible;
         }
       }
@@ -134,9 +133,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   isFilterLabelActive = async () => {
-    const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
+    const { isFilterLabelActive, parsedKeys, parsedValues, row } = this.props;
     if (isFilterLabelActive) {
-      return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
     return false;
   };
@@ -144,7 +143,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0]);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -157,7 +156,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0]);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -206,7 +205,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
 
     return (
-      <div className={cx('show-on-hover', styles.copyButton)}>
+      <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
           title="Copy value to clipboard"
@@ -250,13 +249,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
       disableActions,
+      row,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
-    const style = getLogRowStyles(theme);
+    const rowStyles = getLogRowStyles(theme);
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
+    const refIdTooltip =
+      config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -270,23 +272,27 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={cx(style.logDetailsValue)}>
-          <td className={style.logsDetailsIcon}>
+        <tr className={rowStyles.logDetailsValue}>
+          <td className={rowStyles.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
-                  {config.featureToggles.toggleLabelsInLogsUI && (
+                  {config.featureToggles.toggleLabelsInLogsUI ? (
                     // If we are using the new label toggling, we want to use the async icon button
                     <AsyncIconButton
                       name="search-plus"
                       onClick={this.filterLabel}
                       isActive={this.isFilterLabelActive}
+                      tooltipSuffix={refIdTooltip}
                     />
-                  )}
-                  {!config.featureToggles.toggleLabelsInLogsUI && (
+                  ) : (
                     <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
                   )}
-                  <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                  <IconButton
+                    name="search-minus"
+                    tooltip={`Filter out value${refIdTooltip}`}
+                    onClick={this.filterOutLabel}
+                  />
                 </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
@@ -304,7 +310,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </td>
 
           {/* Key - value columns */}
-          <td className={style.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
+          <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
@@ -350,10 +356,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
   isActive(): Promise<boolean>;
+  tooltipSuffix: string;
 }
 
-const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
+const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonProps) => {
   const [active, setActive] = useState(false);
+  const tooltip = active ? 'Remove filter' : 'Filter for value';
 
   /**
    * We purposely want to run this on every render to allow the active state to be updated
@@ -361,13 +369,7 @@ const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
    */
   isActive().then(setActive);
 
-  return (
-    <IconButton
-      {...rest}
-      variant={active ? 'primary' : undefined}
-      tooltip={active ? 'Remove filter' : 'Filter for value'}
-    />
-  );
+  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);

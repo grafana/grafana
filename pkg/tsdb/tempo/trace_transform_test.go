@@ -99,14 +99,14 @@ func TestTraceToFrame(t *testing.T) {
 	})
 }
 
-type Row map[string]interface{}
+type Row map[string]any
 type BetterFrame struct {
 	frame *data.Frame
 }
 
 func (f *BetterFrame) GetRow(index int) Row {
 	row := f.frame.RowCopy(index)
-	betterRow := make(map[string]interface{})
+	betterRow := make(map[string]any)
 	for i, field := range row {
 		betterRow[f.frame.Fields[i].Name] = field
 	}
@@ -125,7 +125,7 @@ func (f *BetterFrame) FindRow(fn func(row Row) bool) Row {
 	return nil
 }
 
-func (f *BetterFrame) FindRowWithValue(fieldName string, value interface{}) Row {
+func (f *BetterFrame) FindRowWithValue(fieldName string, value any) Row {
 	return f.FindRow(func(row Row) bool {
 		return row[fieldName] == value
 	})

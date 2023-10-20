@@ -80,7 +80,6 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     getAttributesAsLabels: () => (attributes !== null ? attributes.map(attributesToLabels) : null),
     extraFields,
   };
-  return null;
 }
 
 export function parseLogsFrame(frame: DataFrame): LogsFrame | null {

@@ -1,9 +1,10 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
+import { DataFrameDTO, Field, FieldType, TableData, TimeSeries } from '../types/index';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
   createDataFrame,
+  guessFieldTypeForField,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
@@ -401,5 +402,52 @@ describe('reverse DataFrame', () => {
     expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
     expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
     expect(rev.fields[1].nanos).toBeUndefined();
+  });
+});
+
+describe('guessFieldTypeForField', () => {
+  it('should guess types if value exists', () => {
+    const field: Field = {
+      name: 'Field',
+      config: {},
+      type: FieldType.other,
+      values: [1, 2, 3],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
+
+    field.values = [null, null, 3];
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
+  });
+
+  it('should guess type if name suggests time values', () => {
+    const field: Field = {
+      name: 'Date',
+      config: {},
+      type: FieldType.other,
+      values: [1, 2, 3],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
+
+    field.name = 'time';
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
+  });
+
+  it('should return undefined if no values present', () => {
+    const field: Field = {
+      name: 'Val',
+      config: {},
+      type: FieldType.other,
+      values: [null, null],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(undefined);
+
+    field.values = [];
+
+    expect(guessFieldTypeForField(field)).toBe(undefined);
   });
 });

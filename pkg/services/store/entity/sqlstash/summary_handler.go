@@ -3,6 +3,7 @@ package sqlstash
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -17,7 +18,7 @@ type summarySupport struct {
 	marshaled   []byte
 
 	// metadata for nested objects
-	parent_grn *entity.GRN
+	parent_grn *grn.GRN
 	folder     string
 	isNested   bool // set when this is for a nested item
 }

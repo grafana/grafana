@@ -5,14 +5,11 @@ import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
-
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
 const meta: Meta<typeof Select> = {
   title: 'Forms/Legacy/Select',
   component: Select,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: [

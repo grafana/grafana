@@ -533,7 +533,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		if err != nil {
 			return fmt.Errorf("failed to read %q: %w", filepath.Join(srcDir, "plugin.json"), err)
 		}
-		var plugJSON map[string]interface{}
+		var plugJSON map[string]any
 		if err := json.Unmarshal(jsonB, &plugJSON); err != nil {
 			return err
 		}
@@ -771,7 +771,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 		defaultFileSrc:         filepath.Join(grafanaDir, "packaging", "rpm", "sysconfig", "grafana-server"),
 		systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "rpm", "systemd", "grafana-server.service"),
 		wrapperFilePath:        filepath.Join(grafanaDir, "packaging", "wrappers"),
-		depends:                []string{"/sbin/service", "fontconfig", "freetype", "urw-fonts"},
+		depends:                []string{"/sbin/service", "fontconfig", "freetype"},
 	}); err != nil {
 		return err
 	}

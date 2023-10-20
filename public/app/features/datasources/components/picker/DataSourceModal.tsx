@@ -14,6 +14,7 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
@@ -143,7 +144,7 @@ export function DataSourceModal({
 
   return (
     <Modal
-      title="Select data source"
+      title={t('data-source-picker.modal.title', 'Select data source')}
       closeOnEscape={true}
       closeOnBackdropClick={true}
       isOpen={true}
@@ -159,7 +160,7 @@ export function DataSourceModal({
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}
-          placeholder="Search data source"
+          placeholder={t('data-source-picker.modal.input-placeholder', 'Select data source')}
           onChange={(e) => {
             setSearch(e.currentTarget.value);
             reportSearchUsageOnce();
@@ -167,7 +168,6 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
-            className={styles.dataSourceList}
             onChange={onChangeDataSource}
             current={current}
             onClickEmptyStateCTA={() =>
@@ -212,7 +212,11 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.newDSSection}>
-          <span className={styles.newDSDescription}>Open a new tab and configure a new connection</span>
+          <span className={styles.newDSDescription}>
+            <Trans i18nKey="data-source-picker.modal.configure-new-data-source">
+              Open a new tab and configure a data source
+            </Trans>
+          </span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
@@ -266,10 +270,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
         overflow-y: auto;
       }
     `,
-    dataSourceList: css`
-      flex: 1 1;
-      height: 100%;
-    }`,
     rightColumn: css`
       display: flex;
       flex-direction: column;

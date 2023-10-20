@@ -162,7 +162,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close query range response body", "error", err)
+			s.log.Warn("Failed to close query range response body", "error", err)
 		}
 	}()
 
@@ -187,7 +187,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close response body", "error", err)
+			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -205,16 +205,16 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close response body", "error", err)
+			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 	return s.parseResponse(ctx, q, res)
 }
 
 func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, func()) {
-	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus", []utils.Attribute{
-		{Key: "expr", Value: q.Expr, Kv: attribute.Key("expr").String(q.Expr)},
-		{Key: "start_unixnano", Value: q.Start, Kv: attribute.Key("start_unixnano").Int64(q.Start.UnixNano())},
-		{Key: "stop_unixnano", Value: q.End, Kv: attribute.Key("stop_unixnano").Int64(q.End.UnixNano())},
-	})
+	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus",
+		attribute.String("expr", q.Expr),
+		attribute.Int64("start_unixnano", q.Start.UnixNano()),
+		attribute.Int64("stop_unixnano", q.End.UnixNano()),
+	)
 }

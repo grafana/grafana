@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -70,6 +71,31 @@ func TestProcessManager_Start(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("Won't stop the plugin if the context is cancelled", func(t *testing.T) {
+		bp := fakes.NewFakeBackendPlugin(true)
+		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
+			plugin.Backend = true
+		})
+
+		tickerDuration := keepPluginAliveTickerDuration
+		keepPluginAliveTickerDuration = 1 * time.Millisecond
+		defer func() {
+			keepPluginAliveTickerDuration = tickerDuration
+		}()
+
+		m := &Service{}
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		err := m.Start(ctx, p)
+		require.NoError(t, err)
+		require.Equal(t, 1, bp.StartCount)
+		cancel()
+
+		<-bp.ExitedCheckDoneOrStopped
+		require.False(t, p.Exited())
+		require.Equal(t, 0, bp.StopCount)
 	})
 }
 

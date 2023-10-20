@@ -445,12 +445,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const init = (u: uPlot) => {
     let over = u.over;
     over.style.overflow = 'hidden';
-    u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
-      if (el instanceof HTMLElement) {
-        el.style.borderRadius = '0';
-        if (opts.fullHighlight) {
-          el.style.zIndex = '-1';
-        }
+    u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
+      el.style.borderRadius = '0';
+
+      if (opts.fullHighlight) {
+        el.style.zIndex = '-1';
       }
     });
   };
@@ -527,10 +526,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     if (isStacked) {
-      //barsPctLayout = [null as any].concat(distrOne(u.data.length - 1, u.data[0].length));
-      barsPctLayout = [null as any].concat(distrOne(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
-      barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
     }
 
     if (useMappedColors) {

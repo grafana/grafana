@@ -42,7 +42,7 @@ type NodeManagedChannelsResponse struct {
 
 func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCallback) {
 	var (
-		resp interface{}
+		resp any
 		err  error
 	)
 	switch e.Op {
@@ -66,7 +66,7 @@ func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCall
 	})
 }
 
-func (c *Caller) handleManagedStreams(data []byte) (interface{}, error) {
+func (c *Caller) handleManagedStreams(data []byte) (any, error) {
 	var req NodeManagedChannelsRequest
 	err := json.Unmarshal(data, &req)
 	if err != nil {

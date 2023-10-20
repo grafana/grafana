@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
@@ -38,8 +39,8 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -50,9 +51,14 @@ export interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
-  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
+  /**
+   * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
+   * Any overflowing content will be clipped at the table boundary.
+   */
+  overflowingContent?: boolean;
 }
 
 interface State {
@@ -128,7 +134,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <table className={styles.logsRowsTable}>
+      <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
         <tbody>
           {hasData &&
             firstRows.map((row) => (

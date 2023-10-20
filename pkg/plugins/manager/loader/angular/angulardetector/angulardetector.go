@@ -3,6 +3,7 @@ package angulardetector
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"regexp"
 )
 
@@ -16,6 +17,8 @@ var (
 
 // AngularDetector implements a check to see if a js file is using angular APIs.
 type AngularDetector interface {
+	fmt.Stringer
+
 	// DetectAngular takes the content of a js file and returns true if the plugin is using Angular.
 	DetectAngular(js []byte) bool
 }
@@ -30,6 +33,11 @@ func (d *ContainsBytesDetector) DetectAngular(moduleJs []byte) bool {
 	return bytes.Contains(moduleJs, d.Pattern)
 }
 
+// String returns the string representation of the pattern.
+func (d *ContainsBytesDetector) String() string {
+	return string(d.Pattern)
+}
+
 // RegexDetector is an AngularDetector that returns true if the module.js content matches a regular expression.
 type RegexDetector struct {
 	Regex *regexp.Regexp
@@ -38,6 +46,11 @@ type RegexDetector struct {
 // DetectAngular returns true if moduleJs matches the regular expression d.regex.
 func (d *RegexDetector) DetectAngular(moduleJs []byte) bool {
 	return d.Regex.Match(moduleJs)
+}
+
+// String returns the string representation of the regular expression.
+func (d *RegexDetector) String() string {
+	return d.Regex.String()
 }
 
 // DetectorsProvider can provide multiple AngularDetectors used for Angular detection.

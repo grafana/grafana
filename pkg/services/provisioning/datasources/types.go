@@ -42,8 +42,8 @@ type upsertDataSourceFromConfig struct {
 	BasicAuthUser   string
 	WithCredentials bool
 	IsDefault       bool
-	Correlations    []map[string]interface{}
-	JSONData        map[string]interface{}
+	Correlations    []map[string]any
+	JSONData        map[string]any
 	SecureJSONData  map[string]string
 	Editable        bool
 	UID             string
@@ -75,22 +75,22 @@ type deleteDatasourceConfigV1 struct {
 }
 
 type upsertDataSourceFromConfigV0 struct {
-	OrgID           int64                    `json:"org_id" yaml:"org_id"`
-	Version         int                      `json:"version" yaml:"version"`
-	Name            string                   `json:"name" yaml:"name"`
-	Type            string                   `json:"type" yaml:"type"`
-	Access          string                   `json:"access" yaml:"access"`
-	URL             string                   `json:"url" yaml:"url"`
-	User            string                   `json:"user" yaml:"user"`
-	Database        string                   `json:"database" yaml:"database"`
-	BasicAuth       bool                     `json:"basic_auth" yaml:"basic_auth"`
-	BasicAuthUser   string                   `json:"basic_auth_user" yaml:"basic_auth_user"`
-	WithCredentials bool                     `json:"with_credentials" yaml:"with_credentials"`
-	IsDefault       bool                     `json:"is_default" yaml:"is_default"`
-	Correlations    []map[string]interface{} `json:"correlations" yaml:"correlations"`
-	JSONData        map[string]interface{}   `json:"json_data" yaml:"json_data"`
-	SecureJSONData  map[string]string        `json:"secure_json_data" yaml:"secure_json_data"`
-	Editable        bool                     `json:"editable" yaml:"editable"`
+	OrgID           int64             `json:"org_id" yaml:"org_id"`
+	Version         int               `json:"version" yaml:"version"`
+	Name            string            `json:"name" yaml:"name"`
+	Type            string            `json:"type" yaml:"type"`
+	Access          string            `json:"access" yaml:"access"`
+	URL             string            `json:"url" yaml:"url"`
+	User            string            `json:"user" yaml:"user"`
+	Database        string            `json:"database" yaml:"database"`
+	BasicAuth       bool              `json:"basic_auth" yaml:"basic_auth"`
+	BasicAuthUser   string            `json:"basic_auth_user" yaml:"basic_auth_user"`
+	WithCredentials bool              `json:"with_credentials" yaml:"with_credentials"`
+	IsDefault       bool              `json:"is_default" yaml:"is_default"`
+	Correlations    []map[string]any  `json:"correlations" yaml:"correlations"`
+	JSONData        map[string]any    `json:"json_data" yaml:"json_data"`
+	SecureJSONData  map[string]string `json:"secure_json_data" yaml:"secure_json_data"`
+	Editable        bool              `json:"editable" yaml:"editable"`
 }
 
 type upsertDataSourceFromConfigV1 struct {

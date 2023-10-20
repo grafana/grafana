@@ -1,18 +1,28 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Button, Dropdown, Icon, LinkButton, Menu, MenuItem } from '@grafana/ui';
 
 import { logInfo, LogMessages } from './Analytics';
-import { useRulesAccess } from './utils/accessControlHooks';
-import { createUrl } from './utils/url';
+import { GrafanaRulesExporter } from './components/export/GrafanaRulesExporter';
+import { AlertSourceAction, useAlertSourceAbility } from './hooks/useAbilities';
 
 interface Props {}
 
 export function MoreActionsRuleButtons({}: Props) {
-  const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
+  const [_, viewRuleAllowed] = useAlertSourceAbility(AlertSourceAction.ViewAlertRule);
+  const [createRuleSupported, createRuleAllowed] = useAlertSourceAbility(AlertSourceAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertSourceAbility(
+    AlertSourceAction.CreateExternalAlertRule
+  );
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
   const location = useLocation();
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const newMenu = (
     <Menu>
       {(canCreateGrafanaRules || canCreateCloudRules) && (
@@ -23,16 +33,7 @@ export function MoreActionsRuleButtons({}: Props) {
           label="New recording rule"
         />
       )}
-      {canReadProvisioning && (
-        <MenuItem
-          url={createUrl('/api/v1/provisioning/alert-rules/export', {
-            download: 'true',
-            format: 'yaml',
-          })}
-          label="Export all"
-          target="_blank"
-        />
-      )}
+      {viewRuleAllowed && <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />}
     </Menu>
   );
 
@@ -54,6 +55,7 @@ export function MoreActionsRuleButtons({}: Props) {
           <Icon name="angle-down" />
         </Button>
       </Dropdown>
+      {showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
     </>
   );
 }

@@ -1,10 +1,14 @@
+import { isString } from 'lodash';
+
 import {
   type PluginExtension,
   PluginExtensionTypes,
   type PluginExtensionLink,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponent,
+  urlUtil,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import type { PluginExtensionRegistry } from './types';
 import {
@@ -60,24 +64,25 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
       // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
         // Run the configure() function with the current context, and apply the ovverides
-        const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
+        const overrides = getLinkExtensionOverrides(pluginId, extensionConfig, frozenContext);
 
         // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
           continue;
         }
 
+        const path = overrides?.path || extensionConfig.path;
         const extension: PluginExtensionLink = {
-          id: generateExtensionId(registryItem.pluginId, extensionConfig),
+          id: generateExtensionId(pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
-          pluginId: registryItem.pluginId,
-          onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
+          pluginId: pluginId,
+          onClick: getLinkExtensionOnClick(pluginId, extensionConfig, frozenContext),
 
           // Configurable properties
           icon: overrides?.icon || extensionConfig.icon,
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
-          path: overrides?.path || extensionConfig.path,
+          path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionConfig) : undefined,
           category: overrides?.category || extensionConfig.category,
         };
 
@@ -165,6 +170,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 }
 
 function getLinkExtensionOnClick(
+  pluginId: string,
   config: PluginExtensionLinkConfig,
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
@@ -176,6 +182,13 @@ function getLinkExtensionOnClick(
 
   return function onClickExtensionLink(event?: React.MouseEvent) {
     try {
+      reportInteraction('ui_extension_link_clicked', {
+        pluginId: pluginId,
+        extensionPointId: config.extensionPointId,
+        title: config.title,
+        category: config.category,
+      });
+
       const result = onClick(event, getEventHelpers(context));
 
       if (isPromise(result)) {
@@ -191,4 +204,14 @@ function getLinkExtensionOnClick(
       }
     }
   };
+}
+
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, config: PluginExtensionLinkConfig): string {
+  return urlUtil.appendQueryToUrl(
+    path,
+    urlUtil.toUrlParams({
+      uel_pid: pluginId,
+      uel_epid: config.extensionPointId,
+    })
+  );
 }

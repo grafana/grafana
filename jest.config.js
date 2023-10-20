@@ -3,16 +3,7 @@
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
-const esModules = [
-  'ol',
-  'd3',
-  'd3-color',
-  'd3-interpolate',
-  'delaunator',
-  'internmap',
-  'robust-predicates',
-  'sinon',
-].join('|');
+const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'].join('|');
 
 module.exports = {
   verbose: false,
@@ -41,6 +32,8 @@ module.exports = {
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
+    // prevent systemjs amd extra from breaking tests.
+    'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
