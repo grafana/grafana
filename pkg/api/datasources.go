@@ -366,6 +366,17 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 						return errors.New("validation error, invalid header name specified")
 					}
 				}
+				// Ensure header values match the expected format: "1234:{\"policy\":\"prometheus\"}"
+				if match, err := header.TeamHTTPHeaderValueRegexMatch(); match.MatchString(header.Value) {
+					datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+					return errors.New("validation error, invalid header value specified")
+				} else if err != nil {
+					datasourcesLogger.Error("Could not parse the regex for teamHTTPHeaderValue")
+					return err
+				}
+				// QUESTION: should we format the values from here, since we have validated the json
+				// from header values match the expected format: "1234:env=prod,namespace=auth"
+				// to header values match the expected format: "1234:{env=prod, namespace=auth}"
 			}
 		}
 	}

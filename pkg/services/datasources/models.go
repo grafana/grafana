@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"encoding/json"
+	"regexp"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -75,6 +76,14 @@ type TeamHTTPHeaders map[string][]TeamHTTPHeader
 type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
+}
+
+func (th *TeamHTTPHeader) TeamHTTPHeaderValueRegexMatch() (*regexp.Regexp, error) {
+	// 1234:{"namespace":"auth", "env!="prod"}
+	// 1234:{"namespace":"auth", "env":"prod"}
+	// FIXME: better regex for labelSelector
+	exp := "\\d:.*"
+	return regexp.Compile(exp)
 }
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {

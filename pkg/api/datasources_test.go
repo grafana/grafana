@@ -230,38 +230,69 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 		Features:           featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
+	hs.Cfg.AuthProxyEnabled = true
 
-	data := datasources.TeamHTTPHeaders{
-		"1234": []datasources.TeamHTTPHeader{
-			// Authorization is used by the auth proxy
-			// As part of
-			// contexthandler.AuthHTTPHeaderListFromContext(ctx)
-			{
-				Header: "Authorization",
-				Value:  "Could be anything",
+	testcases := []struct {
+		desc string
+		data datasources.TeamHTTPHeaders
+		want int
+	}{
+		{
+			desc: "We should only allow for headers being X-Prom-Label-Policy",
+			data: datasources.TeamHTTPHeaders{"1234": []datasources.TeamHTTPHeader{
+				{
+					Header: "Authorization",
+					Value:  "Could be anything",
+				},
 			},
+			},
+			want: 400,
+		},
+		{
+			desc: "Allowed header but no team id",
+			data: datasources.TeamHTTPHeaders{"": []datasources.TeamHTTPHeader{
+				{
+					Header: "X-Prom-Label-Policy",
+					Value:  "Could be anything",
+				},
+			},
+			},
+			want: 400,
+		},
+		{
+			desc: "Allowed header and header values ",
+			data: datasources.TeamHTTPHeaders{"1234": []datasources.TeamHTTPHeader{
+				{
+					Header: "X-Prom-Label-Policy",
+					Value:  "Could be anything",
+				},
+			},
+			},
+			want: 500,
 		},
 	}
+	for _, tc := range testcases {
+		jsonData := simplejson.New()
+		jsonData.Set("teamHttpHeaders", tc.data)
+		t.Run(tc.desc, func(t *testing.T) {
+			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+					Name:     "Test",
+					URL:      "localhost:5432",
+					Access:   "direct",
+					Type:     "test",
+					JsonData: jsonData,
+				})
+				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+				return hs.AddDataSource(c)
+			}))
 
-	hs.Cfg.AuthProxyEnabled = true
-	jsonData := simplejson.New()
-	jsonData.Set("teamHttpHeaders", data)
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 
-	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:     "Test",
-			URL:      "localhost:5432",
-			Access:   "direct",
-			Type:     "test",
-			JsonData: jsonData,
+			assert.Equal(t, tc.want, sc.resp.Code)
 		})
-		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
-		return hs.AddDataSource(c)
-	}))
+	}
 
-	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-
-	assert.Equal(t, 400, sc.resp.Code)
 }
 
 // Updating data sources with URLs not specifying protocol should work.
