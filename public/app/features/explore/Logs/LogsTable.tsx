@@ -93,8 +93,6 @@ export function LogsTable(props: Props) {
     [logsSortOrder, timeZone, splitOpen, range]
   );
 
-  // const prepareState = useCallback()
-
   /**
    * Known issue here is that there is a re-render of the table when the set of labels has changed,
    * the transformations are added after the fresh data has already been rendered
