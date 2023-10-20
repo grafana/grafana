@@ -15,7 +15,7 @@ This example shows how to create a correlation using Correlations Editor in Expl
 
 Correlations allow you to use results of one query to run a new query in any data source. In this example you will run a query that renders tabular data. The data will be used to run a different query that yields a graph result.
 
-Please make sure you have setup up [a test data source]({{< relref "/docs/grafana/latest/datasources/testdata/#testdata-data-source" >}}).
+Please make sure you have set up [a test data source]({{< relref "../../../datasources/testdata#testdata-data-source" >}}).
 
 ## Create a new correlation
 

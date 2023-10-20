@@ -1307,8 +1307,14 @@ describe('queryHasFilter()', () => {
 
 describe('addAdhocFilters', () => {
   describe('with invalid filters', () => {
+    let ds: ElasticDatasource, templateSrv: TemplateSrv;
+    beforeEach(() => {
+      const context = getTestContext();
+      ds = context.ds;
+      templateSrv = context.templateSrv;
+    });
+
     it('should filter out ad hoc filter without key', () => {
-      const { ds, templateSrv } = getTestContext();
       jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: '', operator: '=', value: 'a', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
@@ -1316,7 +1322,6 @@ describe('addAdhocFilters', () => {
     });
 
     it('should filter out ad hoc filter without value', () => {
-      const { ds, templateSrv } = getTestContext();
       jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: '=', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
@@ -1324,7 +1329,6 @@ describe('addAdhocFilters', () => {
     });
 
     it('should filter out filter ad hoc filter with invalid operator', () => {
-      const { ds, templateSrv } = getTestContext();
       jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: 'A', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
@@ -1349,9 +1353,49 @@ describe('addAdhocFilters', () => {
     });
 
     it('should correctly add 1 ad hoc filter when query is empty', () => {
-      const query = ds.addAdHocFilters('');
-      expect(query).toBe('test:"test1"');
+      expect(ds.addAdHocFilters('')).toBe('test:"test1"');
+      expect(ds.addAdHocFilters(' ')).toBe('test:"test1"');
+      expect(ds.addAdHocFilters('  ')).toBe('test:"test1"');
     });
+
+    it('should not fail if the filter value is a number', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        // @ts-expect-error
+        .mockReturnValue([{ key: 'key', operator: '=', value: 1, condition: '' }]);
+      expect(ds.addAdHocFilters('')).toBe('key:"1"');
+    });
+
+    it.each(['=', '!=', '=~', '!~', '>', '<', '', ''])(
+      `should properly build queries with '%s' filters`,
+      (operator: string) => {
+        jest
+          .mocked(templateSrvMock.getAdhocFilters)
+          .mockReturnValue([{ key: 'key', operator, value: 'value', condition: '' }]);
+
+        const query = ds.addAdHocFilters('foo:"bar"');
+        switch (operator) {
+          case '=':
+            expect(query).toBe('foo:"bar" AND key:"value"');
+            break;
+          case '!=':
+            expect(query).toBe('foo:"bar" AND -key:"value"');
+            break;
+          case '=~':
+            expect(query).toBe('foo:"bar" AND key:/value/');
+            break;
+          case '!~':
+            expect(query).toBe('foo:"bar" AND -key:/value/');
+            break;
+          case '>':
+            expect(query).toBe('foo:"bar" AND key:>value');
+            break;
+          case '<':
+            expect(query).toBe('foo:"bar" AND key:<value');
+            break;
+        }
+      }
+    );
 
     it('should escape characters in filter keys', () => {
       jest
