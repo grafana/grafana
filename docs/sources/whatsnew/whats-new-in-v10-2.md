@@ -132,17 +132,25 @@ _Available in public preview in Grafana Open Source and Enterprise_
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-We've made a number of improvements to the data visualization experience in Grafana. These include:
+We've made a number of smaller improvements to the data visualization experience in Grafana. Notable changes include:
 
 #### Geomap marker symbol alignment options
 
-TODO: Add image / gif / video
+You can now offset Geomap marker symbols from the underlying data point.
 
-#### Gauge styling updates
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
 
-TODO: Add image / gif / video (maybe not for this one)
+#### Gauge visualization overflow support
 
-#### Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
+You can now visualize gauges in vertical and horizontal orientations with overflow. This resolves an issue where the design would break when the number of gauges exceeded the available space.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-gauge-overflow.gif" max-width="750px" caption="Gauge overflow" >}}
+
+#### Bar chart axes improvements
+
+You can now center bar chart axes on zero and configure axes border and color settings.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
 
 ## Data sources
 
