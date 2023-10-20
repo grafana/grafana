@@ -63,16 +63,16 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			expectedError error
 		}{
 			{
-				description: "should not return error",
+				description: "should create service account and not return error",
 				form: serviceaccounts.CreateServiceAccountForm{
 					Name: "my-service-account",
 				},
 				expectedError: nil,
 			},
 			{
-				description: "should not allow to create a service account with sa-extsvc prefix",
+				description: "should not allow to create a service account with extsvc prefix",
 				form: serviceaccounts.CreateServiceAccountForm{
-					Name: "sa-extsvc-my-service-account",
+					Name: "extsvc-my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrExtServiceAccountInvalidName,
 			},
@@ -82,7 +82,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
 				_, err := svc.CreateServiceAccount(context.Background(), testOrgId, &tc.form)
-				assert.Equal(t, err, tc.expectedError)
+				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
 	})
@@ -113,7 +113,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccount(context.Background(), testOrgId, testServiceAccountId)
-				assert.Equal(t, err, tc.expectedError)
+				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
 	})
@@ -144,8 +144,8 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
 				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
-				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal)
+				assert.NoError(t, err, tc.description)
+				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})
 		}
 	})
@@ -206,7 +206,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), testOrgId, testServiceAccountId, &tc.form)
-				assert.Equal(t, tc.expectedError, err)
+				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
 		}
 	})
@@ -245,7 +245,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
-				assert.Equal(t, tc.expectedError, err)
+				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
 		}
 	})
