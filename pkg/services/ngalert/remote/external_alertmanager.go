@@ -1,4 +1,4 @@
-package notifier
+package remote
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
@@ -21,7 +22,7 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
-type externalAlertmanager struct {
+type ExternalAlertmanager struct {
 	log           log.Logger
 	url           string
 	tenantID      string
@@ -31,14 +32,14 @@ type externalAlertmanager struct {
 	defaultConfig string
 }
 
-type externalAlertmanagerConfig struct {
+type ExternalAlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
 	DefaultConfig     string
 }
 
-func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*externalAlertmanager, error) {
+func NewExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*ExternalAlertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
@@ -59,12 +60,12 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
 
-	_, err = Load([]byte(cfg.DefaultConfig))
+	_, err = notifier.Load([]byte(cfg.DefaultConfig))
 	if err != nil {
 		return nil, err
 	}
 
-	return &externalAlertmanager{
+	return &ExternalAlertmanager{
 		amClient:      amclient.New(transport, nil),
 		httpClient:    &client,
 		log:           log.New("ngalert.notifier.external-alertmanager"),
@@ -75,19 +76,19 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	}, nil
 }
 
-func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+func (am *ExternalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	return nil
 }
 
-func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+func (am *ExternalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	return nil
 }
 
-func (am *externalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+func (am *ExternalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	return nil
 }
 
-func (am *externalAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
+func (am *ExternalAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while creating silence", "err", r)
@@ -103,7 +104,7 @@ func (am *externalAlertmanager) CreateSilence(ctx context.Context, silence *apim
 	return res.Payload.SilenceID, nil
 }
 
-func (am *externalAlertmanager) DeleteSilence(ctx context.Context, silenceID string) error {
+func (am *ExternalAlertmanager) DeleteSilence(ctx context.Context, silenceID string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while deleting silence", "err", r)
@@ -118,7 +119,7 @@ func (am *externalAlertmanager) DeleteSilence(ctx context.Context, silenceID str
 	return nil
 }
 
-func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string) (apimodels.GettableSilence, error) {
+func (am *ExternalAlertmanager) GetSilence(ctx context.Context, silenceID string) (apimodels.GettableSilence, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while getting silence", "err", r)
@@ -134,7 +135,7 @@ func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string
 	return *res.Payload, nil
 }
 
-func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
+func (am *ExternalAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while listing silences", "err", r)
@@ -150,7 +151,7 @@ func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []strin
 	return res.Payload, nil
 }
 
-func (am *externalAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
+func (am *ExternalAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while getting alerts", "err", r)
@@ -172,7 +173,7 @@ func (am *externalAlertmanager) GetAlerts(ctx context.Context, active, silenced,
 	return res.Payload, nil
 }
 
-func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
+func (am *ExternalAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while getting alert groups", "err", r)
@@ -197,7 +198,7 @@ func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, sile
 // TODO: implement PutAlerts in a way that is similar to what Prometheus does.
 // This current implementation is only good for testing methods that retrieve alerts from the remote Alertmanager.
 // More details in issue https://github.com/grafana/grafana/issues/76692
-func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
+func (am *ExternalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
 	defer func() {
 		if r := recover(); r != nil {
 			am.log.Error("Panic while putting alerts", "err", r)
@@ -219,11 +220,11 @@ func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts ap
 	return err
 }
 
-func (am *externalAlertmanager) GetStatus() apimodels.GettableStatus {
+func (am *ExternalAlertmanager) GetStatus() apimodels.GettableStatus {
 	return apimodels.GettableStatus{}
 }
 
-func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+func (am *ExternalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
 	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
 	res, err := am.amClient.Receiver.GetReceivers(params)
 	if err != nil {
@@ -237,30 +238,30 @@ func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.R
 	return rcvs, nil
 }
 
-func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
-	return &TestReceiversResult{}, nil
+func (am *ExternalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
+	return &notifier.TestReceiversResult{}, nil
 }
 
-func (am *externalAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error) {
-	return &TestTemplatesResults{}, nil
+func (am *ExternalAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
+	return &notifier.TestTemplatesResults{}, nil
 }
 
-func (am *externalAlertmanager) StopAndWait() {
+func (am *ExternalAlertmanager) StopAndWait() {
 }
 
-func (am *externalAlertmanager) Ready() bool {
+func (am *ExternalAlertmanager) Ready() bool {
 	return false
 }
 
-func (am *externalAlertmanager) FileStore() *FileStore {
-	return &FileStore{}
+func (am *ExternalAlertmanager) FileStore() *notifier.FileStore {
+	return &notifier.FileStore{}
 }
 
-func (am *externalAlertmanager) OrgID() int64 {
+func (am *ExternalAlertmanager) OrgID() int64 {
 	return am.orgID
 }
 
-func (am *externalAlertmanager) ConfigHash() [16]byte {
+func (am *ExternalAlertmanager) ConfigHash() [16]byte {
 	return [16]byte{}
 }
 
@@ -282,9 +283,9 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // TODO: change implementation, this is only useful for testing other methods.
-func (am *externalAlertmanager) postConfig(ctx context.Context, rawConfig string) error {
-	url := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(rawConfig))
+func (am *ExternalAlertmanager) postConfig(ctx context.Context, rawConfig string) error {
+	alertsURL := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, alertsURL, strings.NewReader(rawConfig))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
 	}
