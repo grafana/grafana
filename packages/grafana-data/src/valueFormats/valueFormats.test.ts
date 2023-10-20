@@ -70,7 +70,7 @@ describe('valueFormats', () => {
     ${'dateTimeAsSystem'} | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
   `(
-    'With format=$format decimals=$decimals and value=$value then result shoudl be = $expected',
+    'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
       const result = getValueFormat(format)(value, decimals, undefined, undefined);
       const full = formattedValueToString(result);
