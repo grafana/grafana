@@ -16,7 +16,7 @@
 // limitations under the License.
 
 // nolint
-package notifier
+package remote
 
 import (
 	"context"
