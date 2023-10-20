@@ -65,7 +65,6 @@ You can now use generative AI to assist you in your Grafana dashboards. So far g
 
 To enable these features, you must first enable the `dashgpt` feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
 
-TODO: Add image / gif / video (enablement?)
 {{< video-embed src="/media/docs/grafana/2023-10-20-Generative-AI-Enablement-Video.mp4" >}}
 
 ### Calculate visualization min/max individually per field
