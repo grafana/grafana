@@ -70,6 +70,32 @@ Recorded queries provide a way to take a _static_ number, (say, the number of Gi
 
 <!-- TODO: add graphic or video -->
 
+## Correlations
+
+### Create Correlations the easy way in Grafana Explore
+
+<!-- Kristina Durivage -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+Grafana Correlations is a new feature you can use to establish links from any data source query to any other, carrying forward data like namespace, host, or label values. This is extremely powerful for performing root cause analysis with a diverse set of data sources.
+
+Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+
+To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
+
+{{< figure src="/media/docs/grafana/correlations-explore-editor-10-2.png" max-width="300px" caption="Create a Correlation with variables from within Grafana Explore" >}}
+
+### Create correlations for provisioned data sources
+
+<!-- Piotr Jamróz -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
+
+To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
+
 ## Dashboards and visualizations
 
 ### Use AI to generate titles, descriptions, and change summaries
@@ -255,7 +281,7 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 
 As our work on improving the user experience of transforming data continues, we've also been adding new capabilities to transformations.
 
-### Support for dashboard variables in transformations
+### Use dashboard variables in transformations
 
 <!-- Oscar Kilhed, Victor Marin -->
 
@@ -287,7 +313,7 @@ The **Add field from calculation** transformation has been updated.
 
 Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
 
-### New transformation: Format string
+### Format strings with transformations
 
 <!-- Solomon Dubock, BI Squad -->
 
@@ -313,7 +339,7 @@ We've added initial support to detect situations in which various transformation
 
 If you have the `transformationsRedesign` feature flag set, you'll be able to access this functionality right away. If you'd like to try it, enable this feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 
-### Extended time zone support in Format time and Convert field type transformations
+### Choose your timezome in the Format time and Convert field type transformations
 
 <!-- Kyle Cunningham -->
 
@@ -322,28 +348,6 @@ _Generally available in all editions of Grafana_
 We've added support for setting timezones manually when formatting times as strings using the **Format time** and **Convert field type** transformations. This allows times to be formatted relative to any timezone across the globe.
 
 {{< figure src="/media/docs/grafana/transformations/format-timezone.png" caption="Timezone support in the Format time transformation" >}}
-
-## Correlations
-
-### Correlations editor in Explore
-
-<!-- Kristina Durivage -->
-
-_Available in public preview in Grafana Open Source and Enterprise_
-
-Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
-
-To try out **Correlations**, enable the `correlations` feature toggle.
-
-### Create correlations for provisioned data sources
-
-<!-- Piotr Jamróz -->
-
-_Available in public preview in Grafana Open Source and Enterprise_
-
-You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
-
-To try out **Correlations**, enable the `correlations` feature toggle.
 
 ## Alerting
 
@@ -381,14 +385,14 @@ This feature provides a way to export Alerting resources such as rules, contact 
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
-With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
+With Grafana v9.3, we introduced a [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
 
 With the current release, we've introduced a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh access tokens when they expire. In addition, to further improve security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It's enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
 
 For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
 
 {{% admonition type="note" %}}
-The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
+The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/). If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
 
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
 {{% /admonition %}}
