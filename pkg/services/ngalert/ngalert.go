@@ -172,16 +172,17 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	multiOrgLogger := log.New("ngalert.multiorg.alertmanager")
+
+	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			externalAMCfg := remote.ExternalAlertmanagerConfig{}
 			return remote.NewExternalAlertmanager(externalAMCfg, orgID)
 		})
-		ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, multiOrgLogger, ng.SecretsService, override)
-	} else {
-		ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, multiOrgLogger, ng.SecretsService)
+
+		overrides = append(overrides, override)
 	}
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}

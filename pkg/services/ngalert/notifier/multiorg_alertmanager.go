@@ -64,7 +64,6 @@ type Alertmanager interface {
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
-	factory   orgAlertmanagerFactory
 
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]Alertmanager
@@ -79,6 +78,7 @@ type MultiOrgAlertmanager struct {
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
+	factory     orgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
