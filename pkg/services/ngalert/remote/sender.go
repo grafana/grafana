@@ -24,6 +24,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,8 +37,8 @@ import (
 const (
 	alertmanagerLabel = "alertmanager"
 	maxBatchSize      = 64
-	namespace         = "prometheus"
-	subsystem         = "notifications"
+	namespace         = "grafana"
+	subsystem         = "alerting"
 )
 
 // alert is a generic representation of an alert in the Prometheus eco-system.
@@ -58,7 +59,7 @@ type alert struct {
 // Sender is responsible for forwarding alerts to a remote Alertmanager.
 type Sender struct {
 	logger  log.Logger
-	metrics *alertMetrics
+	metrics *metrics.RemoteAlertmanagerMetrics
 	opts    *options
 	timeout time.Duration
 
@@ -83,85 +84,13 @@ type options struct {
 	timeout        time.Duration
 }
 
-type alertMetrics struct {
-	latency       *prometheus.SummaryVec
-	errors        *prometheus.CounterVec
-	sent          *prometheus.CounterVec
-	dropped       prometheus.Counter
-	queueLength   prometheus.GaugeFunc
-	queueCapacity prometheus.Gauge
-}
-
-func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen func() float64) *alertMetrics {
-	m := &alertMetrics{
-		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
-			Namespace:  namespace,
-			Subsystem:  subsystem,
-			Name:       "latency_seconds",
-			Help:       "Latency quantiles for sending alert notifications.",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-			[]string{alertmanagerLabel},
-		),
-		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "errors_total",
-			Help:      "Total number of errors sending alert notifications.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		sent: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "sent_total",
-			Help:      "Total number of alerts sent.",
-		},
-			[]string{alertmanagerLabel},
-		),
-		dropped: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "dropped_total",
-			Help:      "Total number of alerts dropped due to errors when sending to Alertmanager.",
-		}),
-		queueLength: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_length",
-			Help:      "The number of alert notifications in the queue.",
-		}, queueLen),
-		queueCapacity: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "queue_capacity",
-			Help:      "The capacity of the alert notifications queue.",
-		}),
-	}
-
-	m.queueCapacity.Set(float64(queueCap))
-
-	if r != nil {
-		r.MustRegister(
-			m.latency,
-			m.errors,
-			m.sent,
-			m.dropped,
-			m.queueLength,
-			m.queueCapacity,
-		)
-	}
-
-	return m
-}
-
 func NewSender(o *options, logger log.Logger, c postAlertsClient) *Sender {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	n := &Sender{
+	s := &Sender{
 		queue:   make([]*alert, 0, o.queueCapacity),
 		ctx:     ctx,
 		cancel:  cancel,
@@ -172,18 +101,10 @@ func NewSender(o *options, logger log.Logger, c postAlertsClient) *Sender {
 		timeout: o.timeout,
 	}
 
-	queueLenFunc := func() float64 { return float64(n.queueLen()) }
-
-	n.metrics = newAlertMetrics(
-		o.registerer,
-		o.queueCapacity,
-		queueLenFunc,
-	)
-
 	// Start the alert dispatcher.
-	go n.Run()
+	go s.Run()
 
-	return n
+	return s
 }
 
 func (s *Sender) queueLen() int {
@@ -219,7 +140,7 @@ func (s *Sender) Run() {
 		case <-s.more:
 			alerts := s.nextBatch()
 			if err := s.send(alerts...); err != nil {
-				s.metrics.dropped.Add(float64(len(alerts)))
+				s.metrics.Dropped.Add(float64(len(alerts)))
 			}
 			// If the queue still has items left, kick off the next iteration.
 			if s.queueLen() > 0 {
@@ -259,7 +180,7 @@ func (s *Sender) Send(alerts ...*alert) {
 		alerts = alerts[d:]
 
 		level.Warn(s.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
-		s.metrics.dropped.Add(float64(d))
+		s.metrics.Dropped.Add(float64(d))
 	}
 
 	// If the queue is full, remove the oldest alerts in favor
@@ -268,7 +189,7 @@ func (s *Sender) Send(alerts ...*alert) {
 		s.queue = s.queue[d:]
 
 		level.Warn(s.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
-		s.metrics.dropped.Add(float64(d))
+		s.metrics.Dropped.Add(float64(d))
 	}
 	s.queue = append(s.queue, alerts...)
 

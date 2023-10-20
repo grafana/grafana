@@ -13,6 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
@@ -34,10 +35,12 @@ type Alertmanager struct {
 	url           string
 	tenantID      string
 	orgID         int64
-	amClient      *amclient.AlertmanagerAPI
-	manager       *Sender
-	httpClient    *http.Client
 	defaultConfig string
+
+	amClient   *amclient.AlertmanagerAPI
+	manager    *Sender
+	httpClient *http.Client
+	metrics    *metrics.RemoteAlertmanagerMetrics
 }
 
 type AlertmanagerConfig struct {
@@ -76,15 +79,23 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, r prometheus.Registere
 	logger := log.New("ngalert.notifier.remote-alertmanager")
 	amClient := amclient.New(transport, nil)
 
+	opts := &options{
+		queueCapacity: defaultMaxQueueCapacity,
+		registerer:    r,
+		timeout:       defaultTimeout,
+	}
 	manager := NewSender(
-		&options{
-			queueCapacity: defaultMaxQueueCapacity,
-			registerer:    r,
-			timeout:       defaultTimeout,
-		},
+		opts,
 		logger,
 		amClient.Alert,
 	)
+
+	queueLenFn := func() float64 {
+		return float64(manager.queueLen())
+	}
+	m := metrics.NewRemoteAlertmanagerMetrics(r, opts.queueCapacity, queueLenFn)
+
+	manager.metrics = m
 
 	return &Alertmanager{
 		amClient:      amClient,
@@ -95,6 +106,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, r prometheus.Registere
 		orgID:         orgID,
 		defaultConfig: cfg.DefaultConfig,
 		manager:       manager,
+		metrics:       m,
 	}, nil
 }
 

@@ -176,9 +176,15 @@ func (ng *AlertNG) init() error {
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			r := multiOrgMetrics.GetOrCreateOrgRegistry(orgID)
-			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID, r)
+			remoteAmCfg := ng.Cfg.UnifiedAlerting.RemoteAlertmanager
+			// TODO: not commit...
+			externalAMCfg := remote.AlertmanagerConfig{
+				URL:               remoteAmCfg.URL,
+				TenantID:          remoteAmCfg.TenantID,
+				BasicAuthPassword: remoteAmCfg.Password,
+				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
+			}
+			return remote.NewAlertmanager(externalAMCfg, orgID, ng.Metrics.Registerer)
 		})
 
 		overrides = append(overrides, override)
