@@ -234,21 +234,6 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: node:18.12.0-alpine
   name: lint-frontend
-- commands:
-  - apk add --update git
-  - |-
-    yarn run i18n:extract || (echo "
-    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
-    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
-    commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
-  - yarn run i18n:compile
-  depends_on:
-  - yarn-install
-  image: node:18.12.0-alpine
-  name: verify-i18n
 trigger:
   event:
   - pull_request
@@ -1462,21 +1447,6 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: node:18.12.0-alpine
   name: lint-frontend
-- commands:
-  - apk add --update git
-  - |-
-    yarn run i18n:extract || (echo "
-    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
-    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
-    commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
-  - yarn run i18n:compile
-  depends_on:
-  - yarn-install
-  image: node:18.12.0-alpine
-  name: verify-i18n
 trigger:
   branch: main
   event:
@@ -4589,6 +4559,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: eb40700da27daf3af368dda61af2016b55500d519c03107600d5af06dba4db12
+hmac: 4c68ef8aedb7202b86f077dbccc04504b81eaa1729276238d90a06672198487e
 
 ...
