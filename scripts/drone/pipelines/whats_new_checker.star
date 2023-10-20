@@ -3,12 +3,12 @@ This module contains logic for checking if the package.json whats new url matche
 """
 
 load(
-    "scripts/drone/utils/images.star",
-    "images",
-)
-load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -18,7 +18,7 @@ load(
 def whats_new_checker_step():
     return {
         "name": "whats-new-checker",
-        "image": images["go_image"],
+        "image": images["go"],
         "depends_on": [
             "compile-build-cmd",
         ],
