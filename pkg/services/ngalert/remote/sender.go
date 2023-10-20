@@ -28,7 +28,6 @@ import (
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
 )
@@ -93,7 +92,6 @@ type alertMetrics struct {
 	queueCapacity prometheus.Gauge
 }
 
-// TODO(santiago): update
 func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen func() float64) *alertMetrics {
 	m := &alertMetrics{
 		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -182,6 +180,9 @@ func NewSender(o *options, logger log.Logger, c postAlertsClient) *Sender {
 		queueLenFunc,
 	)
 
+	// Start the alert dispatcher.
+	go n.Run()
+
 	return n
 }
 
@@ -210,7 +211,7 @@ func (s *Sender) nextBatch() []*alert {
 }
 
 // Run dispatches notifications continuously.
-func (s *Sender) Run(tsets <-chan map[string][]*targetgroup.Group) {
+func (s *Sender) Run() {
 	for {
 		select {
 		case <-s.ctx.Done():

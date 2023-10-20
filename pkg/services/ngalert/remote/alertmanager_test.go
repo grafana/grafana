@@ -11,6 +11,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -76,7 +77,7 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 				DefaultConfig:     test.defaultConfig,
 			}
-			am, err := NewAlertmanager(cfg, test.orgID)
+			am, err := NewAlertmanager(cfg, test.orgID, prometheus.NewRegistry())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -111,7 +112,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -191,7 +192,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	// We should have no alerts and no groups at first.
@@ -248,7 +249,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		DefaultConfig:     validConfig,
 	}
 
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	// We should start with the default config.

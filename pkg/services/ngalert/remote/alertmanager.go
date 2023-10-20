@@ -47,7 +47,7 @@ type AlertmanagerConfig struct {
 	DefaultConfig     string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, r prometheus.Registerer) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
@@ -77,11 +77,9 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	amClient := amclient.New(transport, nil)
 
 	manager := NewSender(
-		// Injecting a new registry here means these metrics are not exported.
-		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
 		&options{
 			queueCapacity: defaultMaxQueueCapacity,
-			registerer:    prometheus.NewRegistry(),
+			registerer:    r,
 			timeout:       defaultTimeout,
 		},
 		logger,
@@ -230,7 +228,6 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 		return nil
 	}
 
-	// TODO(santiago): is this really necessary?
 	as := make([]*alert, 0, len(alerts.PostableAlerts))
 	for _, a := range alerts.PostableAlerts {
 		na := am.alertToNotifierAlert(a)
@@ -241,7 +238,6 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 	return nil
 }
 
-// TODO(santiago): check restrictions on labels and annotations
 func (am *Alertmanager) alertToNotifierAlert(a amv2.PostableAlert) *alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &alert{
@@ -279,12 +275,19 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 	return &notifier.TestTemplatesResults{}, nil
 }
 
-func (am *Alertmanager) StopAndWait() {
-	am.manager.Stop()
+// TODO: change implementation, this is only useful for testing other methods
+func (am *Alertmanager) Ready() bool {
+	readyURL := strings.TrimSuffix(am.url, "/") + "/-/ready"
+	res, err := am.httpClient.Get(readyURL)
+	if err != nil {
+		return false
+	}
+
+	return res.StatusCode == http.StatusOK
 }
 
-func (am *Alertmanager) Ready() bool {
-	return false
+func (am *Alertmanager) StopAndWait() {
+	am.manager.Stop()
 }
 
 func (am *Alertmanager) FileStore() *notifier.FileStore {
