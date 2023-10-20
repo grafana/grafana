@@ -105,6 +105,7 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
+  showCriticalPathOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
@@ -130,13 +131,19 @@ function generateRowStates(
   childrenHiddenIDs: Set<string>,
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
-  showSpanFilterMatchesOnly: boolean
+  showSpanFilterMatchesOnly: boolean,
+  showCriticalPathOnly: boolean,
+  criticalPath: CriticalPathSection[]
 ): RowState[] {
   if (!spans) {
     return [];
   }
   if (showSpanFilterMatchesOnly && findMatchesIDs) {
     spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
+  }
+
+  if (showCriticalPathOnly && criticalPath) {
+    spans = spans.filter((span) => criticalPath.find((section) => section.spanId === span.spanID));
   }
 
   let collapseDepth = null;
@@ -187,10 +194,20 @@ function generateRowStatesFromTrace(
   childrenHiddenIDs: Set<string>,
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
-  showSpanFilterMatchesOnly: boolean
+  showSpanFilterMatchesOnly: boolean,
+  showCriticalPathOnly: boolean,
+  criticalPath: CriticalPathSection[]
 ): RowState[] {
   return trace
-    ? generateRowStates(trace.spans, childrenHiddenIDs, detailStates, findMatchesIDs, showSpanFilterMatchesOnly)
+    ? generateRowStates(
+        trace.spans,
+        childrenHiddenIDs,
+        detailStates,
+        findMatchesIDs,
+        showSpanFilterMatchesOnly,
+        showCriticalPathOnly,
+        criticalPath
+      )
     : [];
 }
 
@@ -236,8 +253,24 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   getRowStates(): RowState[] {
-    const { childrenHiddenIDs, detailStates, trace, findMatchesIDs, showSpanFilterMatchesOnly } = this.props;
-    return memoizedGenerateRowStates(trace, childrenHiddenIDs, detailStates, findMatchesIDs, showSpanFilterMatchesOnly);
+    const {
+      childrenHiddenIDs,
+      detailStates,
+      trace,
+      findMatchesIDs,
+      showSpanFilterMatchesOnly,
+      showCriticalPathOnly,
+      criticalPath,
+    } = this.props;
+    return memoizedGenerateRowStates(
+      trace,
+      childrenHiddenIDs,
+      detailStates,
+      findMatchesIDs,
+      showSpanFilterMatchesOnly,
+      showCriticalPathOnly,
+      criticalPath
+    );
   }
 
   getClipping(): { left: boolean; right: boolean } {
