@@ -32,8 +32,8 @@ const CHANGES_GENERATION_POSTFIX_PROMPT = [
   'Group together similar changes into one line when multiple panels are affected',
   'Do not mention line number',
   'Refer to templating elements as variables',
-  'Ignore and never mention changes about plugin version',
-  'Threshold step changes of value being removed and replaced with color "green" should always be ignored',
+  'Ignore and never mention changes about plugin version.',
+  'Ignore and never mention changes which add or remove null or empty values.',
   'Try to make the response as short as possible',
 ].join('.\n');
 

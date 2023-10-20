@@ -261,15 +261,13 @@ describe('getDashboardStringDiff', () => {
 
     expect(result).toEqual({
       migrationDiff:
-        'Index: Original Title\n' +
         '===================================================================\n' +
-        '--- Original Title\t\n' +
-        '+++ Original Title\t\n',
+        '--- Before migration changes\t\n' +
+        '+++ After migration changes\t\n',
       userDiff:
-        'Index: Original Title\n' +
         '===================================================================\n' +
-        '--- Original Title\t\n' +
-        '+++ Original Title\t\n',
+        '--- Before user changes\t\n' +
+        '+++ After user changes\t\n',
     });
   });
 
