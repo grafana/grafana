@@ -22,8 +22,8 @@ import (
 
 	"github.com/grafana/kindsys"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
@@ -445,7 +445,7 @@ func setup() (*testContext, error) {
 
 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false}}
 
-	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, &logtest.Fake{})
+	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, log.New())
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +455,7 @@ func setup() (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
+	queryData, _ := querydata.New(httpClient, features, tracer, settings, log.New())
 
 	return &testContext{
 		httpProvider: httpProvider,
