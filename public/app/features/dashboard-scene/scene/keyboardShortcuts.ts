@@ -111,13 +111,9 @@ export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel)
 export function toggleVizPanelLegend(vizPanel: VizPanel) {
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
-    vizPanel.setState({
-      options: {
-        ...options,
-        legend: {
-          ...options.legend,
-          showLegend: options.legend.showLegend ? false : true,
-        },
+    vizPanel.onOptionsChange({
+      legend: {
+        showLegend: options.legend.showLegend ? false : true,
       },
     });
   }
