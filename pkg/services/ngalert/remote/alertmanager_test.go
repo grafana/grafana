@@ -215,9 +215,11 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have two alerts and one group now.
-	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
-	require.NoError(t, err)
-	require.Equal(t, 2, len(alerts))
+	require.Eventually(t, func() bool {
+		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+		require.NoError(t, err)
+		return len(alerts) == 2
+	}, 16*time.Second, 1*time.Second)
 
 	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)

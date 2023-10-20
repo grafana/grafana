@@ -40,7 +40,7 @@ const (
 	subsystem         = "notifications"
 )
 
-// Alert is a generic representation of an alert in the Prometheus eco-system.
+// alert is a generic representation of an alert in the Prometheus eco-system.
 type alert struct {
 	// Label value pairs for purpose of aggregation, matching, and disposition
 	// dispatching. This must minimally include an "alertname" label.
@@ -299,7 +299,7 @@ func (s *Sender) setMore() {
 	}
 }
 
-func alertsToOpenAPIAlerts(alerts []*alert) models.PostableAlerts {
+func alertsPostableAlerts(alerts []*alert) models.PostableAlerts {
 	openAPIAlerts := models.PostableAlerts{}
 	for _, a := range alerts {
 		start := strfmt.DateTime(a.StartsAt)
@@ -328,11 +328,11 @@ func (s *Sender) send(alerts ...*alert) error {
 	if len(alerts) == 0 {
 		return nil
 	}
-	openAPIAlerts := alertsToOpenAPIAlerts(alerts)
+	postableAlerts := alertsPostableAlerts(alerts)
 	ctx, cancel := context.WithTimeout(s.ctx, s.timeout)
 	defer cancel()
 
-	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(openAPIAlerts)
+	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(postableAlerts)
 	_, err := s.client.PostAlerts(params)
 	return err
 }
