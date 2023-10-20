@@ -136,7 +136,7 @@ We've made a number of smaller improvements to the data visualization experience
 
 #### Geomap marker symbol alignment options
 
-You can now offset Geomap marker symbols from the underlying data point.
+You can now offset geomap marker symbols from the underlying data point.
 
 {{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
 
