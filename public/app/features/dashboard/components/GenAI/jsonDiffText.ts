@@ -189,17 +189,59 @@ function shortenDiff(diffS: string) {
   return ret.join('\n') + '\n';
 }
 
+export function removeEmptyFields(input: JSONValue): JSONValue {
+  if (input === null || input === '') {
+    return null;
+  }
+
+  if (Array.isArray(input)) {
+    // Filter out empty values and recursively process the non-empty ones
+    const filteredArray = input.map((item) => removeEmptyFields(item)).filter((item) => item !== null);
+
+    return filteredArray.length > 0 ? filteredArray : null;
+  }
+
+  if (typeof input !== 'object') {
+    // If it's not an object, return as is
+    return input;
+  }
+
+  // For objects, recursively process each key-value pair
+  const result: JSONObject = {};
+  for (const key in input) {
+    const processedValue = removeEmptyFields(input[key]);
+
+    if (processedValue !== null) {
+      if (Array.isArray(processedValue) && processedValue.length === 0) {
+        continue;
+      }
+
+      if (typeof processedValue === 'object') {
+        const keys = Object.keys(processedValue);
+        if (keys.length === 0) {
+          continue;
+        }
+      }
+
+      result[key] = processedValue;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 function jsonSanitize(obj: Dashboard | DashboardModel | null) {
-  return JSON.parse(JSON.stringify(obj, null, 2));
+  return JSON.parse(JSON.stringify(removeEmptyFields(obj), null, 2));
 }
 
 export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDiff: string; userDiff: string } {
-  const originalDashboard = jsonSanitize(dashboard.getOriginalDashboard());
+  let originalDashboard = jsonSanitize(dashboard.getOriginalDashboard());
   let dashboardAfterMigration = jsonSanitize(new DashboardModel(originalDashboard).getSaveModelClone());
   let currentDashboard = jsonSanitize(dashboard.getSaveModelClone());
 
-  dashboardAfterMigration = orderProperties(originalDashboard, dashboardAfterMigration);
-  currentDashboard = orderProperties(dashboardAfterMigration, currentDashboard);
+  dashboardAfterMigration = removeEmptyFields(orderProperties(originalDashboard, dashboardAfterMigration));
+  currentDashboard = removeEmptyFields(orderProperties(dashboardAfterMigration, currentDashboard));
+  originalDashboard = removeEmptyFields(originalDashboard);
 
   let migrationDiff: string = createTwoFilesPatch(
     'Before migration changes',

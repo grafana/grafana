@@ -1,6 +1,13 @@
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
-import { orderProperties, JSONArray, JSONValue, isObject, getDashboardStringDiff } from './jsonDiffText';
+import {
+  orderProperties,
+  JSONArray,
+  JSONValue,
+  isObject,
+  getDashboardStringDiff,
+  removeEmptyFields,
+} from './jsonDiffText';
 
 describe('orderProperties', () => {
   it('should sort simple objects', () => {
@@ -279,5 +286,153 @@ describe('getDashboardStringDiff', () => {
 
     expect(result.userDiff).toContain(`-  \"title\": \"Original Title\"`);
     expect(result.userDiff).toContain(`+  \"title\": \"New Title\",`);
+  });
+});
+
+describe('removeEmptyFields', () => {
+  it('should remove "null" fields from the JSON object', () => {
+    const inputJSON = {
+      a: null,
+      b: 'Hello',
+      c: {
+        d: null,
+        e: 'World',
+      },
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      b: 'Hello',
+      c: {
+        e: 'World',
+      },
+    });
+  });
+
+  it('should remove empty arrays from the JSON object', () => {
+    const inputJSON = {
+      a: [1, 2, 3],
+      b: [],
+      c: [4, 5],
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      a: [1, 2, 3],
+      c: [4, 5],
+    });
+  });
+
+  it('should remove empty objects from the JSON object', () => {
+    const inputJSON = {
+      a: {},
+      b: 'Hello',
+      c: {
+        d: {},
+        e: 'World',
+      },
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      b: 'Hello',
+      c: {
+        e: 'World',
+      },
+    });
+  });
+
+  it('should handle a mix of "null", empty arrays, and empty objects', () => {
+    const inputJSON = {
+      a: null,
+      b: [],
+      c: {
+        d: null,
+        e: {},
+        f: [1, 2, 3],
+        g: 'Hello',
+      },
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      c: {
+        f: [1, 2, 3],
+        g: 'Hello',
+      },
+    });
+  });
+
+  it('should handle nested structures', () => {
+    const inputJSON = {
+      a: {
+        b: {
+          c: null,
+          d: {
+            e: [],
+            f: 'World',
+          },
+        },
+      },
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      a: {
+        b: {
+          d: {
+            f: 'World',
+          },
+        },
+      },
+    });
+  });
+
+  it('should handle complex JSON structure', () => {
+    const inputJSON = {
+      panels: [
+        {
+          fieldConfig: {
+            defaults: {
+              foo: 'bar',
+            },
+            overrides: [],
+          },
+          gridPos: {
+            h: 15,
+            w: 10,
+            x: 0,
+            y: 0,
+          },
+        },
+      ],
+      schemaVersion: 38,
+    };
+
+    const result = removeEmptyFields(inputJSON);
+
+    expect(result).toEqual({
+      panels: [
+        {
+          fieldConfig: {
+            defaults: {
+              foo: 'bar',
+            },
+          },
+          gridPos: {
+            h: 15,
+            w: 10,
+            x: 0,
+            y: 0,
+          },
+        },
+      ],
+      schemaVersion: 38,
+    });
   });
 });

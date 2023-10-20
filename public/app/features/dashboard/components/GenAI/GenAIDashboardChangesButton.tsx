@@ -30,10 +30,7 @@ const CHANGES_GENERATION_POSTFIX_PROMPT = [
   'When the panel changes position, just mention that the panel has changed position',
   'When an entire panel is added or removed, use the panel title and only say it was added or removed and disregard the rest of the changes for that panel',
   'Group together similar changes into one line when multiple panels are affected',
-  'Do not mention line number',
   'Refer to templating elements as variables',
-  'Ignore and never mention changes about plugin version.',
-  'Ignore and never mention changes which add or remove null or empty values.',
   'Try to make the response as short as possible',
 ].join('.\n');
 
