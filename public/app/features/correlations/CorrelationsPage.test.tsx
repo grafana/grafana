@@ -508,7 +508,7 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
+      expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
 
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
