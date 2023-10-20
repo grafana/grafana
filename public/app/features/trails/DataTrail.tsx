@@ -24,7 +24,7 @@ import {
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
-import { LogsScene } from './LogsScene';
+import { LogsScene, LogsSearch } from './LogsScene';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricSelectedEvent, metricDS, VAR_FILTERS, LOGS_METRIC } from './shared';
@@ -63,6 +63,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }),
       controls: [
         new VariableValueSelectors({}),
+        new LogsSearch({}),
         new SceneControlsSpacer(),
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),

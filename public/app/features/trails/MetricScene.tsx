@@ -28,7 +28,7 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
-import { getMetricSceneFor, getTrailFor } from './utils';
+import { getParentOfType, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -66,12 +66,15 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   public setActionView(actionViewDef?: ActionViewDefinition) {
     const { body } = this.state;
+
     if (actionViewDef && actionViewDef.value !== this.state.actionView) {
-      body.setState({
-        children: [...body.state.children.slice(0, 3), actionViewDef.getScene()],
-      });
+      // reduce max height for main panel to reduce height flicker
+      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
+      body.setState({ children: [...body.state.children.slice(0, 3), actionViewDef.getScene()] });
       this.setState({ actionView: actionViewDef.value });
     } else {
+      // restore max height
+      body.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
       body.setState({ children: body.state.children.slice(0, 3) });
       this.setState({ actionView: undefined });
     }
@@ -101,9 +104,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
-    const graphView = getMetricSceneFor(model);
+    const metricScene = getParentOfType(model, MetricScene);
     const trail = getTrailFor(model);
-    const { actionView } = graphView.useState();
+    const { actionView } = metricScene.useState();
 
     return (
       <Box paddingY={1}>
@@ -112,7 +115,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton
               key={viewDef.value}
               variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => graphView.setActionView(viewDef)}
+              onClick={() => metricScene.setActionView(viewDef)}
             >
               {viewDef.displayName}
             </ToolbarButton>
@@ -131,6 +134,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 }
 
+const MAIN_PANEL_MIN_HEIGHT = 250;
+const MAIN_PANEL_MAX_HEIGHT = '50%';
+
 function buildGraphScene(metric: string) {
   const queries = getAutoQueriesForMetric(metric);
 
@@ -138,8 +144,8 @@ function buildGraphScene(metric: string) {
     direction: 'column',
     children: [
       new SceneFlexItem({
-        minHeight: 350,
-        maxHeight: 350,
+        minHeight: MAIN_PANEL_MIN_HEIGHT,
+        maxHeight: MAIN_PANEL_MAX_HEIGHT,
         body: new AutoVizPanel({ queries }),
       }),
       new SceneFlexItem({
@@ -154,6 +160,13 @@ function buildGraphScene(metric: string) {
       }),
     ],
   });
+}
+
+/**
+ *
+ */
+function mainViewHeightBehavior(obj: SceneFlexItem) {
+  const metricScene = getParentOfType(model, MetricScene);
 }
 
 export interface QueryDebugViewState extends SceneObjectState {}

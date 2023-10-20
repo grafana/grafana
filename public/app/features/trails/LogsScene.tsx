@@ -13,12 +13,18 @@ import {
   PanelBuilders,
 } from '@grafana/scenes';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { ToolbarButton } from '@grafana/ui';
+import { Icon, Input, ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
-import { ActionViewDefinition, KEY_SQR_METRIC_VIZ_QUERY, MakeOptional, OpenEmbeddedTrailEvent } from './shared';
+import {
+  ActionViewDefinition,
+  KEY_SQR_METRIC_VIZ_QUERY,
+  LOGS_METRIC,
+  MakeOptional,
+  OpenEmbeddedTrailEvent,
+} from './shared';
 import { getParentOfType, getTrailFor } from './utils';
 
 export interface LogsSceneState extends SceneObjectState {
@@ -102,6 +108,8 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               {viewDef.displayName}
             </ToolbarButton>
           ))}
+          <ToolbarButton variant={'canvas'}>Breakdown</ToolbarButton>
+          <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'} icon="bookmark" />
           <ToolbarButton variant={'canvas'} icon="share-alt" />
@@ -143,6 +151,10 @@ function buildLogsScene() {
           .build(),
       }),
       new SceneFlexItem({
+        ySizing: 'content',
+        body: new MetricActionBar({}),
+      }),
+      new SceneFlexItem({
         minHeight: 350,
         $data: new SceneQueryRunner({
           queries: [
@@ -161,10 +173,6 @@ function buildLogsScene() {
         $behaviors: [onlyShowInDebugBehavior],
         body: new QueryDebugView({}),
       }),
-      new SceneFlexItem({
-        ySizing: 'content',
-        body: new MetricActionBar({}),
-      }),
     ],
   });
 }
@@ -180,5 +188,18 @@ export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
 
     const query = queryRunner?.state.queries[0] as PromQuery;
     return <div className="small">{sceneGraph.interpolate(model, query.expr)}</div>;
+  };
+}
+
+export interface LogsSearchState extends SceneObjectState {}
+
+export class LogsSearch extends SceneObjectBase<LogsSearchState> {
+  public static Component = ({ model }: SceneComponentProps<LogsSearch>) => {
+    const { metric } = getTrailFor(model).useState();
+    if (metric !== LOGS_METRIC) {
+      return null;
+    }
+
+    return <Input placeholder="Search logs" prefix={<Icon name="search" />} width={50} />;
   };
 }

@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
-import { getTrailsAppFor, newLogsTrail, newMetricsTrail } from './utils';
+import { DataTrailsApp } from './DataTrailsApp';
+import { getParentOfType, newLogsTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recent: DataTrail[];
@@ -21,7 +22,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   }
 
   public onNewMetricsTrail = () => {
-    const app = getTrailsAppFor(this);
+    const app = getAppFor(this);
     const trail = newMetricsTrail();
 
     this.setState({ recent: [...this.state.recent, app.state.trail] });
@@ -29,7 +30,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   public onNewLogsTrail = () => {
-    const app = getTrailsAppFor(this);
+    const app = getAppFor(this);
     const trail = newLogsTrail();
 
     this.setState({ recent: [...this.state.recent, app.state.trail] });
@@ -37,7 +38,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   public onSelectTrail = (trail: DataTrail) => {
-    const app = getTrailsAppFor(this);
+    const app = getAppFor(this);
 
     const currentTrail = app.state.trail;
     const existsInRecent = this.state.recent.find((t) => t === currentTrail);
@@ -50,7 +51,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
     const { recent } = model.useState();
-    const app = getTrailsAppFor(model);
+    const app = getAppFor(model);
     const styles = useStyles2(getStyles);
 
     return (
@@ -85,6 +86,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       </div>
     );
   };
+}
+
+function getAppFor(model: SceneObject) {
+  return getParentOfType(model, DataTrailsApp);
 }
 
 function getStyles(theme: GrafanaTheme2) {
