@@ -20,11 +20,11 @@ import { VariableHide } from '@grafana/schema';
 import { Button, Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
-import { getAutoQueriesForMetric } from './AutoQueryEngine';
+import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
-  trailsDS,
+  metricDS,
   VAR_FILTERS,
   VAR_METRIC_EXPR,
   VAR_METRIC_NAMES,
@@ -139,7 +139,7 @@ function getMetricNamesVariableSet() {
     variables: [
       new QueryVariable({
         name: VAR_METRIC_NAMES,
-        datasource: trailsDS,
+        datasource: metricDS,
         hide: VariableHide.hideVariable,
         includeAll: true,
         defaultToAll: true,
@@ -158,7 +158,7 @@ function getPanelForMetric(metric: string, index: number) {
     .setTitle(topQuery.title)
     .setData(
       new SceneQueryRunner({
-        datasource: trailsDS,
+        datasource: metricDS,
         maxDataPoints: 300,
         queries: [topQuery.query],
       })

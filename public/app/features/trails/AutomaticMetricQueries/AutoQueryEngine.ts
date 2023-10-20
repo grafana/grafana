@@ -1,6 +1,6 @@
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR } from './shared';
+import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 export interface AutoQueryDef {
   variant: AutoQueryVariant;

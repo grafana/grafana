@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
-import { getUrlForTrail, newEmptyTrail } from './utils';
+import { getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
@@ -50,7 +50,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           render={() => (
             <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
-                <trail.Component model={trail} />
+                <DataTrailView trail={trail} />
               </div>
             </Page>
           )}
@@ -60,12 +60,29 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   };
 }
 
+function DataTrailView({ trail }: { trail: DataTrail }) {
+  const [isInitialized, setIsInitialized] = React.useState(false);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      getUrlSyncManager().initSync(trail);
+      setIsInitialized(true);
+    }
+  }, [trail, isInitialized]);
+
+  if (!isInitialized) {
+    return null;
+  }
+
+  return <trail.Component model={trail} />;
+}
+
 let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
     dataTrailsApp = new DataTrailsApp({
-      trail: newEmptyTrail(),
+      trail: newMetricsTrail(),
       home: new DataTrailsHome({
         recent: [
           new DataTrail({

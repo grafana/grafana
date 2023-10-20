@@ -12,37 +12,26 @@ import {
   sceneGraph,
   PanelBuilders,
 } from '@grafana/scenes';
+import { GraphDrawStyle } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
-import { buildBreakdownActionScene } from './BreakdownScene';
-import { MetricSelectScene } from './MetricSelectScene';
 import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
-import {
-  ActionViewDefinition,
-  getVariablesWithMetricConstant,
-  KEY_SQR_METRIC_VIZ_QUERY,
-  MakeOptional,
-  OpenEmbeddedTrailEvent,
-} from './shared';
-import { getMetricSceneFor, getTrailFor } from './utils';
+import { ActionViewDefinition, KEY_SQR_METRIC_VIZ_QUERY, MakeOptional, OpenEmbeddedTrailEvent } from './shared';
+import { getParentOfType, getTrailFor } from './utils';
 
-export interface MetricSceneState extends SceneObjectState {
+export interface LogsSceneState extends SceneObjectState {
   body: SceneFlexLayout;
-  metric: string;
   actionView?: string;
 }
 
-export class MetricScene extends SceneObjectBase<MetricSceneState> {
+export class LogsScene extends SceneObjectBase<LogsSceneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
+  public constructor(state: MakeOptional<LogsSceneState, 'body'>) {
     super({
-      $variables: state.$variables ?? getVariablesWithMetricConstant(state.metric),
-      body: state.body ?? buildGraphScene(state.metric),
+      body: state.body ?? buildLogsScene(),
       ...state,
     });
   }
@@ -77,17 +66,13 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
     }
   }
 
-  static Component = ({ model }: SceneComponentProps<MetricScene>) => {
+  static Component = ({ model }: SceneComponentProps<LogsScene>) => {
     const { body } = model.useState();
     return <body.Component model={body} />;
   };
 }
 
-const actionViewsDefinitions: ActionViewDefinition[] = [
-  { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
-  { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
-  { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
-];
+const actionViewsDefinitions: ActionViewDefinition[] = [];
 
 export interface MetricActionBarState extends SceneObjectState {}
 
@@ -101,9 +86,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
-    const graphView = getMetricSceneFor(model);
+    const logsScene = getParentOfType(model, LogsScene);
     const trail = getTrailFor(model);
-    const { actionView } = graphView.useState();
+    const { actionView } = logsScene.useState();
 
     return (
       <Box paddingY={1}>
@@ -112,7 +97,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton
               key={viewDef.value}
               variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => graphView.setActionView(viewDef)}
+              onClick={() => logsScene.setActionView(viewDef)}
             >
               {viewDef.displayName}
             </ToolbarButton>
@@ -131,16 +116,39 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 }
 
-function buildGraphScene(metric: string) {
-  const queries = getAutoQueriesForMetric(metric);
-
+function buildLogsScene() {
   return new SceneFlexLayout({
     direction: 'column',
     children: [
       new SceneFlexItem({
+        minHeight: 150,
+        maxHeight: 150,
+        $data: new SceneQueryRunner({
+          queries: [
+            {
+              refId: 'A',
+              datasource: { uid: 'gdev-loki' },
+              expr: 'sum by (level) (count_over_time({${filters}} |= `` | logfmt[$__auto]))',
+            },
+          ],
+        }),
+        body: PanelBuilders.timeseries()
+          .setTitle('Log volume')
+          .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+          .build(),
+      }),
+      new SceneFlexItem({
         minHeight: 350,
-        maxHeight: 350,
-        body: new AutoVizPanel({ queries }),
+        $data: new SceneQueryRunner({
+          queries: [
+            {
+              refId: 'A',
+              datasource: { uid: 'gdev-loki' },
+              expr: '{${filters}} | logfmt',
+            },
+          ],
+        }),
+        body: PanelBuilders.logs().setTitle('Logs').build(),
       }),
       new SceneFlexItem({
         ySizing: 'content',
@@ -168,25 +176,4 @@ export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
     const query = queryRunner?.state.queries[0] as PromQuery;
     return <div className="small">{sceneGraph.interpolate(model, query.expr)}</div>;
   };
-}
-
-function buildLogsScene() {
-  return new SceneFlexItem({
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: { uid: 'gdev-loki' },
-          expr: '{${filters}} | logfmt',
-        },
-      ],
-    }),
-    body: PanelBuilders.logs().setTitle('Logs').build(),
-  });
-}
-
-function buildRelatedMetricsScene() {
-  return new SceneFlexItem({
-    body: new MetricSelectScene({}),
-  });
 }

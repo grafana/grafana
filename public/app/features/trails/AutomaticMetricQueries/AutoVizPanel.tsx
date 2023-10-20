@@ -10,8 +10,9 @@ import {
 } from '@grafana/scenes';
 import { RadioButtonGroup } from '@grafana/ui';
 
+import { KEY_SQR_METRIC_VIZ_QUERY, metricDS } from '../shared';
+
 import { AutoQueryDef, AutoQueryVariant } from './AutoQueryEngine';
-import { KEY_SQR_METRIC_VIZ_QUERY, trailsDS } from './shared';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
@@ -61,7 +62,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setData(
             new SceneQueryRunner({
               key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: trailsDS,
+              datasource: metricDS,
               queries: [def.query],
             })
           )
@@ -77,7 +78,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setData(
             new SceneQueryRunner({
               key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: trailsDS,
+              datasource: metricDS,
               queries: [def.query],
             })
           )

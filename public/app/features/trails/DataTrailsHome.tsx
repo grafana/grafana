@@ -9,7 +9,7 @@ import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
-import { getTrailsAppFor, newEmptyTrail } from './utils';
+import { getTrailsAppFor, newLogsTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recent: DataTrail[];
@@ -20,9 +20,17 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     super(state);
   }
 
-  public onStartNew = () => {
+  public onNewMetricsTrail = () => {
     const app = getTrailsAppFor(this);
-    const trail = newEmptyTrail();
+    const trail = newMetricsTrail();
+
+    this.setState({ recent: [...this.state.recent, app.state.trail] });
+    app.goToUrlForTrail(trail);
+  };
+
+  public onNewLogsTrail = () => {
+    const app = getTrailsAppFor(this);
+    const trail = newLogsTrail();
 
     this.setState({ recent: [...this.state.recent, app.state.trail] });
     app.goToUrlForTrail(trail);
@@ -51,11 +59,14 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <Text variant="h2">Data trails</Text>
           <Text color="secondary">Automatically query, explore and navigate your observability data</Text>
         </Flex>
-        <div>
-          <Button icon="plus" size="lg" variant="secondary" onClick={model.onStartNew}>
-            Start new trail
+        <Flex gap={2}>
+          <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewMetricsTrail}>
+            New metric trail
           </Button>
-        </div>
+          <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewLogsTrail}>
+            New logs trail
+          </Button>
+        </Flex>
         <Flex gap={4}>
           <div className={styles.column}>
             <Text variant="h4">Recent trails</Text>
@@ -83,13 +94,13 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      gap: theme.spacing(3),
     }),
     column: css({
       width: 500,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
     }),
     newTrail: css({
       height: 'auto',

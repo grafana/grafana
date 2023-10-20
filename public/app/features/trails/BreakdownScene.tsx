@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { getFrameDisplayName, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -22,11 +21,11 @@ import {
 import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { AddToFiltersGraphAction } from '../AddToFiltersGraphAction';
-import { ByFrameRepeater } from '../ByFrameRepeater';
-import { LayoutSwitcher } from '../LayoutSwitcher';
-import { trailsDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
-import { getColorByIndex } from '../utils';
+import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
+import { ByFrameRepeater } from './ByFrameRepeater';
+import { LayoutSwitcher } from './LayoutSwitcher';
+import { metricDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
+import { getColorByIndex } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -195,7 +194,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
               queries: [
                 {
                   refId: 'A',
-                  datasource: trailsDS,
+                  datasource: metricDS,
                   expr: `sum(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])) by(${option.value})`,
                 },
               ],
@@ -220,7 +219,7 @@ function getVariableSet() {
       new QueryVariable({
         name: VAR_GROUP_BY,
         label: 'Group by',
-        datasource: trailsDS,
+        datasource: metricDS,
         includeAll: true,
         query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
         value: '',

@@ -24,13 +24,14 @@ import {
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
+import { LogsScene } from './LogsScene';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { MetricSelectedEvent, trailsDS, VAR_FILTERS } from './shared';
+import { MetricSelectedEvent, metricDS, VAR_FILTERS, LOGS_METRIC } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
-  topScene: SceneObject;
+  topScene?: SceneObject;
   embedded?: boolean;
   filters?: AdHocVariableFilter[];
   controls: SceneObject[];
@@ -49,9 +50,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       $timeRange: new SceneTimeRange({}),
       $variables: new SceneVariableSet({
         variables: [
+          // new DataSourceVariable({
+          //   name: 'ds',
+          //   pluginId: 'prometheus',
+          // }),
           AdHocFiltersVariable.create({
             name: 'filters',
-            datasource: trailsDS,
+            datasource: metricDS,
             filters: state.filters ?? [],
           }),
         ],
@@ -63,7 +68,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneRefreshPicker({}),
       ],
       history: new DataTrailHistory({}),
-      topScene: state.topScene ?? getTopSceneFor(state),
+      topScene: state.topScene,
       ...state,
     });
 
@@ -71,8 +76,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public _onActivate() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().initSync(this);
+    if (!this.state.topScene) {
+      this.setState({ topScene: getTopSceneFor(this.state) });
     }
 
     // Some scene elements publish this
@@ -135,7 +140,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         stateUpdate.metric = values.metric;
-        stateUpdate.topScene = new MetricScene({ metric: values.metric });
+        stateUpdate.topScene = getTopSceneFor(stateUpdate);
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
@@ -169,9 +174,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             />
           </div>
         )}
-        <div className={styles.body}>
-          <topScene.Component model={topScene} />
-        </div>
+        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
       </div>
     );
   };
@@ -179,6 +182,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
 function getTopSceneFor(state: Partial<DataTrailState>) {
   if (state.metric) {
+    if (state.metric === LOGS_METRIC) {
+      return new LogsScene({});
+    }
     return new MetricScene({ metric: state.metric });
   } else {
     return new MetricSelectScene({ showHeading: true });
