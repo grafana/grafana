@@ -48,6 +48,16 @@ There are several different types of queries you can create using the Elasticsea
 
 Regardless of query type, you can create multiple queries by clicking **+ Add query**.
 
+### Query history
+
+The query editor keeps a history of your MongoDB queries.
+
+- **Query history** - A history of your MongoDB queries. Queries are kept for 2 weeks, and broken out by date, unless they are starred. The editor shows 100 queries at a time, but it is paginated so you can always see more after the first 100. There is an overall limit to 200,000 records
+
+- **Starred** - Starred queries are kept beyond the 2 week limit.
+
+- **Settings** - Toggle on to change the default active ab from "Query history" to "Starred".
+
 ### Query inspector
 
 Click **Query inspector** to get detailed statistics regarding your query. Query inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
@@ -77,7 +87,7 @@ Metrics queries aggregate data and produce a variety of calculations such as cou
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
-Use the **plus icon** to the right to add multiple metrics to your query. Click on the **eye icon** next to "Metric" to hide metrics, and the **garbage can icon** to remove metrics.
+Use the **+ sign** to the right to add multiple metrics to your query. Click on the **eye icon** next to **Metric** to hide metrics, and the **garbage can icon** to remove metrics.
 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. Below is a list of options in the dropdown menu.
 
