@@ -60,6 +60,13 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
   tooltip: false,
 };
 
+enum mapIndex {
+  x1 = 0,
+  y1 = 1,
+  x2 = 2,
+  y2 = 3,
+}
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -192,8 +199,8 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const crosshairFeature = new Feature({});
     const hLineFeature = new Feature({});
     const vLineFeature = new Feature({});
+    const lineFeatures = [hLineFeature, vLineFeature];
     const crosshairRadius = (style.base.lineWidth || 6) + 3;
-    // TODO update crosshair style to match other panels
     const crosshairStyle = new Style({
       image: new Circle({
         radius: crosshairRadius,
@@ -220,22 +227,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       style: crosshairStyle,
     });
 
-    const hLineLayer = new VectorLayer({
+    const linesLayer = new VectorLayer({
       source: new VectorSource({
-        features: [hLineFeature],
-      }),
-      style: lineStyle,
-    });
-
-    const vLineLayer = new VectorLayer({
-      source: new VectorSource({
-        features: [vLineFeature],
+        features: lineFeatures,
       }),
       style: lineStyle,
     });
 
     const layer = new LayerGroup({
-      layers: [vectorLayer, crosshairLayer, hLineLayer, vLineLayer],
+      layers: [vectorLayer, crosshairLayer, linesLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -263,21 +263,19 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                     const crosshairPointCoords = crosshairPoint.getCoordinates();
                     crosshairFeature.setGeometry(crosshairPoint);
                     crosshairFeature.setStyle(crosshairStyle);
-                    // TODO consolidate horizontal and vertical lines
                     hLineFeature.setGeometry(
                       new LineString([
-                        [mapExtents[0], crosshairPointCoords[1]],
-                        [mapExtents[2], crosshairPointCoords[1]],
+                        [mapExtents[mapIndex.x1], crosshairPointCoords[mapIndex.y1]],
+                        [mapExtents[mapIndex.x2], crosshairPointCoords[mapIndex.y1]],
                       ])
                     );
                     vLineFeature.setGeometry(
                       new LineString([
-                        [crosshairPointCoords[0], mapExtents[1]],
-                        [crosshairPointCoords[0], mapExtents[3]],
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y1]],
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y2]],
                       ])
                     );
-                    hLineFeature.setStyle(lineStyle);
-                    vLineFeature.setStyle(lineStyle);
+                    lineFeatures.forEach((feature) => feature.setStyle(lineStyle));
                   }
                 }
               }
