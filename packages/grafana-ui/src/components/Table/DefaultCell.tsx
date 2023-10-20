@@ -51,13 +51,8 @@ export const DefaultCell = (props: TableCellProps) => {
 
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue);
 
-  if (isStringValue) {
-    if (cellProps.style?.justifyContent === 'flex-end') {
-      cellProps.style!.textAlign = 'right';
-    }
-
-    // hack! todo: remove mutation?
-    delete cellProps.style!.justifyContent;
+  if (isStringValue && cellProps.style?.justifyContent === 'flex-end') {
+    cellProps.style!.textAlign = 'right';
   }
 
   return (
