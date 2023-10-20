@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { Button, LegacyForms } from '@grafana/ui';
-const { Input } = LegacyForms;
+import { Field, Form, Button, Input, InputControl } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -57,11 +56,9 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     this.props.setFolderTitle(evt.target.value);
   };
 
-  onSave = async (evt: React.FormEvent<HTMLFormElement>) => {
-    evt.preventDefault();
-    evt.stopPropagation();
+  onSave = () => {
     this.setState({ isLoading: true });
-    await this.props.saveFolder(this.props.folder);
+    this.props.saveFolder(this.props.folder);
     this.setState({ isLoading: false });
   };
 
@@ -90,31 +87,29 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
       <Page navId="dashboards/browse" pageNav={pageNav.main}>
         <Page.Contents isLoading={this.state.isLoading}>
           <h3 className="page-sub-heading">Folder settings</h3>
-
-          <div className="section gf-form-group">
-            <form name="folderSettingsForm" onSubmit={this.onSave}>
-              <div className="gf-form">
-                <label htmlFor="folder-title" className="gf-form-label width-7">
-                  Name
-                </label>
-                <Input
-                  type="text"
-                  className="gf-form-input width-30"
-                  id="folder-title"
-                  value={folder.title}
-                  onChange={this.onTitleChange}
+          <Form name="folderSettingsForm" onSubmit={this.onSave}>
+            {({ control, errors }) => (
+              <>
+                <InputControl
+                  render={({ field: { ref, ...field } }) => (
+                    <Field label="Title" invalid={!!errors.title} error={errors.title?.message}>
+                      <Input {...field} autoFocus onChange={this.onTitleChange} value={folder.title} />
+                    </Field>
+                  )}
+                  control={control}
+                  name="title"
                 />
-              </div>
-              <div className="gf-form-button-row">
-                <Button type="submit" disabled={!folder.canSave || !folder.hasChanged}>
-                  Save
-                </Button>
-                <Button variant="destructive" onClick={this.onDelete} disabled={!folder.canDelete}>
-                  Delete
-                </Button>
-              </div>
-            </form>
-          </div>
+                <div className="gf-form-button-row">
+                  <Button type="submit" disabled={!folder.canSave || !folder.hasChanged}>
+                    Save
+                  </Button>
+                  <Button variant="destructive" onClick={this.onDelete} disabled={!folder.canDelete}>
+                    Delete
+                  </Button>
+                </div>
+              </>
+            )}
+          </Form>
         </Page.Contents>
       </Page>
     );
