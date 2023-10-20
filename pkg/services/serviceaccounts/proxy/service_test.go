@@ -74,7 +74,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				form: serviceaccounts.CreateServiceAccountForm{
 					Name: "extsvc-my-service-account",
 				},
-				expectedError: extsvcaccounts.ErrExtServiceAccountInvalidName,
+				expectedError: extsvcaccounts.ErrInvalidName,
 			},
 		}
 
@@ -102,7 +102,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			},
 			{
 				description:   "should not allow to delete a service account with sa-extsvc prefix",
-				expectedError: extsvcaccounts.ErrExtServiceAccountCannotBeDeleted,
+				expectedError: extsvcaccounts.ErrCannotBeDeleted,
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "sa-extsvc-my-service-account",
 				},
@@ -177,7 +177,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
-				expectedError: extsvcaccounts.ErrExtServiceAccountInvalidName,
+				expectedError: extsvcaccounts.ErrInvalidName,
 			},
 			{
 				description: "should not allow to update an external service account with a valid name",
@@ -187,7 +187,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "sa-extsvc-my-service-account",
 				},
-				expectedError: extsvcaccounts.ErrExtServiceAccountCannotBeUpdated,
+				expectedError: extsvcaccounts.ErrCannotBeUpdated,
 			},
 			{
 				description: "should not allow to update an external service account with a sa-extsvc prefix",
@@ -197,7 +197,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "sa-extsvc-my-service-account",
 				},
-				expectedError: extsvcaccounts.ErrExtServiceAccountInvalidName,
+				expectedError: extsvcaccounts.ErrInvalidName,
 			},
 		}
 
@@ -236,7 +236,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "sa-extsvc-my-service-account",
 				},
-				expectedError: extsvcaccounts.ErrExtServiceAccountCannotCreateToken,
+				expectedError: extsvcaccounts.ErrCannotCreateToken,
 			},
 		}
 
