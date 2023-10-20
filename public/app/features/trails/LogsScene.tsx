@@ -12,7 +12,7 @@ import {
   sceneGraph,
   PanelBuilders,
 } from '@grafana/scenes';
-import { GraphDrawStyle } from '@grafana/schema';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -124,17 +124,22 @@ function buildLogsScene() {
         minHeight: 150,
         maxHeight: 150,
         $data: new SceneQueryRunner({
+          maxDataPoints: 150,
           queries: [
             {
               refId: 'A',
               datasource: { uid: 'gdev-loki' },
+              legendFormat: `{{level}}`,
               expr: 'sum by (level) (count_over_time({${filters}} |= `` | logfmt[$__auto]))',
             },
           ],
         }),
         body: PanelBuilders.timeseries()
           .setTitle('Log volume')
+          .setOption('legend', { placement: 'right' })
+          .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
           .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+          .setCustomFieldConfig('fillOpacity', 80)
           .build(),
       }),
       new SceneFlexItem({
