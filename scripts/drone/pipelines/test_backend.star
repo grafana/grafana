@@ -3,12 +3,7 @@ This module returns the pipeline used for testing backend code.
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/steps/lib.star",
-    "compile_build_cmd",
     "enterprise_setup_step",
     "identify_runner_step",
     "test_backend_integration_step",
@@ -16,6 +11,10 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 
 def test_backend(trigger, ver_mode):
@@ -32,15 +31,17 @@ def test_backend(trigger, ver_mode):
 
     steps = []
 
+    verify_step = verify_gen_cue_step()
+    verify_jsonnet_step = verify_gen_jsonnet_step()
+
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
         steps.append(enterprise_setup_step())
 
     steps += [
         identify_runner_step(),
-        compile_build_cmd(),
-        verify_gen_cue_step(),
-        verify_gen_jsonnet_step(),
+        verify_step,
+        verify_jsonnet_step,
         wire_install_step(),
         test_backend_step(),
         test_backend_integration_step(),

@@ -217,12 +217,32 @@ func ldflags(opts BuildOpts) (string, error) {
 		return "", err
 	}
 
+	commitSha := getGitSha()
+	if v := os.Getenv("COMMIT_SHA"); v != "" {
+		commitSha = v
+	}
+
+	var enterpriseCommitSha string
+	if opts.enterprise {
+		enterpriseCommitSha = getGitEnterpriseSha()
+		if v := os.Getenv("ENTERPRISE_COMMIT_SHA"); v != "" {
+			enterpriseCommitSha = v
+		}
+	}
+
+	buildBranch := getGitBranch()
+	if v := os.Getenv("BUILD_BRANCH"); v != "" {
+		buildBranch = v
+	}
 	var b bytes.Buffer
 	b.WriteString("-w")
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", opts.version))
-	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
+	b.WriteString(fmt.Sprintf(" -X main.commit=%s", commitSha))
+	if enterpriseCommitSha != "" {
+		b.WriteString(fmt.Sprintf(" -X main.enterpriseCommit=%s", enterpriseCommitSha))
+	}
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp))
-	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
+	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", buildBranch))
 	if v := os.Getenv("LDFLAGS"); v != "" {
 		b.WriteString(fmt.Sprintf(" -extldflags \"%s\"", v))
 	}

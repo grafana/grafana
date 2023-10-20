@@ -3,28 +3,31 @@ This module returns the pipeline used for integration tests.
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
     "enterprise_setup_step",
     "identify_runner_step",
-    "mysql_integration_tests_step",
-    "postgres_integration_tests_step",
+    "memcached_integration_tests_steps",
+    "mysql_integration_tests_steps",
+    "postgres_integration_tests_steps",
+    "redis_integration_tests_steps",
+    "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
 )
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
 
-def integration_tests(trigger, prefix, ver_mode):
+def integration_tests(trigger, prefix, ver_mode = "pr"):
     """Generate a pipeline for integration tests.
 
     Args:
@@ -37,10 +40,13 @@ def integration_tests(trigger, prefix, ver_mode):
     """
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = []
+
+    verify_step = verify_gen_cue_step()
+    verify_jsonnet_step = verify_gen_jsonnet_step()
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
@@ -50,15 +56,18 @@ def integration_tests(trigger, prefix, ver_mode):
         download_grabpl_step(),
         compile_build_cmd(),
         identify_runner_step(),
-        verify_gen_cue_step(),
-        verify_gen_jsonnet_step(),
+        verify_step,
+        verify_jsonnet_step,
         wire_install_step(),
     ]
 
-    test_steps = [
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
-    ]
+    # test_steps = [a, b] + [c, d] + [e, f]...
+    test_steps = postgres_integration_tests_steps() + \
+                 mysql_integration_tests_steps("mysql57", "5.7") + \
+                 mysql_integration_tests_steps("mysql80", "8.0") + \
+                 redis_integration_tests_steps() + \
+                 memcached_integration_tests_steps() + \
+                 remote_alertmanager_integration_tests_steps()
 
     return pipeline(
         name = "{}-integration-tests".format(prefix),

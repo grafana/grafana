@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-
 	"path"
 	"path/filepath"
 	"strings"
@@ -233,7 +232,7 @@ func getSHA256(u string) ([]byte, error) {
 	return sha256, nil
 }
 
-func postRequest(cfg packaging.PublishConfig, pth string, obj interface{}, descr string) error {
+func postRequest(cfg packaging.PublishConfig, pth string, obj any, descr string) error {
 	var sfx string
 	switch cfg.Edition {
 	case config.EditionOSS:
