@@ -131,7 +131,7 @@ You can now add buttons to your Canvas visualizations. Buttons can be configured
 
 To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
 
-{{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
 ### Zoom in on the Y-axis of the Time Series and Candlestick panels
 
@@ -175,7 +175,7 @@ We've made a number of smaller improvements to the data visualization experience
 
 #### Geomap marker symbol alignment options
 
-You can now offset Geomap marker symbols from the underlying data point.
+You can now offset geomap marker symbols from the underlying data point.
 
 {{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
 
