@@ -45,12 +45,12 @@ export function LogsTable(props: Props) {
   // Only a single frame (query) is supported currently
   const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
 
-  // Parse the dataframe to a logFrame
-  const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
-  const timeIndex = logsFrame?.timeField.index;
-
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
+      // Parse the dataframe to a logFrame
+      const logsFrame = frame ? parseLogsFrame(frame) : undefined;
+      const timeIndex = logsFrame?.timeField.index;
+
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
       const [frameWithOverrides] = applyFieldOverrides({
@@ -90,9 +90,10 @@ export function LogsTable(props: Props) {
 
       return frameWithOverrides;
     },
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-    [timeIndex, logsSortOrder, timeZone, splitOpen, range]
+    [logsSortOrder, timeZone, splitOpen, range]
   );
+
+  // const prepareState = useCallback()
 
   /**
    * Known issue here is that there is a re-render of the table when the set of labels has changed,
@@ -100,15 +101,15 @@ export function LogsTable(props: Props) {
    */
   useEffect(() => {
     const prepare = async () => {
+      // Parse the dataframe to a logFrame
+      const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
+
       if (!logFrameRaw || !logsFrame) {
         setTableFrame(undefined);
         return;
       }
 
       let dataFrame = logFrameRaw;
-
-      const timeIndex = logsFrame?.timeField.index;
-      dataFrame = sortDataFrame(dataFrame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
       // create extract JSON transformation for every field that is `json.RawMessage`
       const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFieldsAndExclude(
@@ -135,11 +136,6 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-
-    // This is messy: this is triggered either by user action of adding/removing columns, or from the dataframe (query result) changing
-    // We have to be careful and make sure not to assume that the columnsWithMeta is "recent", it is also updated when the dataframe changes, but it doesn't always happen first!
-    // Also if you add both the logFrame and the logFrameRaw as dependencies it will cause an infinite re-render: adding the eslint ignore
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columnsWithMeta, logFrameRaw, logsSortOrder, props.datasourceType, prepareTableFrame]);
 
   if (!tableFrame) {
