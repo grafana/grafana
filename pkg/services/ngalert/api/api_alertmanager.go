@@ -298,7 +298,10 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 		return errResp
 	}
 
-	rcvs := am.GetReceivers(c.Req.Context())
+	rcvs, err := am.GetReceivers(c.Req.Context())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to retrieve receivers")
+	}
 	return response.JSON(http.StatusOK, rcvs)
 }
 

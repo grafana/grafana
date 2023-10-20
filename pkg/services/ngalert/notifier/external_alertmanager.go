@@ -3,8 +3,10 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -15,6 +17,7 @@ import (
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
+	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
@@ -220,8 +223,18 @@ func (am *externalAlertmanager) GetStatus() apimodels.GettableStatus {
 	return apimodels.GettableStatus{}
 }
 
-func (am *externalAlertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
-	return []apimodels.Receiver{}
+func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
+	res, err := am.amClient.Receiver.GetReceivers(params)
+	if err != nil {
+		return []apimodels.Receiver{}, err
+	}
+
+	var rcvs []apimodels.Receiver
+	for _, rcv := range res.Payload {
+		rcvs = append(rcvs, *rcv)
+	}
+	return rcvs, nil
 }
 
 func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
@@ -266,4 +279,38 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	return r.next.RoundTrip(req)
+}
+
+// TODO: change implementation, this is only useful for testing other methods.
+func (am *externalAlertmanager) postConfig(ctx context.Context, rawConfig string) error {
+	url := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(rawConfig))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("config not found")
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error while closing body", "err", err)
+		}
+	}()
+
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading request response: %w", err)
+	}
+
+	if res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
+	}
+	return nil
 }
