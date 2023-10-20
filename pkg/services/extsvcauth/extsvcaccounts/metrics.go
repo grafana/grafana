@@ -30,7 +30,8 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			res, err := saSvc.SearchOrgServiceAccounts(ctx, &serviceaccounts.SearchOrgServiceAccountsQuery{
-				Query:     "sa-extsvc-",
+				// FIXME replace with constants
+				Query:     "sa-" + extsvcPrefix,
 				CountOnly: true,
 			})
 			if err != nil {
