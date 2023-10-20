@@ -80,7 +80,7 @@ Description of provisioning properties:
 : Correlation type. “query” is the only supported type at the moment
 
 **config.target**
-: [Target query model]({{< relref "#determine-target-query-model-structure" >}})
+: [Target query model](#determine-target-query-model-structure)
 
 **config.field**
 : Name of the field where link is shown
