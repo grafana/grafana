@@ -3,12 +3,9 @@ package notifications
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,21 +27,6 @@ type Webhook struct {
 // WebhookClient exists to mock the client in tests.
 type WebhookClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-var netTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		Renegotiation: tls.RenegotiateFreelyAsClient,
-	},
-	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 5 * time.Second,
-}
-var netClient WebhookClient = &http.Client{
-	Timeout:   time.Second * 30,
-	Transport: netTransport,
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
@@ -78,7 +60,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := netClient.Do(request)
+	resp, err := ns.client.Do(request)
 	if err != nil {
 		return err
 	}

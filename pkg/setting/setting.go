@@ -199,6 +199,8 @@ type Cfg struct {
 	// SMTP email settings
 	Smtp SmtpSettings
 
+	Webhooks WebhooksSettings
+
 	// Rendering
 	ImagesDir                      string
 	CSVsDir                        string
@@ -1171,6 +1173,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
+	cfg.readWebhooksSettings()
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}

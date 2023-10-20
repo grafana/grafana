@@ -3,12 +3,16 @@ package notifications
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"html/template"
+	"net"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
 
@@ -39,7 +43,23 @@ var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
 func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUserStore) (*NotificationService, error) {
+	netTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			Renegotiation: tls.RenegotiateFreelyAsClient,
+		},
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+	netClient := &http.Client{
+		Timeout:   cfg.Webhooks.Timeout,
+		Transport: netTransport,
+	}
+
 	ns := &NotificationService{
+		client:       netClient,
 		Bus:          bus,
 		Cfg:          cfg,
 		log:          log.New("notifications"),
@@ -100,6 +120,7 @@ type NotificationService struct {
 	mailer       Mailer
 	log          log.Logger
 	store        TempUserStore
+	client       *http.Client
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {
@@ -186,7 +207,7 @@ func __dangerouslyInjectHTML(s string) template.HTML {
 	return template.HTML(s)
 }
 
-func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
+func (ns *NotificationService) SendEmailCommandHandlerSync(_ context.Context, cmd *SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&SendEmailCommand{
 		Data:          cmd.Data,
 		Info:          cmd.Info,
@@ -207,7 +228,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 	return err
 }
 
-func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error {
+func (ns *NotificationService) SendEmailCommandHandler(_ context.Context, cmd *SendEmailCommand) error {
 	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
@@ -241,12 +262,12 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 		return nil, ErrInvalidEmailCode
 	}
 
-	user, err := userByLogin(ctx, login)
+	u, err := userByLogin(ctx, login)
 	if err != nil {
 		return nil, err
 	}
 
-	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
+	validEmailCode, err := validateUserEmailCode(ns.Cfg, u, query.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +275,7 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 		return nil, ErrInvalidEmailCode
 	}
 
-	return user, nil
+	return u, nil
 }
 
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {

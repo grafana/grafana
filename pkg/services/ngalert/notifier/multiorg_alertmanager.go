@@ -138,6 +138,9 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+		if cfg.UnifiedAlerting.HAPeerTimeout <= cfg.Webhooks.Timeout {
+			moa.logger.Warn("[unified_alerting][ha_peer_timeout] is higher than [webhooks][timeout] - this poses a risk of duplicate notification. You should raise the ha_peer_timeout or lower the webhook_timeout.")
+		}
 		peer, err := cluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,
