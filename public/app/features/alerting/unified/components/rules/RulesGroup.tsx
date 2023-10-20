@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
-import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -10,18 +9,17 @@ import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { contextSrv } from '../../../../../core/services/context_srv';
 import { LogMessages } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
-import { provisioningPermissions } from '../../utils/access-control';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
+import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 
 import { ActionIcon } from './ActionIcon';
@@ -47,7 +45,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isReorderingGroup, setIsReorderingGroup] = useState(false);
-  const [isExporting, toggleIsExporting] = useToggle(false);
+  const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   const { canEditRules } = useRulesAccess();
@@ -66,7 +64,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
-  const canReadProvisioning = contextSrv.hasPermission(provisioningPermissions.read);
   // check if group has provisioned items
   const isProvisioned = group.rules.some((rule) => {
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
@@ -118,18 +115,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             />
           );
         }
-        if (isGroupView && canReadProvisioning) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="xport rule group"
-              data-testid="export-group"
-              key="export"
-              icon="download-alt"
-              tooltip="Export rule group"
-              onClick={() => toggleIsExporting(true)}
-            />
-          );
-        }
         if (isListView) {
           actionIcons.push(
             <ActionIcon
@@ -141,19 +126,45 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               target="__blank"
             />
           );
+
+          if (folder?.canAdmin) {
+            actionIcons.push(
+              <ActionIcon
+                aria-label="manage permissions"
+                key="manage-perms"
+                icon="lock"
+                tooltip="manage permissions"
+                to={baseUrl + '/permissions'}
+                target="__blank"
+              />
+            );
+          }
         }
       }
-      if (folder?.canAdmin && isListView) {
-        actionIcons.push(
-          <ActionIcon
-            aria-label="manage permissions"
-            key="manage-perms"
-            icon="lock"
-            tooltip="manage permissions"
-            to={baseUrl + '/permissions'}
-            target="__blank"
-          />
-        );
+      if (folder) {
+        if (isListView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule folder"
+              data-testid="export-folder"
+              key="export-folder"
+              icon="download-alt"
+              tooltip="Export rules folder"
+              onClick={() => setIsExporting('folder')}
+            />
+          );
+        } else if (isGroupView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule group"
+              data-testid="export-group"
+              key="export-group"
+              icon="download-alt"
+              tooltip="Export rule group"
+              onClick={() => setIsExporting('group')}
+            />
+          );
+        }
       }
     }
   } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
@@ -290,8 +301,15 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         onDismiss={() => setIsDeletingGroup(false)}
         confirmText="Delete"
       />
-      {isExporting && folder?.uid && (
-        <GrafanaRuleGroupExporter folderUid={folder?.uid} groupName={group.name} onClose={toggleIsExporting} />
+      {folder && isExporting === 'folder' && (
+        <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(undefined)} />
+      )}
+      {folder && isExporting === 'group' && (
+        <GrafanaRuleGroupExporter
+          folderUid={folder.uid}
+          groupName={group.name}
+          onClose={() => setIsExporting(undefined)}
+        />
       )}
     </div>
   );

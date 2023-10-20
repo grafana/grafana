@@ -30,10 +30,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       return { clone, diff: {}, diffCount: 0, hasChanges: false };
     }
 
-    const cloneJSON = JSON.stringify(clone, null, 2);
-    const cloneSafe = JSON.parse(cloneJSON); // avoids undefined issues
-
-    const diff = jsonDiff(previous, cloneSafe);
+    const diff = jsonDiff(previous, clone);
     let diffCount = 0;
     for (const d of Object.values(diff)) {
       diffCount += d.length;
@@ -48,7 +45,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   }, [dashboard, previous, options, isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
-  const { state, onDashboardSave } = useDashboardSave(dashboard, isCopy);
+  const { state, onDashboardSave } = useDashboardSave(isCopy);
   const onSuccess = onSaveSuccess
     ? () => {
         onDismiss();

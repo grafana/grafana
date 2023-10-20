@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName, TransformerCategory } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, TransformerCategory, SelectableValue, getTimeZones } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
@@ -61,3 +61,23 @@ export const numberOrVariableValidator = (value: string | number) => {
   }
   return false;
 };
+
+export function getTimezoneOptions(includeInternal: boolean) {
+  const timeZoneOptions: Array<SelectableValue<string>> = [];
+
+  // There are currently only two internal timezones
+  // Browser and UTC. We add the manually to avoid
+  // funky string manipulation.
+  if (includeInternal) {
+    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
+    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+  }
+
+  // Add all other timezones
+  const tzs = getTimeZones();
+  for (const tz of tzs) {
+    timeZoneOptions.push({ label: tz, value: tz });
+  }
+
+  return timeZoneOptions;
+}

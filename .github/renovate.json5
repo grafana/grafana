@@ -18,7 +18,7 @@
     "@locker/near-membrane-shared", // critical library. we need to bump this only intentionally
     "@locker/near-membrane-shared-dom", // critical library. we need to bump this only intentionally
   ],
-  "includePaths": ["package.json", "packages/**"],
+  "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "postUpdateOptions": ["yarnDedupeHighest"],

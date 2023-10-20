@@ -49,18 +49,22 @@ export const RolePickerInput = ({
     onQueryChange(query);
   };
 
-  const numberOfRoles = appliedRoles.length;
+  const showBasicRoleOnLabel = showBasicRole && basicRole !== 'None';
 
   return !isFocused ? (
     // TODO: fix keyboard a11y
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
+      <RolesLabel
+        appliedRoles={appliedRoles}
+        numberOfRoles={appliedRoles.length}
+        showBuiltInRole={showBasicRoleOnLabel}
+      />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
       ))}
