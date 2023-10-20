@@ -15,5 +15,4 @@ func TestCfg_readWebhooksSettings(t *testing.T) {
 	{
 		require.Equal(t, cfg.Webhooks.Timeout, 30*time.Second)
 	}
-
 }
