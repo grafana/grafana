@@ -242,6 +242,16 @@ describe('running queries', () => {
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
   });
+  it('should cancel running query when a new query is issued', async () => {
+    const initialState = {
+      ...makeExplorePaneState(),
+    };
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(runQueries)
+      .whenThunkIsDispatched({ exploreId });
+
+    expect(dispatchedActions).toContainEqual(cancelQueriesAction({ exploreId }));
+  });
 });
 
 describe('changeQueries', () => {

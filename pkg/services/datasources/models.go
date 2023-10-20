@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -63,6 +64,37 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+}
+
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
+}
+
+type TeamHTTPHeaders map[string][]TeamHTTPHeader
+
+type TeamHTTPHeader struct {
+	Header string `json:"header"`
+	Value  string `json:"value"`
+}
+
+func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return teamHTTPHeadersJSON, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of

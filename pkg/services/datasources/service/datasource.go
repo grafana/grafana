@@ -229,7 +229,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			{BuiltinRole: "Editor", Permission: "Query"},
 		}
 		if cmd.UserID != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 		}
 		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
 		return err
