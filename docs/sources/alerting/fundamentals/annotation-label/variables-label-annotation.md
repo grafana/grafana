@@ -22,7 +22,7 @@ You can use templates to include data from queries and expressions in labels and
 
 All templates should be written in [text/template](https://pkg.go.dev/text/template). Regardless of whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.
 
-Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should therefore avoid doing expensive computations in your templates as much as possible as high cardinality alert rules can execute a template hundreds or even thousands of times every time the alert rule is evaluated, depending on the number of time series.
+Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should try to avoid doing expensive computations in your templates as much as possible.
 
 ## Examples
 
