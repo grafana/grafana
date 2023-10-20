@@ -63,9 +63,10 @@ You can now use generative AI to assist you in your Grafana dashboards. So far g
 - **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
 
-TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+To enable these features you will need to first enable the `dashgpt` feature flag in your [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles). You then will also need to install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
 
-TODO: Add image / gif / video
+TODO: Add image / gif / video (enablement?)
+{{< video-embed src="/media/docs/grafana/2023-10-20-Generative-AI-Enablement-Video.mp4" >}}
 
 ### Calculate visualization min/max individually per field
 
