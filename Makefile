@@ -110,7 +110,7 @@ gen-cue: ## Do all CUE/Thema code generation
 
 gen-go: $(WIRE)
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
