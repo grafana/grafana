@@ -19,6 +19,12 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
+const (
+	graphVisType data.VisType = "graph"
+	tableVisType data.VisType = "table"
+	logsVisType  data.VisType = "logs"
+)
+
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
 	return parse(buf, statusCode, query)
 }
@@ -155,7 +161,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField)
+	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
 func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
@@ -198,10 +204,11 @@ func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValu
 	return data.NewFrame(row.Name, field)
 }
 
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
 	frame := data.NewFrame(name, timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString: queryString,
+		ExecutedQueryString:    queryString,
+		PreferredVisualization: visType,
 	}
 
 	return frame
@@ -323,6 +330,17 @@ func parseNumber(value any) *float64 {
 	}
 
 	return &fvalue
+}
+
+func getVisType(resFormat string) data.VisType {
+	switch resFormat {
+	case "table":
+		return tableVisType
+	case "logs":
+		return logsVisType
+	default:
+		return graphVisType
+	}
 }
 
 func isTagValuesQuery(query models.Query) bool {
