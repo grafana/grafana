@@ -707,12 +707,14 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 
 func TestResponseParser_Parse(t *testing.T) {
 	tests := []struct {
-		name  string
-		input string
-		f     func(t *testing.T, got backend.DataResponse)
+		name      string
+		resFormat string
+		input     string
+		f         func(t *testing.T, got backend.DataResponse)
 	}{
 		{
-			name: "Influxdb response parser with valid value when null values returned",
+			name:      "Influxdb response parser with valid value when null values returned",
+			resFormat: "time_series",
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -739,7 +741,8 @@ func TestResponseParser_Parse(t *testing.T) {
 			},
 		},
 		{
-			name: "Influxdb response parser with valid value when all values are null",
+			name:      "Influxdb response parser with valid value when all values are null",
+			resFormat: "time_series",
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -765,10 +768,56 @@ func TestResponseParser_Parse(t *testing.T) {
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
+		{
+			name:      "Influxdb response parser with table result",
+			resFormat: "table",
+			input: `{
+					  "results": [
+					    {
+					      "statement_id": 0,
+					      "series": [
+					        {
+					          "name": "Annotation",
+					          "columns": [
+					            "time",
+					            "domain",
+					            "type",
+					            "ASD",
+					            "details"
+					          ],
+					          "values": [
+					            [
+					              1697789142916,
+					              "AASD157",
+					              "fghg",
+					              null,
+					              "Something happened AtTime=2023-10-20T08:05:42.902036"
+					            ],
+					            [
+					              1697789142918,
+					              "HUY23",
+					              "val23",
+					              null,
+					              "Something else happened AtTime=2023-10-20T08:05:42.902036"
+					            ]
+					          ]
+					        }
+					      ]
+					    }
+					  ]
+					}`,
+			f: func(t *testing.T, got backend.DataResponse) {
+				assert.Equal(t, "domain", got.Frames[0].Name)
+				assert.Equal(t, "domain", got.Frames[0].Fields[1].Config.DisplayNameFromDS)
+				assert.Equal(t, "ASD", got.Frames[2].Name)
+				assert.Equal(t, "ASD", got.Frames[2].Fields[1].Config.DisplayNameFromDS)
+				assert.Equal(t, tableVisType, got.Frames[0].Meta.PreferredVisualization)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ResponseParse(prepare(tt.input), 200, generateQuery(models.Query{}))
+			got := ResponseParse(prepare(tt.input), 200, generateQuery(models.Query{ResultFormat: tt.resFormat}))
 			require.NotNil(t, got)
 			if tt.f != nil {
 				tt.f(t, *got)
