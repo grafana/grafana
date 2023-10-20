@@ -15,7 +15,7 @@
     "title": "Grafana Alerting API.",
     "version": "1.1.0"
   },
-  "basePath": "/api/v1",
+  "basePath": "/api",
   "paths": {
     "/api/alertmanager/grafana/api/v2/alerts": {
       "get": {
@@ -1751,7 +1751,7 @@
         }
       }
     },
-    "/api/v1/eval": {
+    "/v1/eval": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -1783,7 +1783,7 @@
         }
       }
     },
-    "/api/v1/ngalert": {
+    "/v1/ngalert": {
       "get": {
         "description": "Get the status of the alerting engine",
         "produces": [
@@ -1803,7 +1803,7 @@
         }
       }
     },
-    "/api/v1/ngalert/admin_config": {
+    "/v1/ngalert/admin_config": {
       "get": {
         "produces": [
           "application/json"
@@ -1892,7 +1892,7 @@
         }
       }
     },
-    "/api/v1/ngalert/alertmanagers": {
+    "/v1/ngalert/alertmanagers": {
       "get": {
         "produces": [
           "application/json"
@@ -1912,7 +1912,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules": {
+    "/v1/provisioning/alert-rules": {
       "get": {
         "tags": [
           "provisioning",
@@ -1969,7 +1969,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/export": {
+    "/v1/provisioning/alert-rules/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2027,7 +2027,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/{UID}": {
+    "/v1/provisioning/alert-rules/{UID}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2125,7 +2125,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/{UID}/export": {
+    "/v1/provisioning/alert-rules/{UID}/export": {
       "get": {
         "produces": [
           "application/json",
@@ -2174,7 +2174,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points": {
+    "/v1/provisioning/contact-points": {
       "get": {
         "tags": [
           "provisioning",
@@ -2234,7 +2234,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points/export": {
+    "/v1/provisioning/contact-points/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2287,7 +2287,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points/{UID}": {
+    "/v1/provisioning/contact-points/{UID}": {
       "put": {
         "consumes": [
           "application/json"
@@ -2355,7 +2355,7 @@
         }
       }
     },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2436,7 +2436,7 @@
         }
       }
     },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
       "get": {
         "produces": [
           "application/json",
@@ -2490,7 +2490,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings": {
+    "/v1/provisioning/mute-timings": {
       "get": {
         "tags": [
           "provisioning",
@@ -2542,7 +2542,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings/{name}": {
+    "/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2635,7 +2635,7 @@
         }
       }
     },
-    "/api/v1/provisioning/policies": {
+    "/v1/provisioning/policies": {
       "get": {
         "tags": [
           "provisioning",
@@ -2707,7 +2707,7 @@
         }
       }
     },
-    "/api/v1/provisioning/policies/export": {
+    "/v1/provisioning/policies/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2731,7 +2731,7 @@
         }
       }
     },
-    "/api/v1/provisioning/templates": {
+    "/v1/provisioning/templates": {
       "get": {
         "tags": [
           "provisioning",
@@ -2752,7 +2752,7 @@
         }
       }
     },
-    "/api/v1/provisioning/templates/{name}": {
+    "/v1/provisioning/templates/{name}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2845,7 +2845,7 @@
         }
       }
     },
-    "/api/v1/rule/backtest": {
+    "/v1/rule/backtest": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -2877,7 +2877,7 @@
         }
       }
     },
-    "/api/v1/rule/test/grafana": {
+    "/v1/rule/test/grafana": {
       "post": {
         "description": "Test a rule against Grafana ruler",
         "consumes": [
@@ -2918,7 +2918,7 @@
         }
       }
     },
-    "/api/v1/rule/test/{DatasourceUID}": {
+    "/v1/rule/test/{DatasourceUID}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": [
@@ -2963,7 +2963,7 @@
         }
       }
     },
-    "/api/v1/rules/history": {
+    "/v1/rules/history": {
       "get": {
         "produces": [
           "application/json"
@@ -3588,6 +3588,9 @@
           "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
+        "ErrorSource": {
+          "$ref": "#/definitions/ErrorSource"
+        },
         "Frames": {
           "$ref": "#/definitions/Frames"
         },
@@ -3791,6 +3794,10 @@
           }
         }
       }
+    },
+    "ErrorSource": {
+      "description": "ErrorSource type defines the source of the error",
+      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -4832,7 +4839,7 @@
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
       "additionalProperties": {
-        "$ref": "#/definitions/Regexp"
+        "type": "string"
       }
     },
     "MatchType": {
@@ -5954,11 +5961,6 @@
           "type": "string"
         }
       }
-    },
-    "Regexp": {
-      "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-      "type": "object",
-      "title": "Regexp is the representation of a compiled regular expression."
     },
     "RelativeTimeRange": {
       "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
@@ -7105,6 +7107,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7129,7 +7132,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7235,7 +7237,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7300,7 +7301,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7350,6 +7350,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -7357,7 +7358,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -7502,6 +7502,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

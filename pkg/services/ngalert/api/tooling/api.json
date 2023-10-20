@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -608,6 +608,9 @@
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
+    },
     "Frames": {
      "$ref": "#/definitions/Frames"
     },
@@ -812,6 +815,10 @@
     }
    },
    "type": "object"
+  },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1849,7 +1856,7 @@
   },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -2971,11 +2978,6 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
-   "type": "object"
-  },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4147,7 +4149,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4314,6 +4315,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4362,6 +4364,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4511,7 +4514,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4669,7 +4671,7 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -4724,7 +4726,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -4781,7 +4783,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -4876,7 +4878,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -4924,7 +4926,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -4982,7 +4984,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -5034,7 +5036,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5100,7 +5102,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -5179,7 +5181,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -5232,7 +5234,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -5282,7 +5284,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -5372,7 +5374,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5441,7 +5443,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -5464,7 +5466,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5484,7 +5486,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [

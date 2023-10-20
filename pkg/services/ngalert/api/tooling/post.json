@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -608,6 +608,9 @@
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
+    },
     "Frames": {
      "$ref": "#/definitions/Frames"
     },
@@ -812,6 +815,10 @@
     }
    },
    "type": "object"
+  },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1849,7 +1856,7 @@
   },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -2973,11 +2980,6 @@
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
    "type": "object"
   },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
-   "type": "object"
-  },
   "RelativeTimeRange": {
    "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
    "properties": {
@@ -3882,6 +3884,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3917,7 +3920,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4146,7 +4149,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4251,7 +4253,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4307,14 +4308,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4513,6 +4512,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -6404,7 +6404,7 @@
     ]
    }
   },
-  "/api/v1/eval": {
+  "/v1/eval": {
    "post": {
     "consumes": [
      "application/json"
@@ -6436,7 +6436,7 @@
     ]
    }
   },
-  "/api/v1/ngalert": {
+  "/v1/ngalert": {
    "get": {
     "description": "Get the status of the alerting engine",
     "operationId": "RouteGetStatus",
@@ -6456,7 +6456,7 @@
     ]
    }
   },
-  "/api/v1/ngalert/admin_config": {
+  "/v1/ngalert/admin_config": {
    "delete": {
     "consumes": [
      "application/json"
@@ -6545,7 +6545,7 @@
     ]
    }
   },
-  "/api/v1/ngalert/alertmanagers": {
+  "/v1/ngalert/alertmanagers": {
    "get": {
     "operationId": "RouteGetAlertmanagers",
     "produces": [
@@ -6565,7 +6565,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -6620,7 +6620,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -6677,7 +6677,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -6772,7 +6772,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -6820,7 +6820,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -6878,7 +6878,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -6930,7 +6930,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -6996,7 +6996,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -7075,7 +7075,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -7128,7 +7128,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -7178,7 +7178,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -7268,7 +7268,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -7337,7 +7337,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -7360,7 +7360,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -7380,7 +7380,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -7470,7 +7470,7 @@
     ]
    }
   },
-  "/api/v1/rule/backtest": {
+  "/v1/rule/backtest": {
    "post": {
     "consumes": [
      "application/json"
@@ -7502,7 +7502,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/grafana": {
+  "/v1/rule/test/grafana": {
    "post": {
     "consumes": [
      "application/json"
@@ -7543,7 +7543,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/{DatasourceUID}": {
+  "/v1/rule/test/{DatasourceUID}": {
    "post": {
     "consumes": [
      "application/json"
@@ -7588,7 +7588,7 @@
     ]
    }
   },
-  "/api/v1/rules/history": {
+  "/v1/rules/history": {
    "get": {
     "operationId": "RouteGetStateHistory",
     "produces": [
