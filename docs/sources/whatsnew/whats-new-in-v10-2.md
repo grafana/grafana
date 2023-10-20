@@ -40,19 +40,39 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
 
+## Share your dashboard with the world: Public dashboards are generally available
+
+<!-- Thanos Karachalios -->
+
+_Generally Available in all editions of Grafana_
+
+Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
+
+{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+
+## Explore lengthy, mixed data faster with Content Outline
+
+<!-- Thanos Karachalios -->
+
+_Generally available in all editions of Grafana_
+
+Introducing Content Outline in Grafana Explore. It's easy to lose track of your place when you're running complex mixed queries or switching between logs and traces. Content outline is our first step towards seamless navigation from log lines to traces and back to queries, ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
+
+{{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
+
 ## Recorded queries: Record multiple metrics from a single query
 
 <!-- Kyle Brandt, Observability Metrics -->
 
 _Generally available in Grafana Enterprise_
 
-Recorded queries provide a way to take a _static_ metric, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them easier to create and manage.
+Recorded queries provide a way to take a _static_ number, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
 
 <!-- TODO: add graphic or video -->
 
 ## Dashboards and visualizations
 
-### Generative AI features for dashboards
+### Use AI to generate titles, descriptions, and change summaries
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
@@ -67,6 +87,46 @@ You can now use generative AI to assist you in your Grafana dashboards. So far g
 To try it out, look for the "✨ Auto generate" option next to the Title and Description settings for your dashboard, or when you press the "Save" button.
 
 {{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="300px" caption="Auto-generate a panel description using AI" >}}
+
+### Find the dashboard you're looking faster, with the new Dashboard Browse screen
+
+<!-- Yaelle Chaudy for Frontend Platform -->
+
+_Generally available in all editions of Grafana_
+
+The new Browse screen for dashboards features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
+
+To make using folders easier and more consistent, there's no longer a special **General** folder. Dashboards without a folder, or dashboards previously in the **General** folder, are now shown at the root level.
+
+To try it out, head to the Dashboards section of your Grafana instance.
+
+{{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+
+### Create interactive buttons in the Canvas panel
+
+_Available in public preview in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+<!-- Cloud -->
+
+You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+
+TODO: Add image / gif / video
+
+### Zoom in on the Y-axis of the Time Series panel
+
+_Available in public preview in all editions of Grafana_
+
+<!-- Nathan Marrs -->
+<!-- Cloud -->
+
+You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+
+To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
+
+TODO: Add image / gif / video
 
 ### Calculate visualization min/max individually per field
 
@@ -88,46 +148,6 @@ In this example, using the same data, with the min and max calculated for each i
 
 This isn't only useful in the stat visualization&mdash;gauge, bar gauge, and status history visualizations, table cells formatted by thresholds, and gauge table cells all benefit from this addition.
 
-### New browse dashboards view
-
-<!-- Yaelle Chaudy for Frontend Platform -->
-
-_Generally available in all editions of Grafana_
-
-The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
-
-To make using folders easier and more consistent, there's no longer a special **General** folder. Dashboards without a folder, or dashboards previously in the **General** folder, are now shown at the root level.
-
-To learn more, refer to the following video demo.
-
-{{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
-
-### New Canvas button element
-
-_Available in public preview in all editions of Grafana_
-
-<!-- Nathan Marrs -->
-<!-- Cloud -->
-
-You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
-
-To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
-
-TODO: Add image / gif / video
-
-### Time series visualization now support y-axis zooming
-
-_Available in public preview in all editions of Grafana_
-
-<!-- Nathan Marrs -->
-<!-- Cloud -->
-
-You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
-
-To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
-
-TODO: Add image / gif / video
-
 ### Data visualization quality of life improvements
 
 _Available in public preview in all editions of Grafana_
@@ -145,9 +165,13 @@ TBD / WIP - some high level thoughts
 
 TODO: Add image / gif / video (maybe not for this one)
 
-## Data sources
+## Data sources and querying
 
-### Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
+### Tempo data source
+
+We've placed special focus on the Tempo data source over the past couple of months with new features, query performance improvements, and a better query exerience.
+
+#### Compute RED metrics over spans aggregated by attribute with the "Aggregate By" Search option
 
 <!-- Joey Tawadrous, Jen Villa -->
 
@@ -163,39 +187,27 @@ For more information, refer to the [documentation](https://grafana.com/docs/graf
 
 {{< figure src="/media/docs/tempo/metrics-summary-10-2.png" caption="Aggregate by" >}}
 
-### Tenant database instance name and number for SAP HANA® data source
+#### Query traces more easily with the Improved TraceQL editor
 
-<!-- Miguel Palau -->
+<!-- Fabrizio Casati -->
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+_Generally available in all editions of Grafana_
 
-The SAP HANA® data source now supports tenant databases connections by using the database name and/or instance number. For more information, refer to [SAP HANA® configuration](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
+The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
 
-{{< video-embed src="/media/docs/sap-hana/tenant.mp4" >}}
+{{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-traceql-query-editor-improvements.mp4" >}}
 
-### Log aggregation for Datadog data source
+#### Group multiple spansets per trace
 
-<!-- Taewoo Kim -->
+<!-- Joey Tawadrous -->
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+_Generally available in all editions of Grafana_
 
-The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
+The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
-{{< video-embed src="/media/docs/datadog/datadog-log-aggregation.mp4" >}}
+{{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
-### API throttling for Datadog data source
-
-<!-- Taewoo Kim -->
-
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
-
-The Datadog data source supports blocking API requests based on upstream rate limits (for metric queries). With this update, you can set a rate limit percentage at which the plugin stops sending queries.
-
-To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-datadog-datasource/latest#configure-the-data-source), as well as the following video demo.
-
-{{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
-
-### Query-type template variables for Tempo data source
+#### Create Query-type template variables for the Tempo data source
 
 <!-- Fabrizio Casati -->
 
@@ -207,29 +219,37 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 {{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-tempo-query-type-template-variables.mp4" >}}
 
-## Sharing
+### SAP HANA®: Configure your data source with tenant database instance name and number
 
-### Public dashboards
+<!-- Miguel Palau -->
 
-<!-- Thanos Karachalios -->
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
-_Generally Available in all editions of Grafana_
+The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number. For more information, refer to our [SAP HANA® configuration dcumentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
 
-Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
+{{< video-embed src="/media/docs/sap-hana/tenant.mp4" >}}
 
-{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+### Datadog: Aggregate logs to compute metrics and time series
 
-## Explore
+<!-- Taewoo Kim -->
 
-### Content outline
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
-<!-- Thanos Karachalios -->
+The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
 
-_Generally available in all editions of Grafana_
+{{< video-embed src="/media/docs/datadog/datadog-log-aggregation.mp4" >}}
 
-Introducing Content Outline in Grafana Explore. We recognized that complex mixed queries, as well as lengthy logs and traces results led to to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
+### Datadog: Rate-limit requests from the Datadog data source
 
-{{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
+<!-- Taewoo Kim -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+
+In the Datadog data source, you can now block API requests for metric queries based on upstream rate limits. With this update, you can set a rate limit percentage at which the plugin stops sending queries.
+
+To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-datadog-datasource/latest#configure-the-data-source), as well as the following video demo.
+
+{{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
 
 ## Transformations
 
@@ -324,28 +344,6 @@ _Available in public preview in Grafana Open Source and Enterprise_
 You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
 
 To try out **Correlations**, enable the `correlations` feature toggle.
-
-## TraceQL query editor
-
-### Improved TraceQL query editor
-
-<!-- Fabrizio Casati -->
-
-_Generally available in all editions of Grafana_
-
-The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
-
-{{< video-embed src="/media/docs/tempo/screen-recording-grafana-10.2-traceql-query-editor-improvements.mp4" >}}
-
-### Multiple spansets per trace
-
-<!-- Joey Tawadrous -->
-
-_Generally available in all editions of Grafana_
-
-The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
-
-{{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
 ## Alerting
 
