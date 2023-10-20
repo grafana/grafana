@@ -116,7 +116,7 @@ To learn more, refer to our [Canvas button element documentation](https://grafan
 
 ### Y-axis zoom support in time series and candlestick visualizations
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Generally available in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -127,7 +127,7 @@ You can now zoom in on the y-axis of your time series and candlestick visualizat
 
 ### Data visualization quality of life improvements
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Generally available in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
