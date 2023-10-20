@@ -82,6 +82,8 @@ export function LogsTable(props: Props) {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
             ...field.config.custom,
+            // @todo it would be much more efficient to mutate the dataframe fields, instead of using transforms to create a filtered copy in rect state, this would require that the table component handles the filtering.
+            // visible: columnsWithMeta[field.name]?.active ?? false,
           },
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame ?? undefined),
@@ -93,10 +95,6 @@ export function LogsTable(props: Props) {
     [logsSortOrder, timeZone, splitOpen, range]
   );
 
-  /**
-   * Known issue here is that there is a re-render of the table when the set of labels has changed,
-   * the transformations are added after the fresh data has already been rendered
-   */
   useEffect(() => {
     const prepare = async () => {
       // Parse the dataframe to a logFrame
@@ -116,10 +114,10 @@ export function LogsTable(props: Props) {
       );
 
       // remove hidden fields
-      removeHiddenFields(dataFrame, transformations);
+      transformations.push(...removeHiddenFields(dataFrame));
       let labelFilters = buildLabelFilters(columnsWithMeta, logsFrame);
 
-      // Add one transform to remove everything we added above
+      // Add the label filters to the transformations
       const transform = getLabelFiltersTransform(labelFilters);
       if (transform) {
         transformations.push(transform);
@@ -211,10 +209,8 @@ function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) 
     });
 }
 
-function removeHiddenFields(
-  dataFrame: DataFrame,
-  transformations: Array<DataTransformerConfig | CustomTransformOperator>
-) {
+function removeHiddenFields(dataFrame: DataFrame): Array<DataTransformerConfig | CustomTransformOperator> {
+  const transformations: Array<DataTransformerConfig | CustomTransformOperator> = [];
   const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
   hiddenFields.forEach((field: Field) => {
     transformations.push({
@@ -226,6 +222,8 @@ function removeHiddenFields(
       },
     });
   });
+
+  return transformations;
 }
 
 function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsFrame: LogsFrame) {
