@@ -2860,7 +2860,7 @@ __metadata:
     swc-loader: 0.2.3
     ts-node: 10.9.1
     tslib: 2.6.0
-    webpack: 5.88.1
+    webpack: 5.89.0
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3041,7 +3041,7 @@ __metadata:
     tslib: 2.6.0
     typescript: 4.8.4
     uuid: 9.0.0
-    webpack: 5.88.1
+    webpack: 5.89.0
     yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -3236,7 +3236,7 @@ __metadata:
     glob: 10.3.3
     replace-in-file-webpack-plugin: 1.0.6
     tslib: 2.6.0
-    webpack: 5.88.1
+    webpack: 5.89.0
   languageName: unknown
   linkType: soft
 
@@ -3478,7 +3478,7 @@ __metadata:
     typescript: 4.8.4
     uplot: 1.6.26
     uuid: 9.0.0
-    webpack: 5.88.1
+    webpack: 5.89.0
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
@@ -18074,7 +18074,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 7.0.1
-    webpack: 5.88.1
+    webpack: 5.89.0
     webpack-bundle-analyzer: 4.9.0
     webpack-cli: 5.1.4
     webpack-dev-server: 4.15.1
@@ -30269,9 +30269,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.88.1":
-  version: 5.88.1
-  resolution: "webpack@npm:5.88.1"
+"webpack@npm:5, webpack@npm:5.89.0":
+  version: 5.89.0
+  resolution: "webpack@npm:5.89.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^1.0.0
@@ -30302,7 +30302,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 726e7e05ab2e7c142609a673dd6aa1a711ed97f349418a2a393d650c5ddad172d191257f60e1e37f6b2a77261571c202aabd5ce9240791a686774f0801cf5ec2
+  checksum: 43fe0dbc30e168a685ef5a86759d5016a705f6563b39a240aa00826a80637d4a3deeb8062e709d6a4b05c63e796278244c84b04174704dc4a37bedb0f565c5ed
   languageName: node
   linkType: hard
 
