@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -48,6 +48,22 @@ export function LogsTableWrap(props: Props) {
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const dataFrame = logsFrames[0];
+
+  const getColumnsFromProps = useCallback(
+    (fieldNames: fieldNameMetaStore) => {
+      const previouslySelected = props.panelState?.columns;
+      if (previouslySelected) {
+        Object.values(previouslySelected).forEach((key) => {
+          if (fieldNames[key]) {
+            fieldNames[key].active = true;
+          }
+        });
+      }
+
+      return fieldNames;
+    },
+    [props.panelState?.columns]
+  );
 
   /**
    * when the query results change, we need to update the columnsWithMeta state
@@ -117,25 +133,13 @@ export function LogsTableWrap(props: Props) {
       };
     });
 
-    // get existing labels from url
-    const previouslySelected = props.panelState?.columns;
-    if (previouslySelected) {
-      Object.values(previouslySelected).forEach((key) => {
-        if (pendingLabelState[key]) {
-          pendingLabelState[key].active = true;
-        }
-      });
-    }
+    pendingLabelState = getColumnsFromProps(pendingLabelState);
 
     setColumnsWithMeta(pendingLabelState);
-    // Query changed, reset the local search state.
-    setFilteredColumnsWithMeta(undefined);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
     // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.datasourceType, dataFrame]);
+  }, [dataFrame, getColumnsFromProps]);
 
   if (!columnsWithMeta) {
     return null;
