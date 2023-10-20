@@ -71,7 +71,7 @@ export const DefaultCell = (props: TableCellProps) => {
         </DataLinksContextMenu>
       )}
 
-      {hover && showActions && <CellActions hover={hover} {...props} previewMode="text" showFilters={showFilters} />}
+      {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
 };
