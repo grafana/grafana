@@ -12,8 +12,10 @@ import {
 } from '@grafana/data';
 import { AngularComponent, getPluginLinkExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
+import { AccessControlAction } from 'app/types';
 
 import { PanelModel } from '../state';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
@@ -23,6 +25,7 @@ import { getPanelMenu } from './getPanelMenu';
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasAccessToExplore: () => true,
+    hasPermission: jest.fn(),
   },
 }));
 
@@ -38,6 +41,8 @@ describe('getPanelMenu()', () => {
   beforeEach(() => {
     getPluginLinkExtensionsMock.mockRestore();
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+    config.unifiedAlertingEnabled = false;
   });
 
   it('should return the correct panel menu items', () => {
@@ -617,6 +622,59 @@ describe('getPanelMenu()', () => {
       openInNewWindow(testUrl);
 
       expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
+    });
+  });
+  describe('Alerting menu', () => {
+    it('should render Create alert menu item if user has permissions to read and update alerts ', () => {
+      const panel = new PanelModel({});
+
+      const dashboard = createDashboardModelFixture({});
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      const menuItems = getPanelMenu(dashboard, panel);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Create alert',
+          }),
+        ])
+      );
+    });
+
+    it('should not render Create alert menu item, if user does not have permissions to update alerts ', () => {
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+      config.unifiedAlertingEnabled = true;
+
+      const menuItems = getPanelMenu(dashboard, panel);
+
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.not.objectContaining({
+            text: 'Create alert',
+          }),
+        ])
+      );
+    });
+    it('should not render Create alert menu item, if user does not have permissions to read update alerts ', () => {
+      const panel = new PanelModel({});
+
+      const dashboard = createDashboardModelFixture({});
+      grantUserPermissions([]);
+      config.unifiedAlertingEnabled = true;
+
+      const menuItems = getPanelMenu(dashboard, panel);
+
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const createAlertOption = moreSubMenu?.find((i) => i.text === 'Create alert')?.subMenu;
+
+      expect(createAlertOption).toBeUndefined();
     });
   });
 });

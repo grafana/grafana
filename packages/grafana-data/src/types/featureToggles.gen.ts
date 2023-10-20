@@ -147,4 +147,6 @@ export interface FeatureToggles {
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
   costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
 }

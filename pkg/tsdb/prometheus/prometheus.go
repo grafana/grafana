@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/patrickmn/go-cache"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,11 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
 )
 
-var plog = log.New("tsdb.prometheus")
-
 type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
+	logger   log.Logger
 }
 
 type instance struct {
@@ -38,17 +37,19 @@ type instance struct {
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, features, tracer)),
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, features, tracer, plog)),
 		features: features,
+		logger:   plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, log log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
-		opts, err := client.CreateTransportOptions(ctx, settings, cfg, plog)
+		opts, err := client.CreateTransportOptions(ctx, settings, cfg, log)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
@@ -58,13 +59,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		}
 
 		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, features, tracer, settings, plog)
+		qd, err := querydata.New(httpClient, features, tracer, settings, log)
 		if err != nil {
 			return nil, err
 		}
 
 		// Resource call management using new custom client same as querydata
-		r, err := resource.New(httpClient, settings, plog)
+		r, err := resource.New(httpClient, settings, log)
 		if err != nil {
 			return nil, err
 		}

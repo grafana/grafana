@@ -1,13 +1,12 @@
-import { locationUtil, PanelMenuItem } from '@grafana/data';
+import { PanelMenuItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
+import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
-import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -23,8 +22,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const items: PanelMenuItem[] = [];
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = panel.getRoot();
-    const panelPlugin = panel.getPlugin();
-    const queryRunner = getQueryRunnerFor(panel);
 
     if (dashboard instanceof DashboardScene) {
       items.push({
@@ -32,7 +29,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'v',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'view' }),
-        href: locationUtil.getUrlForPartial(location, { viewPanel: panel.state.key }),
+        href: getViewPanelUrl(panel),
       });
 
       // We could check isEditing here but I kind of think this should always be in the menu,
@@ -40,7 +37,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
         iconClassName: 'eye',
-        shortcut: 'v',
+        shortcut: 'e',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
         href: getDashboardUrl({
           uid: dashboard.state.uid,
@@ -60,20 +57,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (contextSrv.hasAccessToExplore() && !panelPlugin?.meta.skipDataQuery && queryRunner) {
-      const timeRange = sceneGraph.getTimeRange(panel);
-
+    const exploreUrl = await tryGetExploreUrlForPanel(panel);
+    if (exploreUrl) {
       items.push({
         text: t('panel.header-menu.explore', `Explore`),
         iconClassName: 'compass',
         shortcut: 'p x',
         onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'explore' }),
-        href: await getExploreUrl({
-          queries: queryRunner.state.queries,
-          dsRef: queryRunner.state.datasource,
-          timeRange: timeRange.state.value,
-          scopedVars: { __sceneObject: { value: panel } },
-        }),
+        href: exploreUrl,
       });
     }
 
@@ -82,7 +73,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       iconClassName: 'info-circle',
       shortcut: 'i',
       onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data }),
-      href: locationUtil.getUrlForPartial(location, { inspect: panel.state.key }),
+      href: getInspectUrl(panel),
     });
 
     menu.setState({ items });
