@@ -490,11 +490,11 @@ const (
 	// FlagKubernetesPlaylists
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
-	// FlagPanelFilterVariable
-	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-	FlagPanelFilterVariable = "panelFilterVariable"
 	
+	// FlagCloudWatchBatchQueries
+	// Runs CloudWatch metrics queries as separate batches
+	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
+
 	// FlagNavAdminSubsections
 	// Splits the administration section of the nav tree into subsections
 	FlagNavAdminSubsections = "navAdminSubsections"
@@ -534,4 +534,8 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
 )
