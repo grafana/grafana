@@ -60,16 +60,6 @@ Introducing Content Outline in Grafana Explore. It's easy to lose track of your 
 
 {{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
 
-## Recorded queries: Record multiple metrics from a single query
-
-<!-- Kyle Brandt, Observability Metrics -->
-
-_Generally available in Grafana Enterprise_
-
-Recorded queries provide a way to take a _static_ number, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
-
-<!-- TODO: add graphic or video -->
-
 ## Correlations
 
 ### Create Correlations the easy way in Grafana Explore
@@ -462,3 +452,13 @@ We're excited to introduce the "No basic role," a new basic role with no permiss
 Previously, permissions were granted based on predefined sets of capabilities. Now, with the "No basic role," you have the flexibility to be even more granular.
 
 For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+
+## Recorded queries: Record multiple metrics from a single query
+
+<!-- Kyle Brandt, Observability Metrics -->
+
+_Generally available in Grafana Enterprise_
+
+Recorded queries provide a way to take a _static_ number, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
+
+<!-- TODO: add graphic or video -->
