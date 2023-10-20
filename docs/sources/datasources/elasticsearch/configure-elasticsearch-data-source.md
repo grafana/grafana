@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure Elasticsearch
+menuTitle: Configure Elasticsearch data source
 title: Configure the Elasticsearch data source
 weight: 200
 ---
