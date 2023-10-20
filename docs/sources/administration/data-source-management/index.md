@@ -71,7 +71,7 @@ You can assign data source permissions to users, service accounts, teams, and ro
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source for which you want to edit permissions.
-1. On the Permissions tab, find the user, service accounts, team, or role permission you want to update.
+1. On the Permissions tab, find the user, service account, team, or role permission you want to update.
 1. Select a different option in the **Permission** dropdown.
 
 <div class="clearfix"></div>
@@ -81,7 +81,7 @@ You can assign data source permissions to users, service accounts, teams, and ro
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source from which you want to remove permissions.
-1. On the Permissions tab, find the user, service accounts, team, or role permission you want to remove.
+1. On the Permissions tab, find the user, service account, team, or role permission you want to remove.
 1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>
