@@ -56,8 +56,8 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   const result: FieldConfigSource = {
     defaults: mergeWith(
       {},
-      pluginDefaults.defaults,
       existingFieldConfig ? existingFieldConfig.defaults : {},
+      pluginDefaults.defaults,
       (objValue, srcValue) => {
         if (isArray(srcValue)) {
           return srcValue;
