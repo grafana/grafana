@@ -108,6 +108,7 @@ const (
 
 const (
 	StateReasonMissingSeries = "MissingSeries"
+	StateReasonNoData        = "NoData"
 	StateReasonError         = "Error"
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
