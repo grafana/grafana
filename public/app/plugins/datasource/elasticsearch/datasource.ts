@@ -35,9 +35,9 @@ import {
   DataSourceWithToggleableQueryFiltersSupport,
   QueryFilterOptions,
   ToggleFilterAction,
+  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
@@ -114,7 +114,6 @@ export class ElasticDatasource
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
   isProxyAccess: boolean;
-  timeSrv: TimeSrv;
   databaseVersion: SemVer | null;
   legacyQueryRunner: LegacyQueryRunner;
 
@@ -157,7 +156,6 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
-    this.timeSrv = getTimeSrv();
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
@@ -832,9 +830,8 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: { key: string }) {
-    const range = this.timeSrv.timeRange();
-    return lastValueFrom(this.getTerms({ field: options.key }, range));
+  getTagValues(options: DataSourceGetTagValuesOptions) {
+    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
   targetContainsTemplate(target: ElasticsearchQuery) {

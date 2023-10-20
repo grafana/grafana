@@ -8,20 +8,17 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  dateMath,
   DateTime,
   dateTime,
   Field,
   FieldType,
   MutableDataFrame,
-  RawTimeRange,
   SupplementaryQueryType,
   TimeRange,
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, reportInteraction, config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
@@ -48,8 +45,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const TIMESRV_START = [2022, 8, 21, 6, 10, 10];
-const TIMESRV_END = [2022, 8, 24, 6, 10, 21];
+const TIME_START = [2022, 8, 21, 6, 10, 10];
+const TIME_END = [2022, 8, 24, 6, 10, 21];
 const DATAQUERY_BASE = {
   requestId: '1',
   interval: '',
@@ -62,13 +59,6 @@ const DATAQUERY_BASE = {
   startTime: 0,
 };
 
-jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
-  getTimeSrv: () => ({
-    timeRange: () => createTimeRange(toUtc(TIMESRV_START), toUtc(TIMESRV_END)),
-  }),
-}));
-
 const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   from,
   to,
@@ -80,7 +70,6 @@ const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
 
 interface TestContext {
   data?: Data;
-  from?: string;
   jsonData?: Partial<ElasticsearchOptions>;
   database?: string;
   fetchMockImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
@@ -93,7 +82,6 @@ interface Data {
 
 function getTestContext({
   data = { responses: [] },
-  from = 'now-5m',
   jsonData,
   fetchMockImplementation,
   templateSrvMock,
@@ -102,17 +90,6 @@ function getTestContext({
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
   fetchMock.mockImplementation(fetchMockImplementation ?? defaultMock);
-
-  const timeSrv = {
-    time: { from, to: 'now' },
-    timeRange: () => ({
-      from: dateMath.parse(timeSrv.time.from, false),
-      to: dateMath.parse(timeSrv.time.to, true),
-    }),
-    setTime: (time: RawTimeRange) => {
-      timeSrv.time = time;
-    },
-  } as TimeSrv;
 
   const settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = { url: ELASTICSEARCH_MOCK_URL };
   settings.jsonData = jsonData as ElasticsearchOptions;
@@ -133,7 +110,9 @@ function getTestContext({
 
   const ds = createElasticDatasource(settings, templateSrv);
 
-  return { timeSrv, ds, fetchMock, templateSrv };
+  const timeRange = createTimeRange(toUtc(TIME_START), toUtc(TIME_END));
+
+  return { ds, fetchMock, templateSrv, timeRange };
 }
 
 describe('ElasticDatasource', () => {
@@ -167,12 +146,12 @@ describe('ElasticDatasource', () => {
           },
         ],
       };
-      const { ds, fetchMock } = getTestContext({
+      const { ds, fetchMock, timeRange } = getTestContext({
         data,
         jsonData: { interval: 'Daily', timeField: '@timestamp' },
       });
 
-      ds.getTagValues({ key: 'test' });
+      ds.getTagValues({ key: 'test', timeRange: timeRange, filters: [] });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const obj = JSON.parse(fetchMock.mock.calls[0][0].data.split('\n')[1]);
@@ -501,7 +480,6 @@ describe('ElasticDatasource', () => {
 
       const { ds } = getTestContext({
         fetchMockImplementation: () => throwError(response),
-        from: undefined,
       });
 
       const errObject = {
@@ -566,8 +544,7 @@ describe('ElasticDatasource', () => {
     it('should not retry when ES is down', async () => {
       const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
 
-      const { ds, timeSrv, fetchMock } = getTestContext({
-        from: 'now-2w',
+      const { ds, fetchMock, timeRange } = getTestContext({
         jsonData: { interval: 'Daily' },
         fetchMockImplementation: (options) => {
           if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
@@ -577,9 +554,7 @@ describe('ElasticDatasource', () => {
         },
       });
 
-      const range = timeSrv.timeRange();
-
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual({ status: 500 });
         expect(fetchMock).toBeCalledTimes(1);
@@ -587,16 +562,16 @@ describe('ElasticDatasource', () => {
     });
 
     it('should not retry more than 7 indices', async () => {
-      const { ds, timeSrv, fetchMock } = getTestContext({
-        from: 'now-2w',
+      const { ds, fetchMock } = getTestContext({
         jsonData: { interval: 'Daily' },
         fetchMockImplementation: (options) => {
           return throwError({ status: 404 });
         },
       });
-      const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      const timeRange = createTimeRange(dateTime().subtract(2, 'week'), dateTime());
+
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
         expect(fetchMock).toBeCalledTimes(7);
@@ -1591,7 +1566,7 @@ describe('ElasticDatasource using backend', () => {
   describe('annotationQuery', () => {
     describe('results processing', () => {
       it('should return simple annotations using defaults', async () => {
-        const { ds, timeSrv } = getTestContext();
+        const { ds, timeRange } = getTestContext();
         ds.postResourceRequest = jest.fn().mockResolvedValue({
           responses: [
             {
@@ -1607,7 +1582,7 @@ describe('ElasticDatasource using backend', () => {
 
         const annotations = await ds.annotationQuery({
           annotation: {},
-          range: timeSrv.timeRange(),
+          range: timeRange,
         });
 
         expect(annotations).toHaveLength(2);
@@ -1616,7 +1591,7 @@ describe('ElasticDatasource using backend', () => {
       });
 
       it('should return annotation events using options', async () => {
-        const { ds, timeSrv } = getTestContext();
+        const { ds, timeRange } = getTestContext();
         ds.postResourceRequest = jest.fn().mockResolvedValue({
           responses: [
             {
@@ -1638,7 +1613,7 @@ describe('ElasticDatasource using backend', () => {
             tagsField: '@test_tags',
             textField: 'text',
           },
-          range: timeSrv.timeRange(),
+          range: timeRange,
         });
         expect(annotations).toHaveLength(2);
         expect(annotations[0].time).toBe(1);
@@ -1877,8 +1852,7 @@ describe('ElasticDatasource using backend', () => {
 
     it('should not retry when ES is down', async () => {
       const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
-      const { ds, timeSrv } = getTestContext({
-        from: 'now-2w',
+      const { ds, timeRange } = getTestContext({
         jsonData: { interval: 'Daily' },
       });
 
@@ -1891,8 +1865,7 @@ describe('ElasticDatasource using backend', () => {
         return throwError({ status: 500 });
       });
 
-      const range = timeSrv.timeRange();
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual({ status: 500 });
         expect(ds.getResource).toBeCalledTimes(1);
@@ -1900,17 +1873,17 @@ describe('ElasticDatasource using backend', () => {
     });
 
     it('should not retry more than 7 indices', async () => {
-      const { ds, timeSrv } = getTestContext({
-        from: 'now-2w',
+      const { ds } = getTestContext({
         jsonData: { interval: 'Daily' },
       });
-      const range = timeSrv.timeRange();
 
       ds.getResource = jest.fn().mockImplementation(() => {
         return throwError({ status: 404 });
       });
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+      const timeRange = createTimeRange(dateTime().subtract(2, 'week'), dateTime());
+
+      await expect(ds.getFields(undefined, timeRange)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
         expect(ds.getResource).toBeCalledTimes(7);
@@ -1919,7 +1892,6 @@ describe('ElasticDatasource using backend', () => {
 
     it('should return nested fields', async () => {
       const { ds } = getTestContext({
-        from: 'now-2w',
         jsonData: { interval: 'Daily' },
       });
 
