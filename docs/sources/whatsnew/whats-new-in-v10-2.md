@@ -137,7 +137,7 @@ _Generally available in Grafana Open Source and Enterprise_
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis, hold the shift key while clicking and dragging on supported visualizations. Double click to reset the zoom.
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis on supported visualizations, hold the Shift key while clicking and dragging; double-click to reset the zoom.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
 
@@ -168,7 +168,7 @@ _Generally available in Grafana Open Source and Enterprise_
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-We've made a number of smaller improvements to the data visualization experience in Grafana. Notable changes include:
+We've made a number of smaller improvements to the data visualization experience in Grafana.
 
 #### Geomap marker symbol alignment options
 
