@@ -9,7 +9,7 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
-import { nodeR } from './Node';
+import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
@@ -24,10 +24,13 @@ export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadi
   const cosine = (line.x2 - line.x1) / mag;
   const sine = (line.y2 - line.y1) / mag;
   return {
-    x1: line.x1 + cosine * (sourceNodeRadius + 5),
-    y1: line.y1 + sine * (sourceNodeRadius + 5),
-    x2: line.x2 - cosine * (targetNodeRadius + 3 + s - s / 10),
-    y2: line.y2 - sine * (targetNodeRadius + 3 + s - s / 10),
+    x1: line.x1 + cosine * (sourceNodeRadius + 5 + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2),
+    y1: line.y1 + sine * (sourceNodeRadius + 5 + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2),
+    x2:
+      line.x2 -
+      cosine * (targetNodeRadius + 3 + s - s / 10 + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2),
+    y2:
+      line.y2 - sine * (targetNodeRadius + 3 + s - s / 10 + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2),
   };
 }
 

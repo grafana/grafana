@@ -71,6 +71,8 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   `,
 });
 
+export const computeNodeCircumferenceStrokeWidth = (nodeRadius: number) => Math.ceil(nodeRadius * 0.075);
+
 export const Node = memo(function Node(props: {
   node: NodeDatum;
   hovering: HoverState;
@@ -83,6 +85,7 @@ export const Node = memo(function Node(props: {
   const styles = getStyles(theme, hovering);
   const isHovered = hovering === 'active';
   const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+  const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
@@ -98,7 +101,7 @@ export const Node = memo(function Node(props: {
         cy={node.y}
       />
       {isHovered && (
-        <circle className={styles.hoverCircle} r={nodeRadius - 3} cx={node.x} cy={node.y} strokeWidth={2} />
+        <circle className={styles.hoverCircle} r={nodeRadius - 3} cx={node.x} cy={node.y} strokeWidth={strokeWidth} />
       )}
       <ColorCircle node={node} />
       <g className={styles.text} style={{ pointerEvents: 'none' }}>
@@ -177,14 +180,15 @@ function ColorCircle(props: { node: NodeDatum }) {
   const fullStat = node.arcSections.find((s) => s.values[node.dataFrameRowIndex] >= 1);
   const theme = useTheme2();
   const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+  const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
 
   if (fullStat) {
-    // Doing arc with path does not work well so it's better to just do a circle in that case
+    // Drawing a full circle with a `path` tag does not work well, it's better to use a `circle` tag in that case
     return (
       <circle
         fill="none"
         stroke={theme.visualization.getColorByName(fullStat.config.color?.fixedColor || '')}
-        strokeWidth={2}
+        strokeWidth={strokeWidth}
         r={nodeRadius}
         cx={node.x}
         cy={node.y}
@@ -199,7 +203,7 @@ function ColorCircle(props: { node: NodeDatum }) {
       <circle
         fill="none"
         stroke={node.color ? getColor(node.color, node.dataFrameRowIndex, theme) : 'gray'}
-        strokeWidth={2}
+        strokeWidth={strokeWidth}
         r={nodeRadius}
         cx={node.x}
         cy={node.y}
@@ -230,7 +234,7 @@ function ColorCircle(props: { node: NodeDatum }) {
               : value
           }
           color={theme.visualization.getColorByName(color)}
-          strokeWidth={2}
+          strokeWidth={strokeWidth}
         />
       );
       acc.elements.push(el);
