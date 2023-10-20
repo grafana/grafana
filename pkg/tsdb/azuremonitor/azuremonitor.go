@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -89,7 +90,12 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		cloud, err := getAzureCloud(cfg, &azSettings.AzureClientSettings)
+		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
+		cloud, err := azcredentials.GetAzureCloud(cfg.Azure, credentials)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -97,11 +103,6 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		routesForModel, err := getAzureRoutes(cloud, settings.JSONData)
 		if err != nil {
 			return nil, err
-		}
-
-		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
-		if err != nil {
-			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
 		model := types.DatasourceInfo{
