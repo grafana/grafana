@@ -36,10 +36,8 @@ export function layout(nodes, edges) {
     mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
   }
 
-  console.time('layout');
   const dot = edgesToDOT(mappedEdges);
   const dotLayout = JSON.parse(graphviz.dot(dot, 'json0'));
-  console.timeEnd('layout');
 
   const nodesMap = dotLayout.objects.reduce((acc, obj) => {
     acc[DOTToIdMap[obj.name]] = {
@@ -66,7 +64,9 @@ export function layout(nodes, edges) {
     };
   });
 
-  return [Object.values(nodesMap).map((v) => v.datum), edges];
+  const finalNodes = Object.values(nodesMap).map((v) => v.datum);
+  centerNodes(finalNodes);
+  return [finalNodes, edgesMapped];
 }
 
 function toDOT(edges, graphAttr = '', edgeAttr = '') {
@@ -83,13 +83,14 @@ function toDOT(edges, graphAttr = '', edgeAttr = '') {
 }
 
 function edgesToDOT(edges) {
-  return toDOT(edges, '', '[ minlen=3 ]');
+  return toDOT(edges, 'rankdir="LR"; TBbalance="min"', '[ minlen=3 ]');
 }
 
 function nodesDOT(edges) {
   let dot = '';
   const visitedNodes = new Set();
-  const attr = '[fixedsize=true, width=1.2, height=1.2] \n';
+  // TODO: height/width for default sizing but nodes can have variable size now
+  const attr = '[fixedsize=true, width=1.2, height=1.7] \n';
   for (const edge of edges) {
     if (!visitedNodes.has(edge.source)) {
       dot += edge.source + attr;
@@ -99,4 +100,55 @@ function nodesDOT(edges) {
     }
   }
   return dot;
+}
+
+/**
+ * Makes sure that the center of the graph based on its bound is in 0, 0 coordinates.
+ * Modifies the nodes directly.
+ */
+function centerNodes(nodes) {
+  const bounds = graphBounds(nodes);
+  for (let node of nodes) {
+    node.x = node.x - bounds.center.x;
+    node.y = node.y - bounds.center.y;
+  }
+}
+
+/**
+ * Get bounds of the graph meaning the extent of the nodes in all directions.
+ */
+function graphBounds(nodes) {
+  if (nodes.length === 0) {
+    return { top: 0, right: 0, bottom: 0, left: 0, center: { x: 0, y: 0 } };
+  }
+
+  const bounds = nodes.reduce(
+    (acc, node) => {
+      if (node.x > acc.right) {
+        acc.right = node.x;
+      }
+      if (node.x < acc.left) {
+        acc.left = node.x;
+      }
+      if (node.y > acc.bottom) {
+        acc.bottom = node.y;
+      }
+      if (node.y < acc.top) {
+        acc.top = node.y;
+      }
+      return acc;
+    },
+    { top: Infinity, right: -Infinity, bottom: -Infinity, left: Infinity }
+  );
+
+  const y = bounds.top + (bounds.bottom - bounds.top) / 2;
+  const x = bounds.left + (bounds.right - bounds.left) / 2;
+
+  return {
+    ...bounds,
+    center: {
+      x,
+      y,
+    },
+  };
 }

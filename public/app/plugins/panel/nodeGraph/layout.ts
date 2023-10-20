@@ -85,71 +85,15 @@ export function useLayout(
       return;
     }
 
-    setLoading(true);
-    // (async () => {
-    //   if (!graphviz) {
-    //     graphviz = await Graphviz.load();
-    //   }
-    //   const mappedEdges: Array<{ source: string; target: string }> = [];
-    //   const idToDOTMap: Record<string, string> = {};
-    //   const DOTToIdMap: Record<string, string> = {};
-    //   let index = 0;
-    //   for (const edge of rawEdges) {
-    //     if (!idToDOTMap[edge.source]) {
-    //       idToDOTMap[edge.source] = index.toString(10);
-    //       DOTToIdMap[index.toString(10)] = edge.source;
-    //       index++;
-    //     }
-    //
-    //     if (!idToDOTMap[edge.target]) {
-    //       idToDOTMap[edge.target] = index.toString(10);
-    //       DOTToIdMap[index.toString(10)] = edge.target;
-    //       index++;
-    //     }
-    //     mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
-    //   }
-    //
-    //   console.time('layout');
-    //   const dot = edgesToDOT(mappedEdges);
-    //   const dotLayout = JSON.parse(graphviz.dot(dot, 'json0'));
-    //   console.timeEnd('layout');
-    //
-    //   const nodesMap: Record<string, { obj: { pos: string }; datum: NodeDatum }> = dotLayout.objects.reduce(
-    //     (acc: Record<string, { obj: { pos: string } }>, obj: { pos: string; name: string }) => {
-    //       acc[DOTToIdMap[obj.name]] = {
-    //         obj,
-    //       };
-    //       return acc;
-    //     },
-    //     {}
-    //   );
-    //
-    //   for (const node of rawNodes) {
-    //     nodesMap[node.id] = {
-    //       ...nodesMap[node.id],
-    //       datum: {
-    //         ...node,
-    //         x: parseFloat(nodesMap[node.id].obj.pos.split(',')[0]),
-    //         y: parseFloat(nodesMap[node.id].obj.pos.split(',')[1]),
-    //       },
-    //     };
-    //   }
-    //   const edges: EdgeDatumLayout[] = rawEdges.map((e) => {
-    //     return {
-    //       ...e,
-    //       source: nodesMap[e.source].datum,
-    //       target: nodesMap[e.target].datum,
-    //     };
-    //   });
-    //
-    //   setNodesGraph(Object.values(nodesMap).map((v) => v.datum));
-    //   setEdgesGraph(edges);
-    //   setLoading(false);
-    // })();
+    // DOT lyout is better but also more expensive and so we switch to default force based layout for bigger graphs.
+    // see https://docs.google.com/spreadsheets/d/1shQv9wXkYJrPmaduozUCrGEqs34w7725mNeFXbWTe14/edit#gid=0 for some
+    // comparison.
+    const layoutType = rawNodes.length > 200 ? 'default' : 'dot';
 
+    setLoading(true);
     // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
     // having callback seems ok here.
-    const cancel = defaultLayout(rawNodes, rawEdges, 'dot', ({ nodes, edges }) => {
+    const cancel = layout(rawNodes, rawEdges, layoutType, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
         setEdgesGraph(edges as EdgeDatumLayout[]);
@@ -208,7 +152,7 @@ export function useLayout(
  * Wraps the layout code in a worker as it can take long and we don't want to block the main thread.
  * Returns a cancel function to terminate the worker.
  */
-function defaultLayout(
+function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
   engine: 'default' | 'dot',
@@ -275,35 +219,3 @@ function gridLayout(
     node.y = -60 + row * spacingVertical;
   }
 }
-
-// function toDOT(edges: Array<{ source: string; target: string }>, graphAttr = '', edgeAttr = '') {
-//   let dot = `
-//   digraph G {
-//     ${graphAttr}
-//   `;
-//   for (const edge of edges) {
-//     dot += edge.source + '->' + edge.target + ' ' + edgeAttr + '\n';
-//   }
-//   dot += nodesDOT(edges);
-//   dot += '}';
-//   return dot;
-// }
-//
-// function edgesToDOT(edges: Array<{ source: string; target: string }>) {
-//   return toDOT(edges, '', '[ minlen=3 ]');
-// }
-//
-// function nodesDOT(edges: Array<{ source: string; target: string }>) {
-//   let dot = '';
-//   const visitedNodes = new Set();
-//   const attr = '[fixedsize=true, width=1.2, height=1.2] \n';
-//   for (const edge of edges) {
-//     if (!visitedNodes.has(edge.source)) {
-//       dot += edge.source + attr;
-//     }
-//     if (!visitedNodes.has(edge.target)) {
-//       dot += edge.target + attr;
-//     }
-//   }
-//   return dot;
-// }
