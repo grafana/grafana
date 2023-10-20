@@ -114,6 +114,7 @@ type FeatureFlag struct {
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
+	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
 	Enabled bool `json:"enabled,omitempty"`
 }
 
