@@ -34,7 +34,7 @@ The following diagram gives you an overview of Grafana Alerting and introduces y
 
 ### Alert rules
 
-An alert rule is a set of criteria that determine when an alert should fire. It consists of one or more queries and expressions; a condition which needs to be met; an interval which determines how often the alert rule is evaluated; and a duration over which the condition must be met for an alert to fire.
+An alert rule is a set of criteria that determine when an alert should fire. It consists of one or more queries and expressions, a condition which needs to be met, an interval which determines how often the alert rule is evaluated, and a duration over which the condition must be met for an alert to fire.
 
 Alert rules are evaluated over their interval, and each alert rule can have zero, one, or any number of alerts firing at a time. The state of the alert rule is determined by its most "severe" alert, which can be one of  Normal, Pending, or Firing. For example, if at least one of an alert rule's alerts are firing then the alert rule is also firing. The health of an alert rule is determined by the status of it's most recent evaluation. These can be OK, Error, and NoData.
 
