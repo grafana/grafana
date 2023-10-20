@@ -435,10 +435,6 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.10-alpine
   name: lint-backend
-- commands:
-  - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.20.10-alpine
-  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -1619,10 +1615,6 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.10-alpine
   name: lint-backend
-- commands:
-  - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.20.10-alpine
-  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -4597,6 +4589,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 560e3a9b25dd7cfec06be7db82cda143115dcd22e0058cac77693e0da0c4058a
+hmac: eb40700da27daf3af368dda61af2016b55500d519c03107600d5af06dba4db12
 
 ...
