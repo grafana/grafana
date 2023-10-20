@@ -21,6 +21,11 @@ type packageJson struct {
 	Version string `json:"version"`
 }
 
+type flagObj struct {
+	name  string
+	value string
+}
+
 var app = cli.NewApp()
 
 func TestGetConfig(t *testing.T) {
@@ -32,35 +37,35 @@ func TestGetConfig(t *testing.T) {
 		wantErr            bool
 	}{
 		{
-			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, "", flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
 			name:               "package.json matches tag",
 			packageJsonVersion: "10.0.0",
 			metadata:           config.Metadata{GrafanaVersion: "10.0.0", ReleaseMode: config.ReleaseMode{Mode: config.TagMode}},
 			wantErr:            false,
 		},
 		{
-			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, "", flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
 			name:               "custom tag, package.json doesn't match",
 			packageJsonVersion: "10.0.0",
 			metadata:           config.Metadata{GrafanaVersion: "10.0.0-abcd123pre", ReleaseMode: config.ReleaseMode{Mode: config.TagMode}},
 			wantErr:            false,
 		},
 		{
-			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, "", flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
 			name:               "package.json doesn't match tag",
 			packageJsonVersion: "10.1.0",
 			metadata:           config.Metadata{GrafanaVersion: "10.0.0", ReleaseMode: config.ReleaseMode{Mode: config.TagMode}},
 			wantErr:            true,
 		},
 		{
-			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, "", flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
 			name:               "test tag event, check should be skipped",
 			packageJsonVersion: "10.1.0",
 			metadata:           config.Metadata{GrafanaVersion: "10.1.0-test", ReleaseMode: config.ReleaseMode{Mode: config.TagMode, IsTest: true}},
 			wantErr:            false,
 		},
 		{
-			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, buildID, flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}, flagObj{name: buildID, value: "12345"}), nil),
 			name:               "non-tag event",
 			packageJsonVersion: "10.1.0-pre",
 			metadata:           config.Metadata{GrafanaVersion: "10.1.0-12345pre", ReleaseMode: config.ReleaseMode{Mode: config.PullRequestMode}},
@@ -85,16 +90,12 @@ func TestGetConfig(t *testing.T) {
 	}
 }
 
-func setFlags(t *testing.T, flag1, flag2, flag3 string, flagSet *flag.FlagSet) *flag.FlagSet {
+func setFlags(t *testing.T, flagSet *flag.FlagSet, flags ...flagObj) *flag.FlagSet {
 	t.Helper()
-	if flag1 != "" {
-		flagSet.StringVar(&flag1, jobs, "2", "")
-	}
-	if flag2 != "" {
-		flagSet.StringVar(&flag2, githubToken, "token", "")
-	}
-	if flag3 != "" {
-		flagSet.StringVar(&flag3, buildID, "12345", "")
+	for _, f := range flags {
+		if f.name != "" {
+			flagSet.StringVar(&f.name, f.name, f.value, "")
+		}
 	}
 	return flagSet
 }

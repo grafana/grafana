@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -10,9 +11,10 @@ import (
 )
 
 type Revision struct {
-	Timestamp int64
-	SHA256    string
-	Branch    string
+	Timestamp        int64
+	SHA256           string
+	EnterpriseCommit string
+	Branch           string
 }
 
 func GrafanaTimestamp(ctx context.Context, dir string) (int64, error) {
@@ -42,14 +44,26 @@ func GrafanaRevision(ctx context.Context, grafanaDir string) (Revision, error) {
 		return Revision{}, err
 	}
 
+	enterpriseCommit, err := executil.OutputAt(ctx, grafanaDir, "git", "-C", "../grafana-enterprise", "rev-parse", "--short", "HEAD")
+	if err != nil {
+		enterpriseCommit, err = executil.OutputAt(ctx, grafanaDir, "git", "-C", "..", "rev-parse", "--short", "HEAD")
+		if err != nil {
+			enterpriseCommit, err = executil.OutputAt(ctx, grafanaDir, "git", "-C", "/tmp/grafana-enterprise", "rev-parse", "--short", "HEAD")
+			if err != nil {
+				log.Println("Could not get enterprise commit. Error:", err)
+			}
+		}
+	}
+
 	branch, err := executil.OutputAt(ctx, grafanaDir, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return Revision{}, err
 	}
 
 	return Revision{
-		SHA256:    sha,
-		Branch:    branch,
-		Timestamp: stamp,
+		SHA256:           sha,
+		EnterpriseCommit: enterpriseCommit,
+		Branch:           branch,
+		Timestamp:        stamp,
 	}, nil
 }

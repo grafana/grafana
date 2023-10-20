@@ -6,9 +6,10 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/env"
 	"github.com/grafana/grafana/pkg/build/git"
-	"github.com/urfave/cli/v2"
 )
 
 // checkOpts are options used to create a new GitHub check for the enterprise downstream test.
