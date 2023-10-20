@@ -43,7 +43,7 @@ export type TracePageHeaderProps = {
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   showCriticalPathSpansOnly: boolean;
-  setShowCriticalPathSpansOnly: (showCriticalPathOnly: boolean) => void;
+  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;

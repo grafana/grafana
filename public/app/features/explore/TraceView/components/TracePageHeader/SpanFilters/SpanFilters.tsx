@@ -38,7 +38,7 @@ export type SpanFilterProps = {
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   showCriticalPathSpansOnly: boolean;
-  setShowCriticalPathSpansOnly: (showCriticalPathOnly: boolean) => void;
+  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
 };

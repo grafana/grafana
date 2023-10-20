@@ -105,7 +105,7 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
-  showCriticalPathOnly: boolean;
+  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
@@ -132,7 +132,7 @@ function generateRowStates(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathOnly: boolean,
+  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   if (!spans) {
@@ -142,7 +142,7 @@ function generateRowStates(
     spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
   }
 
-  if (showCriticalPathOnly && criticalPath) {
+  if (showCriticalPathSpansOnly && criticalPath) {
     spans = spans.filter((span) => criticalPath.find((section) => section.spanId === span.spanID));
   }
 
@@ -195,7 +195,7 @@ function generateRowStatesFromTrace(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathOnly: boolean,
+  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   return trace
@@ -205,7 +205,7 @@ function generateRowStatesFromTrace(
         detailStates,
         findMatchesIDs,
         showSpanFilterMatchesOnly,
-        showCriticalPathOnly,
+        showCriticalPathSpansOnly,
         criticalPath
       )
     : [];
@@ -259,7 +259,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       trace,
       findMatchesIDs,
       showSpanFilterMatchesOnly,
-      showCriticalPathOnly,
+      showCriticalPathSpansOnly,
       criticalPath,
     } = this.props;
     return memoizedGenerateRowStates(
@@ -268,7 +268,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailStates,
       findMatchesIDs,
       showSpanFilterMatchesOnly,
-      showCriticalPathOnly,
+      showCriticalPathSpansOnly,
       criticalPath
     );
   }

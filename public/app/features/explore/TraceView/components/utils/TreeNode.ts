@@ -16,11 +16,14 @@ export default class TreeNode<TValue> {
   value: TValue;
   children: Array<TreeNode<TValue>>;
 
-  static iterFunction<TValue>(fn: (value: TValue, node: TreeNode<TValue>, depth: number) => any, depth = 0) {
+  static iterFunction<TValue>(
+    fn: ((value: TValue, node: TreeNode<TValue>, depth: number) => TreeNode<TValue> | null) | Function,
+    depth = 0
+  ) {
     return (node: TreeNode<TValue>) => fn(node.value, node, depth);
   }
 
-  static searchFunction<TValue>(search: any) {
+  static searchFunction<TValue>(search: Function | TreeNode<TValue>) {
     if (typeof search === 'function') {
       return search;
     }

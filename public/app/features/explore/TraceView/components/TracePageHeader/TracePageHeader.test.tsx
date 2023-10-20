@@ -31,6 +31,8 @@ const setup = () => {
     setShowSpanFilters: jest.fn(),
     showSpanFilterMatchesOnly: false,
     setShowSpanFilterMatchesOnly: jest.fn(),
+    showCriticalPathSpansOnly: false,
+    setShowCriticalPathSpansOnly: jest.fn(),
     spanFilterMatches: undefined,
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',

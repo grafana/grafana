@@ -224,7 +224,7 @@ export function TraceView(props: Props) {
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={focusedSpanIdForSearch}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-            showCriticalPathOnly={showCriticalPathSpansOnly}
+            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
