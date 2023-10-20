@@ -15,8 +15,6 @@ interface Props {
   onMouseLeave: (id: string) => void;
 }
 
-export const scaledEdgeThickness = (e: EdgeDatum) => 10 + e.thickness * 2;
-
 export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
 
@@ -27,6 +25,7 @@ export const Edge = memo(function Edge(props: Props) {
     sourceNodeRadius: number;
     targetNodeRadius: number;
   };
+  const arrowHeadHeight = 10 + edge.thickness * 2; // resized value, just to make the UI nicer
 
   // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
@@ -38,7 +37,7 @@ export const Edge = memo(function Edge(props: Props) {
     },
     sourceNodeRadius + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2 || nodeR,
     targetNodeRadius + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2 || nodeR,
-    scaledEdgeThickness(edge)
+    arrowHeadHeight
   );
 
   const markerId = `triangle-${edge.id}`;
@@ -46,8 +45,8 @@ export const Edge = memo(function Edge(props: Props) {
 
   return (
     <>
-      <EdgeArrowMarker id={markerId} size={scaledEdgeThickness(edge)} />
-      <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} size={scaledEdgeThickness(edge)} />
+      <EdgeArrowMarker id={markerId} headHeight={arrowHeadHeight} />
+      <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} headHeight={arrowHeadHeight} />
       <g
         onClick={(event) => onClick(event, edge)}
         style={{ cursor: 'pointer' }}

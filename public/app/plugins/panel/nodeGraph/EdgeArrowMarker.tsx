@@ -7,11 +7,11 @@ import React from 'react';
 export function EdgeArrowMarker({
   id = 'triangle',
   fill = '#999',
-  size = 10,
+  headHeight = 10,
 }: {
   id?: string;
   fill?: string;
-  size?: number;
+  headHeight?: number;
 }) {
   return (
     <defs>
@@ -21,8 +21,8 @@ export function EdgeArrowMarker({
         refX="1" // shift the arrow head slightly closer to the center of the line it will be attached to, to ensure no empty space is shown between the line and the arrow head
         refY="5"
         markerUnits="userSpaceOnUse"
-        markerWidth={size}
-        markerHeight={size}
+        markerWidth={headHeight} // equal to the height just for simplicily
+        markerHeight={headHeight}
         orient="auto"
       >
         <path d="M 0 0 L 10 5 L 0 10 z" fill={fill} />

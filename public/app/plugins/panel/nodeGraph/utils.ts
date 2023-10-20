@@ -9,7 +9,7 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
-import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
+import { nodeR } from './Node';
 import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
@@ -21,20 +21,21 @@ type Line = { x1: number; y1: number; x2: number; y2: number };
  * @param line a line, where x1 and y1 are the coordinates of the source node center, and x2 and y2 are the coordinates of the target node center
  * @param sourceNodeRadius radius of the source node (possibly taking into account the thickness of the node circumference line, etc.)
  * @param targetNodeRadius radius of the target node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param arrowHeadHeight height of the arrow head (in pixels)
  */
-export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, thickness = 0): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, arrowHeadHeight = 1): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
   const cosine = (line.x2 - line.x1) / mag;
   const sine = (line.y2 - line.y1) / mag;
-  const scaledThickness = thickness - thickness / 10;
+  const scaledThickness = arrowHeadHeight - arrowHeadHeight / 10;
 
   // Reduce the line length (along its main direction) by:
   // - the radius of the source node
   // - the radius of the target node,
   // - a constant value, just to add some empty space
-  // - the thickness of the edge line, since the arrow head of an edge scales with the edge thickness
+  // - the height of the arrow head; the bigger the arrow head, the better is to add even more empty space
   return {
     x1: line.x1 + cosine * (sourceNodeRadius + 5),
     y1: line.y1 + sine * (sourceNodeRadius + 5),
