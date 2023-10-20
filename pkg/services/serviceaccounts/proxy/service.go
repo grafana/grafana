@@ -33,7 +33,7 @@ func ProvideServiceAccountsProxy(
 var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
 func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	if isExternalServiceAccount(saForm.Name) {
+	if isNameValid(saForm.Name) {
 		return nil, extsvcaccounts.ErrExtServiceAccountInvalidName
 	}
 	return s.proxiedService.CreateServiceAccount(ctx, orgID, saForm)
@@ -93,6 +93,10 @@ func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, servi
 	}
 
 	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
+}
+
+func isNameValid(name string) bool {
+	return strings.HasPrefix(name, extsvcaccounts.ExtsvcPrefix)
 }
 
 func isExternalServiceAccount(login string) bool {
