@@ -3522,6 +3522,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hpcc-js/wasm@npm:^2.14.1":
+  version: 2.14.1
+  resolution: "@hpcc-js/wasm@npm:2.14.1"
+  dependencies:
+    yargs: 17.7.2
+  bin:
+    dot-wasm: bin/dot-wasm.js
+  checksum: dd7973f8da59febc10758f9cdf77ab1206013b746e80d4dcceeab82c54ccfadecc0a473facdb91f7b9a363664dcd8b9e5c10b0bdefa949c156f382cb5d765303
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.10, @humanwhocodes/config-array@npm:^0.11.11":
   version: 0.11.11
   resolution: "@humanwhocodes/config-array@npm:0.11.11"
@@ -17765,6 +17776,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
+    "@hpcc-js/wasm": ^2.14.1
     "@kusto/monaco-kusto": ^7.4.0
     "@leeoniya/ufuzzy": 1.0.8
     "@lezer/common": 1.0.2
@@ -30795,7 +30807,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.3.1, yargs@npm:^17.4.0, yargs@npm:^17.5.1":
+"yargs@npm:17.7.2, yargs@npm:^17.3.1, yargs@npm:^17.4.0, yargs@npm:^17.5.1":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:

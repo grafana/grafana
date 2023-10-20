@@ -4,7 +4,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
 
-import { createWorker } from './createLayoutWorker';
+import { createWorker, createDOTWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
@@ -36,6 +36,8 @@ export const defaultConfig: Config = {
   tick: 300,
   gridLayout: false,
 };
+
+// let graphviz: undefined | typeof Graphviz;
 
 /**
  * This will return copy of the nods and edges with x,y positions filled in. Also the layout changes source/target props
@@ -84,10 +86,70 @@ export function useLayout(
     }
 
     setLoading(true);
+    // (async () => {
+    //   if (!graphviz) {
+    //     graphviz = await Graphviz.load();
+    //   }
+    //   const mappedEdges: Array<{ source: string; target: string }> = [];
+    //   const idToDOTMap: Record<string, string> = {};
+    //   const DOTToIdMap: Record<string, string> = {};
+    //   let index = 0;
+    //   for (const edge of rawEdges) {
+    //     if (!idToDOTMap[edge.source]) {
+    //       idToDOTMap[edge.source] = index.toString(10);
+    //       DOTToIdMap[index.toString(10)] = edge.source;
+    //       index++;
+    //     }
+    //
+    //     if (!idToDOTMap[edge.target]) {
+    //       idToDOTMap[edge.target] = index.toString(10);
+    //       DOTToIdMap[index.toString(10)] = edge.target;
+    //       index++;
+    //     }
+    //     mappedEdges.push({ source: idToDOTMap[edge.source], target: idToDOTMap[edge.target] });
+    //   }
+    //
+    //   console.time('layout');
+    //   const dot = edgesToDOT(mappedEdges);
+    //   const dotLayout = JSON.parse(graphviz.dot(dot, 'json0'));
+    //   console.timeEnd('layout');
+    //
+    //   const nodesMap: Record<string, { obj: { pos: string }; datum: NodeDatum }> = dotLayout.objects.reduce(
+    //     (acc: Record<string, { obj: { pos: string } }>, obj: { pos: string; name: string }) => {
+    //       acc[DOTToIdMap[obj.name]] = {
+    //         obj,
+    //       };
+    //       return acc;
+    //     },
+    //     {}
+    //   );
+    //
+    //   for (const node of rawNodes) {
+    //     nodesMap[node.id] = {
+    //       ...nodesMap[node.id],
+    //       datum: {
+    //         ...node,
+    //         x: parseFloat(nodesMap[node.id].obj.pos.split(',')[0]),
+    //         y: parseFloat(nodesMap[node.id].obj.pos.split(',')[1]),
+    //       },
+    //     };
+    //   }
+    //   const edges: EdgeDatumLayout[] = rawEdges.map((e) => {
+    //     return {
+    //       ...e,
+    //       source: nodesMap[e.source].datum,
+    //       target: nodesMap[e.target].datum,
+    //     };
+    //   });
+    //
+    //   setNodesGraph(Object.values(nodesMap).map((v) => v.datum));
+    //   setEdgesGraph(edges);
+    //   setLoading(false);
+    // })();
 
     // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
     // having callback seems ok here.
-    const cancel = defaultLayout(rawNodes, rawEdges, ({ nodes, edges }) => {
+    const cancel = defaultLayout(rawNodes, rawEdges, 'dot', ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
         setEdgesGraph(edges as EdgeDatumLayout[]);
@@ -149,9 +211,11 @@ export function useLayout(
 function defaultLayout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
+  engine: 'default' | 'dot',
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  const worker = createWorker();
+  const worker = engine === 'default' ? createWorker() : createDOTWorker();
+
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {
       // These stats needs to be Field class but the data is stringified over the worker boundary
@@ -211,3 +275,35 @@ function gridLayout(
     node.y = -60 + row * spacingVertical;
   }
 }
+
+// function toDOT(edges: Array<{ source: string; target: string }>, graphAttr = '', edgeAttr = '') {
+//   let dot = `
+//   digraph G {
+//     ${graphAttr}
+//   `;
+//   for (const edge of edges) {
+//     dot += edge.source + '->' + edge.target + ' ' + edgeAttr + '\n';
+//   }
+//   dot += nodesDOT(edges);
+//   dot += '}';
+//   return dot;
+// }
+//
+// function edgesToDOT(edges: Array<{ source: string; target: string }>) {
+//   return toDOT(edges, '', '[ minlen=3 ]');
+// }
+//
+// function nodesDOT(edges: Array<{ source: string; target: string }>) {
+//   let dot = '';
+//   const visitedNodes = new Set();
+//   const attr = '[fixedsize=true, width=1.2, height=1.2] \n';
+//   for (const edge of edges) {
+//     if (!visitedNodes.has(edge.source)) {
+//       dot += edge.source + attr;
+//     }
+//     if (!visitedNodes.has(edge.target)) {
+//       dot += edge.target + attr;
+//     }
+//   }
+//   return dot;
+// }

@@ -260,6 +260,7 @@
     "@grafana/scenes": "^1.18.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
+    "@hpcc-js/wasm": "^2.14.1",
     "@kusto/monaco-kusto": "^7.4.0",
     "@leeoniya/ufuzzy": "1.0.8",
     "@lezer/common": "1.0.2",
