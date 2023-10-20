@@ -6,9 +6,10 @@
   "version": "10.3.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
+    "prebuild": "yarn i18n:compile && yarn plugin:build",
+    "build": "yarn prebuild & NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
-    "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
+    "dev": "yarn prebuild & NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
@@ -55,9 +56,9 @@
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
-    "plugin:build": "lerna run build --ignore=\"@grafana/*\"",
-    "plugin:build:commit": "lerna run build:commit --ignore=\"@grafana/*\"",
-    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\""
+    "plugin:build": "lerna run build --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\"",
+    "plugin:build:commit": "lerna run build:commit --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\"",
+    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\""
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-1/",
