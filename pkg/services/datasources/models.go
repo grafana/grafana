@@ -86,6 +86,10 @@ func (th *TeamHTTPHeader) TeamHTTPHeaderValueRegexMatch() (*regexp.Regexp, error
 	return regexp.Compile(exp)
 }
 
+func (th TeamHTTPHeaders) ValidHeaders() []string {
+	return []string{"X-Prom-Label-Policy"}
+}
+
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 	return GetTeamHTTPHeaders(ds.JsonData)
 }

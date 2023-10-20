@@ -351,20 +351,28 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
 	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
-			datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
-			return errors.New("validation error, invalid format of TeamHTTPHeaders")
+			return err
 		}
-		// whitelisting X-Prom-Label-Policy
-		for _, headers := range teamHTTPHeadersJSON {
-			for _, header := range headers {
-				// TODO: currently we only allow for X-Prom-Label-Policy header to be used by our proxy
-				for _, name := range []string{"X-Prom-Label-Policy"} {
-					if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
-						datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
-						return errors.New("validation error, invalid header name specified")
-					}
+	}
+
+	return nil
+}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	// whitelisting ValidHeaders
+	for _, headers := range teamHTTPHeadersJSON {
+		for _, header := range headers {
+			for _, name := range teamHTTPHeadersJSON.ValidHeaders() {
+				if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
+					datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
+					return errors.New("validation error, invalid header name specified")
 				}
 				// Ensure header values match the expected format: "1234:{\"policy\":\"prometheus\"}"
 				if match, err := header.TeamHTTPHeaderValueRegexMatch(); match.MatchString(header.Value) {
@@ -380,7 +388,6 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 			}
 		}
 	}
-
 	return nil
 }
 
