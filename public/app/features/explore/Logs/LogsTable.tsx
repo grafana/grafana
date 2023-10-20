@@ -149,6 +149,7 @@ function getLabelFiltersTransform(labelFilters: Record<string, true>) {
       },
     };
   }
+  return null;
 }
 
 export function LogsTable(props: Props) {
