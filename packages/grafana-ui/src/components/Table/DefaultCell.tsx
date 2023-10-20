@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -27,7 +27,15 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const [hover, setHover] = useState(false);
   let value: string | ReactElement;
+
+  const onMouseLeave = () => {
+    setHover(false);
+  };
+  const onMouseEnter = () => {
+    setHover(true);
+  };
 
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
@@ -41,7 +49,7 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   return (
-    <div {...cellProps} className={cellStyle}>
+    <div {...cellProps} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={cellStyle}>
       {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
 
       {hasLinks && (
@@ -63,7 +71,7 @@ export const DefaultCell = (props: TableCellProps) => {
         </DataLinksContextMenu>
       )}
 
-      {showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
+      {showActions && <CellActions hover={hover} {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
 };

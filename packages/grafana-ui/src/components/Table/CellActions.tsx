@@ -11,6 +11,7 @@ import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
   previewMode: 'text' | 'code';
+  hover: boolean;
 }
 
 interface CommonButtonProps {
@@ -19,7 +20,7 @@ interface CommonButtonProps {
   tooltipPlacement: TooltipPlacement;
 }
 
-export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
+export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded, hover }: CellActionProps) {
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
@@ -60,10 +61,10 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
               {...commonButtonProps}
             />
           )}
-          {showFilters && (
+          {hover && showFilters && (
             <IconButton name={'search-plus'} onClick={onFilterFor} tooltip="Filter for value" {...commonButtonProps} />
           )}
-          {showFilters && (
+          {hover && showFilters && (
             <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
           )}
         </HorizontalGroup>
