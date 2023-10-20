@@ -47,9 +47,11 @@ export const DefaultCell = (props: TableCellProps) => {
     }
   }
 
-  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, value);
+  const isStringValue = typeof value === 'string';
 
-  if (typeof value === 'string') {
+  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue);
+
+  if (isStringValue) {
     if (cellProps.style?.justifyContent === 'flex-end') {
       cellProps.style!.textAlign = 'right';
     }
@@ -65,7 +67,7 @@ export const DefaultCell = (props: TableCellProps) => {
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}
     >
-      {!hasLinks && (typeof value === 'string' ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
+      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
 
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
@@ -96,7 +98,7 @@ function getCellStyle(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue,
   disableOverflowOnHover = false,
-  value: string | ReactElement,
+  isStringValue = false
 ) {
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
@@ -125,10 +127,10 @@ function getCellStyle(
   // If we have definied colors return those styles
   // Otherwise we return default styles
   if (textColor !== undefined || bgColor !== undefined) {
-    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, typeof value === 'string');
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue);
   }
 
-  if (typeof value === 'string') {
+  if (isStringValue) {
     return disableOverflowOnHover ? tableStyles.cellContainerTextNoOverflow : tableStyles.cellContainerText;
   } else {
     return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
