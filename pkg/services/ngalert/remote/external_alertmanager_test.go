@@ -1,4 +1,4 @@
-package notifier
+package remote
 
 import (
 	"context"
@@ -70,13 +70,13 @@ func TestNewExternalAlertmanager(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			cfg := externalAlertmanagerConfig{
+			cfg := ExternalAlertmanagerConfig{
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 				DefaultConfig:     test.defaultConfig,
 			}
-			am, err := newExternalAlertmanager(cfg, test.orgID)
+			am, err := NewExternalAlertmanager(cfg, test.orgID)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -105,13 +105,13 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := externalAlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := newExternalAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -185,13 +185,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := externalAlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := newExternalAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no alerts and no groups at first.
