@@ -48,6 +48,8 @@ _Generally available in Grafana Enterprise_
 
 Recorded queries provide a way to take a _static_ metric, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them easier to create and manage.
 
+<!-- TODO: add graphic or video -->
+
 ## Dashboards and visualizations
 
 ### Generative AI features for dashboards
@@ -70,7 +72,7 @@ To try it out, look for the "✨ Auto generate" option next to the Title and Des
 
 <!-- Oscar Kilhed -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 When visualizing multiple fields with a wide spread of values, calculating the min or max value of the visualization based on all fields can hide useful details.
 
@@ -90,7 +92,7 @@ This isn't only useful in the stat visualization&mdash;gauge, bar gauge, and sta
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 The new browse dashboards interface features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
 
@@ -102,7 +104,7 @@ To learn more, refer to the following video demo.
 
 ### New Canvas button element
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -115,7 +117,7 @@ TODO: Add image / gif / video
 
 ### Time series visualization now support y-axis zooming
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -128,7 +130,7 @@ TODO: Add image / gif / video
 
 ### Data visualization quality of life improvements
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -165,7 +167,7 @@ For more information, refer to the [documentation](https://grafana.com/docs/graf
 
 <!-- Miguel Palau -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
 The SAP HANA® data source now supports tenant databases connections by using the database name and/or instance number. For more information, refer to [SAP HANA® configuration](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
 
@@ -175,7 +177,7 @@ The SAP HANA® data source now supports tenant databases connections by using th
 
 <!-- Taewoo Kim -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
 The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
 
@@ -185,7 +187,7 @@ The Datadog data source now supports log aggregation. This feature helps aggrega
 
 <!-- Taewoo Kim -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
 The Datadog data source supports blocking API requests based on upstream rate limits (for metric queries). With this update, you can set a rate limit percentage at which the plugin stops sending queries.
 
@@ -197,7 +199,7 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 
 <!-- Fabrizio Casati -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 The Tempo data source now supports query-type template variables. With this update, you can create variables for which the values are a list of attribute names or attribute values seen on spans received by Tempo.
 
@@ -211,7 +213,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 <!-- Thanos Karachalios -->
 
-_Generally Available in Grafana Open Source and Enterprise_
+_Generally Available in all editions of Grafana_
 
 Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
 
@@ -223,7 +225,7 @@ Public dashboards allow you to share your visualizations and insights with a bro
 
 <!-- Thanos Karachalios -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 Introducing Content Outline in Grafana Explore. We recognized that complex mixed queries, as well as lengthy logs and traces results led to to time-consuming navigation and the loss of context. Content outline is our first step towards seamless navigation from log lines to traces and back to queries ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
 
@@ -237,7 +239,7 @@ As our work on improving the user experience of transforming data continues, we'
 
 <!-- Oscar Kilhed, Victor Marin -->
 
-_Experimental in Grafana Open Source and Enterprise_
+_Experimental in all editions of Grafana_
 
 Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
 
@@ -247,7 +249,7 @@ Previously, the only transformation that supported [dashboard variables](https:/
 
 <!-- Victor Marin -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 The **Add field from calculation** transformation has been updated.
 
@@ -269,7 +271,7 @@ Learn more in the [Add field from calculation documentation](https://grafana.com
 
 <!-- Solomon Dubock, BI Squad -->
 
-_Experimental in Grafana Open Source and Enterprise_
+_Experimental in all editions of Grafana_
 
 With the new **Format string** transformation, you can manipulate string fields to improve how they're displayed. The currently supported operations are:
 
@@ -295,7 +297,7 @@ If you have the `transformationsRedesign` feature flag set, you'll be able to ac
 
 <!-- Kyle Cunningham -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 We've added support for setting timezones manually when formatting times as strings using the **Format time** and **Convert field type** transformations. This allows times to be formatted relative to any timezone across the globe.
 
@@ -329,7 +331,7 @@ To try out **Correlations**, enable the `correlations` feature toggle.
 
 <!-- Fabrizio Casati -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceql-query-editor) has been improved to facilitate the creation of TraceQL queries. In particular, it now features improved autocompletion, syntax highlighting, and error reporting.
 
@@ -339,7 +341,7 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceq
 
 <!-- Joey Tawadrous -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
@@ -351,7 +353,7 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceq
 
 <!-- Alexander Weaver -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 We've added support for the Microsoft Teams contact points when using an external Alertmanager.
 
@@ -359,7 +361,7 @@ We've added support for the Microsoft Teams contact points when using an externa
 
 <!-- Brenda Muir -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect alerts generated by Grafana Alerting with Grafana OnCall. From there, you can route them according to defined escalation chains and schedules.
 
@@ -369,7 +371,7 @@ To learn more, refer to the [Grafana OnCall integration for Alerting documentati
 
 <!-- Yuri Tseretyan -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
 
@@ -397,7 +399,7 @@ The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3
 
 <!-- Jo Guerreiro -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 Service accounts allow you to create a token that can be used to authenticate with Grafana.
 You can use this token to access Grafana's API, as well as dashboards that the service account has access to.
@@ -411,7 +413,7 @@ This is useful if you want to limit the access service accounts have to your Gra
 
 <!-- Jo Guerreiro -->
 
-_Generally available in Grafana Enterprise_
+_Generally available in Grafana Cloud and Grafana Enterprise_
 
 Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources.
 However, without proper access controls, service accounts can pose a security risk to your Grafana instance.
@@ -430,7 +432,7 @@ This way, you can limit the potential damage that could be caused by a compromis
 
 <!-- Jo Guerreiro -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 You can now map Google groups to Grafana organizational roles when using Google OIDC.
 This is useful if you want to limit the access users have to your Grafana instance.
@@ -443,7 +445,7 @@ Refer to the [Google Authentication documentation](http://grafana.com/docs/grafa
 
 <!-- Mihaly Gyongyosi -->
 
-_Generally available in Grafana Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 With the current release, we enabled RBAC permission validation (`rbac.permission_validation_enabled` setting) by default. This means that the permissions provided in the request during custom role creation or update are validated against the list of [available permissions and their scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#action-definitions). If the request contains a permission that is not available or the scope of the permission is not valid, the request is rejected with an error message.
 
@@ -451,7 +453,7 @@ With the current release, we enabled RBAC permission validation (`rbac.permissio
 
 <!-- Eric Leijonmarck -->
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 We're excited to introduce the "No basic role," a new basic role with no permissions. A basic role in Grafana dictates the set of actions a user or entity can perform, known as permissions. This new role is especially beneficial if you're aiming for tailored, customized RBAC permissions for your service accounts or users. You can set this as a basic role through the API or UI.
 
