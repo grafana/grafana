@@ -26,6 +26,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { getState } from 'app/store/store';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
 import { config } from '../config';
@@ -52,8 +53,21 @@ export interface GetExploreUrlArguments {
   scopedVars: ScopedVars | undefined;
 }
 
-export function generateExploreId() {
-  return nanoid(3);
+/**
+ * Generate a new Explore ID that is not already in use in any other pane.
+ *
+ * @returns a new Explore ID that is not already in use.
+ */
+export function generateExploreId(): string {
+  const existingIds = Object.keys(getState().explore.panes);
+  const newId = nanoid(3);
+
+  // the id must not be only numeric to ensure it can be used as a key in the redux store and preserve its order.
+  if (existingIds.includes(newId) || /^\d+$/.test(newId)) {
+    return generateExploreId();
+  }
+
+  return newId;
 }
 
 /**
