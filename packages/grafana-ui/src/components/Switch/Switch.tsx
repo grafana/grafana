@@ -36,9 +36,10 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           }}
           id={switchIdRef.current}
           {...inputProps}
+          aria-label={label ?? 'Toggle switch'}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'} />
+        <label htmlFor={switchIdRef.current} />
       </div>
     );
   }
