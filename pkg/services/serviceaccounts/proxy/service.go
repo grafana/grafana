@@ -17,7 +17,7 @@ import (
 
 type ServiceAccountsProxy struct {
 	log            log.Logger
-	proxiedService *manager.ServiceAccountsService
+	proxiedService serviceaccounts.Service
 }
 
 func ProvideServiceAccountsProxy(
