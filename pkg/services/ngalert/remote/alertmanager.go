@@ -283,6 +283,12 @@ func (am *Alertmanager) Ready() bool {
 		return false
 	}
 
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error closing response body", "err", err)
+		}
+	}()
+
 	return res.StatusCode == http.StatusOK
 }
 

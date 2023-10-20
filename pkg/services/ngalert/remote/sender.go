@@ -21,9 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/infra/log"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
@@ -57,7 +56,7 @@ type alert struct {
 
 // Sender is responsible for forwarding alerts to a remote Alertmanager.
 type Sender struct {
-	logger  log.Logger
+	log     log.Logger
 	metrics *alertMetrics
 	opts    *options
 	timeout time.Duration
@@ -167,7 +166,7 @@ func NewSender(o *options, logger log.Logger, c postAlertsClient) *Sender {
 		cancel:  cancel,
 		more:    make(chan struct{}, 1),
 		opts:    o,
-		logger:  logger,
+		log:     logger,
 		client:  c,
 		timeout: o.timeout,
 	}
@@ -258,7 +257,7 @@ func (s *Sender) Send(alerts ...*alert) {
 	if d := len(alerts) - s.opts.queueCapacity; d > 0 {
 		alerts = alerts[d:]
 
-		level.Warn(s.logger).Log("msg", "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
+		s.log.Warn("Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
 		s.metrics.dropped.Add(float64(d))
 	}
 
@@ -267,7 +266,7 @@ func (s *Sender) Send(alerts ...*alert) {
 	if d := (len(s.queue) + len(alerts)) - s.opts.queueCapacity; d > 0 {
 		s.queue = s.queue[d:]
 
-		level.Warn(s.logger).Log("msg", "Alert notification queue full, dropping alerts", "num_dropped", d)
+		s.log.Warn("Alert notification queue full, dropping alerts", "num_dropped", d)
 		s.metrics.dropped.Add(float64(d))
 	}
 	s.queue = append(s.queue, alerts...)
@@ -320,7 +319,7 @@ func alertsPostableAlerts(alerts []*alert) models.PostableAlerts {
 
 // Stop shuts down the notification handler.
 func (s *Sender) Stop() {
-	level.Info(s.logger).Log("msg", "Stopping sender...")
+	s.log.Info("Stopping sender...")
 	s.cancel()
 }
 
