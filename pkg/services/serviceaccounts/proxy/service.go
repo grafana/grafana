@@ -34,7 +34,7 @@ var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
 func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if isExternalServiceAccount(saForm.Name) {
-		return nil, extsvcaccounts.ErrExtServiceAccountCannotBeCreated
+		return nil, extsvcaccounts.ErrExtServiceAccountInvalidName
 	}
 	return s.proxiedService.CreateServiceAccount(ctx, orgID, saForm)
 }
@@ -69,8 +69,16 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Contex
 
 func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	if isExternalServiceAccount(*saForm.Name) {
+		return nil, extsvcaccounts.ErrExtServiceAccountInvalidName
+	}
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+	if isExternalServiceAccount(sa.Login) {
 		return nil, extsvcaccounts.ErrExtServiceAccountCannotBeUpdated
 	}
+
 	return s.proxiedService.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 

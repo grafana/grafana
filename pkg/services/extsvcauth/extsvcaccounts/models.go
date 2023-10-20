@@ -15,7 +15,7 @@ const (
 
 var (
 	ErrExtServiceAccountCannotBeDeleted   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
-	ErrExtServiceAccountCannotBeCreated   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeCreated", errutil.WithPublicMessage("external service account cannot be created"))
+	ErrExtServiceAccountInvalidName       = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountInvalidName", errutil.WithPublicMessage("only external service accounts can be prefixed with 'sa-extsvc-'"))
 	ErrExtServiceAccountCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
 	ErrExtServiceAccountCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotCreateToken", errutil.WithPublicMessage("external service account cannot create token"))
 )
