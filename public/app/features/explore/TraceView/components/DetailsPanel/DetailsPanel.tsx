@@ -13,8 +13,8 @@ import LabeledList from '../common/LabeledList';
 import { TraceSpanReference } from '../types/trace';
 import { ubTxRightAlign } from '../uberUtilityStyles';
 
-import AccordianLogs from './AccordionLogs';
-import AccordianReferences from './AccordionReferences';
+import AccordianLogs from './AccordianLogs';
+import AccordianReferences from './AccordianReferences';
 import { StackTraces } from './StackTraces';
 
 type Props = {

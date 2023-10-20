@@ -15,7 +15,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Field, LinkModel } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
@@ -23,7 +23,7 @@ import { TraceSpanReference } from '../types/trace';
 import { ubMb1 } from '../uberUtilityStyles';
 import ReferenceLink from '../url/ReferenceLink';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = () => {
   return {
     AccordianKeyValues: css`
       margin-left: 10px;
