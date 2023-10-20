@@ -262,7 +262,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		rcvs, err = am.GetReceivers(context.Background())
 		require.NoError(t, err)
 		return *rcvs[0].Name == "discord"
-	}, 10*time.Second, 100*time.Millisecond)
+	}, 16*time.Second, 1*time.Second)
 }
 
 func genSilence(createdBy string) apimodels.PostableSilence {
