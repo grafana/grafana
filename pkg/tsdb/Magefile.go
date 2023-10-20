@@ -14,6 +14,9 @@ import (
 func find(dir string, name string) ([]string, error) {
 	files := []string{}
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if filepath.Base(path) == name {
 			files = append(files, path)
 		}
@@ -34,7 +37,7 @@ func findPluginJSONDir(pluginDir string) (string, error) {
 	pluginJSONPath := ""
 	for _, pluginJSONMatch := range pluginJSONMatches {
 		// Ignore dist folder
-		if !strings.Contains(pluginJSONMatch, "dist") {
+		if filepath.Base(filepath.Dir(pluginJSONMatch)) != "dist" {
 			pluginJSONPath = pluginJSONMatch
 		}
 	}
@@ -90,11 +93,15 @@ func BuildAllPlugins() error {
 	// Plugins need to have a main.go file
 	matches, err := find(".", "main.go")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for _, match := range matches {
 		// Get the directory name of the plugin
-		pluginDir := strings.Split(match, fmt.Sprintf("%c", os.PathSeparator))[0]
+		parts := strings.Split(filepath.ToSlash(match), "/")
+		if len(parts) == 0 {
+			continue
+		}
+		pluginDir := parts[0]
 		rootDir, err := findRootDir(pluginDir)
 		if err != nil {
 			return err
