@@ -132,7 +132,7 @@ _Generally available in Grafana Open Source and Enterprise_
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-We've made a number of smaller improvements to the data visualization experience in Grafana. Notable changes include:
+We've made a number of smaller improvements to the data visualization experience in Grafana.
 
 #### Geomap marker symbol alignment options
 
