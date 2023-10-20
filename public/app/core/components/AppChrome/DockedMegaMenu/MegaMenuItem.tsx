@@ -51,6 +51,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={sectionExpanded ? 'angle-down' : 'angle-right'}
               size="md"
+              variant="secondary"
             />
           )}
         </div>
@@ -138,7 +139,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   collapseButton: css({
-    color: theme.colors.text.disabled,
     margin: 0,
   }),
   collapsibleSectionWrapper: css({
