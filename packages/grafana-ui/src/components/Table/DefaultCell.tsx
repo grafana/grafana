@@ -53,10 +53,9 @@ export const DefaultCell = (props: TableCellProps) => {
       {...cellProps}
       onMouseEnter={showActions ? onMouseEnter : undefined}
       onMouseLeave={showActions ? onMouseLeave : undefined}
-      className={cellStyle}
+      className={cx(cellStyle, tableStyles.cellText)}
     >
-      {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
-
+      {!hasLinks && `${value}`}
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
@@ -75,7 +74,6 @@ export const DefaultCell = (props: TableCellProps) => {
           }}
         </DataLinksContextMenu>
       )}
-
       {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
