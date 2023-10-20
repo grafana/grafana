@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -63,7 +64,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := getHeuristicsMockProvider(&rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{
@@ -83,7 +84,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := getHeuristicsMockProvider(&rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{

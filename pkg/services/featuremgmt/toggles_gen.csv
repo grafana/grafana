@@ -120,6 +120,7 @@ enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,
 formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
+cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
 teamHttpHeaders,experimental,@grafana/grafana-authnz-team,false,false,false,false
@@ -129,3 +130,4 @@ panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,fal
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
 costManagementUi,experimental,@grafana/databases-frontend,false,false,false,false
 managedPluginsInstall,experimental,@grafana/plugins-platform-backend,false,false,false,false
+prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,false,true
