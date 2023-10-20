@@ -195,7 +195,7 @@ describe('SharePublic - New config setup', () => {
   it('renders when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard();
 
-    await screen.findByText('Welcome to public dashboards public preview!');
+    await screen.findByText('Welcome to public dashboards!');
     expect(screen.getByText('Generate public URL')).toBeInTheDocument();
 
     expect(screen.queryByTestId(selectors.WillBePublicCheckbox)).toBeInTheDocument();

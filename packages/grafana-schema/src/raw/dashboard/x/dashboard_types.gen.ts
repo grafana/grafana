@@ -78,6 +78,10 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
  */
 export interface AnnotationQuery {
   /**
+   * Set to 1 for the standard annotation query all dashboards have by default.
+   */
+  builtIn?: number;
+  /**
    * Datasource where the annotations data is
    */
   datasource: DataSourceRef;
@@ -113,6 +117,7 @@ export interface AnnotationQuery {
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+  builtIn: 0,
   enable: true,
   hide: false,
 };
@@ -644,7 +649,7 @@ export interface Panel {
   /**
    * Field options allow you to change how the data is displayed in your visualizations.
    */
-  fieldConfig: FieldConfigSource;
+  fieldConfig?: FieldConfigSource;
   /**
    * Grid position.
    */
@@ -684,7 +689,7 @@ export interface Panel {
   /**
    * It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
    */
-  options: Record<string, unknown>;
+  options?: Record<string, unknown>;
   /**
    * The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
    */
@@ -733,11 +738,11 @@ export interface Panel {
    * When there are multiple transformations, Grafana applies them in the order they are listed.
    * Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
    */
-  transformations: Array<DataTransformerConfig>;
+  transformations?: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
-  transparent: boolean;
+  transparent?: boolean;
   /**
    * The panel plugin type id. This is used to find the plugin to display the panel.
    */
@@ -991,7 +996,7 @@ export interface Dashboard {
   /**
    * Whether a dashboard is editable or not.
    */
-  editable: boolean;
+  editable?: boolean;
   /**
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
@@ -1004,7 +1009,7 @@ export interface Dashboard {
    * Configuration of dashboard cursor sync behavior.
    * Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
    */
-  graphTooltip: DashboardCursorSync;
+  graphTooltip?: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.

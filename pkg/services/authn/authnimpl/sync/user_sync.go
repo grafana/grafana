@@ -91,7 +91,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
 			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errSyncUserInternal.Errorf("unable to create user")
+			return errSyncUserInternal.Errorf("unable to create user: %w", errCreate)
 		}
 	} else {
 		// update user
@@ -394,4 +394,5 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	identity.AuthenticatedBy = usr.AuthenticatedBy
 }
