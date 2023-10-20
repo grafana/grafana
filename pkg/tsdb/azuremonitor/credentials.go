@@ -45,30 +45,6 @@ func getAuthType(cfg *setting.Cfg, jsonData *types.AzureClientSettings) string {
 	}
 }
 
-func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
-	// Allow only known cloud names
-	cloudName := ""
-	if cfg != nil && cfg.Azure != nil {
-		cloudName = cfg.Azure.Cloud
-	}
-	switch cloudName {
-	case azsettings.AzurePublic:
-		return azsettings.AzurePublic, nil
-	case azsettings.AzureChina:
-		return azsettings.AzureChina, nil
-	case azsettings.AzureUSGovernment:
-		return azsettings.AzureUSGovernment, nil
-	case azsettings.AzureCustomized:
-		return azsettings.AzureCustomized, nil
-	case "":
-		// Not set cloud defaults to public
-		return azsettings.AzurePublic, nil
-	default:
-		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
-		return "", err
-	}
-}
-
 func normalizeAzureCloud(cloudName string) (string, error) {
 	switch cloudName {
 	case azureMonitorPublic:
@@ -90,12 +66,12 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *types.AzureClientSettings) (strin
 	switch authType {
 	case azcredentials.AzureAuthManagedIdentity, azcredentials.AzureAuthWorkloadIdentity:
 		// In case of managed identity and workload identity, the cloud is always same as where Grafana is hosted
-		return getDefaultAzureCloud(cfg)
+		return cfg.Azure.GetDefaultCloud(), nil
 	case azcredentials.AzureAuthClientSecret:
 		if cloud := jsonData.CloudName; cloud != "" {
 			return normalizeAzureCloud(cloud)
 		} else {
-			return getDefaultAzureCloud(cfg)
+			return cfg.Azure.GetDefaultCloud(), nil
 		}
 	default:
 		err := fmt.Errorf("the authentication type '%s' not supported", authType)
