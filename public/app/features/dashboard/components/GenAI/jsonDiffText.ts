@@ -231,7 +231,7 @@ export function removeEmptyFields(input: JSONValue): JSONValue {
 }
 
 function jsonSanitize(obj: Dashboard | DashboardModel | null) {
-  return JSON.parse(JSON.stringify(removeEmptyFields(obj), null, 2));
+  return JSON.parse(JSON.stringify(obj, null, 2));
 }
 
 export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDiff: string; userDiff: string } {
