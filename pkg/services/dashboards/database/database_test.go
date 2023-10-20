@@ -799,6 +799,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+			require.NoError(t, err)
 			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 				SignedInUser: user,
 				Type:         tc.typ,
@@ -821,7 +822,6 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestIntegrationFindDashboardsByFolder(t *testing.T) {
@@ -1042,6 +1042,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		for featureFlags := range tc.expectedResult {
 			t.Run(fmt.Sprintf("%s with featureFlags: %v", tc.desc, featureFlags), func(t *testing.T) {
 				dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featureFlags), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+				require.NoError(t, err)
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
 					Type:         tc.typ,
