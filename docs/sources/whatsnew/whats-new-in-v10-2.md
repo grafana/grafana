@@ -46,7 +46,7 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 
 _Generally available in Grafana Enterprise_
 
-With recorded queries, a single recorded query can now record multiple metrics.
+Recorded queries provide a way to take a _static_ metric, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them easier to create and manage.
 
 ## Dashboards and visualizations
 
