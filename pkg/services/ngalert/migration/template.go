@@ -35,7 +35,7 @@ func (t Token) String() string {
 	} else if t.IsVariable() {
 		return t.Variable
 	} else {
-		panic("empty token")
+		return ""
 	}
 }
 
@@ -108,7 +108,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 	)
 
 	if !startVariable(in) {
-		panic("tokenizeVariable called with input that doesn't start with delimiter")
+		return Token{}, pos, fmt.Errorf("expected variable")
 	}
 	pos += 2 // seek past opening delimiter
 
@@ -139,7 +139,12 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		return Token{}, pos, fmt.Errorf("expected '}', got '%c'", r)
 	}
 
-	return Token{Variable: string(runes)}, pos, nil
+	token := Token{Variable: string(runes)}
+	if !token.IsVariable() {
+		return Token{}, pos, fmt.Errorf("empty variable")
+	}
+
+	return token, pos, nil
 }
 
 func startVariable(in []rune) bool {

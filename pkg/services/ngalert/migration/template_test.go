@@ -303,6 +303,12 @@ func TestMigrateTmpl(t *testing.T) {
 			expected: withDeduplicateMap("{{$mergedLabels.instance}}{{` is down ${`}}{{$mergedLabels.nestedVar}}}"),
 			vars:     true,
 		},
+		{
+			name:     "edge cases",
+			input:    "Test test 123 \n$(metric)\n${.}\n${}\n${Condition[0]}",
+			expected: withDeduplicateMap("Test test 123 \n$(metric)\n{{index $mergedLabels \".\"}}\n${}\n{{index $mergedLabels \"Condition[0]\"}}"),
+			vars:     true,
+		},
 	}
 
 	for _, tc := range cases {
