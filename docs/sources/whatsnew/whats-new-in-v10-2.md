@@ -50,10 +50,10 @@ Public dashboards allow you to share your visualizations and insights with a bro
 
 {{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
-
 ## Navigate lengthy, mixed data in Explore with Content Outline
 
 <!-- Thanos Karachalios -->
+
 _Generally available in all editions of Grafana_
 
 Introducing Content Outline in Grafana Explore. It's easy to lose track of your place when you're running complex mixed queries or switching between logs and traces. Content outline is our first step towards seamless navigation from log lines to traces and back to queries, ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
@@ -87,6 +87,7 @@ In previous versions of Grafana, if a data source was provisioned, the only way 
 To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
 
 ## Dashboards and visualizations
+
 ### Use AI to generate titles, descriptions, and change summaries
 
 _Available in public preview in Grafana Open Source and Enterprise_
@@ -99,9 +100,11 @@ You can now use generative AI to assist you in your Grafana dashboards. So far g
 - **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
 
-To try it out, look for the "✨ Auto generate" option next to the Title and Description settings for your dashboard, or when you press the "Save" button.
+To enable these features, you must first enable the `dashgpt` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
 
-{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="300px" caption="Auto-generate a panel description using AI" >}}
+When enabled look for the "✨ Auto generate" option next to the Title and Description settings in your panels and dashboards, or when you press the "Save" button.
+
+{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
 
 ### Find your dashboard faster with the new Dashboard Browse screen
 
@@ -411,7 +414,7 @@ Learn more in our [dashboard and folder permissions documentation](https://grafa
 
 _Generally available in Grafana Cloud and Grafana Enterprise_
 
-Grafana 10.2 also introduces the ability to assign *data source* permissions to service accounts, for Grafana CLoud and Enterprise users.
+Grafana 10.2 also introduces the ability to assign _data source_ permissions to service accounts, for Grafana CLoud and Enterprise users.
 With this feature, you can create a service account that has access to a specific data source and nothing else.
 This is useful in scenarios where you want to limit the access service accounts have to your Grafana instance.
 
