@@ -28,6 +28,10 @@ func generateQuery(query models.Query) *models.Query {
 	if query.RawQuery == "" {
 		query.RawQuery = "Test raw query"
 	}
+
+	if query.ResultFormat == "" {
+		query.ResultFormat = "time_series"
+	}
 	return &query
 }
 
@@ -82,7 +86,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			floatField,
 		)
-		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		floatFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		string_test := "/usr/path"
 		stringField := data.NewField("Value", labels, []*string{
@@ -98,7 +102,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
-		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		bool_true := true
 		bool_false := false
@@ -115,7 +119,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		boolFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -265,7 +269,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -310,7 +314,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -359,7 +363,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -586,7 +590,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
@@ -736,7 +740,7 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
@@ -764,7 +768,7 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
