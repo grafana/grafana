@@ -44,6 +44,10 @@ def lint_backend_pipeline(trigger, ver_mode):
 
     test_steps = [
         lint_backend_step(),
+        # modowners doesn't exist for versions below 10.1.x.
+        # validate_modfile_step(),
+        # OpenAPI spec validation is disabled for versions below 10.2.x.
+        # validate_openapi_spec_step(),
     ]
 
     if ver_mode == "main":
