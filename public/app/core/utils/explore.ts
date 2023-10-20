@@ -72,20 +72,36 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
   if (exploreDatasource) {
     let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange.raw) };
-    if (exploreDatasource.interpolateVariablesInQueries) {
-      state = {
-        ...state,
-        datasource: exploreDatasource.uid,
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars ?? {}),
-      };
+    if (!exploreDatasource.meta.mixed) {
+      if (exploreDatasource.interpolateVariablesInQueries) {
+        state = {
+          ...state,
+          datasource: exploreDatasource.uid,
+          queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars ?? {}),
+        };
+      } else {
+        state = {
+          ...state,
+          datasource: exploreDatasource.uid,
+          queries: exploreTargets,
+        };
+      }
     } else {
+      let queriesClone = [...queries];
+      await queries.forEach(async (query, i) => {
+        let queryDatasource = await getDataSourceSrv().get(query.datasource);
+        if (queryDatasource.interpolateVariablesInQueries) {
+          queriesClone[i] = queryDatasource.interpolateVariablesInQueries([exploreTargets[i]], scopedVars ?? {})[0];
+        } else {
+          queriesClone[i] = exploreTargets[i];
+        }
+      });
       state = {
         ...state,
         datasource: exploreDatasource.uid,
-        queries: exploreTargets,
+        queries: queriesClone,
       };
     }
-
     const exploreState = JSON.stringify({ [generateExploreId()]: state });
     url = urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
   }
