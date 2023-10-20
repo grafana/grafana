@@ -22,24 +22,11 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'Respond with only the description of the dashboard.';
 
 export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {
-  function getMessages(dashboard: DashboardModel): Message[] {
-    const panelPrompt = getDashboardPanelPrompt(dashboard);
-
-    return [
-      {
-        content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
-        role: Role.system,
-      },
-      {
-        content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
-        role: Role.system,
-      },
-    ];
-  }
+  const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
 
   return (
     <GenAIButton
-      messages={getMessages(dashboard)}
+      messages={messages}
       onGenerate={onGenerate}
       loadingText={'Generating description'}
       eventTrackingSrc={EventTrackingSrc.dashboardDescription}
@@ -47,3 +34,18 @@ export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashD
     />
   );
 };
+
+function getMessages(dashboard: DashboardModel): Message[] {
+  const panelPrompt = getDashboardPanelPrompt(dashboard);
+
+  return [
+    {
+      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+      role: Role.system,
+    },
+    {
+      content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
+      role: Role.system,
+    },
+  ];
+}

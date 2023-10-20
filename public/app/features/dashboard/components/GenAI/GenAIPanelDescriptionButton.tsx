@@ -12,7 +12,7 @@ interface GenAIPanelDescriptionButtonProps {
   panel: PanelModel;
 }
 
-const PANEL_DESCRIPTION_CHAR_LIMIT = 250;
+const PANEL_DESCRIPTION_CHAR_LIMIT = 200;
 
 const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Panels.\n' +
@@ -24,11 +24,32 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
-  const messages = React.useMemo(() => getMessages(panel), [panel]);
+  function getMessages(panel: PanelModel): Message[] {
+    const dashboard = getDashboardSrv().getCurrent()!;
+
+    return [
+      {
+        content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+        role: Role.system,
+      },
+      {
+        content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
+        role: Role.system,
+      },
+      {
+        content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
+        role: Role.system,
+      },
+      {
+        content: `This is the JSON which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+        role: Role.user,
+      },
+    ];
+  }
 
   return (
     <GenAIButton
-      messages={messages}
+      messages={getMessages(panel)}
       onGenerate={onGenerate}
       loadingText={'Generating description'}
       eventTrackingSrc={EventTrackingSrc.panelDescription}
@@ -36,26 +57,3 @@ export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDes
     />
   );
 };
-
-function getMessages(panel: PanelModel): Message[] {
-  const dashboard = getDashboardSrv().getCurrent()!;
-
-  return [
-    {
-      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
-      role: Role.system,
-    },
-    {
-      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-      role: Role.system,
-    },
-    {
-      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
-      role: Role.system,
-    },
-    {
-      content: `This is the JSON which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
-      role: Role.user,
-    },
-  ];
-}
