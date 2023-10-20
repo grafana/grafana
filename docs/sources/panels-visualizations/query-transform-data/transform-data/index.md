@@ -9,7 +9,7 @@ comments: |
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
-  Refer to ./docs/README.md "Content guidelines" for more information about building these docs.
+  Refer to ./docs/README.md "Content guidelines" for more information about editing and building these docs.
 
 aliases:
   - ../../panels/reference-transformation-functions/
@@ -64,13 +64,13 @@ The order in which Grafana applies transformations directly impacts the results.
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions](#transformation-functions).
 
 1. Navigate to the panel where you want to add one or more transformations.
-2. Hover over any part of the panel to display the actions menu on the top right corner.
-3. Click the menu and select **Edit**.
-4. Click the **Transform** tab.
-5. Click a transformation.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Click the **Transform** tab.
+1. Click a transformation.
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions](#transformation-functions).
    For information about available calculations, refer to [Calculation types][].
-6. To apply another transformation, click **Add transformation**.
+1. To apply another transformation, click **Add transformation**.
    This transformation acts on the result set returned by the previous transformation.
    {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
@@ -128,7 +128,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-In the example below, I added two fields together and named them Sum.
+In the example below, we added two fields together and named them Sum.
 
 {{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
@@ -341,7 +341,7 @@ Grafana displays the query identification letters in dark gray text. Click a que
 
 > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
 
-In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
+In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
 
 {{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
@@ -421,13 +421,13 @@ You can apply filters in one of two ways:
 - Enter a regex expression.
 - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
 
-In the example below, I removed the Min field from the results.
+In the example below, we removed the Min field from the results.
 
 Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
 
 {{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-Here is the table after I applied the transformation to remove the Min field.
+Here's the table after we applied the transformation to remove the Min field.
 
 {{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
