@@ -176,9 +176,8 @@ func (ng *AlertNG) init() error {
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			r := multiOrgMetrics.GetOrCreateOrgRegistry(orgID)
 			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID, r)
+			return remote.NewAlertmanager(externalAMCfg, orgID)
 		})
 
 		overrides = append(overrides, override)

@@ -21,7 +21,6 @@ import (
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -47,7 +46,7 @@ type AlertmanagerConfig struct {
 	DefaultConfig     string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, r prometheus.Registerer) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
@@ -79,7 +78,6 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, r prometheus.Registere
 	manager := NewSender(
 		&options{
 			queueCapacity: defaultMaxQueueCapacity,
-			registerer:    r,
 			timeout:       defaultTimeout,
 		},
 		logger,

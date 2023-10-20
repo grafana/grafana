@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +53,7 @@ func TestSanitizeLabelName(t *testing.T) {
 				URL:           "http://test",
 				DefaultConfig: validConfig,
 			}
-			am, err := NewAlertmanager(cfg, 1, prometheus.NewRegistry())
+			am, err := NewAlertmanager(cfg, 1)
 			require.NoError(t, err)
 			res, err := am.sanitizeLabelName(tc.labelName)
 
@@ -106,7 +105,7 @@ func TestSanitizeLabelSet(t *testing.T) {
 				URL:           "http://test",
 				DefaultConfig: validConfig,
 			}
-			am, err := NewAlertmanager(cfg, 1, prometheus.NewRegistry())
+			am, err := NewAlertmanager(cfg, 1)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedResult, am.sanitizeLabelSet(tc.labelset))
 		})
