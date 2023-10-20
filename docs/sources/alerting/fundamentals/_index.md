@@ -58,7 +58,7 @@ Notification policies group alerts and then route them to contact points. They d
 
 Alerts are matched to notification policies using label matchers. These are human-readable expressions that assert if the alert's labels exactly match, do not exactly match, contain, or do not contain some expected text. For example, the matcher `foo=bar` matches alerts with the label `foo=bar` while the matcher `foo=~[a-zA-Z]+` matches alerts with any label called foo with a value that matches the regular expression `[a-zA-Z]+`.
 
-By default, an alert can only match one notification policy. However, with the continue feature alerts can be made to match any number of notification policies at the same time. For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
+By default, an alert can only match one notification policy. However, with the `continue` feature alerts can be made to match any number of notification policies at the same time. For more information on notification policies, see [fundamentals of Notification Policies][notification-policies].
 
 ### Silences and mute timings
 
