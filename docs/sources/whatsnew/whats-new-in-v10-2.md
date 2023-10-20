@@ -50,10 +50,10 @@ Public dashboards allow you to share your visualizations and insights with a bro
 
 {{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
 
-## Explore lengthy, mixed data faster with Content Outline
+
+## Navigate lengthy, mixed data faster with Content Outline in Explore
 
 <!-- Thanos Karachalios -->
-
 _Generally available in all editions of Grafana_
 
 Introducing Content Outline in Grafana Explore. It's easy to lose track of your place when you're running complex mixed queries or switching between logs and traces. Content outline is our first step towards seamless navigation from log lines to traces and back to queries, ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
@@ -62,13 +62,13 @@ Introducing Content Outline in Grafana Explore. It's easy to lose track of your 
 
 ## Correlations
 
+Grafana Correlations is a new Public Preview feature you can use to establish links from any data source query to any other, carrying forward data like namespace, host, or label values. This is extremely powerful for performing root cause analysis with a diverse set of data sources. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+
 ### Create Correlations the easy way in Grafana Explore
 
 <!-- Kristina Durivage -->
 
 _Available in public preview in Grafana Open Source and Enterprise_
-
-Grafana Correlations is a new feature you can use to establish links from any data source query to any other, carrying forward data like namespace, host, or label values. This is extremely powerful for performing root cause analysis with a diverse set of data sources.
 
 Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
@@ -82,7 +82,7 @@ To try out **Correlations**, enable the `correlations` [feature toggle](https://
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
-You can now create correlations using either the **Administration** page or provisioning, regardless of whether a data source was provisioned or not. In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning.
+In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
 To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
 
@@ -241,7 +241,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 _Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
-The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number. For more information, refer to our [SAP HANA® configuration dcumentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
+The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number, which are less likely to change than the port for your database. For more information, refer to our [SAP HANA® configuration documentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
 
 {{< video-embed src="/media/docs/sap-hana/tenant.mp4" >}}
 
