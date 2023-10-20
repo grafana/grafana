@@ -17,7 +17,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import { StackTraces } from './StackTraces';
 
-type Props = {
+export type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
   width: number;
@@ -69,43 +69,6 @@ export function DetailsPanel(props: Props) {
 
   const tabs = [TabLabels.Attributes];
   const tabsCounters: Record<string, number> = {};
-  warnings = ['Testing the warning', 'And here is another', 'Two more', 'Last one!'];
-  stackTraces = ['Testing the stack traces', 'And here is another', 'Two more', 'Last one!'];
-  references = [
-    {
-      refType: 'CHILD_OF',
-      span: {
-        spanID: 'span1',
-        traceID: 'trace1',
-        operationName: 'op1',
-        process: {
-          serviceName: 'service1',
-          tags: [{ key: 'tag1', value: 'value1' }],
-        },
-      } as unknown as TraceSpan,
-      spanID: 'span1',
-      traceID: 'trace1',
-    },
-    {
-      refType: 'CHILD_OF',
-      span: {
-        spanID: 'span3',
-        traceID: 'trace1',
-        operationName: 'op2',
-        process: {
-          serviceName: 'service2',
-          tags: [],
-        },
-      } as unknown as TraceSpan,
-      spanID: 'span3',
-      traceID: 'trace1',
-    },
-    {
-      refType: 'CHILD_OF',
-      spanID: 'span5',
-      traceID: 'trace2',
-    },
-  ];
 
   if (logs && logs.length > 0) {
     tabs.push(TabLabels.Events);
