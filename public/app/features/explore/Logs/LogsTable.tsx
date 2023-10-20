@@ -51,7 +51,7 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
   return true;
 };
 
-export const LogsTable: React.FunctionComponent<Props> = (props) => {
+export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
@@ -103,9 +103,9 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
 
       return frameWithOverrides;
     },
-    // We dont want to re-render whenever the splitOpen function changes, so it's being purposefully excluded from the deps
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [logsSortOrder, timeZone, props.datasourceType, range]
+    [splitOpen, logsSortOrder, timeZone, range]
   );
 
   /**
@@ -256,4 +256,4 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
   );
-};
+}

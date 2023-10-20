@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   DataFrame,
@@ -39,15 +39,13 @@ export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean |
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
-export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
+export function LogsTableWrap(props: Props) {
   const { logsFrames } = props;
   // Save the normalized cardinality of each label
-  const [columnsWithMeta, setColumnsWithMeta] = React.useState<fieldNameMetaStore | undefined>(undefined);
+  const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   // Filtered copy of columnsWithMeta that only includes matching results
-  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = React.useState<fieldNameMetaStore | undefined>(
-    undefined
-  );
+  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const dataFrame = logsFrames[0];
 
@@ -245,7 +243,7 @@ export const LogsTableWrap: React.FunctionComponent<Props> = (props) => {
       />
     </div>
   );
-};
+}
 
 const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
   const largestFrameLength = dataFrames?.reduce((length, frame) => {
