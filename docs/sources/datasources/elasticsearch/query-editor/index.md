@@ -81,7 +81,7 @@ Metrics queries aggregate data and produce a variety of calculations such as cou
   - min - see [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-min-aggregation.html)
   - extended stats - see [Extended stats aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html)
   - percentiles - see [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-percentile-aggregation.html)
-  - unique count - see [Cardinlaity aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-cardinality-aggregation.html)
+  - unique count - see [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-cardinality-aggregation.html)
   - top metrics - see [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-top-metrics.html)
   - rate - see [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
 
