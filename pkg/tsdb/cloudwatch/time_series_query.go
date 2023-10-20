@@ -56,56 +56,64 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
-	for r, q := range requestQueriesByRegion {
-		requestQueries := q
+	for r, regionQueries := range requestQueriesByRegion {
 		region := r
-		eg.Go(func() error {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
-					if theErr, ok := err.(error); ok {
-						resultChan <- &responseWrapper{
-							DataResponse: &backend.DataResponse{
-								Error: theErr,
-							},
+
+		batches := [][]*models.CloudWatchQuery{regionQueries}
+		if e.features.IsEnabled(featuremgmt.FlagCloudWatchBatchQueries) {
+			batches = getMetricQueryBatches(regionQueries, logger)
+		}
+
+		for _, batch := range batches {
+			requestQueries := batch
+			eg.Go(func() error {
+				defer func() {
+					if err := recover(); err != nil {
+						logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+						if theErr, ok := err.(error); ok {
+							resultChan <- &responseWrapper{
+								DataResponse: &backend.DataResponse{
+									Error: theErr,
+								},
+							}
 						}
 					}
-				}
-			}()
+				}()
 
-			client, err := e.getCWClient(ctx, req.PluginContext, region)
-			if err != nil {
-				return err
-			}
-
-			metricDataInput, err := e.buildMetricDataInput(logger, startTime, endTime, requestQueries)
-			if err != nil {
-				return err
-			}
-
-			mdo, err := e.executeRequest(ectx, client, metricDataInput)
-			if err != nil {
-				return err
-			}
-
-			if e.features.IsEnabled(featuremgmt.FlagCloudWatchWildCardDimensionValues) {
-				requestQueries, err = e.getDimensionValuesForWildcards(req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
+				client, err := e.getCWClient(ctx, req.PluginContext, region)
 				if err != nil {
 					return err
 				}
-			}
 
-			res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
-			if err != nil {
-				return err
-			}
+				metricDataInput, err := e.buildMetricDataInput(logger, startTime, endTime, requestQueries)
+				if err != nil {
+					return err
+				}
 
-			for _, responseWrapper := range res {
-				resultChan <- responseWrapper
-			}
+				mdo, err := e.executeRequest(ectx, client, metricDataInput)
+				if err != nil {
+					return err
+				}
 
-			return nil
-		})
+				if e.features.IsEnabled(featuremgmt.FlagCloudWatchWildCardDimensionValues) {
+					requestQueries, err = e.getDimensionValuesForWildcards(req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
+					if err != nil {
+						return err
+					}
+				}
+
+				res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
+				if err != nil {
+					return err
+				}
+
+				for _, responseWrapper := range res {
+					resultChan <- responseWrapper
+				}
+
+				return nil
+			})
+		}
 	}
 
 	if err := eg.Wait(); err != nil {
