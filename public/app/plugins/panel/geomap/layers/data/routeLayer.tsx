@@ -287,8 +287,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         crosshairFeature.setStyle(new Style({}));
-        hLineFeature.setStyle(new Style({}));
-        vLineFeature.setStyle(new Style({}));
+        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
       })
     );
 
