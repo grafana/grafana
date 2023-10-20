@@ -16,21 +16,30 @@ type Line = { x1: number; y1: number; x2: number; y2: number };
 
 /**
  * Makes line shorter while keeping its middle in the same place.
+ * This is manly used to add some empty space between an edge line and its source and target nodes, to make it nicer.
+ *
+ * @param line a line, where x1 and y1 are the coordinates of the source node center, and x2 and y2 are the coordinates of the target node center
+ * @param sourceNodeRadius radius of the source node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param targetNodeRadius radius of the target node (possibly taking into account the thickness of the node circumference line, etc.)
  */
-export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, s = 0): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, thickness = 0): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
   const cosine = (line.x2 - line.x1) / mag;
   const sine = (line.y2 - line.y1) / mag;
+  const scaledThickness = thickness - thickness / 10;
+
+  // Reduce the line length (along its main direction) by:
+  // - the radius of the source node
+  // - the radius of the target node,
+  // - a constant value, just to add some empty space
+  // - the thickness of the edge line, since the arrow head of an edge scales with the edge thickness
   return {
-    x1: line.x1 + cosine * (sourceNodeRadius + 5 + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2),
-    y1: line.y1 + sine * (sourceNodeRadius + 5 + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2),
-    x2:
-      line.x2 -
-      cosine * (targetNodeRadius + 3 + s - s / 10 + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2),
-    y2:
-      line.y2 - sine * (targetNodeRadius + 3 + s - s / 10 + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2),
+    x1: line.x1 + cosine * (sourceNodeRadius + 5),
+    y1: line.y1 + sine * (sourceNodeRadius + 5),
+    x2: line.x2 - cosine * (targetNodeRadius + 3 + scaledThickness),
+    y2: line.y2 - sine * (targetNodeRadius + 3 + scaledThickness),
   };
 }
 

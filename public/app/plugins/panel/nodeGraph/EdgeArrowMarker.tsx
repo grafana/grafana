@@ -18,7 +18,7 @@ export function EdgeArrowMarker({
       <marker
         id={id}
         viewBox="0 0 10 10"
-        refX="1"
+        refX="1" // shift the arrow head slightly closer to the center of the line it will be attached to, to ensure no empty space is shown between the line and the arrow head
         refY="5"
         markerUnits="userSpaceOnUse"
         markerWidth={size}

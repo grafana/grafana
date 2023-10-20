@@ -1,7 +1,7 @@
 import React, { MouseEvent, memo } from 'react';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
-import { nodeR } from './Node';
+import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
@@ -36,8 +36,8 @@ export const Edge = memo(function Edge(props: Props) {
       x2: target.x!,
       y2: target.y!,
     },
-    sourceNodeRadius || nodeR,
-    targetNodeRadius || nodeR,
+    sourceNodeRadius + computeNodeCircumferenceStrokeWidth(sourceNodeRadius) / 2 || nodeR,
+    targetNodeRadius + computeNodeCircumferenceStrokeWidth(targetNodeRadius) / 2 || nodeR,
     scaledEdgeThickness(edge)
   );
 

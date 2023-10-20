@@ -145,7 +145,7 @@ export function generateRandomNodes(count = 10) {
     nodeFields.arc__errors.values.push(node.error);
     const rnd = Math.random();
     nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
-    nodeFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(Math.max(rnd * 100, 30));
+    nodeFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(Math.max(rnd * 100, 30)); // ensure a minimum radius of 30 or icons will not fit well in the node
     nodeFields[NodeGraphDataFrameFieldNames.highlighted].values.push(Math.random() > 0.5);
 
     for (const edge of node.edges) {
