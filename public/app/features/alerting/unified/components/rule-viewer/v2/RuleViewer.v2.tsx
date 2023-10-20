@@ -34,9 +34,9 @@ enum Tabs {
 // figure out why we needed <AlertingPageWrapper>
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
-  const { id } = match.params;
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
+  const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
     if (!id) {
       throw new Error('Rule ID is required');

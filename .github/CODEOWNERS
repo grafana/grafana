@@ -38,7 +38,7 @@
 # Documentation sources might have different owners.
 /docs/                                                                       @grafana/docs-tooling
 /docs/sources/                                                               @Eve832
-/docs/sources/administration/                                                @Eve832 @GrafanaWriter
+/docs/sources/administration/                                                @jdbaldry
 /docs/sources/alerting/                                                      @brendamuir
 /docs/sources/dashboards/                                                    @imatwawana
 /docs/sources/datasources/                                                   @lwandz13
@@ -329,6 +329,7 @@
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
+/packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 
 
 # root files, mostly frontend
