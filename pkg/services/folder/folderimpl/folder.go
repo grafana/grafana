@@ -327,6 +327,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	saveDashboardCmd, err := s.BuildSaveDashboardCommand(ctx, dto)
 	if err != nil {
+		if cmd.UID != "" && errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
+			return nil, dashboards.ErrFolderWithSameUIDExists
+		}
 		return nil, toFolderError(err)
 	}
 
