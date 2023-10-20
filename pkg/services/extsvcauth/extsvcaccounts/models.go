@@ -14,10 +14,10 @@ const (
 )
 
 var (
-	ErrExtServiceAccountCannotBeDeleted   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
-	ErrExtServiceAccountInvalidName       = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountInvalidName", errutil.WithPublicMessage("only external service accounts can be prefixed with 'sa-extsvc-'"))
-	ErrExtServiceAccountCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
-	ErrExtServiceAccountCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrExtServiceAccountCannotCreateToken", errutil.WithPublicMessage("external service account cannot create token"))
+	ErrCannotBeDeleted   = errutil.BadRequest("extsvcaccounts.ErrCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
+	ErrInvalidName       = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
+	ErrCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
+	ErrCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrCannotCreateToken", errutil.WithPublicMessage("cannot add external service account token"))
 )
 
 // Credentials represents the credentials associated to an external service
