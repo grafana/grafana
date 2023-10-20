@@ -38,120 +38,6 @@ interface Props {
   datasourceType?: string;
 }
 
-const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
-  if (!logsFrame) {
-    return false;
-  }
-  if (logsFrame.bodyField.name === field.name) {
-    return false;
-  }
-  if (logsFrame.timeField.name === field.name) {
-    return false;
-  }
-  // @todo not currently excluding derived fields from filtering
-
-  return true;
-};
-
-// TODO: explore if `logsFrame.ts` can help us with getting the right fields
-// TODO Why is typeInfo not defined on the Field interface?
-function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) {
-  return dataFrame.fields
-    .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return field.typeInfo?.frame === 'json.RawMessage' && datasourceType === 'loki';
-    })
-    .flatMap((field: Field) => {
-      return [
-        {
-          id: 'extractFields',
-          options: {
-            format: 'json',
-            keepTime: false,
-            replace: false,
-            source: field.name,
-          },
-        },
-        // hide the field that was extracted
-        {
-          id: 'organize',
-          options: {
-            excludeByName: {
-              [field.name]: true,
-            },
-          },
-        },
-      ];
-    });
-}
-
-function removeHiddenFields(
-  dataFrame: DataFrame,
-  transformations: Array<DataTransformerConfig | CustomTransformOperator>
-) {
-  const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
-  hiddenFields.forEach((field: Field) => {
-    transformations.push({
-      id: 'organize',
-      options: {
-        excludeByName: {
-          [field.name]: true,
-        },
-      },
-    });
-  });
-}
-
-function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsFrame: LogsFrame) {
-  // Create object of label filters to filter out any columns not selected by the user
-  let labelFilters: Record<string, true> = {};
-  Object.keys(columnsWithMeta)
-    .filter((key) => !columnsWithMeta[key].active)
-    .forEach((key) => {
-      labelFilters[key] = true;
-    });
-
-  // We could be getting fresh data
-  const uniqueLabels = new Set<string>();
-  const logFrameLabels = logsFrame?.getAttributesAsLabels();
-
-  // Populate the set with all labels from latest dataframe
-  logFrameLabels?.forEach((labels) => {
-    Object.keys(labels).forEach((label) => {
-      uniqueLabels.add(label);
-    });
-  });
-
-  // Check if there are labels in the data, that aren't yet in the labelFilters, and set them to be hidden by the transform
-  Object.keys(labelFilters).forEach((label) => {
-    if (!uniqueLabels.has(label)) {
-      labelFilters[label] = true;
-    }
-  });
-
-  // Check if there are labels in the label filters that aren't yet in the data, and set those to also be hidden
-  // The next time the column filters are synced any extras will be removed
-  Array.from(uniqueLabels).forEach((label) => {
-    if (label in columnsWithMeta && !columnsWithMeta[label]?.active) {
-      labelFilters[label] = true;
-    } else if (!labelFilters[label] && !(label in columnsWithMeta)) {
-      labelFilters[label] = true;
-    }
-  });
-  return labelFilters;
-}
-
-function getLabelFiltersTransform(labelFilters: Record<string, true>) {
-  if (Object.keys(labelFilters).length > 0) {
-    return {
-      id: 'organize',
-      options: {
-        excludeByName: labelFilters,
-      },
-    };
-  }
-  return null;
-}
-
 export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
@@ -283,4 +169,118 @@ export function LogsTable(props: Props) {
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
   );
+}
+
+const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
+  if (!logsFrame) {
+    return false;
+  }
+  if (logsFrame.bodyField.name === field.name) {
+    return false;
+  }
+  if (logsFrame.timeField.name === field.name) {
+    return false;
+  }
+  // @todo not currently excluding derived fields from filtering
+
+  return true;
+};
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      return field.typeInfo?.frame === 'json.RawMessage' && datasourceType === 'loki';
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+        // hide the field that was extracted
+        {
+          id: 'organize',
+          options: {
+            excludeByName: {
+              [field.name]: true,
+            },
+          },
+        },
+      ];
+    });
+}
+
+function removeHiddenFields(
+  dataFrame: DataFrame,
+  transformations: Array<DataTransformerConfig | CustomTransformOperator>
+) {
+  const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
+  hiddenFields.forEach((field: Field) => {
+    transformations.push({
+      id: 'organize',
+      options: {
+        excludeByName: {
+          [field.name]: true,
+        },
+      },
+    });
+  });
+}
+
+function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsFrame: LogsFrame) {
+  // Create object of label filters to filter out any columns not selected by the user
+  let labelFilters: Record<string, true> = {};
+  Object.keys(columnsWithMeta)
+    .filter((key) => !columnsWithMeta[key].active)
+    .forEach((key) => {
+      labelFilters[key] = true;
+    });
+
+  // We could be getting fresh data
+  const uniqueLabels = new Set<string>();
+  const logFrameLabels = logsFrame?.getAttributesAsLabels();
+
+  // Populate the set with all labels from latest dataframe
+  logFrameLabels?.forEach((labels) => {
+    Object.keys(labels).forEach((label) => {
+      uniqueLabels.add(label);
+    });
+  });
+
+  // Check if there are labels in the data, that aren't yet in the labelFilters, and set them to be hidden by the transform
+  Object.keys(labelFilters).forEach((label) => {
+    if (!uniqueLabels.has(label)) {
+      labelFilters[label] = true;
+    }
+  });
+
+  // Check if there are labels in the label filters that aren't yet in the data, and set those to also be hidden
+  // The next time the column filters are synced any extras will be removed
+  Array.from(uniqueLabels).forEach((label) => {
+    if (label in columnsWithMeta && !columnsWithMeta[label]?.active) {
+      labelFilters[label] = true;
+    } else if (!labelFilters[label] && !(label in columnsWithMeta)) {
+      labelFilters[label] = true;
+    }
+  });
+  return labelFilters;
+}
+
+function getLabelFiltersTransform(labelFilters: Record<string, true>) {
+  if (Object.keys(labelFilters).length > 0) {
+    return {
+      id: 'organize',
+      options: {
+        excludeByName: labelFilters,
+      },
+    };
+  }
+  return null;
 }
