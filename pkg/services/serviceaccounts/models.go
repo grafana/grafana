@@ -158,6 +158,7 @@ const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
+	FilterOnlyExternal      ServiceAccountFilter = "external"
 )
 
 type Stats struct {

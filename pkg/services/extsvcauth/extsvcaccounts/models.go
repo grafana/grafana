@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	extsvcPrefix = "extsvc-"
+	metricsNamespace = "grafana"
+
+	ExtsvcPrefix = "extsvc-"
 	kvStoreType  = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"

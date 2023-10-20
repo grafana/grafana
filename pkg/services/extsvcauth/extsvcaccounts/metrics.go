@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-const namespace = "grafana"
 
 type metrics struct {
 	extSvcAccCount        prometheus.GaugeFunc
@@ -22,17 +22,23 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 
 	m.extSvcAccCount = prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
+			Namespace: metricsNamespace,
 			Name:      "extsvc_total",
 			Help:      "Number of external service accounts in store",
 		},
 		func() float64 {
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			res, err := saSvc.SearchOrgServiceAccounts(ctx, &serviceaccounts.SearchOrgServiceAccountsQuery{
-				// FIXME replace with constants
-				Query:     "sa-" + extsvcPrefix,
+				OrgID:     extsvcauth.TmpOrgID,
+				Filter:    serviceaccounts.FilterOnlyExternal,
 				CountOnly: true,
+				SignedInUser: &user.SignedInUser{
+					OrgID: extsvcauth.TmpOrgID,
+					Permissions: map[int64]map[string][]string{
+						extsvcauth.TmpOrgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
+					},
+				},
 			})
 			if err != nil {
 				logger.Error("Could not compute extsvc_total metric", "error", err)
@@ -42,12 +48,12 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 		},
 	)
 	m.extSvcAccSavedCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
+		Namespace: metricsNamespace,
 		Name:      "extsvc_saved_total",
 		Help:      "Number of external service accounts saved since start up.",
 	})
 	m.extSvcAccDeletedCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
+		Namespace: metricsNamespace,
 		Name:      "extsvc_deleted_total",
 		Help:      "Number of external service accounts deleted since start up.",
 	})
