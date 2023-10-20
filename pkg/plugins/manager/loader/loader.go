@@ -2,6 +2,9 @@ package loader
 
 import (
 	"context"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -34,6 +37,10 @@ func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, valid
 }
 
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+	start := time.Now()
+	sourceLogger := l.log.New("source", src.PluginClass(ctx)).FromContext(ctx)
+	sourceLogger.Debug("Loading plugin source...")
+
 	discoveredPlugins, err := l.discovery.Discover(ctx, src)
 	if err != nil {
 		return nil, err
@@ -53,6 +60,15 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	if err != nil {
 		return nil, err
 	}
+
+	names := make([]string, len(initializedPlugins))
+	for i, p := range initializedPlugins {
+		names[i] = p.ID
+	}
+	sort.Strings(names)
+	plugins := strings.Join(names, ", ")
+
+	sourceLogger.Debug("Plugin source loaded", "plugins", plugins, "duration", time.Since(start))
 
 	return initializedPlugins, nil
 }
