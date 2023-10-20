@@ -133,3 +133,13 @@ func (annotation *ItemDTO) GetType() annotationType {
 	}
 	return Organization
 }
+
+type DashboardProjection struct {
+	ID  int64
+	UID string
+}
+
+type AccessResources struct {
+	Dashboards []*DashboardProjection
+	Types      map[any]struct{}
+}
