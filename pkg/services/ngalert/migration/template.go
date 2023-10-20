@@ -108,7 +108,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 	)
 
 	if !startVariable(in) {
-		return Token{}, pos, fmt.Errorf("expected variable")
+		return Token{}, pos, fmt.Errorf("expected '${', got '%s'", string(in[:2]))
 	}
 	pos += 2 // seek past opening delimiter
 
@@ -118,11 +118,11 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		r = in[pos]
 
 		if unicode.IsSpace(r) && r != ' ' {
-			return Token{}, pos, fmt.Errorf("unexpected whitespace")
+			return Token{}, pos, errors.New("unexpected whitespace")
 		}
 
 		if startVariable(in[pos:]) {
-			return Token{}, pos, fmt.Errorf("ambiguous delimiter")
+			return Token{}, pos, errors.New("ambiguous delimiter")
 		}
 
 		if r == '}' {
@@ -141,7 +141,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 
 	token := Token{Variable: string(runes)}
 	if !token.IsVariable() {
-		return Token{}, pos, fmt.Errorf("empty variable")
+		return Token{}, pos, errors.New("empty variable")
 	}
 
 	return token, pos, nil
