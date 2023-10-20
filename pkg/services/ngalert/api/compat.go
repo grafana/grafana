@@ -186,7 +186,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		IsPaused:     rule.IsPaused,
 	}
 	if rule.For.Seconds() > 0 {
-		result.ForSeconds = util.Pointer(int64(rule.For.Seconds()))
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
 	}
 	if rule.Annotations != nil {
 		result.Annotations = &rule.Annotations
