@@ -20,13 +20,8 @@ import { DashboardMeta } from 'app/types';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import {
-  findVizPanelByKey,
-  forceRenderChildren,
-  getClosestVizPanel,
-  getDashboardUrl,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
