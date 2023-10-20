@@ -70,9 +70,9 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedError: nil,
 			},
 			{
-				description: "should not allow to create a service account with sa-extsvc prefix",
+				description: "should not allow to create a service account with `extsvc-` prefix",
 				form: serviceaccounts.CreateServiceAccountForm{
-					Name: "sa-extsvc-my-service-account",
+					Name: "extsvc-my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrExtServiceAccountInvalidName,
 			},
