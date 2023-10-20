@@ -209,7 +209,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 
 func formatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column, frameName)
+		return buildFrameNameFromQuery(row, column, frameName, query.ResultFormat)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -247,9 +247,11 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 	return result
 }
 
-func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []byte {
-	frameName = append(frameName, row.Name...)
-	frameName = append(frameName, '.')
+func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, resultFormat string) []byte {
+	if resultFormat != "table" {
+		frameName = append(frameName, row.Name...)
+		frameName = append(frameName, '.')
+	}
 	frameName = append(frameName, column...)
 
 	if len(row.Tags) > 0 {
