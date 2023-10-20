@@ -106,6 +106,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Filter       ServiceAccountFilter
 	Page         int
 	Limit        int
+	CountOnly    bool
 	SignedInUser identity.Requester
 }
 

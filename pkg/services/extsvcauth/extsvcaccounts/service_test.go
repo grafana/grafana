@@ -39,9 +39,11 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SaSvc:    &tests.MockServiceAccountService{},
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}
+	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
 		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
-		logger:   log.New("extsvcaccounts.test"),
+		logger:   logger,
+		metrics:  newMetrics(nil, env.SaSvc, logger),
 		saSvc:    env.SaSvc,
 		skvStore: env.SkvStore,
 	}

@@ -30,7 +30,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, db db.DB, reg prometheus.Reg
 	return &ExtSvcAccountsService{
 		acSvc:    acSvc,
 		logger:   logger,
-		metrics:  newMetrics(reg),
+		metrics:  newMetrics(reg, saSvc, logger),
 		saSvc:    saSvc,
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
@@ -113,7 +113,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 					"error", err.Error())
 				return 0, err
 			}
-			esa.metrics.extSvcAccDelCount.Inc()
+			esa.metrics.extSvcAccDeletedCount.Inc()
 		}
 		esa.logger.Info("Skipping service account creation",
 			"service", cmd.ExtSvcSlug,

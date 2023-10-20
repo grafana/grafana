@@ -335,11 +335,14 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
-		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
-			return err
+		// Fetch service accounts only if requested otherwise just count the number of hits
+		if !query.CountOnly {
+			if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
+				return err
+			}
 		}
 
-		// get total
+		// get number of hits
 		serviceaccount := serviceaccounts.ServiceAccountDTO{}
 		countSess := dbSession.Table("org_user")
 		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
