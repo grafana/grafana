@@ -49,7 +49,12 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   return (
-    <div {...cellProps} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={cellStyle}>
+    <div
+      {...cellProps}
+      onMouseEnter={showActions ? onMouseEnter : undefined}
+      onMouseLeave={showActions ? onMouseLeave : undefined}
+      className={cellStyle}
+    >
       {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
 
       {hasLinks && (
