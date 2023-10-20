@@ -195,7 +195,7 @@ You can now center bar chart axes on zero and configure axes border and color se
 
 ### Tempo data source
 
-We've placed special focus on the Tempo data source over the past couple of months with new features, query performance improvements, and a better query exerience.
+We've placed special focus on the Tempo data source over the past couple of months with new features, query performance improvements, and a better query experience.
 
 #### Compute RED metrics over spans aggregated by attribute with the "Aggregate By" Search option
 
