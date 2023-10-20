@@ -19,7 +19,6 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'If the dashboard has no panels, the description should be "Empty dashboard"\n' +
   'There should be no numbers in the description except where they are important.\n' +
   'The dashboard description should not have the dashboard title or any quotation marks in it.\n' +
-  'The description should be, at most, 140 characters.\n' +
   'Respond with only the description of the dashboard.';
 
 export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {

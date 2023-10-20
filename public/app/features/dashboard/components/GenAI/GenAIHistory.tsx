@@ -16,12 +16,11 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 
-import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { Message, OPEN_AI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+import { getFeedbackMessage, Message, OPEN_AI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];

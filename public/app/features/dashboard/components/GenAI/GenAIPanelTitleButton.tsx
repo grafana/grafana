@@ -5,17 +5,19 @@ import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { Message, QuickFeedbackType, Role } from './utils';
+import { Message, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
   panel: PanelModel;
 }
 
+const PANEL_TITLE_CHAR_LIMIT = 50;
+
 const TITLE_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Panels.' +
-  'Your goal is to write short, descriptive, and concise panel title for a panel.' +
-  'The title should be shorter than 50 characters.';
+  'Your goal is to write short, descriptive, and concise panel title.' +
+  `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
@@ -44,21 +46,12 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
+      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
       role: Role.system,
     },
     {
       content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
-      role: Role.user,
+      role: Role.system,
     },
   ];
 }
-
-export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
-  return [
-    {
-      role: Role.system,
-      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
-    },
-  ];
-};
