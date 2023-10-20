@@ -109,7 +109,7 @@ Optional fields:
 | secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
 | detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |
 | thickness     | number        | The thickness of the edge. Default: `1`                                                                                                                                                               |
-| highlighted   | boolean       | Whether the edge should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: false.                                       |
+| highlighted   | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                      |
 
 ### Nodes data frame structure
 
