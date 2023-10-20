@@ -114,18 +114,16 @@ To learn more, refer to our [Canvas button element documentation](https://grafan
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-### Time series and candlestick visualizations now support y-axis zooming
+### Y-axis zoom support in time series and candlestick visualizations
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values.
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis, hold the shift key while clicking and dragging on supported visualizations. Double click to reset the zoom.
 
-To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
-
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
 
 ### Data visualization quality of life improvements
 
