@@ -238,6 +238,7 @@ function getVariableSet() {
         label: 'Group by',
         datasource: trailDS,
         includeAll: true,
+        defaultToAll: true,
         query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
         value: '',
         text: '',

@@ -13,14 +13,12 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariableSet,
-  SceneVariableValueChangedEvent,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
