@@ -7,6 +7,8 @@ import {
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
+  SceneCSSGridItem,
+  SceneCSSGridLayout,
   SceneDataNode,
   SceneFlexItem,
   SceneFlexItemLike,
@@ -24,7 +26,7 @@ import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { metricDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
+import { trailDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
 import { getColorByIndex } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
@@ -184,9 +186,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
     }
 
     children.push(
-      new SceneFlexItem({
-        minHeight: 250,
-        minWidth: 450,
+      new SceneCSSGridItem({
         body: PanelBuilders.timeseries()
           .setTitle(option.label!)
           .setData(
@@ -194,7 +194,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
               queries: [
                 {
                   refId: 'A',
-                  datasource: metricDS,
+                  datasource: trailDS,
                   expr: `sum(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])) by(${option.value})`,
                   maxDataPoints: 300,
                 },
@@ -207,12 +207,28 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
     );
   }
 
-  return new SceneFlexLayout({
-    direction: 'row',
-    children: children,
-    wrap: 'wrap',
+  return new LayoutSwitcher({
+    options: [
+      { value: 'grid', label: 'Grid' },
+      { value: 'rows', label: 'Rows' },
+    ],
+    active: 'grid',
+    layouts: [
+      new SceneCSSGridLayout({
+        templateColumns: GRID_TEMPLAE_COLUMNS,
+        autoRows: '200px',
+        children: children,
+      }),
+      new SceneCSSGridLayout({
+        templateColumns: '1fr',
+        autoRows: '200px',
+        children: children,
+      }),
+    ],
   });
 }
+
+const GRID_TEMPLAE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
 function getVariableSet() {
   return new SceneVariableSet({
@@ -220,7 +236,7 @@ function getVariableSet() {
       new QueryVariable({
         name: VAR_GROUP_BY,
         label: 'Group by',
-        datasource: metricDS,
+        datasource: trailDS,
         includeAll: true,
         query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
         value: '',
@@ -236,7 +252,7 @@ function buildNormalLayout() {
       queries: [
         {
           refId: 'A',
-          datasource: metricDS,
+          datasource: trailDS,
           expr: 'sum(rate(${metric}{${filters}}[$__rate_interval])) by($groupby)',
           maxDataPoints: 300,
         },
@@ -259,15 +275,13 @@ function buildNormalLayout() {
         ],
       }),
       new ByFrameRepeater({
-        body: new SceneFlexLayout({
-          direction: 'row',
+        body: new SceneCSSGridLayout({
+          templateColumns: GRID_TEMPLAE_COLUMNS,
+          autoRows: '200px',
           children: [],
-          wrap: 'wrap',
         }),
         getLayoutChild: (data, frame, frameIndex) => {
-          return new SceneFlexItem({
-            minHeight: 180,
-            minWidth: 350,
+          return new SceneCSSGridItem({
             body: PanelBuilders.timeseries()
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
@@ -280,13 +294,12 @@ function buildNormalLayout() {
         },
       }),
       new ByFrameRepeater({
-        body: new SceneFlexLayout({
-          direction: 'column',
+        body: new SceneCSSGridLayout({
+          templateColumns: GRID_TEMPLAE_COLUMNS,
           children: [],
         }),
         getLayoutChild: (data, frame, frameIndex) => {
-          return new SceneFlexItem({
-            minHeight: 180,
+          return new SceneCSSGridItem({
             body: PanelBuilders.timeseries()
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))

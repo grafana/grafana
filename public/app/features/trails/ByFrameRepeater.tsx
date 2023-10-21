@@ -3,16 +3,16 @@ import React from 'react';
 import { LoadingState, PanelData, DataFrame } from '@grafana/data';
 import {
   SceneObjectState,
-  SceneFlexLayout,
   SceneFlexItem,
   SceneObjectBase,
   sceneGraph,
   SceneComponentProps,
   SceneByFrameRepeater,
+  SceneLayout,
 } from '@grafana/scenes';
 
 interface ByFrameRepeaterState extends SceneObjectState {
-  body: SceneFlexLayout;
+  body: SceneLayout;
   getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem;
 }
 

@@ -23,6 +23,7 @@ import {
   LOGS_METRIC,
   MakeOptional,
   OpenEmbeddedTrailEvent,
+  trailDS,
 } from './shared';
 import { showOnlyInAdvanced } from './showOnlyInAdvanced';
 import { getParentOfType, getTrailFor } from './utils';
@@ -136,7 +137,7 @@ function buildLogsScene() {
           queries: [
             {
               refId: 'A',
-              datasource: { uid: 'gdev-loki' },
+              datasource: trailDS,
               legendFormat: `{{level}}`,
               expr: 'sum by (level) (count_over_time({${filters}} |= `` | logfmt[$__auto]))',
             },

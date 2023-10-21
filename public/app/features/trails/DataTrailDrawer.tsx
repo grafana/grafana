@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
@@ -53,9 +54,11 @@ function DataTrailDrawerRenderer({ model }: SceneComponentProps<DataTrailDrawer>
 export function buildDataTrailFromQuery(query: PromVisualQuery, dsRef: DataSourceRef) {
   const filters = query.labels.map((label) => ({ key: label.label, value: label.value, operator: label.op }));
 
+  const ds = getDataSourceSrv().getInstanceSettings(dsRef);
+
   return new DataTrail({
     metric: query.metric,
-    initialDS: dsRef.uid,
+    initialDS: ds?.name,
     filters,
     embedded: true,
   });

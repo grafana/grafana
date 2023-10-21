@@ -11,7 +11,7 @@ import {
 import { RadioButtonGroup } from '@grafana/ui';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 
-import { KEY_SQR_METRIC_VIZ_QUERY, metricDS } from '../shared';
+import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../shared';
 
 import { AutoQueryDef, AutoQueryVariant } from './AutoQueryEngine';
 
@@ -70,7 +70,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setData(
             new SceneQueryRunner({
               key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: metricDS,
+              datasource: trailDS,
               queries: [def.query],
             })
           )
@@ -86,7 +86,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setData(
             new SceneQueryRunner({
               key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: metricDS,
+              datasource: trailDS,
               queries: [def.query],
             })
           )

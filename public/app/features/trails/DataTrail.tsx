@@ -28,7 +28,7 @@ import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { LogsScene, LogsSearch } from './LogsScene';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { MetricSelectedEvent, metricDS, VAR_FILTERS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_FILTERS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -60,11 +60,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
               name: VAR_DATASOURCE,
               label: 'Data source',
               value: state.initialDS,
-              pluginId: 'prometheus',
+              pluginId: state.metric === LOGS_METRIC ? 'loki' : 'prometheus',
             }),
             AdHocFiltersVariable.create({
               name: 'filters',
-              datasource: metricDS,
+              datasource: trailDS,
               layout: 'simple',
               filters: state.filters ?? [],
             }),
@@ -181,7 +181,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
               icon="cog"
               onClick={model.onToggleAdvanced}
               variant={advancedMode ? 'active' : 'canvas'}
-              tooltip="Advanced mode"
+              tooltip="Settings"
             />
           </div>
         )}

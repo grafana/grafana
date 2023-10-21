@@ -28,15 +28,15 @@ export function DataTrailCard({ trail, onSelect }: Props) {
   return (
     <button className={styles.container} onClick={() => onSelect(trail)}>
       <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
-      <Flex gap={1}>
+      <Flex gap={1.5}>
         {dsValue && (
-          <Flex direction="column">
+          <Flex direction="column" gap={0.5}>
             <div className={styles.label}>Datasource</div>
             <div className={styles.value}>{getDataSource(trail)}</div>
           </Flex>
         )}
         {filters.map((filter, index) => (
-          <Flex key={index} direction="column">
+          <Flex key={index} direction="column" gap={0.5}>
             <div className={styles.label}>{filter.key}</div>
             <div className={styles.value}>{filter.value}</div>
           </Flex>

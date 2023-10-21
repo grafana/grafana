@@ -8,35 +8,45 @@ import {
   SceneComponentProps,
   PanelBuilders,
   SceneFlexItem,
-  SceneFlexLayout,
   SceneQueryRunner,
   SceneVariableSet,
   QueryVariable,
   sceneGraph,
   VariableDependencyConfig,
   SceneVariable,
+  SceneCSSGridLayout,
+  SceneCSSGridItem,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { SelectMetricAction } from './SelectMetricAction';
-import { getVariablesWithMetricConstant, metricDS, VAR_FILTERS, VAR_METRIC_NAMES } from './shared';
+import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex } from './utils';
 
 export interface MetricSelectSceneState extends SceneObjectState {
-  body: SceneFlexLayout;
+  body: SceneCSSGridLayout;
   showHeading?: boolean;
   searchQuery?: string;
   showPreviews?: boolean;
 }
 
+const ROW_PREVIEW_HEIGHT = '175px';
+const ROW_CARD_HEIGHT = '64px';
+
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
       $variables: state.$variables ?? getMetricNamesVariableSet(),
-      body: state.body ?? new SceneFlexLayout({ children: [], wrap: 'wrap' }),
+      body:
+        state.body ??
+        new SceneCSSGridLayout({
+          children: [],
+          templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
+          autoRows: ROW_PREVIEW_HEIGHT,
+        }),
+      showPreviews: true,
       ...state,
     });
 
@@ -80,6 +90,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
     const metricNames = variable.state.options;
     const children: SceneFlexItem[] = [];
+    const showPreviews = this.state.showPreviews;
+    const previewLimit = 20;
+    const cardLimit = 50;
 
     for (let index = 0; index < metricNames.length; index++) {
       const metric = metricNames[index];
@@ -89,21 +102,30 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         continue;
       }
 
-      children.push(
-        new SceneFlexItem({
-          minHeight: 150,
-          minWidth: 370,
-          $variables: getVariablesWithMetricConstant(metricName),
-          body: getPanelForMetric(metricName, index),
-        })
-      );
-
-      if (children.length > 10) {
+      if (children.length > cardLimit) {
         break;
+      }
+
+      if (showPreviews && children.length < previewLimit) {
+        children.push(
+          new SceneCSSGridItem({
+            $variables: getVariablesWithMetricConstant(metricName),
+            body: getPreviewPanelFor(metricName, index),
+          })
+        );
+      } else {
+        children.push(
+          new SceneCSSGridItem({
+            $variables: getVariablesWithMetricConstant(metricName),
+            body: getCardPanelFor(metricName),
+          })
+        );
       }
     }
 
-    this.state.body.setState({ children });
+    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+
+    this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
   public onSearchChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
@@ -111,12 +133,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   };
 
+  public onTogglePreviews = () => {
+    this.setState({ showPreviews: !this.state.showPreviews });
+    this.buildLayout();
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery } = model.useState();
+    const { showHeading, searchQuery, showPreviews } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
-      <Flex direction="column">
+      <div className={styles.container}>
         {showHeading && (
           <div className={styles.headingWrapper}>
             <Text variant="h4">Select a metric</Text>
@@ -124,10 +151,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         )}
         <div className={styles.header}>
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
-          <InlineSwitch showLabel={true} label="Show previews" value={true} />
+          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         <model.state.body.Component model={model.state.body} />
-      </Flex>
+      </div>
     );
   };
 }
@@ -137,18 +164,18 @@ function getMetricNamesVariableSet() {
     variables: [
       new QueryVariable({
         name: VAR_METRIC_NAMES,
-        datasource: metricDS,
+        datasource: trailDS,
         hide: VariableHide.hideVariable,
         includeAll: true,
         defaultToAll: true,
         skipUrlSync: true,
-        query: { query: 'label_values({$filters},__name__)', refId: 'A' },
+        query: { query: `label_values(${VAR_FILTERS_EXPR},__name__)`, refId: 'A' },
       }),
     ],
   });
 }
 
-function getPanelForMetric(metric: string, index: number) {
+function getPreviewPanelFor(metric: string, index: number) {
   const queries = getAutoQueriesForMetric(metric);
   const topQuery = queries[0];
 
@@ -156,8 +183,8 @@ function getPanelForMetric(metric: string, index: number) {
     .setTitle(topQuery.title)
     .setData(
       new SceneQueryRunner({
-        datasource: metricDS,
-        maxDataPoints: 300,
+        datasource: trailDS,
+        maxDataPoints: 200,
         queries: [topQuery.query],
       })
     )
@@ -169,13 +196,26 @@ function getPanelForMetric(metric: string, index: number) {
     .build();
 }
 
+function getCardPanelFor(metric: string) {
+  return PanelBuilders.text()
+    .setTitle(metric)
+    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
+    .setOption('content', '')
+    .build();
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
     headingWrapper: css({
       marginTop: theme.spacing(1),
     }),
     header: css({
-      flexGrow: 1,
+      flexGrow: 0,
       display: 'flex',
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),

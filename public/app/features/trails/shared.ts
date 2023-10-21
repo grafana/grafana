@@ -21,7 +21,7 @@ export const VAR_DATASOURCE_EXPR = '${ds}';
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
 
-export const metricDS = { uid: VAR_DATASOURCE_EXPR, type: 'prometheus' };
+export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

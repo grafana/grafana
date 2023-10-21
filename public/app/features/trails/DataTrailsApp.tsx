@@ -4,7 +4,13 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  getUrlSyncManager,
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -86,10 +92,12 @@ export function getDataTrailsApp() {
       home: new DataTrailsHome({
         recent: [
           new DataTrail({
+            initialDS: 'gdev-prometheus',
             metric: 'grafana_http_request_duration_seconds_count',
             filters: [{ key: 'job', operator: '=', value: 'grafana' }],
           }).getRef(),
           new DataTrail({
+            initialDS: 'gdev-prometheus',
             metric: 'go_memstats_alloc_bytes_total',
             filters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
           }).getRef(),
@@ -97,7 +105,11 @@ export function getDataTrailsApp() {
         bookmarks: [
           new DataTrail({
             initialDS: 'sedemo-prom',
-            filters: [{ key: 'job', operator: '=', value: 'production/grafana' }],
+            $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+            filters: [
+              { key: 'job', operator: '=', value: 'production/grafana' },
+              { key: 'endpoint', operator: '=', value: 'queryData' },
+            ],
           }).getRef(),
           new DataTrail({
             initialDS: 'sedemo-prom',
