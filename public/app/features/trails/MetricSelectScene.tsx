@@ -72,13 +72,23 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   }
 
+  private ignoreNextUpdate = false;
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
       this.buildLayout();
+    } else {
+      // Temp hack when going back to select metric scene and variable updates
+      this.ignoreNextUpdate = true;
     }
   }
 
   private buildLayout() {
+    // Temp hack when going back to select metric scene and variable updates
+    if (this.ignoreNextUpdate) {
+      this.ignoreNextUpdate = false;
+      return;
+    }
+
     const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
 
     if (!(variable instanceof QueryVariable)) {
