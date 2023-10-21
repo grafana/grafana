@@ -26,6 +26,7 @@ export const VizLegendList = <T extends unknown>({
   readonly,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
+  const hasRightItems = placement === 'bottom' && items.some((item) => item.yAxis !== 1);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -69,13 +70,15 @@ export const VizLegendList = <T extends unknown>({
               getItemKey={getItemKey}
             />
           </div>
-          <div className={cx(styles.section, styles.sectionRight)}>
-            <InlineList
-              items={items.filter((item) => item.yAxis !== 1)}
-              renderItem={renderItem}
-              getItemKey={getItemKey}
-            />
-          </div>
+          {hasRightItems && (
+            <div className={cx(styles.section, styles.sectionRight)}>
+              <InlineList
+                items={items.filter((item) => item.yAxis !== 1)}
+                renderItem={renderItem}
+                getItemKey={getItemKey}
+              />
+            </div>
+          )}
         </div>
       );
     }
