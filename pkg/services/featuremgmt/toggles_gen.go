@@ -491,6 +491,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagCloudWatchBatchQueries
+	// Runs CloudWatch metrics queries as separate batches
+	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
+
 	// FlagNavAdminSubsections
 	// Splits the administration section of the nav tree into subsections
 	FlagNavAdminSubsections = "navAdminSubsections"
