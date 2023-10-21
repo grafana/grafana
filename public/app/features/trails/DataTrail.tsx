@@ -39,9 +39,11 @@ export interface DataTrailState extends SceneObjectState {
   history: DataTrailHistory;
   advancedMode?: boolean;
 
+  // just for for the starting data source
+  initialDS?: string;
+
   // Synced with url
   metric?: string;
-  initialDS?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -49,32 +51,33 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   public constructor(state: Partial<DataTrailState>) {
     super({
-      $timeRange: new SceneTimeRange({}),
-      $variables: new SceneVariableSet({
-        variables: [
-          new DataSourceVariable({
-            name: VAR_DATASOURCE,
-            label: 'Data source',
-            value: state.initialDS,
-            pluginId: 'prometheus',
-          }),
-          AdHocFiltersVariable.create({
-            name: 'filters',
-            datasource: metricDS,
-            layout: 'simple',
-            filters: state.filters ?? [],
-          }),
-        ],
-      }),
-      controls: [
+      $timeRange: state.$timeRange ?? new SceneTimeRange({}),
+      $variables:
+        state.$variables ??
+        new SceneVariableSet({
+          variables: [
+            new DataSourceVariable({
+              name: VAR_DATASOURCE,
+              label: 'Data source',
+              value: state.initialDS,
+              pluginId: 'prometheus',
+            }),
+            AdHocFiltersVariable.create({
+              name: 'filters',
+              datasource: metricDS,
+              layout: 'simple',
+              filters: state.filters ?? [],
+            }),
+          ],
+        }),
+      controls: state.controls ?? [
         new VariableValueSelectors({ layout: 'vertical' }),
         new LogsSearch({}),
         new SceneControlsSpacer(),
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
       ],
-      history: new DataTrailHistory({}),
-      topScene: state.topScene,
+      history: state.history ?? new DataTrailHistory({}),
       ...state,
     });
 

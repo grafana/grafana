@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail } from './DataTrail';
-import { VAR_FILTERS_EXPR } from './shared';
+import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
 
 export interface Props {
   trail: DataTrail;
@@ -16,12 +17,49 @@ export interface Props {
 export function DataTrailCard({ trail, onSelect }: Props) {
   const styles = useStyles2(getStyles);
 
+  const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail)!;
+  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+    return null;
+  }
+
+  const filters = filtersVariable.state.set.state.filters;
+  const dsValue = getDataSource(trail);
+
   return (
     <button className={styles.container} onClick={() => onSelect(trail)}>
-      <div className={styles.heading}>{trail.state.metric}</div>
-      <div className={styles.body}>{sceneGraph.interpolate(trail, VAR_FILTERS_EXPR)}</div>
+      <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
+      <Flex gap={1}>
+        {dsValue && (
+          <Flex direction="column">
+            <div className={styles.label}>Datasource</div>
+            <div className={styles.value}>{getDataSource(trail)}</div>
+          </Flex>
+        )}
+        {filters.map((filter, index) => (
+          <Flex key={index} direction="column">
+            <div className={styles.label}>{filter.key}</div>
+            <div className={styles.value}>{filter.value}</div>
+          </Flex>
+        ))}
+      </Flex>
     </button>
   );
+}
+
+function getMetricName(metric?: string) {
+  if (!metric) {
+    return 'Select metric';
+  }
+
+  if (metric === LOGS_METRIC) {
+    return 'Logs';
+  }
+
+  return metric;
+}
+
+function getDataSource(trail: DataTrail) {
+  return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -37,6 +75,17 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
       boxShadow: 'none',
       background: 'transparent',
+      textAlign: 'left',
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      },
+    }),
+    label: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    value: css({
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
     heading: css({
       padding: theme.spacing(0),

@@ -24,7 +24,7 @@ export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
   constructor(state: DataTrailDrawerState) {
     super(state);
 
-    this.trail = buildDataTrailFromQuery(state.query);
+    this.trail = buildDataTrailFromQuery(state.query, state.dsRef);
     this.trail.addActivationHandler(() => {
       this.trail.subscribeToEvent(OpenEmbeddedTrailEvent, this.onOpenTrail);
     });
@@ -50,11 +50,12 @@ function DataTrailDrawerRenderer({ model }: SceneComponentProps<DataTrailDrawer>
   );
 }
 
-export function buildDataTrailFromQuery(query: PromVisualQuery) {
+export function buildDataTrailFromQuery(query: PromVisualQuery, dsRef: DataSourceRef) {
   const filters = query.labels.map((label) => ({ key: label.label, value: label.value, operator: label.op }));
 
   return new DataTrail({
     metric: query.metric,
+    initialDS: dsRef.uid,
     filters,
     embedded: true,
   });

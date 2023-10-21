@@ -442,5 +442,13 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/72"
     }
+  },
+   {
+    "type": "label",
+    "name": "grafana program",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/471"
+    }
   }
 ]

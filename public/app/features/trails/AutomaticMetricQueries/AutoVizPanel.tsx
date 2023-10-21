@@ -62,8 +62,8 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setOption('color', {
             mode: HeatmapColorMode.Scheme,
             exponent: 0.5,
-            scheme: 'OrRd',
-            steps: 66,
+            scheme: 'Spectral',
+            steps: 32,
             reverse: false,
           })
           .setHeaderActions(this.getQuerySelector(def))

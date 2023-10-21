@@ -26,7 +26,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newMetricsTrail();
 
-    this.setState({ recent: [...this.state.recent, app.state.trail.getRef()] });
+    this.setState({ recent: [app.state.trail.getRef(), ...this.state.recent] });
     app.goToUrlForTrail(trail);
   };
 
@@ -34,7 +34,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newLogsTrail();
 
-    this.setState({ recent: [...this.state.recent, app.state.trail.getRef()] });
+    this.setState({ recent: [app.state.trail.getRef(), ...this.state.recent] });
     app.goToUrlForTrail(trail);
   };
 
@@ -45,7 +45,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const existsInRecent = this.state.recent.find((t) => t.resolve() === currentTrail);
 
     if (!existsInRecent) {
-      this.setState({ recent: [...this.state.recent, currentTrail.getRef()] });
+      this.setState({ recent: [currentTrail.getRef(), ...this.state.recent] });
     }
 
     app.goToUrlForTrail(trail);
@@ -80,7 +80,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               ))}
             </div>
           </div>
-          <div>
+          <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
               {bookmarks.map((trail, index) => (

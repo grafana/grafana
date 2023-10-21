@@ -96,8 +96,17 @@ export function getDataTrailsApp() {
         ],
         bookmarks: [
           new DataTrail({
-            initialDS: 'kCLEK-Cnk',
+            initialDS: 'sedemo-prom',
             filters: [{ key: 'job', operator: '=', value: 'production/grafana' }],
+          }).getRef(),
+          new DataTrail({
+            initialDS: 'sedemo-prom',
+            metric: 'access_evaluation_duration_bucket',
+            filters: [
+              { key: 'job', operator: '=', value: 'production/grafana' },
+              { key: 'cluster', operator: '=', value: 'se-demo-cluster' },
+              { key: 'namespace', operator: '=', value: 'production' },
+            ],
           }).getRef(),
         ],
       }),

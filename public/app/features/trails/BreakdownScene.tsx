@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { getFrameDisplayName, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -269,7 +269,7 @@ function buildNormalLayout() {
             minHeight: 180,
             minWidth: 350,
             body: PanelBuilders.timeseries()
-              .setTitle(getFrameDisplayName(frame, frameIndex))
+              .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
@@ -288,7 +288,7 @@ function buildNormalLayout() {
           return new SceneFlexItem({
             minHeight: 180,
             body: PanelBuilders.timeseries()
-              .setTitle(getFrameDisplayName(frame, frameIndex))
+              .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
@@ -300,6 +300,21 @@ function buildNormalLayout() {
       }),
     ],
   });
+}
+
+function getLabelValue(frame: DataFrame) {
+  const labels = frame.fields[1]?.labels;
+
+  if (!labels) {
+    return 'No labels';
+  }
+
+  const keys = Object.keys(labels);
+  if (keys.length === 0) {
+    return 'No labels';
+  }
+
+  return labels[keys[0]];
 }
 
 export function buildBreakdownActionScene() {

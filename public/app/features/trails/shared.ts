@@ -16,11 +16,12 @@ export const VAR_METRIC_EXPR = '${metric}';
 export const VAR_GROUP_BY = 'groupby';
 export const VAR_GROUP_BY_EXP = '${groupby}';
 export const VAR_DATASOURCE = 'ds';
+export const VAR_DATASOURCE_EXPR = '${ds}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
 
-export const metricDS = { uid: `\${${VAR_DATASOURCE}}`, type: 'prometheus' };
+export const metricDS = { uid: VAR_DATASOURCE_EXPR, type: 'prometheus' };
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
