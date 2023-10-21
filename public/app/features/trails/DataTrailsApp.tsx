@@ -94,19 +94,19 @@ export function getDataTrailsApp() {
           new DataTrail({
             initialDS: 'gdev-prometheus',
             metric: 'grafana_http_request_duration_seconds_count',
-            filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+            initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
           }).getRef(),
           new DataTrail({
             initialDS: 'gdev-prometheus',
             metric: 'go_memstats_alloc_bytes_total',
-            filters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
+            initialFilters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
           }).getRef(),
         ],
         bookmarks: [
           new DataTrail({
             initialDS: 'sedemo-prom',
             $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-            filters: [
+            initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },
               { key: 'endpoint', operator: '=', value: 'queryData' },
             ],
@@ -114,7 +114,7 @@ export function getDataTrailsApp() {
           new DataTrail({
             initialDS: 'sedemo-prom',
             metric: 'access_evaluation_duration_bucket',
-            filters: [
+            initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },
               { key: 'cluster', operator: '=', value: 'se-demo-cluster' },
               { key: 'namespace', operator: '=', value: 'production' },

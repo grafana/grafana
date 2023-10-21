@@ -161,7 +161,7 @@ function buildLogsScene() {
           queries: [
             {
               refId: 'A',
-              datasource: { uid: 'gdev-loki' },
+              datasource: trailDS,
               expr: '{${filters}} | logfmt',
             },
           ],

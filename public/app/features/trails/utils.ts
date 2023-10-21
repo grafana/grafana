@@ -14,7 +14,7 @@ export function newMetricsTrail(): DataTrail {
   return new DataTrail({
     initialDS: 'gdev-prometheus',
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+    initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
     embedded: false,
   });
 }
@@ -22,7 +22,7 @@ export function newMetricsTrail(): DataTrail {
 export function newLogsTrail(): DataTrail {
   return new DataTrail({
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    filters: [{ key: 'job', operator: '=', value: 'grafana' }],
+    initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
     metric: LOGS_METRIC,
   });
 }

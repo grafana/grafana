@@ -59,7 +59,7 @@ export function buildDataTrailFromQuery(query: PromVisualQuery, dsRef: DataSourc
   return new DataTrail({
     metric: query.metric,
     initialDS: ds?.name,
-    filters,
+    initialFilters: filters,
     embedded: true,
   });
 }

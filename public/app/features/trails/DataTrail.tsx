@@ -9,6 +9,7 @@ import {
   getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
+  sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -34,13 +35,13 @@ import { getUrlForTrail } from './utils';
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
   embedded?: boolean;
-  filters?: AdHocVariableFilter[];
   controls: SceneObject[];
   history: DataTrailHistory;
   advancedMode?: boolean;
 
   // just for for the starting data source
   initialDS?: string;
+  initialFilters?: AdHocVariableFilter[];
 
   // Synced with url
   metric?: string;
@@ -52,24 +53,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   public constructor(state: Partial<DataTrailState>) {
     super({
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      $variables:
-        state.$variables ??
-        new SceneVariableSet({
-          variables: [
-            new DataSourceVariable({
-              name: VAR_DATASOURCE,
-              label: 'Data source',
-              value: state.initialDS,
-              pluginId: state.metric === LOGS_METRIC ? 'loki' : 'prometheus',
-            }),
-            AdHocFiltersVariable.create({
-              name: 'filters',
-              datasource: trailDS,
-              layout: 'simple',
-              filters: state.filters ?? [],
-            }),
-          ],
-        }),
+      $variables: state.$variables ?? getVariableSet(state.initialDS, state.metric, state.initialFilters),
       controls: state.controls ?? [
         new VariableValueSelectors({ layout: 'vertical' }),
         new LogsSearch({}),
@@ -86,7 +70,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   public _onActivate() {
     if (!this.state.topScene) {
-      this.setState({ topScene: getTopSceneFor(this.state) });
+      this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
 
     this.state.history.trailActivated(this);
@@ -109,9 +93,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     this.setState(step.trailState);
-    locationService.replace(getUrlForTrail(this));
 
     if (!this.state.embedded) {
+      locationService.replace(getUrlForTrail(this));
+
       getUrlSyncManager().initSync(this);
     }
   }
@@ -130,15 +115,33 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
     if (this.state.embedded) {
-      this.setState({
-        topScene: new MetricScene({ metric: evt.payload }),
-        metric: evt.payload,
-      });
+      this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
     } else {
       locationService.partial({ metric: evt.payload, actionView: null });
     }
 
     this.state.history.addTrailStep(this, 'metric');
+  }
+
+  private getSceneUpdatesForNewMetricValue(metric: string | undefined) {
+    const stateUpdate: Partial<DataTrailState> = {};
+    stateUpdate.metric = metric;
+    stateUpdate.topScene = getTopSceneFor(metric);
+
+    // Switching to logs from metrics requires some scene changes
+    if (metric === LOGS_METRIC) {
+      stateUpdate.initialDS = 'gdev-loki';
+
+      const filters = sceneGraph.lookupVariable(VAR_FILTERS, this);
+      if (filters instanceof AdHocFiltersVariable) {
+        const initialFilters = filters.state.set.state.filters;
+        stateUpdate.$variables = getVariableSet(stateUpdate.initialDS, stateUpdate.metric, initialFilters);
+        // Hack to trigger re-render of controls
+        stateUpdate.controls = this.state.controls.map((control) => control.clone());
+      }
+    }
+
+    return stateUpdate;
   }
 
   getUrlState() {
@@ -150,15 +153,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
-        stateUpdate.metric = values.metric;
-        stateUpdate.topScene = getTopSceneFor(stateUpdate);
+        Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({ showHeading: true });
     }
 
-    this.setState(stateUpdate);
+    // Temp hack to workaround url sync not cancelling url update when url changes during url sync
+    setTimeout(() => {
+      this.setState(stateUpdate);
+    }, 1);
   }
 
   public onToggleAdvanced = () => {
@@ -191,15 +196,34 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-function getTopSceneFor(state: Partial<DataTrailState>) {
-  if (state.metric) {
-    if (state.metric === LOGS_METRIC) {
+function getTopSceneFor(metric?: string) {
+  if (metric) {
+    if (metric === LOGS_METRIC) {
       return new LogsScene({});
     }
-    return new MetricScene({ metric: state.metric });
+    return new MetricScene({ metric: metric });
   } else {
     return new MetricSelectScene({ showHeading: true });
   }
+}
+
+function getVariableSet(initialDS?: string, metric?: string, initialFilters?: AdHocVariableFilter[]) {
+  return new SceneVariableSet({
+    variables: [
+      new DataSourceVariable({
+        name: VAR_DATASOURCE,
+        label: 'Data source',
+        value: initialDS,
+        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+      }),
+      AdHocFiltersVariable.create({
+        name: 'filters',
+        datasource: trailDS,
+        layout: 'simple',
+        filters: initialFilters ?? [],
+      }),
+    ],
+  });
 }
 
 function getStyles(theme: GrafanaTheme2) {
