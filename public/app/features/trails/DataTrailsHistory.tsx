@@ -85,7 +85,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: 10,
       alignItems: 'center',
-      opacity: 0.7,
     }),
     heading: css({}),
     step: css({
@@ -97,6 +96,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       width: 8,
       height: 8,
+      opacity: 0.7,
       borderRadius: theme.shape.radius.circle,
       background: theme.colors.primary.main,
       position: 'relative',

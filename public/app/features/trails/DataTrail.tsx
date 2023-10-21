@@ -5,6 +5,7 @@ import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  DataSourceVariable,
   getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
@@ -27,7 +28,7 @@ import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { LogsScene, LogsSearch } from './LogsScene';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { MetricSelectedEvent, metricDS, VAR_FILTERS, LOGS_METRIC } from './shared';
+import { MetricSelectedEvent, metricDS, VAR_FILTERS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -38,8 +39,9 @@ export interface DataTrailState extends SceneObjectState {
   history: DataTrailHistory;
   advancedMode?: boolean;
 
-  // Sycned with url
+  // Synced with url
   metric?: string;
+  initialDS?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -50,19 +52,22 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       $timeRange: new SceneTimeRange({}),
       $variables: new SceneVariableSet({
         variables: [
-          // new DataSourceVariable({
-          //   name: 'ds',
-          //   pluginId: 'prometheus',
-          // }),
+          new DataSourceVariable({
+            name: VAR_DATASOURCE,
+            label: 'Data source',
+            value: state.initialDS,
+            pluginId: 'prometheus',
+          }),
           AdHocFiltersVariable.create({
             name: 'filters',
             datasource: metricDS,
+            layout: 'simple',
             filters: state.filters ?? [],
           }),
         ],
       }),
       controls: [
-        new VariableValueSelectors({}),
+        new VariableValueSelectors({ layout: 'vertical' }),
         new LogsSearch({}),
         new SceneControlsSpacer(),
         new SceneTimePicker({}),
@@ -211,8 +216,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controls: css({
       display: 'flex',
-      gap: theme.spacing(1),
-      alignItems: 'center',
+      gap: theme.spacing(2),
+      alignItems: 'flex-end',
       flexWrap: 'wrap',
     }),
   };

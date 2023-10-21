@@ -9,6 +9,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { RadioButtonGroup } from '@grafana/ui';
+import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 
 import { KEY_SQR_METRIC_VIZ_QUERY, metricDS } from '../shared';
 
@@ -58,6 +59,13 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           .setTitle(def.title)
           .setUnit(def.unit)
           .setOption('calculate', false)
+          .setOption('color', {
+            mode: HeatmapColorMode.Scheme,
+            exponent: 0.5,
+            scheme: 'OrRd',
+            steps: 66,
+            reverse: false,
+          })
           .setHeaderActions(this.getQuerySelector(def))
           .setData(
             new SceneQueryRunner({

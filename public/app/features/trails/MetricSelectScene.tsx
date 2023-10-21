@@ -117,7 +117,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     return (
       <Flex direction="column">
-        {showHeading && <Text variant="h4">Select a metric</Text>}
+        {showHeading && (
+          <div className={styles.headingWrapper}>
+            <Text variant="h4">Select a metric</Text>
+          </div>
+        )}
         <div className={styles.header}>
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
           <InlineSwitch showLabel={true} label="Show previews" value={true} />
@@ -167,6 +171,9 @@ function getPanelForMetric(metric: string, index: number) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    headingWrapper: css({
+      marginTop: theme.spacing(1),
+    }),
     header: css({
       flexGrow: 1,
       display: 'flex',

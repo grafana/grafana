@@ -88,11 +88,17 @@ export function getDataTrailsApp() {
           new DataTrail({
             metric: 'grafana_http_request_duration_seconds_count',
             filters: [{ key: 'job', operator: '=', value: 'grafana' }],
-          }),
+          }).getRef(),
           new DataTrail({
             metric: 'go_memstats_alloc_bytes_total',
             filters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
-          }),
+          }).getRef(),
+        ],
+        bookmarks: [
+          new DataTrail({
+            initialDS: 'kCLEK-Cnk',
+            filters: [{ key: 'job', operator: '=', value: 'production/grafana' }],
+          }).getRef(),
         ],
       }),
     });

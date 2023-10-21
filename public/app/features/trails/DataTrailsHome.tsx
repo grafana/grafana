@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Flex } from '@grafana/ui/src/unstable';
@@ -13,7 +13,8 @@ import { DataTrailsApp } from './DataTrailsApp';
 import { getParentOfType, newLogsTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
-  recent: DataTrail[];
+  recent: Array<SceneObjectRef<DataTrail>>;
+  bookmarks: Array<SceneObjectRef<DataTrail>>;
 }
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
@@ -25,7 +26,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newMetricsTrail();
 
-    this.setState({ recent: [...this.state.recent, app.state.trail] });
+    this.setState({ recent: [...this.state.recent, app.state.trail.getRef()] });
     app.goToUrlForTrail(trail);
   };
 
@@ -33,7 +34,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newLogsTrail();
 
-    this.setState({ recent: [...this.state.recent, app.state.trail] });
+    this.setState({ recent: [...this.state.recent, app.state.trail.getRef()] });
     app.goToUrlForTrail(trail);
   };
 
@@ -41,16 +42,17 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
 
     const currentTrail = app.state.trail;
-    const existsInRecent = this.state.recent.find((t) => t === currentTrail);
+    const existsInRecent = this.state.recent.find((t) => t.resolve() === currentTrail);
+
     if (!existsInRecent) {
-      this.setState({ recent: [...this.state.recent, currentTrail] });
+      this.setState({ recent: [...this.state.recent, currentTrail.getRef()] });
     }
 
     app.goToUrlForTrail(trail);
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
-    const { recent } = model.useState();
+    const { recent, bookmarks } = model.useState();
     const app = getAppFor(model);
     const styles = useStyles2(getStyles);
 
@@ -74,13 +76,17 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             <div className={styles.trailList}>
               {app.state.trail.state.metric && <DataTrailCard trail={app.state.trail} onSelect={model.onSelectTrail} />}
               {recent.map((trail, index) => (
-                <DataTrailCard key={index} trail={trail} onSelect={model.onSelectTrail} />
+                <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
               ))}
             </div>
           </div>
           <div>
             <Text variant="h4">Bookmarks</Text>
-            <div className={styles.trailList}></div>
+            <div className={styles.trailList}>
+              {bookmarks.map((trail, index) => (
+                <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
+              ))}
+            </div>
           </div>
         </Flex>
       </div>

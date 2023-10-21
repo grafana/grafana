@@ -43,7 +43,9 @@ export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
 function DataTrailDrawerRenderer({ model }: SceneComponentProps<DataTrailDrawer>) {
   return (
     <Drawer title={'Data trail'} onClose={model.onClose} size="lg">
-      <model.trail.Component model={model.trail} />
+      <div style={{ display: 'flex', height: '100%' }}>
+        <model.trail.Component model={model.trail} />
+      </div>
     </Drawer>
   );
 }

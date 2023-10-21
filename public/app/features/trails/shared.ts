@@ -2,8 +2,6 @@ import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export const metricDS = { uid: 'gdev-prometheus', type: 'prometheus' };
-
 export interface ActionViewDefinition {
   displayName: string;
   value: string;
@@ -17,9 +15,12 @@ export const VAR_METRIC = 'metric';
 export const VAR_METRIC_EXPR = '${metric}';
 export const VAR_GROUP_BY = 'groupby';
 export const VAR_GROUP_BY_EXP = '${groupby}';
-export const LOGS_METRIC = '$__logs__';
+export const VAR_DATASOURCE = 'ds';
 
+export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
+
+export const metricDS = { uid: `\${${VAR_DATASOURCE}}`, type: 'prometheus' };
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

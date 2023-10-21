@@ -137,7 +137,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 }
 
 const MAIN_PANEL_MIN_HEIGHT = 250;
-const MAIN_PANEL_MAX_HEIGHT = '50%';
+const MAIN_PANEL_MAX_HEIGHT = '40%';
 
 function buildGraphScene(metric: string) {
   const queries = getAutoQueriesForMetric(metric);

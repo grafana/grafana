@@ -196,6 +196,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
                   refId: 'A',
                   datasource: metricDS,
                   expr: `sum(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])) by(${option.value})`,
+                  maxDataPoints: 300,
                 },
               ],
             })
@@ -235,8 +236,9 @@ function buildNormalLayout() {
       queries: [
         {
           refId: 'A',
-          datasource: { uid: 'gdev-prometheus' },
+          datasource: metricDS,
           expr: 'sum(rate(${metric}{${filters}}[$__rate_interval])) by($groupby)',
+          maxDataPoints: 300,
         },
       ],
     }),
