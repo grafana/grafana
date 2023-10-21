@@ -274,7 +274,7 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, plu
 	}
 
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	if err := client.GetResourcesPages(params,
+	if err := client.GetResourcesPagesWithContext(ctx, params,
 		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
 			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage

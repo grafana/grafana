@@ -187,8 +187,8 @@ type fakeRGTAClient struct {
 	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
 }
 
-func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput,
-	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
+func (c fakeRGTAClient) GetResourcesPagesWithContext(ctx context.Context, in *resourcegroupstaggingapi.GetResourcesInput,
+	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool, opts ...request.Option) error {
 	fn(&resourcegroupstaggingapi.GetResourcesOutput{
 		ResourceTagMappingList: c.tagMapping,
 	}, true)
