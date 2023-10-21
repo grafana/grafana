@@ -74,7 +74,7 @@ export const ManualEditor = ({
               aria-label={`Select series ${index + 1}`}
               tabIndex={0}
               onKeyPress={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === 'Enter') {
                   setSelected(index);
                 }
               }}
