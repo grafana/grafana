@@ -73,7 +73,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   private _onActivate() {
-    this.buildLayout();
+    if (this.state.body.state.children.length === 0) {
+      this.buildLayout();
+    }
   }
 
   private buildLayout() {

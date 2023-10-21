@@ -73,12 +73,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
 
-    this.state.history.trailActivated(this);
-
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
-    this.subscribeToEvent(SceneVariableValueChangedEvent, this._handleVariableValueChanged.bind(this));
-    this.subscribeToEvent(SceneObjectStateChangedEvent, this._handleSceneObjectStateChanged.bind(this));
 
     return () => {
       if (!this.state.embedded) {
@@ -92,6 +88,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       getUrlSyncManager().cleanUp(this);
     }
 
+    if (!step.trailState.metric) {
+      step.trailState.metric = undefined;
+    }
+
     this.setState(step.trailState);
 
     if (!this.state.embedded) {
@@ -101,26 +101,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
   }
 
-  private _handleSceneObjectStateChanged(evt: SceneObjectStateChangedEvent) {
-    if (evt.payload.changedObject instanceof SceneTimeRange) {
-      this.state.history.addTrailStep(this, 'time');
-    }
-  }
-
-  private _handleVariableValueChanged(evt: SceneVariableValueChangedEvent) {
-    if (evt.payload.state.name === VAR_FILTERS) {
-      this.state.history.addTrailStep(this, 'filters');
-    }
-  }
-
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
     if (this.state.embedded) {
       this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
     } else {
       locationService.partial({ metric: evt.payload, actionView: null });
     }
-
-    this.state.history.addTrailStep(this, 'metric');
   }
 
   private getSceneUpdatesForNewMetricValue(metric: string | undefined) {

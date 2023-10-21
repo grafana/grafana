@@ -2,11 +2,20 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneUtils } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneComponentProps,
+  sceneUtils,
+  SceneVariableValueChangedEvent,
+  SceneObjectStateChangedEvent,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { useStyles2, Tooltip } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail, DataTrailState } from './DataTrail';
+import { VAR_FILTERS } from './shared';
 import { getTrailFor } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
@@ -24,14 +33,39 @@ export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
     super({ steps: state.steps ?? [] });
+
+    this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  public trailActivated(trail: DataTrail) {
-    if (this.state.steps.length > 0) {
-      return;
+  public _onActivate() {
+    const trail = getTrailFor(this);
+
+    if (this.state.steps.length === 0) {
+      this.addTrailStep(trail, 'start');
     }
 
-    this.addTrailStep(trail, 'start');
+    trail.subscribeToState((newState, oldState) => {
+      if (newState.metric !== oldState.metric) {
+        if (this.state.steps.length === 1) {
+          // For the first step we want to update the starting state so that it contains data
+          this.state.steps[0].trailState = sceneUtils.cloneSceneObjectState(oldState, { history: this });
+        }
+
+        this.addTrailStep(trail, 'metric');
+      }
+    });
+
+    trail.subscribeToEvent(SceneVariableValueChangedEvent, (evt) => {
+      if (evt.payload.state.name === VAR_FILTERS) {
+        this.addTrailStep(trail, 'filters');
+      }
+    });
+
+    trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
+      if (evt.payload.changedObject instanceof SceneTimeRange) {
+        this.addTrailStep(trail, 'time');
+      }
+    });
   }
 
   public addTrailStep(trail: DataTrail, type: TrailStepType) {
