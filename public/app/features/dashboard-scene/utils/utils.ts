@@ -1,5 +1,4 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { IntervalVariableModel } from '@grafana/data';
 import {
   MultiValueVariable,
   SceneDataTransformer,
@@ -8,6 +7,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -78,62 +78,6 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   });
 }
 
-export interface DashboardUrlOptions {
-  uid?: string;
-  subPath?: string;
-  updateQuery?: UrlQueryMap;
-  /** Set to location.search to preserve current params */
-  currentQueryParams: string;
-  /** * Returns solo panel route instead */
-  soloRoute?: boolean;
-  /** return render url */
-  render?: boolean;
-  /** Return an absolute URL */
-  absolute?: boolean;
-  // Add tz to query params
-  timeZone?: string;
-}
-
-export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
-
-  if (options.soloRoute) {
-    path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
-  }
-
-  if (options.render) {
-    path = '/render' + path;
-
-    options.updateQuery = {
-      ...options.updateQuery,
-      width: 1000,
-      height: 500,
-      tz: options.timeZone,
-    };
-  }
-
-  const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
-
-  if (options.updateQuery) {
-    for (const key of Object.keys(options.updateQuery)) {
-      // removing params with null | undefined
-      if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
-        delete params[key];
-      } else {
-        params[key] = options.updateQuery[key];
-      }
-    }
-  }
-
-  const relativeUrl = urlUtil.renderUrl(path, params);
-
-  if (options.absolute) {
-    return config.appUrl + relativeUrl.slice(1);
-  }
-
-  return relativeUrl;
-}
-
 export function getMultiVariableValues(variable: MultiValueVariable) {
   const { value, text, options } = variable.state;
 
@@ -148,6 +92,58 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
     values: Array.isArray(value) ? value : [value],
     texts: Array.isArray(text) ? text : [text],
   };
+}
+
+// Transform old interval model to new interval model from scenes
+export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+  // separate intervals by quotes either single or double
+  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+
+  // If no intervals are found in query, return the initial state of the interval reducer.
+  if (!matchIntervals) {
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
+  }
+  const uniqueIntervals = new Set<string>();
+
+  // when options are defined in variable.query
+  const intervals = matchIntervals.reduce((uniqueIntervals: Set<string>, text: string) => {
+    // Remove surrounding quotes from the interval value.
+    const intervalValue = text.replace(/["']+/g, '');
+
+    // Skip intervals that start with "$__auto_interval_",scenes will handle them.
+    if (intervalValue.startsWith('$__auto_interval_')) {
+      return uniqueIntervals;
+    }
+
+    // Add the interval if it's not already in the Set.
+    uniqueIntervals.add(intervalValue);
+    return uniqueIntervals;
+  }, uniqueIntervals);
+
+  return Array.from(intervals);
+}
+
+// Transform new interval scene model to old interval core model
+export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
+  const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
+  return variableQuery;
+}
+
+export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
+  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+
+  // If the interval is the old auto format, return the new auto interval from scenes.
+  if (selectedInterval.startsWith('$__auto_interval_')) {
+    return '$__auto';
+  }
+
+  // Check if the selected interval is valid.
+  if (intervals.includes(selectedInterval)) {
+    return selectedInterval;
+  }
+
+  // If the selected interval is not valid, return the first valid interval.
+  return intervals[0];
 }
 
 export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {

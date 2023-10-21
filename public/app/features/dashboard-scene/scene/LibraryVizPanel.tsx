@@ -42,7 +42,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       });
     } catch (err) {
       vizPanel.setState({
-        pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
+        _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
       });
     }
 

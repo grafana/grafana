@@ -114,7 +114,6 @@ describe('sceneVariablesSetToVariables', () => {
         "uid": "fake-std",
       },
       "description": "test-desc",
-      "hide": 0,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
@@ -123,8 +122,7 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
-      "skipUrlSync": false,
-      "sort": 1,
+      "type": "query",
     }
     `);
   });
@@ -162,15 +160,15 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "description": "test-desc",
-      "hide": 0,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
       "name": "test",
       "options": [],
       "query": "fake-std",
+      "refresh": 1,
       "regex": "",
-      "skipUrlSync": false,
+      "type": "datasource",
     }
     `);
   });
@@ -213,14 +211,13 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "description": "test-desc",
-      "hide": 0,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
       "name": "test",
       "options": [],
       "query": "test,test1,test2",
-      "skipUrlSync": false,
+      "type": "custom",
     }
     `);
   });
@@ -252,6 +249,7 @@ describe('sceneVariablesSetToVariables', () => {
       "name": "test",
       "query": "constant value",
       "skipUrlSync": true,
+      "type": "constant",
     }
     `);
   });
