@@ -104,7 +104,7 @@ export function getDataTrailsApp() {
 function getStyles(theme: GrafanaTheme2) {
   return {
     customPage: css({
-      padding: theme.spacing(1, 3, 2, 3),
+      padding: theme.spacing(2, 3, 2, 3),
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       flexGrow: 1,
       display: 'flex',

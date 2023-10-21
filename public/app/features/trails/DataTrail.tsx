@@ -36,7 +36,7 @@ export interface DataTrailState extends SceneObjectState {
   filters?: AdHocVariableFilter[];
   controls: SceneObject[];
   history: DataTrailHistory;
-  debug?: boolean;
+  advancedMode?: boolean;
 
   // Sycned with url
   metric?: string;
@@ -80,6 +80,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (!this.state.topScene) {
       this.setState({ topScene: getTopSceneFor(this.state) });
     }
+
+    this.state.history.trailActivated(this);
 
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
@@ -151,12 +153,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.setState(stateUpdate);
   }
 
-  public onToggleDebug = () => {
-    this.setState({ debug: !this.state.debug });
+  public onToggleAdvanced = () => {
+    this.setState({ advancedMode: !this.state.advancedMode });
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, debug } = model.useState();
+    const { controls, topScene, history, advancedMode } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -168,10 +170,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
               <control.Component key={control.state.key} model={control} />
             ))}
             <ToolbarButton
-              icon="eye"
-              onClick={model.onToggleDebug}
-              variant={debug ? 'active' : 'canvas'}
-              tooltip="Show more information"
+              icon="cog"
+              onClick={model.onToggleAdvanced}
+              variant={advancedMode ? 'active' : 'canvas'}
+              tooltip="Advanced mode"
             />
           </div>
         )}

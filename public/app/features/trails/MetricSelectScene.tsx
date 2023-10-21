@@ -17,18 +17,12 @@ import {
   SceneVariable,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Button, Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
+import { Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import {
-  getVariablesWithMetricConstant,
-  MetricSelectedEvent,
-  metricDS,
-  VAR_FILTERS,
-  VAR_METRIC_EXPR,
-  VAR_METRIC_NAMES,
-} from './shared';
+import { SelectMetricAction } from './SelectMetricAction';
+import { getVariablesWithMetricConstant, metricDS, VAR_FILTERS, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex } from './utils';
 
 export interface MetricSelectSceneState extends SceneObjectState {
@@ -167,25 +161,8 @@ function getPanelForMetric(metric: string, index: number) {
     .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9)
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
-    .setHeaderActions(new SelectMetricAction({}))
+    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
-}
-
-export interface SelectMetricActionState extends SceneObjectState {}
-
-export class SelectMetricAction extends SceneObjectBase<SelectMetricActionState> {
-  public onClick = () => {
-    const metric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-    this.publishEvent(new MetricSelectedEvent(metric), true);
-  };
-
-  public static Component = ({ model }: SceneComponentProps<SelectMetricAction>) => {
-    return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
-        Select
-      </Button>
-    );
-  };
 }
 
 function getStyles(theme: GrafanaTheme2) {

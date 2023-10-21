@@ -19,11 +19,19 @@ export interface DataTrailHistoryStep {
   trailState: DataTrailState;
 }
 
-export type TrailStepType = 'filters' | 'time' | 'metric';
+export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
 
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
     super({ steps: state.steps ?? [] });
+  }
+
+  public trailActivated(trail: DataTrail) {
+    if (this.state.steps.length > 0) {
+      return;
+    }
+
+    this.addTrailStep(trail, 'start');
   }
 
   public addTrailStep(trail: DataTrail, type: TrailStepType) {
@@ -76,7 +84,6 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: 10,
-      marginTop: theme.spacing(1),
       alignItems: 'center',
       opacity: 0.7,
     }),
@@ -112,6 +119,12 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     stepTypes: {
+      start: css({
+        background: visTheme.getColorByName('green'),
+        '&:after': {
+          background: visTheme.getColorByName('green'),
+        },
+      }),
       filters: css({
         background: visTheme.getColorByName('purple'),
         '&:after': {

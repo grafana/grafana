@@ -20,14 +20,16 @@ import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngin
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { buildBreakdownActionScene } from './BreakdownScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
+import { SelectMetricAction } from './SelectMetricAction';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,
   KEY_SQR_METRIC_VIZ_QUERY,
+  LOGS_METRIC,
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
+import { showOnlyInAdvanced } from './showOnlyInAdvanced';
 import { getParentOfType, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
@@ -151,7 +153,7 @@ function buildGraphScene(metric: string) {
       new SceneFlexItem({
         ySizing: 'content',
         isHidden: true,
-        $behaviors: [onlyShowInDebugBehavior],
+        $behaviors: [showOnlyInAdvanced],
         body: new QueryDebugView({}),
       }),
       new SceneFlexItem({
@@ -160,13 +162,6 @@ function buildGraphScene(metric: string) {
       }),
     ],
   });
-}
-
-/**
- *
- */
-function mainViewHeightBehavior(obj: SceneFlexItem) {
-  const metricScene = getParentOfType(model, MetricScene);
 }
 
 export interface QueryDebugViewState extends SceneObjectState {}
@@ -194,7 +189,10 @@ function buildLogsScene() {
         },
       ],
     }),
-    body: PanelBuilders.logs().setTitle('Logs').build(),
+    body: PanelBuilders.logs()
+      .setTitle('Logs')
+      .setHeaderActions(new SelectMetricAction({ metric: LOGS_METRIC, title: 'Open' }))
+      .build(),
   });
 }
 

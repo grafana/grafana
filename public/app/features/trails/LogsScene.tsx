@@ -17,7 +17,6 @@ import { Icon, Input, ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { onlyShowInDebugBehavior } from './onlyShowInDebugBehavior';
 import {
   ActionViewDefinition,
   KEY_SQR_METRIC_VIZ_QUERY,
@@ -25,6 +24,7 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
+import { showOnlyInAdvanced } from './showOnlyInAdvanced';
 import { getParentOfType, getTrailFor } from './utils';
 
 export interface LogsSceneState extends SceneObjectState {
@@ -170,7 +170,7 @@ function buildLogsScene() {
       new SceneFlexItem({
         ySizing: 'content',
         isHidden: true,
-        $behaviors: [onlyShowInDebugBehavior],
+        $behaviors: [showOnlyInAdvanced],
         body: new QueryDebugView({}),
       }),
     ],
