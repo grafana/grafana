@@ -13,7 +13,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '300px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -104,17 +104,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    minWidth: MENU_WIDTH,
+    padding: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
   }),
   dockMenuButton: css({
+    color: theme.colors.text.disabled,
     display: 'none',
-    marginRight: theme.spacing(2),
 
     [theme.breakpoints.up('md')]: {
       display: 'inline-flex',

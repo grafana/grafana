@@ -85,7 +85,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, alert)
 	}
 
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	// Eventually, our Alertmanager should have received at least one alert.
 	assertAlertsDelivered(t, fakeAM, expected)
@@ -189,8 +189,8 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		alerts2.PostableAlerts = append(alerts2.PostableAlerts, alert)
 	}
 
-	alertsRouter.Send(ruleKey1, alerts1)
-	alertsRouter.Send(ruleKey2, alerts2)
+	alertsRouter.Send(context.Background(), ruleKey1, alerts1)
+	alertsRouter.Send(context.Background(), ruleKey2, alerts2)
 
 	assertAlertsDelivered(t, fakeAM, expected)
 
@@ -315,7 +315,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		expected = append(expected, &alert)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, alert)
 	}
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	// Eventually, our Alertmanager should have received at least one alert.
 	assertAlertsDelivered(t, fakeAM, expected)
@@ -347,11 +347,11 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
 	require.Equal(t, models.InternalAlertmanager, alertsRouter.sendAlertsTo[ruleKey.OrgID])
 
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	am, err := moa.AlertmanagerFor(ruleKey.OrgID)
 	require.NoError(t, err)
-	actualAlerts, err := am.GetAlerts(true, true, true, nil, "")
+	actualAlerts, err := am.GetAlerts(context.Background(), true, true, true, nil, "")
 	require.NoError(t, err)
 	require.Len(t, actualAlerts, len(expected))
 }

@@ -37,6 +37,8 @@ If the feature is not going to be released outside of Grafana Cloud, omit the HT
 
 The release date of the feature, fully written out. For example: September 12, 2023.
 
+Add your feature in order by date. Dates are in descending order from the top of the page (that is, the top of the page has the most recently released features).
+
 ## _`CLOUD AVAILABILITY`_
 
 One of the following [release life cycle stages](https://grafana.com/docs/release-life-cycle/):

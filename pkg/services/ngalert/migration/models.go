@@ -41,7 +41,7 @@ type OrgMigration struct {
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
-func (ms *MigrationService) newOrgMigration(orgID int64) *OrgMigration {
+func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 	return &OrgMigration{
 		cfg: ms.cfg,
 		log: ms.log.New("orgID", orgID),
