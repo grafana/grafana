@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { cloneDeep } from 'lodash';
 import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -14,7 +13,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '300px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -22,13 +21,11 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = React.memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navBarTree = useSelector((state) => state.navBarTree);
+    const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-
-    const navTree = cloneDeep(navBarTree);
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -107,17 +104,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    minWidth: MENU_WIDTH,
+    padding: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
   }),
   dockMenuButton: css({
+    color: theme.colors.text.disabled,
     display: 'none',
-    marginRight: theme.spacing(2),
 
     [theme.breakpoints.up('md')]: {
       display: 'inline-flex',

@@ -427,6 +427,16 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
@@ -769,6 +779,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copiar",
+      "create-alert": "",
       "create-library-panel": "Crear panel de librería",
       "duplicate": "Duplicar",
       "edit": "Editar",

@@ -24,13 +24,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -68,6 +71,10 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
+	upgradeService migration.UpgradeService,
+
+	// This is necessary to ensure the guardian provider is initialized before we run the migration.
+	_ *guardian.Provider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -94,9 +101,17 @@ func ProvideService(
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
+		upgradeService:       upgradeService,
 	}
 
-	if ng.IsDisabled() {
+	// Migration is called even if UA is disabled. If UA is disabled, this will do nothing except handle logic around
+	// reverting the migration.
+	err := ng.upgradeService.Run(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	if !ng.shouldRun() {
 		return ng, nil
 	}
 
@@ -142,6 +157,8 @@ type AlertNG struct {
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
+
+	upgradeService migration.UpgradeService
 }
 
 func (ng *AlertNG) init() error {
@@ -155,7 +172,17 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
+
+	var overrides []notifier.Option
+	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			externalAMCfg := remote.ExternalAlertmanagerConfig{}
+			return remote.NewExternalAlertmanager(externalAMCfg, orgID)
+		})
+
+		overrides = append(overrides, override)
+	}
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}
@@ -316,8 +343,16 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 	})
 }
 
+// shouldRun determines if AlertNG should init or run anything more than just the migration.
+func (ng *AlertNG) shouldRun() bool {
+	return ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
+	if !ng.shouldRun() {
+		return nil
+	}
 	ng.Log.Debug("Starting")
 
 	ng.stateManager.Warm(ctx, ng.store)
@@ -341,10 +376,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
 func (ng *AlertNG) IsDisabled() bool {
-	if ng.Cfg == nil {
-		return true
-	}
-	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+	return ng.Cfg == nil
 }
 
 // GetHooks returns a facility for replacing handlers for paths. The handler hook for a path

@@ -7,8 +7,7 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
 
-import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
-import { getIconSubDir, getSvgSize } from './utils';
+import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -45,10 +44,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
     }
 
-    if (!cacheInitialized) {
-      initIconCache();
-    }
-
     if (!isIconName(name)) {
       console.warn('Icon component passed an invalid icon name', name);
     }
@@ -57,6 +52,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       return <div ref={ref}>invalid icon name</div>;
     }
 
+    const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
     const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
