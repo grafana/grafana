@@ -137,7 +137,7 @@ func (b *DSAPIBuilder) executeHealthHandler(ctx context.Context, w http.Response
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(jsonRsp)
+	_, _ = w.Write(jsonRsp)
 }
 
 func (b *DSAPIBuilder) executeQueryHandler(ctx context.Context, w http.ResponseWriter, req *http.Request, pluginCtx *backend.PluginContext) {
@@ -145,14 +145,14 @@ func (b *DSAPIBuilder) executeQueryHandler(ctx context.Context, w http.ResponseW
 	if err != nil {
 		klog.Errorf("QueryDataRequest was malformed: %s", err)
 		w.WriteHeader(400)
-		w.Write([]byte("QueryDataRequest was malformed"))
+		_, _ = w.Write([]byte("QueryDataRequest was malformed"))
 		return
 	}
 	queries, err := readQueries(body)
 	if err != nil {
 		klog.Errorf("Could not parse QueryDataRequest: %s", err)
 		w.WriteHeader(400)
-		w.Write([]byte("Could not parse QueryDataRequest"))
+		_, _ = w.Write([]byte("Could not parse QueryDataRequest"))
 		return
 	}
 
@@ -171,5 +171,5 @@ func (b *DSAPIBuilder) executeQueryHandler(ctx context.Context, w http.ResponseW
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(jsonRsp)
+	_, _ = w.Write(jsonRsp)
 }
