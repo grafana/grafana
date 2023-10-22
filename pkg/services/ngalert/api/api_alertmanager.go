@@ -43,7 +43,7 @@ func (e UnknownReceiverError) Error() string {
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -58,7 +58,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -93,7 +93,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -107,7 +107,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -143,7 +143,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqCont
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -168,7 +168,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) res
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -196,7 +196,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -213,7 +213,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -293,7 +293,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -324,7 +324,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	}
 	defer cancelFunc()
 
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -341,7 +341,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
@@ -463,8 +463,8 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 	return apiRes
 }
 
-func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, *response.NormalResponse) {
-	am, err := srv.mam.AlertmanagerFor(orgID)
+func (srv AlertmanagerSrv) AlertmanagerFor(ctx context.Context, orgID int64) (notifier.Alertmanager, *response.NormalResponse) {
+	am, err := srv.mam.AlertmanagerFor(ctx, orgID)
 	if err == nil {
 		return am, nil
 	}

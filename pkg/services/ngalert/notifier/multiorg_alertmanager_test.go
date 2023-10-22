@@ -196,9 +196,9 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].Ready())
-		require.False(t, mam.alertmanagers[2].Ready())
-		require.True(t, mam.alertmanagers[3].Ready())
+		require.NoError(t, mam.alertmanagers[1].Ready(ctx))
+		require.Error(t, mam.alertmanagers[2].Ready(ctx))
+		require.NoError(t, mam.alertmanagers[3].Ready(ctx))
 
 		// Configurations should be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
@@ -216,9 +216,9 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].Ready())
-		require.False(t, mam.alertmanagers[2].Ready())
-		require.True(t, mam.alertmanagers[3].Ready())
+		require.NoError(t, mam.alertmanagers[1].Ready(ctx))
+		require.Error(t, mam.alertmanagers[2].Ready(ctx))
+		require.NoError(t, mam.alertmanagers[3].Ready(ctx))
 
 		// The configuration should still be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
@@ -237,9 +237,9 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].Ready())
-		require.True(t, mam.alertmanagers[2].Ready())
-		require.True(t, mam.alertmanagers[3].Ready())
+		require.NoError(t, mam.alertmanagers[1].Ready(ctx))
+		require.NoError(t, mam.alertmanagers[2].Ready(ctx))
+		require.NoError(t, mam.alertmanagers[3].Ready(ctx))
 
 		// All configurations should be marked as successfully applied.
 		for _, org := range orgs {
@@ -278,13 +278,13 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 	// First, let's try to request an Alertmanager from an org that doesn't exist.
 	{
-		_, err := mam.AlertmanagerFor(5)
+		_, err := mam.AlertmanagerFor(ctx, 5)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
 
 	// With an Alertmanager that exists, it responds correctly.
 	{
-		am, err := mam.AlertmanagerFor(2)
+		am, err := mam.AlertmanagerFor(ctx, 2)
 		require.NoError(t, err)
 		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
 		require.Equal(t, int64(2), am.OrgID())
@@ -295,7 +295,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	orgStore.orgs = []int64{1, 3}
 	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 	{
-		_, err := mam.AlertmanagerFor(2)
+		_, err := mam.AlertmanagerFor(ctx, 2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
 }
@@ -338,7 +338,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 
 	// Now let's save a new config for org 2.
 	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-	am, err := mam.AlertmanagerFor(2)
+	am, err := mam.AlertmanagerFor(ctx, 2)
 	require.NoError(t, err)
 
 	postable, err := Load([]byte(newConfig))

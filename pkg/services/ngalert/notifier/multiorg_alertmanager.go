@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	ErrNoAlertmanagerForOrg = fmt.Errorf("Alertmanager does not exist for this organization")
-	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
+	ErrNoAlertmanagerForOrg = fmt.Errorf("alertmanager does not exist for this organization")
+	ErrAlertmanagerNotReady = fmt.Errorf("alertmanager is not ready yet")
 )
 
 type Alertmanager interface {
@@ -54,11 +54,11 @@ type Alertmanager interface {
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// State
-	StopAndWait()
-	Ready() bool
+	ConfigHash() [16]byte
 	FileStore() *FileStore
 	OrgID() int64
-	ConfigHash() [16]byte
+	StopAndWait()
+	Ready(context.Context) error
 }
 
 type MultiOrgAlertmanager struct {
@@ -402,7 +402,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
-func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(ctx context.Context, orgID int64) (Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
@@ -411,8 +411,8 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, err
 		return nil, ErrNoAlertmanagerForOrg
 	}
 
-	if !orgAM.Ready() {
-		return orgAM, ErrAlertmanagerNotReady
+	if err := orgAM.Ready(ctx); err != nil {
+		return orgAM, err
 	}
 
 	return orgAM, nil

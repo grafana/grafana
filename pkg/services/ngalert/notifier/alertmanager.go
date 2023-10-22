@@ -148,11 +148,14 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	return am, nil
 }
 
-func (am *alertmanager) Ready() bool {
+func (am *alertmanager) Ready(_ context.Context) error {
 	// We consider AM as ready only when the config has been
 	// applied at least once successfully. Until then, some objects
 	// can still be nil.
-	return am.Base.Ready()
+	if ready := am.Base.Ready(); !ready {
+		return ErrAlertmanagerNotReady
+	}
+	return nil
 }
 
 func (am *alertmanager) StopAndWait() {

@@ -349,7 +349,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
-	am, err := moa.AlertmanagerFor(ruleKey.OrgID)
+	am, err := moa.AlertmanagerFor(context.Background(), ruleKey.OrgID)
 	require.NoError(t, err)
 	actualAlerts, err := am.GetAlerts(context.Background(), true, true, true, nil, "")
 	require.NoError(t, err)
@@ -416,7 +416,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
 		for _, org := range orgs {
-			_, err := moa.AlertmanagerFor(org)
+			_, err := moa.AlertmanagerFor(context.Background(), org)
 			if err != nil {
 				return false
 			}

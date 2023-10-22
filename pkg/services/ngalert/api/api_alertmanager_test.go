@@ -180,7 +180,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
 		require.Equal(t, 404, response.Status())
-		require.Contains(t, string(response.Body()), "Alertmanager does not exist for this organization")
+		require.Contains(t, string(response.Body()), "alertmanager does not exist for this organization")
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
@@ -230,7 +230,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
+		am, err := sut.mam.AlertmanagerFor(rc.Req.Context(), 1)
 		require.NoError(t, err)
 		hash := am.ConfigHash()
 
@@ -242,7 +242,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
+		am, err = sut.mam.AlertmanagerFor(rc.Req.Context(), 1)
 		require.NoError(t, err)
 		newHash := am.ConfigHash()
 		require.Equal(t, hash, newHash)
@@ -615,7 +615,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence := tesCase.silence()
 
 			if silence.ID != "" {
-				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
+				alertmanagerFor, err := sut.mam.AlertmanagerFor(rc.Req.Context(), 1)
 				require.NoError(t, err)
 				silence.ID = ""
 				newID, err := alertmanagerFor.CreateSilence(context.Background(), &silence)

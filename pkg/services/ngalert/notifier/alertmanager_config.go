@@ -57,7 +57,7 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 		return fmt.Errorf("failed to unmarshal historical alertmanager configuration: %w", err)
 	}
 
-	am, err := moa.AlertmanagerFor(orgId)
+	am, err := moa.AlertmanagerFor(ctx, orgId)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
@@ -175,7 +175,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return fmt.Errorf("failed to assign missing uids: %w", err)
 	}
 
-	am, err := moa.AlertmanagerFor(org)
+	am, err := moa.AlertmanagerFor(ctx, org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {

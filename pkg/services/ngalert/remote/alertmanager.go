@@ -26,6 +26,7 @@ import (
 const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
+	readyPath               = "/-/ready"
 )
 
 type Alertmanager struct {
@@ -273,12 +274,16 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 	return &notifier.TestTemplatesResults{}, nil
 }
 
-// TODO: change implementation, this is only useful for testing other methods
-func (am *Alertmanager) Ready() bool {
-	readyURL := strings.TrimSuffix(am.url, "/") + "/-/ready"
-	res, err := am.httpClient.Get(readyURL)
+func (am *Alertmanager) Ready(ctx context.Context) error {
+	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
 	if err != nil {
-		return false
+		return fmt.Errorf("error creating request: %w", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error performing readiness check: %w", err)
 	}
 
 	defer func() {
@@ -287,7 +292,10 @@ func (am *Alertmanager) Ready() bool {
 		}
 	}()
 
-	return res.StatusCode == http.StatusOK
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w, status code: %d", notifier.ErrAlertmanagerNotReady, res.StatusCode)
+	}
+	return nil
 }
 
 func (am *Alertmanager) StopAndWait() {
