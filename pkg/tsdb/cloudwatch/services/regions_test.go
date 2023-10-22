@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -24,7 +25,7 @@ func TestRegions(t *testing.T) {
 		}
 		ec2Mock := &mocks.EC2Mock{}
 		ec2Mock.On("DescribeRegionsWithContext").Return(mockRegions, nil)
-		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(ctx)
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(context.Background())
 		assert.NoError(t, err)
 		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
 			Value: resources.Region{
@@ -44,7 +45,7 @@ func TestRegions(t *testing.T) {
 			Regions: []*ec2.Region{},
 		}
 		ec2Mock.On("DescribeRegionsWithContext").Return(mockRegions, assert.AnError)
-		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(ctx)
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(context.Background())
 		assert.NoError(t, err)
 		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
 			Value: resources.Region{

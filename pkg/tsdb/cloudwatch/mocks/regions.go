@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -12,9 +14,9 @@ type RegionsService struct {
 	mock.Mock
 }
 
-func (r *RegionsService) GetRegionsWithContext() (ctx aws.Context, in []resources.ResourceResponse[resources.Region], e error) {
+func (r *RegionsService) GetRegionsWithContext(ctx context.Context) (in []resources.ResourceResponse[resources.Region], e error) {
 	args := r.Called()
-	return ctx, args.Get(0).(([]resources.ResourceResponse[resources.Region])), args.Error(1)
+	return args.Get(0).(([]resources.ResourceResponse[resources.Region])), args.Error(1)
 }
 
 type EC2Mock struct {
