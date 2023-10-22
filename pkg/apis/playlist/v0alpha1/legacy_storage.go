@@ -74,6 +74,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 		}
 
 		for _, v := range p.Items {
+			raw := v
 			t.Rows = append(t.Rows, metav1.TableRow{
 				Cells: []interface{}{
 					v.Name,
@@ -81,7 +82,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 					v.Spec.Interval,
 				},
 				Object: runtime.RawExtension{
-					Object: &v,
+					Object: &raw,
 				},
 			})
 		}
