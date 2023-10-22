@@ -59,7 +59,7 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
     };
 
     return (
-      <Dropdown overlay={renderPopover} placement="bottom" offset={[0, 6]} onVisibleChange={model.onToggleOpen}>
+      <Dropdown overlay={renderPopover} placement="bottom" onVisibleChange={model.onToggleOpen}>
         <ToolbarButton icon="cog" variant="canvas" isOpen={isOpen} />
       </Dropdown>
     );
@@ -77,6 +77,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.borderRadius(),
       border: `1px solid ${theme.colors.border.weak}`,
       zIndex: 1,
+      marginRight: theme.spacing(2),
     }),
     heading: css({
       fontWeight: theme.typography.fontWeightMedium,

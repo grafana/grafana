@@ -21,7 +21,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
