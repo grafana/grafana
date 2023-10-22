@@ -4,12 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +14,14 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/utils/strings/slices"
+
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const VersionID = "v0alpha1" //
@@ -31,9 +33,10 @@ type DSAPIBuilder struct {
 	groupVersion schema.GroupVersion
 	apiVersion   string
 
-	plugin    pluginstore.Plugin
-	client    plugins.Client
-	dsService datasources.DataSourceService
+	plugin          pluginstore.Plugin
+	client          plugins.Client
+	dsService       datasources.DataSourceService
+	dataSourceCache datasources.CacheService
 }
 
 func RegisterAPIService(
@@ -42,6 +45,7 @@ func RegisterAPIService(
 	pluginClient plugins.Client,
 	pluginStore pluginstore.Store,
 	dsService datasources.DataSourceService,
+	dataSourceCache datasources.CacheService,
 ) *DSAPIBuilder {
 	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -61,11 +65,12 @@ func RegisterAPIService(
 			Version: VersionID,
 		}
 		builder = &DSAPIBuilder{
-			groupVersion: groupVersion,
-			apiVersion:   groupVersion.String(),
-			plugin:       ds,
-			client:       pluginClient,
-			dsService:    dsService,
+			groupVersion:    groupVersion,
+			apiVersion:      groupVersion.String(),
+			plugin:          ds,
+			client:          pluginClient,
+			dsService:       dsService,
+			dataSourceCache: dataSourceCache,
 		}
 		apiregistration.RegisterAPI(builder)
 	}
@@ -192,30 +197,27 @@ func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 }
 
 func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return b.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-		OrgID: orgId,
-		UID:   name,
-	})
+	return b.dataSourceCache.GetDatasourceByUID(ctx, name, user, false)
 }
 
 func (b *DSAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	vals, err := b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-		OrgID: orgId,
+		OrgID: info.OrgID,
 		Type:  b.plugin.ID,
 	})
 	// HACK!!! See https://github.com/grafana/grafana/issues/76154
 	if err == nil && len(vals) == 0 && len(b.plugin.AliasIDs) > 0 {
 		vals, err = b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-			OrgID: orgId,
+			OrgID: info.OrgID,
 			Type:  b.plugin.AliasIDs[0], // "testdata",
 		})
 	}

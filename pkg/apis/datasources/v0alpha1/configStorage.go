@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 var (
@@ -49,9 +50,9 @@ func (s *configStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *configStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	return &DataSourceConfig{
@@ -61,7 +62,7 @@ func (s *configStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: fmt.Sprintf("org-%d", orgId),
+			Namespace: fmt.Sprintf("org-%d", info.OrgID),
 		},
 		Spec: map[string]any{
 			"hello": "world",

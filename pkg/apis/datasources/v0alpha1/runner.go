@@ -9,30 +9,27 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
+
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 // Authz should already be applied!!!
 func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
-	info, ok := request.RequestInfoFrom(r.Context())
+	ctx := r.Context()
+	ns, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		fmt.Printf("ERROR!!!!")
+		return
+	}
+	info, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		fmt.Printf("ERROR!!!!")
 		return
 	}
-	orgId, ok := grafanarequest.ParseOrgID(info.Namespace)
-	if !ok {
-		fmt.Printf("bad org")
-		return
-	}
 
-	ctx := r.Context()
-	ds, err := b.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-		OrgID: orgId,
-		UID:   info.Name,
-	})
+	ds, err := b.getDataSource(ctx, info.Name)
 	if err != nil {
 		fmt.Printf("ERROR!!!! %v", err)
 		return
@@ -40,7 +37,7 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	if ds == nil {
 		klog.Errorf("missing datasource: %s", err)
 		w.WriteHeader(400)
-		_ = w.Write([]byte("missing datasource"))
+		_, _ = w.Write([]byte("missing datasource"))
 		return
 	}
 
@@ -63,7 +60,7 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pluginCtx := &backend.PluginContext{
-		OrgID:                      orgId,
+		OrgID:                      ns.OrgID,
 		PluginID:                   b.plugin.ID,
 		PluginVersion:              b.plugin.Info.Version,
 		User:                       &backend.User{},
@@ -75,7 +72,7 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	case "query":
 		if r.Method != "POST" {
 			w.WriteHeader(400)
-			_ = w.Write([]byte("use POST for query!"))
+			_, _ = w.Write([]byte("use POST for query!"))
 			return
 		}
 		b.executeQueryHandler(ctx, w, r, pluginCtx)
@@ -100,7 +97,7 @@ func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.Re
 	if err != nil {
 		klog.Errorf("CallResourceRequest body was malformed: %s", err)
 		w.WriteHeader(400)
-		_ = w.Write([]byte("CallResourceRequest body was malformed"))
+		_, _ = w.Write([]byte("CallResourceRequest body was malformed"))
 		return
 	}
 
