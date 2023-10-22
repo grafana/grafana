@@ -636,6 +636,15 @@ export enum BarGaugeValueMode {
 }
 
 /**
+ * Allows for the bar gauge name to be placed explicitly
+ */
+export enum BarGaugeNamePlacement {
+  Auto = 'auto',
+  Left = 'left',
+  Top = 'top',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
@@ -747,6 +756,7 @@ export interface TableBarGaugeCellOptions {
  * Sparkline cell options
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
+  hideValue?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 

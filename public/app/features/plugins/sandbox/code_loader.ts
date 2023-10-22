@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/data';
+import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolveWithCache } from '../loader/cache';
@@ -19,8 +19,13 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
   if (isSameDomainAsHost(url)) {
     const response = await fetch(url);
     scriptCode = await response.text();
-    scriptCode = patchPluginSourceMap(meta, scriptCode);
-
+    //even though this is not loaded via a CDN we need to transform the sourceMapUrl
+    scriptCode = transformPluginSourceForCDN({
+      url,
+      source: scriptCode,
+      transformSourceMapURL: true,
+      transformAssets: false,
+    });
     // cdn loaded
   } else if (isHostedOnCDN(url)) {
     const response = await fetch(url);
@@ -29,6 +34,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
       url,
       source: scriptCode,
       transformSourceMapURL: true,
+      transformAssets: true,
     });
   }
 
@@ -36,6 +42,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     throw new Error('Only same domain scripts are allowed in sandboxed plugins');
   }
 
+  scriptCode = patchPluginAPIs(scriptCode);
   sandboxEnv.evaluate(scriptCode);
 }
 
@@ -49,6 +56,7 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
       url,
       source: pluginCode,
       transformSourceMapURL: true,
+      transformAssets: true,
     });
     return pluginCode;
   } else {
@@ -57,7 +65,12 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     const pluginCodeUrl = resolveWithCache(meta.module);
     const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
-    pluginCode = patchPluginSourceMap(meta, pluginCode);
+    pluginCode = transformPluginSourceForCDN({
+      url: pluginCodeUrl,
+      source: pluginCode,
+      transformSourceMapURL: true,
+      transformAssets: false,
+    });
     pluginCode = patchPluginAPIs(pluginCode);
     return pluginCode;
   }
@@ -67,27 +80,10 @@ function patchPluginAPIs(pluginCode: string): string {
   return pluginCode.replace(/window\.location/gi, 'window.locationSandbox');
 }
 
-/**
- * Patches the plugin's module.js source code references to sourcemaps to include the full url
- * of the module.js file instead of the regular relative reference.
- *
- * Because the plugin module.js code is loaded via fetch and then "eval" as a string
- * it can't find the references to the module.js.map directly and we need to patch it
- * to point to the correct location
- */
-function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
-  // skips inlined and files without source maps
-  if (pluginCode.includes('//# sourceMappingURL=module.js.map')) {
-    let replaceWith = '';
-    // make sure we don't add the sourceURL twice
-    if (!pluginCode.includes('//# sourceURL') || !pluginCode.includes('//@ sourceUrl')) {
-      replaceWith += `//# sourceURL=module.js\n`;
-    }
-    // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = meta.module + '.map';
-    replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
-
-    return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
-  }
-  return pluginCode;
+export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvironment) {
+  // same as https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/vector.ts#L16
+  // Array is a "reflective" type in Near-membrane and doesn't get an identify continuity
+  sandboxEnvironment.evaluate(
+    `${patchArrayVectorProrotypeMethods.toString()};${patchArrayVectorProrotypeMethods.name}()`
+  );
 }

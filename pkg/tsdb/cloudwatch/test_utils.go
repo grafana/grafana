@@ -130,7 +130,7 @@ func (c *mockEC2Client) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.Desc
 	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
 }
 
-func (c *mockEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+func (c *mockEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
 	args := c.Called(in, fn)
 	return args.Error(0)
 }
@@ -155,8 +155,8 @@ func (c oldEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeR
 	}, nil
 }
 
-func (c oldEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
-	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+func (c oldEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput,
+	fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
 	reservations := []*ec2.Reservation{}
 	for _, r := range c.reservations {
 		instances := []*ec2.Instance{}

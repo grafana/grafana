@@ -108,11 +108,17 @@ Use this transformation to add a new field calculated from two other fields. Eac
 
 - **Mode -** Select a mode:
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
-  - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
+  - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
+  - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
+    - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+    - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+    - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+    - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+    - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
   - **Row index -** Insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
-- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+- **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
 - **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -281,28 +287,41 @@ You'll get the following output:
 
 ### Filter by name
 
-Use this transformation to remove portions of the query results.
+Use this transformation to remove parts of the query results.
 
-Grafana displays the **Identifier** field, followed by the fields returned by your query.
+You can filter field names in three different ways:
 
-You can apply filters in one of two ways:
+- [Using a regular expression](#use-a-regular-expression)
+- [Manually selecting included fields](#manually-select-included-fields)
+- [Using a dashboard variable](#use-a-dashboard-variable)
 
-- Enter a regex expression.
-- Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
+#### Use a regular expression
 
-In the example below, I removed the Min field from the results.
+When you filter using a regular expression, field names that match the regular expression are included.
 
-Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+From the input data:
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
+| ------------------- | ----------- | ------------ | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 23.6        | 24.4         | 22.1         | 20.1          |
 
-Here is the table after I applied the transformation to remove the Min field.
+The result from using the regular expression `prod.*` would be:
 
-{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | prod-eu-west | prod-eu-north |
+| ------------------- | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 22.1         | 20.1          |
 
-Here is the same query using a Stat visualization.
+The regular expression can include an interpolated dashboard variable by using the `${[variable name]}` syntax.
 
-{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+#### Manually select included fields
+
+Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
+
+#### Use a dashboard variable
+
+Enable `From variable` to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
 ### Filter data by query
 
@@ -874,7 +893,7 @@ Output:
 
 The extra labels can now be used in the field display name provide more complete field names.
 
-If you want to extract config from one query and appply it to another you should use the config from query results transformation.
+If you want to extract config from one query and apply it to another you should use the config from query results transformation.
 
 #### Example
 
@@ -976,10 +995,9 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
-> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+For each generated "Trend" field value calculation function can be selected. Default is "last non null value". This value will be displayed next to the sparkline and used for sorting table rows.
 
 ### Format Time
 
@@ -988,6 +1006,23 @@ This transformation is available in Grafana 10.1+ as an alpha feature.
 {{% /admonition %}}
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
+
+### Format string
+
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `formatString` in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+
+Use this transformation to format the output of a string field. You can format output in the following ways:
+
+- Upper case - Formats the entire string in upper case characters.
+- Lower case - Formats the entire string in lower case characters.
+- Sentence case - Formats the the first character of the string in upper case.
+- Title case - Formats the first character of each word in the string in upper case.
+- Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
+- Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+- Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+- Trim - Removes all leading and trailing spaces from the string.
+- Substring - Returns a substring of the string, using the specified start and end positions.
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
@@ -1010,4 +1045,8 @@ Use this transformation to format the output of a time field. Output can be form
 
 [feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
+
+[dashboard variable]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[dashboard variable]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
 {{% /docs/reference %}}

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -251,42 +252,33 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
-	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation")
-	defer span.End()
-	span.SetAttributes("rule_uid", alertRule.UID, attribute.String("rule_uid", alertRule.UID))
-	span.SetAttributes("org_id", alertRule.OrgID, attribute.Int64("org_id", alertRule.OrgID))
-	span.SetAttributes("rule_version", alertRule.Version, attribute.Int64("rule_version", alertRule.Version))
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
-	span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
-	span.SetAttributes("results", len(results), attribute.Int("tick", len(results)))
+	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
+		attribute.String("rule_uid", alertRule.UID),
+		attribute.Int64("org_id", alertRule.OrgID),
+		attribute.Int64("rule_version", alertRule.Version),
+		attribute.String("tick", utcTick),
+		attribute.Int("results", len(results))))
+	defer span.End()
 
 	logger := st.log.FromContext(tracingCtx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
-
-	span.AddEvents([]string{"message", "state_transitions"},
-		[]tracing.EventValue{
-			{Str: "results processed"},
-			{Num: int64(len(states))},
-		})
+	span.AddEvent("results processed", trace.WithAttributes(
+		attribute.Int64("state_transitions", int64(len(states))),
+	))
 
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
 	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
 	if len(staleStates) > 0 {
-		span.AddEvents([]string{"message", "state_transitions"},
-			[]tracing.EventValue{
-				{Str: "deleted stale states"},
-				{Num: int64(len(staleStates))},
-			})
+		span.AddEvent("deleted stale states", trace.WithAttributes(
+			attribute.Int64("state_transitions", int64(len(staleStates))),
+		))
 	}
 
 	st.saveAlertStates(tracingCtx, logger, states...)
-
-	span.AddEvents([]string{"message"},
-		[]tracing.EventValue{
-			{Str: "updated database"},
-		})
+	span.AddEvent("updated database")
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {

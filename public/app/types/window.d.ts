@@ -1,11 +1,6 @@
 export declare global {
   interface Window {
-    __timeRangeSceneObject: {
-      isActive: boolean;
-      state: {
-        value: TimeRange;
-      };
-    };
+    __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
     __grafana_load_failed: () => void;

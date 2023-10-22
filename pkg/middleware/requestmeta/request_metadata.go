@@ -10,7 +10,7 @@ import (
 const (
 	TeamAlerting = "alerting"
 	TeamAuth     = "auth"
-	TeamCore     = "core"
+	TeamBackend  = "backend"
 )
 
 type StatusSource string
@@ -119,7 +119,7 @@ func WithStatusSource(ctx context.Context, statusCode int) {
 
 func defaultRequestMetadata() RequestMetaData {
 	return RequestMetaData{
-		Team:         TeamCore,
+		Team:         TeamBackend,
 		StatusSource: StatusSourceServer,
 		SLOGroup:     SLOGroupHighFast,
 	}

@@ -38,7 +38,8 @@ func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.Extern
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.ExternalServiceRegistration != nil && r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if p.ExternalServiceRegistration != nil &&
+		(r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
 		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
 		if err != nil {
 			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)

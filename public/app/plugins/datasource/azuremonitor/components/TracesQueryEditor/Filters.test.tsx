@@ -16,6 +16,19 @@ import { AzureMonitorQuery } from '../../types';
 import Filters from './Filters';
 import { setFilters } from './setQueryValue';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: jest.fn(),
+      getVariables: jest.fn(),
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    }),
+  };
+});
+
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
@@ -389,10 +402,8 @@ describe(`Traces Filters`, () => {
         ],
       },
     };
-    const removeLabel = screen.getAllByLabelText(`Remove`);
-    await act(async () => {
-      await userEvent.click(removeLabel[1]);
-    });
+    const removeLabel = screen.getAllByLabelText(/Remove/);
+    await userEvent.click(removeLabel[1]);
 
     rerender(
       <Filters

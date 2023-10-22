@@ -5,10 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/org"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer/stack"
 )
 
 var WireSet = wire.NewSet(
 	org.WireSet,
+	stack.WireSet,
 	accesscontrol.WireSet,
 	ProvideAuthorizer,
 )

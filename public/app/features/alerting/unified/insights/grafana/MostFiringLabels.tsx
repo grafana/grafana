@@ -52,6 +52,6 @@ export function getMostFiredLabelsScene(timeRange: SceneTimeRange, datasource: D
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.table().setTitle(panelTitle).setData(query).build(),
+    body: PanelBuilders.table().setTitle(panelTitle).setDescription(panelTitle).setData(query).build(),
   });
 }
