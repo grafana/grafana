@@ -2,6 +2,7 @@
 timeout = "10m"
 
 [linters-settings.goconst]
+severity = "warning"
 min-len = 5
 min-occurrences = 5
 
@@ -71,31 +72,24 @@ disable-all = true
 enable = [
   "bodyclose",
   "depguard",
-  "dogsled",
-  "errcheck",
-  # "gochecknoinits",
-  "goconst",
-  # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
+  "errcheck", # TODO: https://revive.run/r#unhandled-error
+  "goconst", # TODO: https://revive.run/r#add-constant
   "goimports",
-  "goprintffuncname",
   "gosec",
   "gosimple",
   "govet",
   "ineffassign",
   "misspell",
-  "nakedret",
+  "nakedret", # TODO: https://revive.run/r#bare-return
   "exportloopref",
   "staticcheck",
   "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
-  "whitespace",
   "gocyclo",
   "exhaustive",
   "typecheck",
-  "asciicheck",
-  "errorlint",
   "revive",
 ]
 
