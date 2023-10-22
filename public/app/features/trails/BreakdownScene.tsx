@@ -215,7 +215,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
     active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
-        templateColumns: GRID_TEMPLAE_COLUMNS,
+        templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
         children: children,
       }),
@@ -228,7 +228,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
   });
 }
 
-const GRID_TEMPLAE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
+const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
 function getVariableSet() {
   return new SceneVariableSet({
@@ -277,7 +277,7 @@ function buildNormalLayout() {
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
-          templateColumns: GRID_TEMPLAE_COLUMNS,
+          templateColumns: GRID_TEMPLATE_COLUMNS,
           autoRows: '200px',
           children: [],
         }),
@@ -296,7 +296,8 @@ function buildNormalLayout() {
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
-          templateColumns: GRID_TEMPLAE_COLUMNS,
+          templateColumns: '1fr',
+          autoRows: '200px',
           children: [],
         }),
         getLayoutChild: (data, frame, frameIndex) => {
