@@ -87,9 +87,8 @@ func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cl
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service) *Registry {
-	if otelTracer := tracer.OtelTracer(); otelTracer != nil {
-		sdktracing.InitDefaultTracer(otelTracer)
-	}
+	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
+	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
@@ -176,4 +175,10 @@ func (l *logWrapper) Level() sdklog.Level {
 func (l *logWrapper) With(args ...any) sdklog.Logger {
 	l.logger = l.logger.New(args...)
 	return l
+}
+
+func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
+	return &logWrapper{
+		logger: l.logger.FromContext(ctx),
+	}
 }

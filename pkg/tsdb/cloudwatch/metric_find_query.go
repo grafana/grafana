@@ -251,7 +251,7 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	if err := client.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+	if err := client.DescribeInstancesPagesWithContext(ctx, params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 		resp.Reservations = append(resp.Reservations, page.Reservations...)
 		return !lastPage
 	}); err != nil {

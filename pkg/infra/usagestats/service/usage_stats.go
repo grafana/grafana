@@ -77,7 +77,7 @@ func (uss *UsageStats) runMetricsFunc(ctx context.Context, fn usagestats.Metrics
 	start := time.Now()
 	ctx, span := uss.tracer.Start(ctx, "UsageStats.Gather")
 	fnName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
-	span.SetAttributes("usageStats.function", fnName, attribute.Key("usageStats.function").String(fnName))
+	span.SetAttributes(attribute.String("usageStats.function", fnName))
 	defer span.End()
 
 	fnMetrics, err := fn(ctx)
