@@ -25,7 +25,7 @@ func TestRegions(t *testing.T) {
 		}
 		ec2Mock := &mocks.EC2Mock{}
 		ec2Mock.On("DescribeRegionsWithContext").Return(mockRegions, nil)
-		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(context.Background())
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegions(context.Background())
 		assert.NoError(t, err)
 		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
 			Value: resources.Region{
@@ -45,7 +45,7 @@ func TestRegions(t *testing.T) {
 			Regions: []*ec2.Region{},
 		}
 		ec2Mock.On("DescribeRegionsWithContext").Return(mockRegions, assert.AnError)
-		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegionsWithContext(context.Background())
+		regions, err := NewRegionsService(ec2Mock, testLogger).GetRegions(context.Background())
 		assert.NoError(t, err)
 		assert.Contains(t, regions, resources.ResourceResponse[resources.Region]{
 			Value: resources.Region{

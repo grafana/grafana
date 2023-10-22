@@ -14,7 +14,7 @@ type RegionsService struct {
 	mock.Mock
 }
 
-func (r *RegionsService) GetRegionsWithContext(ctx context.Context) (in []resources.ResourceResponse[resources.Region], e error) {
+func (r *RegionsService) GetRegions(ctx context.Context) (in []resources.ResourceResponse[resources.Region], e error) {
 	args := r.Called()
 	return args.Get(0).(([]resources.ResourceResponse[resources.Region])), args.Error(1)
 }

@@ -31,7 +31,7 @@ func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions [
 	}
 }
 
-func (r *RegionsService) GetRegionsWithContext(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error) {
+func (r *RegionsService) GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error) {
 	regions := constants.Regions()
 
 	result := make([]resources.ResourceResponse[resources.Region], 0)

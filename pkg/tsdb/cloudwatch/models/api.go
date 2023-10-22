@@ -46,7 +46,7 @@ type AccountsProvider interface {
 }
 
 type RegionsAPIProvider interface {
-	GetRegionsWithContext(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
+	GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
 }
 
 // Clients
