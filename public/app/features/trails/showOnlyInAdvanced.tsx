@@ -3,15 +3,15 @@ import { SceneFlexItem } from '@grafana/scenes';
 import { getTrailFor } from './utils';
 
 export function showOnlyInAdvanced(obj: SceneFlexItem) {
-  const trail = getTrailFor(obj);
-  const sub = trail.subscribeToState((state, prev) => {
-    if (state.advancedMode !== !obj.state.isHidden) {
-      obj.setState({ isHidden: !state.advancedMode });
+  const settings = getTrailFor(obj).state.settings;
+  const sub = settings.subscribeToState((state, prev) => {
+    if (Boolean(state.showQuery) !== !Boolean(obj.state.isHidden)) {
+      obj.setState({ isHidden: !Boolean(state.showQuery) });
     }
   });
 
-  if (trail.state.advancedMode !== !obj.state.isHidden) {
-    obj.setState({ isHidden: !trail.state.advancedMode });
+  if (Boolean(settings.state.showQuery) !== !Boolean(obj.state.isHidden)) {
+    obj.setState({ isHidden: !Boolean(settings.state.showQuery) });
   }
 
   return () => sub.unsubscribe();

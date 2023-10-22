@@ -23,6 +23,7 @@ import {
 } from '@grafana/scenes';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { LogsScene, LogsSearch } from './LogsScene';
 import { MetricScene } from './MetricScene';
@@ -35,6 +36,7 @@ export interface DataTrailState extends SceneObjectState {
   embedded?: boolean;
   controls: SceneObject[];
   history: DataTrailHistory;
+  settings: DataTrailSettings;
   advancedMode?: boolean;
 
   // just for for the starting data source
@@ -60,6 +62,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         new SceneRefreshPicker({}),
       ],
       history: state.history ?? new DataTrailHistory({}),
+      settings: state.settings ?? new DataTrailSettings({}),
       ...state,
     });
 
@@ -155,7 +158,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, advancedMode } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -166,12 +169,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
-            <ToolbarButton
-              icon="cog"
-              onClick={model.onToggleAdvanced}
-              variant={advancedMode ? 'active' : 'canvas'}
-              tooltip="Settings"
-            />
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
