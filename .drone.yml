@@ -542,37 +542,6 @@ steps:
     NODE_OPTIONS: --max_old_space_size=8192
   image: node:18.12.0-alpine
   name: build-frontend-packages
-- commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    --depth=1
-  - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
-  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
-    push --delete origin $${TEST_TAG}; fi
-  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
-  - cd -
-  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
-    --quiet && git fetch --quiet
-  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
-    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
-    fi
-  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
-    $${TEST_TAG}
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-    TEST_TAG: v0.0.0-test
-  failure: ignore
-  image: alpine/git:2.40.1
-  name: trigger-test-release
-  when:
-    branch: main
-    paths:
-      include:
-      - .drone.yml
-      - pkg/build/**
-    repo:
-    - grafana/grafana
 - failure: ignore
   image: grafana/drone-downstream
   name: trigger-enterprise-downstream
@@ -831,7 +800,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -997,16 +966,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -1209,7 +1182,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2134,7 +2107,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2279,16 +2252,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -2362,38 +2339,6 @@ volumes:
 - host:
     path: //./pipe/docker_engine/
   name: docker
----
-clone:
-  retries: 3
-depends_on: []
-kind: pipeline
-name: notify-drone-changes
-platform:
-  arch: amd64
-  os: linux
-steps:
-- image: plugins/slack
-  name: slack
-  settings:
-    channel: slack-webhooks-test
-    template: "`.drone.yml` and `starlark` files have been changed on the OSS repo,
-      by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name
-      }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{
-      truncate build.commit 8 }}>"
-    webhook:
-      from_secret: drone-changes-webhook
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - exclude
-    include:
-    - .drone.yml
-  repo:
-  - grafana/grafana
-type: docker
 ---
 clone:
   retries: 3
@@ -3143,14 +3088,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.42/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3175,7 +3118,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3825,7 +3767,7 @@ services:
   - /bin/mimir -target=backend
   environment: {}
   image: grafana/mimir:latest
-  name: mimir
+  name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3963,16 +3905,20 @@ steps:
   image: golang:1.20.10-alpine
   name: memcached-integration-tests
 - commands:
-  - dockerize -wait tcp://mimir:8080 -timeout 120s
+  - dockerize -wait tcp://mimir_backend:8080 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
+  environment:
+    AM_PASSWORD: test
+    AM_TENANT_ID: test
+    AM_URL: http://mimir_backend:8080
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -4661,6 +4607,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: efc8706531a40b72753d483d3d8a7ba4941b5f54e0b21a68bcf47556a97a9ede
+hmac: a7032573772937b59787f5c01c113b02afb07a9febf15664a68cbcee1458acc9
 
 ...

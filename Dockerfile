@@ -18,6 +18,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
+COPY public public
 
 RUN yarn install --immutable
 

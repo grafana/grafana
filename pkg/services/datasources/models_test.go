@@ -58,3 +58,45 @@ func TestAllowedCookies(t *testing.T) {
 		})
 	}
 }
+
+func TestTeamHTTPHeaders(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		given string
+		want  TeamHTTPHeaders
+	}{
+		{
+			desc:  "Usual json data with teamHttpHeaders",
+			given: `{"teamHttpHeaders": {"101": [{"header": "X-CUSTOM-HEADER", "value": "foo"}]}}`,
+			want: TeamHTTPHeaders{
+				"101": {
+					{Header: "X-CUSTOM-HEADER", Value: "foo"},
+				},
+			},
+		},
+		{
+			desc:  "Json data without teamHttpHeaders",
+			given: `{"foo": "bar"}`,
+			want:  nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			jsonDataBytes := []byte(test.given)
+			jsonData, err := simplejson.NewJson(jsonDataBytes)
+			require.NoError(t, err)
+
+			ds := DataSource{
+				ID:       1235,
+				JsonData: jsonData,
+				UID:      "test",
+			}
+
+			actual, err := ds.TeamHTTPHeaders()
+			assert.NoError(t, err)
+			assert.Equal(t, test.want, actual)
+			assert.EqualValues(t, test.want, actual)
+		})
+	}
+}
