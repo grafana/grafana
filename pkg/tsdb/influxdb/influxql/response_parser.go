@@ -20,12 +20,12 @@ var (
 )
 
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
-	return parse(buf, statusCode, query)
-}
+	defer func() {
+		if err := buf.Close(); err != nil {
+			fmt.Println("Failed to close response body", "err", err)
+		}
+	}()
 
-// parse is the same as Parse, but without the io.ReadCloser (we don't need to
-// close the buffer)
-func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {

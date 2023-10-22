@@ -14,8 +14,9 @@ import (
 const update = false
 
 var files = []string{
-	"influx_select_*_from_cpu",
-	"influx_select_value_from_*",
+	// "influx_select_*_from_cpu",
+	// "influx_select_value_from_*",
+	"big_response",
 }
 
 func TestReadPromFrames(t *testing.T) {

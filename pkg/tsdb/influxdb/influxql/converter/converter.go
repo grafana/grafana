@@ -100,6 +100,9 @@ func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
 				rsp = readColumns(measurement, iter, rsp)
 			case "values":
 				rsp = readValues(iter, rsp)
+			case "tags":
+				// FIXME support tags
+				_ = iter.Skip()
 			default:
 				v, err := iter.Read()
 				if err != nil {
@@ -190,6 +193,14 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse) backend.Data
 						valueFields = append(valueFields, numberField)
 					}
 					valueFields[colIdx].Append(n)
+				case jsoniter.NilValue:
+					_, _ = iter.Read()
+					if len(valueFields) == colIdx {
+						numberField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+						numberField.Name = "Value"
+						valueFields = append(valueFields, numberField)
+					}
+					valueFields[colIdx].Append(float64(0))
 				}
 
 				if len(timeFields) == colIdx {
