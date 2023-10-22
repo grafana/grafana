@@ -264,7 +264,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 			return
 		}
 		// avoid allocation when converting string to byte slice
-		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
+		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
 	}
 	// this temp slice is used to convert ints to bytes.
 	tmp := make([]byte, 8)
