@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
@@ -86,12 +87,6 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
-}
-
 func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.ResponseWriter, req *http.Request, pluginCtx *backend.PluginContext) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -101,17 +96,6 @@ func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.Re
 		return
 	}
 
-	wrappedSender := callResourceResponseSenderFunc(func(response *backend.CallResourceResponse) error {
-		w.WriteHeader(response.Status)
-		for key, headerValues := range response.Headers {
-			for _, value := range headerValues {
-				w.Header().Set(key, value)
-			}
-		}
-		w.Write(response.Body)
-		return nil
-	})
-
 	idx := strings.LastIndex(req.URL.Path, "/resource")
 	if idx < 0 {
 		w.WriteHeader(400)
@@ -120,12 +104,14 @@ func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.Re
 	}
 	path := req.URL.Path[idx+len("/resource"):]
 
+	httpSender := httpresponsesender.New(w)
+
 	err = b.client.CallResource(ctx, &backend.CallResourceRequest{
 		PluginContext: *pluginCtx,
 		Path:          path,
 		Method:        req.Method,
 		Body:          body,
-	}, wrappedSender)
+	}, httpSender)
 
 	if err != nil {
 		// our wrappedSender func will likely never be invoked for errors
