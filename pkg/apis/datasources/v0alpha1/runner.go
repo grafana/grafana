@@ -3,7 +3,6 @@ package v0alpha1
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -14,6 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 // Authz should already be applied!!!
@@ -21,24 +22,24 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ns, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		fmt.Printf("ERROR!!!!")
+		errhttp.Write(ctx, err, w)
 		return
 	}
 	info, ok := request.RequestInfoFrom(ctx)
 	if !ok {
-		fmt.Printf("ERROR!!!!")
+		err = errutil.BadRequest("missing k8s request info")
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	ds, err := b.getDataSource(ctx, info.Name)
 	if err != nil {
-		fmt.Printf("ERROR!!!! %v", err)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 	if ds == nil {
-		klog.Errorf("missing datasource: %s", err)
-		w.WriteHeader(400)
-		_, _ = w.Write([]byte("missing datasource"))
+		err = errutil.BadRequest("missing datasource")
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -51,13 +52,13 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	settings.User = ds.User
 	settings.JSONData, err = ds.JsonData.ToDB()
 	if err != nil {
-		fmt.Printf("ERROR!!!! %v", ds)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	settings.DecryptedSecureJSONData, err = b.dsService.DecryptedValues(ctx, ds)
 	if err != nil {
-		fmt.Printf("ERROR!!!! %v", err)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 	pluginCtx := &backend.PluginContext{
@@ -72,8 +73,8 @@ func (b *DSAPIBuilder) doSubresource(w http.ResponseWriter, r *http.Request) {
 	switch info.Subresource {
 	case "query":
 		if r.Method != "POST" {
-			w.WriteHeader(400)
-			_, _ = w.Write([]byte("use POST for query!"))
+			err = errutil.BadRequest("use POST for query!")
+			errhttp.Write(ctx, err, w)
 			return
 		}
 		b.executeQueryHandler(ctx, w, r, pluginCtx)
@@ -99,25 +100,20 @@ func (b *DSAPIBuilder) executeCallResourceHandler(ctx context.Context, w http.Re
 	idx := strings.LastIndex(req.URL.Path, "/resource")
 	if idx < 0 {
 		w.WriteHeader(400)
-		w.Write([]byte("expected resource path"))
+		_, _ = w.Write([]byte("expected resource path"))
 		return
 	}
 	path := req.URL.Path[idx+len("/resource"):]
-
-	httpSender := httpresponsesender.New(w)
 
 	err = b.client.CallResource(ctx, &backend.CallResourceRequest{
 		PluginContext: *pluginCtx,
 		Path:          path,
 		Method:        req.Method,
 		Body:          body,
-	}, httpSender)
+	}, httpresponsesender.New(w))
 
 	if err != nil {
-		// our wrappedSender func will likely never be invoked for errors
-		// respond with a 400
-		w.WriteHeader(400)
-		w.Write([]byte("encountered error invoking CallResponseHandler for request"))
+		errhttp.Write(ctx, err, w)
 	}
 }
 
@@ -130,12 +126,14 @@ func (b *DSAPIBuilder) executeHealthHandler(ctx context.Context, w http.Response
 		// our wrappedSender func will likely never be invoked for errors
 		// respond with a 400
 		w.WriteHeader(400)
+		errhttp.Write(ctx, err, w)
 		klog.Errorf("encountered error invoking CheckHealth: %v", err)
-		w.Write([]byte("encountered error invoking CheckHealth"))
+		_, _ = w.Write([]byte("encountered error invoking CheckHealth"))
 	}
 
 	jsonRsp, err := json.Marshal(healthResponse)
 	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
 	w.WriteHeader(200)
@@ -169,6 +167,7 @@ func (b *DSAPIBuilder) executeQueryHandler(ctx context.Context, w http.ResponseW
 
 	jsonRsp, err := json.Marshal(queryResponse)
 	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
 	w.WriteHeader(200)
