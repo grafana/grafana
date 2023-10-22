@@ -84,7 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     options: css({
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
+      gridTemplateColumns: '1fr 50px',
       rowGap: theme.spacing(1),
       columnGap: theme.spacing(2),
     }),

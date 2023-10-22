@@ -3,11 +3,16 @@ import { config } from '@grafana/runtime';
 import { getUrlSyncManager, SceneObject, SceneTimeRange } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
+import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { LOGS_METRIC } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return getParentOfType(model, DataTrail);
+}
+
+export function getTrailSettings(model: SceneObject): DataTrailSettings {
+  return getParentOfType(model, DataTrail).state.settings;
 }
 
 export function newMetricsTrail(): DataTrail {

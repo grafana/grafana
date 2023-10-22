@@ -9,12 +9,10 @@ import {
   SceneQueryRunner,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  sceneGraph,
   PanelBuilders,
 } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
@@ -24,12 +22,10 @@ import { SelectMetricAction } from './SelectMetricAction';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,
-  KEY_SQR_METRIC_VIZ_QUERY,
   LOGS_METRIC,
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
-import { showOnlyInAdvanced } from './showOnlyInAdvanced';
 import { getParentOfType, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
@@ -123,6 +119,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             </ToolbarButton>
           ))}
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
+          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore" />
           <ToolbarButton variant={'canvas'} icon="bookmark" />
           <ToolbarButton variant={'canvas'} icon="share-alt" />
           {trail.state.embedded && (
@@ -152,30 +149,10 @@ function buildGraphScene(metric: string) {
       }),
       new SceneFlexItem({
         ySizing: 'content',
-        isHidden: true,
-        $behaviors: [showOnlyInAdvanced],
-        body: new QueryDebugView({}),
-      }),
-      new SceneFlexItem({
-        ySizing: 'content',
         body: new MetricActionBar({}),
       }),
     ],
   });
-}
-
-export interface QueryDebugViewState extends SceneObjectState {}
-
-export class QueryDebugView extends SceneObjectBase<QueryDebugViewState> {
-  public static Component = ({ model }: SceneComponentProps<QueryDebugView>) => {
-    const queryRunner = sceneGraph.findObject(model, (x) => x.state.key === KEY_SQR_METRIC_VIZ_QUERY);
-    if (!(queryRunner instanceof SceneQueryRunner)) {
-      return;
-    }
-
-    const query = queryRunner?.state.queries[0] as PromQuery;
-    return <div className="small">{sceneGraph.interpolate(model, query.expr)}</div>;
-  };
 }
 
 function buildLogsScene() {

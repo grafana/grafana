@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -8,17 +10,18 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { RadioButtonGroup } from '@grafana/ui';
+import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 
 import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../shared';
+import { getTrailSettings } from '../utils';
 
 import { AutoQueryDef, AutoQueryVariant } from './AutoQueryEngine';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
   queries: AutoQueryDef[];
-  current?: AutoQueryVariant;
+  queryDef?: AutoQueryDef;
 }
 
 export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
@@ -28,7 +31,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
     if (!state.panel) {
       this.setState({
         panel: this.getVizPanelFor(state.queries[0]),
-        current: state.queries[0].variant,
+        queryDef: state.queries[0],
       });
     }
   }
@@ -48,7 +51,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     this.setState({
       panel: this.getVizPanelFor(def),
-      current: variant,
+      queryDef: def,
     });
   };
 
@@ -95,12 +98,41 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   }
 
   public static Component = ({ model }: SceneComponentProps<AutoVizPanel>) => {
-    const { panel } = model.useState();
+    const { panel, queryDef } = model.useState();
+    const { showQuery } = getTrailSettings(model).useState();
+    const styles = useStyles2(getStyles);
 
     if (!panel) {
       return;
     }
 
-    return <panel.Component model={panel} />;
+    if (!showQuery) {
+      return <panel.Component model={panel} />;
+    }
+
+    return (
+      <div className={styles.wrapper}>
+        <Field label="Query">
+          <span>{queryDef?.query.expr ?? 'No query'}</span>
+        </Field>
+        <div className={styles.panel}>
+          <panel.Component model={panel} />
+        </div>
+      </div>
+    );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
+    panel: css({
+      position: 'relative',
+      flexGrow: 1,
+    }),
   };
 }
