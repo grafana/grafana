@@ -15,6 +15,8 @@ import {
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardRepeatsProcessedEvent } from './types';
+
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
   sources: SceneGridItemLike[];
@@ -120,6 +122,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     }
 
     updateLayout(layout, rows, maxYOfRows, rowToRepeat);
+
+    // Used from dashboard url sync
+    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   getRowClone(
