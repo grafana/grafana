@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -20,13 +21,14 @@ type RequestContextFactoryFunc func(ctx context.Context, pluginCtx backend.Plugi
 type RouteHandlerFunc func(ctx context.Context, pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
 
 type RequestContext struct {
-	MetricsClientProvider MetricsClientProvider
-	LogsAPIProvider       CloudWatchLogsAPIProvider
-	OAMAPIProvider        OAMAPIProvider
-	EC2APIProvider        EC2APIProvider
-	Settings              CloudWatchSettings
-	Features              featuremgmt.FeatureToggles
-	Logger                log.Logger
+	MetricsClientProvider        MetricsClientProvider
+	LogsAPIProvider              CloudWatchLogsAPIProvider
+	OAMAPIProvider               OAMAPIProvider
+	EC2APIProvider               EC2APIProvider
+	CloudWatchMetricsAPIProvider ListMetricsPagesWithContext
+	Settings                     CloudWatchSettings
+	Features                     featuremgmt.FeatureToggles
+	Logger                       log.Logger
 }
 
 // Services
@@ -56,7 +58,7 @@ type MetricsClientProvider interface {
 
 // APIs - instead of using the API defined in the services within the aws-sdk-go directly, specify a subset of the API with methods that are actually used in a service or a client
 type CloudWatchMetricsAPIProvider interface {
-	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error
 }
 
 type CloudWatchLogsAPIProvider interface {

@@ -55,7 +55,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 			{MetricName: utils.Pointer("Test_MetricName3"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName1"), Value: utils.Pointer("Value4")}}},
 			{MetricName: utils.Pointer("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName1"), Value: utils.Pointer("Value2")}}},
 		}}
-		api.On("ListMetricsPages").Return(nil)
+		api.On("ListMetricsPagesWithContext", ctx, &cloudwatch.ListMetricsInput{}).Return(nil)
 		queries, err := executor.getDimensionValuesForWildcards(pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
@@ -71,7 +71,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		api := &mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{
 			{MetricName: utils.Pointer("Test_MetricName"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName"), Value: utils.Pointer("Value")}}},
 		}}
-		api.On("ListMetricsPages").Return(nil)
+		api.On("ListMetricsPagesWithContext", ctx, &cloudwatch.ListMetricsInput{}).Return(nil)
 		_, err := executor.getDimensionValuesForWildcards(pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
 		assert.Nil(t, err)
 		// make sure the original query wasn't altered
@@ -91,7 +91,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		query.Dimensions = map[string][]string{"Test_DimensionName2": {"*"}}
 		query.MatchExact = false
 		api := &mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{}}
-		api.On("ListMetricsPages").Return(nil)
+		api.On("ListMetricsPagesWithContext", ctx, &cloudwatch.ListMetricsInput{}).Return(nil)
 		queries, err := executor.getDimensionValuesForWildcards(pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
@@ -102,7 +102,7 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		api.Metrics = []*cloudwatch.Metric{
 			{MetricName: utils.Pointer("Test_MetricName"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName2"), Value: utils.Pointer("Value")}}},
 		}
-		api.On("ListMetricsPages").Return(nil)
+		api.On("ListMetricsPagesWithContext", ctx, &cloudwatch.ListMetricsInput{}).Return(nil)
 		queries, err = executor.getDimensionValuesForWildcards(pluginCtx, "us-east-1", api, []*models.CloudWatchQuery{query}, tagValueCache, logger)
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)

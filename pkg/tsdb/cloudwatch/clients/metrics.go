@@ -22,7 +22,7 @@ func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.C
 func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
 	var cloudWatchMetrics []resources.MetricResponse
 	pageNum := 0
-	err := l.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err := l.ListMetricsPagesWithContext(ctx, params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		pageNum++
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -153,7 +154,7 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("successfully queries logs, fails during metrics query", func(t *testing.T) {
 		client = fakeCheckHealthClient{
-			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+			listMetricsPagesWithContext: func(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
 				return fmt.Errorf("some list metrics error")
 			}}
 
