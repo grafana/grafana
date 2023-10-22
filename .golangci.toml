@@ -100,6 +100,10 @@ enable = [
 [issues]
 exclude-use-default = false
 
+[[issues.exclude-rules]]
+path = "_test\\.go"
+linters = [ "gosec" ]
+
 # Enable when appropriate
 # Poorly chosen identifier
 [[issues.exclude-rules]]
