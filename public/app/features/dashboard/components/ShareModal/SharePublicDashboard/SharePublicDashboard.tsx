@@ -2,15 +2,32 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Spinner, useStyles2 } from '@grafana/ui/src';
-import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
-import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { ModalsController, Spinner, useStyles2 } from '@grafana/ui/src';
+import {
+  useCreatePublicDashboardMutation,
+  useDeletePublicDashboardMutation,
+  useGetPublicDashboardQuery,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  dashboardHasTemplateVariables,
+  publicDashboardPersisted,
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
 
 import { HorizontalGroup } from '../../../../plugins/admin/components/HorizontalGroup';
 
 import ConfigPublicDashboard from './ConfigPublicDashboard/ConfigPublicDashboard';
 import CreatePublicDashboard from './CreatePublicDashboard/CreatePublicDashboard';
+import { AccessControlAction, useSelector } from 'app/types';
+import { useGetUnsupportedDataSources } from './useGetUnsupportedDataSources';
+import { trackDashboardSharingActionPerType } from '../analytics';
+import { shareDashboardType } from '../utils';
+import { contextSrv } from 'app/core/core';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
+import { ShareModal } from '../ShareModal';
+import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
+
 interface Props extends ShareModalTabProps {}
 
 export const Loader = () => {
@@ -27,16 +44,71 @@ export const Loader = () => {
 };
 
 export const SharePublicDashboard = (props: Props) => {
-  const { data: publicDashboard, isLoading, isError } = useGetPublicDashboardQuery(props.dashboard.uid);
+  const { data: publicDashboard, isLoading: isGetLoading, isError } = useGetPublicDashboardQuery(props.dashboard.uid);
+  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+  const isLoading = isGetLoading || isSaveLoading || isDeleteLoading;
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const hasTemplateVariables = dashboardHasTemplateVariables(dashboard.getVariables());
+
+  const onDeletePublicDashboardClick = (onDelete: () => void) => {
+    deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.uid,
+    });
+    onDelete();
+  };
 
   return (
     <>
       {isLoading ? (
         <Loader />
       ) : !publicDashboardPersisted(publicDashboard) ? (
-        <CreatePublicDashboard isError={isError} />
+        <CreatePublicDashboard
+          isLoading={isSaveLoading}
+          isError={isError}
+          unsupportedTemplateVariables={hasTemplateVariables}
+          unsupportedDatasources={unsupportedDataSources}
+          onCreate={() => {
+            trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
+            createPublicDashboard({ dashboard, payload: { isEnabled: true } });
+          }}
+        />
       ) : (
-        <ConfigPublicDashboard />
+        <ModalsController>
+          {({ showModal, hideModal }) => (
+            <ConfigPublicDashboard
+              publicDashboard={publicDashboard}
+              unsupportedDatasources={unsupportedDataSources}
+              isLoading={isLoading || isUpdateLoading}
+              timeRange={timeRange}
+              showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
+              hasTemplateVariables={hasTemplateVariables}
+              onUpdate={(updatedPublicDashboard) => {
+                update({ dashboard, payload: updatedPublicDashboard });
+              }}
+              onRevoke={() => {
+                showModal(DeletePublicDashboardModal, {
+                  dashboardTitle: dashboard.title,
+                  onConfirm: () => onDeletePublicDashboardClick(hideModal),
+                  onDismiss: () => {
+                    showModal(ShareModal, {
+                      dashboard,
+                      onDismiss: hideModal,
+                      activeTab: shareDashboardType.publicDashboard,
+                    });
+                  },
+                });
+              }}
+            />
+          )}
+        </ModalsController>
       )}
     </>
   );

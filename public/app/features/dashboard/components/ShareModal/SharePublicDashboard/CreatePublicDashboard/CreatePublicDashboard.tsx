@@ -7,15 +7,10 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction, useSelector } from '../../../../../../types';
-import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
+import { AccessControlAction } from '../../../../../../types';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables } from '../SharePublicDashboardUtils';
-import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
 
@@ -27,21 +22,24 @@ export type SharePublicDashboardAcknowledgmentInputs = {
   usageAcknowledgment: boolean;
 };
 
-const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
+interface CreatePublicDashboardProps {
+  isError?: boolean;
+  onCreate: () => void;
+  unsupportedDatasources?: string[];
+  unsupportedTemplateVariables?: boolean;
+  isLoading?: boolean;
+}
+export const CreatePublicDashboard = ({
+  unsupportedDatasources = [],
+  isLoading = false,
+  isError = false,
+  unsupportedTemplateVariables = false,
+  onCreate,
+}: CreatePublicDashboardProps) => {
   const styles = useStyles2(getStyles);
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
 
-  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
-  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
-
-  const disableInputs = !hasWritePermissions || isSaveLoading || isError;
-
-  const onCreate = async () => {
-    trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
-    createPublicDashboard({ dashboard, payload: { isEnabled: true } });
-  };
+  const disableInputs = !hasWritePermissions || isLoading || isError;
 
   return (
     <div className={styles.container}>
@@ -52,10 +50,10 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
 
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
 
-      {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
+      {unsupportedTemplateVariables && <UnsupportedTemplateVariablesAlert />}
 
-      {!!unsupportedDataSources.length && (
-        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
+      {unsupportedDatasources.length > 0 && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
 
       <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
@@ -72,7 +70,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
             </div>
             <div className={styles.buttonContainer}>
               <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
+                Generate public URL {isLoading && <Spinner className={styles.loadingSpinner} />}
               </Button>
             </div>
           </>

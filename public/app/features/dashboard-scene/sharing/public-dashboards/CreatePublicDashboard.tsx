@@ -1,10 +1,6 @@
-import { css } from '@emotion/css';
 import React from 'react';
-import { FormState, UseFormRegister } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -16,76 +12,34 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { Button, Form, Spinner, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/AcknowledgeCheckboxes';
-import { SharePublicDashboardAcknowledgmentInputs } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/CreatePublicDashboard';
-import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
-import { UnsupportedDataSourcesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedDataSourcesAlert';
-import { UnsupportedTemplateVariablesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedTemplateVariablesAlert';
+import { CreatePublicDashboard as CreatePublicDashboardComponent } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/CreatePublicDashboard';
 import { supportedDatasources } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AccessControlAction } from 'app/types';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../../scene/PanelRepeaterGridItem';
 
 import { SharePublicDashboardTab } from './SharePublicDashboardTab';
-const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export function CreatePublicDashboard({ model }: SceneComponentProps<SharePublicDashboardTab>) {
   const { isSaveLoading: isLoading, dashboardRef } = model.useState();
 
-  const styles = useStyles2(getStyles);
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const dashboard = dashboardRef.resolve();
   const { value: unsupportedDataSources } = useAsync(async () => {
     const types = getPanelTypes(dashboard);
     return getUnsupportedDashboardDatasources(types);
   }, []);
 
-  const disableInputs = !hasWritePermissions || !!isLoading;
   const hasTemplateVariables = (dashboard.state.$variables?.state.variables.length ?? 0) > 0;
 
   return (
-    <div className={styles.container}>
-      <div>
-        <p className={styles.title}>Welcome to public dashboards!</p>
-        <p className={styles.description}>
-          Currently, we don&apos;t support template variables or frontend data sources
-        </p>
-      </div>
-
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
-
-      {hasTemplateVariables && <UnsupportedTemplateVariablesAlert />}
-
-      {unsupportedDataSources?.length && (
-        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
-      )}
-
-      <Form onSubmit={model.onCreate} validateOn="onChange" maxWidth="none">
-        {({
-          register,
-          formState: { isValid },
-        }: {
-          register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
-          formState: FormState<SharePublicDashboardAcknowledgmentInputs>;
-        }) => (
-          <>
-            <div className={styles.checkboxes}>
-              <AcknowledgeCheckboxes disabled={disableInputs} register={register} />
-            </div>
-            <div className={styles.buttonContainer}>
-              <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isLoading && <Spinner className={styles.loadingSpinner} />}
-              </Button>
-            </div>
-          </>
-        )}
-      </Form>
-    </div>
+    <CreatePublicDashboardComponent
+      onCreate={model.onCreate}
+      isLoading={isLoading}
+      unsupportedDatasources={unsupportedDataSources}
+      unsupportedTemplateVariables={hasTemplateVariables}
+    />
   );
 }
 
@@ -174,29 +128,3 @@ export const getUnsupportedDashboardDatasources = async (types: string[]): Promi
 
   return Array.from(unsupportedDS);
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(4),
-  }),
-  title: css({
-    fontSize: theme.typography.h4.fontSize,
-    margin: theme.spacing(0, 0, 2),
-  }),
-  description: css({
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing(0),
-  }),
-  checkboxes: css({
-    margin: theme.spacing(0, 0, 4),
-  }),
-  buttonContainer: css({
-    display: 'flex',
-    justifyContent: 'end',
-  }),
-  loadingSpinner: css({
-    marginLeft: theme.spacing(1),
-  }),
-});
