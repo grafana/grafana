@@ -46,7 +46,7 @@ type AccountsProvider interface {
 }
 
 type RegionsAPIProvider interface {
-	GetRegions() ([]resources.ResourceResponse[resources.Region], error)
+	GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
 }
 
 // Clients
@@ -70,6 +70,6 @@ type OAMAPIProvider interface {
 }
 
 type EC2APIProvider interface {
-	DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error)
+	DescribeRegionsWithContext(ctx context.Context, in *ec2.DescribeRegionsInput, opts ...request.Option) (*ec2.DescribeRegionsOutput, error)
 	DescribeInstancesPagesWithContext(ctx context.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error
 }
