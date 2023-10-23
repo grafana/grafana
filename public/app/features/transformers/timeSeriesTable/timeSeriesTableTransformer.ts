@@ -10,25 +10,39 @@ import {
   isTimeSeriesFrame,
   ReducerID,
   reduceField,
-  TransformationApplicabilityLevels
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 
 /**
- * Maps a refId to a Field which contains a DataFrame.
+ * Maps a refId to a Field which can contain
+ * different types of data. In our case we 
+ * care about DataFrame, number, and string.
  */
-interface RefFrameFieldMap {
-  [index: string]: Field<DataFrame>;
+interface RefFieldMap<T> {
+  [index: string]: Field<T>;
 }
 
-interface RefStringFieldMap {
-  [index: string]: Field<string>;
-}
-
-interface RefNumberFieldMap {
-  [index: string]: Field<number>;
-}
+/**
+ * For options we have a set of options
+ * for each refId. So we map the refId
+ * for each setting.
+ */
 export interface TimeSeriesTableTransformerOptions {
-  refIdToStat?: Record<string, ReducerID>;
+  [index: string]: RefIdTransformerOptions;
+}
+
+/**
+ * For each refId we allow the following to
+ * be configured:
+ * 
+ *  - stat: A stat to calculate for the refId
+ *  - mergeSeries: Whether separate series should be merged into one
+ *  - timeField: The time field that should be used for the time series
+ */
+interface RefIdTransformerOptions {
+  stat?: ReducerID;
+  mergeSeries?: boolean,
+  timeField?: string,
 }
 
 export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
@@ -71,9 +85,13 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
  */
 export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOptions, data: DataFrame[]): DataFrame[] {
   // Initialize maps for labels, sparklines, and reduced values
-  const refId2LabelField: RefStringFieldMap = {};
-  const refId2FrameField: RefFrameFieldMap = {};
-  const refId2ValueField: RefNumberFieldMap = {}; 
+  const refId2LabelField: RefFieldMap<string> = {};
+  const refId2FrameField: RefFieldMap<DataFrame> = {};
+  const refId2ValueField: RefFieldMap<number> = {};
+
+  // Whether we're going to merge together the resulting 
+  // frames (the default) or leave them alone
+  const merge = false;//options.mergeSeries !== undefined ? options.mergeSeries : true;
 
   // Accumulator for our final value
   // which we'll return
@@ -81,13 +99,21 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
   // See how many refIds we have so we can properly
   // display labels
-  let refIds = new Set<string>();
-  for (const frame of data) {
-    if (frame.refId !== undefined) {
-      refIds.add(frame.refId);
+  let refIds = getRefIds(data);
+
+  // If we're merging data then rather
+  // than creating a series per source 
+  // series we initialize fields here
+  // so we end up with one
+  for (const refId of refIds) {
+    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
+    if (merge) {
+      refId2LabelField[refId] = newField('Label', FieldType.string);
+      refId2FrameField[refId] = newField('Trend', FieldType.frame);
+      refId2ValueField[refId] = newField('Trend Value', FieldType.number);
     }
-  }
-  
+  } 
+
 
   for (const frame of data) {
     // If it's not a time series frame we add
@@ -99,39 +125,26 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
     // Grab the current refId and the corresponding label fields
     const refId = frame.refId ?? '';
-    
-    // Then initialize a new dataframe for labels and sparklines
-    const table = new MutableDataFrame();
 
-    // Retrieve the time field
-    const timeField = frame.fields.find((field) => field.type === FieldType.time);
+    // Retrieve the time field that's been configured
+    // If one isn't configured then use the first found
+    let timeField = null;
+    if (options[refId]?.timeField !== undefined) {
+      timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
+    } else {
+      timeField = frame.fields.find((field) => field.type === FieldType.time);
+    }
 
-    // Initialize field for labels
-    refId2LabelField[refId] = {
-      name: 'Label',
-      type: FieldType.string,
-      config: {},
-      values: [],
-    };
-
-    // Initialize field for sparklines
-    refId2FrameField[refId] = {
-      name: 'Trend',
-      type: FieldType.frame,
-      config: {},
-      values: [],
-    };
-
-    // Initialize field for reductions
-    refId2ValueField[refId] = {
-      name: 'Value',
-      type: FieldType.number,
-      config: {},
-      values: []
-    };
+    // Initialize fields for this frame 
+    // if we're not merging them
+    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
+    if (!merge) {
+      refId2LabelField[refId] = newField('Label', FieldType.string);
+      refId2FrameField[refId] = newField('Trend', FieldType.frame);
+      refId2ValueField[refId] = newField('Trend Value', FieldType.number);
+    }
 
     for (const field of frame.fields) {
-
       // Skip non-number based fields
       // i.e. we skip time, strings, etc.
       if (field.type !== FieldType.number) {
@@ -164,7 +177,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       // Calculate the reduction of the current field
       // and push the frame with reduction 
       // into the the appropriate field
-      const reducerId = options.refIdToStat?.[refId] ?? ReducerID.lastNotNull;
+      const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
       const value = reduceField({ field, reducers: [reducerId] })[reducerId] || null;
       refId2ValueField[refId].values.push(value);
 
@@ -178,18 +191,80 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       refId2FrameField[refId].values.push(sparklineFrame);
     }
 
-    // Set the refId
-    table.refId = refId;
+    if (!merge) {
+      // Then initialize a new dataframe for labels and sparklines
+      const table = new MutableDataFrame();
 
-    // Add the label, sparkline, and value fields
-    // into the new frame
-    table.addField(refId2LabelField[refId]);
-    table.addField(refId2FrameField[refId]);
-    table.addField(refId2ValueField[refId]);
+      // Set the refId
+      table.refId = refId;
 
-    // Finaly push to the result
-    result.push(table);
+      // Add the label, sparkline, and value fields
+      // into the new frame
+      table.addField(refId2LabelField[refId]);
+      table.addField(refId2FrameField[refId]);
+      table.addField(refId2ValueField[refId]);
+
+      // Finaly push to the result
+      result.push(table);
+    }
   }
 
+  // If we're merging create the final result
+  for (const refId of refIds) {
+    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
+    if (merge) {
+    // Then initialize a new dataframe for labels and sparklines
+      const table = new MutableDataFrame();
+
+      // Set the refId
+      table.refId = refId;
+
+      // Add the label, sparkline, and value fields
+      // into the new frame
+      table.addField(refId2LabelField[refId]);
+      table.addField(refId2FrameField[refId]);
+      table.addField(refId2ValueField[refId]);
+
+      // Finaly push to the result
+      result.push(table);
+    }
+  } 
+
+
   return result;
+}
+
+/**
+ * Create a new field with the given label and type.
+ * 
+ * @param label 
+ *  The string label for the field.
+ * @param type 
+ *  The type fo the field (e.g. number, boolean, etc.)
+ * @returns 
+ *  A new Field"
+ */
+function newField(label: string, type: FieldType) {
+  return {
+    name: label,
+    type: type,
+    config: {},
+    values: []
+  };
+}
+
+/**
+ * Get the refIds contained in an array of Data frames.
+ * @param data 
+ * @returns 
+ */
+export function getRefIds(data: DataFrame[]) {
+  let refIds = new Set<string>();
+  for (const frame of data) {
+    if (frame.refId !== undefined) {
+      refIds.add(frame.refId);
+    }
+  }
+
+  return refIds;
 }
