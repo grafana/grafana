@@ -39,6 +39,20 @@ _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
+## Detect unusable transformations
+
+<!-- Kyle Cunningham -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
+
+{{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
+
 ## Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
 
 <!-- Joey Tawadrous, Jen Villa -->
