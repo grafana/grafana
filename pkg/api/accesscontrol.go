@@ -119,6 +119,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 
+	datasourcesCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources:creator",
+			DisplayName: "Data source creator",
+			Description: "Create data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionCreate,
+				},
+			},
+		},
+		Grants: []string{},
+	}
+
 	datasourcesWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:datasources:writer",
@@ -254,6 +269,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: teamCreatorGrants,
+	}
+
+	teamsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:teams:read",
+			DisplayName: "Team reader",
+			Description: "List all teams.",
+			Group:       "Teams",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+			},
+		},
+		Grants: []string{},
 	}
 
 	teamsWriterRole := ac.RoleRegistration{
@@ -520,12 +548,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
-		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole}
+
 	if hs.Features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
 		roles = append(roles, libraryPanelsCreatorRole, libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole)
 	}

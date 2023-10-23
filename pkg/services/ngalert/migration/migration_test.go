@@ -1226,7 +1226,7 @@ func createOrg(t *testing.T, id int64) *org.Org {
 }
 
 // teardown cleans the input tables between test cases.
-func teardown(t *testing.T, x *xorm.Engine, service *MigrationService) {
+func teardown(t *testing.T, x *xorm.Engine, service *migrationService) {
 	_, err := x.Exec("DELETE from org")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert")

@@ -437,6 +437,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -707,9 +708,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:            "reportingRetries",
@@ -848,6 +850,12 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:         "navAdminSubsections",
 			Description:  "Splits the administration section of the nav tree into subsections",
 			Stage:        FeatureStageExperimental,
@@ -903,6 +911,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaDatabasesFrontend,
+		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins directly from plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "prometheusPromQAIL",
+			Description:  "Prometheus and AI/ML to assist users in creating a query",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )
