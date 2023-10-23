@@ -69,7 +69,7 @@ func TestService(t *testing.T) {
 				f := &fakeHTTPClientProvider{}
 				httpProvider := getMockPromTestSDKProvider(f)
 				service := &Service{
-					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
+					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
 				}
 
 				req := &backend.CallResourceRequest{
