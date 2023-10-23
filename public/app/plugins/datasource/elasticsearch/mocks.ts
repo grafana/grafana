@@ -45,17 +45,18 @@ export function createElasticDatasource(settings: Partial<DataSourceInstanceSett
     ...rest,
   };
 
-  const templateSrv = {
+  const templateSrv: TemplateSrv = {
+    getVariables: () => ([]),
     replace: (text?: string) => {
       if (text?.startsWith('$')) {
         return `resolvedVariable`;
       } else {
-        return text;
+        return text || '';
       }
     },
-    containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
-    getAdhocFilters: jest.fn().mockReturnValue([]),
-  } as unknown as TemplateSrv;
+    containsTemplate: (text?: string) => text?.includes('$') ?? false,
+    updateTimeRange: () => {},
+  };
 
   return new ElasticDatasource(instanceSettings, templateSrv);
 }
