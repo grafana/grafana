@@ -17,7 +17,7 @@ interface Link {
 }
 export interface TransformationInfo {
   name: string;
-  getHelperDocs: (imageRenderType: ImageRenderType) => string;
+  getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
 }
 
@@ -33,7 +33,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
       `getHelperDocs` will build the markdown content based in the `ImageRenderType`.
       The images will either be rendered in Hugo Shortcode format or as standard markdown for UI usage.
     */
-    getHelperDocs: function (imageRenderType: ImageRenderType) {
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
@@ -63,233 +63,253 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
       },
     ],
   },
-  // concatenate: {
-  //   name: 'Concatenate fields',
-  //   getHelperDocs: `
-  // Use this transformation to combine all fields from all frames into one result. Consider the following:
+  concatenate: {
+    name: 'Concatenate fields',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to combine all fields from all frames into one result. Consider the following:
 
-  // **Query A:**
+  **Query A:**
 
-  // | Temp  | Uptime    |
-  // | ----- | --------- |
-  // | 15.4  | 1230233   |
+  | Temp  | Uptime    |
+  | ----- | --------- |
+  | 15.4  | 1230233   |
 
-  // Query B:
+  Query B:
 
-  // | AQI   | Errors |
-  // | ----- | ------ |
-  // | 3.2   | 5      |
+  | AQI   | Errors |
+  | ----- | ------ |
+  | 3.2   | 5      |
 
-  // After you concatenate the fields, the data frame would be:
+  After you concatenate the fields, the data frame would be:
 
-  // | Temp  | Uptime   | AQI   | Errors |
-  // | ----- | -------- | ----- | ------ |
-  // | 15.4  | 1230233  | 3.2   | 5      |
-  // `,
-  // },
-  // configFromData: {
-  //   name: 'Config from query results',
-  //   getHelperDocs: `
-  // Use this transformation to select one query and from it extract standard options such as
-  // **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
-  // This enables dynamic query driven visualization configuration.
+  | Temp  | Uptime   | AQI   | Errors |
+  | ----- | -------- | ----- | ------ |
+  | 15.4  | 1230233  | 3.2   | 5      |
+  `;
+    },
+  },
+  configFromData: {
+    name: 'Config from query results',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to select one query and from it extract standard options such as
+  **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
+  This enables dynamic query driven visualization configuration.
 
-  // ### Options
+  ### Options
 
-  // - **Config query**: Selet the query that returns the data you want to use as configuration.
-  // - **Apply to**: Select what fields or series to apply the configuration to.
-  // - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
+  - **Config query**: Selet the query that returns the data you want to use as configuration.
+  - **Apply to**: Select what fields or series to apply the configuration to.
+  - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 
-  // ### Field mapping table
+  ### Field mapping table
 
-  // Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
+  Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
 
-  // #### Example
+  #### Example
 
-  // Input[0] (From query: A, name: ServerA)
+  Input[0] (From query: A, name: ServerA)
 
-  // | Time          | Value |
-  // | ------------- | ----- |
-  // | 1626178119127 | 10    |
-  // | 1626178119129 | 30    |
+  | Time          | Value |
+  | ------------- | ----- |
+  | 1626178119127 | 10    |
+  | 1626178119129 | 30    |
 
-  // Input[1] (From query: B)
+  Input[1] (From query: B)
 
-  // | Time          | Value |
-  // | ------------- | ----- |
-  // | 1626178119127 | 100   |
-  // | 1626178119129 | 100   |
+  | Time          | Value |
+  | ------------- | ----- |
+  | 1626178119127 | 100   |
+  | 1626178119129 | 100   |
 
-  // Output (Same as Input[0] but now with config on the Value field)
+  Output (Same as Input[0] but now with config on the Value field)
 
-  // | Time          | Value (config: Max=100) |
-  // | ------------- | ----------------------- |
-  // | 1626178119127 | 10                      |
-  // | 1626178119129 | 30                      |
+  | Time          | Value (config: Max=100) |
+  | ------------- | ----------------------- |
+  | 1626178119127 | 10                      |
+  | 1626178119129 | 30                      |
 
-  // Each row in the source data becomes a separate field. Each field now also has a maximum
-  // configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
-  // in the panel editor options pane.
+  Each row in the source data becomes a separate field. Each field now also has a maximum
+  configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
+  in the panel editor options pane.
 
-  // #### Value mappings
+  #### Value mappings
 
-  // You can also transform a query result into value mappings. This is is a bit different because every
-  // row in the configuration query result is used to define a single value mapping row. See the following example.
+  You can also transform a query result into value mappings. This is is a bit different because every
+  row in the configuration query result is used to define a single value mapping row. See the following example.
 
-  // Config query result:
+  Config query result:
 
-  // | Value | Text   | Color |
-  // | ----- | ------ | ----- |
-  // | L     | Low    | blue  |
-  // | M     | Medium | green |
-  // | H     | High   | red   |
+  | Value | Text   | Color |
+  | ----- | ------ | ----- |
+  | L     | Low    | blue  |
+  | M     | Medium | green |
+  | H     | High   | red   |
 
-  // In the field mapping specify:
+  In the field mapping specify:
 
-  // | Field | Use as                  | Select     |
-  // | ----- | ----------------------- | ---------- |
-  // | Value | Value mappings / Value  | All values |
-  // | Text  | Value mappings / Text   | All values |
-  // | Color | Value mappings / Ciolor | All values |
+  | Field | Use as                  | Select     |
+  | ----- | ----------------------- | ---------- |
+  | Value | Value mappings / Value  | All values |
+  | Text  | Value mappings / Text   | All values |
+  | Color | Value mappings / Ciolor | All values |
 
-  // Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
-  // `,
-  // },
-  // convertFieldType: {
-  //   name: 'Convert field type',
-  //   getHelperDocs: `
-  // Use this transformation to change the field type of the specified field.
+  Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
+  `;
+    },
+  },
+  convertFieldType: {
+    name: 'Convert field type',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to change the field type of the specified field.
 
-  // - **Field -** Select from available fields
-  // - **as -** Select the FieldType to convert to
-  //   - **Numeric -** attempts to make the values numbers
-  //   - **String -** will make the values strings
-  //   - **Time -** attempts to parse the values as time
-  //     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
-  //   - **Boolean -** will make the values booleans
+  - **Field -** Select from available fields
+  - **as -** Select the FieldType to convert to
+    - **Numeric -** attempts to make the values numbers
+    - **String -** will make the values strings
+    - **Time -** attempts to parse the values as time
+      - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - **Boolean -** will make the values booleans
 
-  // For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+  For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
 
-  // #### Sample Query
+  #### Sample Query
 
-  // | Time       | Mark      | Value |
-  // |------------|-----------|-------|
-  // | 2017-07-01 | above     | 25    |
-  // | 2018-08-02 | below     | 22    |
-  // | 2019-09-02 | below     | 29    |
-  // | 2020-10-04 | above     | 22    |
+  | Time       | Mark      | Value |
+  |------------|-----------|-------|
+  | 2017-07-01 | above     | 25    |
+  | 2018-08-02 | below     | 22    |
+  | 2019-09-02 | below     | 29    |
+  | 2020-10-04 | above     | 22    |
 
-  // The result:
+  The result:
 
-  // #### Transformed Query
+  #### Transformed Query
 
-  // | Time                | Mark      | Value |
-  // |---------------------|-----------|-------|
-  // | 2017-01-01 00:00:00 | above     | 25    |
-  // | 2018-01-01 00:00:00 | below     | 22    |
-  // | 2019-01-01 00:00:00 | below     | 29    |
-  // | 2020-01-01 00:00:00 | above     | 22    |
-  // `,
-  // },
-  // extractFields: {
-  //   name: 'Extract fields',
-  //   getHelperDocs: `
-  // Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
+  | Time                | Mark      | Value |
+  |---------------------|-----------|-------|
+  | 2017-01-01 00:00:00 | above     | 25    |
+  | 2018-01-01 00:00:00 | below     | 22    |
+  | 2019-01-01 00:00:00 | below     | 29    |
+  | 2020-01-01 00:00:00 | above     | 22    |
+  `;
+    },
+  },
+  extractFields: {
+    name: 'Extract fields',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 
-  // - **Source** - Select the field for the source of data.
-  // - **Format** - Select one of the following:
-  //   - **JSON** - To parse JSON content from the source.
-  //   - **Key+value parse** - To parse content in the format 'a=b' or 'c:d' from the source.
-  //   - **Auto** - To discover fields automatically.
-  // - **Replace all fields** - Optional: Select this option if you want to hide all other fields and display only your calculated field in the visualization.
-  // - **Keep time** - Optional: Only available if **Replace all fields** is true. Keep the time field in the output.
+  - **Source** - Select the field for the source of data.
+  - **Format** - Select one of the following:
+    - **JSON** - To parse JSON content from the source.
+    - **Key+value parse** - To parse content in the format 'a=b' or 'c:d' from the source.
+    - **Auto** - To discover fields automatically.
+  - **Replace all fields** - Optional: Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+  - **Keep time** - Optional: Only available if **Replace all fields** is true. Keep the time field in the output.
 
-  // Consider the following data set:
+  Consider the following data set:
 
-  // #### Data Set Example
+  #### Data Set Example
 
-  // | Timestamp         | json_data |
-  // |-------------------|-----------|
-  // | 1636678740000000000 | {"value": 1} |
-  // | 1636678680000000000 | {"value": 5} |
-  // | 1636678620000000000 | {"value": 12} |
+  | Timestamp         | json_data |
+  |-------------------|-----------|
+  | 1636678740000000000 | {"value": 1} |
+  | 1636678680000000000 | {"value": 5} |
+  | 1636678620000000000 | {"value": 12} |
 
-  // You could prepare the data to be used by a [Time series panel][] with this configuration:
+  You could prepare the data to be used by a [Time series panel][] with this configuration:
 
-  // - Source: json_data
-  // - Format: JSON
-  //   - Field: value
-  //   - Alias: my_value
-  // - Replace all fields: true
-  // - Keep time: true
+  - Source: json_data
+  - Format: JSON
+    - Field: value
+    - Alias: my_value
+  - Replace all fields: true
+  - Keep time: true
 
-  // This will generate the following output:
+  This will generate the following output:
 
-  // #### Transformed Data
+  #### Transformed Data
 
-  // | Timestamp         | my_value |
-  // |-------------------|----------|
-  // | 1636678740000000000 | 1        |
-  // | 1636678680000000000 | 5        |
-  // | 1636678620000000000 | 12       |
-  // `,
-  //   links: [
-  //     {
-  //       title: 'Time series panel',
-  //       url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/',
-  //     },
-  //   ],
-  // },
-  // fieldLookup: {
-  //   name: 'Lookup fields from resource',
-  //   getHelperDocs: `
-  // Use this transformation on a field value to look up additional fields from an external source.
+  | Timestamp         | my_value |
+  |-------------------|----------|
+  | 1636678740000000000 | 1        |
+  | 1636678680000000000 | 5        |
+  | 1636678620000000000 | 12       |
+  `;
+    },
+    links: [
+      {
+        title: 'Time series panel',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/',
+      },
+    ],
+  },
+  fieldLookup: {
+    name: 'Lookup fields from resource',
+    getHelperDocs: function () {
+      return `
+  Use this transformation on a field value to look up additional fields from an external source.
 
-  // - **Field** - Select a text field.
-  // - **Lookup** - Select from **Countries**, **USA States**, and **Airports**.
+  - **Field** - Select a text field.
+  - **Lookup** - Select from **Countries**, **USA States**, and **Airports**.
 
-  // This transformation currently supports spatial data.
+  This transformation currently supports spatial data.
 
-  // For example, if you have this data:
+  For example, if you have this data:
 
-  // #### Data Set Example
+  #### Data Set Example
 
-  // | Location  | Values |
-  // |-----------|--------|
-  // | AL        | 0      |
-  // | AK        | 10     |
-  // | Arizona   | 5      |
-  // | Arkansas  | 1      |
-  // | Somewhere | 5      |
+  | Location  | Values |
+  |-----------|--------|
+  | AL        | 0      |
+  | AK        | 10     |
+  | Arizona   | 5      |
+  | Arkansas  | 1      |
+  | Somewhere | 5      |
 
-  // With this configuration:
+  With this configuration:
 
-  // - Field: location
-  // - Lookup: USA States
+  - Field: location
+  - Lookup: USA States
 
-  // You'll get the following output:
+  You'll get the following output:
 
-  // #### Transformed Data
+  #### Transformed Data
 
-  // | Location  | ID | Name      | Lng        | Lat        | Values |
-  // |-----------|----|-----------|------------|------------|--------|
-  // | AL        | AL | Alabama   | -80.891064 | 12.448457  | 0      |
-  // | AK        | AK | Arkansas  | -100.891064| 24.448457  | 10     |
-  // | Arizona   |    |           |            |            | 5      |
-  // | Arkansas  |    |           |            |            | 1      |
-  // | Somewhere |    |           |            |            | 5      |
-  // `,
-  // },
-  // filterByRefId: {
-  //   name: 'Filter data by query refId',
-  //   getHelperDocs: `
-  // Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
+  | Location  | ID | Name      | Lng        | Lat        | Values |
+  |-----------|----|-----------|------------|------------|--------|
+  | AL        | AL | Alabama   | -80.891064 | 12.448457  | 0      |
+  | AK        | AK | Arkansas  | -100.891064| 24.448457  | 10     |
+  | Arizona   |    |           |            |            | 5      |
+  | Arkansas  |    |           |            |            | 1      |
+  | Somewhere |    |           |            |            | 5      |
+  `;
+    },
+  },
+  filterByRefId: {
+    name: 'Filter data by query refId',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+  Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
-  // Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
+  Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
-  // > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
-  // `,
-  // },
+  > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+
+  In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
+    imageRenderType,
+    this.name
+  )}
+  `;
+    },
+  },
   // filterByValue: {
   //   name: 'Filter data by values',
   //   getHelperDocs: `

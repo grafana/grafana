@@ -116,41 +116,7 @@ We recommend that you remove transformations that you don't need. When you delet
 
 You can perform the following transformations on your data.
 
-${`### ${transformationDocsContent['calculateField'].name}
-${transformationDocsContent['calculateField'].helperDocs}
-
-In the example below, we added two fields together and named them Sum.
-
-{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-`}
-
-${`### ${transformationDocsContent['concatenate'].name}
-${transformationDocsContent['concatenate'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['configFromData'].name}
-${transformationDocsContent['configFromData'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['convertFieldType'].name}
-${transformationDocsContent['convertFieldType'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['extractFields'].name}
-${transformationDocsContent['extractFields'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['fieldLookup'].name}
-${transformationDocsContent['fieldLookup'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['filterByRefId'].name}
-${transformationDocsContent['filterByRefId'].helperDocs}
-
-In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
-
-{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-`}
+JEV iterate here --------------------
 
 ${`### ${transformationDocsContent['filterByValue'].name}
 ${transformationDocsContent['filterByValue'].helperDocs}
