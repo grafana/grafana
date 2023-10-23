@@ -1,4 +1,8 @@
-import { transformationDocsContent } from '../../public/app/features/transformers/docs/content';
+import {
+  transformationDocsContent,
+  TransformationDocsContentType,
+  ImageRenderType,
+} from '../../public/app/features/transformers/docs/content';
 
 const template = `---
 comments: |
@@ -116,7 +120,7 @@ We recommend that you remove transformations that you don't need. When you delet
 
 You can perform the following transformations on your data.
 
-JEV iterate here --------------------
+${buildTransformationDocsContent(transformationDocsContent)}
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
@@ -144,6 +148,22 @@ JEV iterate here --------------------
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 {{% /docs/reference %}}
 `;
+
+function buildTransformationDocsContent(transformationDocsContent: TransformationDocsContentType) {
+  const transformationsList = Object.keys(transformationDocsContent);
+
+  const content = transformationsList
+    .map((transformationName) => {
+      return `
+  ### ${transformationDocsContent[transformationName].name}
+  
+    ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.ShortcodeFigure)}
+    `;
+    })
+    .join('');
+
+  return content;
+}
 
 // `process.stdout.write(template)` was not functioning as expected, but `console.log` also writes to the standard output.
 console.log(template);

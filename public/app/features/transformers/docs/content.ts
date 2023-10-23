@@ -21,12 +21,16 @@ export interface TransformationInfo {
   links?: Link[];
 }
 
-enum ImageRenderType {
+export enum ImageRenderType {
   ShortcodeFigure = 'shortcodeFigure',
   UIImage = 'uiImage',
 }
 
-export const transformationDocsContent: Record<string, TransformationInfo> = {
+export interface TransformationDocsContentType {
+  [key: string]: TransformationInfo;
+}
+
+export const transformationDocsContent: TransformationDocsContentType = {
   calculateField: {
     name: 'Add field from calculation',
     /*
@@ -1122,7 +1126,9 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   spatial: {
     name: 'Spatial',
     getHelperDocs: function () {
-      return `Use this transformation to apply spatial operations to query results`;
+      return `
+  Use this transformation to apply spatial operations to query results
+  `;
     },
   },
   timeSeriesTable: {
