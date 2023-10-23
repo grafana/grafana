@@ -279,6 +279,7 @@ require (
 	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
 )
@@ -410,7 +411,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	k8s.io/api v0.27.1 // indirect
-	k8s.io/component-base v0.27.1 // indirect
 	k8s.io/kms v0.27.1 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
