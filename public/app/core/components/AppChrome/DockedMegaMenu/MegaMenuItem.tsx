@@ -22,8 +22,8 @@ const MAX_DEPTH = 2;
 
 export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
-  const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
+  const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   const [sectionExpanded, setSectionExpanded] =
     useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
