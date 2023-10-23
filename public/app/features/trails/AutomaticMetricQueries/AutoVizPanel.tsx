@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 
 import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../shared';
@@ -76,9 +77,11 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     return (
       <div className={styles.wrapper}>
-        <Field label="Query">
-          <div>{queryDef && queryDef.queries.map((query, index) => <div key={index}>{query.expr}</div>)}</div>
-        </Field>
+        <Flex gap={2}>
+          <Field label="Query">
+            <div>{queryDef && queryDef.queries.map((query, index) => <div key={index}>{query.expr}</div>)}</div>
+          </Field>
+        </Flex>
         <div className={styles.panel}>
           <panel.Component model={panel} />
         </div>

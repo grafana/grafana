@@ -104,14 +104,17 @@ function getQueriesForBucketMetric(metric: string): AutoQueryInfo {
       {
         refId: 'A',
         expr: `histogram_quantile(0.99, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+        legendFormat: '99th Percentile',
       },
       {
         refId: 'B',
         expr: `histogram_quantile(0.90, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+        legendFormat: '90th Percentile',
       },
       {
         refId: 'C',
         expr: `histogram_quantile(0.50, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+        legendFormat: '50th Percentile',
       },
     ],
     vizBuilder: percentilesGraphBuilder,
@@ -160,7 +163,6 @@ function percentilesGraphBuilder(def: AutoQueryDef) {
       })
     )
     .setUnit(def.unit)
-    .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9);
 }
 
