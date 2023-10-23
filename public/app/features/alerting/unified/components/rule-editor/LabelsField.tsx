@@ -31,7 +31,6 @@ interface Props {
 }
 
 const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
-  // return { loading: false, labelsByKey: {} };
   const dispatch = useDispatch();
 
   useEffect(() => {
