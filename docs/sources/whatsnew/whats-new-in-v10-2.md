@@ -106,7 +106,7 @@ When enabled, look for the **✨ Auto generate** option next to the **Title** an
 
 {{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
 
-### Find your dashboard faster with the new Dashboard Browse screen
+### Find your dashboard faster with the new Dashboards browse screen
 
 <!-- Yaelle Chaudy for Frontend Platform -->
 
@@ -201,7 +201,7 @@ We've placed special focus on the Tempo data source over the past couple of mont
 
 <!-- Joey Tawadrous, Jen Villa -->
 
-_Experimental in Grafana Open Source and Enterprise_
+_Experimental in all editions of Grafana_
 
 Requires Tempo or Grafana Enterprise Traces (GET) v2.2 or greater.
 
