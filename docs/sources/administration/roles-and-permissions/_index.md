@@ -169,7 +169,7 @@ While Grafana OSS includes a robust set of permissions and settings that you can
 
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
-Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions/" >}}).
+Data source permissions enable you to restrict data source query permissions to specific **Users**, **Service Accounts**, and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions/" >}}).
 
 ### Role-based access control
 
