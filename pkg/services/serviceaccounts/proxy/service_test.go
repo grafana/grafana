@@ -125,14 +125,14 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			expectedIsExternal     bool
 		}{
 			{
-				description: "should allow to delete a service account",
+				description: "should not mark as external",
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "my-service-account",
 				},
 				expectedIsExternal: false,
 			},
 			{
-				description: "should not allow to delete a service account with sa-extsvc prefix",
+				description: "should mark as external",
 				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
 					Login: "sa-extsvc-my-service-account",
 				},
@@ -170,7 +170,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedError: nil,
 			},
 			{
-				description: "should not allow to update a non-external service account with sa-extsvc prefix",
+				description: "should not allow to update a non-external service account with extsvc prefix",
 				form: serviceaccounts.UpdateServiceAccountForm{
 					Name: &nameWithProtectedPrefix,
 				},
@@ -190,7 +190,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 				expectedError: extsvcaccounts.ErrCannotBeUpdated,
 			},
 			{
-				description: "should not allow to update an external service account with a sa-extsvc prefix",
+				description: "should not allow to update an external service account with a extsvc prefix",
 				form: serviceaccounts.UpdateServiceAccountForm{
 					Name: &nameWithProtectedPrefix,
 				},
@@ -250,7 +250,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		}
 	})
 
-	t.Run("should identify service account names for being external or not", func(t *testing.T) {
+	t.Run("should identify service account logins for being external or not", func(t *testing.T) {
 		assert.False(t, isExternalServiceAccount("my-service-account"))
 		assert.False(t, isExternalServiceAccount("sa-my-service-account"))
 		assert.False(t, isExternalServiceAccount("extsvc-my-service-account"))
