@@ -89,7 +89,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: 'swc-loader',
+            loader: require.resolve('swc-loader'),
             options: {
               jsc: {
                 baseUrl: '.',

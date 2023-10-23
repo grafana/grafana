@@ -2857,7 +2857,6 @@ __metadata:
     react: 18.2.0
     react-use: 17.4.0
     rxjs: 7.8.1
-    swc-loader: 0.2.3
     ts-node: 10.9.1
     tslib: 2.6.0
     webpack: 5.89.0
@@ -3255,6 +3254,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: 8.0.0
     glob: 10.3.3
     replace-in-file-webpack-plugin: 1.0.6
+    swc-loader: 0.2.3
     tslib: 2.6.0
     webpack: 5.89.0
   languageName: unknown
