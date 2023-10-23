@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
 
-<Release date>
+October 24, 2023
 
 _Available in public preview in Grafana Cloud_
 
@@ -45,8 +45,8 @@ When enabled, look for the **✨ Auto generate** option next to the **Title** an
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
 
-<Release date>
-  
+October 24, 2023
+
 _Available in public preview in Grafana Cloud_
 
 You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
@@ -61,7 +61,7 @@ To learn more, refer to our [Canvas button element documentation](https://grafan
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
 
-<Release date>
+October 24, 2023
 
 _Available in public preview in Grafana Cloud_
 
@@ -77,7 +77,7 @@ We've made a number of smaller improvements to the data visualization experience
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
 
-<Release date>
+October 24, 2023
 
 _Generally available in Grafana Cloud_
 
