@@ -86,7 +86,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | ----- | --------- |
   | 15.4  | 1230233   |
 
-  Query B:
+  **Query B:**
 
   | AQI   | Errors |
   | ----- | ------ |
