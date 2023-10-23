@@ -773,6 +773,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
+      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
