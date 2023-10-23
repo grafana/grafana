@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Generative AI features for dashboards
+## Use AI to generate titles, descriptions, and change summaries
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
@@ -28,19 +28,18 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Available in public preview in Grafana Cloud_
 
-// Is this actually generally available given steps of needing to also install LLM plugin / have openAI key?
+ou can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
 
-You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+- **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
 
-- **Generate panel titles and descriptions** - You can now generate a title and description for your panel based on the data you've added to it. This is useful when you want to quickly create a panel and don't want to spend time coming up with a title or description.
-- **Generate dashboard titles and descriptions** - You can now generate a title and description for your dashboard based on the panels you've added to it. This is useful when you want to quickly create a dashboard and don't want to spend time coming up with a title or description.
-- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is useful when you want to quickly save a dashboard and don't want to spend time coming up with a summary.
+To enable these features, you must first enable the `dashgpt` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
 
-TODO - how can they use / access these features?? Link to some form of documentation or just say "more info coming soon"?
+When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
-TODO: Add image / gif / video
+{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
 
-## New Canvas button element
+## ## Create interactive buttons in canvas visualizations
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
@@ -50,13 +49,13 @@ TODO: Add image / gif / video
   
 _Available in public preview in Grafana Cloud_
 
-You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
-To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#TODO).
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
 
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-## Time series visualization now support y-axis zooming
+## ## Zoom in on the y-axis of the time series and candlestick visualizations
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
@@ -66,31 +65,39 @@ TODO: Add image / gif / video
 
 _Available in public preview in Grafana Cloud_
 
-You can now zoom in on the y-axis of your time series visualizations. This is useful when you want to focus on a specific range of values.
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis on supported visualizations, hold the Shift key while clicking and dragging; double-click to reset the zoom.
 
-To learn more, refer to our [Time series documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#TODO).
-
-TODO: Add image / gif / video
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
 
 ## Data visualization quality of life improvements
 
+We've made a number of smaller improvements to the data visualization experience in Grafana.
+
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
 <!-- already in on-prem release notes -->
 
 <Release date>
 
-_Available in public preview in Grafana Cloud_
+_Generally available in Grafana Cloud_
 
-TBD / WIP - some high level thoughts
+**Geomap marker symbol alignment options**
 
-- Geomap marker symbol alignment options (https://github.com/grafana/grafana/pull/74293)
-- Bar chart improvements (https://github.com/grafana/grafana/pull/75136)
-- Gauge styling updates?
-- Exemplar tooltip config (if it makes it for 10.2)
-- ?
+You can now offset geomap marker symbols from the underlying data point.
 
-TODO: Add image / gif / video (maybe not for this one)
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
+
+**Gauge visualization overflow support**
+
+You can now visualize gauges in vertical and horizontal orientations with overflow. This resolves an issue where the design would break when the number of gauges exceeded the available space.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-gauge-overflow.gif" max-width="750px" caption="Gauge overflow" >}}
+
+**Bar chart axes improvements**
+
+You can now center bar chart axes on zero and configure axes border and color settings.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
 
 ## Alerting insights
 
