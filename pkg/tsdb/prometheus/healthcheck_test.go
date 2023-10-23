@@ -69,10 +69,16 @@ func (provider *healthCheckProvider[T]) GetTransport(opts ...sdkHttpClient.Optio
 	return *new(T), nil
 }
 
-func getMockProvider[T http.RoundTripper]() *healthCheckProvider[T] {
-	return &healthCheckProvider[T]{
+func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
+	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
 	}
+	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return *p.RoundTripper
+	}
+	fn := httpclient.MiddlewareFunc(anotherFN)
+	mid := httpclient.NamedMiddlewareFunc("mock", fn)
+	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
 func Test_healthcheck(t *testing.T) {
