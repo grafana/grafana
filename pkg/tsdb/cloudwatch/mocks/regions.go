@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +26,7 @@ func (e *EC2Mock) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRe
 	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
 }
 
-func (e *EC2Mock) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+func (e *EC2Mock) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
 	args := e.Called(in, fn)
 	return args.Error(0)
 }

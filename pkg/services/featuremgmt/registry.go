@@ -437,6 +437,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -848,6 +849,12 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:         "navAdminSubsections",
 			Description:  "Splits the administration section of the nav tree into subsections",
 			Stage:        FeatureStageExperimental,
@@ -910,6 +917,13 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "prometheusPromQAIL",
+			Description:  "Prometheus and AI/ML to assist users in creating a query",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

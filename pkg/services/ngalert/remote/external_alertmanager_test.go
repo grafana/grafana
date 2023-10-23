@@ -1,4 +1,4 @@
-package notifier
+package remote
 
 import (
 	"context"
@@ -14,7 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const validConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+const (
+	validConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+
+	// Valid config for Cloud AM, no `grafana_managed_receievers` field.
+	upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
+)
 
 func TestNewExternalAlertmanager(t *testing.T) {
 	tests := []struct {
@@ -65,13 +70,13 @@ func TestNewExternalAlertmanager(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			cfg := externalAlertmanagerConfig{
+			cfg := ExternalAlertmanagerConfig{
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 				DefaultConfig:     test.defaultConfig,
 			}
-			am, err := newExternalAlertmanager(cfg, test.orgID)
+			am, err := NewExternalAlertmanager(cfg, test.orgID)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -100,13 +105,13 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := externalAlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := newExternalAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -168,6 +173,98 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Equal(t, *silences[1].Status.State, "expired")
 }
 
+func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := ExternalAlertmanagerConfig{
+		URL:               amURL + "/alertmanager",
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     validConfig,
+	}
+	am, err := NewExternalAlertmanager(cfg, 1)
+	require.NoError(t, err)
+
+	// We should have no alerts and no groups at first.
+	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 0, len(alerts))
+
+	alertGroups, err := am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 0, len(alertGroups))
+
+	// Let's create two active alerts and one expired one.
+	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
+	alert2 := genAlert(true, map[string]string{"test_2": "test_2"})
+	alert3 := genAlert(false, map[string]string{"test_3": "test_3"})
+	postableAlerts := apimodels.PostableAlerts{
+		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
+	}
+	err = am.PutAlerts(context.Background(), postableAlerts)
+	require.NoError(t, err)
+
+	// We should have two alerts and one group now.
+	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 2, len(alerts))
+
+	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(alertGroups))
+
+	// Filtering by `test_1=test_1` should return one alert.
+	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(alerts))
+}
+
+func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := ExternalAlertmanagerConfig{
+		URL:               amURL + "/alertmanager",
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     validConfig,
+	}
+
+	am, err := NewExternalAlertmanager(cfg, 1)
+	require.NoError(t, err)
+
+	// We should start with the default config.
+	rcvs, err := am.GetReceivers(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "empty-receiver", *rcvs[0].Name)
+
+	// After changing the configuration, we should have a new `discord` receiver.
+	require.NoError(t, am.postConfig(context.Background(), upstreamConfig))
+	require.Eventually(t, func() bool {
+		rcvs, err = am.GetReceivers(context.Background())
+		require.NoError(t, err)
+		return *rcvs[0].Name == "discord"
+	}, 16*time.Second, 1*time.Second)
+}
+
 func genSilence(createdBy string) apimodels.PostableSilence {
 	starts := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
 	ends := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+10) * time.Second))
@@ -185,6 +282,23 @@ func genSilence(createdBy string) apimodels.PostableSilence {
 			Matchers:  matchers,
 			StartsAt:  &starts,
 			EndsAt:    &ends,
+		},
+	}
+}
+
+func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
+	endsAt := time.Now()
+	if active {
+		endsAt = time.Now().Add(1 * time.Minute)
+	}
+
+	return amv2.PostableAlert{
+		Annotations: map[string]string{"test_annotation": "test_annotation_value"},
+		StartsAt:    strfmt.DateTime(time.Now()),
+		EndsAt:      strfmt.DateTime(endsAt),
+		Alert: amv2.Alert{
+			GeneratorURL: "http://localhost:8080",
+			Labels:       labels,
 		},
 	}
 }

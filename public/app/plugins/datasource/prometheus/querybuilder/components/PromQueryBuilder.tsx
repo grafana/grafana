@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Button, Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -19,6 +22,8 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
+import { PromQail } from './promQail/PromQail';
+import AI_Logo_color from './promQail/resources/AI_Logo_color.svg';
 
 export interface Props {
   query: PromVisualQuery;
@@ -29,9 +34,14 @@ export interface Props {
   showExplain: boolean;
 }
 
+// initial commit for hackathon-2023-08-promqail
+// AI/ML + Prometheus
+const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
+
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
@@ -39,6 +49,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   return (
     <>
+      {prometheusPromQAIL && showDrawer && (
+        <Drawer scrollableContent={true} closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+          <PromQail
+            query={query}
+            closeDrawer={() => setShowDrawer(false)}
+            onChange={onChange}
+            datasource={datasource}
+          />
+        </Drawer>
+      )}
       <EditorRow>
         <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
       </EditorRow>
@@ -72,6 +92,25 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
+        {prometheusPromQAIL && (
+          <div
+            className={css({
+              padding: '0 0 0 6px',
+            })}
+          >
+            <Button
+              variant={'secondary'}
+              onClick={() => {
+                setShowDrawer(true);
+              }}
+              title={'Get query suggestions.'}
+              disabled={!query.metric}
+            >
+              <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
+              {'\u00A0'}Get query suggestions
+            </Button>
+          </div>
+        )}
         <QueryBuilderHints<PromVisualQuery>
           datasource={datasource}
           query={query}

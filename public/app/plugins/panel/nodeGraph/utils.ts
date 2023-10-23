@@ -607,7 +607,7 @@ export const getGraphFrame = (frames: DataFrame[]) => {
   return frames.reduce<GraphFrame>(
     (acc, frame) => {
       const sourceField = frame.fields.filter((f) => f.name === 'source');
-      if (sourceField.length) {
+      if (frame.name === 'edges' || sourceField.length) {
         acc.edges.push(frame);
       } else {
         acc.nodes.push(frame);
