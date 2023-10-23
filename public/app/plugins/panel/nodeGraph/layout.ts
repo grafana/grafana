@@ -3,6 +3,7 @@ import { useUnmount } from 'react-use';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { Field } from '@grafana/data';
+import { config as grafanaConfig } from '@grafana/runtime';
 
 import { createWorker, createDOTWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
@@ -88,7 +89,7 @@ export function useLayout(
     // DOT lyout is better but also more expensive and so we switch to default force based layout for bigger graphs.
     // see https://docs.google.com/spreadsheets/d/1shQv9wXkYJrPmaduozUCrGEqs34w7725mNeFXbWTe14/edit#gid=0 for some
     // comparison.
-    const layoutType = rawNodes.length > 200 ? 'default' : 'dot';
+    const layoutType = grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 200 ? 'dot' : 'default';
 
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so

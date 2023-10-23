@@ -904,5 +904,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaDatabasesFrontend,
 		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
 	}
 )

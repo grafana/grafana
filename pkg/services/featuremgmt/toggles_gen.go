@@ -522,4 +522,8 @@ const (
 	// FlagCostManagementUi
 	// Toggles the display of the cost management ui plugin
 	FlagCostManagementUi = "costManagementUi"
+
+	// FlagNodeGraphDotLayout
+	// Changed the layout algorithm for the node graph
+	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 )
