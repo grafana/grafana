@@ -204,7 +204,6 @@
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
-    "nx": "16.10.0",
     "postcss": "8.4.31",
     "postcss-loader": "7.3.3",
     "postcss-reporter": "7.0.5",
