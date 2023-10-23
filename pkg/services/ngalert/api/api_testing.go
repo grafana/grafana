@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,7 +35,7 @@ type TestingApiSrv struct {
 	*AlertingProxy
 	DatasourceCache datasources.CacheService
 	log             log.Logger
-	accessControl   accesscontrol.AccessControl
+	authz           RuleAccessControlService
 	evaluator       eval.EvaluatorFactory
 	cfg             *setting.UnifiedAlertingSettings
 	backtesting     *backtesting.Engine
@@ -65,9 +64,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if !authz.AuthorizeDatasourceAccessForRule(rule, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
+	if !srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{rule}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", authz.ErrAuthorization))
 	}
 
@@ -151,9 +148,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 
 func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authz.AuthorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
+	if !srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{&ngmodels.AlertRule{Data: queries}}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", authz.ErrAuthorization), "")
 	}
 
@@ -209,9 +204,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authz.AuthorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
+	if !srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{&ngmodels.AlertRule{Data: queries}}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", authz.ErrAuthorization))
 	}
 
