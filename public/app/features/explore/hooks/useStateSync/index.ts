@@ -10,7 +10,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../../state/datasource';
-import { changePanelsStateAction, initializeExplore } from '../../state/explorePane';
+import { initializeExplore } from '../../state/explorePane';
 import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
@@ -49,14 +49,9 @@ export function useStateSync(params: ExploreQueryParams) {
           // - a pane is opened or closed
           // - a query is run
           // - range is changed
-          // - panel state is updated
-          [
-            splitClose.type,
-            splitOpen.fulfilled.type,
-            runQueries.pending.type,
-            changeRangeAction.type,
-            changePanelsStateAction.type,
-          ].includes(action.type),
+          [splitClose.type, splitOpen.fulfilled.type, runQueries.pending.type, changeRangeAction.type].includes(
+            action.type
+          ),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
           // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
           // are committed to the store.
