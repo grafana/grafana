@@ -46,7 +46,7 @@ export function createElasticDatasource(settings: Partial<DataSourceInstanceSett
   };
 
   const templateSrv: TemplateSrv = {
-    getVariables: () => ([]),
+    getVariables: () => [],
     replace: (text?: string) => {
       if (text?.startsWith('$')) {
         return `resolvedVariable`;
