@@ -116,11 +116,13 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       }
     }
 
+    if (!dsPromises.length) {
+      return;
+    }
+
     Promise.all(dsPromises).then((dsInstances) => {
-      newState.logDetailsFilterAvailable = dsInstances.map(({ ds }) => ds).some(
-        (ds) => ds.modifyQuery || hasToggleableQueryFiltersSupport(ds)
-      );
       dsInstances.forEach(({ ds, refId }) => {
+        newState.logDetailsFilterAvailable = newState.logDetailsFilterAvailable || Boolean(ds.modifyQuery) || hasToggleableQueryFiltersSupport(ds);
         if (hasLogsContextSupport(ds)) {
           newState.logContextSupport[refId] = ds;
         }
