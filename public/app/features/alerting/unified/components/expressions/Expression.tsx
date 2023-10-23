@@ -60,14 +60,15 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
-  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
-
+  const noDataSeries = series.filter((serie) => !Boolean(getSeriesValue(serie))).length;
   const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
+    [PromAlertingRuleState.Firing]: series.filter((serie) => Boolean(getSeriesValue(serie))),
     [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
   };
+
+  const seriesCount = series.length - noDataSeries;
 
   const renderExpressionType = useCallback(
     (query: ExpressionQuery) => {
