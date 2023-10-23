@@ -64,7 +64,7 @@ export const MegaMenu = React.memo(
                     <IconButton
                       className={styles.dockMenuButton}
                       tooltip={t('navigation.megamenu.dock', 'Dock menu')}
-                      name="lock"
+                      name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
                     />
