@@ -22,8 +22,8 @@
     "fork-ts-checker-webpack-plugin": "8.0.0",
     "jest": "29.3.1",
     "jest-environment-jsdom": "29.3.1",
+    "swc-loader": "0.2.3",
     "ts-jest": "29.0.5",
-    "ts-loader": "9.3.1",
     "ts-node": "10.9.1",
     "webpack": "5.76.0"
   },
