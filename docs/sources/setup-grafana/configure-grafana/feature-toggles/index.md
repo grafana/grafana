@@ -78,6 +78,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
+| `cloudWatchBatchQueries`         | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 
 ## Experimental feature toggles
 
