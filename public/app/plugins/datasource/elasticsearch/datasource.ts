@@ -38,7 +38,14 @@ import {
   DataSourceGetTagValuesOptions,
   AdHocVariableFilter,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getDataSourceSrv,
+  config,
+  BackendSrvRequest,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
@@ -397,7 +404,11 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(
+    queries: ElasticsearchQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
@@ -954,7 +965,11 @@ export class ElasticDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): ElasticsearchQuery {
+  applyTemplateVariables(
+    query: ElasticsearchQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery {
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {

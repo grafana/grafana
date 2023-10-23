@@ -4,9 +4,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { ElasticDatasource } from './datasource';
 import { ElasticsearchOptions } from './types';
 
-export function createElasticDatasource(
-  settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {}
-) {
+export function createElasticDatasource(settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {}) {
   const { jsonData, ...rest } = settings;
 
   const instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions> = {
@@ -57,7 +55,7 @@ export function createElasticDatasource(
     },
     containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
     getAdhocFilters: jest.fn().mockReturnValue([]),
-  } as unknown as TemplateSrv
+  } as unknown as TemplateSrv;
 
   return new ElasticDatasource(instanceSettings, templateSrv);
 }

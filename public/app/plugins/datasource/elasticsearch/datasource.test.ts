@@ -78,11 +78,7 @@ interface Data {
   [key: string]: undefined | string | string[] | number | Data | Data[];
 }
 
-function getTestContext({
-  data = { responses: [] },
-  jsonData,
-  fetchMockImplementation,
-}: TestContext = {}) {
+function getTestContext({ data = { responses: [] }, jsonData, fetchMockImplementation }: TestContext = {}) {
   const defaultMock = (options: BackendSrvRequest) => of(createFetchResponse(data));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -1305,7 +1301,7 @@ describe('addAdhocFilters', () => {
     });
 
     it('should not fail if the filter value is a number', () => {
-        // @ts-expect-error
+      // @ts-expect-error
       expect(ds.addAdHocFilters('', [{ key: 'key', operator: '=', value: 1, condition: '' }])).toBe('key:"1"');
     });
 
@@ -1314,7 +1310,7 @@ describe('addAdhocFilters', () => {
       (operator: string) => {
         const filters = [{ key: 'key', operator, value: 'value', condition: '' }];
         const query = ds.addAdHocFilters('foo:"bar"', filters);
-        
+
         switch (operator) {
           case '=':
             expect(query).toBe('foo:"bar" AND key:"value"');
@@ -1361,7 +1357,7 @@ describe('addAdhocFilters', () => {
     ];
     beforeEach(() => {
       const { ds: datasource } = getTestContext();
-      ds = datasource;;
+      ds = datasource;
     });
 
     it('should correctly add ad hoc filters when query is not empty', () => {
