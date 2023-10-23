@@ -56,6 +56,7 @@ export function NavToolbar({
           tooltipPlacement="bottom"
           size="xl"
           onClick={onToggleMegaMenu}
+          data-testid={Components.NavBar.Toggle.button}
         />
       </div>
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
