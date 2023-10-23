@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['formatTime'].name}
-${transformationDocsContent['formatTime'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['groupBy'].name}
 ${transformationDocsContent['groupBy'].helperDocs}
 `}
