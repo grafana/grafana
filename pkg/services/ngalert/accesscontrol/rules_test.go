@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"math"
 	"math/rand"
 	"testing"
@@ -8,11 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -77,6 +80,12 @@ func mapUpdates(updates []store.RuleDelta, mapFunc func(store.RuleDelta) *models
 	return result
 }
 
+func createUserWithPermissions(permissions map[string][]string) identity.Requester {
+	return &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: permissions,
+	}}
+}
+
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
@@ -104,7 +113,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					}
 				}
 				return map[string][]string{
-					ac.ActionAlertingRuleCreate: {
+					fakeActions.Create: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
@@ -128,7 +137,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
 				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
+					fakeActions.Delete: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: getDatasourceScopesForRules(c.AffectedGroups[c.GroupKey]),
@@ -167,7 +176,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					return update.New
 				})...))
 				return map[string][]string{
-					ac.ActionAlertingRuleUpdate: {
+					fakeActions.Update: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
@@ -223,8 +232,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return map[string][]string{
-					ac.ActionAlertingRuleDelete: deleteScopes,
-					ac.ActionAlertingRuleCreate: {
+					fakeActions.Delete: deleteScopes,
+					fakeActions.Create: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
@@ -296,7 +305,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return map[string][]string{
-					ac.ActionAlertingRuleUpdate: {
+					fakeActions.Update: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
@@ -314,28 +323,32 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				permissionCombinations := createAllCombinationsOfPermissions(permissions)
 				permissionCombinations = permissionCombinations[0 : len(permissionCombinations)-1] // exclude all permissions
 				for _, missing := range permissionCombinations {
-					executed := false
-					err := accesscontrol.AuthorizeRuleChanges(groupChanges, accesscontrol.RegularActionsProvider(), func(evaluator ac.Evaluator) bool {
-						response := evaluator.Evaluate(missing)
-						executed = true
-						return response
-					})
+					ac := &recordingAccessControlFake{}
+					srv := RuleService{
+						ac:      ac,
+						actions: fakeActions,
+					}
+					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
 					require.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v", missing, permissions)
-					require.ErrorIs(t, err, accesscontrol.ErrAuthorization)
-					require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
+					require.ErrorIs(t, err, ErrAuthorization)
+					require.NotEmptyf(t, ac.EvaluateRecordings, "Access control was supposed to be called but it was not")
 				}
 			})
 
-			executed := false
-
-			err := accesscontrol.AuthorizeRuleChanges(groupChanges, accesscontrol.RegularActionsProvider(), func(evaluator ac.Evaluator) bool {
-				response := evaluator.Evaluate(permissions)
-				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-				executed = true
-				return true
-			})
+			ac := &recordingAccessControlFake{
+				Callback: func(user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+					response := evaluator.Evaluate(user.GetPermissions())
+					require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
+					return response, nil
+				},
+			}
+			srv := RuleService{
+				ac:      ac,
+				actions: fakeActions,
+			}
+			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
-			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
+			require.NotEmptyf(t, ac.EvaluateRecordings, "evaluation function is expected to be called but it was not.")
 		})
 	}
 }
@@ -369,29 +382,33 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 			datasources.ActionQuery: scopes,
 		}
 
-		executed := 0
+		ac := &recordingAccessControlFake{}
+		svc := RuleService{
+			ac:      ac,
+			actions: fakeActions,
+		}
 
-		eval := accesscontrol.AuthorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
-			response := evaluator.Evaluate(permissions)
-			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-			executed++
-			return true
-		})
+		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
 
 		require.True(t, eval)
-		require.Equal(t, expectedExecutions, executed)
+		require.Len(t, ac.EvaluateRecordings, expectedExecutions)
 	})
 
 	t.Run("should return on first negative evaluation", func(t *testing.T) {
-		executed := 0
+		ac := &recordingAccessControlFake{
+			Callback: func(user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+				return false, nil
+			},
+		}
+		svc := RuleService{
+			ac:      ac,
+			actions: fakeActions,
+		}
 
-		eval := accesscontrol.AuthorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
-			executed++
-			return false
-		})
+		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
 
 		require.False(t, eval)
-		require.Equal(t, 1, executed)
+		require.Len(t, ac.EvaluateRecordings, 1)
 	})
 }
 
@@ -407,14 +424,16 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		permissions := map[string][]string{
 			datasources.ActionQuery: scopes,
 		}
+		ac := &recordingAccessControlFake{}
+		svc := RuleService{
+			ac:      ac,
+			actions: fakeActions,
+		}
 
-		result := accesscontrol.AuthorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
-			response := evaluator.Evaluate(permissions)
-			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-			return true
-		})
+		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
 		require.True(t, result)
+		require.NotEmpty(t, ac.EvaluateRecordings)
 	})
 	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
 		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
@@ -431,11 +450,22 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		rule := models.AlertRuleGen()()
 		rules = append(rules, rule)
 
-		result := accesscontrol.AuthorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
-			response := evaluator.Evaluate(permissions)
-			return response
-		})
+		ac := &recordingAccessControlFake{}
+
+		svc := RuleService{
+			ac:      ac,
+			actions: fakeActions,
+		}
+
+		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
 		require.False(t, result)
 	})
+}
+
+var fakeActions = ActionsProvider{
+	Create: "fake-create",
+	Read:   "fake-read",
+	Update: "fake-update",
+	Delete: "fake-delete",
 }
