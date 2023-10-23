@@ -261,6 +261,7 @@ export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
+export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';

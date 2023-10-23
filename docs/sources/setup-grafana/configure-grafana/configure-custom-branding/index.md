@@ -120,18 +120,22 @@ To customize the footer of a public dashboard, add the following section to the 
 ```ini
 [white_labeling.public_dashboards]
 
-# Hides the footer for the public dashboards if set to "true". If
+# Hides the footer for the public dashboards if set to `true`.
 # example: footer_hide = "true"
 ;footer_hide =
 
 # Set to text shown in the footer
 ;footer_text =
 
-# Set to complete url to override public dashboard footer logo
+# Set to complete url to override public dashboard footer logo. Default is `grafana-logo` and will display the Grafana logo.
+# An empty value will hide the footer logo.
 ;footer_logo =
 
 # Set to link for the footer
 ;footer_link =
+
+# Set to `true` to hide the Grafana logo next to the title
+;header_logo_hide =
 ```
 
 If you specify `footer_hide` to `true`, all the other values are ignored because the footer will not be shown.

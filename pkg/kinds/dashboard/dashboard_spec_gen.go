@@ -187,6 +187,9 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
+	// Set to 1 for the standard annotation query all dashboards have by default.
+	BuiltIn *float32 `json:"builtIn,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource DataSourceRef `json:"datasource"`
 

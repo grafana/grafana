@@ -110,11 +110,11 @@ export const StyleEditor = (props: Props) => {
   };
 
   const onAlignHorizontalChange = (alignHorizontal: HorizontalAlign) => {
-    onChange({ ...value, symbolAlign: { ...value.symbolAlign, horizontal: alignHorizontal } });
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, horizontal: alignHorizontal } });
   };
 
   const onAlignVerticalChange = (alignVertical: VerticalAlign) => {
-    onChange({ ...value, symbolAlign: { ...value.symbolAlign, vertical: alignVertical } });
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, vertical: alignVertical } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());

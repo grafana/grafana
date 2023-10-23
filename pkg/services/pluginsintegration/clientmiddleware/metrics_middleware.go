@@ -3,6 +3,7 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
@@ -26,21 +29,26 @@ type pluginMetrics struct {
 type MetricsMiddleware struct {
 	pluginMetrics
 	pluginRegistry registry.Service
+	features       featuremgmt.FeatureToggles
 	next           plugins.Client
 }
 
-func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *MetricsMiddleware {
+func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
+	var additionalLabels []string
+	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		additionalLabels = []string{"status_source"}
+	}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status", "target"})
+	}, append([]string{"plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, []string{"plugin_id", "endpoint", "target"})
+	}, append([]string{"plugin_id", "endpoint", "target"}, additionalLabels...))
 	pluginRequestSize := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
@@ -54,7 +62,7 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
-	}, []string{"source", "plugin_id", "endpoint", "status", "target"})
+	}, append([]string{"source", "plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	promRegisterer.MustRegister(
 		pluginRequestCounter,
 		pluginRequestDuration,
@@ -69,12 +77,13 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
 		},
 		pluginRegistry: pluginRegistry,
+		features:       features,
 	}
 }
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
-func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
-	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
+func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
+	imw := newMetricsMiddleware(promRegisterer, pluginRegistry, features)
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		imw.next = next
 		return imw
@@ -117,12 +126,21 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 			status = statusCancelled
 		}
 	}
-
 	elapsed := time.Since(start)
 
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target)
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, target)
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, target)
+	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
+	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
+	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status, target}
+	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
+		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
+		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
+		pluginRequestDurationSecondsLabels = append(pluginRequestDurationSecondsLabels, string(statusSource))
+	}
+
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues(pluginRequestDurationSecondsLabels...)
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
@@ -142,6 +160,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Setup plugin request status source
+	ctx = pluginrequestmeta.WithStatusSource(ctx, pluginrequestmeta.StatusSourcePlugin)
+
 	var requestSize float64
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
@@ -152,6 +173,32 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var resp *backend.QueryDataResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
+		if resp == nil || resp.Responses == nil || !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+			return innerErr
+		}
+
+		// Set downstream status source in the context if there's at least one response with downstream status source,
+		// and if there's no plugin error
+		var hasPluginError bool
+		var hasDownstreamError bool
+		for _, r := range resp.Responses {
+			if r.Error == nil {
+				continue
+			}
+			if r.ErrorSource == backend.ErrorSourceDownstream {
+				hasDownstreamError = true
+			} else {
+				hasPluginError = true
+			}
+		}
+		// A plugin error has higher priority than a downstream error,
+		// so set to downstream only if there's no plugin error
+		if hasDownstreamError && !hasPluginError {
+			if err := pluginrequestmeta.WithDownstreamStatusSource(ctx); err != nil {
+				return fmt.Errorf("failed to set downstream status source: %w", err)
+			}
+		}
+
 		return innerErr
 	})
 	return resp, err
