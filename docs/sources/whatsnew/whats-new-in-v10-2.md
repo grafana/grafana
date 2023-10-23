@@ -377,6 +377,24 @@ _Generally available in Grafana Open Source and Enterprise_
 
 We've added support for the Microsoft Teams contact points when using an external Alertmanager.
 
+### Edit file-provisioned and Terraform-provisioned alerting resources
+
+<!-- George Robinson -->
+
+_Generally available in all editions of Grafana_
+
+Edit provisioned alerting resources using file provisioning or Terraform directly from within the Grafana UI.
+
+### Recovery thresholds for alerts
+
+<!-- George Robinson -->
+
+_Generally available in all editions of Grafana_
+
+To reduce the noise of flapping alerts, you can set a recovery threshold different from the alert threshold.
+
+Flapping alerts occur when a metric hovers around the alert threshold condition and they may lead to frequent state changes, resulting in too many notifications being generated.
+
 ## Authentication and authorization
 
 ### No basic role
