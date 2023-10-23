@@ -26,7 +26,7 @@ type grpcPlugin struct {
 	descriptor     PluginDescriptor
 	clientFactory  func() *plugin.Client
 	client         *plugin.Client
-	pluginClient   pluginClient
+	pluginClient   *ClientV2
 	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
