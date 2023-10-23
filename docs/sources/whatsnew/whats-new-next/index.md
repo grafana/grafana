@@ -84,7 +84,7 @@ To learn more, refer to our [Canvas button element documentation](https://grafan
 
 October 24, 2023
 
-_Available in public preview in Grafana Cloud_
+_Generally available in Grafana Cloud_
 
 You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis on supported visualizations, hold the Shift key while clicking and dragging; double-click to reset the zoom.
 
