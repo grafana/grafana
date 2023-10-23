@@ -2,19 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneComponentProps,
-  PanelBuilders,
-  SceneQueryRunner,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
-import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 
-import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../shared';
 import { getTrailSettings } from '../utils';
 
 import { AutoQueryDef, AutoQueryInfo } from './AutoQueryEngine';
