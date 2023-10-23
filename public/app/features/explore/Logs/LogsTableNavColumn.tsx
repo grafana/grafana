@@ -22,6 +22,8 @@ function getStyles(theme: GrafanaTheme2) {
     checkbox: css({}),
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
+      // need some space or the outline of the checkbox is cut off
+      paddingLeft: theme.spacing(0.5),
     }),
     empty: css({
       marginBottom: theme.spacing(2),
