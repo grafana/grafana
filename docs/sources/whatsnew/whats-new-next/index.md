@@ -49,7 +49,7 @@ October 24, 2023
 
 _Available in public preview in Grafana Cloud_
 
-ou can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
 
 - **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
@@ -119,6 +119,20 @@ You can now visualize gauges in vertical and horizontal orientations with overfl
 You can now center bar chart axes on zero and configure axes border and color settings.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
+
+## Detect unusable transformations
+
+<!-- Kyle Cunningham -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
+
+{{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
 
 ## Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
 
