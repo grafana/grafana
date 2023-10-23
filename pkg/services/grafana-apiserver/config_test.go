@@ -1,6 +1,7 @@
 package grafanaapiserver
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +13,7 @@ func TestNewConfig(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Env = setting.Prod
 	cfg.DataPath = "/tmp/grafana"
-	cfg.HTTPAddr = "test"
+	cfg.HTTPAddr = "10.0.0.1"
 	cfg.HTTPPort = "4000"
 	cfg.IsFeatureToggleEnabled = func(_ string) bool { return true }
 	cfg.AppURL = "http://test:4000"
@@ -28,9 +29,9 @@ func TestNewConfig(t *testing.T) {
 		devMode:     false,
 		etcdServers: []string{"http://localhost:2379"},
 		apiURL:      "http://test:4000",
-		ip:          "test",
+		ip:          net.ParseIP("10.0.0.1"),
 		port:        4000,
-		host:        "test:4000",
+		host:        "10.0.0.1:4000",
 		dataPath:    "/tmp/grafana/grafana-apiserver",
 		logLevel:    5,
 	}

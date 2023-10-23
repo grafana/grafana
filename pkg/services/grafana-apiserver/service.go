@@ -3,7 +3,6 @@ package grafanaapiserver
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"path"
 	"strconv"
@@ -164,7 +163,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
-	o.SecureServing.BindAddress = net.ParseIP(s.config.ip)
+	o.SecureServing.BindAddress = s.config.ip
 	o.SecureServing.BindPort = s.config.port
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true

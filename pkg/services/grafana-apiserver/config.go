@@ -2,6 +2,7 @@ package grafanaapiserver
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 	"strconv"
 
@@ -13,7 +14,7 @@ type config struct {
 	enabled bool
 	devMode bool
 
-	ip     string
+	ip     net.IP
 	port   int
 	host   string
 	apiURL string
@@ -26,7 +27,7 @@ type config struct {
 
 func newConfig(cfg *setting.Cfg) *config {
 	defaultLogLevel := 0
-	ip := cfg.HTTPAddr
+	ip := net.ParseIP(cfg.HTTPAddr)
 	apiURL := cfg.AppURL
 	port, err := strconv.Atoi(cfg.HTTPPort)
 	if err != nil {
@@ -36,7 +37,7 @@ func newConfig(cfg *setting.Cfg) *config {
 	if cfg.Env == setting.Dev {
 		defaultLogLevel = 10
 		port = 6443
-		ip = "127.0.0.1"
+		ip = net.ParseIP("127.0.0.1")
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
 	}
 
