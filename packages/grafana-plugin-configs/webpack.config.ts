@@ -208,8 +208,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       unsafeCache: true,
     },
 
-    stats: env.production ? 'errors-only' : 'normal',
-
     watchOptions: {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
