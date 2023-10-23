@@ -140,6 +140,7 @@ func ProvideService(
 	}
 
 	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/apiserver-metrics", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
@@ -294,6 +295,12 @@ func (s *service) start(ctx context.Context) error {
 		if req.URL.Path == "" {
 			req.URL.Path = "/"
 		}
+
+		//TODO: add support for the existing MetricsEndpointBasicAuth config option
+		if req.URL.Path == "/apiserver-metrics" {
+			req.URL.Path = "/metrics"
+		}
+
 		ctx := req.Context()
 		signedInUser := appcontext.MustUser(ctx)
 
