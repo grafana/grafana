@@ -56,8 +56,8 @@ export const VizLegendList = <T extends unknown>({
     }
     case 'bottom':
     default: {
-      const rightItems = items.filter((item) => item.yAxis !== 1);
       const leftItems = items.filter((item) => item.yAxis === 1);
+      const rightItems = items.filter((item) => item.yAxis !== 1);
 
       const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
