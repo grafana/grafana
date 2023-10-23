@@ -6,7 +6,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Get started
+title: Get started with Grafana Open Source
 weight: 9
 ---
 
