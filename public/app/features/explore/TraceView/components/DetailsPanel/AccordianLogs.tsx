@@ -28,10 +28,10 @@ import { ubMb1 } from '../uberUtilityStyles';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    AccordianLogsFooter: css`
-      label: AccordianLogsFooter;
-      color: ${autoColor(theme, '#999')};
-    `,
+    AccordianLogsFooter: css({
+      label: 'AccordianLogsFooter',
+      color: `${autoColor(theme, '#999')}`,
+    }),
   };
 };
 
