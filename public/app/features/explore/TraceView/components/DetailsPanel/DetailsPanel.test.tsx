@@ -6,8 +6,11 @@ import { LinkModel } from '@grafana/data';
 
 import { getAbsoluteTime } from '../TraceTimelineViewer/SpanDetail';
 import DetailState from '../TraceTimelineViewer/SpanDetail/DetailState';
+import { TopOfViewRefType } from '../TraceTimelineViewer/VirtualizedTraceView';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
+import { SpanLinkDef } from '../types';
+import { SpanLinkType } from '../types/links';
 import { TraceSpan } from '../types/trace';
 
 import { DetailsPanel } from './DetailsPanel';
@@ -92,7 +95,17 @@ const setup = () => {
     },
     setDetailsPanelOffset: jest.fn(),
     defaultDetailsPanelHeight: 200,
-    datasourceType: 'unknown'
+    createSpanLink: () => {
+      return [
+        {
+          title: 'link',
+          type: SpanLinkType.Logs,
+          href: 'url',
+        } as SpanLinkDef,
+      ];
+    },
+    datasourceType: 'unknown',
+    topOfViewRefType: TopOfViewRefType.Explore,
   };
 
   return {
@@ -196,5 +209,15 @@ describe('DetailsPanel', () => {
       expect(screen.getByText('trace2')).toBeInTheDocument();
       expect(screen.getByText('span2')).toBeInTheDocument();
     });
+  });
+
+  it('renders logs for this span', () => {
+    setup();
+    expect(screen.getByText('Logs for this span')).toBeDefined();
+  });
+
+  it('renders deep link', () => {
+    setup();
+    expect(screen.getByTitle('Deep link to this span')).toBeDefined();
   });
 });

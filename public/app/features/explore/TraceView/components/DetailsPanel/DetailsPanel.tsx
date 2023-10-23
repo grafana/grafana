@@ -3,17 +3,18 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone, TraceLog } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, DataLinkButton, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkButton, Icon, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { autoColor, DetailState, TraceSpan } from '..';
 import { ExploreDrawer } from '../../../ExploreDrawer';
 import { getOverviewItems } from '../TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import TextList from '../TraceTimelineViewer/SpanDetail/TextList';
+import { TopOfViewRefType } from '../TraceTimelineViewer/VirtualizedTraceView';
 import LabeledList from '../common/LabeledList';
 import { SpanLinkFunc, SpanLinkType } from '../types/links';
 import { TraceSpanReference } from '../types/trace';
-import { ubTxRightAlign } from '../uberUtilityStyles';
+import { uAlignIcon, ubTxRightAlign } from '../uberUtilityStyles';
 
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
@@ -33,6 +34,7 @@ type Props = {
   defaultDetailsPanelHeight: number;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
+  topOfViewRefType: TopOfViewRefType;
 };
 
 enum TabLabels {
@@ -58,6 +60,7 @@ export function DetailsPanel(props: Props) {
     defaultDetailsPanelHeight,
     createSpanLink,
     datasourceType,
+    topOfViewRefType,
   } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
@@ -93,6 +96,7 @@ export function DetailsPanel(props: Props) {
     tabsCounters[TabLabels.References] = references.length;
   }
 
+  const focusSpanLink = createFocusSpanLink(span.traceID, span.spanID);
   let logLinkButton: JSX.Element | undefined = undefined;
   if (createSpanLink) {
     const links = createSpanLink(span);
@@ -164,9 +168,35 @@ export function DetailsPanel(props: Props) {
           </div>
           <Button icon={'times'} variant={'secondary'} onClick={clearSelectedSpan} size={'sm'} />
         </div>
-        
+
         <div className={styles.linkContainer}>
           {logLinkButton}
+
+          {topOfViewRefType === TopOfViewRefType.Explore && (
+            <small className={styles.debugInfo}>
+              {/* TODO: fix keyboard a11y */}
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+              <a
+                {...focusSpanLink}
+                onClick={(e) => {
+                  // click handling logic copied from react router:
+                  // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+                  if (
+                    focusSpanLink.onClick &&
+                    e.button === 0 && // Ignore everything but left clicks
+                    (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                    !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+                  ) {
+                    e.preventDefault();
+                    focusSpanLink.onClick(e);
+                  }
+                }}
+              >
+                <Icon name={'link'} className={cx(uAlignIcon, styles.linkIcon)}></Icon>
+              </a>
+              <span className={styles.debugLabel} data-label="SpanID:" /> {span.spanID}
+            </small>
+          )}
         </div>
 
         <TabsBar>
@@ -304,8 +334,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: DetailsPanelLinkContainer;
     display: flex;
     align-items: flex-end;
-    flex-direction: column;
+    flex-direction: row-reverse;
     padding-right: 0.6rem;
-    margin-bottom: -25px;
+  `,
+  debugInfo: css`
+    label: DetailsPanelDebugInfo;
+    letter-spacing: 0.25px;
+    margin-right: 15px;
+  `,
+  debugLabel: css`
+    label: DetailsPanelDebugLabel;
+    &::before {
+      color: ${autoColor(theme, '#bbb')};
+      content: attr(data-label);
+    }
+  `,
+  linkIcon: css`
+    font-size: 1.5em;
   `,
 });

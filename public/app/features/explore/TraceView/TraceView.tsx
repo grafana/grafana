@@ -262,6 +262,7 @@ export function TraceView(props: Props) {
             defaultDetailsPanelHeight={defaultDetailsPanelHeight}
             createSpanLink={createSpanLink}
             datasourceType={datasourceType}
+            topOfViewRefType={topOfViewRefType}
           />
         </>
       ) : (
