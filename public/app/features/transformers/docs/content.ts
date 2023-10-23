@@ -1119,7 +1119,12 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   `;
     },
   },
-  // spatial: { name: 'Spatial', getHelperDocs: `Use this transformation to apply spatial operations to query results` },
+  spatial: {
+    name: 'Spatial',
+    getHelperDocs: function () {
+      return `Use this transformation to apply spatial operations to query results`;
+    },
+  },
   // timeSeriesTable: {
   //   name: 'Time series table',
   //   getHelperDocs: `
