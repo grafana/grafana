@@ -14,7 +14,7 @@ import (
 
 // sanitizeLabelSet sanitizes all given LabelSet keys according to sanitizeLabelName.
 // If there is a collision as a result of sanitization, a short (6 char) md5 hash of the original key will be added as a suffix.
-func (am *Alertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Labels {
+func (am *ExternalAlertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Labels {
 	ls := make(labels.Labels, 0, len(lbls))
 	set := make(map[string]struct{})
 
@@ -43,7 +43,7 @@ func (am *Alertmanager) sanitizeLabelSet(lbls models.LabelSet) labels.Labels {
 // Prometheus alertmanager requires labels to match ^[a-zA-Z_][a-zA-Z0-9_]*$.
 // Characters with an ASCII code < 127 will be replaced with an underscore (_), characters with ASCII code >= 127 will be replaced by their hex representation.
 // For backwards compatibility, whitespace will be removed instead of replaced with an underscore.
-func (am *Alertmanager) sanitizeLabelName(name string) (string, error) {
+func (am *ExternalAlertmanager) sanitizeLabelName(name string) (string, error) {
 	if len(name) == 0 {
 		return "", errors.New("label name cannot be empty")
 	}

@@ -21,7 +21,7 @@ const (
 	upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
 )
 
-func TestNewAlertmanager(t *testing.T) {
+func TestNewExternalAlertmanager(t *testing.T) {
 	tests := []struct {
 		name          string
 		url           string
@@ -70,13 +70,13 @@ func TestNewAlertmanager(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			cfg := AlertmanagerConfig{
+			cfg := ExternalAlertmanagerConfig{
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 				DefaultConfig:     test.defaultConfig,
 			}
-			am, err := NewAlertmanager(cfg, test.orgID)
+			am, err := NewExternalAlertmanager(cfg, test.orgID)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -105,13 +105,13 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := AlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -185,13 +185,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := AlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should have no alerts and no groups at first.
@@ -243,14 +243,14 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	tenantID := os.Getenv("AM_TENANT_ID")
 	password := os.Getenv("AM_PASSWORD")
 
-	cfg := AlertmanagerConfig{
+	cfg := ExternalAlertmanagerConfig{
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 		DefaultConfig:     validConfig,
 	}
 
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewExternalAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
 	// We should start with the default config.

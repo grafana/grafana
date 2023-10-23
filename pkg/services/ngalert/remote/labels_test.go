@@ -49,11 +49,11 @@ func TestSanitizeLabelName(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			cfg := AlertmanagerConfig{
+			cfg := ExternalAlertmanagerConfig{
 				URL:           "http://test",
 				DefaultConfig: validConfig,
 			}
-			am, err := NewAlertmanager(cfg, 1)
+			am, err := NewExternalAlertmanager(cfg, 1)
 			require.NoError(t, err)
 			res, err := am.sanitizeLabelName(tc.labelName)
 
@@ -101,11 +101,11 @@ func TestSanitizeLabelSet(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			cfg := AlertmanagerConfig{
+			cfg := ExternalAlertmanagerConfig{
 				URL:           "http://test",
 				DefaultConfig: validConfig,
 			}
-			am, err := NewAlertmanager(cfg, 1)
+			am, err := NewExternalAlertmanager(cfg, 1)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedResult, am.sanitizeLabelSet(tc.labelset))
 		})
