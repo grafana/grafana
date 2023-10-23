@@ -431,6 +431,27 @@ export const transformationDocsContent: TransformationDocsContentType = {
   `;
     },
   },
+  formatString: {
+    name: 'Format string',
+    getHelperDocs: function () {
+      return `
+  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+
+  Use this transformation to format the output of a string field. You can format output in the following ways:
+  
+  - Upper case - Formats the entire string in upper case characters.
+  - Lower case - Formats the entire string in lower case characters.
+  - Sentence case - Formats the the first character of the string in upper case.
+  - Title case - Formats the first character of each word in the string in upper case.
+  - Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+  - Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
+  - Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+  - Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+  - Trim - Removes all leading and trailing spaces from the string.
+  - Substring - Returns a substring of the string, using the specified start and end positions.
+  `;
+    },
+  },
   formatTime: {
     name: 'Format time',
     getHelperDocs: function () {
