@@ -152,7 +152,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 
 	t.Run("should update service account", func(t *testing.T) {
 		nameWithoutProtectedPrefix := "my-updated-service-account"
-		nameWithProtectedPrefix := "sa-extsvc-my-updated-service-account"
+		nameWithProtectedPrefix := "extsvc-my-updated-service-account"
 		testCases := []struct {
 			description            string
 			form                   serviceaccounts.UpdateServiceAccountForm
