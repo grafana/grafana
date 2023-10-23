@@ -32,6 +32,20 @@ func ProvideServiceAccountsProxy(
 
 var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
+func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if isExternalServiceAccount(sa.Login) {
+		s.log.Error("unable to create tokens for external service accounts", "serviceAccountID", serviceAccountID)
+		return nil, extsvcaccounts.ErrCannotCreateToken
+	}
+
+	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
+}
+
 func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if !isNameValid(saForm.Name) {
 		s.log.Error("Unable to create service account with a protected name", "name", saForm.Name)
@@ -84,20 +98,6 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 	}
 
 	return s.proxiedService.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
-}
-
-func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID)
-	if err != nil {
-		return nil, err
-	}
-
-	if isExternalServiceAccount(sa.Login) {
-		s.log.Error("unable to create tokens for external service accounts", "serviceAccountID", serviceAccountID)
-		return nil, extsvcaccounts.ErrCannotCreateToken
-	}
-
-	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
 }
 
 func isNameValid(name string) bool {
