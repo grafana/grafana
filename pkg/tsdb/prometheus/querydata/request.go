@@ -10,9 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
@@ -36,7 +37,7 @@ type ExemplarEvent struct {
 // client.
 type QueryData struct {
 	intervalCalculator intervalv2.Calculator
-	tracer             tracing.Tracer
+	tracer             trace.Tracer
 	client             *client.Client
 	log                log.Logger
 	ID                 int64
@@ -49,7 +50,6 @@ type QueryData struct {
 func New(
 	httpClient *http.Client,
 	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*QueryData, error) {
@@ -75,7 +75,7 @@ func New(
 
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
-		tracer:             tracer,
+		tracer:             tracing.DefaultTracer(),
 		log:                plog,
 		client:             promClient,
 		TimeInterval:       timeInterval,
