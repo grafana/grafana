@@ -60,8 +60,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
-	ProvideClientDecorator,
-	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
@@ -127,6 +125,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	finder.ProvideLocalFinder,
+	ProvideClientDecorator,
+	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 )
 
 func ProvideClientDecorator(
@@ -177,10 +177,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
-	}
-
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		middlewares = append(middlewares, clientmiddleware.NewTeamHTTPHeadersMiddleware())
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
