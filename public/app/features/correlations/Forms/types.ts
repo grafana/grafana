@@ -49,7 +49,7 @@ export function getSupportedTransTypeDetails(
         label: 'Regular expression',
         value: SupportedTransformationType.Regex,
         description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
+          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.',
         expressionDetails: {
           show: true,
           required: true,

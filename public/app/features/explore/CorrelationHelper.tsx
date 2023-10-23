@@ -23,10 +23,12 @@ import { getTransformationVars } from '../correlations/transformations';
 import { generateDefaultLabel } from '../correlations/utils';
 
 import { CorrelationTransformationAddModal } from './CorrelationTransformationAddModal';
+import { changeCorrelationHelperData } from './state/explorePane';
 import { changeCorrelationEditorDetails } from './state/main';
 import { selectCorrelationDetails, selectPanes } from './state/selectors';
 
 interface Props {
+  exploreId: string;
   correlations: ExploreCorrelationHelperData;
 }
 
@@ -35,13 +37,12 @@ interface FormValues {
   description: string;
 }
 
-export const CorrelationHelper = ({ correlations }: Props) => {
+export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
   const panesVals = Object.values(panes);
   const { register, watch, getValues } = useForm<FormValues>();
-  const [correlationVars, setCorrelationVars] = useState(correlations.vars);
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
@@ -100,7 +101,17 @@ export const CorrelationHelper = ({ correlations }: Props) => {
         transVarRecords[key] = transformationVars[key]?.value;
       });
     });
-    setCorrelationVars({ ...correlations.vars, ...transVarRecords });
+
+    dispatch(
+      changeCorrelationHelperData({
+        exploreId: exploreId,
+        correlationEditorHelperData: {
+          resultField: correlations.resultField,
+          origVars: correlations.origVars,
+          vars: { ...correlations.origVars, ...transVarRecords },
+        },
+      })
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, transformations]);
 
@@ -133,7 +144,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
         The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
         variables to set up your correlations:
         <pre>
-          {Object.entries(correlationVars).map((entry) => {
+          {Object.entries(correlations.vars).map((entry) => {
             return `\$\{${entry[0]}\} = ${entry[1]}\n`;
           })}
         </pre>
