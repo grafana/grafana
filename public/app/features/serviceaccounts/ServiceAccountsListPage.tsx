@@ -3,8 +3,18 @@ import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  useStyles2,
+  InlineField,
+  Pagination,
+} from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
+
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -15,6 +25,7 @@ import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenM
 import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
+  changePage,
   fetchACOptions,
   fetchServiceAccounts,
   deleteServiceAccount,
@@ -34,6 +45,7 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
+  changePage,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -46,6 +58,9 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const ServiceAccountsListPageUnconnected = ({
+  page,
+  changePage,
+  totalPages,
   serviceAccounts,
   isLoading,
   roleOptions,
@@ -238,6 +253,10 @@ export const ServiceAccountsListPageUnconnected = ({
                   ))}
                 </tbody>
               </table>
+
+              <Flex justifyContent="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </Flex>
             </div>
           </>
         )}
