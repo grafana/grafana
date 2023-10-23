@@ -118,28 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['filterByValue'].name}
-${transformationDocsContent['filterByValue'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['filterFieldsByName'].name}
-${transformationDocsContent['filterFieldsByName'].helperDocs}
-
-In the example below, we removed the Min field from the results.
-
-Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
-
-{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-Here's the table after we applied the transformation to remove the Min field.
-
-{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-Here is the same query using a Stat visualization.
-
-{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-`}
-
 ${`### ${transformationDocsContent['formatTime'].name}
 ${transformationDocsContent['formatTime'].helperDocs}
 `}
