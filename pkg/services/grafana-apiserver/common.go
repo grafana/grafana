@@ -42,7 +42,7 @@ type APIRouteHandler struct {
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
 }
 
-// APIRoutes define the
+// APIRoutes define explicit HTTP handlers in an apiserver
 type APIRoutes struct {
 	// Root handlers are registered directly after the apiVersion identifier
 	Root []APIRouteHandler
@@ -50,8 +50,8 @@ type APIRoutes struct {
 	// Namespace handlers are mounted under the namespace
 	Namespace []APIRouteHandler
 
-	// Resource routes behave the same as pod/logs
-	// it looks like a sub-resource, however the response is backed directly by an http handler
-	// The current resource can be fetched through context
-	Resource map[string]APIRouteHandler
+	// Attach explicit HTTP handlers to resources.
+	// This allows implementing features like pod/logs
+	// The key is the plural resource name
+	Resource map[string][]APIRouteHandler
 }

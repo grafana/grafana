@@ -30,28 +30,33 @@ var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type TestingAPIBuilder struct {
-	codecs serializer.CodecFactory
+	groupVersion schema.GroupVersion
+	codecs       serializer.CodecFactory
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
 	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := &TestingAPIBuilder{}
+	builder := &TestingAPIBuilder{
+		groupVersion: schema.GroupVersion{Group: GroupName, Version: VersionID},
+	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *TestingAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return SchemeGroupVersion
+	return b.groupVersion
 }
 
 func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
-	return scheme.SetVersionPriority(SchemeGroupVersion)
+	scheme.AddKnownTypes(b.groupVersion,
+		&RuntimeInfo{},
+		&DummyResource{},
+		&DummyResourceList{},
+	)
+	metav1.AddToGroupVersion(scheme, b.groupVersion)
+	return scheme.SetVersionPriority(b.groupVersion)
 }
 
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
@@ -61,7 +66,13 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
-	storage["runtime"] = newDeploymentInfoStorage()
+	// NOT NamespaceScoped!
+	storage["runtime"] = newRuntimeInfoStorage(b.groupVersion.WithResource("runtime"))
+	// NamespaceScoped, with three resources (and subresources added from APIRoutes)
+	storage["dummy"] = newDummyStorage(
+		b.groupVersion.WithResource("dummy"),
+		"test1", "test2", "test3",
+	)
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	b.codecs = codecs
 	return &apiGroupInfo, nil
@@ -166,30 +177,38 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 		},
+		Resource: map[string][]grafanaapiserver.APIRouteHandler{
+			"dummy": {
+				{
+					Path: "/ddd",
+					Spec: &spec3.PathProps{
+						Summary:     "an example at the root level",
+						Description: "longer description here?",
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+								Parameters: []*spec3.Parameter{
+									{ParameterProps: spec3.ParameterProps{
+										Name: "a",
+									}},
+								},
+							},
+						},
+					},
+					Handler: func(w http.ResponseWriter, r *http.Request) {
+						info, ok := request.RequestInfoFrom(r.Context())
+						if !ok {
+							responsewriters.ErrorNegotiated(
+								apierrors.NewInternalError(fmt.Errorf("no RequestInfo found in the context")),
+								b.codecs, schema.GroupVersion{}, w, r,
+							)
+							return
+						}
+
+						msg := fmt.Sprintf("Custom resource route (ccc)\n\n%+v", info)
+						_, _ = w.Write([]byte(msg))
+					},
+				},
+			},
+		},
 	}
-}
-
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
-
-// Resource takes an unqualified resource and returns a Group qualified GroupResource
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
-}
-
-var (
-	// SchemeBuilder points to a list of functions added to Scheme.
-	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	localSchemeBuilder = &SchemeBuilder
-	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
-)
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&RuntimeInfo{},
-	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
 }
