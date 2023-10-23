@@ -1,19 +1,25 @@
+import { PanelBuilders, SceneQueryRunner, VizPanelBuilder } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
-import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR } from '../shared';
+import { KEY_SQR_METRIC_VIZ_QUERY, trailDS, VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../shared';
 
 export interface AutoQueryDef {
-  variant: AutoQueryVariant;
+  variant: string;
   title: string;
   unit: string;
-  query: PromQuery;
+  queries: PromQuery[];
+  vizBuilder: (def: AutoQueryDef) => VizPanelBuilder;
 }
 
-export type AutoQueryVariant = 'graph' | 'heatmap' | 'p95';
+export interface AutoQueryInfo {
+  preview: AutoQueryDef;
+  main: AutoQueryDef;
+  variants: AutoQueryDef[];
+  breakdown: AutoQueryDef;
+}
 
-export function getAutoQueriesForMetric(metric: string) {
-  const queries: AutoQueryDef[] = [];
-
+export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
   let unit = 'short';
   let agg = 'avg';
   let rate = false;
@@ -46,47 +52,135 @@ export function getAutoQueriesForMetric(metric: string) {
     query = `rate(${query}[$__rate_interval])`;
   }
 
-  queries.push({
+  const queryDef: AutoQueryDef = {
     title: `${title}`,
     variant: 'graph',
     unit,
-    query: {
-      refId: 'A',
-      expr: `${agg}(${query})`,
-    },
-  });
+    queries: [{ refId: 'A', expr: `${agg}(${query})` }],
+    vizBuilder: simpleGraphBuilder,
+  };
 
-  return queries;
+  return { preview: queryDef, main: queryDef, breakdown: queryDef, variants: [] };
 }
 
-function getQueriesForBucketMetric(metric: string) {
-  const queries: AutoQueryDef[] = [];
+function getQueriesForBucketMetric(metric: string): AutoQueryInfo {
   let unit = 'short';
 
   if (metric.endsWith('seconds_bucket')) {
     unit = 's';
   }
 
-  queries.push({
+  const p50: AutoQueryDef = {
     title: metric,
-    variant: 'p95',
+    variant: 'p50',
     unit,
-    query: {
-      refId: 'A',
-      expr: `histogram_quantile(0.95, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-    },
-  });
+    queries: [
+      {
+        refId: 'A',
+        expr: `histogram_quantile(0.50, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+      },
+    ],
+    vizBuilder: simpleGraphBuilder,
+  };
 
-  queries.push({
+  const breakdown: AutoQueryDef = {
+    title: metric,
+    variant: 'p50',
+    unit,
+    queries: [
+      {
+        refId: 'A',
+        expr: `histogram_quantile(0.50, sum by(le, ${VAR_GROUP_BY_EXP}) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+      },
+    ],
+    vizBuilder: simpleGraphBuilder,
+  };
+
+  const percentiles: AutoQueryDef = {
+    title: metric,
+    variant: 'percentiles',
+    unit,
+    queries: [
+      {
+        refId: 'A',
+        expr: `histogram_quantile(0.99, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+      },
+      {
+        refId: 'B',
+        expr: `histogram_quantile(0.90, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+      },
+      {
+        refId: 'C',
+        expr: `histogram_quantile(0.50, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
+      },
+    ],
+    vizBuilder: percentilesGraphBuilder,
+  };
+
+  const heatmap: AutoQueryDef = {
     title: metric,
     variant: 'heatmap',
     unit,
-    query: {
-      refId: 'A',
-      expr: `sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
-      format: 'heatmap',
-    },
-  });
+    queries: [
+      {
+        refId: 'A',
+        expr: `sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
+        format: 'heatmap',
+      },
+    ],
+    vizBuilder: heatmapGraphBuilder,
+  };
 
-  return queries;
+  return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
+}
+
+function simpleGraphBuilder(def: AutoQueryDef) {
+  return PanelBuilders.timeseries()
+    .setTitle(def.title)
+    .setData(
+      new SceneQueryRunner({
+        datasource: trailDS,
+        maxDataPoints: 200,
+        queries: def.queries,
+      })
+    )
+    .setUnit(def.unit)
+    .setOption('legend', { showLegend: false })
+    .setCustomFieldConfig('fillOpacity', 9);
+}
+
+function percentilesGraphBuilder(def: AutoQueryDef) {
+  return PanelBuilders.timeseries()
+    .setTitle(def.title)
+    .setData(
+      new SceneQueryRunner({
+        datasource: trailDS,
+        maxDataPoints: 200,
+        queries: def.queries,
+      })
+    )
+    .setUnit(def.unit)
+    .setOption('legend', { showLegend: false })
+    .setCustomFieldConfig('fillOpacity', 9);
+}
+
+function heatmapGraphBuilder(def: AutoQueryDef) {
+  return PanelBuilders.heatmap()
+    .setTitle(def.title)
+    .setUnit(def.unit)
+    .setOption('calculate', false)
+    .setOption('color', {
+      mode: HeatmapColorMode.Scheme,
+      exponent: 0.5,
+      scheme: 'Spectral',
+      steps: 32,
+      reverse: false,
+    })
+    .setData(
+      new SceneQueryRunner({
+        key: KEY_SQR_METRIC_VIZ_QUERY,
+        datasource: trailDS,
+        queries: def.queries,
+      })
+    );
 }

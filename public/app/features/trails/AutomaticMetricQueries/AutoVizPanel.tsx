@@ -16,11 +16,11 @@ import { HeatmapColorMode } from 'app/plugins/panel/heatmap/panelcfg.gen';
 import { KEY_SQR_METRIC_VIZ_QUERY, trailDS } from '../shared';
 import { getTrailSettings } from '../utils';
 
-import { AutoQueryDef, AutoQueryVariant } from './AutoQueryEngine';
+import { AutoQueryDef, AutoQueryInfo } from './AutoQueryEngine';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
-  queries: AutoQueryDef[];
+  autoQuery: AutoQueryInfo;
   queryDef?: AutoQueryDef;
 }
 
@@ -30,24 +30,26 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     if (!state.panel) {
       this.setState({
-        panel: this.getVizPanelFor(state.queries[0]),
-        queryDef: state.queries[0],
+        panel: this.getVizPanelFor(state.autoQuery.main),
+        queryDef: state.autoQuery.main,
       });
     }
   }
 
   private getQuerySelector(def: AutoQueryDef) {
-    if (this.state.queries.length < 2) {
+    const variants = this.state.autoQuery.variants;
+
+    if (variants.length === 0) {
       return;
     }
 
-    const options = this.state.queries.map((q) => ({ label: q.variant, value: q.variant }));
+    const options = variants.map((q) => ({ label: q.variant, value: q.variant }));
 
     return <RadioButtonGroup size="sm" options={options} value={def.variant} onChange={this.onChangeQuery} />;
   }
 
-  public onChangeQuery = (variant: AutoQueryVariant) => {
-    const def = this.state.queries.find((q) => q.variant === variant)!;
+  public onChangeQuery = (variant: string) => {
+    const def = this.state.autoQuery.variants.find((q) => q.variant === variant)!;
 
     this.setState({
       panel: this.getVizPanelFor(def),
@@ -56,45 +58,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   };
 
   private getVizPanelFor(def: AutoQueryDef) {
-    switch (def.variant) {
-      case 'heatmap': {
-        return PanelBuilders.heatmap()
-          .setTitle(def.title)
-          .setUnit(def.unit)
-          .setOption('calculate', false)
-          .setOption('color', {
-            mode: HeatmapColorMode.Scheme,
-            exponent: 0.5,
-            scheme: 'Spectral',
-            steps: 32,
-            reverse: false,
-          })
-          .setHeaderActions(this.getQuerySelector(def))
-          .setData(
-            new SceneQueryRunner({
-              key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: trailDS,
-              queries: [def.query],
-            })
-          )
-          .build();
-      }
-      default:
-        return PanelBuilders.timeseries()
-          .setTitle(def.title)
-          .setUnit(def.unit)
-          .setOption('legend', { showLegend: false })
-          .setCustomFieldConfig('fillOpacity', 9)
-          .setHeaderActions(this.getQuerySelector(def))
-          .setData(
-            new SceneQueryRunner({
-              key: KEY_SQR_METRIC_VIZ_QUERY,
-              datasource: trailDS,
-              queries: [def.query],
-            })
-          )
-          .build();
-    }
+    return def.vizBuilder(def).setHeaderActions(this.getQuerySelector(def)).build();
   }
 
   public static Component = ({ model }: SceneComponentProps<AutoVizPanel>) => {
@@ -113,7 +77,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
     return (
       <div className={styles.wrapper}>
         <Field label="Query">
-          <span>{queryDef?.query.expr ?? 'No query'}</span>
+          <div>{queryDef && queryDef.queries.map((query, index) => <div key={index}>{query.expr}</div>)}</div>
         </Field>
         <div className={styles.panel}>
           <panel.Component model={panel} />

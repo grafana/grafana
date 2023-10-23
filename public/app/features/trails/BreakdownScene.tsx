@@ -28,7 +28,7 @@ import { AutoQueryDef, getAutoQueriesForMetric } from './AutomaticMetricQueries/
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { MetricScene } from './MetricScene';
-import { trailDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
+import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from './shared';
 import { getColorByIndex, getParentOfType } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
@@ -68,7 +68,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     });
 
     const metric = getParentOfType(this, MetricScene).state.metric;
-    this._query = getAutoQueriesForMetric(metric)[0];
+    this._query = getAutoQueriesForMetric(metric).breakdown;
 
     this.updateBody(variable);
   }
@@ -194,6 +194,8 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       continue;
     }
 
+    const expr = queryDef.queries[0].expr.replace(VAR_GROUP_BY_EXP, String(option.value));
+
     children.push(
       new SceneCSSGridItem({
         body: PanelBuilders.timeseries()
@@ -201,12 +203,13 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
           .setUnit(queryDef.unit)
           .setData(
             new SceneQueryRunner({
+              maxDataPoints: 300,
+              datasource: trailDS,
               queries: [
                 {
                   refId: 'A',
-                  datasource: trailDS,
-                  expr: `${queryDef.query.expr} by(${option.value})`,
-                  maxDataPoints: 300,
+                  expr: expr,
+                  legendFormat: `{{${option.label}}}`,
                 },
               ],
             })
@@ -260,14 +263,9 @@ function getVariableSet() {
 function buildNormalLayout(queryDef: AutoQueryDef) {
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: trailDS,
-          expr: `${queryDef.query.expr} by($groupby)`,
-          maxDataPoints: 300,
-        },
-      ],
+      datasource: trailDS,
+      maxDataPoints: 300,
+      queries: queryDef.queries,
     }),
     options: [
       { value: 'single', label: 'Single' },
@@ -293,13 +291,11 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         }),
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
-            body: PanelBuilders.timeseries()
+            body: queryDef
+              .vizBuilder(queryDef)
               .setTitle(getLabelValue(frame))
-              .setUnit(queryDef.unit)
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-              .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-              .setCustomFieldConfig('fillOpacity', 9)
               .setHeaderActions(new AddToFiltersGraphAction({ frame }))
               .build(),
           });
@@ -313,13 +309,11 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         }),
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
-            body: PanelBuilders.timeseries()
+            body: queryDef
+              .vizBuilder(queryDef)
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
-              .setUnit(queryDef.unit)
-              .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-              .setCustomFieldConfig('fillOpacity', 9)
               .setHeaderActions(new AddToFiltersGraphAction({ frame }))
               .build(),
           });

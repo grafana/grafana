@@ -137,7 +137,7 @@ const MAIN_PANEL_MIN_HEIGHT = 250;
 const MAIN_PANEL_MAX_HEIGHT = '40%';
 
 function buildGraphScene(metric: string) {
-  const queries = getAutoQueriesForMetric(metric);
+  const autoQuery = getAutoQueriesForMetric(metric);
 
   return new SceneFlexLayout({
     direction: 'column',
@@ -145,7 +145,7 @@ function buildGraphScene(metric: string) {
       new SceneFlexItem({
         minHeight: MAIN_PANEL_MIN_HEIGHT,
         maxHeight: MAIN_PANEL_MAX_HEIGHT,
-        body: new AutoVizPanel({ queries }),
+        body: new AutoVizPanel({ autoQuery }),
       }),
       new SceneFlexItem({
         ySizing: 'content',

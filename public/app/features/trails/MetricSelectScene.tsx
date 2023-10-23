@@ -188,21 +188,10 @@ function getMetricNamesVariableSet() {
 }
 
 function getPreviewPanelFor(metric: string, index: number) {
-  const queries = getAutoQueriesForMetric(metric);
-  const topQuery = queries[0];
+  const autoQuery = getAutoQueriesForMetric(metric);
 
-  return PanelBuilders.timeseries()
-    .setTitle(topQuery.title)
-    .setData(
-      new SceneQueryRunner({
-        datasource: trailDS,
-        maxDataPoints: 200,
-        queries: [topQuery.query],
-      })
-    )
-    .setUnit(topQuery.unit)
-    .setOption('legend', { showLegend: false })
-    .setCustomFieldConfig('fillOpacity', 9)
+  return autoQuery.preview
+    .vizBuilder(autoQuery.preview)
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
