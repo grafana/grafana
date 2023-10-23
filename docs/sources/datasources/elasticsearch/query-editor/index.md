@@ -40,28 +40,6 @@ Elasticsearch groups aggregations into three categories:
 
 - **Pipeline** - Elasticsearch pipeline aggregations work with inputs or metrics created from other aggregations (not documents or fields). There are parent and sibling and sibling pipeline aggregations. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-pipeline.html) for additional information.
 
-## Common options
-
-There are several different types of queries you can create using the Elasticsearch query editor. The following options are available for all query types.
-
-### Add query
-
-Regardless of query type, you can create multiple queries by clicking **+ Add query**.
-
-### Query history
-
-The query editor keeps a history of your MongoDB queries.
-
-- **Query history** - A history of your MongoDB queries. Queries are kept for 2 weeks, and broken out by date, unless they are starred. The editor shows 100 queries at a time, but it is paginated so you can always see more after the first 100. There is an overall limit to 200,000 records
-
-- **Starred** - Starred queries are kept beyond the 2 week limit.
-
-- **Settings** - Toggle on to change the default active ab from "Query history" to "Starred".
-
-### Query inspector
-
-Click **Query inspector** to get detailed statistics regarding your query. Query inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
-
 ## Select a query type
 
 There are three types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
