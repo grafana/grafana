@@ -773,6 +773,7 @@
   "panel": {
     "header-menu": {
       "copy": "Kopieren",
+      "create-alert": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",

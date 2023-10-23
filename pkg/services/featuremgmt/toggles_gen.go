@@ -491,6 +491,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagCloudWatchBatchQueries
+	// Runs CloudWatch metrics queries as separate batches
+	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
+
 	// FlagNavAdminSubsections
 	// Splits the administration section of the nav tree into subsections
 	FlagNavAdminSubsections = "navAdminSubsections"
@@ -522,4 +526,12 @@ const (
 	// FlagCostManagementUi
 	// Toggles the display of the cost management ui plugin
 	FlagCostManagementUi = "costManagementUi"
+
+	// FlagManagedPluginsInstall
+	// Install managed plugins directly from plugins catalog
+	FlagManagedPluginsInstall = "managedPluginsInstall"
+
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 )
