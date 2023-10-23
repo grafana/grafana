@@ -36,9 +36,9 @@ import {
   QueryFilterOptions,
   ToggleFilterAction,
   DataSourceGetTagValuesOptions,
+  AdHocVariableFilter,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
@@ -397,8 +397,8 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars | {}): ElasticsearchQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): ElasticsearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
   async testDatasource() {
@@ -941,9 +941,8 @@ export class ElasticDatasource
     return { ...query, query: expression };
   }
 
-  addAdHocFilters(query: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length === 0) {
+  addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {
+    if (!adhocFilters) {
       return query;
     }
     let finalQuery = query;
@@ -955,7 +954,7 @@ export class ElasticDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars): ElasticsearchQuery {
+  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): ElasticsearchQuery {
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
@@ -978,7 +977,7 @@ export class ElasticDatasource
     const expandedQuery = {
       ...query,
       datasource: this.getRef(),
-      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
+      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };
 

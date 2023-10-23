@@ -1,12 +1,11 @@
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { ElasticDatasource } from './datasource';
 import { ElasticsearchOptions } from './types';
 
 export function createElasticDatasource(
-  settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {},
-  templateSrv: TemplateSrv
+  settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {}
 ) {
   const { jsonData, ...rest } = settings;
 
@@ -47,6 +46,18 @@ export function createElasticDatasource(
     database: '[test-]YYYY.MM.DD',
     ...rest,
   };
+
+  const templateSrv = {
+    replace: (text?: string) => {
+      if (text?.startsWith('$')) {
+        return `resolvedVariable`;
+      } else {
+        return text;
+      }
+    },
+    containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
+    getAdhocFilters: jest.fn().mockReturnValue([]),
+  } as unknown as TemplateSrv
 
   return new ElasticDatasource(instanceSettings, templateSrv);
 }
