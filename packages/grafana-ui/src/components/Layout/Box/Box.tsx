@@ -272,7 +272,7 @@ const getStyles = (
       getResponsiveStyle(theme, boxShadow, (val) => ({
         boxShadow: theme.shadows[val],
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, gap, (val) => ({
+      getResponsiveStyle(theme, gap, (val) => ({
         gap: theme.spacing(val),
       })),
     ]),
