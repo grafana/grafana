@@ -1125,24 +1125,26 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
       return `Use this transformation to apply spatial operations to query results`;
     },
   },
-  // timeSeriesTable: {
-  //   name: 'Time series table',
-  //   getHelperDocs: `
-  // Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+  timeSeriesTable: {
+    name: 'Time series table',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
-  // > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
-  // `,
-  //   links: [
-  //     {
-  //       title: 'sparkline cell type',
-  //       url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
-  //     },
-  //     {
-  //       title: 'configuration file',
-  //       url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
-  //     },
-  //   ],
-  // },
+  > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
+  `;
+    },
+    links: [
+      {
+        title: 'sparkline cell type',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
+      },
+      {
+        title: 'configuration file',
+        url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
+      },
+    ],
+  },
 };
 
 export function getLinkToDocs(): string {
