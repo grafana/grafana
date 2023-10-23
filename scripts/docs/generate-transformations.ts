@@ -118,14 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['groupingToMatrix'].name}
-${transformationDocsContent['groupingToMatrix'].helperDocs}
-`}
-
-${`### ${transformationDocsContent['heatmap'].name}
-${transformationDocsContent['heatmap'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['histogram'].name}
 ${transformationDocsContent['histogram'].helperDocs}
 `}
