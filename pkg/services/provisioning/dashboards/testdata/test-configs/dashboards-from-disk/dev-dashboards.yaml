@@ -16,3 +16,9 @@ providers:
   type: file
   options:
     path: /var/lib/grafana/dashboards
+
+- name: 'Org 4 dashboards'
+  orgName: Org 4
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards

@@ -92,7 +92,14 @@ func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 
 	uidUsage := map[string]uint8{}
 	for _, dashboard := range dashboards {
-		if dashboard.OrgID == 0 {
+		if dashboard.OrgID == 0 && dashboard.OrgName != "" {
+			getOrgQuery := &org.GetOrgByNameQuery{Name: dashboard.OrgName}
+			res, err := cr.orgService.GetByName(ctx, getOrgQuery)
+			if err != nil {
+				return nil, err
+			}
+			dashboard.OrgID = res.ID
+		} else if dashboard.OrgID <= 0 {
 			dashboard.OrgID = 1
 		}
 
