@@ -91,7 +91,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			changes: func() *store.GroupDelta {
 				return &store.GroupDelta{
 					GroupKey: groupKey,
-					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey))),
+					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey))),
 					Update:   nil,
 					Delete:   nil,
 				}
@@ -114,8 +114,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to delete it should check delete action and query for datasource",
 			changes: func() *store.GroupDelta {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
 				return &store.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
@@ -138,8 +138,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
 				updates := make([]store.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
@@ -177,15 +177,15 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
 
 				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
 
 				updates := make([]store.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
-					withGroupKey(targetGroupKey)(cp)
+					models.WithGroupKey(targetGroupKey)(cp)
 					cp.Data = []models.AlertQuery{
 						models.GenerateAlertQuery(),
 					}
@@ -239,8 +239,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					NamespaceUID: groupKey.NamespaceUID,
 					RuleGroup:    util.GenerateShortUID(),
 				}
-				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(targetGroupKey)))
+				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(targetGroupKey)))
 
 				updates := make([]store.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)
@@ -250,7 +250,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
 					cp := models.CopyRule(rule)
-					withGroupKey(targetGroupKey)(cp)
+					models.WithGroupKey(targetGroupKey)(cp)
 					cp.Data = []models.AlertQuery{
 						models.GenerateAlertQuery(),
 					}
