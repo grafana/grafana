@@ -220,7 +220,7 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
 
 		if aliasFormat == "m" || aliasFormat == "measurement" {
-			return []byte(query.Measurement)
+			return []byte(row.Name)
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
