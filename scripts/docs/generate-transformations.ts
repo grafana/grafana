@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['groupBy'].name}
-${transformationDocsContent['groupBy'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['groupingToMatrix'].name}
 ${transformationDocsContent['groupingToMatrix'].helperDocs}
 `}
