@@ -31,6 +31,7 @@ interface Props {
 }
 
 const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
+  // return { loading: false, labelsByKey: {} };
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -38,29 +39,35 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
   }, [dispatch, dataSourceName]);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  const result = rulerRequest?.result || {};
+  const labelsByKeyResult = useMemo<Record<string, string[]>>(() => {
+    const labelsByKey: Record<string, string[]> = {};
+    const rulerRulesConfig = rulerRequest?.result;
 
-  //store all labels in a flat array and remove empty values
-  const labels = compact(
-    flattenDeep(
-      Object.keys(result).map((ruleGroupKey) =>
-        result[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
+    if (!rulerRulesConfig) {
+      return {};
+    }
+
+    //store all labels in a flat array and remove empty values
+    const labels = compact(
+      flattenDeep(
+        Object.keys(rulerRulesConfig).map((ruleGroupKey) =>
+          rulerRulesConfig[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
+        )
       )
-    )
-  );
+    );
 
-  const labelsByKey: Record<string, string[]> = {};
-
-  labels.forEach((label: Record<string, string>) => {
-    Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
+    labels.forEach((label: Record<string, string>) => {
+      Object.entries(label).forEach(([key, value]) => {
+        labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
+      });
     });
-  });
 
-  return { loading: rulerRequest?.loading, labelsByKey };
+    return labelsByKey;
+  }, [rulerRequest]);
+
+  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
 function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
