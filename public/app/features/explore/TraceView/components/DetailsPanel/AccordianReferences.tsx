@@ -25,51 +25,42 @@ import ReferenceLink from '../url/ReferenceLink';
 
 const getStyles = () => {
   return {
-    AccordianKeyValues: css`
-      margin-left: 10px;
-    `,
-    AccordianReferences: css`
-      label: AccordianReferences;
-      position: relative;
-      margin-bottom: 0.25rem;
-    `,
-    AccordianReferencesContent: css`
-      label: AccordianReferencesContent;
-      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-    `,
-    itemContent: css`
-      padding: 0.25rem 0.5rem;
-      display: flex;
-      width: 100%;
-      justify-content: space-between;
-    `,
-    item: css`
-      &:nth-child(2n) {
-        background: #f5f5f5;
-      }
-    `,
-    debugInfo: css`
-      letter-spacing: 0.25px;
-      margin: 0.5em 0 0;
-      flex-wrap: wrap;
-      display: flex;
-      justify-content: flex-end;
-    `,
-    debugLabel: css`
-      margin: 0 5px 0 5px;
-      &::before {
-        color: #bbb;
-        content: attr(data-label);
-      }
-    `,
-    serviceName: css`
-      margin-right: 8px;
-    `,
-    title: css`
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    `,
+    AccordianKeyValues: css({
+      marginLeft: '10px',
+    }),
+    AccordianReferences: css({
+      label: 'AccordianReferences',
+      position: 'relative',
+      marginBottom: '0.25rem',
+    }),
+    AccordianReferencesContent: css({
+      label: 'AccordianReferencesContent',
+      padding: '0.5rem 0.5rem 0.25rem 0.5rem',
+    }),
+    itemContent: css({
+      padding: '0.25rem 0.5rem',
+      display: 'flex',
+      width: '100%',
+      justifyContent: 'space-between',
+    }),
+    debugInfo: css({
+      letterSpacing: '0.25px',
+      margin: '0.5em 0 0',
+      flexWrap: 'wrap',
+      display: 'flex',
+      justifyContent: 'flex-end',
+    }),
+    debugLabel: css({
+      margin: '0 5px 0 5px',
+    }),
+    serviceName: css({
+      marginRight: '8px',
+    }),
+    title: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
+    }),
   };
 };
 
@@ -99,7 +90,7 @@ export function References(props: ReferenceItemProps) {
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
         <div key={i}>
-          <div className={styles.item} key={`${reference.spanID}`}>
+          <div key={`${reference.spanID}`}>
             <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
               <span className={styles.itemContent}>
                 {reference.span ? (
@@ -115,12 +106,8 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 )}
                 <small className={styles.debugInfo}>
-                  <span className={styles.debugLabel} data-label="TraceID:">
-                    {reference.traceID}
-                  </span>
-                  <span className={styles.debugLabel} data-label="SpanID:">
-                    {reference.spanID}
-                  </span>
+                  <span className={styles.debugLabel}>TraceID:{reference.traceID}</span>
+                  <span className={styles.debugLabel}>SpanID:{reference.spanID}</span>
                 </small>
               </span>
             </ReferenceLink>

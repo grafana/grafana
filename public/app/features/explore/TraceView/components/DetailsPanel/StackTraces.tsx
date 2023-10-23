@@ -19,8 +19,8 @@ export const StackTraces = ({ stackTraces }: { stackTraces: string[] }) => {
 };
 
 const getStyles = () => ({
-  stackTraces: css`
-    word-break: break-all;
-    white-space: pre;
-  `,
+  stackTraces: css({
+    wordBreak: 'break-all',
+    whiteSpace: 'pre',
+  }),
 });
