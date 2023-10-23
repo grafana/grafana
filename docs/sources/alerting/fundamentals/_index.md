@@ -50,7 +50,7 @@ In Grafana Managed Alerts, alerts can be in Normal, Pending, Alerting, No Data o
 
 Contact points determine where notifications are sent. For example, you might have a contact point that sends notifications to an email address, to Slack, to an incident management system (IRM) such as Grafana OnCall or Pagerduty, or to a webhook.
 
-The notifications that are sent from contact points can be customized using notification templates. You can use notification templates to change the title, message, and structure of the notification. Notification templates are not tied to specific contact points, and can be shared between as many contact points as you like.
+The notifications that are sent from contact points can be customized using notification templates. You can use notification templates to change the title, message, and structure of the notification. Notification templates are not specific to individual integrations or contact points.
 
 ### Notification policies
 
