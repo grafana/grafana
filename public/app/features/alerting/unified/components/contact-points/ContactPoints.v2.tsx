@@ -30,6 +30,7 @@ import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
@@ -265,14 +266,13 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const permissions = getNotificationsPermissions(selectedAlertmanager ?? '');
 
   const isReferencedByPolicies = policies > 0;
   const isGranaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // we make a distinction here becase for "canExport" we show the menu item, if not we hide it
   const canExport = isGranaManagedAlertmanager;
-  const allowedToExport = contextSrv.hasPermission(permissions.provisioning.read);
+  const [_, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
 
   return (
     <div className={styles.headerWrapper}>
@@ -316,7 +316,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
                   <Menu.Item
                     icon="download-alt"
                     label={isOrgAdmin() ? 'Export' : 'Export redacted'}
-                    disabled={!allowedToExport}
+                    disabled={!exportAllowed}
                     url={createUrl(`/api/v1/provisioning/contact-points/export/`, {
                       download: 'true',
                       format: 'yaml',

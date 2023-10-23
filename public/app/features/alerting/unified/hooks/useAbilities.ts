@@ -131,8 +131,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     // only Grafana flavored alertmanager supports exporting
     [AlertmanagerAction.ExportContactPoint]: [
       isGrafanaFlavoredAlertmanager,
-      ctx.hasPermission(notificationsPermissions.provisioning.read) ||
-        ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
+      ctx.hasPermission(notificationsPermissions.read),
     ],
     // -- notification templates --
     [AlertmanagerAction.CreateNotificationTemplate]: [
@@ -167,8 +166,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     ],
     [AlertmanagerAction.ExportNotificationPolicies]: [
       isGrafanaFlavoredAlertmanager,
-      ctx.hasPermission(notificationsPermissions.provisioning.read) ||
-        ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
+      ctx.hasPermission(notificationsPermissions.read),
     ],
     [AlertmanagerAction.DecryptSecrets]: [
       isGrafanaFlavoredAlertmanager,
