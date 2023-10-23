@@ -487,7 +487,7 @@ With the current release, we enabled RBAC permission validation (`rbac.permissio
 
 <!-- Kyle Brandt, Observability Metrics -->
 
-_Generally available in Grafana Enterprise_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 Recorded queries provide a way to take a _static_ number, (for example, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, recorded queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
 
