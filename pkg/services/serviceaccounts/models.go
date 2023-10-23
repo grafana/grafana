@@ -152,7 +152,7 @@ type ServiceAccountProfileDTO struct {
 	// example: []
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
-	IsExternal bool
+	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
