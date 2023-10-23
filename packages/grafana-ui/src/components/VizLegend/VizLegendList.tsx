@@ -73,7 +73,7 @@ export const VizLegendList = <T extends unknown>({
           {hasRightItems && (
             <div className={cx(styles.section, styles.sectionRight)}>
               <InlineList
-                items={items.filter((item) => item.yAxis !== 1)}
+                items={rightItems}
                 renderItem={renderItem}
                 getItemKey={getItemKey}
               />
