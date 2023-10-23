@@ -91,7 +91,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     let newState: LogsContainerState = { ...this.state, logDetailsFilterAvailable: false };
 
     // Not in mixed mode.
-    if (datasourceInstance.name !== MIXED_DATASOURCE_NAME) {
+    if (datasourceInstance.uid !== MIXED_DATASOURCE_NAME) {
       if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
         newState.logDetailsFilterAvailable = true;
       }
