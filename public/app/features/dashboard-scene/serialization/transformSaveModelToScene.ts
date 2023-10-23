@@ -374,7 +374,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
   if (panel.repeat) {
     const repeatDirection = panel.repeatDirection ?? 'h';
-
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,

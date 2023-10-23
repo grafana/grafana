@@ -437,6 +437,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -846,6 +847,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "navAdminSubsections",
