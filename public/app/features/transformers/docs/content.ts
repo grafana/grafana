@@ -1184,7 +1184,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     },
   },
   timeSeriesTable: {
-    name: 'Time series table',
+    name: 'Time series to table transform',
     getHelperDocs: function () {
       return `
   Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
