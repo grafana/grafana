@@ -8,7 +8,6 @@ import {
   SceneComponentProps,
   PanelBuilders,
   SceneFlexItem,
-  SceneQueryRunner,
   SceneVariableSet,
   QueryVariable,
   sceneGraph,
