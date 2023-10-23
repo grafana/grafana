@@ -241,6 +241,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       visualisationType: visualisation,
     };
     this.updatePanelState(payload);
+
+    reportInteraction('grafana_explore_logs_visualisation_changed', {
+      newVisualizationType: visualisation,
+    });
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
