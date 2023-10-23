@@ -1,11 +1,6 @@
 [run]
 timeout = "10m"
 
-[linters-settings.goconst]
-severity = "warning"
-min-len = 5
-min-occurrences = 5
-
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
@@ -103,6 +98,10 @@ exclude-use-default = false
 [[issues.exclude-rules]]
 path = "_test\\.go"
 linters = [ "gosec" ]
+
+[[issues.exclude-rules]]
+path = "pkg/tsdb/azuremonitor/loganalytics/azure-log-analytics-datasource.go"
+linters = [ "goconst" ]
 
 # Enable when appropriate
 # Poorly chosen identifier
