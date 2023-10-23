@@ -155,14 +155,7 @@ export function DetailsPanel(props: Props) {
         className={styles.drawer}
       >
         <div className={cx(styles.header, styles.flexSpaceBetween)}>
-          <div
-            className={cx(
-              styles.flexSpaceBetween,
-              css`
-                flex: 1 0 auto;
-              `
-            )}
-          >
+          <div className={cx(styles.flexSpaceBetween, css({ flex: '1 0 auto' }))}>
             <h4 style={{ margin: 0 }}>{operationName}</h4>
             <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
           </div>

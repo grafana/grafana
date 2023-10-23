@@ -34,6 +34,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
         splitOpenFn={() => {}}
         queryResponse={mockPanelData}
         topOfViewRef={topOfViewRef}
+        width={200}
       />
     </Provider>
   );
