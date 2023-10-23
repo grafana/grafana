@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -48,6 +48,22 @@ export function LogsTableWrap(props: Props) {
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const dataFrame = logsFrames[0];
+
+  const getColumnsFromProps = useCallback(
+    (fieldNames: fieldNameMetaStore) => {
+      const previouslySelected = props.panelState?.columns;
+      if (previouslySelected) {
+        Object.values(previouslySelected).forEach((key) => {
+          if (fieldNames[key]) {
+            fieldNames[key].active = true;
+          }
+        });
+      }
+
+      return fieldNames;
+    },
+    [props.panelState?.columns]
+  );
 
   /**
    * when the query results change, we need to update the columnsWithMeta state
@@ -117,11 +133,13 @@ export function LogsTableWrap(props: Props) {
       };
     });
 
+    pendingLabelState = getColumnsFromProps(pendingLabelState);
+
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
     // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
-  }, [dataFrame]);
+  }, [dataFrame, getColumnsFromProps]);
 
   if (!columnsWithMeta) {
     return null;
@@ -149,6 +167,22 @@ export function LogsTableWrap(props: Props) {
       };
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
+
+    const newPanelState: ExploreLogsPanelState = {
+      ...props.panelState,
+      // URL format requires our array of values be an object, so we convert it using object.assign
+      columns: Object.assign(
+        {},
+        // Get the keys of the object as an array
+        Object.keys(pendingLabelState)
+          // Only include active filters
+          .filter((key) => pendingLabelState[key]?.active)
+      ),
+      visualisationType: 'table',
+    };
+
+    // Update url state
+    props.updatePanelState(newPanelState);
   };
 
   // uFuzzy search dispatcher, adds any matches to the local state
