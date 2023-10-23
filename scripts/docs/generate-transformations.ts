@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['joinByLabels'].name}
-${transformationDocsContent['joinByLabels'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['labelsToFields'].name}
 ${transformationDocsContent['labelsToFields'].helperDocs}
 `}
