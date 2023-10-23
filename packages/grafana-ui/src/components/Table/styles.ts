@@ -26,12 +26,14 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       display: asCellText ? 'block' : 'flex',
 
-      ...(asCellText ? {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        userSelect: 'text',
-        whiteSpace: 'nowrap',
-      } : {}),
+      ...(asCellText
+        ? {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            userSelect: 'text',
+            whiteSpace: 'nowrap',
+          }
+        : {}),
 
       alignItems: 'center',
       borderRight: `1px solid ${borderColor}`,
