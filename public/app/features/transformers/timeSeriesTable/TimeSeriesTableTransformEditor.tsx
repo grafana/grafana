@@ -24,11 +24,13 @@ export function TimeSeriesTableTransformEditor({
   }
 
   const onSelectTimefield = useCallback(
-    (value: SelectableValue<string>) => {
+    (refId: string,value: SelectableValue<string>) => {
       const val = value?.value !== undefined ? value.value : '';
       onChange({
         ...options,
-        timeField: val,
+        [refId]: {
+          timeField: val 
+        }
       });
     }, 
     [onChange, options]
@@ -39,10 +41,10 @@ export function TimeSeriesTableTransformEditor({
       const reducerID = stats[0];
       if (reducerID && isReducerID(reducerID)) {
         onChange({
-          refIdToStat: {
-            ...options.refIdToStat,
-            [refId]: reducerID,
-          },
+          ...options,
+          [refId]: {
+            stat: reducerID,
+          }
         });
       }
     },
@@ -50,14 +52,16 @@ export function TimeSeriesTableTransformEditor({
   );
 
   const onMergeSeriesToggle = useCallback(
-    () => {
-      // console.log(options);
-      // onChange({
-      //   ...options,
-      //   mergeSeries: options.mergeSeries !== undefined ? !options.mergeSeries : false,
-      // })
+    (refId: string) => {
+      console.log(options);
+      const mergeSeries = options[refId]?.mergeSeries !== undefined ? !options[refId].mergeSeries : false;
+
+      onChange({
+        ...options,
+        [refId]: {mergeSeries}
+      })
     },
-    []// [onChange, options]
+    [onChange, options]
   );
 
   let configRows = [];
@@ -68,7 +72,7 @@ export function TimeSeriesTableTransformEditor({
           label="Time Field" 
           tooltip="The the time field that will be used for the time series. If not selected the first found will be used.">
           <Select
-            onChange={onSelectTimefield}
+            onChange={onSelectTimefield.bind(null, refId)}
             options={timeFields}
             value={options[refId]?.timeField}
           />
@@ -85,7 +89,7 @@ export function TimeSeriesTableTransformEditor({
         <InlineField label="Merge series" tooltip="If selected, multiple series from a single datasource will be merged into one series.">
           <InlineSwitch 
             value={options[refId]?.mergeSeries !== undefined ? options[refId]?.mergeSeries : true}
-            onChange={onMergeSeriesToggle}
+            onChange={onMergeSeriesToggle.bind(null, refId)}
           />
         </InlineField>
       </InlineFieldRow>
