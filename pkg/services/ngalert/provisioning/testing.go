@@ -2,13 +2,16 @@ package provisioning
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -146,4 +149,62 @@ type NotificationSettingsValidatorProviderFake struct {
 
 func (n *NotificationSettingsValidatorProviderFake) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
 	return notifier.NoValidation{}, nil
+}
+
+type call struct {
+	Method string
+	Args   []interface{}
+}
+
+type fakeRuleAccessControlService struct {
+	mu                             sync.Mutex
+	Calls                          []call
+	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
+	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
+}
+
+func (s *fakeRuleAccessControlService) RecordCall(method string, args ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	call := call{
+		Method: method,
+		Args:   args,
+	}
+
+	s.Calls = append(s.Calls, call)
+}
+
+func (s *fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+	s.RecordCall("AuthorizeAccessToRuleGroup", ctx, user, rules)
+	if s.AuthorizeAccessToRuleGroupFunc != nil {
+		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
+	}
+	return nil
+}
+
+func (s *fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+	s.RecordCall("AuthorizeRuleChanges", ctx, user, change)
+	if s.AuthorizeRuleChangesFunc != nil {
+		return s.AuthorizeRuleChangesFunc(ctx, user, change)
+	}
+	return nil
+}
+
+func (s *fakeRuleAccessControlService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	s.RecordCall("CanReadAllRules", ctx, user)
+	if s.CanReadAllRulesFunc != nil {
+		return s.CanReadAllRulesFunc(ctx, user)
+	}
+	return false, nil
+}
+
+func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	s.RecordCall("CanWriteAllRules", ctx, user)
+	if s.CanWriteAllRulesFunc != nil {
+		return s.CanWriteAllRulesFunc(ctx, user)
+	}
+	return false, nil
 }

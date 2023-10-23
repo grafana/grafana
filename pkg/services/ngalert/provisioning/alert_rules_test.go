@@ -607,6 +607,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
 		folderService:          folderService,
+		authz:                  &fakeRuleAccessControlService{},
 	}
 }
 
