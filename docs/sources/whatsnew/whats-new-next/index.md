@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Use AI to generate titles, descriptions, and change summaries
+## Use AI to generate dashboard titles, descriptions, and change summaries
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
