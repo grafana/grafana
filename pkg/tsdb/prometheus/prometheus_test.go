@@ -9,12 +9,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 type fakeSender struct{}
@@ -43,14 +41,14 @@ type fakeHTTPClientProvider struct {
 	Roundtripper *fakeRoundtripper
 }
 
-func (provider *fakeHTTPClientProvider) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
+func (provider *fakeHTTPClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
 	client := &http.Client{}
 	provider.Roundtripper = &fakeRoundtripper{}
 	client.Transport = provider.Roundtripper
 	return client, nil
 }
 
-func (provider *fakeHTTPClientProvider) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
+func (provider *fakeHTTPClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
 	return &fakeRoundtripper{}, nil
 }
 

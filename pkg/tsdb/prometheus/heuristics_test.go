@@ -18,11 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type heuristicsProvider struct {
-	httpclient.Provider
-	http.RoundTripper
-}
-
 type heuristicsSuccessRoundTripper struct {
 	res    io.ReadCloser
 	status int
