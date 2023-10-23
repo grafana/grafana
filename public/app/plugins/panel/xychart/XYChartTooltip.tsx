@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
@@ -42,39 +42,48 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const yField = series.y(frame);
 
   const getHeaderLabel = (): LabelValue => {
+    let label = series.name;
+    if (options.seriesMapping === 'manual') {
+      label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
+    }
     return {
-      label: getFieldDisplayName(xField, frame),
-      value: fmt(xField, xField.values[rowIndex]),
+      label,
+      value: null,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       color: series.pointColor(frame) as string,
+      colorIndicator: ColorIndicator.marker_md,
     };
   };
 
-  const getLabelValue = (): LabelValue[] => {
-    return [
-      {
-        label: getFieldDisplayName(yField, frame),
-        value: fmt(yField, yField.values[rowIndex]),
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        color: series.pointColor(frame) as string,
-      },
-    ];
-  };
+  // const getLabelValue = (): LabelValue[] => {
+  //   return [
+  //     {
+  //       label: getFieldDisplayName(yField, frame),
+  //       value: fmt(yField, yField.values[rowIndex]),
+  //       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  //       color: series.pointColor(frame) as string,
+  //     },
+  //   ];
+  // };
 
   const getContentLabel = (): LabelValue[] => {
-    // const yValue: YValue = {
-    //   name: getFieldDisplayName(yField, frame),
-    //   val: yField.values[rowIndex],
-    //   field: yField,
-    //   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    //   color: series.pointColor(frame) as string,
-    // };
+    const yValue: YValue = {
+      name: getFieldDisplayName(yField, frame),
+      val: yField.values[rowIndex],
+      field: yField,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      color: series.pointColor(frame) as string,
+    };
 
     const content: LabelValue[] = [
-      // {
-      //   label: yValue.name,
-      //   value: fmt(yValue.field, yValue.val),
-      // },
+      {
+        label: getFieldDisplayName(xField, frame),
+        value: fmt(xField, xField.values[rowIndex]),
+      },
+      {
+        label: yValue.name,
+        value: fmt(yValue.field, yValue.val),
+      },
     ];
 
     // add extra fields
@@ -109,7 +118,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} keyValuePairs={getLabelValue()} />
+      <VizTooltipHeader headerLabel={getHeaderLabel()} />
       <VizTooltipContent contentLabelValue={getContentLabel()} />
       {isPinned && <VizTooltipFooter dataLinks={getLinks()} canAnnotate={false} />}
     </div>
