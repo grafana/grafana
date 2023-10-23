@@ -114,7 +114,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   dockMenuButton: css({
-    color: theme.colors.text.disabled,
     display: 'none',
 
     [theme.breakpoints.up('md')]: {

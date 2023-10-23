@@ -20,7 +20,7 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-const config = async (env: any): Promise<Configuration> => {
+const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const pluginJson = getPluginJson();
   const baseConfig: Configuration = {
     cache: {
@@ -70,8 +70,8 @@ const config = async (env: any): Promise<Configuration> => {
       // Mark legacy SDK imports as external if their name starts with the "grafana/" prefix
       ({ request }, callback) => {
         const prefix = 'grafana/';
-        const hasPrefix = (request: any) => request.indexOf(prefix) === 0;
-        const stripPrefix = (request: any) => request.substr(prefix.length);
+        const hasPrefix = (request?: string) => request?.indexOf(prefix) === 0;
+        const stripPrefix = (request?: string) => request?.substr(prefix.length);
 
         if (hasPrefix(request)) {
           return callback(undefined, stripPrefix(request));
