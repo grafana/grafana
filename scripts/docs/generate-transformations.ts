@@ -156,10 +156,10 @@ function buildTransformationDocsContent(transformationDocsContent: Transformatio
     .map((transformationName) => {
       return `
   ### ${transformationDocsContent[transformationName].name}
-  
-    ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.ShortcodeFigure)}
-    `;
+  ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.ShortcodeFigure)}
+  `;
     })
+    // Remove the superfluous commas.
     .join('');
 
   return content;
