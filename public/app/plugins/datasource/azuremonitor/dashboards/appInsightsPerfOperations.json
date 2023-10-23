@@ -57,7 +57,7 @@
       "version": ""
     }
   ],
-  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
+  "description": "The dashboard provides insights of request performance of Azure Apps through Application Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
