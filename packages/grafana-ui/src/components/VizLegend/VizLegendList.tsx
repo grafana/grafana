@@ -70,7 +70,7 @@ export const VizLegendList = <T extends unknown>({
               getItemKey={getItemKey}
             />
           </div>
-          {hasRightItems && (
+          {rightItems.length > 0 && (
             <div className={cx(styles.section, styles.sectionRight)}>
               <InlineList
                 items={rightItems}
