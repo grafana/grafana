@@ -396,26 +396,40 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
 
-  ${buildImageContent('/static/img/docs/transformations/filter-name-table-before-7-0.png', imageRenderType, this.name + 1)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-table-before-7-0.png',
+    imageRenderType,
+    this.name + 1
+  )}
 
   Here's the table after we applied the transformation to remove the Min field.
 
-  ${buildImageContent('/static/img/docs/transformations/filter-name-table-after-7-0.png', imageRenderType, this.name + 2)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-table-after-7-0.png',
+    imageRenderType,
+    this.name + 2
+  )}
 
   Here is the same query using a Stat visualization.
 
-  ${buildImageContent('/static/img/docs/transformations/filter-name-stat-after-7-0.png', imageRenderType, this.name + 3)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
+    imageRenderType,
+    this.name + 3
+  )}
   `;
     },
   },
-  // formatTime: {
-  //   name: 'Format time',
-  //   getHelperDocs: `
-  // Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
+  formatTime: {
+    name: 'Format time',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
-  // > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
-  // `,
-  // },
+  > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
+  `;
+    },
+  },
   // groupBy: {
   //   name: 'Group by',
   //   getHelperDocs: `
