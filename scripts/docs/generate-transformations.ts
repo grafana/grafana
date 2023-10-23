@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['histogram'].name}
-${transformationDocsContent['histogram'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['joinByField'].name}
 ${transformationDocsContent['joinByField'].helperDocs}
 
