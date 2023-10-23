@@ -689,11 +689,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
-    "packages/grafana-plugin-configs/webpack.config.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1760,11 +1755,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/admin/UserSessions.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/admin/Users/OrgUnits.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/alerting/AlertTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3028,7 +3018,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"]
     ],
     "public/app/features/dashboard-scene/utils/test-utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6254,8 +6247,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/influxdb/datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
@@ -6271,8 +6264,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Do not use any type assertions.", "18"]
+      [0, 0, 0, "Do not use any type assertions.", "17"]
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

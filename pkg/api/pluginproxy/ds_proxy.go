@@ -272,6 +272,15 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
+
+	if proxy.features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		err := proxyutil.ApplyTeamHTTPHeaders(req, proxy.ds, proxy.ctx.Teams)
+		if err != nil {
+			// NOTE: could downgrade the errors to warnings
+			ctxLogger.Error("Error applying teamHTTPHeaders", "error", err)
+			return
+		}
+	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {

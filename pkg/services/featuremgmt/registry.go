@@ -215,8 +215,7 @@ var (
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
+			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -336,9 +335,10 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "clientTokenRotation",
@@ -437,6 +437,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -707,9 +708,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:            "reportingRetries",
@@ -848,6 +850,12 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:         "navAdminSubsections",
 			Description:  "Splits the administration section of the nav tree into subsections",
 			Stage:        FeatureStageExperimental,
@@ -861,6 +869,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -882,6 +897,34 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaBackendPlatformSquad,
+		},
+		{
+			Name:         "pluginsInstrumentationStatusSource",
+			Description:  "Include a status source label for plugin request metrics and logs",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
+		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins directly from plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "prometheusPromQAIL",
+			Description:  "Prometheus and AI/ML to assist users in creating a query",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )
