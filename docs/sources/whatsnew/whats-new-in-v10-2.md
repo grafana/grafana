@@ -44,7 +44,7 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 
 <!-- Thanos Karachalios -->
 
-_Generally Available in all editions of Grafana_
+_Generally available in all editions of Grafana_
 
 Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
 
@@ -62,25 +62,25 @@ Introducing Content Outline in Grafana Explore. It's easy to lose track of your 
 
 ## Correlations
 
-Grafana Correlations is a new Public Preview feature you can use to establish links from any data source query to any other, carrying forward data like namespace, host, or label values. This is extremely powerful for performing root cause analysis with a diverse set of data sources. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
+Grafana Correlations is a new public preview feature you can use to establish links from any data source query to any other, carrying forward data like namespace, host, or label values. This is extremely powerful for performing root cause analysis with a diverse set of data sources. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
 ### Create Correlations the easy way in Grafana Explore
 
 <!-- Kristina Durivage -->
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 Creating correlations has just become easier. Try out our new correlations editor in Explore by selecting the **+ Add > Add correlation** option from the top bar or from the command palette. The editor shows all possible places where you can place data links and guides you through building and testing target queries. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
 To try out **Correlations**, enable the `correlations` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
 
-{{< figure src="/media/docs/grafana/correlations-explore-editor-10-2.png" max-width="300px" caption="Create a Correlation with variables from within Grafana Explore" >}}
+{{< figure src="/media/docs/grafana/correlations-explore-editor-10-2.png" max-width="750px" caption="Create a correlation with variables from within Grafana Explore" >}}
 
 ### Create correlations for provisioned data sources
 
 <!-- Piotr Jamróz -->
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 In previous versions of Grafana, if a data source was provisioned, the only way to add correlations to it was also with provisioning. Now, that's no longer the case, and you can easily create new correlations mixing both methods—using the **Administration** page or provisioning. For more information, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/).
 
@@ -90,7 +90,7 @@ To try out **Correlations**, enable the `correlations` [feature toggle](https://
 
 ### Use AI to generate titles, descriptions, and change summaries
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -102,7 +102,7 @@ You can now use generative AI to assist you in your Grafana dashboards. So far g
 
 To enable these features, you must first enable the `dashgpt` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
 
-When enabled look for the "✨ Auto generate" option next to the Title and Description settings in your panels and dashboards, or when you press the "Save" button.
+When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 {{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
 
@@ -112,30 +112,30 @@ When enabled look for the "✨ Auto generate" option next to the Title and Descr
 
 _Generally available in all editions of Grafana_
 
-The new Browse screen for dashboards features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
+The new browse screen for dashboards features a more compact design, making it easier to navigate, search for, and manage your folders and dashboards. The new interface also has many performance improvements, especially for instances with a large number of folders and dashboards.
 
 To make using folders easier and more consistent, there's no longer a special **General** folder. Dashboards without a folder, or dashboards previously in the **General** folder, are now shown at the root level.
 
-To try it out, head to the Dashboards section of your Grafana instance.
+To try it out, go to the **Dashboards** section of your Grafana instance.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
 
-### Create interactive buttons in the Canvas panel
+### Create interactive buttons in canvas visualizations
 
 _Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
 
-You can now add buttons to your Canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
 To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-### Zoom in on the Y-axis of the Time Series and Candlestick panels
+### Zoom in on the y-axis of the time series and candlestick visualizations
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -152,13 +152,13 @@ _Generally available in all editions of Grafana_
 
 When visualizing multiple fields with a wide spread of values, calculating the min or max value of the visualization based on all fields can hide useful details.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/globalminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated from all fields" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/globalminmax.png" max-width="300px" caption="Stat visualization with min/max calculated from all fields" >}}
 
 In this example in the stat visualization, it's hard to get an idea of how the values of each series relate to the historical values of that series. The threshold of 10% is exceeded by the A-series even though the A-series is below 10% of its historical maximum.
 
 Now, you can automatically calculate the min or max of each visualized field based on the lowest and highest value of the individual field. This setting is available in the standard options of most visualizations.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat panel visualization with min/max calculated per field" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/localminmax.png" max-width="300px" caption="Stat visualization with min/max calculated per field" >}}
 
 In this example, using the same data, with the min and max calculated for each individual field, we get a much better understanding of how the current value relates to the historical values. The A-series no longer exceeds the 10% threshold; in fact, it's now clear that it's at a historical low.
 
@@ -166,7 +166,7 @@ This isn't only useful in the stat visualization&mdash;gauge, bar gauge, and sta
 
 ### Data visualization quality of life improvements
 
-_Generally available in Grafana Open Source and Enterprise_
+_Generally available in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 <!-- Cloud -->
@@ -229,11 +229,11 @@ The [TraceQL query editor](https://grafana.com/docs/tempo/latest/traceql/#traceq
 
 _Generally available in all editions of Grafana_
 
-The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when the `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
+The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
 {{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
 
-#### Create Query-type template variables for the Tempo data source
+#### Create query-type template variables for the Tempo data source
 
 <!-- Fabrizio Casati -->
 
@@ -251,7 +251,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 _Generally available in Grafana Enterprise and Grafana Cloud Advanced_
 
-The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number, which are less likely to change than the port for your database. For more information, refer to our [SAP HANA® configuration documentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
+The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number. This is helpful because these are less likely to change than the port for your database. For more information, refer to our [SAP HANA® configuration documentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
 
 {{< video-embed src="/media/docs/sap-hana/tenant.mp4" >}}
 
@@ -309,7 +309,7 @@ The **Add field from calculation** transformation has been updated.
 
 {{< figure src="/media/docs/grafana/transformations/unary-operation.png" >}}
 
-**Row index** can now show the index as a percentage.
+Also, **Row index** can now show the index as a percentage.
 
 Learn more in the [Add field from calculation documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
 
@@ -331,7 +331,7 @@ Learn more in the [Format string documentation](https://grafana.com/docs/grafana
 
 <!-- Kyle Cunningham -->
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
 
@@ -373,7 +373,7 @@ This feature provides a way to export Alerting resources such as rules, contact 
 
 <!-- Alexander Weaver -->
 
-_Generally available in all editions of Grafana_
+_Generally available in Grafana Open Source and Enterprise_
 
 We've added support for the Microsoft Teams contact points when using an external Alertmanager.
 
@@ -391,9 +391,9 @@ Previously, permissions were granted based on predefined sets of capabilities. N
 
 For more details on basic roles and permissions, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-### New Service Account permissions
+### New service account permissions
 
-[Service accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) allow you to create tokens to access Grafana's API and dashboards. Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources. However, without proper access controls, service accounts can pose a security risk to your Grafana instance. In Grafana 10.2, we've added new tools to limit Service Accounts to just the resources they need to access.
+[Service accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) allow you to create tokens to access Grafana's API and dashboards. Service accounts are a powerful tool for authenticating with Grafana's API and accessing data sources. However, without proper access controls, service accounts can pose a security risk to your Grafana instance. In Grafana 10.2, we've added new tools to limit service accounts to just the resources they need to access.
 
 #### Add dashboard and folder permissions to service accounts
 
@@ -443,7 +443,7 @@ Refer to the [Google Authentication documentation](http://grafana.com/docs/grafa
 
 <!-- Mihaly Gyongyosi -->
 
-_Available in public preview in Grafana Open Source and Enterprise_
+_Available in public preview in all editions of Grafana_
 
 With Grafana v9.3, we introduced a [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
 
@@ -471,6 +471,6 @@ With the current release, we enabled RBAC permission validation (`rbac.permissio
 
 _Generally available in Grafana Enterprise_
 
-Recorded queries provide a way to take a _static_ number, (say, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, Recorded Queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
+Recorded queries provide a way to take a _static_ number, (for example, the number of GitHub issues open at a given time, or the number of rows in a database table) and record it periodically as a Prometheus metric. This is great for tracking numbers over time for quick querying later. Previously, recorded queries were limited to a single series, so you needed to narrow your query down to a single number in order to record it. Now, you can record multiple metrics with a single recorded query, which makes them more powerful _and_ easier to create and manage.
 
 <!-- TODO: add graphic or video -->
