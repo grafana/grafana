@@ -113,6 +113,15 @@ export function getDataTrailsApp() {
           }).getRef(),
           new DataTrail({
             initialDS: 'sedemo-prom',
+            metric: 'grafana_plugin_request_duration_seconds_count',
+            initialFilters: [
+              { key: 'job', operator: '=', value: 'production/grafana' },
+              { key: 'cluster', operator: '=', value: 'se-demo-cluster' },
+              { key: 'namespace', operator: '=', value: 'production' },
+            ],
+          }).getRef(),
+          new DataTrail({
+            initialDS: 'sedemo-prom',
             metric: 'access_evaluation_duration_bucket',
             initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },

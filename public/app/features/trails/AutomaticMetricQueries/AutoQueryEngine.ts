@@ -52,7 +52,7 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     query = `rate(${query}[$__rate_interval])`;
   }
 
-  const queryDef: AutoQueryDef = {
+  const main: AutoQueryDef = {
     title: `${title}`,
     variant: 'graph',
     unit,
@@ -60,7 +60,21 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     vizBuilder: simpleGraphBuilder,
   };
 
-  return { preview: queryDef, main: queryDef, breakdown: queryDef, variants: [] };
+  const breakdown: AutoQueryDef = {
+    title: `${title}`,
+    variant: 'graph',
+    unit,
+    queries: [
+      {
+        refId: 'A',
+        expr: `${agg}(${query}) by(${VAR_GROUP_BY_EXP})`,
+        legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
+      },
+    ],
+    vizBuilder: simpleGraphBuilder,
+  };
+
+  return { preview: main, main: main, breakdown: breakdown, variants: [] };
 }
 
 function getQueriesForBucketMetric(metric: string): AutoQueryInfo {
