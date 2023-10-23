@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['seriesToRows'].name}
-${transformationDocsContent['seriesToRows'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['sortBy'].name}
 ${transformationDocsContent['sortBy'].helperDocs}
 `}
