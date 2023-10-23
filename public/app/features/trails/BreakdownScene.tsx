@@ -24,10 +24,12 @@ import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
+import { AutoQueryDef, getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
+import { MetricScene } from './MetricScene';
 import { trailDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
-import { getColorByIndex } from './utils';
+import { getColorByIndex, getParentOfType } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -50,6 +52,8 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  private _query?: AutoQueryDef;
+
   private _onActivate() {
     const variable = this.getVariable();
 
@@ -62,6 +66,9 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
         this.updateBody(variable);
       }
     });
+
+    const metric = getParentOfType(this, MetricScene).state.metric;
+    this._query = getAutoQueriesForMetric(metric)[0];
 
     this.updateBody(variable);
   }
@@ -85,7 +92,9 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     };
 
     if (!this.state.body && !variable.state.loading) {
-      stateUpdate.body = variable.hasAllValue() ? buildAllLayout(options) : buildNormalLayout();
+      stateUpdate.body = variable.hasAllValue()
+        ? buildAllLayout(options, this._query!)
+        : buildNormalLayout(this._query!);
     }
 
     this.setState(stateUpdate);
@@ -115,9 +124,9 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
-      this.setState({ body: buildAllLayout(this.getLabelOptions(variable)) });
+      this.setState({ body: buildAllLayout(this.getLabelOptions(variable), this._query!) });
     } else if (variable.hasAllValue()) {
-      this.setState({ body: buildNormalLayout() });
+      this.setState({ body: buildNormalLayout(this._query!) });
     }
 
     variable.changeValueTo(value);
@@ -177,7 +186,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function buildAllLayout(options: Array<SelectableValue<string>>) {
+export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef: AutoQueryDef) {
   const children: SceneFlexItemLike[] = [];
 
   for (const option of options) {
@@ -189,13 +198,14 @@ export function buildAllLayout(options: Array<SelectableValue<string>>) {
       new SceneCSSGridItem({
         body: PanelBuilders.timeseries()
           .setTitle(option.label!)
+          .setUnit(queryDef.unit)
           .setData(
             new SceneQueryRunner({
               queries: [
                 {
                   refId: 'A',
                   datasource: trailDS,
-                  expr: `sum(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])) by(${option.value})`,
+                  expr: `${queryDef.query.expr} by(${option.value})`,
                   maxDataPoints: 300,
                 },
               ],
@@ -247,14 +257,14 @@ function getVariableSet() {
   });
 }
 
-function buildNormalLayout() {
+function buildNormalLayout(queryDef: AutoQueryDef) {
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       queries: [
         {
           refId: 'A',
           datasource: trailDS,
-          expr: 'sum(rate(${metric}{${filters}}[$__rate_interval])) by($groupby)',
+          expr: `${queryDef.query.expr} by($groupby)`,
           maxDataPoints: 300,
         },
       ],
@@ -285,6 +295,7 @@ function buildNormalLayout() {
           return new SceneCSSGridItem({
             body: PanelBuilders.timeseries()
               .setTitle(getLabelValue(frame))
+              .setUnit(queryDef.unit)
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
@@ -305,6 +316,7 @@ function buildNormalLayout() {
             body: PanelBuilders.timeseries()
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
+              .setUnit(queryDef.unit)
               .setOption('legend', { showLegend: false })
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
               .setCustomFieldConfig('fillOpacity', 9)

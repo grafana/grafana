@@ -68,12 +68,12 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
     if (actionViewDef && actionViewDef.value !== this.state.actionView) {
       // reduce max height for main panel to reduce height flicker
       body.state.children[0].setState({ maxHeight: MAIN_PANEL_MIN_HEIGHT });
-      body.setState({ children: [...body.state.children.slice(0, 3), actionViewDef.getScene()] });
+      body.setState({ children: [...body.state.children.slice(0, 2), actionViewDef.getScene()] });
       this.setState({ actionView: actionViewDef.value });
     } else {
       // restore max height
       body.state.children[0].setState({ maxHeight: MAIN_PANEL_MAX_HEIGHT });
-      body.setState({ children: body.state.children.slice(0, 3) });
+      body.setState({ children: body.state.children.slice(0, 2) });
       this.setState({ actionView: undefined });
     }
   }

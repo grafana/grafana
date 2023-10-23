@@ -15,21 +15,35 @@ export function getAutoQueriesForMetric(metric: string) {
   const queries: AutoQueryDef[] = [];
 
   let unit = 'short';
-  let agg = 'sum';
-  //let rate = false;
+  let agg = 'avg';
+  let rate = false;
   let title = metric;
 
   if (metric.endsWith('seconds_sum')) {
     unit = 's';
     agg = 'avg';
+    rate = true;
   } else if (metric.endsWith('seconds')) {
     unit = 's';
     agg = 'avg';
-  } else if (metric.endsWith('seconds_count')) {
-    unit = 's';
+    rate = false;
+  } else if (metric.endsWith('bytes')) {
+    unit = 'bytes';
     agg = 'avg';
+    rate = false;
+  } else if (metric.endsWith('seconds_count') || metric.endsWith('seconds_total')) {
+    agg = 'sum';
+    rate = true;
   } else if (metric.endsWith('bucket')) {
     return getQueriesForBucketMetric(metric);
+  } else if (metric.endsWith('count') || metric.endsWith('total')) {
+    agg = 'sum';
+    rate = true;
+  }
+
+  let query = `${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}`;
+  if (rate) {
+    query = `rate(${query}[$__rate_interval])`;
   }
 
   queries.push({
@@ -38,7 +52,7 @@ export function getAutoQueriesForMetric(metric: string) {
     unit,
     query: {
       refId: 'A',
-      expr: `${agg}(rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
+      expr: `${agg}(${query})`,
     },
   });
 

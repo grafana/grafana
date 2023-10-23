@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { PromVisualQuery } from 'app/plugins/datasource/prometheus/querybuilder/types';
@@ -13,6 +13,7 @@ import { getDataTrailsApp } from './DataTrailsApp';
 import { OpenEmbeddedTrailEvent } from './shared';
 
 interface DataTrailDrawerState extends SceneObjectState {
+  timeRange: SceneTimeRange;
   query: PromVisualQuery;
   dsRef: DataSourceRef;
 }
@@ -25,7 +26,7 @@ export class DataTrailDrawer extends SceneObjectBase<DataTrailDrawerState> {
   constructor(state: DataTrailDrawerState) {
     super(state);
 
-    this.trail = buildDataTrailFromQuery(state.query, state.dsRef);
+    this.trail = buildDataTrailFromQuery(state);
     this.trail.addActivationHandler(() => {
       this.trail.subscribeToEvent(OpenEmbeddedTrailEvent, this.onOpenTrail);
     });
@@ -51,12 +52,13 @@ function DataTrailDrawerRenderer({ model }: SceneComponentProps<DataTrailDrawer>
   );
 }
 
-export function buildDataTrailFromQuery(query: PromVisualQuery, dsRef: DataSourceRef) {
+export function buildDataTrailFromQuery({ query, dsRef, timeRange }: DataTrailDrawerState) {
   const filters = query.labels.map((label) => ({ key: label.label, value: label.value, operator: label.op }));
 
   const ds = getDataSourceSrv().getInstanceSettings(dsRef);
 
   return new DataTrail({
+    $timeRange: timeRange,
     metric: query.metric,
     initialDS: ds?.name,
     initialFilters: filters,
