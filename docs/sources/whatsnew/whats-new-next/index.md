@@ -18,6 +18,27 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Export alert rules and notification resources to Terraform
+
+<!-- Yuri Tseretyan -->
+<!-- OSS, Enterprise -->
+
+October 30, 2023
+
+_Generally available in Grafana Cloud_
+
+This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+
+## Alerting insights
+
+<!-- George Robinson -->
+
+October 30, 2023
+
+_Generally available in Grafana Cloud_
+
+Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
 ## Use AI to generate dashboard titles, descriptions, and change summaries
 
 <!-- Nathan Marrs -->
@@ -98,27 +119,6 @@ You can now visualize gauges in vertical and horizontal orientations with overfl
 You can now center bar chart axes on zero and configure axes border and color settings.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
-
-## Export alert rules and notification resources to Terraform
-
-<!-- Yuri Tseretyan -->
-<!-- OSS, Enterprise -->
-
-October 30, 2023
-
-_Generally available in Grafana Cloud_
-
-This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
-
-## Alerting insights
-
-<!-- George Robinson -->
-
-October 30, 2023
-
-_Generally available in Grafana Cloud_
-
-Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
 ## Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
 
