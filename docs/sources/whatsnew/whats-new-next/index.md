@@ -39,6 +39,87 @@ _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
+## Use AI to generate dashboard titles, descriptions, and change summaries
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+
+- **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
+
+To enable these features, you must first enable the `dashgpt` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
+
+When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
+
+{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
+
+## Create interactive buttons in canvas visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
+
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
+
+## Zoom in on the y-axis of the time series and candlestick visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis on supported visualizations, hold the Shift key while clicking and dragging; double-click to reset the zoom.
+
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
+
+## Data visualization quality of life improvements
+
+We've made a number of smaller improvements to the data visualization experience in Grafana.
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+**Geomap marker symbol alignment options**
+
+You can now offset geomap marker symbols from the underlying data point.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
+
+**Gauge visualization overflow support**
+
+You can now visualize gauges in vertical and horizontal orientations with overflow. This resolves an issue where the design would break when the number of gauges exceeded the available space.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-gauge-overflow.gif" max-width="750px" caption="Gauge overflow" >}}
+
+**Bar chart axes improvements**
+
+You can now center bar chart axes on zero and configure axes border and color settings.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
+
 ## Detect unusable transformations
 
 <!-- Kyle Cunningham -->
