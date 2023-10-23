@@ -67,6 +67,8 @@ enum mapIndex {
   y2 = 3,
 }
 
+const crosshairColor = '#607D8B';
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -205,15 +207,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha('#607D8B', 1),
+          color: alpha(crosshairColor, 1),
           width: 1,
         }),
-        fill: new Fill({ color: alpha('#607D8B', 0.4) }),
+        fill: new Fill({ color: alpha(crosshairColor, 0.4) }),
       }),
     });
     const lineStyle = new Style({
       stroke: new Stroke({
-        color: '#607D8B',
+        color: crosshairColor,
         width: 1,
         lineDash: [3, 3],
         lineCap: 'square',
