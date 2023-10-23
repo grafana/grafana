@@ -101,9 +101,9 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 }
 
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, extsvcaccounts.ExtsvcPrefix)
+	return !strings.HasPrefix(name, extsvcaccounts.ExtSvcPrefix)
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtsvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtSvcPrefix)
 }
