@@ -18,6 +18,153 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
+func TestOrgSync_GrafanaAdminOrgRolesHook(t *testing.T) {
+	ctx := context.TODO()
+	orgService := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{
+		{
+			ID:   1,
+			Name: "Main Org.",
+		},
+		{
+			ID:   3,
+			Name: "Org Foo",
+		},
+		{
+			ID:   4,
+			Name: "Org Bar",
+		},
+	},
+	}
+	s := &OrgSync{
+		orgService: orgService,
+	}
+	tests := []struct {
+		name    string
+		id      *authn.Identity
+		wantErr bool
+		wantID  *authn.Identity
+	}{
+		{
+			name: "GrafanaAdmin=nil is unchanged",
+			id: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleEditor},
+				IsGrafanaAdmin: nil,
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleEditor},
+				IsGrafanaAdmin: nil,
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "GrafanaAdmin=false is unchanged",
+			id: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleEditor},
+				IsGrafanaAdmin: ptrBool(false),
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleEditor},
+				IsGrafanaAdmin: ptrBool(false),
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "GrafanaAdmin=true becomes Admin in all Orgs",
+			id: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin},
+				IsGrafanaAdmin: ptrBool(true),
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 3: org.RoleAdmin, 4: org.RoleAdmin},
+				IsGrafanaAdmin: ptrBool(true),
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if err := s.GrafanaAdminOrgRolesHook(ctx, tt.id, nil); (err != nil) != tt.wantErr {
+				t.Errorf("OrgSync.GrafanaAdminOrgRolesHook() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			assert.EqualValues(t, tt.wantID, tt.id)
+		})
+	}
+}
+
 func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 	orgService := &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{
 		{

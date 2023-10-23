@@ -24,6 +24,20 @@ type OrgSync struct {
 	log log.Logger
 }
 
+func (s *OrgSync) GrafanaAdminOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	if id.IsGrafanaAdmin == nil || !*id.IsGrafanaAdmin {
+		return nil
+	}
+	orgDTOs, err := s.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+	for _, orgDTO := range orgDTOs {
+		id.OrgRoles[orgDTO.ID] = org.RoleAdmin
+	}
+	return nil
+}
+
 func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncOrgRoles {
 		return nil
