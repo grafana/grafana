@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExtSvcAccountsService struct {
@@ -99,7 +100,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, nil
 	}
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, ExtsvcPrefix+cmd.ExtSvcSlug)
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, ExtSvcPrefix+cmd.ExtSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return 0, errRetrieve
 	}
@@ -144,7 +145,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
-			Name:       ExtsvcPrefix + cmd.ExtSvcSlug,
+			Name:       ExtSvcPrefix + cmd.ExtSvcSlug,
 			Role:       newRole(roletype.RoleNone),
 			IsDisabled: newBool(false),
 		})
