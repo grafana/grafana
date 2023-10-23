@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['organize'].name}
-${transformationDocsContent['organize'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['partitionByValues'].name}
 ${transformationDocsContent['partitionByValues'].helperDocs}
 `}
