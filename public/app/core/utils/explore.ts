@@ -88,9 +88,14 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       }
     } else {
       let queriesClone = [...queries];
-      await queries.forEach(async (query, i) => {
-        let queryDatasource = await getDataSourceSrv().get(query.datasource);
-        if (queryDatasource.interpolateVariablesInQueries) {
+      const datasources = await Promise.all(
+        queries.map((query) => {
+          return query.datasource ? getDataSourceSrv().get(query.datasource) : undefined;
+        })
+      );
+
+      datasources.forEach((queryDatasource, i) => {
+        if (queryDatasource?.interpolateVariablesInQueries) {
           queriesClone[i] = queryDatasource.interpolateVariablesInQueries([exploreTargets[i]], scopedVars ?? {})[0];
         } else {
           queriesClone[i] = exploreTargets[i];
