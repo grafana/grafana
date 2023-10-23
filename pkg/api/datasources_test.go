@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -224,14 +225,7 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 
 // Using a team HTTP header whose name matches the name specified for auth proxy header should fail
 func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
-	hs := &HTTPServer{
-		DataSourcesService: &dataSourcesServiceMock{},
-		Cfg:                setting.NewCfg(),
-		Features:           featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
-	}
-	sc := setupScenarioContext(t, "/api/datasources/1234")
-	hs.Cfg.AuthProxyEnabled = true
-
+	tenantID := "1234"
 	testcases := []struct {
 		desc string
 		data datasources.TeamHTTPHeaders
@@ -239,10 +233,10 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	}{
 		{
 			desc: "We should only allow for headers being X-Prom-Label-Policy",
-			data: datasources.TeamHTTPHeaders{"1234": []datasources.TeamHTTPHeader{
+			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
 				{
 					Header: "Authorization",
-					Value:  "Could be anything",
+					Value:  "foo!=bar",
 				},
 			},
 			},
@@ -253,28 +247,48 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			data: datasources.TeamHTTPHeaders{"": []datasources.TeamHTTPHeader{
 				{
 					Header: "X-Prom-Label-Policy",
-					Value:  "Could be anything",
+					Value:  "foo=bar",
 				},
 			},
 			},
 			want: 400,
 		},
 		{
-			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{"1234": []datasources.TeamHTTPHeader{
+			desc: "Allowed team id and header name with invalid header values ",
+			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
 				{
 					Header: "X-Prom-Label-Policy",
 					Value:  "Could be anything",
 				},
 			},
 			},
-			want: 500,
+			want: 400,
 		},
+		// TODO: complete valid case, with team id, header name and header value
+		// {
+		// 	desc: "Allowed header and header values ",
+		// 	data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
+		// 		{
+		// 			Header: "X-Prom-Label-Policy",
+		// 			Value:  "foo!=bar",
+		// 		},
+		// 	},
+		// 	},
+		// 	want: 500,
+		// },
 	}
 	for _, tc := range testcases {
-		jsonData := simplejson.New()
-		jsonData.Set("teamHttpHeaders", tc.data)
 		t.Run(tc.desc, func(t *testing.T) {
+			hs := &HTTPServer{
+				DataSourcesService: &dataSourcesServiceMock{},
+				Cfg:                setting.NewCfg(),
+				Features:           featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+			}
+			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
+			hs.Cfg.AuthProxyEnabled = true
+
+			jsonData := simplejson.New()
+			jsonData.Set("teamHttpHeaders", tc.data)
 			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 					Name:     "Test",
@@ -292,7 +306,6 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			assert.Equal(t, tc.want, sc.resp.Code)
 		})
 	}
-
 }
 
 // Updating data sources with URLs not specifying protocol should work.

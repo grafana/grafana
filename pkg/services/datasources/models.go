@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"encoding/json"
+	"errors"
 	"regexp"
 	"time"
 
@@ -78,11 +79,11 @@ type TeamHTTPHeader struct {
 	Value  string `json:"value"`
 }
 
+// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
+// words separated by special characters
+// "namespace!=auth", "env="prod", "env!~dev"
 func (th *TeamHTTPHeader) TeamHTTPHeaderValueRegexMatch() (*regexp.Regexp, error) {
-	// 1234:{"namespace":"auth", "env!="prod"}
-	// 1234:{"namespace":"auth", "env":"prod"}
-	// FIXME: better regex for labelSelector
-	exp := "\\d:.*"
+	exp := `^[\w\-\.\*\!\~\=]+$`
 	return regexp.Compile(exp)
 }
 
@@ -104,6 +105,20 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
 		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
 		if err != nil {
 			return nil, err
+		}
+		for teamID, headers := range teamHTTPHeadersJSON {
+			if teamID == "" {
+				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+			}
+
+			for _, header := range headers {
+				if header.Header == "" {
+					return nil, errors.New("header name is missing or empty")
+				}
+				if header.Value == "" {
+					return nil, errors.New("header value is missing or empty")
+				}
+			}
 		}
 	}
 

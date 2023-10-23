@@ -374,8 +374,12 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 					datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
 					return errors.New("validation error, invalid header name specified")
 				}
-				// Ensure header values match the expected format: "1234:{\"policy\":\"prometheus\"}"
-				if match, err := header.TeamHTTPHeaderValueRegexMatch(); match.MatchString(header.Value) {
+				match, err := header.TeamHTTPHeaderValueRegexMatch()
+				if err != nil {
+					datasourcesLogger.Error("Could not parse the regex for teamHTTPHeaderValue")
+					return err
+				}
+				if !match.MatchString(header.Value) {
 					datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
 					return errors.New("validation error, invalid header value specified")
 				} else if err != nil {
