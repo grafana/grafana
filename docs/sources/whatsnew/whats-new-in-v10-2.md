@@ -249,7 +249,7 @@ To learn more, refer to the following video demo, as well as the [Grafana Variab
 
 <!-- Miguel Palau -->
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 The SAP HANA® data source now supports tenant database connections by using the database name and/or instance number. This is helpful because these are less likely to change than the port for your database. For more information, refer to our [SAP HANA® configuration documentation](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
 
@@ -259,7 +259,7 @@ The SAP HANA® data source now supports tenant database connections by using the
 
 <!-- Taewoo Kim -->
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
 
@@ -269,7 +269,7 @@ The Datadog data source now supports log aggregation. This feature helps aggrega
 
 <!-- Taewoo Kim -->
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced_
+_Generally available in Grafana Enterprise and Grafana Cloud_
 
 In the Datadog data source, you can now block API requests for metric queries based on upstream rate limits. With this update, you can set a rate limit percentage at which the plugin stops sending queries.
 
