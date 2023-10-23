@@ -29,6 +29,10 @@ enum ImageRenderType {
 export const transformationDocsContent: Record<string, TransformationInfo> = {
   calculateField: {
     name: 'Add field from calculation',
+    /*
+      `getHelperDocs` will build the markdown content based in the `ImageRenderType`.
+      The images will either be rendered in Hugo Shortcode format or as standard markdown for UI usage.
+    */
     getHelperDocs: function (imageRenderType: ImageRenderType) {
       return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
@@ -1040,6 +1044,8 @@ export function getLinkToDocs(): string {
 
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageName?: string) {
   return imageRenderType === 'shortcodeFigure'
-    ? `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
-    : `![${imageName} helper image](${source})`;
+    ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
+      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
+    : // This will build generic Markdown image syntax for UI rendering.
+      `![${imageName} helper image](${source})`;
 }
