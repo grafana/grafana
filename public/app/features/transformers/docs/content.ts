@@ -1111,12 +1111,14 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   `;
     },
   },
-  // sortBy: {
-  //   name: 'Sort by',
-  //   getHelperDocs: `
-  // Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
-  // `,
-  // },
+  sortBy: {
+    name: 'Sort by',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
+  `;
+    },
+  },
   // spatial: { name: 'Spatial', getHelperDocs: `Use this transformation to apply spatial operations to query results` },
   // timeSeriesTable: {
   //   name: 'Time series table',
