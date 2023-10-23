@@ -118,10 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['reduce'].name}
-${transformationDocsContent['reduce'].helperDocs}
-`}
-
 ${`### ${transformationDocsContent['renameByRegex'].name}
 ${transformationDocsContent['renameByRegex'].helperDocs}
 

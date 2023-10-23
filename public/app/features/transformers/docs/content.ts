@@ -929,58 +929,60 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
       },
     ],
   },
-  // reduce: {
-  //   name: 'Reduce',
-  //   getHelperDocs: `
-  // Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
+  reduce: {
+    name: 'Reduce',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
-  // Consider the input:
+  Consider the input:
 
-  // Query A:
+  Query A:
 
-  // | Time                | Temp | Uptime  |
-  // | ------------------- | ---- | ------- |
-  // | 2020-07-07 11:34:20 | 12.3 | 256122  |
-  // | 2020-07-07 11:24:20 | 15.4 | 1230233 |
+  | Time                | Temp | Uptime  |
+  | ------------------- | ---- | ------- |
+  | 2020-07-07 11:34:20 | 12.3 | 256122  |
+  | 2020-07-07 11:24:20 | 15.4 | 1230233 |
 
-  // Query B:
+  Query B:
 
-  // | Time                | AQI | Errors |
-  // | ------------------- | --- | ------ |
-  // | 2020-07-07 11:34:20 | 6.5 | 15     |
-  // | 2020-07-07 11:24:20 | 3.2 | 5      |
+  | Time                | AQI | Errors |
+  | ------------------- | --- | ------ |
+  | 2020-07-07 11:34:20 | 6.5 | 15     |
+  | 2020-07-07 11:24:20 | 3.2 | 5      |
 
-  // The reduce transformer has two modes:
+  The reduce transformer has two modes:
 
-  // - **Series to rows -** Creates a row for each field and a column for each calculation.
-  // - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+  - **Series to rows -** Creates a row for each field and a column for each calculation.
+  - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
-  // For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
-  // the result would be:
+  For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
+  the result would be:
 
-  // | Field  | First  | Last    |
-  // | ------ | ------ | ------- |
-  // | Temp   | 12.3   | 15.4    |
-  // | Uptime | 256122 | 1230233 |
-  // | AQI    | 6.5    | 3.2     |
-  // | Errors | 15     | 5       |
+  | Field  | First  | Last    |
+  | ------ | ------ | ------- |
+  | Temp   | 12.3   | 15.4    |
+  | Uptime | 256122 | 1230233 |
+  | AQI    | 6.5    | 3.2     |
+  | Errors | 15     | 5       |
 
-  // The **Reduce fields** with the **Last** calculation,
-  // results in two frames, each with one row:
+  The **Reduce fields** with the **Last** calculation,
+  results in two frames, each with one row:
 
-  // Query A:
+  Query A:
 
-  // | Temp | Uptime  |
-  // | ---- | ------- |
-  // | 15.4 | 1230233 |
+  | Temp | Uptime  |
+  | ---- | ------- |
+  | 15.4 | 1230233 |
 
-  // Query B:
+  Query B:
 
-  // | AQI | Errors |
-  // | --- | ------ |
-  // | 3.2 | 5      |
-  // `,
-  // },
+  | AQI | Errors |
+  | --- | ------ |
+  | 3.2 | 5      |
+  `;
+    },
+  },
   // renameByRegex: {
   //   name: 'Rename by regex',
   //   getHelperDocs: `
