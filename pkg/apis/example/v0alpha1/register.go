@@ -22,9 +22,8 @@ import (
 )
 
 // GroupName is the group name for this API.
-const GroupName = "example.grafana.com"
+const GroupName = "example.grafana.app"
 const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
@@ -204,7 +203,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 							return
 						}
 
-						msg := fmt.Sprintf("Custom resource route (ccc)\n\n%+v", info)
+						msg := fmt.Sprintf("Custom resource route (ddd)\n\n%+v", info)
 						_, _ = w.Write([]byte(msg))
 					},
 				},
