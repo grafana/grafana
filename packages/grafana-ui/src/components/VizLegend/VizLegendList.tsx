@@ -26,7 +26,6 @@ export const VizLegendList = <T extends unknown>({
   readonly,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
-  const rightItems = items.filter((item) => item.yAxis !== 1);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -57,26 +56,23 @@ export const VizLegendList = <T extends unknown>({
     }
     case 'bottom':
     default: {
+      const rightItems = items.filter((item) => item.yAxis !== 1);
+      const leftItems = items.filter((item) => item.yAxis === 1);
+
       const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
       };
 
       return (
         <div className={cx(styles.bottomWrapper, className)}>
-          <div className={styles.section}>
-            <InlineList
-              items={items.filter((item) => item.yAxis === 1)}
-              renderItem={renderItem}
-              getItemKey={getItemKey}
-            />
-          </div>
+          {leftItems.length > 0 && (
+            <div className={styles.section}>
+              <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} />
+            </div>
+          )}
           {rightItems.length > 0 && (
             <div className={cx(styles.section, styles.sectionRight)}>
-              <InlineList
-                items={rightItems}
-                renderItem={renderItem}
-                getItemKey={getItemKey}
-              />
+              <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} />
             </div>
           )}
         </div>
