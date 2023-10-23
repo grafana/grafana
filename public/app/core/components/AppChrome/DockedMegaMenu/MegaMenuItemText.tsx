@@ -31,7 +31,6 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
 
   return (
     <LinkComponent
-      id={isActive ? 'mega-menu-active' : undefined}
       data-testid={selectors.components.NavMenu.item}
       className={cx(styles.container, {
         [styles.containerActive]: isActive,
