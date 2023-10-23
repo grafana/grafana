@@ -196,7 +196,7 @@ An alert instance is considered stale if its dimension or series has disappeared
 
 Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
 
-### Create alert from any panel
+### Create alerts from panels
 
 Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
 
