@@ -55,7 +55,7 @@ To learn more, refer to our [Canvas button element documentation](https://grafan
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
-## ## Zoom in on the y-axis of the time series and candlestick visualizations
+## Zoom in on the y-axis of the time series and candlestick visualizations
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
