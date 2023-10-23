@@ -26,7 +26,7 @@ export const VizLegendList = <T extends unknown>({
   readonly,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
-  const hasRightItems = placement === 'bottom' && items.some((item) => item.yAxis !== 1);
+  const rightItems = items.filter((item) => item.yAxis !== 1);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
