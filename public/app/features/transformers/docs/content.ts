@@ -394,18 +394,41 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Filter fields by name',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation to remove portions of the query results.
+  Use this transformation to remove parts of the query results.
 
-  Grafana displays the **Identifier** field, followed by the fields returned by your query.
-
-  You can apply filters in one of two ways:
-
-  - Enter a regex expression.
-  - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
-
-  In the example below, we removed the Min field from the results.
-
-  Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+  You can filter field names in three different ways:
+  
+  - [Using a regular expression](#use-a-regular-expression)
+  - [Manually selecting included fields](#manually-select-included-fields)
+  - [Using a dashboard variable](#use-a-dashboard-variable)
+  
+  #### Use a regular expression
+  
+  When you filter using a regular expression, field names that match the regular expression are included.
+  
+  From the input data:
+  
+  | Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
+  | ------------------- | ----------- | ------------ | ------------ | ------------- |
+  | 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
+  | 2023-03-04 23:56:23 | 23.6        | 24.4         | 22.1         | 20.1          |
+  
+  The result from using the regular expression 'prod.*' would be:
+  
+  | Time                | prod-eu-west | prod-eu-north |
+  | ------------------- | ------------ | ------------- |
+  | 2023-03-04 23:56:23 | 22.2         | 20.2          |
+  | 2023-03-04 23:56:23 | 22.1         | 20.1          |
+  
+  The regular expression can include an interpolated dashboard variable by using the \${$${'variableName'}} syntax.
+  
+  #### Manually select included fields
+  
+  Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
+  
+  #### Use a dashboard variable
+  
+  Enable 'From variable' to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',

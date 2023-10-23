@@ -419,18 +419,41 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ### Filter fields by name
 
-Use this transformation to remove portions of the query results.
+Use this transformation to remove parts of the query results.
 
-Grafana displays the **Identifier** field, followed by the fields returned by your query.
+You can filter field names in three different ways:
 
-You can apply filters in one of two ways:
+- [Using a regular expression](#use-a-regular-expression)
+- [Manually selecting included fields](#manually-select-included-fields)
+- [Using a dashboard variable](#use-a-dashboard-variable)
 
-- Enter a regex expression.
-- Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
+#### Use a regular expression
 
-In the example below, we removed the Min field from the results.
+When you filter using a regular expression, field names that match the regular expression are included.
 
-Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+From the input data:
+
+| Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
+| ------------------- | ----------- | ------------ | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 23.6        | 24.4         | 22.1         | 20.1          |
+
+The result from using the regular expression 'prod.\*' would be:
+
+| Time                | prod-eu-west | prod-eu-north |
+| ------------------- | ------------ | ------------- |
+| 2023-03-04 23:56:23 | 22.2         | 20.2          |
+| 2023-03-04 23:56:23 | 22.1         | 20.1          |
+
+The regular expression can include an interpolated dashboard variable by using the ${$variableName} syntax.
+
+#### Manually select included fields
+
+Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
+
+#### Use a dashboard variable
+
+Enable 'From variable' to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
 {{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
@@ -441,6 +464,23 @@ Here's the table after we applied the transformation to remove the Min field.
 Here is the same query using a Stat visualization.
 
 {{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Format string
+
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+
+Use this transformation to format the output of a string field. You can format output in the following ways:
+
+- Upper case - Formats the entire string in upper case characters.
+- Lower case - Formats the entire string in lower case characters.
+- Sentence case - Formats the the first character of the string in upper case.
+- Title case - Formats the first character of each word in the string in upper case.
+- Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+- Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
+- Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+- Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+- Trim - Removes all leading and trailing spaces from the string.
+- Substring - Returns a substring of the string, using the specified start and end positions.
 
 ### Format time
 
@@ -1053,7 +1093,9 @@ Use this transformation to apply spatial operations to query results
 
 ### Time series table
 
-Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+For each generated "Trend" field value calculation function can be selected. Default is "last non null value". This value will be displayed next to the sparkline and used for sorting table rows.
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
 
@@ -1081,4 +1123,8 @@ Use this transformation to convert time series results into a table, converting 
 
 [feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
+
+[dashboard variable]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[dashboard variable]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
 {{% /docs/reference %}}
