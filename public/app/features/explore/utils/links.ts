@@ -213,7 +213,6 @@ export const getFieldLinksForExplore = (options: {
             range,
             field,
             // Don't track internal links without split view as they are used only in Dashboards
-            // TODO: It should be revisited in #66570
             onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });

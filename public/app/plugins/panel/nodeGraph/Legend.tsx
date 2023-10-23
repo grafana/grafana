@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { identity } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { Field, FieldColorModeId, GrafanaTheme2 } from '@grafana/data';
@@ -74,7 +73,9 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme2): Array<Vi
   if (!nodes.length) {
     return [];
   }
-  const fields = [nodes[0].mainStat, nodes[0].secondaryStat].filter(identity) as Field[];
+  const fields = [nodes[0].mainStat, nodes[0].secondaryStat].filter((item): item is NonNullable<typeof item> =>
+    Boolean(item)
+  );
 
   const node = nodes.find((n) => n.arcSections.length > 0);
   if (node) {

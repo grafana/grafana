@@ -22,7 +22,7 @@ export function RedirectToCloneRule({ identifier, isProvisioned, onDismiss }: Co
   const [stage, setStage] = useState<'redirect' | 'confirm'>(isProvisioned ? 'confirm' : 'redirect');
 
   if (stage === 'redirect') {
-    const cloneUrl = `/alerting/new?copyFrom=${ruleId.stringifyIdentifier(identifier)}`;
+    const cloneUrl = `/alerting/new?copyFrom=${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}`;
     return <Redirect to={cloneUrl} push />;
   }
 
