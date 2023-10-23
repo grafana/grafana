@@ -105,22 +105,24 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     }
 
     // Mixed mode.
-    const dsPromises = [];
-    const refIds: string[] = [];
+    const dsPromises: Array<Promise<{ ds: DataSourceApi, refId: string}>> = [];
     for (const query of logsQueries) {
       if (query.datasource && !newState.logContextSupport[query.refId]) {
-        dsPromises.push(getDataSourceSrv().get(query.datasource));
-        refIds.push(query.refId);
+        dsPromises.push(new Promise((resolve) => {
+          getDataSourceSrv().get(query.datasource).then(ds => {
+            resolve({ ds, refId: query.refId });
+          })
+        }));
       }
     }
 
-    Promise.all(dsPromises).then((dataSources) => {
-      newState.logDetailsFilterAvailable = dataSources.some(
+    Promise.all(dsPromises).then((dsInstances) => {
+      newState.logDetailsFilterAvailable = dsInstances.map(({ ds }) => ds).some(
         (ds) => ds.modifyQuery || hasToggleableQueryFiltersSupport(ds)
       );
-      dataSources.forEach((ds, i) => {
+      dsInstances.forEach(({ ds, refId }) => {
         if (hasLogsContextSupport(ds)) {
-          newState.logContextSupport[refIds[i]] = ds;
+          newState.logContextSupport[refId] = ds;
         }
       });
 
