@@ -23,7 +23,7 @@ type FakeOrgService struct {
 }
 
 func NewOrgServiceFake() *FakeOrgService {
-	return &FakeOrgService{}
+	return &FakeOrgService{ExpectedOrg: &org.Org{ID: 4}}
 }
 
 func (f *FakeOrgService) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUserCommand) (int64, error) {

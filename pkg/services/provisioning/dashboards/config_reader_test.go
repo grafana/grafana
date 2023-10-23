@@ -87,7 +87,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 func validateDashboardAsConfig(t *testing.T, cfg []*config) {
 	t.Helper()
 
-	require.Equal(t, 2, len(cfg))
+	require.Equal(t, 3, len(cfg))
 
 	ds := cfg[0]
 	require.Equal(t, ds.Name, "general dashboards")
@@ -112,4 +112,16 @@ func validateDashboardAsConfig(t *testing.T, cfg []*config) {
 	require.Equal(t, ds2.Options["path"], "/var/lib/grafana/dashboards")
 	require.False(t, ds2.DisableDeletion)
 	require.Equal(t, ds2.UpdateIntervalSeconds, int64(10))
+
+	ds3 := cfg[2]
+	require.Equal(t, ds3.Name, "Org 4 dashboards")
+	require.Equal(t, ds3.Type, "file")
+	require.Equal(t, ds3.OrgID, int64(4))
+	require.Equal(t, ds3.Folder, "")
+	require.Equal(t, ds3.FolderUID, "")
+	require.False(t, ds3.Editable)
+	require.Equal(t, len(ds3.Options), 1)
+	require.Equal(t, ds3.Options["path"], "/var/lib/grafana/dashboards")
+	require.False(t, ds3.DisableDeletion)
+	require.Equal(t, ds3.UpdateIntervalSeconds, int64(10))
 }

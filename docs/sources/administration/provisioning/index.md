@@ -328,8 +328,10 @@ apiVersion: 1
 providers:
   # <string> an unique provider name. Required
   - name: 'a unique provider name'
-    # <int> Org id. Default to 1
-    orgId: 1
+    # <string> org name. Ignored when orgId is set
+    orgName: Main Org.
+    # <int> Org id. will default to orgId 1 if orgId and orgName are not specified
+    # orgId: 1
     # <string> name of the dashboard folder.
     folder: ''
     # <string> folder UID. will be automatically generated if not specified
