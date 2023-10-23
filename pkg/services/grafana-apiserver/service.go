@@ -3,8 +3,8 @@ package grafanaapiserver
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
-	"os"
 	"path"
 	"strconv"
 
@@ -43,9 +43,7 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-)
 
-var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
 
@@ -86,6 +84,9 @@ type service struct {
 	config     *config
 	restConfig *clientrest.Config
 
+	stopCh    chan struct{}
+	stoppedCh chan error
+
 	rr       routing.RouteRegister
 	handler  web.Handler
 	builders []APIGroupBuilder
@@ -101,6 +102,7 @@ func ProvideService(
 	s := &service{
 		config:     newConfig(cfg),
 		rr:         rr,
+		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
 		authorizer: authz,
 	}
@@ -162,6 +164,8 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
+	o.SecureServing.BindAddress = net.ParseIP(s.config.ip)
+	o.SecureServing.BindPort = s.config.port
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
 	o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
@@ -178,11 +182,30 @@ func (s *service) start(ctx context.Context) error {
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 	serverConfig.ExternalAddress = s.config.host
-	serverConfig.LoopbackClientConfig = &clientrest.Config{
-		Host: s.config.appURL,
-		TLSClientConfig: clientrest.TLSClientConfig{
-			Insecure: true,
-		},
+
+	if s.config.devMode {
+		// SecureServingOptions is used when the apiserver needs it's own listener.
+		// this is not needed in production, but it's useful for development kubectl access.
+		if err := o.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
+			return err
+		}
+		// AuthenticationOptions is needed to authenticate requests from kubectl in dev mode.
+		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
+			return err
+		}
+	}
+
+	// override ExternalAddress and LoopbackClientConfig in prod mode.
+	// in dev mode we want to use the loopback client config
+	// and address provided by SecureServingOptions.
+	if !s.config.devMode {
+		serverConfig.ExternalAddress = s.config.host
+		serverConfig.LoopbackClientConfig = &clientrest.Config{
+			Host: s.config.apiURL,
+			TLSClientConfig: clientrest.TLSClientConfig{
+				Insecure: true,
+			},
+		}
 	}
 
 	if o.Etcd != nil {
@@ -274,11 +297,33 @@ func (s *service) start(ctx context.Context) error {
 		server.Handler.ServeHTTP(resp, req)
 	}
 
+	// skip starting the server in prod mode
+	if !s.config.devMode {
+		return nil
+	}
+
+	prepared := server.PrepareRun()
+	go func() {
+		s.stoppedCh <- prepared.Run(s.stopCh)
+	}()
 	return nil
 }
 
 func (s *service) running(ctx context.Context) error {
-	<-ctx.Done()
+	// skip waiting for the server in prod mode
+	if !s.config.devMode {
+		<-ctx.Done()
+		return nil
+	}
+
+	select {
+	case err := <-s.stoppedCh:
+		if err != nil {
+			return err
+		}
+	case <-ctx.Done():
+		close(s.stopCh)
+	}
 	return nil
 }
 
@@ -298,7 +343,7 @@ func (s *service) ensureKubeConfig() error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token: "REPLACE_WITH_SERVICE_ACCOUNT_TOKEN",
+		Token: s.restConfig.BearerToken,
 	}
 
 	clientConfig := clientcmdapi.Config{
@@ -310,12 +355,5 @@ func (s *service) ensureKubeConfig() error {
 		AuthInfos:      authinfos,
 	}
 
-	kubeconfigPath := path.Join(s.config.dataPath, "grafana.kubeconfig")
-
-	// check if kubeconfig already exists
-	if _, err := os.Stat(kubeconfigPath); err == nil {
-		return nil
-	}
-
-	return clientcmd.WriteToFile(clientConfig, kubeconfigPath)
+	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
 }

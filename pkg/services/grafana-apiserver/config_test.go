@@ -10,7 +10,7 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.Env = setting.Dev
+	cfg.Env = setting.Prod
 	cfg.DataPath = "/tmp/grafana"
 	cfg.HTTPAddr = "test"
 	cfg.HTTPPort = "4000"
@@ -25,9 +25,11 @@ func TestNewConfig(t *testing.T) {
 
 	expected := &config{
 		enabled:     true,
-		devMode:     true,
+		devMode:     false,
 		etcdServers: []string{"http://localhost:2379"},
-		appURL:      "http://test:4000",
+		apiURL:      "http://test:4000",
+		ip:          "test",
+		port:        4000,
 		host:        "test:4000",
 		dataPath:    "/tmp/grafana/grafana-apiserver",
 		logLevel:    5,
