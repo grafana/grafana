@@ -8,11 +8,11 @@ title: Grafana Open Source
 
 ## Grafana Open Source
 
-Grafana open source is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics, logs, and traces no matter where they are stored. It provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
+Grafana Open Source is an open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics, logs, and traces no matter where they are stored. It provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
 
 ### Grafana Loki
 
-Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](/docs/loki/latest/).
+Grafana Loki is an open source set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](/docs/loki/latest/).
 
 ### Grafana Tempo
 
