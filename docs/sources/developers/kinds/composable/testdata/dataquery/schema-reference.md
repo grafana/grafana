@@ -58,10 +58,11 @@ title: TestDataDataQuery kind
 
 ### NodesQuery
 
-| Property | Type    | Required | Default | Description                                                |
-|----------|---------|----------|---------|------------------------------------------------------------|
-| `count`  | integer | No       |         |                                                            |
-| `type`   | string  | No       |         | Possible values are: `random`, `response`, `random edges`. |
+| Property | Type    | Required | Default | Description                                                                         |
+|----------|---------|----------|---------|-------------------------------------------------------------------------------------|
+| `count`  | integer | No       |         |                                                                                     |
+| `seed`   | integer | No       |         |                                                                                     |
+| `type`   | string  | No       |         | Possible values are: `random`, `response_small`, `response_medium`, `random edges`. |
 
 ### PulseWaveQuery
 

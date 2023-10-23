@@ -83,8 +83,9 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#NodesQuery: {
-					type?:  "random" | "response" | "random edges"
+					type?:  "random" | "response_small" | "response_medium" | "random edges"
 					count?: int64
+					seed?:  int64
 				} @cuetsy(kind="interface")
 
 				#USAQuery: {

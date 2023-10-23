@@ -2857,11 +2857,13 @@ __metadata:
     "@grafana/ui": 10.3.0
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.5.1
+    "@types/d3-random": ^3.0.2
     "@types/jest": 29.5.4
     "@types/lodash": 4.14.195
     "@types/node": 18.18.5
     "@types/react": 18.2.15
     "@types/testing-library__jest-dom": 5.14.8
+    d3-random: ^3.0.1
     lodash: 4.17.21
     react: 18.2.0
     react-use: 17.4.0
@@ -8802,6 +8804,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-random@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@types/d3-random@npm:3.0.2"
+  checksum: ef70135206c7c2b8accb14397733b6397f471323fc659f395321b06ede49253f6ddfd1e004355a29ba32b579e779f350fa2e3648535e6e953adcfcd2a706ddac
+  languageName: node
+  linkType: hard
+
 "@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.0.0":
   version: 3.0.0
   resolution: "@types/d3-scale-chromatic@npm:3.0.0"
@@ -14186,7 +14195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-random@npm:3":
+"d3-random@npm:3, d3-random@npm:^3.0.1":
   version: 3.0.1
   resolution: "d3-random@npm:3.0.1"
   checksum: a70ad8d1cabe399ebeb2e482703121ac8946a3b336830b518da6848b9fdd48a111990fc041dc716f16885a72176ffa2898f2a250ca3d363ecdba5ef92b18e131
