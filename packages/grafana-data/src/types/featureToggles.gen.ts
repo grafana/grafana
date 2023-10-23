@@ -139,6 +139,7 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
   teamHttpHeaders?: boolean;
@@ -148,4 +149,5 @@ export interface FeatureToggles {
   pluginsInstrumentationStatusSource?: boolean;
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
 }

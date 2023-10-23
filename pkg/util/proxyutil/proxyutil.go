@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -170,9 +171,14 @@ func GetTeamHTTPHeaders(ds *datasources.DataSource, teams []int64) (map[string]s
 		}
 
 		for _, header := range headers {
-			// TODO: handle multiple header values
-			// add tests for these cases
-			teamHTTPHeadersMap[header.Header] = header.Value
+			// Header values should be properly escaped.
+			if value, ok := teamHTTPHeadersMap[header.Header]; ok {
+				// Add multiple header values as a comma-separated strings according to RFC 7230
+				// https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+				teamHTTPHeadersMap[header.Header] = fmt.Sprintf("%s,%s", value, url.PathEscape(header.Value))
+			} else {
+				teamHTTPHeadersMap[header.Header] = url.PathEscape(header.Value)
+			}
 		}
 	}
 

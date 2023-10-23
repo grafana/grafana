@@ -41,7 +41,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiMetricDataplane`                            | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                                         | Yes                |
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                                         | Yes                |
 | `alertingNotificationsPoliciesMatchingInstances` | Enables the preview of matching instances for notification policies                                                                                                                                                          | Yes                |
-| `useCachingService`                              | When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.                                                                                  |                    |
+| `useCachingService`                              | When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.                                                                                  | Yes                |
 | `enableElasticsearchBackendQuerying`             | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                                                              | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                                           | Yes                |
 | `cloudWatchLogsMonacoEditor`                     | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                                                        | Yes                |
@@ -78,6 +78,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
+| `cloudWatchBatchQueries`         | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 
 ## Experimental feature toggles
 
@@ -154,6 +155,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsInstrumentationStatusSource`        | Include a status source label for plugin request metrics and logs                                                                                                                                                                                                                 |
 | `costManagementUi`                          | Toggles the display of the cost management ui plugin                                                                                                                                                                                                                              |
 | `managedPluginsInstall`                     | Install managed plugins directly from plugins catalog                                                                                                                                                                                                                             |
+| `prometheusPromQAIL`                        | Prometheus and AI/ML to assist users in creating a query                                                                                                                                                                                                                          |
 
 ## Development feature toggles
 
