@@ -198,9 +198,9 @@ Stale alert instances that are in the **Alerting**/**NoData**/**Error** states a
 
 ### Create alert from any panel
 
-You can create an alert from any panel type. That means you will be able to reuse the queries in this panel and create a new alert based on them.
+Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
 
-1. Navigate to your desired dashboard in the **Dashboards** section.
+1. Navigate to a dashboard in the **Dashboards** section.
 2. In the top right corner of the panel, click on the three dots (ellipses).
 3. From the dropdown menu, select **More...** and then choose **Create alert**.
 
