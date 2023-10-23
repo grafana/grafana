@@ -141,6 +141,22 @@ build-js: ## Build frontend assets.
 	yarn run build
 	yarn run plugins:build-bundled
 
+build-plugins-go: ## Build decoupled plugins
+	@echo "build plugins"
+	@cd pkg/tsdb; \
+	mage -v
+
+PLUGIN_ID ?=
+
+build-plugin-go: ## Build decoupled plugins
+	@echo "build plugin $(PLUGIN_ID)"
+	@cd pkg/tsdb; \
+	if [ -z "$(PLUGIN_ID)" ]; then \
+		echo "PLUGIN_ID is not set"; \
+		exit 1; \
+	fi; \
+	mage -v buildplugin $(PLUGIN_ID)
+
 build: build-go build-js ## Build backend and frontend.
 
 run: $(BRA) ## Build and run web server on filesystem changes.
@@ -163,6 +179,13 @@ test-go-unit: ## Run unit tests for backend with flags.
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+
+.PHONY: test-go-integration-alertmanager
+test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
+	@echo "test remote alertmanager integration tests"
+	$(GO) clean -testcache
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/notifier/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
