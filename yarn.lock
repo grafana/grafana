@@ -2881,8 +2881,8 @@ __metadata:
     jest: 29.3.1
     jest-environment-jsdom: 29.3.1
     react: 18.2.0
+    swc-loader: 0.2.3
     ts-jest: 29.0.5
-    ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.5.0
     webpack: 5.76.0
@@ -15240,7 +15240,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:^5.0.0, enhanced-resolve@npm:^5.10.0, enhanced-resolve@npm:^5.15.0":
+"enhanced-resolve@npm:^5.10.0, enhanced-resolve@npm:^5.15.0":
   version: 5.15.0
   resolution: "enhanced-resolve@npm:5.15.0"
   dependencies:
@@ -18084,7 +18084,6 @@ __metadata:
     tinycolor2: 1.6.0
     tracelib: 1.0.1
     ts-jest: 29.1.1
-    ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.6.0
     tween-functions: ^1.2.0
@@ -29045,21 +29044,6 @@ __metadata:
     typescript: "*"
     webpack: "*"
   checksum: 79da0f364c013231bff28baede3f4f4081b1cca30b24df2d9f31a0517e0524eca2c8e4d438b853b1566a3a8eb9ff51ab0b36743346f0b3d5daa7001c98e5c738
-  languageName: node
-  linkType: hard
-
-"ts-loader@npm:9.3.1":
-  version: 9.3.1
-  resolution: "ts-loader@npm:9.3.1"
-  dependencies:
-    chalk: ^4.1.0
-    enhanced-resolve: ^5.0.0
-    micromatch: ^4.0.0
-    semver: ^7.3.4
-  peerDependencies:
-    typescript: "*"
-    webpack: ^5.0.0
-  checksum: 462a8ac315017cf4961dafd2be29d5abe7c3af63c4515e325269f79b9d0212b35c59184d7fd01fc378749c88454752e1599301d2190eb6844ea5fe332de5f695
   languageName: node
   linkType: hard
 
