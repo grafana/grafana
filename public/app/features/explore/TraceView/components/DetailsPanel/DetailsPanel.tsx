@@ -194,7 +194,7 @@ export function DetailsPanel(props: Props) {
               >
                 <Icon name={'link'} className={cx(uAlignIcon, styles.linkIcon)}></Icon>
               </a>
-              <span className={styles.debugLabel} data-label="SpanID:" /> {span.spanID}
+              SpanID: {span.spanID}
             </small>
           )}
         </div>
@@ -268,27 +268,26 @@ export function DetailsPanel(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: DetailsPanelContainer;
-    position: fixed;
-    overflow: auto;
-    bottom: 0;
-    z-index: 9;
-  `,
+  container: css({
+    position: 'fixed',
+    overflow: 'auto',
+    bottom: 0,
+    zIndex: 9,
+  }),
   drawer: css`
     margin: 0;
     position: relative !important;
   `,
-  header: css`
-    gap: 0 1rem;
-    padding: 0.6rem;
-    overflow: scroll;
-  `,
-  flexSpaceBetween: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  `,
+  header: css({
+    gap: '0 1rem',
+    padding: '0.6rem',
+    overflow: 'scroll',
+  }),
+  flexSpaceBetween: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
   tab: css`
     label: DetailsPanelTab;
     padding: 0.5rem 1rem;
@@ -320,36 +319,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: ${autoColor(theme, 'blue', 'black')};
     }
   `,
-  attributesContainer: css`
-    display: flex;
-    flex: 1 0 auto;
-    flex-direction: column;
-    flex: 0 50%;
-  `,
-  attributeValues: css`
-    display: flex;
-    flex-direction: column;
-  `,
-  linkContainer: css`
-    label: DetailsPanelLinkContainer;
-    display: flex;
-    align-items: flex-end;
-    flex-direction: row-reverse;
-    padding-right: 0.6rem;
-  `,
-  debugInfo: css`
-    label: DetailsPanelDebugInfo;
-    letter-spacing: 0.25px;
-    margin-right: 15px;
-  `,
-  debugLabel: css`
-    label: DetailsPanelDebugLabel;
-    &::before {
-      color: ${autoColor(theme, '#bbb')};
-      content: attr(data-label);
-    }
-  `,
-  linkIcon: css`
-    font-size: 1.5em;
-  `,
+  attributesContainer: css({
+    label: 'attrscontainer',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '0 50%',
+  }),
+  attributeValues: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  linkContainer: css({
+    label: 'DetailsPanelLinkContainer',
+    display: 'flex',
+    alignItems: 'flex-end',
+    flexDirection: 'row-reverse',
+    paddingRight: '0.6rem',
+  }),
+  debugInfo: css({
+    label: 'DetailsPanelDebugInfo',
+    letterSpacing: '0.25px',
+    marginRight: '15px',
+  }),
+  linkIcon: css({
+    fontSize: '1.5em',
+  }),
 });

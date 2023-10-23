@@ -3963,6 +3963,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
+    "public/app/features/explore/TraceView/components/DetailsPanel/DetailsPanel.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
     "public/app/features/explore/TraceView/components/TracePageHeader/Actions/ActionButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -4081,7 +4086,8 @@ exports[`better eslint`] = {
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianLogs.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianReferences.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],

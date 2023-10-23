@@ -203,11 +203,11 @@ describe('DetailsPanel', () => {
     await waitFor(async () => {
       expect(screen.getByText('service1')).toBeInTheDocument();
       expect(screen.getByText('op1')).toBeInTheDocument();
-      expect(screen.getByText('trace1')).toBeInTheDocument();
-      expect(screen.getByText('span1')).toBeInTheDocument();
+      expect(screen.getByText(/trace1/)).toBeInTheDocument();
+      expect(screen.getByText(/span1/)).toBeInTheDocument();
       expect(screen.getByText('View Linked Span')).toBeInTheDocument();
-      expect(screen.getByText('trace2')).toBeInTheDocument();
-      expect(screen.getByText('span2')).toBeInTheDocument();
+      expect(screen.getByText(/trace2/)).toBeInTheDocument();
+      expect(screen.getByText(/span2/)).toBeInTheDocument();
     });
   });
 
