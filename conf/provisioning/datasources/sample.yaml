@@ -3,8 +3,11 @@ apiVersion: 1
 
 # # list of datasources that should be deleted from the database
 #deleteDatasources:
-#   - name: Graphite
-#     orgId: 1
+# - name: Graphite
+#   # <string> org name. Ignored when orgId is set
+#   orgName: Main Org.
+#   # <int> org id. will default to orgId 1 if orgId and orgName are not specified
+#   orgId: 1
 
 # # list of datasources to insert/update depending
 # # on what's available in the database
@@ -15,7 +18,9 @@ apiVersion: 1
 #   type: graphite
 #   # <string, required> access mode. direct or proxy. Required
 #   access: proxy
-#   # <int> org id. will default to orgId 1 if not specified
+#   # <string> org name. Ignored when orgId is set
+#   orgName: Main Org.
+#   # <int> org id. will default to orgId 1 if orgId and orgName are not specified
 #   orgId: 1
 #   # <string> url
 #   url: http://localhost:8080

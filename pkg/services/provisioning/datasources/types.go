@@ -24,12 +24,14 @@ type configs struct {
 }
 
 type deleteDatasourceConfig struct {
-	OrgID int64
-	Name  string
+	OrgID   int64
+	OrgName string
+	Name    string
 }
 
 type upsertDataSourceFromConfig struct {
 	OrgID   int64
+	OrgName string
 	Version int
 
 	Name            string
@@ -65,17 +67,20 @@ type configsV1 struct {
 }
 
 type deleteDatasourceConfigV0 struct {
-	OrgID int64  `json:"org_id" yaml:"org_id"`
-	Name  string `json:"name" yaml:"name"`
+	OrgID   int64  `json:"org_id" yaml:"org_id"`
+	OrgName string `json:"org_name" yaml:"org_name"`
+	Name    string `json:"name" yaml:"name"`
 }
 
 type deleteDatasourceConfigV1 struct {
-	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
-	Name  values.StringValue `json:"name" yaml:"name"`
+	OrgID   values.Int64Value  `json:"orgId" yaml:"orgId"`
+	OrgName values.StringValue `json:"orgName" yaml:"orgName"`
+	Name    values.StringValue `json:"name" yaml:"name"`
 }
 
 type upsertDataSourceFromConfigV0 struct {
 	OrgID           int64             `json:"org_id" yaml:"org_id"`
+	OrgName         string            `json:"org_name" yaml:"org_name"`
 	Version         int               `json:"version" yaml:"version"`
 	Name            string            `json:"name" yaml:"name"`
 	Type            string            `json:"type" yaml:"type"`
@@ -95,6 +100,7 @@ type upsertDataSourceFromConfigV0 struct {
 
 type upsertDataSourceFromConfigV1 struct {
 	OrgID           values.Int64Value     `json:"orgId" yaml:"orgId"`
+	OrgName         values.StringValue    `json:"orgName" yaml:"orgName"`
 	Version         values.IntValue       `json:"version" yaml:"version"`
 	Name            values.StringValue    `json:"name" yaml:"name"`
 	Type            values.StringValue    `json:"type" yaml:"type"`
@@ -125,6 +131,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	for _, ds := range cfg.Datasources {
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
+			OrgName:         ds.OrgName.Value(),
 			Name:            ds.Name.Value(),
 			Type:            ds.Type.Value(),
 			Access:          ds.Access.Value(),
@@ -146,8 +153,9 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 
 	for _, ds := range cfg.DeleteDatasources {
 		r.DeleteDatasources = append(r.DeleteDatasources, &deleteDatasourceConfig{
-			OrgID: ds.OrgID.Value(),
-			Name:  ds.Name.Value(),
+			OrgID:   ds.OrgID.Value(),
+			OrgName: ds.OrgName.Value(),
+			Name:    ds.Name.Value(),
 		})
 	}
 
@@ -166,6 +174,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	for _, ds := range cfg.Datasources {
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID,
+			OrgName:         ds.OrgName,
 			Name:            ds.Name,
 			Type:            ds.Type,
 			Access:          ds.Access,
@@ -186,8 +195,9 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 
 	for _, ds := range cfg.DeleteDatasources {
 		r.DeleteDatasources = append(r.DeleteDatasources, &deleteDatasourceConfig{
-			OrgID: ds.OrgID,
-			Name:  ds.Name,
+			OrgID:   ds.OrgID,
+			OrgName: ds.OrgName,
+			Name:    ds.Name,
 		})
 	}
 

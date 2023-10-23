@@ -100,7 +100,14 @@ func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasourc
 				continue
 			}
 
-			if ds.OrgID == 0 {
+			if ds.OrgID == 0 && ds.OrgName != "" {
+				getOrgQuery := &org.GetOrgByNameQuery{Name: ds.OrgName}
+				res, err := cr.orgService.GetByName(ctx, getOrgQuery)
+				if err != nil {
+					return err
+				}
+				ds.OrgID = res.ID
+			} else if ds.OrgID <= 0 {
 				ds.OrgID = 1
 			}
 
@@ -121,7 +128,14 @@ func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasourc
 				continue
 			}
 
-			if ds.OrgID == 0 {
+			if ds.OrgID == 0 && ds.OrgName != "" {
+				getOrgQuery := &org.GetOrgByNameQuery{Name: ds.OrgName}
+				res, err := cr.orgService.GetByName(ctx, getOrgQuery)
+				if err != nil {
+					return err
+				}
+				ds.OrgID = res.ID
+			} else if ds.OrgID <= 0 {
 				ds.OrgID = 1
 			}
 		}
