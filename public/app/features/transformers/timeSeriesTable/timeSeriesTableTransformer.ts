@@ -13,6 +13,8 @@ import {
   TransformationApplicabilityLevels,
 } from '@grafana/data';
 
+const MERGE_DEFAULT = true;
+
 /**
  * Maps a refId to a Field which can contain
  * different types of data. In our case we 
@@ -89,10 +91,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   const refId2FrameField: RefFieldMap<DataFrame> = {};
   const refId2ValueField: RefFieldMap<number> = {};
 
-  // Whether we're going to merge together the resulting 
-  // frames (the default) or leave them alone
-  const merge = false;//options.mergeSeries !== undefined ? options.mergeSeries : true;
-
   // Accumulator for our final value
   // which we'll return
   const result: DataFrame[] = [];
@@ -106,93 +104,100 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // series we initialize fields here
   // so we end up with one
   for (const refId of refIds) {
-    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
+    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : MERGE_DEFAULT;
     if (merge) {
       refId2LabelField[refId] = newField('Label', FieldType.string);
       refId2FrameField[refId] = newField('Trend', FieldType.frame);
       refId2ValueField[refId] = newField('Trend Value', FieldType.number);
     }
-  } 
 
+    for (let i = 0; i < data.length; i++) {
+      const frame = data[i];
 
-  for (const frame of data) {
-    // If it's not a time series frame we add
-    // it unmodified to the result
-    if (!isTimeSeriesFrame(frame)) {
-      result.push(frame);
-      continue;
-    }
-
-    // Grab the current refId and the corresponding label fields
-    const refId = frame.refId ?? '';
-
-    // Retrieve the time field that's been configured
-    // If one isn't configured then use the first found
-    let timeField = null;
-    if (options[refId]?.timeField !== undefined) {
-      timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
-    } else {
-      timeField = frame.fields.find((field) => field.type === FieldType.time);
-    }
-
-    // Initialize fields for this frame 
-    // if we're not merging them
-    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
-    if (!merge) {
-      refId2LabelField[refId] = newField('Label', FieldType.string);
-      refId2FrameField[refId] = newField('Trend', FieldType.frame);
-      refId2ValueField[refId] = newField('Trend Value', FieldType.number);
-    }
-
-    for (const field of frame.fields) {
-      // Skip non-number based fields
-      // i.e. we skip time, strings, etc.
-      if (field.type !== FieldType.number) {
+      // If it's not a time series frame we add
+      // it unmodified to the result
+      if (!isTimeSeriesFrame(frame)) {
+        result.push(frame);
         continue;
       }
 
-      // Create the value for the label field
-      let labelParts: string[] = [];
-
-      // Add the refId to the label if we have 
-      // more than one
-      if (refIds.size > 1) {
-        labelParts.push(refId);
+      // If we're not dealing with a frame
+      // of the current refId skip it
+      if (frame.refId !== refId) {
+        continue;
+      }
+  
+      // Retrieve the time field that's been configured
+      // If one isn't configured then use the first found
+      let timeField = null;
+      if (options[refId]?.timeField !== undefined) {
+        timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
+      } else {
+        timeField = frame.fields.find((field) => field.type === FieldType.time);
+      }
+  
+      // Initialize fields for this frame 
+      // if we're not merging them
+      if (!merge) {
+        refId2LabelField[refId] = newField('Label', FieldType.string);
+        refId2FrameField[refId] = newField('Trend', FieldType.frame);
+        refId2ValueField[refId] = newField('Trend Value', FieldType.number);
       }
 
-      // Add the name of the field
-      labelParts.push(field.name);
-
-      // If there is any labeled data add it here
-      if (field.labels !== undefined) {
-        for (const [labelKey, labelValue] of Object.entries(field.labels as object)) {
-          labelParts.push(`${labelKey}=${labelValue}`);
+      for (const field of frame.fields) {
+        // Skip non-number based fields
+        // i.e. we skip time, strings, etc.
+        if (field.type !== FieldType.number) {
+          continue;
         }
+  
+        // Create the value for the label field
+        let labelParts: string[] = [];
+  
+        // Add the refId to the label if we have 
+        // more than one
+        if (refIds.size > 1) {
+          labelParts.push(refId);
+        }
+  
+        // Add the name of the field
+        labelParts.push(field.name);
+  
+        // If there is any labeled data add it here
+        if (field.labels !== undefined) {
+          for (const [labelKey, labelValue] of Object.entries(field.labels as object)) {
+            labelParts.push(`${labelKey}=${labelValue}`);
+          }
+        }
+  
+        // Add the label parts to the label field
+        const label = labelParts.join(' : ');
+        refId2LabelField[refId].values.push(label);
+  
+        // Calculate the reduction of the current field
+        // and push the frame with reduction 
+        // into the the appropriate field
+        const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
+        const value = reduceField({ field, reducers: [reducerId] })[reducerId] || null;
+        refId2ValueField[refId].values.push(value);
+  
+        // Push the appropriate time and value frame
+        // to the trend frame for the sparkline
+        const sparklineFrame = new MutableDataFrame();
+        if (timeField !== undefined) {
+          sparklineFrame.addField(timeField);
+          sparklineFrame.addField(field);
+        }
+        refId2FrameField[refId].values.push(sparklineFrame);
+      }
+  
+      // If we're merging then we only add at the very
+      // end that is when i has reached the end of the data
+      if (merge && i !== (data.length -  1)) {
+        continue;
       }
 
-      // Add the label parts to the label field
-      const label = labelParts.join(' : ');
-      refId2LabelField[refId].values.push(label);
-
-      // Calculate the reduction of the current field
-      // and push the frame with reduction 
-      // into the the appropriate field
-      const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
-      const value = reduceField({ field, reducers: [reducerId] })[reducerId] || null;
-      refId2ValueField[refId].values.push(value);
-
-      // Push the appropriate time and value frame
-      // to the trend frame for the sparkline
-      const sparklineFrame = new MutableDataFrame();
-      if (timeField !== undefined) {
-        sparklineFrame.addField(timeField);
-        sparklineFrame.addField(field);
-      }
-      refId2FrameField[refId].values.push(sparklineFrame);
-    }
-
-    if (!merge) {
-      // Then initialize a new dataframe for labels and sparklines
+      // Finally, allocate the new frame
       const table = new MutableDataFrame();
 
       // Set the refId
@@ -206,33 +211,12 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
       // Finaly push to the result
       result.push(table);
-    }
+    }  
   }
-
-  // If we're merging create the final result
-  for (const refId of refIds) {
-    const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : true;
-    if (merge) {
-    // Then initialize a new dataframe for labels and sparklines
-      const table = new MutableDataFrame();
-
-      // Set the refId
-      table.refId = refId;
-
-      // Add the label, sparkline, and value fields
-      // into the new frame
-      table.addField(refId2LabelField[refId]);
-      table.addField(refId2FrameField[refId]);
-      table.addField(refId2ValueField[refId]);
-
-      // Finaly push to the result
-      result.push(table);
-    }
-  } 
-
 
   return result;
 }
+
 
 /**
  * Create a new field with the given label and type.
