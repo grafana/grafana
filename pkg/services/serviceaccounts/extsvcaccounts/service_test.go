@@ -66,7 +66,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 	tests := []struct {
 		name    string
 		init    func(env *TestEnv)
-		cmd     extsvcauth.ManageExtSvcAccountCmd
+		cmd     serviceaccounts.ManageExtSvcAccountCmd
 		checks  func(t *testing.T, env *TestEnv)
 		want    int64
 		wantErr bool
@@ -79,7 +79,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: serviceaccounts.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     false,
 				OrgID:       extSvcOrgID,
@@ -106,7 +106,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: serviceaccounts.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
@@ -135,7 +135,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					Return(extSvcAccount, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: serviceaccounts.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
@@ -169,7 +169,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: serviceaccounts.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
