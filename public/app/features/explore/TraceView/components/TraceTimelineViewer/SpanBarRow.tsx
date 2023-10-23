@@ -17,6 +17,7 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -50,6 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
   `,
   };
   const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
+  const drawerExpandedColor = config.featureToggles?.traceViewDrawer ? 'fff3d7' : 'f0f0f0';
 
   return {
     nameWrapper: css`
@@ -147,6 +149,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     rowExpanded: css`
       label: rowExpanded;
+      background: ${autoColor(theme, `#${drawerExpandedColor}`)};
       & .${spanBarClassName} {
         opacity: 1;
       }
@@ -154,7 +157,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         color: ${autoColor(theme, '#000')};
       }
       & .${nameWrapperClassName}, &:hover .${nameWrapperClassName} {
-        background: ${autoColor(theme, '#f0f0f0')};
         box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
       }
       & .${nameWrapperMatchingFilterClassName} {

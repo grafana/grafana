@@ -15,7 +15,7 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -203,7 +203,7 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
           />
-          <div style={{ paddingBottom: detailsPanelOffset }}>
+          <div style={{ paddingBottom: config.featureToggles.traceViewDrawer ? detailsPanelOffset : 0 }}>
             <TraceTimelineViewer
               findMatchesIDs={spanFilterMatches}
               trace={traceProp}
@@ -245,25 +245,27 @@ export function TraceView(props: Props) {
               selectedSpanId={selectedSpan?.spanID}
             />
           </div>
-          <DetailsPanel
-            span={selectedSpan}
-            timeZone={timeZone}
-            width={width}
-            clearSelectedSpan={() => {
-              toggleDetail(selectedSpan?.spanID ?? '');
-              setSelectedSpan(undefined);
-            }}
-            detailState={detailStates.get(selectedSpan?.spanID ?? '')}
-            traceStartTime={traceProp.startTime}
-            detailLogItemToggle={detailLogItemToggle}
-            detailReferenceItemToggle={detailReferenceItemToggle}
-            createFocusSpanLink={createFocusSpanLink}
-            setDetailsPanelOffset={setDetailsPanelOffset}
-            defaultDetailsPanelHeight={defaultDetailsPanelHeight}
-            createSpanLink={createSpanLink}
-            datasourceType={datasourceType}
-            topOfViewRefType={topOfViewRefType}
-          />
+          {config.featureToggles.traceViewDrawer && (
+            <DetailsPanel
+              span={selectedSpan}
+              timeZone={timeZone}
+              width={width}
+              clearSelectedSpan={() => {
+                toggleDetail(selectedSpan?.spanID ?? '');
+                setSelectedSpan(undefined);
+              }}
+              detailState={detailStates.get(selectedSpan?.spanID ?? '')}
+              traceStartTime={traceProp.startTime}
+              detailLogItemToggle={detailLogItemToggle}
+              detailReferenceItemToggle={detailReferenceItemToggle}
+              createFocusSpanLink={createFocusSpanLink}
+              setDetailsPanelOffset={setDetailsPanelOffset}
+              defaultDetailsPanelHeight={defaultDetailsPanelHeight}
+              createSpanLink={createSpanLink}
+              datasourceType={datasourceType}
+              topOfViewRefType={topOfViewRefType}
+            />
+          )}
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>
