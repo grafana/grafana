@@ -44,7 +44,7 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
 
 ### Create a Grafana-managed alert
 
-1. Navigate in Grafana to **Alerting**, then to **Alert Rules** and click **+ Create alert rule**.
+1. Navigate in Grafana to **Alerting**, then to **Alert Rules** and click **+ New alert rule**.
 1. Choose **Grafana Managed Alert** to create an alert that uses expressions.
 1. Select your Loki datasource from the drop-down.
 1. Enter the alert query in the query editor, switch to **code** mode in the top right corner of the editor to paste the query below:

@@ -21,7 +21,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import dashboard');
     case 'alert':
-      return t('nav.create-alert.title', 'Create alert rule');
+      return t('nav.create-alert.title', 'New alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':

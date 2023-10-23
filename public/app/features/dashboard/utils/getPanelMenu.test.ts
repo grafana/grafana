@@ -625,7 +625,7 @@ describe('getPanelMenu()', () => {
     });
   });
   describe('Alerting menu', () => {
-    it('should render Create alert menu item if user has permissions to read and update alerts ', () => {
+    it('should render "New alert rule" menu item if user has permissions to read and update alerts ', () => {
       const panel = new PanelModel({});
 
       const dashboard = createDashboardModelFixture({});
@@ -637,13 +637,13 @@ describe('getPanelMenu()', () => {
       expect(moreSubMenu).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            text: 'Create alert',
+            text: 'New alert rule',
           }),
         ])
       );
     });
 
-    it('should not render Create alert menu item, if user does not have permissions to update alerts ', () => {
+    it('should not render "New alert rule" menu item, if user does not have permissions to update alerts ', () => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
 
@@ -657,12 +657,12 @@ describe('getPanelMenu()', () => {
       expect(moreSubMenu).toEqual(
         expect.arrayContaining([
           expect.not.objectContaining({
-            text: 'Create alert',
+            text: 'New alert rule',
           }),
         ])
       );
     });
-    it('should not render Create alert menu item, if user does not have permissions to read update alerts ', () => {
+    it('should not render "New alert rule" menu item, if user does not have permissions to read update alerts ', () => {
       const panel = new PanelModel({});
 
       const dashboard = createDashboardModelFixture({});
@@ -672,7 +672,7 @@ describe('getPanelMenu()', () => {
       const menuItems = getPanelMenu(dashboard, panel);
 
       const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
-      const createAlertOption = moreSubMenu?.find((i) => i.text === 'Create alert')?.subMenu;
+      const createAlertOption = moreSubMenu?.find((i) => i.text === 'New alert rule')?.subMenu;
 
       expect(createAlertOption).toBeUndefined();
     });

@@ -261,7 +261,7 @@ export function getPanelMenu(
 
   if (isCreateAlertMenuOptionAvailable) {
     subMenu.push({
-      text: t('panel.header-menu.create-alert', `Create alert`),
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: onCreateAlert,
     });
   }
@@ -304,7 +304,7 @@ export function getPanelMenu(
     subMenu.length = 0;
     if (isCreateAlertMenuOptionAvailable) {
       subMenu.push({
-        text: t('panel.header-menu.create-alert', `Create alert`),
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
         onClick: onCreateAlert,
       });
     }
