@@ -38,16 +38,6 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
 
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
-
-    this.updateAriaExpanded();
-  };
-
-  // update the aria-expanded attribute based on panel state
-  updateAriaExpanded = () => {
-    const buttonElement = document.querySelector('.dashboard-row__title');
-    if (buttonElement) {
-      buttonElement.setAttribute('aria-expanded', this.props.panel.collapsed ? 'false' : 'true');
-    }
   };
 
   getWarning = () => {
@@ -110,7 +100,6 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
           type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
-          // aria-expanded attribute to inform screen readers
           aria-expanded={this.props.panel.collapsed ? 'false' : 'true'}
         >
           <Icon name={this.props.panel.collapsed ? 'angle-right' : 'angle-down'} />
