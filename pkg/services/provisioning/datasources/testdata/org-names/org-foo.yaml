@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: New
+    orgName: Org 4
+
+deleteDatasources:
+  - name: Old
+    orgName: Org 4

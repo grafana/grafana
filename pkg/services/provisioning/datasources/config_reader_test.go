@@ -28,6 +28,7 @@ var (
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
+	orgNames                        = "testdata/org-names"
 
 	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
 	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
@@ -331,6 +332,23 @@ func TestDatasourceAsConfig(t *testing.T) {
 			require.Equal(t, int64(1), correlationsStore.deletedBySourceUID[0].OrgId)
 			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
 			require.Equal(t, int64(3), correlationsStore.deletedBySourceUID[2].OrgId)
+		})
+
+		t.Run("Using correct organization name", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Old", OrgID: 4, ID: 1}}}
+			orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 4}}
+			correlationsStore := &mockCorrelationsStore{}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+			err := dc.applyChanges(context.Background(), orgNames)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 1, len(store.inserted))
+			require.Equal(t, int64(4), store.inserted[0].OrgID)
+			require.Equal(t, 1, len(store.deleted))
+			require.Equal(t, int64(4), store.deleted[0].OrgID)
+			require.Equal(t, 0, len(store.updated))
 		})
 	})
 }
