@@ -13,6 +13,9 @@ const (
 
 	// TmpOrgID is the orgID we use while global service accounts are not supported.
 	TmpOrgID int64 = 1
+
+	// ExtSvcPrefix is the prefix of external service account names.
+	ExtSvcPrefix = "extsvc-"
 )
 
 type AuthProvider string

@@ -16,7 +16,6 @@ var (
 
 const (
 	ServiceAccountPrefix = "sa-"
-	ExtSvcPrefix         = "extsvc-"
 )
 
 const (
