@@ -39,7 +39,7 @@ When enabled, look for the **✨ Auto generate** option next to the **Title** an
 
 {{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
 
-## ## Create interactive buttons in canvas visualizations
+## Create interactive buttons in canvas visualizations
 
 <!-- Nathan Marrs -->
 <!-- OSS, Enterprise -->
