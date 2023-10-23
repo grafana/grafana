@@ -118,18 +118,6 @@ You can perform the following transformations on your data.
 
 JEV iterate here --------------------
 
-${`### ${transformationDocsContent['renameByRegex'].name}
-${transformationDocsContent['renameByRegex'].helperDocs}
-
-In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
-
-{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-With the transformation applied, you can see we are left with just the remainder of the string.
-
-{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-`}
-
 ${`### ${transformationDocsContent['rowsToFields'].name}
 ${transformationDocsContent['rowsToFields'].helperDocs}
 `}

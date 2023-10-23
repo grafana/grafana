@@ -983,14 +983,28 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   `;
     },
   },
-  // renameByRegex: {
-  //   name: 'Rename by regex',
-  //   getHelperDocs: `
-  // Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
+  renameByRegex: {
+    name: 'Rename by regex',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+  Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-  // You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
-  // `,
-  // },
+  You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+  
+  In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
+    imageRenderType,
+    this.name + 1
+  )}
+
+  With the transformation applied, you can see we are left with just the remainder of the string.
+
+  ${buildImageContent('/static/img/docs/transformations/rename-by-regex-after-7-3.png', imageRenderType, this.name + 1)}
+  `;
+    },
+  },
   // rowsToFields: {
   //   name: 'Rows to fields',
   //   getHelperDocs: `
