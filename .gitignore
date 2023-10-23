@@ -204,3 +204,6 @@ deployment_tools_config.json
 # Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
 /public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
+
+# Core plugin builds
+public/app/plugins/**/dist/
