@@ -218,7 +218,7 @@ export const calculateSparseBucketMinMax = (
 
   const fieldNames = ['xMin', 'xMax', 'yMin', 'yMax'];
   const missing = fieldNames.filter(
-    (fieldName) => !displayValues!.some((displayValue) => displayValue.fieldName === fieldName)
+    (fieldName) => !displayValues?.some((displayValue) => displayValue.fieldName === fieldName)
   );
 
   missing.map((fieldName) => {
