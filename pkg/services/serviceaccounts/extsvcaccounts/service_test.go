@@ -67,7 +67,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 	tests := []struct {
 		name    string
 		init    func(env *TestEnv)
-		cmd     extsvcauth.ManageExtSvcAccountCmd
+		cmd     sa.ManageExtSvcAccountCmd
 		checks  func(t *testing.T, env *TestEnv)
 		want    int64
 		wantErr bool
@@ -80,7 +80,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: sa.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     false,
 				OrgID:       extSvcOrgID,
@@ -89,7 +89,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
 					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
@@ -107,7 +107,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: sa.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
@@ -116,7 +116,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
 					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
@@ -136,7 +136,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					Return(extSvcAccount, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: sa.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
@@ -145,11 +145,11 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "CreateServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == extsvcauth.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
+						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
 					}),
 				)
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
@@ -170,7 +170,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: extsvcauth.ManageExtSvcAccountCmd{
+			cmd: sa.ManageExtSvcAccountCmd{
 				ExtSvcSlug:  extSvcSlug,
 				Enabled:     true,
 				OrgID:       extSvcOrgID,
@@ -179,7 +179,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == extSvcOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&
@@ -259,7 +259,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
 					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
@@ -289,7 +289,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
 					mock.MatchedBy(func(saID int64) bool { return saID == extSvcAccID }))
@@ -321,11 +321,11 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.SaSvc.AssertCalled(t, "CreateServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == extsvcauth.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
+						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == roletype.RoleNone
 					}),
 				)
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
@@ -362,7 +362,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			checks: func(t *testing.T, env *TestEnv) {
 				env.SaSvc.AssertCalled(t, "RetrieveServiceAccountIdByName", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == tmpOrgID }),
-					mock.MatchedBy(func(slug string) bool { return slug == extsvcauth.ExtSvcPrefix+extSvcSlug }))
+					mock.MatchedBy(func(slug string) bool { return slug == sa.ExtSvcPrefix+extSvcSlug }))
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == int64(11) && cmd.ExternalServiceID == extSvcSlug &&

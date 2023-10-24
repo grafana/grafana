@@ -19,6 +19,8 @@ var (
 	ErrInvalidName       = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
 	ErrCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
 	ErrCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrCannotCreateToken", errutil.WithPublicMessage("cannot add external service account token"))
+
+	ErrCredentialsNotFound = errutil.NotFound("extsvcaccounts.credentials-not-found")
 )
 
 // Credentials represents the credentials associated to an external service

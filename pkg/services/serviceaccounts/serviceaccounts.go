@@ -21,3 +21,11 @@ type Service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64, saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 }
+
+//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
+type ExtSvcAccountsService interface {
+	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
+	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
+	// RetrieveExtSvcAccount fetches an external service account by ID
+	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
+}
