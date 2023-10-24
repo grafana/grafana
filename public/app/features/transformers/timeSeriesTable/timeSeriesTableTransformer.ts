@@ -176,7 +176,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
         // If there is any labeled data add it here
         if (field.labels !== undefined) {
-          for (const [labelKey, labelValue] of Object.entries(field.labels as object)) {
+          for (const [labelKey, labelValue] of Object.entries(field.labels)) {
             labelParts.push(`${labelKey}=${labelValue}`);
           }
         }
