@@ -28,12 +28,6 @@ export interface ReduceOptions {
   nullValueMode?: NullValueMode;
 }
 
-export interface StatisticalOptions {
-  include?: string[]; // Assume all fields
-  reducer: ReducerID;
-  nullValueMode?: NullValueMode;
-}
-
 export interface UnaryOptions {
   operator: UnaryOperationID;
   fieldName: string;
@@ -71,7 +65,7 @@ export interface CalculateFieldTransformerOptions {
 
   // Only one should be filled
   reduce?: ReduceOptions;
-  statistical?: StatisticalOptions;
+  statistical?: ReduceOptions;
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
@@ -115,7 +109,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.StatisticalFunctions) {
-          creator = getStatisticalCreator(defaults(options.statistical, defaultReduceOptions), data);
+          creator = getStatisticalCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.UnaryOperation) {
           creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
@@ -190,7 +184,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
 };
 
-function getStatisticalCreator(options: StatisticalOptions, allFrames: DataFrame[]): ValuesCreator {
+function getStatisticalCreator(options: ReduceOptions, allFrames: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });

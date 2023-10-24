@@ -23,7 +23,6 @@ import {
 import {
   BinaryOptions,
   UnaryOptions,
-  StatisticalOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
@@ -190,7 +189,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
-    this.setState({ selected: [] });
     onChange({
       ...options,
       mode,
@@ -209,20 +207,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   // Reduce by Row
   //---------------------------------------------------------
 
-  updateStatisticalOptions = (v: StatisticalOptions) => {
-    const { options, onChange } = this.props;
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.StatisticalFunctions,
-      statistical: v,
-    });
-  };
-
   updateReduceOptions = (v: ReduceOptions) => {
     const { options, onChange } = this.props;
     onChange({
       ...options,
-      mode: CalculateFieldMode.ReduceRow,
       reduce: v,
     });
   };
@@ -245,32 +233,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onStatisticalFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
-    if (selected.indexOf(fieldName) > -1) {
-      this.setState({ selected: selected.filter((s) => s !== fieldName) });
-      const { statistical } = this.props.options;
-      this.updateStatisticalOptions({
-        ...statistical!,
-        include: selected.filter((s) => s !== fieldName),
-      });
-    } else {
-      this.setState({ selected: [...selected, fieldName] });
-      const { statistical } = this.props.options;
-      this.updateStatisticalOptions({
-        ...statistical!,
-        include: [...selected, fieldName],
-      });
-    }
-  };
-
-  onStatisticalStatsChange = (stats: string[]) => {
-    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
-
-    const { statistical } = this.props.options;
-    this.updateStatisticalOptions({ ...statistical, reducer });
-  };
-
   onReducerStatsChange = (stats: string[]) => {
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
@@ -288,7 +250,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
-  renderStatisticalFunctions(options?: StatisticalOptions) {
+  renderStatisticalFunctions(options?: ReduceOptions) {
     const { names, selected } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
 
@@ -301,7 +263,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
                 <FilterPill
                   key={`${o}/${i}`}
                   onClick={() => {
-                    this.onStatisticalFieldToggle(o);
+                    this.onFieldToggle(o);
                   }}
                   label={o}
                   selected={selected.indexOf(o) > -1}
@@ -315,7 +277,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onStatisticalStatsChange}
+            onChange={this.onReducerStatsChange}
             defaultStat={ReducerID.sum}
             filterOptions={(ext) =>
               ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
@@ -544,7 +506,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
-        {mode === CalculateFieldMode.StatisticalFunctions && this.renderStatisticalFunctions(options.statistical)}
+        {mode === CalculateFieldMode.StatisticalFunctions && this.renderStatisticalFunctions(options.reduce)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
           <Input
