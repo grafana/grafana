@@ -3,7 +3,6 @@ package datasources
 import (
 	"encoding/json"
 	"errors"
-	"regexp"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -77,18 +76,6 @@ type TeamHTTPHeaders map[string][]TeamHTTPHeader
 type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
-}
-
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
-// words separated by special characters
-// "namespace!=auth", "env="prod", "env!~dev"
-func (th *TeamHTTPHeader) TeamHTTPHeaderValueRegexMatch() (*regexp.Regexp, error) {
-	exp := `^[\w\-\.\*\!\~\=]+$`
-	return regexp.Compile(exp)
-}
-
-func (th TeamHTTPHeaders) ValidHeaders() []string {
-	return []string{"X-Prom-Label-Policy"}
 }
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {

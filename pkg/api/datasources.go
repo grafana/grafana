@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -369,30 +370,37 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	// whitelisting ValidHeaders
 	for _, headers := range teamHTTPHeadersJSON {
 		for _, header := range headers {
-			for _, name := range teamHTTPHeadersJSON.ValidHeaders() {
+			for _, name := range ValidHeaders() {
 				if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
 					datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
 					return errors.New("validation error, invalid header name specified")
 				}
-				match, err := header.TeamHTTPHeaderValueRegexMatch()
-				if err != nil {
-					datasourcesLogger.Error("Could not parse the regex for teamHTTPHeaderValue")
-					return err
-				}
-				if !match.MatchString(header.Value) {
+				if !TeamHTTPHeaderValueRegexMatch(header.Value) {
 					datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
-					return errors.New("validation error, invalid header value specified")
-				} else if err != nil {
-					datasourcesLogger.Error("Could not parse the regex for teamHTTPHeaderValue")
-					return err
+					return errors.New("validation error, invalid header value syntax")
 				}
-				// QUESTION: should we format the values from here, since we have validated the json
-				// from header values match the expected format: "1234:env=prod,namespace=auth"
-				// to header values match the expected format: "1234:{env=prod, namespace=auth}"
 			}
 		}
 	}
 	return nil
+}
+
+// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
+// words separated by special characters
+// "namespace!=auth", "env="prod", "env!~dev"
+func TeamHTTPHeaderValueRegexMatch(headervalue string) bool {
+	// link to regex: https://regex101.com/r/I8KhZz/1
+	// 1234:{ name!="value",foo!~"bar" }
+	exp := `^\d+:{(?:\s*\w+\s*(?:=|!=|=~|!~)\s*\"\w+\"\s*,*)+}$`
+	reg, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	return reg.Match([]byte(strings.TrimSpace(headervalue)))
+}
+
+func ValidHeaders() []string {
+	return []string{"X-Prom-Label-Policy"}
 }
 
 // swagger:route POST /datasources datasources addDataSource
