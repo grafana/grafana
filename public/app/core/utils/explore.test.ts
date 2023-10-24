@@ -118,7 +118,8 @@ describe('getExploreUrl', () => {
         meta: { mixed: false },
       },
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
-    } as unknown as GetExploreUrlArguments;
+      scopedVars: {},
+    };
     expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs%20loki/g);
     expect(interpolateMockLoki).toBeCalled();
     expect(interpolateMockProm).not.toBeCalled();
@@ -134,7 +135,8 @@ describe('getExploreUrl', () => {
         meta: { mixed: true },
       },
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
-    } as unknown as GetExploreUrlArguments;
+      scopedVars: {},
+    };
     const url = await getExploreUrl(nonMixedArgs);
     expect(url).toMatch(/replaced%20testDs%20loki/g);
     expect(url).toMatch(/replaced%20testDs2%20prom/g);
