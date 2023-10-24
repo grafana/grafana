@@ -382,9 +382,7 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	}
 
 	db, store := setupTestDatabase(t)
-	store.cfg.AutoAssignOrg = true
 	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
-	store.cfg.AutoAssignOrgId = int(orgID)
 
 	userWithPerm := &user.SignedInUser{
 		OrgID:       orgID,

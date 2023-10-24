@@ -103,6 +103,8 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	return key
 }
 
+// SetupUsersServiceAccounts creates in "test org" all users or service accounts passed in parameter
+// To achieve this, it sets the AutoAssignOrg and AutoAssignOrgId settings.
 func SetupUsersServiceAccounts(t *testing.T, sqlStore *sqlstore.SQLStore, testUsers []TestUser) (orgID int64) {
 	role := string(org.RoleNone)
 
@@ -117,6 +119,9 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore *sqlstore.SQLStore, testUs
 	})
 	require.NoError(t, err)
 
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = int(org.ID)
+
 	for i := range testUsers {
 		_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Login:            testUsers[i].Login,
@@ -127,6 +132,5 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore *sqlstore.SQLStore, testUs
 		})
 		require.NoError(t, err)
 	}
-
 	return org.ID
 }
