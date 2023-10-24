@@ -643,6 +643,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			NewParentUID: &newParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
@@ -654,6 +657,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 

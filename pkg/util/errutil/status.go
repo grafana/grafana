@@ -62,6 +62,9 @@ const (
 	// to access in order to complete the request.
 	// HTTP status code 504.
 	StatusGatewayTimeout CoreStatus = "Gateway timeout"
+	// StatusConflict means that the request could not be completed due to
+	// a conflict with the current state of the resource.
+	StatusConflict CoreStatus = "Conflict"
 )
 
 // HTTPStatusClientClosedRequest A non-standard status code introduced by nginx
@@ -104,6 +107,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusBadGateway
 	case StatusUnknown, StatusInternal:
 		return http.StatusInternalServerError
+	case StatusConflict:
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}
@@ -130,6 +135,8 @@ func (s CoreStatus) LogLevel() LogLevel {
 		return LevelDebug
 	case StatusUnknown, StatusInternal:
 		return LevelError
+	case StatusConflict:
+		return LevelInfo
 	default:
 		return LevelUnknown
 	}
