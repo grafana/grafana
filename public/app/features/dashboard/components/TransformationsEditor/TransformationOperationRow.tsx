@@ -160,13 +160,17 @@ export const TransformationOperationRow = ({
     <QueryOperationRow
       id={id}
       index={index}
-      title={uiConfig.name}
+      title={`${index + 1} - ${uiConfig.name}`}
       draggable
       actions={renderActions}
       disabled={disabled}
       isOpen={toggleExpand()}
       // Assure that showHelp is untoggled when the row becomes collapsed.
       onClose={() => toggleShowHelp(false)}
+      expanderMessages={{
+        close: 'Collapse transformation row',
+        open: 'Expand transformation row',
+      }}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (

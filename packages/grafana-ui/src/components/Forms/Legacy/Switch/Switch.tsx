@@ -22,6 +22,7 @@ export interface State {
   id: string;
 }
 
+/** @deprecated Please use the `Switch` component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-switch--controlled as seen in Storybook} */
 export class Switch extends PureComponent<Props, State> {
   state = {
     id: uniqueId(),

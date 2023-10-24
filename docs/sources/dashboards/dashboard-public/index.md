@@ -13,12 +13,6 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="note" %}}
-
-This feature is in [public preview](/docs/release-life-cycle/).
-
-{{% /admonition %}}
-
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
