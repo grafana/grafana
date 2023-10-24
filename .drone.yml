@@ -1132,6 +1132,66 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-swagger-gen
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add --update curl jq bash
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
+  - cd grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout main; then echo "git checkout main"; else git checkout main;
+    fi
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: alpine/git:2.40.1
+  name: clone-enterprise
+- commands:
+  - apk add --update git make
+  - make swagger-clean && make openapi3-gen
+  - for f in public/api-merged.json public/openapi3.json; do git add $f; done
+  - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
+    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
+    specification by running make swagger-clean && make openapi3-gen" && return 1;
+    fi
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: golang:1.20.10-alpine
+  name: swagger-gen
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -4607,6 +4667,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 93de8a710e23d3f1d31860f9eed34cd841b0a0eb48637971de4e8ce60a7c3df1
+hmac: 29a933affceb9cc39b285d936de9e6327deedbb80f1285fa645d596f89ede442
 
 ...
