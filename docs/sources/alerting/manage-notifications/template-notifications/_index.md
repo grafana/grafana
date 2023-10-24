@@ -26,7 +26,7 @@ Notification templates are not tied to specific contact point integrations, such
 You can use notification templates to:
 
 - Customize the subject of an email or the title of a message.
-- Add, change or remove text in notifications. For example, to select or omit certain labels and annotations.
+- Add, change or remove text in notifications. For example, to select or omit certain labels, annotations and links.
 - Format text in bold and italic, and add or remove line breaks.
 
 You cannot use notification templates to:
