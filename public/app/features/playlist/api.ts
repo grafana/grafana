@@ -38,7 +38,7 @@ class LegacyAPI implements PlaylistAPI {
 }
 
 interface K8sPlaylistList {
-  playlists: K8sPlaylist[];
+  items: K8sPlaylist[];
 }
 
 interface K8sPlaylist {
@@ -67,7 +67,7 @@ class K8sAPI implements PlaylistAPI {
 
   async getAllPlaylist(): Promise<Playlist[]> {
     const result = await getBackendSrv().get<K8sPlaylistList>(this.url);
-    return result.playlists.map(k8sResourceAsPlaylist);
+    return result.items.map(k8sResourceAsPlaylist);
   }
 
   async getPlaylist(uid: string): Promise<Playlist> {

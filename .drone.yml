@@ -2771,7 +2771,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_main.sh
+  - cd /src && ./scripts/drone_build_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3020,7 +3020,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_tag_grafana.sh
+  - cd /src && ./scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3198,7 +3198,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_tag_grafana.sh
+  - cd /src && ./scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4607,6 +4607,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a7032573772937b59787f5c01c113b02afb07a9febf15664a68cbcee1458acc9
+hmac: a23a1640b21a7e8dd62089ab21b84a4efc43504cd6e956dd0f49e56df4f4e5a2
 
 ...

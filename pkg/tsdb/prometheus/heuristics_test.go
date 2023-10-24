@@ -13,16 +13,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-type heuristicsProvider struct {
-	httpclient.Provider
-	http.RoundTripper
-}
 
 type heuristicsSuccessRoundTripper struct {
 	res    io.ReadCloser
@@ -40,20 +34,13 @@ func (rt *heuristicsSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Res
 	}, nil
 }
 
-func (provider *heuristicsProvider) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
-	client := &http.Client{}
-	client.Transport = provider.RoundTripper
-	return client, nil
-}
-
-func (provider *heuristicsProvider) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
-	return provider.RoundTripper, nil
-}
-
-func getHeuristicsMockProvider(rt http.RoundTripper) *heuristicsProvider {
-	return &heuristicsProvider{
-		RoundTripper: rt,
+func newHeuristicsSDKProvider(hrt heuristicsSuccessRoundTripper) *httpclient.Provider {
+	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return &hrt
 	}
+	fn := httpclient.MiddlewareFunc(anotherFN)
+	mid := httpclient.NamedMiddlewareFunc("mock", fn)
+	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
 func Test_GetHeuristics(t *testing.T) {
@@ -62,9 +49,10 @@ func Test_GetHeuristics(t *testing.T) {
 			res:    io.NopCloser(strings.NewReader("{\"status\":\"success\",\"data\":{\"version\":\"1.0\"}}")),
 			status: http.StatusOK,
 		}
-		httpProvider := getHeuristicsMockProvider(&rt)
+		//httpProvider := getHeuristicsMockProvider(&rt)
+		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{
@@ -82,9 +70,9 @@ func Test_GetHeuristics(t *testing.T) {
 			res:    io.NopCloser(strings.NewReader("{\"status\":\"success\",\"data\":{\"features\":{\"foo\":\"bar\"},\"version\":\"1.0\"}}")),
 			status: http.StatusOK,
 		}
-		httpProvider := getHeuristicsMockProvider(&rt)
+		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{
