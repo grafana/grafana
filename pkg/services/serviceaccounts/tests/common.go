@@ -102,3 +102,31 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 
 	return key
 }
+
+func SetupUsersServiceAccounts(t *testing.T, sqlStore *sqlstore.SQLStore, testUsers []TestUser) (orgID int64) {
+	role := string(org.RoleNone)
+
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
+		Name: "test org",
+	})
+	require.NoError(t, err)
+
+	for i := range testUsers {
+		_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Login:            testUsers[i].Login,
+			IsServiceAccount: testUsers[i].IsServiceAccount,
+			DefaultOrgRole:   role,
+			Name:             testUsers[i].Name,
+			OrgID:            org.ID,
+		})
+		require.NoError(t, err)
+	}
+
+	return org.ID
+}
