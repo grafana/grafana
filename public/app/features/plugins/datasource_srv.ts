@@ -226,8 +226,7 @@ export class DatasourceSrv implements DataSourceService {
       }
       if (
         filters.pluginId &&
-        x.meta.id !== filters.pluginId &&
-        !some(x.meta.aliasIDs, (id) => id === filters.pluginId)
+        !(x.meta.id === filters.pluginId || some(x.meta.aliasIDs, (id) => id === filters.pluginId))
       ) {
         return false;
       }
