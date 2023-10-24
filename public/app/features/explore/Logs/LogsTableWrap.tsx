@@ -59,16 +59,36 @@ export function LogsTableWrap(props: Props) {
           }
         });
       }
-
       return fieldNames;
     },
     [props.panelState?.columns]
   );
 
   /**
+   * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
+   * which can be updated by explore browser history state changes
+   * This prevents an edge case bug where the user is navigating while a search is open.
+   */
+  useEffect(() => {
+    if (!columnsWithMeta || !filteredColumnsWithMeta) {
+      return;
+    }
+    let newFiltered = { ...filteredColumnsWithMeta };
+    let flag = false;
+    Object.keys(columnsWithMeta).forEach((key) => {
+      if (newFiltered[key] && newFiltered[key].active !== columnsWithMeta[key].active) {
+        newFiltered[key] = columnsWithMeta[key];
+        flag = true;
+      }
+    });
+    if (flag) {
+      setFilteredColumnsWithMeta(newFiltered);
+    }
+  }, [columnsWithMeta, filteredColumnsWithMeta]);
+
+  /**
    * when the query results change, we need to update the columnsWithMeta state
    * and reset any local search state
-   * @todo refactor
    *
    * This will also find all the unique labels, and calculate how many log lines have each label into the labelCardinality Map
    * Then it normalizes the counts
@@ -138,7 +158,6 @@ export function LogsTableWrap(props: Props) {
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-    // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
   }, [dataFrame, getColumnsFromProps]);
 
   if (!columnsWithMeta) {
