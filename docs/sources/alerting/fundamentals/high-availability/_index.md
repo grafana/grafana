@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Alerting high availability
-weight: 430
+weight: 170
 ---
 
 # Alerting high availability
