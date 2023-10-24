@@ -46,7 +46,11 @@ const computeCriticalPath = (
   criticalPath: CriticalPathSection[],
   returningChildStartTime?: number
 ): CriticalPathSection[] => {
-  const currentSpan: TraceSpan = spanMap.get(spanId)!;
+  const currentSpan = spanMap.get(spanId);
+
+  if (!currentSpan) {
+    return criticalPath;
+  }
 
   const lastFinishingChildSpan = findLastFinishingChildSpan(spanMap, currentSpan, returningChildStartTime);
   let spanCriticalSection: CriticalPathSection;
@@ -87,7 +91,7 @@ const computeCriticalPath = (
 function criticalPathForTrace(trace: Trace) {
   let criticalPath: CriticalPathSection[] = [];
   // As spans are already sorted based on startTime first span is always rootSpan
-  const rootSpanId = trace.spans[0].spanID;
+  const rootSpanId = trace?.spans[0].spanID;
   // If there is root span then algorithm implements
   if (rootSpanId) {
     const spanMap = trace.spans.reduce((map, span) => {

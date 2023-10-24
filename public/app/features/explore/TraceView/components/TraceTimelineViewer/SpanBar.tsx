@@ -30,75 +30,74 @@ import { ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      label: wrapper;
-      bottom: 0;
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 0;
-      overflow: hidden;
-      z-index: 0;
-    `,
-    bar: css`
-      label: bar;
-      border-radius: 3px;
-      min-width: 2px;
-      position: absolute;
-      height: 36%;
-      top: 32%;
-    `,
-    rpc: css`
-      label: rpc;
-      position: absolute;
-      top: 35%;
-      bottom: 35%;
-      z-index: 1;
-    `,
-    label: css`
-      label: label;
-      color: #aaa;
-      font-size: 12px;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      line-height: 1em;
-      white-space: nowrap;
-      padding: 0 0.5em;
-      position: absolute;
-    `,
-    logMarker: css`
-      label: logMarker;
-      background-color: ${autoColor(theme, '#2c3235')};
-      cursor: pointer;
-      height: 60%;
-      min-width: 1px;
-      position: absolute;
-      top: 20%;
-      &:hover {
-        background-color: ${autoColor(theme, '#464c54')};
-      }
-      &::before,
-      &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        border: 1px solid transparent;
-      }
-      &::after {
-        left: 0;
-      }
-    `,
-    criticalPath: css`
-      position: absolute;
-      top: 45%;
-      height: 11%;
-      z-index: 2;
-      overflow: hidden;
-      background: ${autoColor(theme, '#f1f1f1')};
-      border-left: 1px solid ${autoColor(theme, '#2c3235')};
-      border-right: 1px solid ${autoColor(theme, '#2c3235')};
-    `,
+    wrapper: css({
+      label: 'wrapper',
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      overflow: 'hidden',
+      zIndex: 0,
+    }),
+    bar: css({
+      label: 'bar',
+      borderRadius: theme.shape.radius.default,
+      minWidth: '2px',
+      position: 'absolute',
+      height: '36%',
+      top: '32%',
+    }),
+    rpc: css({
+      label: 'rpc',
+      position: 'absolute',
+      top: '35%',
+      bottom: '35%',
+      zIndex: 1,
+    }),
+    label: css({
+      label: 'label',
+      color: '#aaa',
+      fontSize: '12px',
+      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans - serif",
+      lineHeight: '1em',
+      whiteSpace: 'nowrap',
+      padding: '0 0.5em',
+      position: 'absolute',
+    }),
+    logMarker: css({
+      label: 'logMarker',
+      backgroundColor: autoColor(theme, '#2c3235'),
+      cursor: 'pointer',
+      height: '60%',
+      minWidth: '1px',
+      position: 'absolute',
+      top: '20%',
+      '&:hover': {
+        backgroundColor: autoColor(theme, '#464c54'),
+      },
+      '&::before, &::after': {
+        content: "''",
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        right: 0,
+        border: '1px solid transparent',
+      },
+      '&::after': {
+        left: 0,
+      },
+    }),
+    criticalPath: css({
+      position: 'absolute',
+      top: '45%',
+      height: '11%',
+      zIndex: 2,
+      overflow: 'hidden',
+      background: autoColor(theme, '#f1f1f1'),
+      borderLeft: `1px solid ${autoColor(theme, '#2c3235')}`,
+      borderRight: `1px solid ${autoColor(theme, '#2c3235')}`,
+    }),
   };
 };
 
@@ -172,7 +171,7 @@ function SpanBar({
     >
       <div
         aria-label={label}
-        className={styles.bar}
+        className={cx(styles.bar)}
         style={{
           background: color,
           left: toPercent(viewStart),
@@ -191,13 +190,13 @@ function SpanBar({
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
-            <div data-testid="SpanBar--logMarker" className={styles.logMarker} style={{ left: positionKey }} />
+            <div data-testid="SpanBar--logMarker" className={cx(styles.logMarker)} style={{ left: positionKey }} />
           </Popover>
         ))}
       </div>
       {rpc && (
         <div
-          className={styles.rpc}
+          className={cx(styles.rpc)}
           style={{
             background: rpc.color,
             left: toPercent(rpc.viewStart),
@@ -205,7 +204,7 @@ function SpanBar({
           }}
         />
       )}
-      {criticalPath.map((each, index) => {
+      {criticalPath?.map((each, index) => {
         const critcalPathViewBounds = getViewedBounds(each.section_start, each.section_end);
         const criticalPathViewStart = critcalPathViewBounds.start;
         const criticalPathViewEnd = critcalPathViewBounds.end;

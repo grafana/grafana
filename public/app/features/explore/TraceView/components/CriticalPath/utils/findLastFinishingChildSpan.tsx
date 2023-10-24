@@ -26,7 +26,7 @@ const findLastFinishingChildSpan = (
 ): TraceSpan | undefined => {
   let lastFinishingChildSpanId: string | undefined;
   if (returningChildStartTime) {
-    lastFinishingChildSpanId = currentSpan.childSpanIds.find(
+    lastFinishingChildSpanId = currentSpan?.childSpanIds.find(
       (each) =>
         // Look up the span using the map
         spanMap.has(each) && spanMap.get(each)!.startTime + spanMap.get(each)!.duration < returningChildStartTime
