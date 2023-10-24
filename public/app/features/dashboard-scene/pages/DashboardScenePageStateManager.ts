@@ -1,8 +1,8 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -174,6 +174,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public clearState() {
     getDashboardSrv().setCurrent(undefined);
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
+  }
+
+  public setDashboardCache(uid: string, dashboard: DashboardDTO) {
+    this.dashboardCache.set(uid, { dashboard, ts: Date.now() });
   }
 }
 

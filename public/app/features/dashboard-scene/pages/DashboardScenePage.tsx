@@ -20,7 +20,7 @@ export function DashboardScenePage({ match, route }: Props) {
     if (route.routeName === DashboardRoutes.Home) {
       stateManager.loadDashboard(route.routeName);
     } else {
-      stateManager.loadDashboard(match.params.uid);
+      stateManager.loadDashboard(match.params.uid!);
     }
 
     return () => {
@@ -30,7 +30,7 @@ export function DashboardScenePage({ match, route }: Props) {
 
   if (!dashboard) {
     return (
-      <Page layout={PageLayoutType.Canvas}>
+      <Page layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
         {isLoading && <PageLoader />}
         {loadError && <h2>{loadError}</h2>}
       </Page>
