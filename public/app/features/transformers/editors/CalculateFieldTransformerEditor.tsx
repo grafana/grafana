@@ -233,7 +233,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onReducerStatsChange = (stats: string[]) => {
+  onStatsChange = (stats: string[]) => {
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
     const { reduce } = this.props.options;
@@ -277,7 +277,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onReducerStatsChange}
+            onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
             filterOptions={(ext) =>
               ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
@@ -315,7 +315,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onReducerStatsChange}
+            onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
           />
         </InlineField>
