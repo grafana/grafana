@@ -41,6 +41,7 @@ import {
   InlineSwitch,
   PanelChrome,
   RadioButtonGroup,
+  Tag,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
@@ -577,11 +578,28 @@ class UnthemedLogs extends PureComponent<Props, State> {
           )}
         </PanelChrome>
         <PanelChrome
+          titleItems={[
+            config.featureToggles.logsExploreTableVisualisation ? (
+              this.state.visualisationType === 'logs' ? null : (
+                <PanelChrome.TitleItem title="Experimental" key="A">
+                  <Tag
+                    className={css({
+                      fontSize: 10,
+                      padding: '1px 5px',
+                      verticalAlign: 'text-bottom',
+                    })}
+                    name={'Beta'}
+                    colorIndex={1}
+                  />
+                </PanelChrome.TitleItem>
+              )
+            ) : null,
+          ]}
           title={
             config.featureToggles.logsExploreTableVisualisation
               ? this.state.visualisationType === 'logs'
                 ? 'Logs'
-                : 'Table (experimental)'
+                : 'Table'
               : 'Logs'
           }
           actions={

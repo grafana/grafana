@@ -12,7 +12,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const LogsColumnSearch = (props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void }) => {
+export function LogsColumnSearch(props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   return (
@@ -20,4 +20,4 @@ export const LogsColumnSearch = (props: { onChange: (e: React.FormEvent<HTMLInpu
       <Input type={'text'} placeholder={'Search columns by name'} onChange={props.onChange} />
     </Field>
   );
-};
+}
