@@ -66,12 +66,16 @@ const RuleList = withErrorBoundary(
     const allPromLoaded = promRequests.every(
       ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
     );
+    const allRulerLoaded = rulerRequests.every(
+      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+    );
+
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
     const allRulerEmpty = rulerRequests.every(([_, state]) => {
       const rulerRules = Object.entries(state?.result ?? {});
       const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-      return noRules;
+      return noRules && state.dispatched;
     });
 
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
@@ -93,7 +97,8 @@ const RuleList = withErrorBoundary(
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty;
+    const hasNoAlertRulesCreatedYet =
+      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
