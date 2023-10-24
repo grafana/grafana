@@ -16,9 +16,9 @@ describe('timeSeriesTableTransformer', () => {
     expect(result.refId).toBe('A');
     expect(result.fields).toHaveLength(3);
     expect(result.fields[0].values).toEqual([
-      'Value : instance=A : pod=B', 
+      'Value : instance=A : pod=B',
       'Value : instance=A : pod=C',
-      'Value : instance=A : pod=D'
+      'Value : instance=A : pod=D',
     ]);
     assertDataFrameField(result.fields[1], series);
   });
@@ -53,19 +53,19 @@ describe('timeSeriesTableTransformer', () => {
     expect(results[0].refId).toBe('A');
     expect(results[0].fields).toHaveLength(3);
     expect(results[0].fields[0].values).toEqual([
-      'Value : instance=A : pod=B', 
-      'Value : instance=A : pod=C', 
+      'Value : instance=A : pod=B',
+      'Value : instance=A : pod=C',
       'Value : instance=A : pod=D',
     ]);
     assertDataFrameField(results[0].fields[1], series.slice(0, 3));
     expect(results[1].refId).toBe('B');
     expect(results[1].fields).toHaveLength(3);
     expect(results[1].fields[0].values).toEqual([
-      'Value : instance=B : pod=F : cluster=A', 
+      'Value : instance=B : pod=F : cluster=A',
       'Value : instance=B : pod=G : cluster=B',
     ]);
     expect(results[1].fields[0].values).toEqual([
-      'Value : instance=B : pod=F : cluster=A', 
+      'Value : instance=B : pod=F : cluster=A',
       'Value : instance=B : pod=G : cluster=B',
     ]);
     assertDataFrameField(results[1].fields[1], series.slice(3, 5));
@@ -88,10 +88,7 @@ describe('timeSeriesTableTransformer', () => {
       getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
     ];
 
-    const results = timeSeriesToTableTransform(
-      { B: { stat: ReducerID.mean } },
-      series
-    );
+    const results = timeSeriesToTableTransform({ B: { stat: ReducerID.mean } }, series);
     expect(results[0].fields[2].values[0]).toEqual(3);
     expect(results[1].fields[2].values[0]).toEqual(4);
   });
@@ -105,12 +102,10 @@ function assertFieldsEqual(field1: Field, field2: Field) {
 }
 
 function assertDataFrameField(field: Field, matchesFrames: DataFrame[]) {
-  console.log(field);
   const frames: DataFrame[] = field.values;
   expect(frames).toHaveLength(matchesFrames.length);
   frames.forEach((frame, idx) => {
     const matchingFrame = matchesFrames[idx];
-    console.log(frame);
     expect(frame.fields).toHaveLength(matchingFrame.fields.length);
     frame.fields.forEach((field, fidx) => assertFieldsEqual(field, matchingFrame.fields[fidx]));
   });

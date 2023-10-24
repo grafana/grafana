@@ -1,9 +1,21 @@
 import React, { useCallback } from 'react';
 
-import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID, isReducerID, SelectableValue, getFieldDisplayName } from '@grafana/data';
+import {
+  PluginState,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  ReducerID,
+  isReducerID,
+  SelectableValue,
+  getFieldDisplayName,
+} from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, InlineSwitch, Select } from '@grafana/ui';
 
-import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions, getRefData } from './timeSeriesTableTransformer';
+import {
+  timeSeriesTableTransformer,
+  TimeSeriesTableTransformerOptions,
+  getRefData,
+} from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -24,15 +36,15 @@ export function TimeSeriesTableTransformEditor({
   }
 
   const onSelectTimefield = useCallback(
-    (refId: string,value: SelectableValue<string>) => {
+    (refId: string, value: SelectableValue<string>) => {
       const val = value?.value !== undefined ? value.value : '';
       onChange({
         ...options,
         [refId]: {
-          timeField: val 
-        }
+          timeField: val,
+        },
       });
-    }, 
+    },
     [onChange, options]
   );
 
@@ -44,7 +56,7 @@ export function TimeSeriesTableTransformEditor({
           ...options,
           [refId]: {
             stat: reducerID,
-          }
+          },
         });
       }
     },
@@ -57,8 +69,8 @@ export function TimeSeriesTableTransformEditor({
 
       onChange({
         ...options,
-        [refId]: {mergeSeries}
-      })
+        [refId]: { mergeSeries },
+      });
     },
     [onChange, options]
   );
@@ -67,26 +79,28 @@ export function TimeSeriesTableTransformEditor({
   for (const refId of Object.keys(refIdMap)) {
     configRows.push(
       <InlineFieldRow key={refId}>
-        <InlineField 
-          label="Time Field" 
-          tooltip="The the time field that will be used for the time series. If not selected the first found will be used.">
+        <InlineField
+          label="Time Field"
+          tooltip="The the time field that will be used for the time series. If not selected the first found will be used."
+        >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
             options={timeFields}
             value={options[refId]?.timeField}
           />
         </InlineField>
-        <InlineField 
-          label="Stat"
-          tooltip="The statistic that should be calculated for this time series.">
+        <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
           <StatsPicker
             stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
             onChange={onSelectStat.bind(null, refId)}
             filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
           />
         </InlineField>
-        <InlineField label="Merge series" tooltip="If selected, multiple series from a single datasource will be merged into one series.">
-          <InlineSwitch 
+        <InlineField
+          label="Merge series"
+          tooltip="If selected, multiple series from a single datasource will be merged into one series."
+        >
+          <InlineSwitch
             value={options[refId]?.mergeSeries !== undefined ? options[refId]?.mergeSeries : true}
             onChange={onMergeSeriesToggle.bind(null, refId)}
           />
