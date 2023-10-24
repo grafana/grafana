@@ -3,6 +3,7 @@ package serviceaccounts
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -16,6 +17,7 @@ var (
 
 const (
 	ServiceAccountPrefix = "sa-"
+	ExtSvcPrefix         = "extsvc-"
 )
 
 const (
@@ -171,6 +173,23 @@ type Stats struct {
 	ServiceAccountsWithNoRole int64 `xorm:"serviceaccounts_with_no_role"`
 	Tokens                    int64 `xorm:"serviceaccount_tokens"`
 	ForcedExpiryEnabled       bool  `xorm:"-"`
+}
+
+// ExtSvcAccount represents the service account associated to an external service
+type ExtSvcAccount struct {
+	ID         int64
+	Login      string
+	Name       string
+	OrgID      int64
+	IsDisabled bool
+	Role       roletype.RoleType
+}
+
+type ManageExtSvcAccountCmd struct {
+	ExtSvcSlug  string
+	Enabled     bool // disabled: the service account and its permissions will be deleted
+	OrgID       int64
+	Permissions []accesscontrol.Permission
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

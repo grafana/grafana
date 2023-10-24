@@ -35,18 +35,18 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc *manager.ServiceAccoun
 }
 
 // RetrieveExtSvcAccount fetches an external service account by ID
-func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*extsvcauth.ExtSvcAccount, error) {
-	sa, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
+func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*sa.ExtSvcAccount, error) {
+	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
 	if err != nil {
 		return nil, err
 	}
-	return &extsvcauth.ExtSvcAccount{
-		ID:         sa.Id,
-		Login:      sa.Login,
-		Name:       sa.Name,
-		OrgID:      sa.OrgId,
-		IsDisabled: sa.IsDisabled,
-		Role:       roletype.RoleType(sa.Role),
+	return &sa.ExtSvcAccount{
+		ID:         svcAcc.Id,
+		Login:      svcAcc.Login,
+		Name:       svcAcc.Name,
+		OrgID:      svcAcc.OrgId,
+		IsDisabled: svcAcc.IsDisabled,
+		Role:       roletype.RoleType(svcAcc.Role),
 	}, nil
 }
 
@@ -63,7 +63,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 		esa.logger.Warn("Impersonation setup skipped. It is not possible to impersonate with a service account token.", "service", slug)
 	}
 
-	saID, err := esa.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
+	saID, err := esa.ManageExtSvcAccount(ctx, &sa.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slug,
 		Enabled:     cmd.Self.Enabled,
 		OrgID:       extsvcauth.TmpOrgID,
@@ -91,13 +91,13 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 }
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *extsvcauth.ManageExtSvcAccountCmd) (int64, error) {
+func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
 	if cmd == nil {
 		esa.logger.Warn("Received no input")
 		return 0, nil
 	}
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, ExtSvcPrefix+cmd.ExtSvcSlug)
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, sa.ExtSvcPrefix+cmd.ExtSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return 0, errRetrieve
 	}
@@ -140,7 +140,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		// Create a service account
 		esa.logger.Debug("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
-			Name:       ExtSvcPrefix + cmd.ExtSvcSlug,
+			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
 			Role:       newRole(roletype.RoleNone),
 			IsDisabled: newBool(false),
 		})
@@ -181,7 +181,7 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
 	// Get credentials from store
 	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
-	if err != nil && !errors.Is(err, extsvcauth.ErrCredentialsNotFound) {
+	if err != nil && !errors.Is(err, ErrCredentialsNotFound) {
 		return "", err
 	}
 	if credentials != nil {
@@ -223,7 +223,7 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 		return nil, err
 	}
 	if !ok {
-		return nil, extsvcauth.ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
+		return nil, ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
 	}
 	return &Credentials{Secret: token}, nil
 }
