@@ -1,5 +1,6 @@
 import { createMemoryHistory } from 'history';
 import { merge } from 'lodash';
+import { match } from 'react-router-dom';
 
 import { GrafanaRouteComponentProps } from '../types';
 
@@ -14,12 +15,12 @@ export function getRouteComponentProps<T extends {} = {}, Q extends Record<strin
       state: {},
       search: '',
     },
-    match: { params: {} } as any,
+    match: { params: {} } as match<T>,
     route: {
       path: '',
       component: () => null,
     },
-    queryParams: {} as any,
+    queryParams: {} as Q,
   };
 
   return merge(overrides, defaults);
