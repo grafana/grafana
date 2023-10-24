@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
@@ -24,13 +26,14 @@ type RequestContext struct {
 	EC2APIProvider        EC2APIProvider
 	Settings              CloudWatchSettings
 	Features              featuremgmt.FeatureToggles
+	Logger                log.Logger
 }
 
 // Services
 type ListMetricsProvider interface {
-	GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
-	GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
-	GetMetricsByNamespace(r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error)
+	GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
+	GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
+	GetMetricsByNamespace(ctx context.Context, r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error)
 }
 
 type LogGroupsProvider interface {
@@ -43,17 +46,17 @@ type AccountsProvider interface {
 }
 
 type RegionsAPIProvider interface {
-	GetRegions() ([]resources.ResourceResponse[resources.Region], error)
+	GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
 }
 
 // Clients
 type MetricsClientProvider interface {
-	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error)
+	ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error)
 }
 
 // APIs - instead of using the API defined in the services within the aws-sdk-go directly, specify a subset of the API with methods that are actually used in a service or a client
 type CloudWatchMetricsAPIProvider interface {
-	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	ListMetricsPagesWithContext(ctx context.Context, in *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error
 }
 
 type CloudWatchLogsAPIProvider interface {
@@ -67,6 +70,6 @@ type OAMAPIProvider interface {
 }
 
 type EC2APIProvider interface {
-	DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error)
-	DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error
+	DescribeRegionsWithContext(ctx context.Context, in *ec2.DescribeRegionsInput, opts ...request.Option) (*ec2.DescribeRegionsOutput, error)
+	DescribeInstancesPagesWithContext(ctx context.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error
 }

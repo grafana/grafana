@@ -45,7 +45,7 @@ export const SaveDashboardForm = ({ dashboard, onCancel, onSubmit, onSuccess, sa
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
               </Button>
-              <Button type="submit" disabled={!hasChanges} icon={saving ? 'fa fa-spinner' : undefined}>
+              <Button type="submit" disabled={!hasChanges} icon={saving ? 'spinner' : undefined}>
                 Save
               </Button>
               {!hasChanges && <div>No changes to save</div>}
