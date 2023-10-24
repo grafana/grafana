@@ -48,7 +48,7 @@ export function LogsTable(props: Props) {
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
       // Parse the dataframe to a logFrame
-      const logsFrame = frame ? parseLogsFrame(frame) : undefined;
+      const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
 
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
