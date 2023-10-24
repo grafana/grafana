@@ -22,23 +22,11 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 <!-- George Robinson -->
 <!-- OSS, Enterprise -->
-<Release date>
+October 16, 2023
 
 _Generally available in all editions of Grafana_
 
 Edit provisioned alerting resources using file provisioning or from within the Grafana UI.
-
-### Recovery thresholds for alerts
-
-<!-- George Robinson -->
-<!-- OSS, Enterprise -->
-<Release date>
-
-_Generally available in all editions of Grafana_
-
-To reduce the noise of flapping alerts, you can set a recovery threshold different from the alert threshold.
-
-Flapping alerts occur when a metric hovers around the alert threshold condition and they may lead to frequent state changes, resulting in too many notifications being generated.
 
 ## Export alert rules and notification resources to Terraform
 
