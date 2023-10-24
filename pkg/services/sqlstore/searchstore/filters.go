@@ -56,7 +56,10 @@ type PanelTitleFilter struct {
 
 func (f PanelTitleFilter) Where() (string, []any) {
 	// #TODO: fix for sqlite and postgres
-	return fmt.Sprintf("MATCH(dashboard.panel_titles) AGAINST (? IN NATURAL LANGUAGE MODE)"), []any{f.PanelTitle}
+	if f.Dialect.DriverName() == migrator.MySQL {
+		return "MATCH(dashboard.panel_titles) AGAINST (? IN NATURAL LANGUAGE MODE)", []any{f.PanelTitle}
+	}
+	return fmt.Sprintf("dashboard.panel_titles %s ?", f.Dialect.LikeStr()), []any{"%" + f.PanelTitle + "%"}
 }
 
 type FolderFilter struct {
