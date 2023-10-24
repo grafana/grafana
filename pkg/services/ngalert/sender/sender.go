@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -25,7 +26,7 @@ import (
 )
 
 const (
-	defaultMaxQueueCapacity = 10000
+	DefaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
 )
 
@@ -40,29 +41,31 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
-type externalAMcfg struct {
-	amURL   string
-	headers map[string]string
+type ExternalAMcfg struct {
+	URL     string
+	Headers map[string]string
 }
 
-func (cfg *externalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.amURL})
+type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
+
+func (cfg *ExternalAMcfg) SHA256() string {
+	return asSHA256([]string{cfg.headerString(), cfg.URL})
 }
 
 // headersString transforms all the headers in a sorted way as a
 // single string so it can be used for hashing and comparing.
-func (cfg *externalAMcfg) headerString() string {
+func (cfg *ExternalAMcfg) headerString() string {
 	var result strings.Builder
 
-	headerKeys := make([]string, 0, len(cfg.headers))
-	for key := range cfg.headers {
+	headerKeys := make([]string, 0, len(cfg.Headers))
+	for key := range cfg.Headers {
 		headerKeys = append(headerKeys, key)
 	}
 
 	sort.Strings(headerKeys)
 
 	for _, key := range headerKeys {
-		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.headers[key]))
+		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.Headers[key]))
 	}
 
 	return result.String()
@@ -79,7 +82,7 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: DefaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.logger,
 	)
 
@@ -88,8 +91,14 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	return s
 }
 
+// WithDoFunc receives a function to use when making HTTP requests from the Manager.
+func (s *ExternalAlertmanager) WithDoFunc(doFunc doFunc) *ExternalAlertmanager {
+	s.manager.opts.Do = doFunc
+	return s
+}
+
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []externalAMcfg) error {
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAMcfg) error {
 	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
@@ -160,11 +169,11 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]map[string]string, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]map[string]string{}
 	for i, am := range alertmanagers {
-		u, err := url.Parse(am.amURL)
+		u, err := url.Parse(am.URL)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -185,10 +194,10 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[str
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 
-		if am.headers != nil {
+		if am.Headers != nil {
 			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
 			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.headers
+			headers[fmt.Sprintf("config-%d", i)] = am.Headers
 		}
 
 		// Check the URL for basic authentication information first

@@ -10,11 +10,11 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
@@ -23,13 +23,15 @@ import (
 )
 
 type Alertmanager struct {
-	log           log.Logger
-	url           string
-	tenantID      string
-	orgID         int64
-	amClient      *amclient.AlertmanagerAPI
-	httpClient    *http.Client
 	defaultConfig string
+	log           log.Logger
+	orgID         int64
+	tenantID      string
+	url           string
+
+	amClient   *amclient.AlertmanagerAPI
+	httpClient *http.Client
+	sender     *sender.ExternalAlertmanager
 }
 
 type AlertmanagerConfig struct {
@@ -65,14 +67,32 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 		return nil, err
 	}
 
+	logger := log.New("ngalert.remote.alertmanager")
+
+	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
+		// Using our client with custom headers and basic auth credentials.
+		return client.Do(req.WithContext(ctx))
+	}
+
+	s := sender.NewExternalAlertmanagerSender().WithDoFunc(doFunc)
+	s.Run()
+
+	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{
+		URL: cfg.URL,
+	}})
+	if err != nil {
+		return nil, err
+	}
+
 	return &Alertmanager{
 		amClient:      amclient.New(transport, nil),
-		httpClient:    &client,
-		log:           log.New("ngalert.notifier.external-alertmanager"),
-		url:           cfg.URL,
-		tenantID:      cfg.TenantID,
-		orgID:         orgID,
 		defaultConfig: cfg.DefaultConfig,
+		httpClient:    &client,
+		log:           logger,
+		sender:        s,
+		orgID:         orgID,
+		tenantID:      cfg.TenantID,
+		url:           cfg.URL,
 	}, nil
 }
 
@@ -195,29 +215,9 @@ func (am *Alertmanager) GetAlertGroups(ctx context.Context, active, silenced, in
 	return res.Payload, nil
 }
 
-// TODO: implement PutAlerts in a way that is similar to what Prometheus does.
-// This current implementation is only good for testing methods that retrieve alerts from the remote Alertmanager.
-// More details in issue https://github.com/grafana/grafana/issues/76692
-func (am *Alertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
-	defer func() {
-		if r := recover(); r != nil {
-			am.log.Error("Panic while putting alerts", "err", r)
-		}
-	}()
-
-	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
-	for _, pa := range postableAlerts.PostableAlerts {
-		alerts = append(alerts, &alertingNotify.PostableAlert{
-			Annotations: pa.Annotations,
-			EndsAt:      pa.EndsAt,
-			StartsAt:    pa.StartsAt,
-			Alert:       pa.Alert,
-		})
-	}
-
-	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(alerts)
-	_, err := am.amClient.Alert.PostAlerts(params)
-	return err
+func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
+	am.sender.SendAlerts(alerts)
+	return nil
 }
 
 func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
@@ -247,10 +247,24 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 }
 
 func (am *Alertmanager) StopAndWait() {
+	am.sender.Stop()
 }
 
+// TODO: change implementation, this is only useful for testing other methods
 func (am *Alertmanager) Ready() bool {
-	return false
+	readyURL := strings.TrimSuffix(am.url, "/") + "/-/ready"
+	res, err := am.httpClient.Get(readyURL)
+	if err != nil {
+		return false
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error closing response body", "err", err)
+		}
+	}()
+
+	return res.StatusCode == http.StatusOK
 }
 
 func (am *Alertmanager) FileStore() *notifier.FileStore {
