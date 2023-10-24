@@ -169,5 +169,9 @@ function buildTransformationDocsContent(transformationDocsContent: Transformatio
   return content;
 }
 
-// `process.stdout.write(template)` was not functioning as expected, but `console.log` also writes to the standard output.
+/*
+  `process.stdout.write(template + '\n')` was not functioning as expected.
+  Neither the tsc nor ts-node compiler could identify the node `process` object.
+  Fortunately, `console.log` also writes to the standard output.
+*/
 console.log(template);
