@@ -39,11 +39,11 @@ const Item = ({ background }: { background?: string }) => {
 
 export const Basic: StoryFn<typeof Box> = (args) => {
   return (
-    <div style={{ backgroundColor: 'green' }}>
-      <Box {...args}>
-        <Item background="red" />
+    <Flex>
+      <Box borderColor="strong" borderStyle="solid">
+        <Box {...args}>Box</Box>
       </Box>
-    </div>
+    </Flex>
   );
 };
 
