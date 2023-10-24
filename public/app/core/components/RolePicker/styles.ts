@@ -118,5 +118,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    loadingSpinner: css`
+      margin-left: ${theme.spacing(1)};
+    `,
   };
 };

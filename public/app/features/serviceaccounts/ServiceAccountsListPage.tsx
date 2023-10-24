@@ -218,7 +218,7 @@ export const ServiceAccountsListPageUnconnected = ({
                     <th></th>
                     <th>Account</th>
                     <th>ID</th>
-                    <th>Roles</th>
+                    <th style={{ width: '350px' }}>Roles</th>
                     <th>Tokens</th>
                     <th style={{ width: '34px' }} />
                   </tr>
