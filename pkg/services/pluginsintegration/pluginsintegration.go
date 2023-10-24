@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -90,8 +89,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginerrs.SignatureErrorTracker), new(*pluginerrs.SignatureErrorRegistry)),
 	pluginerrs.ProvideStore,
 	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
-	manager.ProvideInstaller,
-	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,

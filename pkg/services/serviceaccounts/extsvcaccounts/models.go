@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	metricsNamespace = "grafana"
+
 	kvStoreType = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"

@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -17,8 +20,6 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type TestEnv struct {
@@ -39,9 +40,12 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SaSvc:    &tests.MockServiceAccountService{},
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}
+	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
 		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
-		logger:   log.New("extsvcaccounts.test"),
+		features: fmgt,
+		logger:   logger,
+		metrics:  newMetrics(nil, env.SaSvc, logger),
 		saSvc:    env.SaSvc,
 		skvStore: env.SkvStore,
 	}
