@@ -67,6 +67,10 @@ func TestIntegrationCreateFolder(t *testing.T) {
 			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
 			// nolint:gosec
 			resp, err = http.Post(u, "application/json", buf)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
 			require.NoError(t, err)
 			require.Equal(t, http.StatusConflict, resp.StatusCode)
 			b, err := io.ReadAll(resp.Body)
@@ -92,7 +96,7 @@ func TestIntegrationCreateFolder(t *testing.T) {
 	*/
 }
 
-func TestIntegrationCreateNestedFoldersOn(t *testing.T) {
+func TestIntegrationNestedFoldersOn(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -133,6 +137,10 @@ func TestIntegrationCreateNestedFoldersOn(t *testing.T) {
 			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
 			// nolint:gosec
 			resp, err = http.Post(u, "application/json", buf)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusConflict, resp.StatusCode)
 			b, err := io.ReadAll(resp.Body)
@@ -156,7 +164,7 @@ func TestIntegrationCreateNestedFoldersOn(t *testing.T) {
 			OrgID:     orgID,
 			ParentUID: parentUID,
 		})
-		createFolder(t, grafanaListedAddr, buf)
+		subfolderUnderParent := createFolder(t, grafanaListedAddr, buf)
 
 		t.Run("create subfolder with same name should fail", func(t *testing.T) {
 			buf.Reset()
@@ -168,6 +176,10 @@ func TestIntegrationCreateNestedFoldersOn(t *testing.T) {
 			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
 			// nolint:gosec
 			resp, err := http.Post(u, "application/json", buf)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusConflict, resp.StatusCode)
 			b, err := io.ReadAll(resp.Body)
@@ -190,12 +202,65 @@ func TestIntegrationCreateNestedFoldersOn(t *testing.T) {
 				OrgID:     orgID,
 				ParentUID: other,
 			})
+			require.NoError(t, err)
 			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
 			// nolint:gosec
 			resp, err := http.Post(u, "application/json", buf)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
 			require.NoError(t, err)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			b, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			var folderResp dtos.Folder
+			err = json.Unmarshal(b, &folderResp)
+			require.NoError(t, err)
+			assert.Equal(t, other, folderResp.ParentUID)
+			subfolderUnderOther := folderResp.Uid
+
+			t.Run("move subfolder to other folder containing folder with that name should fail", func(t *testing.T) {
+				buf.Reset()
+				err = json.NewEncoder(buf).Encode(folder.MoveFolderCommand{
+					OrgID:        orgID,
+					NewParentUID: parentUID,
+				})
+				u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/move", grafanaListedAddr, subfolderUnderOther)
+				// nolint:gosec
+				resp, err := http.Post(u, "application/json", buf)
+				t.Cleanup(func() {
+					err := resp.Body.Close()
+					require.NoError(t, err)
+				})
+				require.NoError(t, err)
+				require.Equal(t, http.StatusConflict, resp.StatusCode)
+			})
+		})
+
+		t.Run("move subfolder to root should succeed", func(t *testing.T) {
+			buf.Reset()
+			err = json.NewEncoder(buf).Encode(folder.MoveFolderCommand{
+				OrgID: orgID,
+			})
+			u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/move", grafanaListedAddr, subfolderUnderParent)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", buf)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			b, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			var folderResp dtos.Folder
+			err = json.Unmarshal(b, &folderResp)
+			require.NoError(t, err)
+			assert.Equal(t, "", folderResp.ParentUID)
 		})
 	})
 }
@@ -221,6 +286,10 @@ func createFolder(t *testing.T, grafanaListedAddr string, buf *bytes.Buffer) str
 	u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", buf)
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		require.NoError(t, err)
+	})
 	require.NoError(t, err)
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
