@@ -9,7 +9,6 @@ import {
   DataSourceApi,
   DataSourceRef,
   DefaultTimeZone,
-  ExploreUrlState,
   HistoryItem,
   IntervalValues,
   LogsDedupStrategy,
@@ -61,57 +60,36 @@ export function generateExploreId() {
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
   const { queries, dsRef, timeRange, scopedVars } = args;
-  let exploreDatasource = await getDataSourceSrv().get(dsRef);
+  const interpolatedQueries = (
+    await Promise.allSettled(
+      queries
+        // Explore does not support expressions so filter those out
+        .filter((q) => q.datasource?.uid !== ExpressionDatasourceUID)
+        .map(async (q) => {
+          // if the query defines a datasource, use that one, otherwise use the one from the panel, which should always be defined.
+          // this will rejects if the datasource is not found, or return the default one if dsRef is not provided.
+          const queryDs = await getDataSourceSrv().get(q.datasource || dsRef);
 
-  /*
-   * Explore does not support expressions so filter those out
-   */
-  let exploreTargets: DataQuery[] = queries.filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
-
-  let url: string | undefined;
-
-  if (exploreDatasource) {
-    let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange.raw) };
-    if (!exploreDatasource.meta.mixed) {
-      if (exploreDatasource.interpolateVariablesInQueries) {
-        state = {
-          ...state,
-          datasource: exploreDatasource.uid,
-          queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars ?? {}),
-        };
-      } else {
-        state = {
-          ...state,
-          datasource: exploreDatasource.uid,
-          queries: exploreTargets,
-        };
-      }
-    } else {
-      let queriesClone = [...queries];
-      const datasources = await Promise.all(
-        queries.map((query) => {
-          return query.datasource ? getDataSourceSrv().get(query.datasource) : undefined;
+          return {
+            // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
+            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {})[0] || q),
+            // But always set the datasource as it's  required in Explore.
+            // NOTE: if for some reason the query has the "mixed" datasource, we omit the property;
+            // Upon initialization, Explore use its own logic to determine the datasource.
+            ...(!queryDs.meta.mixed && { datasource: queryDs.getRef() }),
+          };
         })
-      );
+    )
+  )
+    .filter(
+      <T>(promise: PromiseSettledResult<T>): promise is PromiseFulfilledResult<T> => promise.status === 'fulfilled'
+    )
+    .map((q) => q.value);
 
-      datasources.forEach((queryDatasource, i) => {
-        if (queryDatasource?.interpolateVariablesInQueries) {
-          queriesClone[i] = queryDatasource.interpolateVariablesInQueries([exploreTargets[i]], scopedVars ?? {})[0];
-        } else {
-          queriesClone[i] = exploreTargets[i];
-        }
-      });
-      state = {
-        ...state,
-        datasource: exploreDatasource.uid,
-        queries: queriesClone,
-      };
-    }
-    const exploreState = JSON.stringify({ [generateExploreId()]: state });
-    url = urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
-  }
-
-  return url;
+  const exploreState = JSON.stringify({
+    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+  });
+  return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
 }
 
 export function buildQueryTransaction(
