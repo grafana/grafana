@@ -1748,7 +1748,7 @@ steps:
     --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
     > packages.txt
   depends_on:
-  - yarn-install
+  - update-package-json-version
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -4607,6 +4607,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a23a1640b21a7e8dd62089ab21b84a4efc43504cd6e956dd0f49e56df4f4e5a2
+hmac: 93de8a710e23d3f1d31860f9eed34cd841b0a0eb48637971de4e8ce60a7c3df1
 
 ...
