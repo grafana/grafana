@@ -878,6 +878,7 @@ export class DashboardModel implements TimeModel {
 
   removePanel(panel: PanelModel) {
     this.panels = this.panels.filter((item) => item !== panel);
+    panel.destroy();
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
