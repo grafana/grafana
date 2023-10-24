@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Service Account should not create an org on its own
