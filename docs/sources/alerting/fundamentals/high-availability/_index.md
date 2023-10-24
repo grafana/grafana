@@ -25,7 +25,7 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated. However, this is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules will still be evaluated and notifications for alerts will still be sent. You will see this duplication in state history, and is a good way to tell if you are using high availability.
+When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules will still be evaluated and notifications for alerts will still be sent. You will see this duplication in state history, and is a good way to tell if you are using high availability.
 
 While the alert generator evaluates all alert rules on all instances, Grafana makes a best-effort attempt to avoid sending duplicate notifications. Alertmanager chooses availability over consistency which means that in certain situations notifications can be duplicated or appear out-of-order. Alertmanager takes the opinion that duplicate or out-of-order notifications are better than no notifications, and so it uses a gossip protocol to share information about notifications between Grafana instances.
 
