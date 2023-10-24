@@ -22,3 +22,11 @@ type Service interface {
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
 		cmd *AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 }
+
+//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
+type ExtSvcAccountsService interface {
+	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
+	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
+	// RetrieveExtSvcAccount fetches an external service account by ID
+	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
+}
