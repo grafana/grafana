@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { PluginState, TransformerRegistryItem, TransformerUIProps, ReducerID, isReducerID, SelectableValue, getFieldDisplayName } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, InlineSwitch, Select } from '@grafana/ui';
 
-import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions, getRefIds } from './timeSeriesTableTransformer';
+import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions, getRefData } from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -11,7 +11,7 @@ export function TimeSeriesTableTransformEditor({
   onChange,
 }: TransformerUIProps<TimeSeriesTableTransformerOptions>) {
   const timeFields: Array<SelectableValue<string>> = [];
-  const refIds: Set<string> = getRefIds(input)
+  const refIdMap = getRefData(input);
 
   // Retrieve time fields
   for (const frame of input) {
@@ -65,7 +65,7 @@ export function TimeSeriesTableTransformEditor({
   );
 
   let configRows = [];
-  for (const refId of refIds) {
+  for (const refId of Object.keys(refIdMap)) {
     configRows.push(
       <InlineFieldRow key={refId}>
         <InlineField 

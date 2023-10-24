@@ -34,6 +34,19 @@ export interface TimeSeriesTableTransformerOptions {
 }
 
 /**
+ * Counts the number of refId frames in
+ * a given frame array. i.e. 
+ *  {
+ *    A: 10
+ *    B: 20
+ *    C: 12
+ *  }
+ */
+interface RefCount {
+  [index: string]: number;
+}
+
+/**
  * For each refId we allow the following to
  * be configured:
  * 
@@ -95,15 +108,15 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // which we'll return
   const result: DataFrame[] = [];
 
-  // See how many refIds we have so we can properly
-  // display labels
-  let refIds = getRefIds(data);
+  // Retreive the refIds of all the data
+  let refIdMap = getRefData(data);
 
   // If we're merging data then rather
   // than creating a series per source 
   // series we initialize fields here
   // so we end up with one
-  for (const refId of refIds) {
+  for (const refId of Object.keys(refIdMap)) {
+
     const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : MERGE_DEFAULT;
     if (merge) {
       refId2LabelField[refId] = newField('Label', FieldType.string);
@@ -111,8 +124,11 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       refId2ValueField[refId] = newField('Trend Value', FieldType.number);
     }
 
-    for (let i = 0; i < data.length; i++) {
-      const frame = data[i];
+    // Get the frames with the current refId
+    const framesForRef = data.filter((frame) => frame.refId === refId);
+
+    for (let i = 0; i < framesForRef.length; i++) {
+      const frame = framesForRef[i];
 
       // If it's not a time series frame we add
       // it unmodified to the result
@@ -156,7 +172,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   
         // Add the refId to the label if we have 
         // more than one
-        if (refIds.size > 1) {
+        if (refIdMap.length > 1) {
           labelParts.push(refId);
         }
   
@@ -193,7 +209,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   
       // If we're merging then we only add at the very
       // end that is when i has reached the end of the data
-      if (merge && i !== (data.length -  1)) {
+      if (merge && ((framesForRef.length - 1) !==  i)) {
         continue;
       }
 
@@ -242,13 +258,18 @@ function newField(label: string, type: FieldType) {
  * @param data 
  * @returns 
  */
-export function getRefIds(data: DataFrame[]) {
-  let refIds = new Set<string>();
+export function getRefData(data: DataFrame[]) {
+  let refMap: RefCount = {};
   for (const frame of data) {
     if (frame.refId !== undefined) {
-      refIds.add(frame.refId);
+      if (refMap[frame.refId] === undefined) {
+        refMap[frame.refId] = 1;
+      }
+      else {
+        refMap[frame.refId]++;
+      }
     }
   }
 
-  return refIds;
+  return refMap;
 }
