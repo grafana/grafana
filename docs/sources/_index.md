@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Grafana OSS documentation
+title: Grafana open source documentation
 ---
 
 # Grafana open source documentation
