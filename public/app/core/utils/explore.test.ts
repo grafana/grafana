@@ -38,12 +38,18 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
     type: 'loki',
     meta: { mixed: false },
     interpolateVariablesInQueries: interpolateMockLoki,
+    getRef: () => {
+      return 'ds1';
+    },
   } as unknown as DataSourceApi,
   ds2: {
     name: 'testDs2',
     type: 'prom',
     meta: { mixed: false },
     interpolateVariablesInQueries: interpolateMockProm,
+    getRef: () => {
+      return 'ds2';
+    },
   } as unknown as DataSourceApi,
   dsMixed: {
     name: 'testDSMixed',
@@ -120,9 +126,9 @@ describe('getExploreUrl', () => {
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
       scopedVars: {},
     };
-    expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs%20loki/g);
-    expect(interpolateMockLoki).toBeCalled();
-    expect(interpolateMockProm).not.toBeCalled();
+    expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs2%20prom/g);
+    expect(interpolateMockLoki).not.toBeCalled();
+    expect(interpolateMockProm).toBeCalled();
   });
   it('should interpolate queries with variables in a mixed datasource scenario', async () => {
     const nonMixedArgs = {
