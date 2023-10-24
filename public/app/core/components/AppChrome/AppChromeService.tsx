@@ -1,5 +1,6 @@
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
+import { string } from 'yargs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -31,6 +32,8 @@ export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
+  private lastPageName?: string;
+  private lastSectionName?: string;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
@@ -40,51 +43,7 @@ export class AppChromeService {
       config.featureToggles.dockedMegaMenu && store.getBool(DOCKED_LOCAL_STORAGE_KEY, false) ? 'docked' : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
-    history: [
-      {
-        name: 'Dashboard',
-        views: [
-          {
-            name: 'BarChart - Thresholds & Mappings',
-            url: '/grafana/d/2I2uMSB7z/barchart-thresholds-and-mappings?orgId=1',
-          },
-          {
-            name: 'Mimir - Aggregator',
-            url: '/grafana/d/2I2uMSB7z/barchart-thresholds-and-mappings?orgId=1',
-          },
-        ],
-      },
-      {
-        name: 'Explore',
-        views: [
-          {
-            name: 'Datasource: se-demo-prom',
-            url: 'http://localhost:3000/grafana/explore?panes=%7B%22kDu%22:%7B%22datasource%22:%22kCLEK-Cnk%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22count%28count%20by%20%28cluster%29%20%28kube_node_info%7B%7D%29%29%22,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22kCLEK-Cnk%22%7D%7D%5D,%22range%22:%7B%22from%22:%22now-1m%22,%22to%22:%22now%22%7D%7D%7D&schemaVersion=1&orgId=1',
-          },
-          {
-            name: 'Datasource: se-demo-prom',
-            url: 'http://localhost:3000/grafana/explore?panes=%7B%22kDu%22:%7B%22datasource%22:%22kCLEK-Cnk%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22count%28count%20by%20%28cluster%29%20%28kube_node_info%7B%7D%29%29%22,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22kCLEK-Cnk%22%7D%7D%5D,%22range%22:%7B%22from%22:%22now-1m%22,%22to%22:%22now%22%7D%7D%7D&schemaVersion=1&orgId=1',
-          },
-        ],
-      },
-      {
-        name: 'Kubernetes',
-        views: [
-          {
-            name: 'prod-api-svc',
-            url: '/grafana/a/grafana-k8s-app/navigation/cluster/prod-api-svc',
-          },
-          {
-            name: 'Efficency',
-            url: '/grafana/a/grafana-k8s-app/efficiency',
-          },
-          {
-            name: 'Cost',
-            url: '/grafana/a/grafana-k8s-app/cost',
-          },
-        ],
-      },
-    ],
+    history: [],
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -116,8 +75,52 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
+      newState.history = this.getUpdatedHistory(newState, current);
       this.state.next(newState);
     }
+  }
+
+  private getSectionName(navModel: NavModel) {
+    const parentName = navModel.node.parentItem?.text;
+
+    // For deeper level sections (apps)
+    if (navModel.main.text !== parentName) {
+      return `${navModel.main.text} / ${parentName}`;
+    }
+
+    return navModel.main.text;
+  }
+
+  private getUpdatedHistory(newState: AppChromeState, currentState: AppChromeState): HistoryEntryApp[] {
+    const pageName = newState.pageNav?.text || newState.sectionNav.node.text;
+    const sectionName = this.getSectionName(newState.sectionNav);
+    const oldPageName = currentState.pageNav?.text || currentState.sectionNav.node.text;
+
+    let entries = currentState.history;
+    let lastEntry = entries[0];
+
+    const oldSectionName = entries[0]?.name;
+
+    if (!sectionName) {
+      return entries;
+    }
+
+    if (sectionName !== oldSectionName) {
+      lastEntry = { name: sectionName, views: [] };
+    }
+
+    if (pageName !== oldPageName) {
+      // Filter out the view if it already exists so we do not add same view twice
+      lastEntry.views = lastEntry.views.filter((view) => view.name !== pageName);
+      lastEntry.views.unshift({ name: pageName, url: window.location.href });
+      console.log('adding entry view', pageName);
+    }
+
+    if (lastEntry !== currentState.history[0]) {
+      entries = [lastEntry, ...entries];
+    }
+
+    return entries;
   }
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
