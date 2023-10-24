@@ -64,6 +64,7 @@ export const Expression: FC<ExpressionProps> = ({
   const alertCondition = isAlertCondition ?? false;
   const noDataSeries = series.filter((serie) => !Boolean(getSeriesValue(serie))).length;
   const groupedByState = {
+    // we need to filter out series with no data (undefined) or zero value
     [PromAlertingRuleState.Firing]: series.filter((serie) => Boolean(getSeriesValue(serie))),
     [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
   };
