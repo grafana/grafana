@@ -133,6 +133,10 @@ export function useStateSync(params: ExploreQueryParams) {
               if (update.queries || update.range) {
                 dispatch(runQueries({ exploreId }));
               }
+
+              if (update.panelsState && panelsState) {
+                dispatch(changePanelsStateAction({ exploreId, panelsState }));
+              }
             });
         } else {
           // This happens when browser history is used to navigate.
