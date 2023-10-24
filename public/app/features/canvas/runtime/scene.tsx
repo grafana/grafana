@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef, MiniMap } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -661,6 +661,40 @@ export class Scene {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
+    const element = (
+      <div
+        key={this.revId}
+        className={this.styles.wrap}
+        style={this.style}
+        ref={this.setRef}
+        onMouseDown={(e) => {
+          const transformInstance = this.transformComponentRef?.current?.instance;
+          // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
+          if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
+          if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {this.connections.render()}
+        {this.root.render()}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
+          </Portal>
+        )}
+        {canShowElementTooltip && (
+          <Portal>
+            <CanvasTooltip scene={this} />
+          </Portal>
+        )}
+      </div>
+    );
 
     return (
       <TransformWrapper
@@ -673,40 +707,20 @@ export class Scene {
           }
         }}
       >
-        <TransformComponent>
-          <div
-            key={this.revId}
-            className={this.styles.wrap}
-            style={this.style}
-            ref={this.setRef}
-            onMouseDown={(e) => {
-              const transformInstance = this.transformComponentRef?.current?.instance;
-              // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-              if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-              // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-              if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-          >
-            {this.connections.render()}
-            {this.root.render()}
-            {canShowContextMenu && (
-              <Portal>
-                <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
-              </Portal>
-            )}
-            {canShowElementTooltip && (
-              <Portal>
-                <CanvasTooltip scene={this} />
-              </Portal>
-            )}
-          </div>
-        </TransformComponent>
+        <div
+          style={{
+            backgroundColor: config.theme2.colors.background.secondary,
+            position: 'fixed',
+            zIndex: 5,
+            bottom: '0px',
+            right: '0px',
+          }}
+        >
+          <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
+            {element}
+          </MiniMap>
+        </div>
+        <TransformComponent>{element}</TransformComponent>
       </TransformWrapper>
     );
   }
