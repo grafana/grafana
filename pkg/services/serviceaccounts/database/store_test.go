@@ -493,7 +493,7 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			}
 
 			require.Equal(t, tc.expectedTotal, got.TotalCount)
-			require.Len(t, got.ServiceAccounts, int(tc.expectedCount))
+			require.Len(t, got.ServiceAccounts, tc.expectedCount)
 		})
 	}
 }
