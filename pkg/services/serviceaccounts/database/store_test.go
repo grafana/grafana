@@ -473,13 +473,13 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			desc: "should paginate result",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Page:         2,
+				Page:         4,
 				Limit:        2,
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},
 			expectedTotal: 7,
-			expectedCount: 2,
+			expectedCount: 1,
 		},
 	}
 	for _, tc := range tt {
