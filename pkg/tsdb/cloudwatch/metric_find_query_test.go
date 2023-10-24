@@ -39,7 +39,7 @@ func TestQuery_Regions(t *testing.T) {
 	}
 	t.Run("An extra region", func(t *testing.T) {
 		const regionName = "xtra-region"
-		ec2Mock.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{
+		ec2Mock.On("DescribeRegionsWithContext", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{
 			Regions: []*ec2.Region{
 				{
 					RegionName: utils.Pointer(regionName),
@@ -109,7 +109,7 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 	})
 
 	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
-		cli.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
+		cli.On("DescribeRegionsWithContext", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		_, err := executor.handleGetRegions(
 			context.Background(),
@@ -121,7 +121,7 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
 		require.NoError(t, err)
 
-		cli.AssertNumberOfCalls(t, "DescribeRegions", 1)
+		cli.AssertNumberOfCalls(t, "DescribeRegionsWithContext", 1)
 	})
 }
 func TestQuery_InstanceAttributes(t *testing.T) {
