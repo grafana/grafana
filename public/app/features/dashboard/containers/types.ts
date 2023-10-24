@@ -1,5 +1,5 @@
 export interface DashboardPageRouteParams {
-  uid: string;
+  uid?: string;
   type?: string;
   slug?: string;
   accessToken?: string;

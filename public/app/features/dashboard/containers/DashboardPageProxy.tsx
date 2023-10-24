@@ -10,11 +10,14 @@ import { DashboardRoutes } from 'app/types';
 import DashboardPage from './DashboardPage';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
-type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>;
+export type DashboardPageProxyProps = GrafanaRouteComponentProps<
+  DashboardPageRouteParams,
+  DashboardPageRouteSearchParams
+>;
 
 // This proxy component is used for Dashboard -> Scenes migration.
 // It will render DashboardScenePage if the user is only allowed to view the dashboard.
-function DashboardPageProxy(props: Props) {
+function DashboardPageProxy(props: DashboardPageProxyProps) {
   const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home ||
