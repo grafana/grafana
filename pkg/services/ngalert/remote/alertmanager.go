@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -264,7 +265,28 @@ func (am *Alertmanager) Ready() bool {
 		}
 	}()
 
-	return res.StatusCode == http.StatusOK
+	if res.StatusCode != http.StatusOK {
+		am.log.Debug("Alertmanager readiness check unsuccessful", "statusCode", res.StatusCode)
+		return false
+	}
+
+	// Wait for active senders.
+	var attempts int
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			attempts++
+			if len(am.sender.Alertmanagers()) > 0 {
+				am.log.Debug("Alertmanager readiness check successful", "attempts", attempts)
+				return true
+			}
+		case <-time.After(10 * time.Second):
+			return false
+		}
+	}
 }
 
 func (am *Alertmanager) FileStore() *notifier.FileStore {

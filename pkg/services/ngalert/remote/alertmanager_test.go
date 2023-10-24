@@ -203,6 +203,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(alertGroups))
 
+	// Wait until the Alertmanager is ready to send alerts.
+	require.True(t, am.Ready())
+
 	// Let's create two active alerts and one expired one.
 	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
 	alert2 := genAlert(true, map[string]string{"test_2": "test_2"})
@@ -214,9 +217,11 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have two alerts and one group now.
-	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
-	require.NoError(t, err)
-	require.Equal(t, 2, len(alerts))
+	require.Eventually(t, func() bool {
+		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+		require.NoError(t, err)
+		return len(alerts) == 2
+	}, 16*time.Second, 1*time.Second)
 
 	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
