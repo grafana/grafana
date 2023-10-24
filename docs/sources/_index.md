@@ -3,19 +3,20 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
-description: Guides, installation, and feature documentation
+description: Open source documentation for Grafana
 keywords:
   - grafana
+  - open source
   - installation
   - documentation
 labels:
   products:
     - enterprise
     - oss
-title: Grafana documentation
+title: Grafana open source documentation
 ---
 
-# Grafana documentation
+# Grafana open source documentation
 
 ## Installing Grafana
 
