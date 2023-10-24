@@ -65,9 +65,10 @@ Select one of the following authentication methods from the dropdown menu.
 
 - **Forward OAuth identity** - Forward the OAuth access token (and the OIDC ID token if available) of the user querying the data source.
 
-- **No authentication** - Make the data source available without authentication.  Grafana recommends using some type of authentication method.
+- **No authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
 
 <!-- - **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests. -->
+
 ### TLS settings
 
 {{% admonition type="note" %}}
@@ -76,7 +77,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
 
-- **TLS client authentication** - Check the box to authenticate with the TLS client, where the server authenticates the client. Add the `Server name`, `Client certificate` and `Client key`. The **ServerName** is used to verify the hostname on the returned certificate.  The **Client certificate** can be generated from a Certificate Authority (CA) or be self-signed. The **Client key** can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts the data between client and server.
+- **TLS client authentication** - Check the box to authenticate with the TLS client, where the server authenticates the client. Add the `Server name`, `Client certificate` and `Client key`. The **ServerName** is used to verify the hostname on the returned certificate. The **Client certificate** can be generated from a Certificate Authority (CA) or be self-signed. The **Client key** can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts the data between client and server.
 
 - **Skip TLS certificate validation** - Check the box to bypass TLS certificate validation. Skipping TLS certificate validation is not recommended unless absolutely necessary or for testing purposes.
 
@@ -96,7 +97,7 @@ Additional settings are optional settings that can be configured for more contro
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
-- **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you. 
+- **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you.
 
 ### Elasticsearch details
 
@@ -137,7 +138,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 - **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
 
-- **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches.  You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
+- **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
 {{% admonition type="note" %}}
 Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
@@ -167,12 +168,11 @@ Each data link configuration consists of:
 
 ## Private data source connect (PDC) and Elasticsearch
 
-Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud.  See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. See [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) for more information on how PDC works and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
 - **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
 
-Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection.  You can also remove a connection by clicking **Delete**.
-
+Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
 
 {{% docs/reference %}}
 [administration documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

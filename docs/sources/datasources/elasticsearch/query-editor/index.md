@@ -23,7 +23,7 @@ weight: 300
 
 # Elasticsearch query editor
 
-Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in Lucene format. 
+Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in Lucene format.
 See [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-query.html) and and [Query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/query-dsl-query-string-query.html#query-string-syntax) if you are new to working with Lucene queries in Elasticsearch.
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
