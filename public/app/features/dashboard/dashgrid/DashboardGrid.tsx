@@ -20,7 +20,7 @@ import { GridPos } from '../state/PanelModel';
 import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
-const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
+export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
 
 export interface Props {
   dashboard: DashboardModel;
