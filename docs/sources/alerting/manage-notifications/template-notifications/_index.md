@@ -34,7 +34,7 @@ You cannot use notification templates to:
 - Add HTML and CSS to email notifications to change their visual appearance.
 - Change the design of notifications in instant messaging services such as Slack and Microsoft Teams. For example, to add or remove custom blocks with Slack Block Kit or adaptive cards with Microsoft Teams.
 - Choose the number and size of images, or where in the notification images are shown.
-- Customize the data in webhooks, including the fields or structure of the JSON data or sending the data in other formats such as XML.
+- Customize the data in webhooks, including the fields or structure of the JSON data or send the data in other formats such as XML.
 - Add or remove HTTP headers in webhooks other than those in the contact point configuration.
 
 [Using Go's templating language][using-go-templating-language]
