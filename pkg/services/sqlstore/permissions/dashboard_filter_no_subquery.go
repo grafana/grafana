@@ -148,8 +148,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 			}
 
 			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
-			hasAccessToDashboardsInGeneralFolder := hasAccessToRoot(toCheck, f.user)
-			if hasAccessToDashboardsInGeneralFolder {
+			if hasAccessToRoot(toCheck, f.user) {
 				builder.WriteString(" OR (dashboard.folder_id = 0 AND NOT dashboard.is_folder)")
 			}
 		} else {
