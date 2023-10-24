@@ -12,7 +12,7 @@ export function PageHistoryButton(props: Props) {
   return (
     <Dropdown overlay={() => <PageHistoryPopover />} placement="bottom">
       <Box marginLeft={1}>
-        <DashNavButton icon="clock-nine" tooltip="Settings" />
+        <DashNavButton icon="clock-nine" tooltip="Go back to a previous page" />
       </Box>
     </Dropdown>
   );
