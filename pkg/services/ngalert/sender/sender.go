@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	DefaultMaxQueueCapacity = 10000
+	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
 )
 
@@ -91,7 +91,7 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: DefaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.logger,
 	)
 
