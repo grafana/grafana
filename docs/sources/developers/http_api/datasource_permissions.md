@@ -129,7 +129,7 @@ Status codes:
 
 Sets user permission for the data source with the given `uid`.
 
-To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To add a permission, set the `permission` field to either `Query` or `Edit`.
 To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
@@ -201,7 +201,7 @@ Status codes:
 
 Sets team permission for the data source with the given `uid`.
 
-To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To add a permission, set the `permission` field to either `Query` or `Edit`.
 To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
@@ -275,7 +275,7 @@ Sets permission for the data source with the given `uid` to all users who have t
 
 You can set permissions for the following basic roles: `Admin`, `Editor`, `Viewer`.
 
-To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To add a permission, set the `permission` field to either `Query` or `Edit`.
 To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
