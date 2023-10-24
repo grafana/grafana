@@ -17,7 +17,7 @@ import (
 func BenchmarkPanelTitleSearch(b *testing.B) {
 	start := time.Now()
 	b.Log("setup start")
-	sc := setupDB(b)
+	sc := setupDBPanelTitle(b)
 	b.Log("setup time:", time.Since(start))
 
 	benchmarks := []struct {

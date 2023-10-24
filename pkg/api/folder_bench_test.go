@@ -293,6 +293,234 @@ func setupDB(b testing.TB) benchScenario {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
+				ID:       dashID,
+				OrgID:    signedInUser.OrgID,
+				IsFolder: false,
+				UID:      str,
+				FolderID: f0.ID,
+				Slug:     str,
+				Title:    str,
+				Data:     simplejson.New(),
+				Created:  now,
+				Updated:  now,
+			})
+
+			dashTags = append(dashTags, &dashboardTag{
+				DashboardId: dashID,
+				Term:        fmt.Sprintf("tag%d", j),
+			})
+		}
+
+		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
+			f1, d1 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
+			folders = append(folders, f1)
+			dashs = append(dashs, d1)
+
+			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
+				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
+				dashID := generateID(IDs)
+				dashs = append(dashs, &dashboards.Dashboard{
+					ID:       dashID,
+					OrgID:    signedInUser.OrgID,
+					IsFolder: false,
+					UID:      str,
+					FolderID: f1.ID,
+					Slug:     str,
+					Title:    str,
+					Data:     simplejson.New(),
+					Created:  now,
+					Updated:  now,
+				})
+
+				dashTags = append(dashTags, &dashboardTag{
+					DashboardId: dashID,
+					Term:        fmt.Sprintf("tag%d", k),
+				})
+			}
+
+			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
+				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
+				folders = append(folders, f2)
+				dashs = append(dashs, d2)
+
+				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
+					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
+					dashID := generateID(IDs)
+					dashs = append(dashs, &dashboards.Dashboard{
+						ID:       dashID,
+						OrgID:    signedInUser.OrgID,
+						IsFolder: false,
+						UID:      str,
+						FolderID: f2.ID,
+						Slug:     str,
+						Title:    str,
+						Data:     simplejson.New(),
+						Created:  now,
+						Updated:  now,
+					})
+
+					dashTags = append(dashTags, &dashboardTag{
+						DashboardId: dashID,
+						Term:        fmt.Sprintf("tag%d", l),
+					})
+				}
+			}
+		}
+	}
+
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.BulkInsert("folder", folders, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("dashboard", dashs, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("permission", permissions, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("dashboard_tag", dashTags, opts)
+		return err
+	})
+	require.NoError(b, err)
+	return benchScenario{
+		db:           db,
+		cfg:          cfg,
+		signedInUser: &signedInUser,
+		teamSvc:      teamSvc,
+		userSvc:      userSvc,
+	}
+}
+
+// #TODO refactor so that there is less repetition with setupDB() above
+func setupDBPanelTitle(b testing.TB) benchScenario {
+	b.Helper()
+	db := sqlstore.InitTestDB(b)
+	IDs := map[int64]struct{}{}
+
+	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
+
+	quotaService := quotatest.New(false, nil)
+	cfg := setting.NewCfg()
+
+	teamSvc := teamimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	require.NoError(b, err)
+
+	cache := localcache.ProvideService()
+	userSvc, err := userimpl.ProvideService(db, orgService, cfg, teamSvc, cache, &quotatest.FakeQuotaService{}, bundleregistry.ProvideService())
+	require.NoError(b, err)
+
+	var orgID int64 = 1
+
+	userIDs := make([]int64, 0, TEAM_MEMBER_NUM)
+	for i := 0; i < TEAM_MEMBER_NUM; i++ {
+		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
+			OrgID: orgID,
+			Login: fmt.Sprintf("user%d", i),
+		})
+		require.NoError(b, err)
+		require.NotZero(b, u.ID)
+		userIDs = append(userIDs, u.ID)
+	}
+
+	signedInUser := user.SignedInUser{UserID: userIDs[0], OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+	}}
+
+	now := time.Now()
+	roles := make([]accesscontrol.Role, 0, TEAM_NUM)
+	teams := make([]team.Team, 0, TEAM_NUM)
+	teamMembers := make([]team.TeamMember, 0, TEAM_MEMBER_NUM)
+	teamRoles := make([]accesscontrol.TeamRole, 0, TEAM_NUM)
+	for i := 1; i < TEAM_NUM+1; i++ {
+		teamID := int64(i)
+		teams = append(teams, team.Team{
+			UID:     fmt.Sprintf("team%d", i),
+			ID:      teamID,
+			Name:    fmt.Sprintf("team%d", i),
+			OrgID:   orgID,
+			Created: now,
+			Updated: now,
+		})
+		signedInUser.Teams = append(signedInUser.Teams, teamID)
+
+		for _, userID := range userIDs {
+			teamMembers = append(teamMembers, team.TeamMember{
+				UserID:     userID,
+				TeamID:     teamID,
+				OrgID:      orgID,
+				Permission: dashboards.PERMISSION_VIEW,
+				Created:    now,
+				Updated:    now,
+			})
+		}
+
+		name := fmt.Sprintf("managed_team_role_%d", i)
+		roles = append(roles, accesscontrol.Role{
+			ID:      int64(i),
+			UID:     name,
+			OrgID:   orgID,
+			Name:    name,
+			Updated: now,
+			Created: now,
+		})
+
+		teamRoles = append(teamRoles, accesscontrol.TeamRole{
+			RoleID:  int64(i),
+			OrgID:   orgID,
+			TeamID:  teamID,
+			Created: now,
+		})
+	}
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.BulkInsert("team", teams, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("team_member", teamMembers, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("role", roles, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("team_role", teamRoles, opts)
+		return err
+	})
+	require.NoError(b, err)
+
+	foldersCap := LEVEL0_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM
+	folders := make([]*f, 0, foldersCap)
+	dashsCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEVEL2_DASHBOARD_NUM
+	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
+	dashTags := make([]*dashboardTag, 0, dashsCap)
+	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
+	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
+		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
+		folders = append(folders, f0)
+		dashs = append(dashs, d)
+
+		roleID := int64(i%TEAM_NUM + 1)
+		permissions = append(permissions, accesscontrol.Permission{
+			RoleID:  roleID,
+			Action:  dashboards.ActionFoldersRead,
+			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Updated: now,
+			Created: now,
+		},
+			accesscontrol.Permission{
+				RoleID:  roleID,
+				Action:  dashboards.ActionDashboardsRead,
+				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Updated: now,
+				Created: now,
+			},
+		)
+		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+
+		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
+			str := fmt.Sprintf("dashboard_%d_%d", i, j)
+			dashID := generateID(IDs)
+			dashs = append(dashs, &dashboards.Dashboard{
 				ID:          dashID,
 				OrgID:       signedInUser.OrgID,
 				IsFolder:    false,

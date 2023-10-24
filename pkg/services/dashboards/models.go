@@ -47,7 +47,7 @@ type Dashboard struct {
 	HasACL    bool `xorm:"has_acl"`
 
 	Title       string
-	PanelTitles string
+	PanelTitles string `xorm:"panel_titles"`
 	Data        *simplejson.Json
 }
 
