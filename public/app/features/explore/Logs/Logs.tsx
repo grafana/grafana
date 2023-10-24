@@ -36,7 +36,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
-  Icon,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
