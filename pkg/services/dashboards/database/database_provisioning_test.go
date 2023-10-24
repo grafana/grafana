@@ -24,9 +24,10 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	require.NoError(t, err)
 
 	folderCmd := dashboards.SaveDashboardCommand{
-		OrgID:    1,
-		FolderID: 0,
-		IsFolder: true,
+		OrgID:     1,
+		FolderID:  0,
+		FolderUID: "",
+		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",
@@ -37,9 +38,10 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	require.Nil(t, err)
 
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
-		OrgID:    1,
-		IsFolder: false,
-		FolderID: dash.ID,
+		OrgID:     1,
+		IsFolder:  false,
+		FolderID:  dash.ID,
+		FolderUID: dash.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",
@@ -63,9 +65,10 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 
 		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
 			saveCmd := dashboards.SaveDashboardCommand{
-				OrgID:    1,
-				IsFolder: false,
-				FolderID: dash.ID,
+				OrgID:     1,
+				IsFolder:  false,
+				FolderID:  dash.ID,
+				FolderUID: dash.UID,
 				Dashboard: simplejson.NewFromAny(map[string]any{
 					"id":    nil,
 					"title": "another_dashboard",

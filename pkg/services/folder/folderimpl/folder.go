@@ -276,6 +276,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
+	dashFolder.OrgID = cmd.OrgID
+
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
@@ -286,10 +289,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if !hasAccess {
 			return nil, dashboards.ErrFolderAccessDenied
 		}
+		dashFolder.FolderUID = cmd.ParentUID
 	}
-
-	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
-	dashFolder.OrgID = cmd.OrgID
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
@@ -325,7 +326,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		User:      user,
 	}
 
-	saveDashboardCmd, err := s.BuildSaveDashboardCommand(ctx, dto)
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -419,6 +420,10 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	dashFolder := queryResult
+	if cmd.NewParentUID != nil {
+		dashFolder.FolderUID = *cmd.NewParentUID
+	}
+
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
@@ -447,7 +452,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := s.BuildSaveDashboardCommand(ctx, dto)
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -621,7 +626,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	// if the current folder is already a parent of newparent, we should return error
 	for _, parent := range parents {
 		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference
+			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
 		}
 	}
 
@@ -629,12 +634,34 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if cmd.NewParentUID != "" {
 		newParentUID = cmd.NewParentUID
 	}
-	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		UID:          cmd.UID,
-		OrgID:        cmd.OrgID,
-		NewParentUID: &newParentUID,
-		SignedInUser: cmd.SignedInUser,
-	})
+
+	var f *folder.Folder
+	if err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+			UID:          cmd.UID,
+			OrgID:        cmd.OrgID,
+			NewParentUID: &newParentUID,
+			SignedInUser: cmd.SignedInUser,
+		}); err != nil {
+			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
+		}
+
+		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
+			UID:          cmd.UID,
+			OrgID:        cmd.OrgID,
+			NewParentUID: &newParentUID,
+			SignedInUser: cmd.SignedInUser,
+			// bypass optimistic locking used for dashboards
+			Overwrite: true,
+		}); err != nil {
+			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 // nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
@@ -735,9 +762,9 @@ func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string)
 	return result, nil
 }
 
-// BuildSaveDashboardCommand is a simplified version on DashboardServiceImpl.BuildSaveDashboardCommand
+// buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand
 // keeping only the meaningful functionality for folders
-func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
+func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.OrgID = dto.OrgID
@@ -807,6 +834,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID,
+		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
 	}

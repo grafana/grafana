@@ -50,3 +50,8 @@ func (s *MockServiceAccountService) UpdateServiceAccount(ctx context.Context, or
 	mockedArgs := s.Called(ctx, orgID, serviceAccountID)
 	return mockedArgs.Get(0).(*serviceaccounts.ServiceAccountProfileDTO), mockedArgs.Error(1)
 }
+
+func (s *MockServiceAccountService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	mockedArgs := s.Called(ctx, query)
+	return mockedArgs.Get(0).(*serviceaccounts.SearchOrgServiceAccountsResult), mockedArgs.Error(1)
+}

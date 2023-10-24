@@ -301,9 +301,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -708,9 +709,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:            "reportingRetries",
