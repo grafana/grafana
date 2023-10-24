@@ -4,15 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
-	"github.com/stretchr/testify/assert"
 )
 
 type FakeServiceAccountsService struct {
-	ExpectedServiceAccountProfileDTO *serviceaccounts.ServiceAccountProfileDTO
+	ExpectedServiceAccountProfileDTO       *serviceaccounts.ServiceAccountProfileDTO
+	ExpectedSearchOrgServiceAccountsResult *serviceaccounts.SearchOrgServiceAccountsResult
 }
 
 var _ serviceaccounts.Service = (*FakeServiceAccountsService)(nil)
@@ -47,7 +50,11 @@ func (f *FakeServiceAccountsService) AddServiceAccountToken(ctx context.Context,
 	return nil, nil
 }
 
-func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
+func (f *FakeServiceAccountsService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	return f.ExpectedSearchOrgServiceAccountsResult, nil
+}
+
+func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	testOrgId := int64(1)
 	testServiceAccountId := int64(1)
 	serviceMock := newServiceAccountServiceFake()
@@ -255,5 +262,30 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		assert.False(t, isExternalServiceAccount("sa-my-service-account"))
 		assert.False(t, isExternalServiceAccount("extsvc-my-service-account"))
 		assert.True(t, isExternalServiceAccount("sa-extsvc-my-service-account"))
+	})
+}
+
+func TestProvideServiceAccount_SearchServiceAccount(t *testing.T) {
+	serviceMock := newServiceAccountServiceFake()
+	svc := ServiceAccountsProxy{
+		log.New("test"),
+		serviceMock,
+	}
+
+	t.Run("should mark external service accounts correctly", func(t *testing.T) {
+		serviceMock.ExpectedSearchOrgServiceAccountsResult = &serviceaccounts.SearchOrgServiceAccountsResult{
+			TotalCount: 2,
+			ServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				{Login: "test"},
+				{Login: serviceaccounts.ServiceAccountPrefix + serviceaccounts.ExtSvcPrefix + "test"},
+			},
+			Page:    1,
+			PerPage: 2,
+		}
+		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
+		require.Len(t, res.ServiceAccounts, 2)
+		require.NoError(t, err)
+		require.False(t, res.ServiceAccounts[0].IsExternal)
+		require.True(t, res.ServiceAccounts[1].IsExternal)
 	})
 }
