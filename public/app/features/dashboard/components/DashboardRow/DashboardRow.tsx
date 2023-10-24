@@ -110,6 +110,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
           type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
+          aria-expanded={this.props.panel.collapsed ? 'false' : 'true'}
         >
           <Icon name={this.props.panel.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
