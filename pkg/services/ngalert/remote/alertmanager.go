@@ -70,12 +70,11 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 
 	logger := log.New("ngalert.remote.alertmanager")
 
+	// Using our client with custom headers and basic auth credentials.
 	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
-		// Using our client with custom headers and basic auth credentials.
 		return client.Do(req.WithContext(ctx))
 	}
-
-	s := sender.NewExternalAlertmanagerSender().WithDoFunc(doFunc)
+	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
 	s.Run()
 
 	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{

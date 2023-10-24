@@ -46,7 +46,16 @@ type ExternalAMcfg struct {
 	Headers map[string]string
 }
 
+type Option func(*ExternalAlertmanager)
+
 type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
+
+// WithDoFunc receives a function to use when making HTTP requests from the Manager.
+func WithDoFunc(doFunc doFunc) Option {
+	return func(s *ExternalAlertmanager) {
+		s.manager.opts.Do = doFunc
+	}
+}
 
 func (cfg *ExternalAMcfg) SHA256() string {
 	return asSHA256([]string{cfg.headerString(), cfg.URL})
@@ -71,7 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender() *ExternalAlertmanager {
+func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
@@ -88,12 +97,10 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 
 	s.sdManager = discovery.NewManager(sdCtx, s.logger)
 
-	return s
-}
+	for _, opt := range opts {
+		opt(s)
+	}
 
-// WithDoFunc receives a function to use when making HTTP requests from the Manager.
-func (s *ExternalAlertmanager) WithDoFunc(doFunc doFunc) *ExternalAlertmanager {
-	s.manager.opts.Do = doFunc
 	return s
 }
 
