@@ -1498,8 +1498,9 @@
               "properties": {
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
-                  "example": "1",
-                  "type": "string"
+                  "example": 1,
+                  "format": "int64",
+                  "type": "integer"
                 },
                 "status": {
                   "description": "Status status of the response.",
@@ -6112,23 +6113,6 @@
         },
         "type": "object"
       },
-      "Item": {
-        "properties": {
-          "title": {
-            "description": "Title is an unused property -- it will be removed in the future",
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ItemType"
-          },
-          "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
-            "type": "string"
-          }
-        },
-        "title": "Item defines model for Item.",
-        "type": "object"
-      },
       "ItemDTO": {
         "properties": {
           "alertId": {
@@ -6203,9 +6187,52 @@
         },
         "type": "object"
       },
-      "ItemType": {
-        "title": "Type of the item.",
-        "type": "string"
+      "JSONWebKey": {
+        "properties": {
+          "Algorithm": {
+            "description": "Key algorithm, parsed from `alg` header.",
+            "type": "string"
+          },
+          "CertificateThumbprintSHA1": {
+            "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "CertificateThumbprintSHA256": {
+            "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Certificates": {
+            "description": "X.509 certificate chain, parsed from `x5c` header.",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "CertificatesURL": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "Key": {
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          },
+          "KeyID": {
+            "description": "Key identifier, parsed from `kid` header.",
+            "type": "string"
+          },
+          "Use": {
+            "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
+        "type": "object"
       },
       "JSONWebKey": {
         "properties": {
@@ -22270,56 +22297,6 @@
           }
         },
         "summary": "Add External Group.",
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ]
-      }
-    },
-    "/teams/{teamId}/groups/{groupId}": {
-      "delete": {
-        "deprecated": true,
-        "operationId": "removeTeamGroupApi",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "groupId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "teamId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Remove External Group.",
         "tags": [
           "sync_team_groups",
           "enterprise"

@@ -59,6 +59,7 @@ interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' |
   shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
+  gap?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
@@ -96,6 +97,7 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     alignItems,
     boxShadow,
     element,
+    gap,
     ...rest
   } = props;
   const styles = useStyles2(
@@ -123,7 +125,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     borderRadius,
     justifyContent,
     alignItems,
-    boxShadow
+    boxShadow,
+    gap
   );
   const Element = element ?? 'div';
 
@@ -185,7 +188,8 @@ const getStyles = (
   borderRadius: BoxProps['borderRadius'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
-  boxShadow: BoxProps['boxShadow']
+  boxShadow: BoxProps['boxShadow'],
+  gap: BoxProps['gap']
 ) => {
   return {
     root: css([
@@ -267,6 +271,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, boxShadow, (val) => ({
         boxShadow: theme.shadows[val],
+      })),
+      getResponsiveStyle(theme, gap, (val) => ({
+        gap: theme.spacing(val),
       })),
     ]),
   };

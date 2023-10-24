@@ -9615,52 +9615,6 @@
         }
       }
     },
-    "/teams/{teamId}/groups/{groupId}": {
-      "delete": {
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ],
-        "summary": "Remove External Group.",
-        "operationId": "removeTeamGroupApi",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "groupId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/teams/{team_id}": {
       "get": {
         "tags": [
@@ -15067,23 +15021,6 @@
         }
       }
     },
-    "Item": {
-      "type": "object",
-      "title": "Item defines model for Item.",
-      "properties": {
-        "title": {
-          "description": "Title is an unused property -- it will be removed in the future",
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/ItemType"
-        },
-        "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
-          "type": "string"
-        }
-      }
-    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -15158,9 +15095,52 @@
         }
       }
     },
-    "ItemType": {
-      "type": "string",
-      "title": "Type of the item."
+    "JSONWebKey": {
+      "type": "object",
+      "title": "JSONWebKey represents a public or private key in JWK format.",
+      "properties": {
+        "Algorithm": {
+          "description": "Key algorithm, parsed from `alg` header.",
+          "type": "string"
+        },
+        "CertificateThumbprintSHA1": {
+          "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "CertificateThumbprintSHA256": {
+          "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "Certificates": {
+          "description": "X.509 certificate chain, parsed from `x5c` header.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificate"
+          }
+        },
+        "CertificatesURL": {
+          "$ref": "#/definitions/URL"
+        },
+        "Key": {
+          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+        },
+        "KeyID": {
+          "description": "Key identifier, parsed from `kid` header.",
+          "type": "string"
+        },
+        "Use": {
+          "description": "Key use, parsed from `use` header.",
+          "type": "string"
+        }
+      }
     },
     "JSONWebKey": {
       "type": "object",
@@ -21833,8 +21813,9 @@
         "properties": {
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
-            "type": "string",
-            "example": "1"
+            "type": "integer",
+            "format": "int64",
+            "example": 1
           },
           "status": {
             "description": "Status status of the response.",
