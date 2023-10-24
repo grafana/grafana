@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -314,7 +313,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereConditions = append(
 				whereConditions,
 				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
-			whereParams = append(whereParams, "sa-"+extsvcauth.ExtSvcPrefix+"%")
+			whereParams = append(whereParams, "sa-"+serviceaccounts.ExtSvcPrefix+"%")
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
