@@ -36,7 +36,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
-  Icon,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
@@ -161,6 +160,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+
+    console.log('init prop', this.props.panelState?.logs);
+    console.log('init state', this.state);
   }
 
   componentWillUnmount() {
