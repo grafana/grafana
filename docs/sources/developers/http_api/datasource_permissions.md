@@ -31,11 +31,6 @@ This API can be used to list, add and remove permissions for a data source.
 
 Permissions can be set for a user, team, service account or a basic role (Admin, Editor, Viewer).
 
-The permission levels for the permission field:
-
-- 1 = Query
-- 2 = Edit
-
 ## Get permissions for a data source
 
 `GET /api/access-control/datasources/:uid`
