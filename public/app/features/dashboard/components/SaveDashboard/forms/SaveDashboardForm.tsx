@@ -126,7 +126,7 @@ export const SaveDashboardForm = ({
               <Button
                 type="submit"
                 disabled={!saveModel.hasChanges || isLoading}
-                icon={saving ? 'fa fa-spinner' : undefined}
+                icon={saving ? 'spinner' : undefined}
                 aria-label={selectors.pages.SaveDashboardModal.save}
               >
                 {isLoading ? 'Saving...' : 'Save'}
