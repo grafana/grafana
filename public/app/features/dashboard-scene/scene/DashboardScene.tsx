@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -14,6 +14,8 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardMeta } from 'app/types';
 
@@ -155,7 +157,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
 
-  public getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location, navIndex: NavIndex) {
+    const { meta } = this.state;
+
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
@@ -164,6 +168,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         updateQuery: { viewPanel: null, inspect: null },
       }),
     };
+
+    const { folderTitle, folderUid } = meta;
+
+    if (folderUid) {
+      if (newBrowseDashboardsEnabled()) {
+        const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+        // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+        // don't show the "page not found" breadcrumb
+        if (folderNavModel.id !== 'not-found') {
+          pageNav = {
+            ...pageNav,
+            parentItem: folderNavModel,
+          };
+        }
+      } else {
+        if (folderTitle) {
+          pageNav = {
+            ...pageNav,
+            parentItem: {
+              text: folderTitle,
+              url: `/dashboards/f/${meta.folderUid}`,
+            },
+          };
+        }
+      }
+    }
 
     if (this.state.viewPanelKey) {
       pageNav = {

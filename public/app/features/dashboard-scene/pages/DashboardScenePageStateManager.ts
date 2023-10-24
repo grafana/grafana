@@ -1,8 +1,13 @@
 import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { updateNavIndex } from 'app/core/actions';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { buildNavModel } from 'app/features/folders/state/navModel';
+import { store } from 'app/store/store';
 import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
@@ -62,6 +67,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       if (rsp) {
         // Fill in meta fields
         const dashboard = this.initDashboardMeta(rsp);
+
+        // Populate nav model in global store according to the folder
+        await this.initNavModel(dashboard);
+
         this.dashboardCache.set(uid, { dashboard, ts: Date.now() });
       }
     } catch (e) {
@@ -131,7 +140,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     const cachedDashboard = this.dashboardCache.get(uid);
 
     if (cachedDashboard && !this.hasExpired(cachedDashboard)) {
-      console.log('DashboardScenePageStateManager: reading from cache', uid);
       return cachedDashboard.dashboard;
     }
 
@@ -147,6 +155,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       ...dashboard,
       meta: initDashboardMeta(dashboard.meta, Boolean(dashboard.dashboard.editable)),
     };
+  }
+
+  private async initNavModel(dashboard: DashboardDTO) {
+    // only the folder API has information about ancestors
+    // get parent folder (if it exists) and put it in the store
+    // this will be used to populate the full breadcrumb trail
+    if (newBrowseDashboardsEnabled() && dashboard.meta.folderUid) {
+      try {
+        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
+        store.dispatch(updateNavIndex(buildNavModel(folder)));
+      } catch (err) {
+        console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);
+      }
+    }
   }
 
   public clearState() {
