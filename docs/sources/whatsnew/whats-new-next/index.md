@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Export alert rules and notification resources to Terraform
+## Export alerting resources to Terraform
 
 <!-- Yuri Tseretyan -->
 <!-- OSS, Enterprise -->
@@ -27,7 +27,7 @@ October 30, 2023
 
 _Generally available in Grafana Cloud_
 
-This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new “Modify export” mode for alert rules enables you to edit provisioned alert rules and export a modified version.
 
 ## Alerting insights
 
@@ -207,16 +207,6 @@ _Available in private preview in Grafana Cloud_
 The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
-
-## Edit file-provisioned alerting resources
-
-<!-- George Robinson -->
-<!-- OSS, Enterprise -->
-October 16, 2023
-
-_Generally available in all editions of Grafana_
-
-Edit provisioned alerting resources using file provisioning or from within the Grafana UI.
 
 ## No basic role
 
