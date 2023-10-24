@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -15,13 +16,15 @@ type Registry struct {
 	features    featuremgmt.FeatureToggles
 	logger      log.Logger
 	oauthServer oauthserver.OAuth2Server
+	saSvc       *extsvcaccounts.ExtSvcAccountsService
 }
 
-func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, features featuremgmt.FeatureToggles) *Registry {
+func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcaccounts.ExtSvcAccountsService, features featuremgmt.FeatureToggles) *Registry {
 	return &Registry{
 		features:    features,
 		logger:      log.New("extsvcauth.registry"),
 		oauthServer: oauthServer,
+		saSvc:       saSvc,
 	}
 }
 
@@ -30,6 +33,13 @@ func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, features featur
 // associated service account has the correct permissions.
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	switch cmd.AuthProvider {
+	case extsvcauth.ServiceAccounts:
+		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+			r.logger.Warn("Skipping external service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			return nil, nil
+		}
+		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
+		return r.saSvc.SaveExternalService(ctx, cmd)
 	case extsvcauth.OAuth2Server:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 			r.logger.Warn("Skipping external service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)

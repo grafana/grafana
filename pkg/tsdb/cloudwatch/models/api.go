@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
@@ -24,6 +26,7 @@ type RequestContext struct {
 	EC2APIProvider        EC2APIProvider
 	Settings              CloudWatchSettings
 	Features              featuremgmt.FeatureToggles
+	Logger                log.Logger
 }
 
 // Services
@@ -68,5 +71,5 @@ type OAMAPIProvider interface {
 
 type EC2APIProvider interface {
 	DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error)
-	DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error
+	DescribeInstancesPagesWithContext(ctx context.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error
 }
