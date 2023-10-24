@@ -118,12 +118,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   for (const refId of Object.keys(refIdMap)) {
 
     const merge = options[refId]?.mergeSeries !== undefined ? options[refId].mergeSeries : MERGE_DEFAULT;
-    if (merge) {
-      refId2LabelField[refId] = newField('Label', FieldType.string);
-      refId2FrameField[refId] = newField('Trend', FieldType.frame);
-      refId2ValueField[refId] = newField('Trend Value', FieldType.number);
-    }
-
+    
     // Get the frames with the current refId
     const framesForRef = data.filter((frame) => frame.refId === refId);
 
@@ -154,7 +149,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   
       // Initialize fields for this frame 
       // if we're not merging them
-      if (!merge) {
+      if ((merge && i === 0) || !merge) {
         refId2LabelField[refId] = newField('Label', FieldType.string);
         refId2FrameField[refId] = newField('Trend', FieldType.frame);
         refId2ValueField[refId] = newField('Trend Value', FieldType.number);
