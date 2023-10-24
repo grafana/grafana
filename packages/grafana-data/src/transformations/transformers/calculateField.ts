@@ -16,6 +16,7 @@ import { noopTransformer } from './noop';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
+  StatisticalFunctions = 'statisticalFunctions',
   BinaryOperation = 'binary',
   UnaryOperation = 'unary',
   Index = 'index',
@@ -25,7 +26,12 @@ export interface ReduceOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
-  cumulativeTotal?: boolean;
+}
+
+export interface StatisticalOptions {
+  include?: string[]; // Assume all fields
+  reducer: ReducerID;
+  nullValueMode?: NullValueMode;
 }
 
 export interface UnaryOptions {
@@ -65,6 +71,7 @@ export interface CalculateFieldTransformerOptions {
 
   // Only one should be filled
   reduce?: ReduceOptions;
+  statistical?: StatisticalOptions;
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
@@ -107,6 +114,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+        } else if (mode === CalculateFieldMode.StatisticalFunctions) {
+          creator = getStatisticalCreator(defaults(options.statistical, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.UnaryOperation) {
           creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
@@ -181,6 +190,65 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
   },
 };
 
+function getStatisticalCreator(options: StatisticalOptions, allFrames: DataFrame[]): ValuesCreator {
+  let matcher = getFieldMatcher({
+    id: FieldMatcherID.numeric,
+  });
+
+  if (options.include && options.include.length) {
+    matcher = getFieldMatcher({
+      id: FieldMatcherID.byNames,
+      options: {
+        names: options.include,
+      },
+    });
+  }
+
+  const info = fieldReducers.get(options.reducer);
+
+  if (!info) {
+    throw new Error(`Unknown reducer: ${options.reducer}`);
+  }
+
+  const reducer = info.reduce ?? doStandardCalcs;
+  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
+  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
+
+  return (frame: DataFrame) => {
+    // Find the columns that should be examined
+    const columns = [];
+    for (const field of frame.fields) {
+      if (matcher(field, frame, allFrames)) {
+        columns.push(field.values);
+      }
+    }
+
+    // Prepare a "fake" field for the row
+    const size = columns.length;
+    const row: Field = {
+      name: 'temp',
+      values: new Array(size),
+      type: FieldType.number,
+      config: {},
+    };
+    const vals: number[] = [];
+
+    for (let i = 0; i < frame.length; i++) {
+      let cumulative = 0;
+
+      for (let j = 0; j < size; j++) {
+        cumulative += columns[j][i];
+      }
+
+      row.values[i] = cumulative;
+
+      vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
+    }
+
+    return vals;
+  };
+}
+
 function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
@@ -225,19 +293,10 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
     const vals: number[] = [];
 
     for (let i = 0; i < frame.length; i++) {
-      if (options.cumulativeTotal) {
-        let cumulativeTotal = 0;
-
-        for (let j = 0; j < size; j++) {
-          cumulativeTotal += columns[j][i];
-        }
-
-        row.values[i] = cumulativeTotal;
-      } else {
-        for (let j = 0; j < size; j++) {
-          row.values[j] = columns[j][i];
-        }
+      for (let j = 0; j < size; j++) {
+        row.values[j] = columns[j][i];
       }
+
       vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
     }
 

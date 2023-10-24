@@ -23,6 +23,7 @@ import {
 import {
   BinaryOptions,
   UnaryOptions,
+  StatisticalOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
@@ -54,6 +55,7 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.StatisticalFunctions, label: 'Statistical' },
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
 
@@ -175,17 +177,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onToggleCumulativeTotal = (e: React.FormEvent<HTMLInputElement>) => {
-    const { options } = this.props;
-    this.props.onChange({
-      ...options,
-      reduce: {
-        ...options.reduce!,
-        cumulativeTotal: e.currentTarget.checked,
-      },
-    });
-  };
-
   onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
     const { options } = this.props;
     this.props.onChange({
@@ -199,6 +190,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
+    this.setState({ selected: [] });
     onChange({
       ...options,
       mode,
@@ -216,6 +208,15 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   //---------------------------------------------------------
   // Reduce by Row
   //---------------------------------------------------------
+
+  updateStatisticalOptions = (v: StatisticalOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.StatisticalFunctions,
+      statistical: v,
+    });
+  };
 
   updateReduceOptions = (v: ReduceOptions) => {
     const { options, onChange } = this.props;
@@ -244,7 +245,33 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onStatsChange = (stats: string[]) => {
+  onStatisticalFieldToggle = (fieldName: string) => {
+    const { selected } = this.state;
+    if (selected.indexOf(fieldName) > -1) {
+      this.setState({ selected: selected.filter((s) => s !== fieldName) });
+      const { statistical } = this.props.options;
+      this.updateStatisticalOptions({
+        ...statistical!,
+        include: selected.filter((s) => s !== fieldName),
+      });
+    } else {
+      this.setState({ selected: [...selected, fieldName] });
+      const { statistical } = this.props.options;
+      this.updateStatisticalOptions({
+        ...statistical!,
+        include: [...selected, fieldName],
+      });
+    }
+  };
+
+  onStatisticalStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { statistical } = this.props.options;
+    this.updateStatisticalOptions({ ...statistical, reducer });
+  };
+
+  onReducerStatsChange = (stats: string[]) => {
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
     const { reduce } = this.props.options;
@@ -256,6 +283,44 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       <>
         <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
           <InlineSwitch value={!!options?.asPercentile} onChange={this.onToggleRowIndexAsPercentile} />
+        </InlineField>
+      </>
+    );
+  }
+
+  renderStatisticalFunctions(options?: StatisticalOptions) {
+    const { names, selected } = this.state;
+    options = defaults(options, { reducer: ReducerID.sum });
+
+    return (
+      <>
+        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            {names.map((o, i) => {
+              return (
+                <FilterPill
+                  key={`${o}/${i}`}
+                  onClick={() => {
+                    this.onStatisticalFieldToggle(o);
+                  }}
+                  label={o}
+                  selected={selected.indexOf(o) > -1}
+                />
+              );
+            })}
+          </HorizontalGroup>
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onStatisticalStatsChange}
+            defaultStat={ReducerID.sum}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
+            }
+          />
         </InlineField>
       </>
     );
@@ -288,15 +353,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onStatsChange}
+            onChange={this.onReducerStatsChange}
             defaultStat={ReducerID.sum}
           />
         </InlineField>
-        {options.reducer === ReducerID.sum && (
-          <InlineField labelWidth={labelWidth} label="Cumulative total">
-            <InlineSwitch value={!!options.cumulativeTotal} onChange={this.onToggleCumulativeTotal} />
-          </InlineField>
-        )}
       </>
     );
   }
@@ -484,6 +544,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.StatisticalFunctions && this.renderStatisticalFunctions(options.statistical)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
           <Input
