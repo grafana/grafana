@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
@@ -100,10 +100,22 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 	return s.proxiedService.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
+func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	sa, err := s.proxiedService.SearchOrgServiceAccounts(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range sa.ServiceAccounts {
+		sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+	}
+	return sa, nil
+}
+
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, extsvcaccounts.ExtSvcPrefix)
+	return !strings.HasPrefix(name, serviceaccounts.ExtSvcPrefix)
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtSvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix)
 }

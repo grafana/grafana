@@ -17,7 +17,7 @@ export type TypeSelectors<S> = S extends StringSelector
   ? E2EFunction
   : S extends UrlSelector
   ? E2EVisit & Omit<E2EFunctions<S>, 'url'>
-  : S extends Record<any, any>
+  : S extends Record<string, string | FunctionSelector | CssSelector | UrlSelector | Selectors>
   ? E2EFunctions<S>
   : S;
 
@@ -32,7 +32,7 @@ export type E2EFactoryArgs<S extends Selectors> = { selectors: S };
 export type CypressOptions = Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>;
 
 const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, selectors: S): E2EFunctions<S> => {
-  const logOutput = (data: any) => cy.logToConsole('Retrieving Selector:', data);
+  const logOutput = (data: unknown) => cy.logToConsole('Retrieving Selector:', data);
   const keys = Object.keys(selectors);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
@@ -80,7 +80,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
       e2eObjects[key] = function (textOrOptions?: string | CypressOptions, options?: CypressOptions) {
         // the input can only be ()
         if (arguments.length === 0) {
-          const selector = value(undefined as unknown as string);
+          const selector = value('');
 
           logOutput(selector);
           return cy.get(selector);
@@ -97,7 +97,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
             logOutput(selector);
             return cy.get(selector);
           }
-          const selector = value(undefined as unknown as string);
+          const selector = value('');
 
           logOutput(selector);
           return cy.get(selector, textOrOptions);
