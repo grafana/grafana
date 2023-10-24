@@ -82,8 +82,6 @@ export function LogsTable(props: Props) {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
             ...field.config.custom,
-            // @todo it would be much more efficient to mutate the dataframe fields, instead of using transforms to create a filtered copy in rect state, this would require that the table component handles the filtering.
-            // visible: columnsWithMeta[field.name]?.active ?? false,
           },
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame ?? undefined),
