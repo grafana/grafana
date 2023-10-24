@@ -12,15 +12,15 @@ import (
 )
 
 type metrics struct {
-	extSvcAccCount        prometheus.GaugeFunc
-	extSvcAccSavedCount   prometheus.Counter
-	extSvcAccDeletedCount prometheus.Counter
+	storedCount  prometheus.GaugeFunc
+	savedCount   prometheus.Counter
+	deletedCount prometheus.Counter
 }
 
 func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger log.Logger) *metrics {
 	var m metrics
 
-	m.extSvcAccCount = prometheus.NewGaugeFunc(
+	m.storedCount = prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Name:      "extsvc_total",
@@ -47,21 +47,21 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 			return float64(res.TotalCount)
 		},
 	)
-	m.extSvcAccSavedCount = prometheus.NewCounter(prometheus.CounterOpts{
+	m.savedCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: metricsNamespace,
 		Name:      "extsvc_saved_total",
 		Help:      "Number of external service accounts saved since start up.",
 	})
-	m.extSvcAccDeletedCount = prometheus.NewCounter(prometheus.CounterOpts{
+	m.deletedCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: metricsNamespace,
 		Name:      "extsvc_deleted_total",
 		Help:      "Number of external service accounts deleted since start up.",
 	})
 
 	if reg != nil {
-		reg.MustRegister(m.extSvcAccCount)
-		reg.MustRegister(m.extSvcAccSavedCount)
-		reg.MustRegister(m.extSvcAccDeletedCount)
+		reg.MustRegister(m.storedCount)
+		reg.MustRegister(m.savedCount)
+		reg.MustRegister(m.deletedCount)
 	}
 
 	return &m

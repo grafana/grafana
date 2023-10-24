@@ -115,7 +115,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 					"error", err.Error())
 				return 0, err
 			}
-			esa.metrics.extSvcAccDeletedCount.Inc()
+			esa.metrics.deletedCount.Inc()
 		}
 		esa.logger.Info("Skipping service account creation",
 			"service", cmd.ExtSvcSlug,
@@ -135,7 +135,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		esa.logger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
 		return 0, errSave
 	}
-	esa.metrics.extSvcAccSavedCount.Inc()
+	esa.metrics.savedCount.Inc()
 
 	return saID, nil
 }
