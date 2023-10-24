@@ -294,6 +294,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
     ],
     color: colorField,
     dataFrameRowIndex: 0,
+    highlighted: false,
     id: '0',
     incoming: 0,
     mainStat: {
@@ -334,6 +335,8 @@ function makeEdgeDatum(id: string, index: number, mainStat = '', secondaryStat =
     target: id.split('--')[1],
     sourceNodeRadius: 40,
     targetNodeRadius: 40,
+    highlighted: false,
+    thickness: 1,
   };
 }
 
@@ -346,5 +349,6 @@ function makeNodeFromEdgeDatum(options: Partial<NodeDatum> = {}): NodeDatum {
     subTitle: '',
     title: 'service:0',
     ...options,
+    highlighted: false,
   };
 }

@@ -6234,6 +6234,53 @@
         "title": "JSONWebKey represents a public or private key in JWK format.",
         "type": "object"
       },
+      "JSONWebKey": {
+        "properties": {
+          "Algorithm": {
+            "description": "Key algorithm, parsed from `alg` header.",
+            "type": "string"
+          },
+          "CertificateThumbprintSHA1": {
+            "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "CertificateThumbprintSHA256": {
+            "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Certificates": {
+            "description": "X.509 certificate chain, parsed from `x5c` header.",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "CertificatesURL": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "Key": {
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          },
+          "KeyID": {
+            "description": "Key identifier, parsed from `kid` header.",
+            "type": "string"
+          },
+          "Use": {
+            "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
+        "type": "object"
+      },
       "Json": {
         "type": "object"
       },
@@ -12478,30 +12525,6 @@
         "tags": [
           "access_control",
           "enterprise"
-        ]
-      }
-    },
-    "/admin/ldap-sync-status": {
-      "get": {
-        "description": "You need to have a permission with action `ldap.status:read`.",
-        "operationId": "getSyncStatus",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getSyncStatusResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Returns the current state of the LDAP background sync integration.",
-        "tags": [
-          "ldap_debug"
         ]
       }
     },

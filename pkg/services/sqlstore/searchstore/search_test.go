@@ -46,7 +46,8 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
-		Dialect: store.GetDialect(),
+		Dialect:  store.GetDialect(),
+		Features: featuremgmt.WithFeatures(),
 	}
 
 	res := []dashboards.DashboardSearchProjection{}
@@ -83,7 +84,8 @@ func TestBuilder_Pagination(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
-		Dialect: store.GetDialect(),
+		Dialect:  store.GetDialect(),
+		Features: featuremgmt.WithFeatures(),
 	}
 
 	resPg1 := []dashboards.DashboardSearchProjection{}
@@ -243,7 +245,8 @@ func TestBuilder_RBAC(t *testing.T) {
 							recursiveQueriesAreSupported,
 						),
 					},
-					Dialect: store.GetDialect(),
+					Dialect:  store.GetDialect(),
+					Features: features,
 				}
 
 				res := []dashboards.DashboardSearchProjection{}
