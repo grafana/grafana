@@ -75,7 +75,7 @@ export const QueryEditor = (props: Props) => {
       <ConfirmModal
         data-testid="switch-query-type-modal"
         title="Warning"
-        body="By switching your query type, your current query will be lost. Confirm to continue."
+        body="By switching your query type, your current query will be lost."
         isOpen={modalIsOpen}
         onConfirm={() => {
           setModalIsOpen(false);
