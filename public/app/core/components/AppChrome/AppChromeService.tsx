@@ -6,6 +6,7 @@ import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types';
@@ -32,8 +33,6 @@ export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
-  private lastPageName?: string;
-  private lastSectionName?: string;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
@@ -81,11 +80,13 @@ export class AppChromeService {
   }
 
   private getSectionName(navModel: NavModel) {
+    const sectionRootName = navModel.main.text;
     const parentName = navModel.node.parentItem?.text;
+    const parentId = navModel.node.parentItem?.id;
 
     // For deeper level sections (apps)
-    if (navModel.main.text !== parentName) {
-      return `${navModel.main.text} / ${parentName}`;
+    if (sectionRootName !== parentName && sectionRootName && parentId !== HOME_NAV_ID) {
+      return `${sectionRootName} / ${parentName}`;
     }
 
     return navModel.main.text;
@@ -109,7 +110,7 @@ export class AppChromeService {
       lastEntry = { name: sectionName, views: [] };
     }
 
-    if (pageName !== oldPageName) {
+    if (pageName !== oldPageName && oldPageName) {
       // Filter out the view if it already exists so we do not add same view twice
       lastEntry.views = lastEntry.views.filter((view) => view.name !== pageName);
       lastEntry.views.unshift({ name: pageName, url: window.location.href });

@@ -33,6 +33,13 @@ interface ItemProps {
 function HistoryEntryAppView({ entry }: ItemProps) {
   const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(true);
+  const currentUrl = window.location.href;
+
+  // Hack to filter out the current page
+  const views = entry.views.filter((view) => view.url !== currentUrl);
+  if (views.length === 0) {
+    return null;
+  }
 
   return (
     <Flex direction="column" gap={1}>
@@ -47,7 +54,7 @@ function HistoryEntryAppView({ entry }: ItemProps) {
       </Flex>
       {isExpanded && (
         <div className={styles.expanded}>
-          {entry.views.map((view, index) => (
+          {views.map((view, index) => (
             <div key={index}>
               <TextLink href={view.url} inline={false}>
                 {view.name}
