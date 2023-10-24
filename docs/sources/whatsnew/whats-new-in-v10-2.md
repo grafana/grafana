@@ -367,7 +367,7 @@ To learn more, refer to the [Grafana OnCall integration for Alerting documentati
 
 _Generally available in all editions of Grafana_
 
-Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new “Modify export” mode for alert rules enables you to edit provisioned alert rules and export a modified version. 
+Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new “Modify export” mode for alert rules enables you to edit provisioned alert rules and export a modified version.
 
 ### Additional contact points for external Alertmanager
 
