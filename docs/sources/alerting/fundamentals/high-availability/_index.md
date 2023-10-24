@@ -21,20 +21,19 @@ weight: 430
 
 # Alerting high availability
 
-The Grafana Alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` evaluates your alert rules, while the internal Alertmanager manages **routing** and **grouping**.
-
-When running Grafana Alerting in high availability, the operational mode of the scheduler remains unaffected, and each Grafana instance evaluates all alerts. The operational change happens in the Alertmanager when it deduplicates alert notifications across Grafana instances.
+Grafana Alerting uses the Prometheus model of separating the evaluation of alert rules from the delivering of notifications. In this model the evaluation of alert rules is done in the alert generator and the delivering of notifications is done in the alert receiver. In Grafana Alerting, the alert generator is the Scheduler and the receiver is the Alertmanager.
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-The coordination between Grafana instances happens via [a Gossip protocol](https://en.wikipedia.org/wiki/Gossip_protocol). Alerts are not gossiped between instances and each scheduler delivers the same volume of alerts to each Alertmanager.
+When running multiple instances of Grafana, the operational mode of the alert generator does not change. This means that all alert rules are evaluated on all instances of Grafana. You can think of the evaluation of alert rules as being duplicated. However, this is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules will still be evaluated and notifications for alerts will still be sent. You will see this duplication in state history, and is a good way to tell if you are using high availability.
 
-The two types of messages gossiped between Grafana instances are:
+While the alert generator evaluates all alert rules on all instances, Grafana makes a best-effort attempt to avoid sending duplicate notifications. Alertmanager chooses availability over consistency which means that in certain situations notifications can be duplicated or appear out-of-order. Alertmanager takes the opinion that duplicate or out-of-order notifications are better than no notifications, and so it uses a gossip protocol to share information about notifications between Grafana instances instead of a more-consistent but less-available protocol such as two-phase commit, or distributed-consensus protocols such as Raft or Paxos.
 
-- Notification logs: Who (which instance) notified what (which alert).
-- Silences: If an alert should fire or not.
+The Alertmanager also gossips silences, which means a silence created on one Grafana instance is replicated to all other Grafana instances.
 
-The notification logs and silences are persisted in the database periodically and during a graceful Grafana shut down.
+Both notifications and silences are persisted to the database periodically, and during graceful shut down.
+
+It is important to make sure that gossiping is configured and tested. You can find the documentation on how to do that [here][configure-high-availability].
 
 ## Useful links
 
