@@ -160,9 +160,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
-
-    console.log('init prop', this.props.panelState?.logs);
-    console.log('init state', this.state);
   }
 
   componentWillUnmount() {
@@ -176,6 +173,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   }
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
+    console.log('updatePanelState', logsPanelState);
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
       dispatch(
@@ -197,6 +195,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...this.props.panelState,
         })
       );
+    }
+    if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
+      this.setState({
+        visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+      });
     }
   }
 
