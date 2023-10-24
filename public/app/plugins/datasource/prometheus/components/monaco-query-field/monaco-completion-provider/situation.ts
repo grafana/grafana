@@ -20,6 +20,7 @@ import {
   PromQL,
   StringLiteral,
   VectorSelector,
+  Expr,
 } from '@prometheus-io/lezer-promql';
 
 import { NeverCaseError } from './util';
@@ -161,6 +162,8 @@ type Resolver = {
 };
 
 function isPathMatch(resolverPath: NodeTypeId[], cursorPath: number[]): boolean {
+  console.log('resolver path', resolverPath);
+  console.log('cursor path', cursorPath);
   return resolverPath.every((item, index) => item === cursorPath[index]);
 }
 
@@ -169,6 +172,18 @@ const ERROR_NODE_NAME: NodeTypeId = 0; // this is used as error-id
 const RESOLVERS: Resolver[] = [
   {
     path: [LabelMatchers, VectorSelector],
+    fun: resolveLabelKeysWithEquals,
+  },
+  {
+    path: [LabelMatchList, LabelMatchers, VectorSelector],
+    fun: resolveLabelKeysWithEquals,
+  },
+  {
+    path: [LabelMatchList, LabelMatchList],
+    fun: resolveLabelKeysWithEquals,
+  },
+  {
+    path: [VectorSelector],
     fun: resolveLabelKeysWithEquals,
   },
   {
@@ -247,7 +262,8 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
-  if (labelMatchersNode.type.id !== LabelMatchers) {
+  console.log('getLabels matcher node', labelMatchersNode.type);
+  if (labelMatchersNode.type.id !== LabelMatchers && labelMatchersNode.type.id !== LabelMatchList) {
     return [];
   }
 
@@ -276,6 +292,49 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
 
   return labels;
 }
+
+//
+// function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
+//   if (selectorNode.type.id !== Selector && selectorNode.type.id !== Matchers) {
+//     return [];
+//   }
+//
+//   let listNode: SyntaxNode | null = null;
+//
+//   // If parent node is selector, we want to start with the current Matcher node
+//   if (selectorNode?.parent?.type.id === Selector) {
+//     listNode = selectorNode;
+//   } else {
+//     // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
+//     listNode =
+//       // Node in-between labels
+//       traverse(selectorNode, [['parent', Matchers]]) ??
+//       // Node after all other labels
+//       walk(selectorNode, [['firstChild', Matchers]]) ??
+//       // Node before all other labels
+//       walk(selectorNode, [['lastChild', Matchers]]);
+//   }
+//
+//   const labels: Label[] = [];
+//
+//   while (listNode !== null) {
+//     const matcherNode = walk(listNode, [['lastChild', Matcher]]);
+//     if (matcherNode !== null) {
+//       const label = getLabel(matcherNode, text);
+//       if (label !== null) {
+//         labels.push(label);
+//       }
+//     }
+//
+//     // there might be more labels
+//     listNode = walk(listNode, [['firstChild', Matchers]]);
+//   }
+//
+//   // our labels-list is last-first, so we reverse it
+//   labels.reverse();
+//
+//   return labels;
+// }
 
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
   let child: SyntaxNode | null = node.firstChild;
@@ -398,11 +457,17 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
-  const metricNameNode = walk(labelMatchersNode, [
-    ['parent', VectorSelector],
-    ['firstChild', MetricIdentifier],
-    ['firstChild', Identifier],
-  ]);
+  const metricNameNode =
+    walk(labelMatchersNode, [
+      ['parent', VectorSelector],
+      ['firstChild', MetricIdentifier],
+      ['firstChild', Identifier],
+    ]) ??
+    traverse(labelMatchersNode, [
+      ['parent', VectorSelector],
+      ['firstChild', MetricIdentifier],
+      ['firstChild', Identifier],
+    ]);
 
   if (metricNameNode === null) {
     // we are probably in a situation without a metric name
@@ -448,6 +513,7 @@ function subTreeHasError(node: SyntaxNode): boolean {
 }
 
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
+  console.log('resolveLabelKeysWithEquals', node);
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
@@ -468,9 +534,11 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     // the area between the end-of-the-child-node and the cursor-pos
     // must contain a `,` in this case.
     const textToCheck = text.slice(child.to, pos);
+    console.log('text to check', textToCheck);
 
     if (!textToCheck.includes(',')) {
-      return null;
+      console.log('null cuz comma', textToCheck);
+      // return null;
     }
   }
 
@@ -480,9 +548,14 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     ['firstChild', Identifier],
   ]);
 
+  console.log('metricNameNode', metricNameNode);
+
   const otherLabels = getLabels(node, text);
 
+  console.log('labels', otherLabels);
+
   if (metricNameNode === null) {
+    console.log('null metricNameNode');
     // we are probably in a situation without a metric name.
     return {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
@@ -552,6 +625,7 @@ export function getSituation(text: string, pos: number): Situation | null {
 
   const ids = [cur.type.id];
   while (cur.parent()) {
+    console.log('node added', cur.type);
     ids.push(cur.type.id);
   }
 
@@ -559,9 +633,34 @@ export function getSituation(text: string, pos: number): Situation | null {
     // i do not use a foreach because i want to stop as soon
     // as i find something
     if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, pos);
+      console.log('resolver path', resolver.path);
+      const situation = resolver.fun(currentNode, text, pos);
+      if (situation) {
+        return situation;
+      }
     }
   }
 
+  console.log('no resolver found');
+
+  return null;
+}
+
+/**
+ * Iteratively calls walk with given path until it returns null, then we return the last non-null node.
+ * @param node
+ * @param path
+ */
+function traverse(node: SyntaxNode, path: Path): SyntaxNode | null {
+  let current: SyntaxNode | null = node;
+  let next = walk(current, path);
+  while (next) {
+    let nextTmp = walk(next, path);
+    if (nextTmp) {
+      next = nextTmp;
+    } else {
+      return next;
+    }
+  }
   return null;
 }

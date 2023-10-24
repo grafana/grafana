@@ -1,7 +1,7 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { getCompletions, DataProvider, CompletionType } from './completions';
-import { getSituation } from './situation';
+import { getSituation, Situation } from './situation';
 import { NeverCaseError } from './util';
 
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
@@ -53,18 +53,7 @@ export function getCompletionProvider(
     position: monacoTypes.Position
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
     const word = model.getWordAtPosition(position);
-    const range =
-      word != null
-        ? monaco.Range.lift({
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: word.startColumn,
-            endColumn: word.endColumn,
-          })
-        : monaco.Range.fromPositions(position);
-    // documentation says `position` will be "adjusted" in `getOffsetAt`
-    // i don't know what that means, to be sure i clone it
-
+    const wordUntil = model.getWordUntilPosition(position);
     const positionClone = {
       column: position.column,
       lineNumber: position.lineNumber,
@@ -81,6 +70,7 @@ export function getCompletionProvider(
 
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
+    const range = calculateRange(situation, word, wordUntil, monaco, position);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -111,3 +101,68 @@ export function getCompletionProvider(
     provideCompletionItems,
   };
 }
+
+export const calculateRange = (
+  situation: Situation | null,
+  word: monacoTypes.editor.IWordAtPosition | null,
+  wordUntil: monacoTypes.editor.IWordAtPosition,
+  monaco: Monaco,
+  position: monacoTypes.Position
+): monacoTypes.Range => {
+  if (
+    situation &&
+    situation?.type === 'IN_LABEL_SELECTOR_WITH_LABEL_NAME' &&
+    'betweenQuotes' in situation &&
+    situation.betweenQuotes
+  ) {
+    // Word until won't have second quote if they are between quotes
+    const indexOfFirstQuote = wordUntil?.word?.indexOf('"') ?? 0;
+
+    const indexOfLastQuote = word?.word?.lastIndexOf('"') ?? 0;
+
+    const indexOfEquals = word?.word.indexOf('=');
+    const indexOfLastEquals = word?.word.lastIndexOf('=');
+
+    // Just one equals "=" the cursor is somewhere within a label value
+    // e.g. value="labe^l-value" or value="^label-value" etc
+    // We want the word to include everything within the quotes, so the result from autocomplete overwrites the existing label value
+    if (
+      indexOfLastEquals === indexOfEquals &&
+      indexOfFirstQuote !== -1 &&
+      indexOfLastQuote !== -1 &&
+      indexOfLastEquals !== -1
+    ) {
+      return word != null
+        ? monaco.Range.lift({
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: wordUntil.startColumn + indexOfFirstQuote + 1,
+            endColumn: wordUntil.startColumn + indexOfLastQuote,
+          })
+        : monaco.Range.fromPositions(position);
+    }
+  }
+
+  if (situation && situation.type === 'IN_LABEL_SELECTOR_WITH_LABEL_NAME') {
+    // Otherwise we want the range to be calculated as the cursor position, as we want to insert the autocomplete, instead of overwriting existing text
+    // The cursor position is the length of the wordUntil
+    return word != null
+      ? monaco.Range.lift({
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: wordUntil.endColumn,
+          endColumn: wordUntil.endColumn,
+        })
+      : monaco.Range.fromPositions(position);
+  }
+
+  // And for all other non-label cases, we want to use the word start and end column
+  return word != null
+    ? monaco.Range.lift({
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      })
+    : monaco.Range.fromPositions(position);
+};

@@ -67,7 +67,14 @@ function ensurePromQL(monaco: Monaco) {
 
     loader().then((mod) => {
       monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, mod.language);
-      monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, mod.languageConfiguration);
+      monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, {
+        ...mod.languageConfiguration,
+        wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()+\[{\]}\\|;',.<>?\s]+)/g,
+        // Default:  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
+        // Removed `"`, `=`, and `-`, from the exclusion list, so now the completion provider can decide to overwrite any matching words, or just insert text at the cursor
+        // Mimir also uses colon `:` in aggregated metrics
+        // And `/` is common as well
+      });
     });
   }
 }
