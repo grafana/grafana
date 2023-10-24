@@ -175,6 +175,17 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
+  onToggleCumulativeTotal = (e: React.FormEvent<HTMLInputElement>) => {
+    const { options } = this.props;
+    this.props.onChange({
+      ...options,
+      reduce: {
+        ...options.reduce!,
+        cumulativeTotal: e.currentTarget.checked,
+      },
+    });
+  };
+
   onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
     const { options } = this.props;
     this.props.onChange({
@@ -281,6 +292,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             defaultStat={ReducerID.sum}
           />
         </InlineField>
+        {options.reducer === ReducerID.sum && (
+          <InlineField labelWidth={labelWidth} label="Cumulative total">
+            <InlineSwitch value={!!options.cumulativeTotal} onChange={this.onToggleCumulativeTotal} />
+          </InlineField>
+        )}
       </>
     );
   }

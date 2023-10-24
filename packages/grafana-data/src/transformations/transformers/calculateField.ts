@@ -25,6 +25,7 @@ export interface ReduceOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
   nullValueMode?: NullValueMode;
+  cumulativeTotal?: boolean;
 }
 
 export interface UnaryOptions {
@@ -224,8 +225,18 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
     const vals: number[] = [];
 
     for (let i = 0; i < frame.length; i++) {
-      for (let j = 0; j < size; j++) {
-        row.values[j] = columns[j][i];
+      if (options.cumulativeTotal) {
+        let cumulativeTotal = 0;
+
+        for (let j = 0; j < size; j++) {
+          cumulativeTotal += columns[j][i];
+        }
+
+        row.values[i] = cumulativeTotal;
+      } else {
+        for (let j = 0; j < size; j++) {
+          row.values[j] = columns[j][i];
+        }
       }
       vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
     }
