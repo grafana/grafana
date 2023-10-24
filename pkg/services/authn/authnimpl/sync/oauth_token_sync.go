@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,6 +27,7 @@ func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService 
 		service,
 		sessionService,
 		socialService,
+		new(singleflight.Group),
 	}
 }
 
@@ -35,6 +37,7 @@ type OAuthTokenSync struct {
 	service        oauthtoken.OAuthTokenService
 	sessionService auth.UserTokenService
 	socialService  social.Service
+	sf             *singleflight.Group
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
@@ -100,26 +103,47 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil
 	}
-	// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
-	updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 
-	if err := s.service.TryTokenRefresh(updateCtx, token); err != nil {
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-		if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
-			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
-		}
+	_, err, _ = s.sf.Do(identity.ID, func() (interface{}, error) {
+		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
+		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
 
-		if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
-			s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
-		}
+		if err := s.service.TryTokenRefresh(updateCtx, token); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil, nil
+			}
 
-		if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
-			s.log.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
-		}
+			// if the access token has already refreshed by another request, we can skip the hook
+			token, _, err := s.service.HasOAuthEntry(ctx, identity)
+			if err != nil {
+				s.log.Error("Failed to get OAuth entry for verifying if token has already been refreshed", "id", identity.ID, "error", err)
+				return nil, err
+			}
 
+			tokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+			if !tokenExpires.Before(time.Now()) {
+				return nil, nil
+			}
+
+			if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
+				s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
+			}
+
+			if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
+				s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
+			}
+
+			if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
+				s.log.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
+			}
+
+			return nil, err
+		}
+		return nil, nil
+	})
+
+	if err != nil {
 		return authn.ErrExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
 	}
 
