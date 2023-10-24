@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,11 +104,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		UID:   name,
 		OrgId: info.OrgID,
 	})
-	if err != nil {
+	if err != nil || dto == nil {
+		if err == playlist.ErrPlaylistNotFound || err == nil {
+			err = errors.NewNotFound(Resource("playlist"), name)
+		}
 		return nil, err
-	}
-	if dto == nil {
-		return nil, fmt.Errorf("not found?")
 	}
 
 	return convertToK8sResource(dto, s.namespacer), nil
@@ -187,13 +188,21 @@ func (s *legacyStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	v, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return v, false, err // includes the not-found error
+	}
 	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
+	}
+	p, ok := v.(*Playlist)
+	if !ok {
+		return v, false, fmt.Errorf("expected a playlist response from Get")
 	}
 	err = s.service.Delete(ctx, &playlist.DeletePlaylistCommand{
 		UID:   name,
 		OrgId: info.OrgID,
 	})
-	return nil, true, err // true is instant delete
+	return p, true, err // true is instant delete
 }
