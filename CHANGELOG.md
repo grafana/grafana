@@ -96,7 +96,7 @@
 - **Canvas:** Button API Editor support setting parameters. [#74637](https://github.com/grafana/grafana/issues/74637), [@adela-almasan](https://github.com/adela-almasan)
 - **Alerting:** Support for single rule and multi-folder rule export. [#74625](https://github.com/grafana/grafana/issues/74625), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Loki:** Added query editor and builder support for new Logfmt features. [#74619](https://github.com/grafana/grafana/issues/74619), [@matyax](https://github.com/matyax)
-- **Alerting:** Add export drawer with yaml and json formats,  in policies and contact points view. [#74613](https://github.com/grafana/grafana/issues/74613), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Add export drawer with yaml and json formats, in policies and contact points view. [#74613](https://github.com/grafana/grafana/issues/74613), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
 - **Canvas:** Button API - Add support for GET requests. [#74566](https://github.com/grafana/grafana/issues/74566), [@adela-almasan](https://github.com/adela-almasan)
 - **Explore:** Content Outline. [#74536](https://github.com/grafana/grafana/issues/74536), [@harisrozajac](https://github.com/harisrozajac)
 - **Alerting:** Add Grafana-managed groups and rules export. [#74522](https://github.com/grafana/grafana/issues/74522), [@konrad147](https://github.com/konrad147)
@@ -147,7 +147,7 @@
 - **Feat:** Feature toggle admin page frontend write UI and InteractiveTable sorting. [#73533](https://github.com/grafana/grafana/issues/73533), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
 - **Cloudwatch:** Add back support for old Log Group picker. [#73524](https://github.com/grafana/grafana/issues/73524), [@sarahzinger](https://github.com/sarahzinger)
 - **Google Cloud Monitor:** Prom query editor. [#73503](https://github.com/grafana/grafana/issues/73503), [@bossinc](https://github.com/bossinc)
-- **Plugins:** Remove deprecated  grafana-toolkit. [#73489](https://github.com/grafana/grafana/issues/73489), [@Ukochka](https://github.com/Ukochka)
+- **Plugins:** Remove deprecated grafana-toolkit. [#73489](https://github.com/grafana/grafana/issues/73489), [@Ukochka](https://github.com/Ukochka)
 - **LibraryPanels:** Add RBAC support. [#73475](https://github.com/grafana/grafana/issues/73475), [@kaydelaney](https://github.com/kaydelaney)
 - **Chore:** Remove DashboardPickerByID. [#73466](https://github.com/grafana/grafana/issues/73466), [@Clarity-89](https://github.com/Clarity-89)
 - **Elastic:** Add `id` field to Elastic responses to allow permalinking. [#73382](https://github.com/grafana/grafana/issues/73382), [@svennergr](https://github.com/svennergr)
@@ -158,7 +158,7 @@
 - **Tempo:** Metrics summary. [#73201](https://github.com/grafana/grafana/issues/73201), [@joey-grafana](https://github.com/joey-grafana)
 - **Alerting:** Export of alert rules in HCL format. [#73166](https://github.com/grafana/grafana/issues/73166), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **SSE:** Localize/Contain Errors within an Expression. [#73163](https://github.com/grafana/grafana/issues/73163), [@kylebrandt](https://github.com/kylebrandt)
-- **Dashboards:** PanelChrome -  remove untitled placeholder and add border when panel is transparent. [#73150](https://github.com/grafana/grafana/issues/73150), [@axelavargas](https://github.com/axelavargas)
+- **Dashboards:** PanelChrome - remove untitled placeholder and add border when panel is transparent. [#73150](https://github.com/grafana/grafana/issues/73150), [@axelavargas](https://github.com/axelavargas)
 - **CloudWatch:** Add missing AppFlow metrics. [#73149](https://github.com/grafana/grafana/issues/73149), [@ciancullinan](https://github.com/ciancullinan)
 - **Flamegraph:** Move to package. [#73113](https://github.com/grafana/grafana/issues/73113), [@aocenas](https://github.com/aocenas)
 - **Plugins:** Forward feature toggles to plugins. [#72995](https://github.com/grafana/grafana/issues/72995), [@oshirohugo](https://github.com/oshirohugo)
@@ -198,7 +198,7 @@
 - **Dashboard:** Field Config - Add CFP franc currency (XPF). [#70036](https://github.com/grafana/grafana/issues/70036), [@smortex](https://github.com/smortex)
 - **Auth:** Check id token expiry date. [#69829](https://github.com/grafana/grafana/issues/69829), [@akselleirv](https://github.com/akselleirv)
 - **Alerting:** Update Discord settings to treat 'url' as a secure setting. [#69588](https://github.com/grafana/grafana/issues/69588), [@yuri-tceretian](https://github.com/yuri-tceretian)
-- **Prometheus:** Add $__rate_interval_ms to go along with $__interval_ms. [#69582](https://github.com/grafana/grafana/issues/69582), [@ywwg](https://github.com/ywwg)
+- **Prometheus:** Add $\_\_rate_interval_ms to go along with $\_\_interval_ms. [#69582](https://github.com/grafana/grafana/issues/69582), [@ywwg](https://github.com/ywwg)
 - **Alerting:** Update state manager to change all current states in the case when Error\NoData is executed as Ok\Nomal. [#68142](https://github.com/grafana/grafana/issues/68142), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Tempo:** Integrate context aware autocomplete API. [#67845](https://github.com/grafana/grafana/issues/67845), [@adrapereira](https://github.com/adrapereira)
 - **GrafanaUI:** Add aria-label prop to RadioButtonGroup. [#67019](https://github.com/grafana/grafana/issues/67019), [@khushijain21](https://github.com/khushijain21)
@@ -293,7 +293,7 @@
 
 ### Breaking changes
 
-The deprecated `/playlists/{uid}/dashboards` API endpoint has been removed.  Dashboard information can be retrieved from the `/dashboard/...` APIs. Issue [#75503](https://github.com/grafana/grafana/issues/75503)
+The deprecated `/playlists/{uid}/dashboards` API endpoint has been removed. Dashboard information can be retrieved from the `/dashboard/...` APIs. Issue [#75503](https://github.com/grafana/grafana/issues/75503)
 
 The `PUT /api/folders/:uid` endpoint no more supports modifying the folder's `UID`. Issue [#74684](https://github.com/grafana/grafana/issues/74684)
 
@@ -307,8 +307,9 @@ Removed all components for the old panel header design. Issue [#74196](https://g
 Correlations created before 10.1.0 do not have an organization id assigned and are treated as global. In some rare cases, it may lead to confusing behavior described in #72259. Organization id is now added when a correlation is created. Any existing correlations without organization id will be kept intact and work as before for backward compatibility during the deprecation period that is set to 6 months after handling organization id is released. After that time, correlations without org_id (or org_id = 0 in the database) will stop showing up in Grafana.
 
 To migrate existing correlations to handle organization id correctly:
-* re-provision any correlations that were created as part of provisioning
-* re-create any correlations created with Admin/Correlations page Issue [#72258](https://github.com/grafana/grafana/issues/72258)
+
+- re-provision any correlations that were created as part of provisioning
+- re-create any correlations created with Admin/Correlations page Issue [#72258](https://github.com/grafana/grafana/issues/72258)
 
 Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a future release. From 10.2, sub-tables are supported by adding `FieldType.nestedFrames` to the field that contains the nested data in your dataframe. Issue [#71953](https://github.com/grafana/grafana/issues/71953)
 
