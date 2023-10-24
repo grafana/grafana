@@ -7,6 +7,7 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServer = true
+kubernetesPlaylists = true
 ```
 
 Start Grafana:
@@ -22,7 +23,7 @@ Start `etcd`:
 make devenv sources=etcd
 ```
 
-Enable dual write to `etcd`:
+Add etcd server to `custom.ini`:
 
 ```ini
 [grafana-apiserver]
@@ -31,13 +32,12 @@ etcd_servers = 127.0.0.1:2379
 
 ### `kubectl` access
 
-From the root of the repository:
-
+From the root of the Grafanaa repository, run the following:
 ```bash
-export KUBECONFIG=$PWD/data/k8s/grafana.kubeconfig
+export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
 kubectl api-resources
 ```
 
 ### Grafana API Access
 
-The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/k8s/apis/](http://localhost:3000/k8s/apis/).
+The Kubernetes compatible API can be accessed using existing Grafana AuthN at: [http://localhost:3000/apis](http://localhost:3000/apis).

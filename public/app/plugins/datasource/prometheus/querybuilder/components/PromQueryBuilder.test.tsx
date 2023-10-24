@@ -12,11 +12,10 @@ import {
   TimeRange,
 } from '@grafana/data';
 
-import { PromApplication } from '../../../../../types/unified-alerting-dto';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { PromOptions } from '../../types';
+import { PromApplication, PromOptions } from '../../types';
 import { getLabelSelects } from '../testUtils';
 import { PromVisualQuery } from '../types';
 

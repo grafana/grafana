@@ -5,7 +5,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 
 import { SubMenu } from './SubMenu';
@@ -14,7 +14,7 @@ import { SubMenu } from './SubMenu';
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
 /** @internal */
-export interface MenuItemProps<T = any> {
+export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
   /** Aria label for accessibility support */

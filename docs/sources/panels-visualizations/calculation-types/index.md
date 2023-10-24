@@ -20,7 +20,7 @@ The following table contains a list of calculations you can perform in Grafana. 
 | :----------------- | :-------------------------------------------------------- |
 | All nulls          | True when all values are null                             |
 | All values         | Array with all values                                     |
-| All unique values  | Array with all unique alues                               |
+| All unique values  | Array with all unique values                              |
 | All zeros          | True when all values are 0                                |
 | Change count       | Number of times the field's value changes                 |
 | Count              | Number of values in a field                               |

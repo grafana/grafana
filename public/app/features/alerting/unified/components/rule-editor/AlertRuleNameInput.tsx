@@ -29,8 +29,7 @@ export const AlertRuleNameInput = () => {
       title={`Enter ${entityName} name`}
       description={
         <Text variant="bodySmall" color="secondary">
-          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
-          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
+          Enter a name to identify your {entityName}.
         </Text>
       }
     >
