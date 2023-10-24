@@ -20,7 +20,6 @@ import {
   PromQL,
   StringLiteral,
   VectorSelector,
-  Expr,
 } from '@prometheus-io/lezer-promql';
 
 import { NeverCaseError } from './util';
@@ -162,8 +161,6 @@ type Resolver = {
 };
 
 function isPathMatch(resolverPath: NodeTypeId[], cursorPath: number[]): boolean {
-  console.log('resolver path', resolverPath);
-  console.log('cursor path', cursorPath);
   return resolverPath.every((item, index) => item === cursorPath[index]);
 }
 
@@ -261,13 +258,26 @@ function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
   return { name, value, op };
 }
 
-function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
-  console.log('getLabels matcher node', labelMatchersNode.type);
-  if (labelMatchersNode.type.id !== LabelMatchers && labelMatchersNode.type.id !== LabelMatchList) {
+function getLabels(node: SyntaxNode, text: string): Label[] {
+  if (node.type.id !== LabelMatchers && node.type.id !== LabelMatchList) {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(labelMatchersNode, [['firstChild', LabelMatchList]]);
+  let listNode: SyntaxNode | null;
+
+  const labelMatchersNode = walk(node, [['parent', LabelMatchers]]);
+
+  if (labelMatchersNode) {
+    listNode = walk(labelMatchersNode, [['firstChild', LabelMatchList]]);
+  } else {
+    // Node in-between labels
+    listNode =
+      traverse(node, [['parent', LabelMatchList]]) ??
+      // Node after all other labels
+      walk(node, [['firstChild', LabelMatchList]]) ??
+      // Node before all other labels
+      walk(node, [['lastChild', LabelMatchList]]);
+  }
 
   const labels: Label[] = [];
 
@@ -513,7 +523,6 @@ function subTreeHasError(node: SyntaxNode): boolean {
 }
 
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
-  console.log('resolveLabelKeysWithEquals', node);
   // for example `something{^}`
 
   // there are some false positives that can end up in this situation, that we want
@@ -525,7 +534,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
 
   // next false positive:
   // `something{a="1"^}`
-  const child = walk(node, [['firstChild', LabelMatchList]]);
+  const child = traverse(node, [['firstChild', LabelMatchList]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
     //
@@ -534,12 +543,11 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     // the area between the end-of-the-child-node and the cursor-pos
     // must contain a `,` in this case.
     const textToCheck = text.slice(child.to, pos);
-    console.log('text to check', textToCheck);
 
     if (!textToCheck.includes(',')) {
-      console.log('null cuz comma', textToCheck);
-      // return null;
+      return null;
     }
+    // if position is after vector open
   }
 
   const metricNameNode = walk(node, [
@@ -548,14 +556,9 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     ['firstChild', Identifier],
   ]);
 
-  console.log('metricNameNode', metricNameNode);
-
   const otherLabels = getLabels(node, text);
 
-  console.log('labels', otherLabels);
-
   if (metricNameNode === null) {
-    console.log('null metricNameNode');
     // we are probably in a situation without a metric name.
     return {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
@@ -625,7 +628,6 @@ export function getSituation(text: string, pos: number): Situation | null {
 
   const ids = [cur.type.id];
   while (cur.parent()) {
-    console.log('node added', cur.type);
     ids.push(cur.type.id);
   }
 
@@ -633,15 +635,12 @@ export function getSituation(text: string, pos: number): Situation | null {
     // i do not use a foreach because i want to stop as soon
     // as i find something
     if (isPathMatch(resolver.path, ids)) {
-      console.log('resolver path', resolver.path);
       const situation = resolver.fun(currentNode, text, pos);
       if (situation) {
         return situation;
       }
     }
   }
-
-  console.log('no resolver found');
 
   return null;
 }
