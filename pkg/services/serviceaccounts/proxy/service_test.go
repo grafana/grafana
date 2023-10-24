@@ -5,52 +5,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
 )
-
-type FakeServiceAccountsService struct {
-	ExpectedServiceAccountProfileDTO *serviceaccounts.ServiceAccountProfileDTO
-}
-
-var _ serviceaccounts.Service = (*FakeServiceAccountsService)(nil)
-
-func newServiceAccountServiceFake() *FakeServiceAccountsService {
-	return &FakeServiceAccountsService{}
-}
-
-func (f *FakeServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	return nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return f.ExpectedServiceAccountProfileDTO, nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return 0, nil
-}
-
-func (f *FakeServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
-	cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	return nil, nil
-}
 
 func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	testOrgId := int64(1)
 	testServiceAccountId := int64(1)
-	serviceMock := newServiceAccountServiceFake()
+	serviceMock := &tests.FakeServiceAccountService{}
 	svc := ServiceAccountsProxy{
 		log.New("test"),
 		serviceMock,
@@ -111,7 +75,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccount(context.Background(), testOrgId, testServiceAccountId)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
@@ -142,7 +106,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
 				assert.NoError(t, err, tc.description)
 				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
@@ -204,7 +168,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), testOrgId, testServiceAccountId, &tc.form)
 				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
@@ -243,7 +207,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
 				assert.Equal(t, tc.expectedError, err, tc.description)
 			})

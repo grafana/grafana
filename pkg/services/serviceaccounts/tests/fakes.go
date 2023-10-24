@@ -9,7 +9,6 @@ import (
 )
 
 type FakeServiceAccountService struct {
-	// serviceaccounts.Service
 	ExpectedAPIKey                         *apikey.APIKey
 	ExpectedErr                            error
 	ExpectedMigrationResult                *serviceaccounts.MigrationResult
