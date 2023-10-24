@@ -68,6 +68,20 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 	return s.proxiedService.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
+func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, orgID int64, serviceAccountID int64, tokenID int64) error {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, 0, serviceAccountID)
+	if err != nil {
+		return err
+	}
+
+	if isExternalServiceAccount(sa.Login) {
+		s.log.Error("unable to delete tokens for external service accounts", "serviceAccountID", serviceAccountID)
+		return extsvcaccounts.ErrCannotDeleteToken
+	}
+
+	return s.proxiedService.DeleteServiceAccountToken(ctx, sa.OrgId, serviceAccountID, tokenID)
+}
+
 func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 	if err != nil {
