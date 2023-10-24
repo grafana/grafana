@@ -15859,6 +15859,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-equals@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "fast-equals@npm:4.0.3"
+  checksum: 3d5935b757f9f2993e59b5164a7a9eeda0de149760495375cde14a4ed725186a7e6c1c0d58f7d42d2f91deb97f3fce1e0aad5591916ef0984278199a85c87c87
+  languageName: node
+  linkType: hard
+
 "fast-fifo@npm:^1.0.0":
   version: 1.1.0
   resolution: "fast-fifo@npm:1.1.0"
@@ -17378,7 +17385,7 @@ __metadata:
     react-draggable: 4.4.5
     react-dropzone: ^14.2.3
     react-enable: ^3.1.0
-    react-grid-layout: 1.3.4
+    react-grid-layout: 1.4.2
     react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
@@ -24698,7 +24705,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-draggable@npm:4.4.5, react-draggable@npm:^4.0.0, react-draggable@npm:^4.0.3":
+"react-draggable@npm:4.4.5":
   version: 4.4.5
   resolution: "react-draggable@npm:4.4.5"
   dependencies:
@@ -24708,6 +24715,19 @@ __metadata:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
   checksum: 21c3775db086e13020967627c20acd41d1ddbc7c7d7fca51491a5bbb54a0aa7e1730a4bc9af17141eb50a4954e547a5e25b2368f5f54b70db6f2686a897bacf2
+  languageName: node
+  linkType: hard
+
+"react-draggable@npm:^4.0.0, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
+  version: 4.4.6
+  resolution: "react-draggable@npm:4.4.6"
+  dependencies:
+    clsx: ^1.1.1
+    prop-types: ^15.8.1
+  peerDependencies:
+    react: ">= 16.3.0"
+    react-dom: ">= 16.3.0"
+  checksum: 9b15aac59244873ac4561c5a2bead43a56e18d406e0a5f242bd4f9d151c074530c02b99387983104bf43417292f9cf8d063e554ed08d88792235e3fbc965f1b8
   languageName: node
   linkType: hard
 
@@ -24802,6 +24822,23 @@ __metadata:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
   checksum: f56c8c452acd9588edf1dc6996a4ea14d9f669d77f6b2ebd50146eaeeb9325c83f5ca44b66bac2b8c24f9cb2ec7ed49396350435991255c3b31e21b8a2e3d243
+  languageName: node
+  linkType: hard
+
+"react-grid-layout@npm:1.4.2":
+  version: 1.4.2
+  resolution: "react-grid-layout@npm:1.4.2"
+  dependencies:
+    clsx: ^2.0.0
+    fast-equals: ^4.0.3
+    prop-types: ^15.8.1
+    react-draggable: ^4.4.5
+    react-resizable: ^3.0.5
+    resize-observer-polyfill: ^1.5.1
+  peerDependencies:
+    react: ">= 16.3.0"
+    react-dom: ">= 16.3.0"
+  checksum: a052d38c290b18e1c513a3b939757c239887009b7f175814b472d007708962870960d3b20d4a15dbdeb955ac55434ce6c5e5e5f8c850cfbdcc90f75c318f1d58
   languageName: node
   linkType: hard
 
@@ -25072,7 +25109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resizable@npm:3.0.5, react-resizable@npm:^3.0.4":
+"react-resizable@npm:3.0.5, react-resizable@npm:^3.0.4, react-resizable@npm:^3.0.5":
   version: 3.0.5
   resolution: "react-resizable@npm:3.0.5"
   dependencies:
