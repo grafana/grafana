@@ -11,6 +11,8 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { HistoryEntryApp } from './types';
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -20,6 +22,7 @@ export interface AppChromeState {
   megaMenu: 'open' | 'closed' | 'docked';
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  history: HistoryEntryApp[];
 }
 
 const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -37,6 +40,52 @@ export class AppChromeService {
       config.featureToggles.dockedMegaMenu && store.getBool(DOCKED_LOCAL_STORAGE_KEY, false) ? 'docked' : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    history: [
+      {
+        name: 'Dashboard',
+        views: [
+          {
+            name: 'BarChart - Thresholds & Mappings',
+            url: '/grafana/d/2I2uMSB7z/barchart-thresholds-and-mappings?orgId=1',
+          },
+          {
+            name: 'Mimir - Aggregator',
+            url: '/grafana/d/2I2uMSB7z/barchart-thresholds-and-mappings?orgId=1',
+          },
+        ],
+      },
+      {
+        name: 'Explore',
+        views: [
+          {
+            name: 'Datasource: se-demo-prom',
+            url: 'http://localhost:3000/grafana/explore?panes=%7B%22kDu%22:%7B%22datasource%22:%22kCLEK-Cnk%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22count%28count%20by%20%28cluster%29%20%28kube_node_info%7B%7D%29%29%22,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22kCLEK-Cnk%22%7D%7D%5D,%22range%22:%7B%22from%22:%22now-1m%22,%22to%22:%22now%22%7D%7D%7D&schemaVersion=1&orgId=1',
+          },
+          {
+            name: 'Datasource: se-demo-prom',
+            url: 'http://localhost:3000/grafana/explore?panes=%7B%22kDu%22:%7B%22datasource%22:%22kCLEK-Cnk%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22count%28count%20by%20%28cluster%29%20%28kube_node_info%7B%7D%29%29%22,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22kCLEK-Cnk%22%7D%7D%5D,%22range%22:%7B%22from%22:%22now-1m%22,%22to%22:%22now%22%7D%7D%7D&schemaVersion=1&orgId=1',
+          },
+        ],
+      },
+      {
+        name: 'Kubernetes',
+        url: '/grafana/a/grafana-k8s-app/home',
+        views: [
+          {
+            name: 'prod-api-svc',
+            url: '/grafana/a/grafana-k8s-app/navigation/cluster/prod-api-svc',
+          },
+          {
+            name: 'Efficency',
+            url: '/grafana/a/grafana-k8s-app/efficiency',
+          },
+          {
+            name: 'Cost',
+            url: '/grafana/a/grafana-k8s-app/cost',
+          },
+        ],
+      },
+    ],
   });
 
   public setMatchedRoute(route: RouteDescriptor) {

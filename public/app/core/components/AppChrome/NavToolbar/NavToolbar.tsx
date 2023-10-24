@@ -10,6 +10,7 @@ import { useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { PageHistoryButton } from '../../PageHistory/PageHistoryButton';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { NavToolbarSeparator } from './NavToolbarSeparator';
@@ -52,6 +53,7 @@ export function NavToolbar({
         />
       </div>
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
+      <PageHistoryButton />
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
