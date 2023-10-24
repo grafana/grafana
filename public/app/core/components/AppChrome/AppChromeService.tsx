@@ -69,7 +69,6 @@ export class AppChromeService {
       },
       {
         name: 'Kubernetes',
-        url: '/grafana/a/grafana-k8s-app/home',
         views: [
           {
             name: 'prod-api-svc',

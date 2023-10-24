@@ -4,35 +4,43 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, useStyles2 } from '@grafana/ui';
 import { Box } from '@grafana/ui/src/unstable';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
-export interface Props {}
+import { HistoryEntryApp } from '../AppChrome/types';
 
-export function PageHistoryButton(props: Props) {
+export function PageHistoryPopover() {
   const styles = useStyles2(getStyles);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const renderPopover = () => {
-    return (
-      /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
-      <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
-        <div className={styles.heading}>Grafana history</div>
-      </div>
-    );
-  };
+  const { history } = useGrafana().chrome.useState();
 
   return (
-    <Dropdown overlay={renderPopover} placement="bottom" onVisibleChange={setIsOpen}>
-      <Box marginLeft={1}>
-        <DashNavButton icon="clock-nine" tooltip="Settings" />
-      </Box>
-    </Dropdown>
+    /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
+    <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
+      <div className={styles.heading}>Page history</div>
+      {history.map((entry, index) => (
+        <HistoryEntryAppView key={index} entry={entry} />
+      ))}
+    </div>
+  );
+}
+
+interface ItemProps {
+  entry: HistoryEntryApp;
+}
+
+function HistoryEntryAppView({ entry }: ItemProps) {
+  const styles = useStyles2(getStyles);
+  const mainUrl = entry.views[0];
+
+  return (
+    <div>
+      <div>{entry.name}</div>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    button: css({}),
     popover: css({
       display: 'flex',
       padding: theme.spacing(2),

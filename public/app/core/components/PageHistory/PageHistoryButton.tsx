@@ -6,23 +6,16 @@ import { Dropdown, useStyles2 } from '@grafana/ui';
 import { Box } from '@grafana/ui/src/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
+import { PageHistoryPopover } from './PageHistoryPopover';
+
 export interface Props {}
 
 export function PageHistoryButton(props: Props) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
-  const renderPopover = () => {
-    return (
-      /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
-      <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
-        <div className={styles.heading}>Page history</div>
-      </div>
-    );
-  };
-
   return (
-    <Dropdown overlay={renderPopover} placement="bottom" onVisibleChange={setIsOpen}>
+    <Dropdown overlay={() => <PageHistoryPopover />} placement="bottom" onVisibleChange={setIsOpen}>
       <Box marginLeft={1}>
         <DashNavButton icon="clock-nine" tooltip="Settings" />
       </Box>
