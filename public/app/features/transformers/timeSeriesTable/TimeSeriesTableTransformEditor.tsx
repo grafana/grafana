@@ -53,7 +53,6 @@ export function TimeSeriesTableTransformEditor({
 
   const onMergeSeriesToggle = useCallback(
     (refId: string) => {
-      console.log(options);
       const mergeSeries = options[refId]?.mergeSeries !== undefined ? !options[refId].mergeSeries : false;
 
       onChange({
