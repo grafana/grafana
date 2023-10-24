@@ -303,49 +303,6 @@ function getLabels(node: SyntaxNode, text: string): Label[] {
   return labels;
 }
 
-//
-// function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
-//   if (selectorNode.type.id !== Selector && selectorNode.type.id !== Matchers) {
-//     return [];
-//   }
-//
-//   let listNode: SyntaxNode | null = null;
-//
-//   // If parent node is selector, we want to start with the current Matcher node
-//   if (selectorNode?.parent?.type.id === Selector) {
-//     listNode = selectorNode;
-//   } else {
-//     // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
-//     listNode =
-//       // Node in-between labels
-//       traverse(selectorNode, [['parent', Matchers]]) ??
-//       // Node after all other labels
-//       walk(selectorNode, [['firstChild', Matchers]]) ??
-//       // Node before all other labels
-//       walk(selectorNode, [['lastChild', Matchers]]);
-//   }
-//
-//   const labels: Label[] = [];
-//
-//   while (listNode !== null) {
-//     const matcherNode = walk(listNode, [['lastChild', Matcher]]);
-//     if (matcherNode !== null) {
-//       const label = getLabel(matcherNode, text);
-//       if (label !== null) {
-//         labels.push(label);
-//       }
-//     }
-//
-//     // there might be more labels
-//     listNode = walk(listNode, [['firstChild', Matchers]]);
-//   }
-//
-//   // our labels-list is last-first, so we reverse it
-//   labels.reverse();
-//
-//   return labels;
-// }
-
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
   let child: SyntaxNode | null = node.firstChild;
   const children: SyntaxNode[] = [];
