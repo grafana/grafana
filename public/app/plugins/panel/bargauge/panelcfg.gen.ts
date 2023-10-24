@@ -17,6 +17,7 @@ export interface Options extends common.SingleStatBaseOptions {
   minVizWidth: number;
   namePlacement: common.BarGaugeNamePlacement;
   showUnfilled: boolean;
+  sizing: common.BarGaugeSizing;
   valueMode: common.BarGaugeValueMode;
 }
 
@@ -27,5 +28,6 @@ export const defaultOptions: Partial<Options> = {
   minVizWidth: 0,
   namePlacement: common.BarGaugeNamePlacement.Auto,
   showUnfilled: true,
+  sizing: common.BarGaugeSizing.Auto,
   valueMode: common.BarGaugeValueMode.Color,
 };

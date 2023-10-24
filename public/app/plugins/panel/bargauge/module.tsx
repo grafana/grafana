@@ -1,5 +1,5 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -52,7 +52,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           ],
         },
         defaultValue: defaultOptions.namePlacement,
-        showIf: (options) => options.orientation !== VizOrientation.Vertical,
+        showIf: (options) => options.orientation === VizOrientation.Horizontal,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',
@@ -61,26 +61,41 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         defaultValue: defaultOptions.showUnfilled,
         showIf: (options) => options.displayMode !== 'lcd',
       })
+      .addRadio({
+        path: 'sizing',
+        name: 'Bar size',
+        settings: {
+          options: [
+            { value: BarGaugeSizing.Auto, label: 'Auto' },
+            { value: BarGaugeSizing.Manual, label: 'Manual' },
+          ],
+        },
+        defaultValue: defaultOptions.sizing,
+        showIf: (options) => options.orientation !== VizOrientation.Auto,
+      })
       .addNumberInput({
         path: 'minVizWidth',
         name: 'Min width',
         description: 'Minimum column width',
         defaultValue: defaultOptions.minVizWidth,
-        showIf: (options) => options.orientation === VizOrientation.Vertical,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
       .addNumberInput({
         path: 'minVizHeight',
         name: 'Min height',
         description: 'Minimum row height',
         defaultValue: defaultOptions.minVizHeight,
-        showIf: (options) => options.orientation === VizOrientation.Horizontal,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       })
       .addNumberInput({
         path: 'maxVizHeight',
         name: 'Max height',
         description: 'Maximum row height',
         defaultValue: defaultOptions.maxVizHeight,
-        showIf: (options) => options.orientation === VizOrientation.Horizontal,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
