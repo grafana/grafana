@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -23,7 +24,7 @@ var (
 
 type legacyStorage struct {
 	service    playlist.Service
-	namespacer namespaceMapper
+	namespacer request.NamespaceMapper
 }
 
 func (s *legacyStorage) New() runtime.Object {
