@@ -513,6 +513,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
+/scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform

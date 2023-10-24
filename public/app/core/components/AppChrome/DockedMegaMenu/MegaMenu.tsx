@@ -4,6 +4,7 @@ import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -39,7 +40,7 @@ export const MegaMenu = React.memo(
     };
 
     return (
-      <div data-testid="navbarmenu" ref={ref} {...restProps}>
+      <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
