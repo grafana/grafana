@@ -50,7 +50,7 @@ See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for a
 **Example request:**
 
 ```http
-GET /api/datasources/my_datasource/permissions HTTP/1.1
+GET /api/access-control/datasources/my_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
