@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -44,12 +44,17 @@ var _ rest.TableConvertor = &customTableConvertor{}
 var swaggerMetadataDescriptions = metav1.ObjectMeta{}.SwaggerDoc()
 
 func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	var table metav1.Table
+	table, ok := object.(*metav1.Table)
+	if ok {
+		return table, nil
+	} else {
+		table = &metav1.Table{}
+	}
 	fn := func(obj runtime.Object) error {
 		cells, err := c.reader(obj)
 		if err != nil {
 			resource := c.gr
-			if info, ok := genericapirequest.RequestInfoFrom(ctx); ok {
+			if info, ok := request.RequestInfoFrom(ctx); ok {
 				resource = schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}
 			}
 			return errNotAcceptable{resource: resource}
@@ -82,7 +87,7 @@ func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
 		table.ColumnDefinitions = c.columns
 	}
-	return &table, nil
+	return table, nil
 }
 
 // errNotAcceptable indicates the resource doesn't support Table conversion
