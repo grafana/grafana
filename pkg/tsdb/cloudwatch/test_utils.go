@@ -125,7 +125,7 @@ type mockEC2Client struct {
 	mock.Mock
 }
 
-func (c *mockEC2Client) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+func (c *mockEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.DescribeRegionsInput, option ...request.Option) (*ec2.DescribeRegionsOutput, error) {
 	args := c.Called(in)
 	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
 }
@@ -143,7 +143,7 @@ type oldEC2Client struct {
 	reservations []*ec2.Reservation
 }
 
-func (c oldEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+func (c oldEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.DescribeRegionsInput, option ...request.Option) (*ec2.DescribeRegionsOutput, error) {
 	regions := []*ec2.Region{}
 	for _, region := range c.regions {
 		regions = append(regions, &ec2.Region{
@@ -187,8 +187,8 @@ type fakeRGTAClient struct {
 	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
 }
 
-func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput,
-	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
+func (c fakeRGTAClient) GetResourcesPagesWithContext(ctx context.Context, in *resourcegroupstaggingapi.GetResourcesInput,
+	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool, opts ...request.Option) error {
 	fn(&resourcegroupstaggingapi.GetResourcesOutput{
 		ResourceTagMappingList: c.tagMapping,
 	}, true)
