@@ -211,19 +211,21 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID              int64          `json:"id,omitempty"`
-	UID             string         `json:"uid,omitempty"`
-	Type            string         `json:"type"`
-	Name            string         `json:"name"`
-	PluginMeta      *PluginMetaDTO `json:"meta"`
-	URL             string         `json:"url,omitempty"`
-	IsDefault       bool           `json:"isDefault"`
-	Access          string         `json:"access,omitempty"`
-	Preload         bool           `json:"preload"`
-	Module          string         `json:"module,omitempty"`
-	JSONData        map[string]any `json:"jsonData"`
-	ReadOnly        bool           `json:"readOnly"`
-	AngularDetected bool           `json:"angularDetected"`
+	ID         int64          `json:"id,omitempty"`
+	UID        string         `json:"uid,omitempty"`
+	Type       string         `json:"type"`
+	Name       string         `json:"name"`
+	PluginMeta *PluginMetaDTO `json:"meta"`
+	URL        string         `json:"url,omitempty"`
+	IsDefault  bool           `json:"isDefault"`
+	Access     string         `json:"access,omitempty"`
+	Preload    bool           `json:"preload"`
+	Module     string         `json:"module,omitempty"`
+	JSONData   map[string]any `json:"jsonData"`
+	ReadOnly   bool           `json:"readOnly"`
+
+	AngularDetected        bool `json:"angularDetected"`
+	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
@@ -243,26 +245,30 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string   `json:"id"`
-	Name            string   `json:"name"`
-	AliasIDs        []string `json:"aliasIds,omitempty"`
-	Info            Info     `json:"info"`
-	HideFromList    bool     `json:"hideFromList"`
-	Sort            int      `json:"sort"`
-	SkipDataQuery   bool     `json:"skipDataQuery"`
-	ReleaseState    string   `json:"state"`
-	BaseURL         string   `json:"baseUrl"`
-	Signature       string   `json:"signature"`
-	Module          string   `json:"module"`
-	AngularDetected bool     `json:"angularDetected"`
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	AliasIDs      []string `json:"aliasIds,omitempty"`
+	Info          Info     `json:"info"`
+	HideFromList  bool     `json:"hideFromList"`
+	Sort          int      `json:"sort"`
+	SkipDataQuery bool     `json:"skipDataQuery"`
+	ReleaseState  string   `json:"state"`
+	BaseURL       string   `json:"baseUrl"`
+	Signature     string   `json:"signature"`
+	Module        string   `json:"module"`
+
+	AngularDetected        bool `json:"angularDetected"`
+	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 }
 
 type AppDTO struct {
-	ID              string `json:"id"`
-	Path            string `json:"path"`
-	Version         string `json:"version"`
-	Preload         bool   `json:"preload"`
-	AngularDetected bool   `json:"angularDetected"`
+	ID      string `json:"id"`
+	Path    string `json:"path"`
+	Version string `json:"version"`
+	Preload bool   `json:"preload"`
+	
+	AngularDetected        bool `json:"angularDetected"`
+	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 }
 
 const (

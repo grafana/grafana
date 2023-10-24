@@ -30,7 +30,8 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	AngularDetected        bool
+	HideAngularDeprecation bool
 
 	ExternalService *auth.ExternalService
 }
@@ -72,7 +73,9 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
 		ExternalService:   p.ExternalService,
+
+		AngularDetected:        p.AngularDetected,
+		HideAngularDeprecation: p.HideAngularDeprecation,
 	}
 }

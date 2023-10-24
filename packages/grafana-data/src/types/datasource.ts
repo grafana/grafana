@@ -676,6 +676,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   rawRef?: DataSourceRef;
 
   angularDetected?: boolean;
+  hideAngularDeprecation?: boolean;
 }
 
 /**

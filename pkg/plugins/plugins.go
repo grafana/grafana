@@ -55,7 +55,8 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	AngularDetected        bool
+	HideAngularDeprecation bool
 
 	ExternalService *auth.ExternalService
 

@@ -31,6 +31,7 @@ export type AppPluginConfig = {
   version: string;
   preload: boolean;
   angularDetected?: boolean;
+  hideAngularDeprecation?: boolean;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
