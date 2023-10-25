@@ -1,38 +1,60 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
   DataFrame,
   FALLBACK_COLOR,
   Field,
+  formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
+  GrafanaTheme2,
   TimeZone,
   LinkModel,
 } from '@grafana/data';
-import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
+import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 
 interface StatusHistoryTooltipProps {
   data: DataFrame[];
+  dataIdxs: Array<number | null>;
   alignedData: DataFrame;
-  seriesIdx: number;
-  datapointIdx: number;
+  seriesIdx: number | null | undefined;
   timeZone: TimeZone;
+  isPinned: boolean;
+}
+
+function fmt(field: Field, val: number): string {
+  if (field.display) {
+    return formattedValueToString(field.display(val));
+  }
+
+  return `${val}`;
 }
 
 export const StatusHistoryTooltip = ({
   data,
+  dataIdxs,
   alignedData,
   seriesIdx,
-  datapointIdx,
   timeZone,
+  isPinned,
 }: StatusHistoryTooltipProps) => {
-  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  // @todo: check other dataIdx, it can be undefined or null in array
+  const datapointIdx = dataIdxs.find((idx) => idx !== undefined);
+  const seriesIndex = dataIdxs.findIndex((idx) => idx != null);
 
   if (!data || datapointIdx == null) {
     return null;
   }
 
-  const field = alignedData.fields[seriesIdx!];
+  const xField = alignedData.fields[0];
+  const field = alignedData.fields[seriesIndex!];
 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
@@ -49,50 +71,40 @@ export const StatusHistoryTooltip = ({
     });
   }
 
-  const xField = alignedData.fields[0];
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-
-  const dataFrameFieldIndex = field.state?.origin;
-  const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+  const fieldFmt = field.display || getDisplayProcessor();
   const value = field.values[datapointIdx!];
   const display = fieldFmt(value);
-  const fieldDisplayName = dataFrameFieldIndex
-    ? getFieldDisplayName(
-        data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex],
-        data[dataFrameFieldIndex.frameIndex],
-        data
-      )
-    : null;
+
+  const getHeaderLabel = (): LabelValue => {
+    return {
+      label: getFieldDisplayName(field),
+      value: fmt(field, field.values[datapointIdx]),
+      color: display.color || (FALLBACK_COLOR as string),
+    };
+  };
+
+  const getContentLabelValue = (): LabelValue[] => {
+    return [
+      {
+        label: 'Time',
+        value: fmt(xField, xField.values[datapointIdx]),
+      },
+    ];
+  };
 
   return (
-    <div>
-      <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-        <strong>{xFieldFmt(xField.values[datapointIdx]).text}</strong>
-        <br />
-        <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-        {fieldDisplayName}
-      </div>
-      {links.length > 0 && (
-        <div
-          style={{
-            margin: theme.spacing(1, -1, -1, -1),
-            borderTop: `1px solid ${theme.colors.border.weak}`,
-          }}
-        >
-          {links.map((link, i) => (
-            <MenuItem
-              key={i}
-              icon={'external-link-alt'}
-              target={link.target}
-              label={link.title}
-              url={link.href}
-              onClick={link.onClick}
-            />
-          ))}
-        </div>
-      )}
+    <div className={styles.wrapper}>
+      <VizTooltipHeader headerLabel={getHeaderLabel()} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} />
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
     </div>
   );
 };
 
-StatusHistoryTooltip.displayName = 'StatusHistoryTooltip';
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    width: '280px',
+  }),
+});
