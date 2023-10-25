@@ -10,8 +10,8 @@ import {
   LogsSortOrder,
   SplitOpen,
   TimeRange,
-} from '@grafana/data/src';
-import { Themeable2 } from '@grafana/ui/src';
+} from '@grafana/data';
+import { Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
