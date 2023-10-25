@@ -16,6 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// GroupName is the group name for this API.
+const GroupName = "playlist.grafana.app"
+const VersionID = "v0alpha1"
+
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
@@ -41,10 +45,11 @@ func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&Playlist{},
+		&PlaylistList{},
+	)
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return scheme.SetVersionPriority(SchemeGroupVersion)
 }
 
@@ -89,22 +94,4 @@ var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionI
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()
-}
-
-var (
-	// SchemeBuilder points to a list of functions added to Scheme.
-	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	localSchemeBuilder = &SchemeBuilder
-	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
-)
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Playlist{},
-		&PlaylistList{},
-	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
 }
