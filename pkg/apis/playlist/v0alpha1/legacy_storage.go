@@ -119,7 +119,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
 	}
@@ -192,7 +192,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return v, false, err // includes the not-found error
 	}
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
 	}
