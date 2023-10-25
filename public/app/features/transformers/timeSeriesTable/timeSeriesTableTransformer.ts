@@ -54,7 +54,7 @@ interface RefCount {
  *  - mergeSeries: Whether separate series should be merged into one
  *  - timeField: The time field that should be used for the time series
  */
-interface RefIdTransformerOptions {
+export interface RefIdTransformerOptions {
   stat?: ReducerID;
   mergeSeries?: boolean;
   timeField?: string;
