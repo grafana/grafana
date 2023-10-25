@@ -25,7 +25,7 @@ import { getFieldLinksForExplore } from '../utils/links';
 import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[];
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
