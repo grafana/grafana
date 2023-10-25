@@ -906,8 +906,8 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           xSize = Math.max(1, xSize - cellGap);
           ySize = Math.max(1, ySize - cellGap);
 
-          let x = xMaxPx;
-          let y = yMaxPx;
+          let x = xMaxPx - cellGap / 2 - xSize;
+          let y = yMaxPx + cellGap / 2;
 
           let fillPath = fillPaths[fills[i]];
 
