@@ -65,11 +65,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           break;
         }
       }
-    }
 
-    this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
-
-    if (config.featureToggles.panelFilterVariable) {
       this.eventSubs.add(
         appEvents.subscribe(VariablesChanged, (e) => {
           if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
@@ -86,6 +82,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
         })
       );
     }
+
+    this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
   }
 
   componentWillUnmount() {
