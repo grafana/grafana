@@ -23,10 +23,6 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 		})
 	}
 	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
 			UID:               types.UID(v.Uid),

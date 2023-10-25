@@ -34,8 +34,6 @@ func TestPlaylistConversion(t *testing.T) {
 	require.NoError(t, err)
 	//fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
-		"kind": "Playlist",
-		"apiVersion": "playlist.x.grafana.com/v0alpha1",
 		"metadata": {
 		  "name": "abc",
 		  "namespace": "org-3",
