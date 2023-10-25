@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 )
@@ -90,7 +91,7 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, intervalCalculator, timeInterval)
+	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, timeInterval)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -182,7 +183,7 @@ func calculatePrometheusInterval(
 	// here is where we compare for $__rate_interval or ${__rate_interval}
 	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
 		// Rate interval is final and is not affected by resolution
-		return calculateRateInterval(adjustedInterval, timeInterval, intervalCalculator), nil
+		return calculateRateInterval(adjustedInterval, timeInterval), nil
 	} else {
 		queryIntervalFactor := intervalFactor
 		if queryIntervalFactor == 0 {
@@ -195,7 +196,6 @@ func calculatePrometheusInterval(
 func calculateRateInterval(
 	interval time.Duration,
 	scrapeInterval string,
-	intervalCalculator intervalv2.Calculator,
 ) time.Duration {
 	scrape := scrapeInterval
 	if scrape == "" {
@@ -212,8 +212,7 @@ func calculateRateInterval(
 }
 
 func interpolateVariables(expr, queryInterval string, interval time.Duration,
-	timeRange time.Duration,
-	intervalCalculator intervalv2.Calculator, timeInterval string) string {
+	timeRange time.Duration, timeInterval string) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
@@ -221,7 +220,7 @@ func interpolateVariables(expr, queryInterval string, interval time.Duration,
 	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
 		rateInterval = interval
 	} else {
-		rateInterval = calculateRateInterval(interval, timeInterval, intervalCalculator)
+		rateInterval = calculateRateInterval(interval, timeInterval)
 	}
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
