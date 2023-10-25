@@ -4,6 +4,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
 
+    // Remove the anchor links from the markdown.
     const cleansedMarkdown = removeMarkdownAnchorLinks(getHelperDocs(ImageRenderType.UIImage));
 
     if (links?.length) {
@@ -15,7 +16,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
         })
         .join('');
 
-      // If links exist, build and add them to the returned documentation.
+      // If external links exist, build and add them to the returned documentation.
       return {
         name,
         helperDocs: `
@@ -26,7 +27,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
       };
     }
 
-    // If NO links exist, simply return the basic documentation.
+    // If NO external links exist, simply return the basic documentation.
     return {
       name,
       helperDocs: `
@@ -36,7 +37,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
     };
   }
 
-  // If the transformation has no documentation, return a link to the online documentation.
+  // If the transformation has no documentation, return an external link to the online documentation.
   return {
     name: 'No documentation found',
     helperDocs: getLinkToDocs(),
