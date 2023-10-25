@@ -129,6 +129,11 @@ describe('datasource_srv', () => {
       uid: 'no-query',
       meta: { id: 'no-query' },
     },
+    TestData: {
+      type: 'grafana-testdata-datasource',
+      name: 'TestData',
+      meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+    },
   };
 
   describe('Given a list of data sources', () => {
@@ -304,6 +309,13 @@ describe('datasource_srv', () => {
     it('Can get get list and filter by pluginId', () => {
       const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
       expect(list[0].name).toBe('Jaeger');
+      expect(list.length).toBe(1);
+    });
+
+    it('Can get get list and filter by an alias', () => {
+      const list = dataSourceSrv.getList({ pluginId: 'testdata' });
+      console.log('List? ', list);
+      expect(list[0].name).toBe('TestData');
       expect(list.length).toBe(1);
     });
 
