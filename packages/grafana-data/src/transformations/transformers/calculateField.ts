@@ -312,10 +312,6 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
     throw new Error(`Unknown reducer: ${options.reducer}`);
   }
 
-  const reducer = info.reduce ?? doStandardCalcs;
-  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
-  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
-
   return (frame: DataFrame) => {
     // Find the columns that should be examined
     let selectedField: Field | null = null;
@@ -330,18 +326,16 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
       return;
     }
 
-    // Prepare a "fake" field for the row
-    const fakeField: Field = {
-      name: 'temp',
-      values: new Array(selectedField.values.length),
-      type: FieldType.number,
-      config: {},
-    };
     const vals: number[] = [];
 
+    let total = 0;
     for (let i = 0; i < frame.length; i++) {
-      fakeField.values[i] = selectedField.values[i];
-      vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+      total += selectedField.values[i];
+      if (options.reducer === ReducerID.sum) {
+        vals.push(total);
+      } else if (options.reducer === ReducerID.mean) {
+        vals.push(total / (i + 1));
+      }
     }
 
     return vals;
