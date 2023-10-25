@@ -155,10 +155,10 @@ export const TransformationOperationRow = ({
         draggable
         actions={renderActions}
         disabled={disabled}
-      expanderMessages={{
-        close: 'Collapse transformation row',
-        open: 'Expand transformation row',
-      }}
+        expanderMessages={{
+          close: 'Collapse transformation row',
+          open: 'Expand transformation row',
+        }}
       >
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
