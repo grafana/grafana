@@ -88,5 +88,5 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   description: `Use a field value to lookup additional fields from an external source. This currently supports spatial data, but will eventually support more formats.`,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.fieldLookup).helperDocs,
+  help: getTransformationContent(DataTransformerID.fieldLookup).getHelperDocs(),
 };
