@@ -136,16 +136,17 @@ export function LogsTable(props: Props) {
   }
 
   const onCellFilterAdded = (filter: AdHocFilterItem) => {
-    if (!props.onClickFilterLabel || !props.onClickFilterOutLabel) {
+    const { value, key, operator } = filter;
+    const { onClickFilterLabel, onClickFilterOutLabel } = props;
+    if (!onClickFilterLabel || !onClickFilterOutLabel) {
       return;
     }
-    const { value, key, operator } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
-      props.onClickFilterLabel(key, value);
+      onClickFilterLabel(key, value);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      props.onClickFilterOutLabel(key, value);
+      onClickFilterOutLabel(key, value);
     }
   };
 
@@ -153,7 +154,7 @@ export function LogsTable(props: Props) {
     <Table
       data={tableFrame}
       width={width}
-      onCellFilterAdded={onCellFilterAdded}
+      onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
