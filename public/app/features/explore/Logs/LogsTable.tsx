@@ -5,8 +5,10 @@ import {
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
+  DataFrameType,
   DataTransformerConfig,
   Field,
+  FieldType,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -178,7 +180,10 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
+      return (
+        (field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels') ||
+        (field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines)
+      );
     })
     .flatMap((field: Field) => {
       return [
