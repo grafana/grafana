@@ -23,7 +23,8 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
       .fetch(request)
       .subscribe({
         error: (error) => {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred: ', JSON.stringify(error)]);
+          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+          console.error('API call error: ', error);
           updateLoadingStateCallback && updateLoadingStateCallback(false);
         },
         complete: () => {
