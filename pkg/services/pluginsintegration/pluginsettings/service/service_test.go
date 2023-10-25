@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
 func TestService_DecryptedValuesCache(t *testing.T) {
@@ -21,7 +19,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(nil, secretsService, saTests.NewMockExtSvcAccountsService(t))
+		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,
@@ -59,7 +57,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		psService := ProvideService(nil, secretsService, saTests.NewMockExtSvcAccountsService(t))
+		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			ctx,
@@ -100,9 +98,8 @@ func TestIntegrationPluginSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	store := db.InitTestDB(t)
-	saSvcMock := saTests.NewMockExtSvcAccountsService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	psService := ProvideService(store, secretsService, saSvcMock)
+	psService := ProvideService(store, secretsService)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {
 		secureJsonData, err := secretsService.EncryptJsonData(context.Background(), map[string]string{"secureKey": "secureValue"}, secrets.WithoutScope())
@@ -174,7 +171,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				pluginStateChangedEvent = evt
 				return nil
 			})
-			saSvcMock.On("EnableExtSvcAccount", mock.Anything, mock.Anything).Return(nil)
 
 			cmd := &pluginsettings.UpdateArgs{
 				OrgID:         existing.OrgId,
