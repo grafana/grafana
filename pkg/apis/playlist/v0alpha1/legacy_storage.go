@@ -22,8 +22,9 @@ var (
 )
 
 type legacyStorage struct {
-	service    playlist.Service
-	namespacer namespaceMapper
+	service        playlist.Service
+	namespacer     namespaceMapper
+	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -45,7 +46,7 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -68,12 +69,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
 		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			UID:   v.UID,

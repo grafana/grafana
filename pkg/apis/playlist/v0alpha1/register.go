@@ -1,6 +1,9 @@
 package v0alpha1
 
 import (
+	"fmt"
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,9 +15,14 @@ import (
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// GroupName is the group name for this API.
+const GroupName = "playlist.grafana.app"
+const VersionID = "v0alpha1"
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
@@ -22,6 +30,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 type PlaylistAPIBuilder struct {
 	service    playlist.Service
 	namespacer namespaceMapper
+	gv         schema.GroupVersion
 }
 
 func RegisterAPIService(p playlist.Service,
@@ -31,21 +40,23 @@ func RegisterAPIService(p playlist.Service,
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: getNamespaceMapper(cfg),
+		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return SchemeGroupVersion
+	return b.gv
 }
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
-	return scheme.SetVersionPriority(SchemeGroupVersion)
+	scheme.AddKnownTypes(b.gv,
+		&Playlist{},
+		&PlaylistList{},
+	)
+	metav1.AddToGroupVersion(scheme, b.gv)
+	return scheme.SetVersionPriority(b.gv)
 }
 
 func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
@@ -59,12 +70,34 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	legacyStore := &legacyStorage{
 		service:    b.service,
 		namespacer: b.namespacer,
+		tableConverter: utils.NewTableConverter(
+			b.gv.WithResource("playlists").GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
+				{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj runtime.Object) ([]interface{}, error) {
+				m, ok := obj.(*Playlist)
+				if !ok {
+					return nil, fmt.Errorf("expected playlist")
+				}
+				return []interface{}{
+					m.Name,
+					m.Spec.Title,
+					m.Spec.Interval,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
 	}
 	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
-		store, err := newStorage(scheme, optsGetter)
+		store, err := newStorage(scheme, optsGetter, b.gv)
+		store.TableConvertor = legacyStore.tableConverter
 		if err != nil {
 			return nil, err
 		}
@@ -81,30 +114,4 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
-}
-
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
-
-// Resource takes an unqualified resource and returns a Group qualified GroupResource
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
-}
-
-var (
-	// SchemeBuilder points to a list of functions added to Scheme.
-	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	localSchemeBuilder = &SchemeBuilder
-	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
-)
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Playlist{},
-		&PlaylistList{},
-	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
 }

@@ -1,4 +1,4 @@
-import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -138,49 +138,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return merge(...streams);
     }
 
-    if (this.version === InfluxVersion.Flux || this.version === InfluxVersion.SQL) {
-      return super.query(filteredRequest);
-    }
-
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      return super.query(filteredRequest).pipe(
-        map((res) => {
-          if (res.error) {
-            throw {
-              message: 'InfluxDB Error: ' + res.error.message,
-              res,
-            };
-          }
-
-          const groupedFrames = groupBy(res.data, (x) => x.refId);
-          if (Object.keys(groupedFrames).length === 0) {
-            return { data: [] };
-          }
-
-          const seriesList: any[] = [];
-          filteredRequest.targets.forEach((target) => {
-            const filteredFrames = groupedFrames[target.refId] ?? [];
-            switch (target.resultFormat) {
-              case 'logs':
-              case 'table':
-                seriesList.push(
-                  this.responseParser.getTable(filteredFrames, target, {
-                    preferredVisualisationType: target.resultFormat,
-                  })
-                );
-                break;
-              default: {
-                for (let i = 0; i < filteredFrames.length; i++) {
-                  seriesList.push(filteredFrames[i]);
-                }
-                break;
-              }
-            }
-          });
-
-          return { data: seriesList };
-        })
-      );
+      return super.query(filteredRequest);
     }
 
     // Fallback to classic query support
@@ -354,7 +313,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
       return lastValueFrom(
         super.query({
-          ...options, // includes 'range'
+          ...(options ?? {}), // includes 'range'
           targets: [target],
         })
       ).then((rsp) => {
@@ -365,7 +324,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, options.scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, options?.scopedVars, this.interpolateQueryExpr);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);

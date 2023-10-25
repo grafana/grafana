@@ -301,9 +301,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -437,6 +438,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -707,9 +709,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:            "reportingRetries",
@@ -769,6 +772,13 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "alertingContactPointsV2",
+			Description:  "Show the new contacpoints list view",
+			FrontendOnly: true,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -846,6 +856,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "navAdminSubsections",
