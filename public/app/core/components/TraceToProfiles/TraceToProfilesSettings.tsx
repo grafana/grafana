@@ -90,7 +90,7 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace', 'deployment.environment'"
+          tooltip="Tags that will be used in the query. Default tags: 'service.name', 'service.namespace'"
           label="Tags"
           labelWidth={26}
         >

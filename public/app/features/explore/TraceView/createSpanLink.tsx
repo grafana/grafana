@@ -127,12 +127,14 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-export const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'].map(
-  (k) => ({
+const formatDefaultKeys = (keys: string[]) => {
+  return keys.map((k) => ({
     key: k,
     value: k.includes('.') ? k.replace('.', '_') : undefined,
-  })
-);
+  }));
+};
+const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
+const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -645,7 +647,9 @@ function scopedVarsFromTags(span: TraceSpan, traceToProfilesOptions: TraceToProf
 
   if (traceToProfilesOptions) {
     const profileTags =
-      traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0 ? traceToProfilesOptions.tags : defaultKeys;
+      traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
+        ? traceToProfilesOptions.tags
+        : defaultProfilingKeys;
 
     tags = {
       __tags: {
