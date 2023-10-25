@@ -2,7 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
