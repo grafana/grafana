@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import {
   ConfirmModal,
   FilterInput,
@@ -13,8 +14,6 @@ import {
   Pagination,
 } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
-
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
