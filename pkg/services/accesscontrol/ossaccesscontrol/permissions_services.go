@@ -163,7 +163,7 @@ func ProvideDashboardPermissions(
 				}
 				return append([]string{parentScope}, nestedScopes...), nil
 			}
-			return []string{}, nil
+			return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

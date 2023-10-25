@@ -27,6 +27,7 @@ export interface Props {
    */
   apply?: boolean;
   maxWidth?: string | number;
+  width?: string | number;
 }
 
 export const TeamRolePicker = ({
@@ -37,6 +38,7 @@ export const TeamRolePicker = ({
   pendingRoles,
   apply = false,
   maxWidth,
+  width,
 }: Props) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
@@ -81,6 +83,7 @@ export const TeamRolePicker = ({
       basicRoleDisabled={true}
       canUpdateRoles={canUpdateRoles}
       maxWidth={maxWidth}
+      width={width}
     />
   );
 };
