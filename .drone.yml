@@ -2710,7 +2710,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: golang:1.20.10-alpine
+  image: node:18.12.0-alpine
   name: release-npm-packages
 trigger:
   event:
@@ -4667,6 +4667,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 29a933affceb9cc39b285d936de9e6327deedbb80f1285fa645d596f89ede442
+hmac: 5018acdf8a91b804503b6bbf01eb313f09d05648c0f5e539210002fccefd7cb3
 
 ...
