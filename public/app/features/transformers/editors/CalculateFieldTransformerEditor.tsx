@@ -193,7 +193,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
-    this.setState({ selected: [] });
     onChange({
       ...options,
       mode,
@@ -212,12 +211,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   // Cumulative functions
   //---------------------------------------------------------
 
-  updateCumulativeOptions = (v: CumulativeOptions) => {
+  updateReduceOptions = (v: ReduceOptions) => {
     const { options, onChange } = this.props;
     onChange({
       ...options,
-      mode: CalculateFieldMode.CumulativeFunctions,
-      cumulative: v,
+      reduce: v,
     });
   };
 
@@ -230,30 +228,20 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     }
   };
 
-  onCumulativeFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
-    if (selected.indexOf(fieldName) > -1) {
-      this.setState({ selected: selected.filter((s) => s !== fieldName) });
-      const { cumulative } = this.props.options;
-      this.updateCumulativeOptions({
-        ...cumulative!,
-        include: selected.filter((s) => s !== fieldName),
-      });
-    } else {
-      this.setState({ selected: [...selected, fieldName] });
-      const { cumulative } = this.props.options;
-      this.updateCumulativeOptions({
-        ...cumulative!,
-        include: [...selected, fieldName],
-      });
-    }
+  onChange = (selected: string[]) => {
+    this.setState({ selected });
+    const { reduce } = this.props.options;
+    this.updateReduceOptions({
+      ...reduce!,
+      include: selected,
+    });
   };
 
-  onCumulativeStatsChange = (stats: string[]) => {
+  onStatsChange = (stats: string[]) => {
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
-    const { cumulative } = this.props.options;
-    this.updateCumulativeOptions({ ...cumulative, reducer });
+    const { reduce } = this.props.options;
+    this.updateReduceOptions({ ...reduce, reducer });
   };
 
   renderRowIndex(options?: IndexOptions) {
@@ -279,7 +267,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
                 <FilterPill
                   key={`${o}/${i}`}
                   onClick={() => {
-                    this.onCumulativeFieldToggle(o);
+                    this.onFieldToggle(o);
                   }}
                   label={o}
                   selected={selected.indexOf(o) > -1}
@@ -293,7 +281,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onCumulativeStatsChange}
+            onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
             filterOptions={(ext) =>
               ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
@@ -349,8 +337,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     // eslint-disable-next-line
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
-    const { cumulative } = this.props.options;
-    this.updateCumulativeOptions({ ...cumulative, reducer });
+    const { window } = this.props.options;
+    this.updateWindowOptions({ ...window, reducer });
   };
 
   renderWindowFunctions(options?: CumulativeOptions) {
@@ -398,24 +386,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   // Reduce by Row
   //---------------------------------------------------------
 
-  updateReduceOptions = (v: ReduceOptions) => {
-    const { options, onChange } = this.props;
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.ReduceRow,
-      reduce: v,
-    });
-  };
-
-  onChange = (selected: string[]) => {
-    this.setState({ selected });
-    const { reduce } = this.props.options;
-    this.updateReduceOptions({
-      ...reduce!,
-      include: selected,
-    });
-  };
-
   onReducerStatsChange = (stats: string[]) => {
     // TODO: try to fix this type assertion
     // eslint-disable-next-line
@@ -452,7 +422,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onReducerStatsChange}
+            onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
           />
         </InlineField>

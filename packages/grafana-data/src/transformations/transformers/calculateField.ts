@@ -29,11 +29,6 @@ export interface ReduceOptions {
   nullValueMode?: NullValueMode;
 }
 
-export interface CumulativeOptions {
-  include?: string[]; // Assume all fields
-  reducer: ReducerID;
-  nullValueMode?: NullValueMode;
-}
 export interface WindowOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
@@ -83,7 +78,6 @@ export interface CalculateFieldTransformerOptions {
 
   // Only one should be filled
   reduce?: ReduceOptions;
-  cumulative?: CumulativeOptions;
   window?: WindowOptions;
   binary?: BinaryOptions;
   unary?: UnaryOptions;
@@ -130,7 +124,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.CumulativeFunctions:
-            creator = getCumulativeCreator(defaults(options.cumulative, defaultReduceOptions), data);
+            creator = getCumulativeCreator(defaults(options.reduce, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.WindowFunctions:
             creator = getWindowCreator(defaults(options.window, defaultWindowOptions), data);
@@ -271,7 +265,7 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
   };
 }
 
-function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]): ValuesCreator {
+function getCumulativeCreator(options: ReduceOptions, allFrames: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
