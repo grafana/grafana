@@ -23,6 +23,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	svc := ServiceAccountsProxy{
 		log.New("test"),
 		serviceMock,
+		true,
 	}
 
 	t.Run("should create service account", func(t *testing.T) {
