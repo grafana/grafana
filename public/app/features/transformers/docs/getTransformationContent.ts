@@ -1,8 +1,10 @@
-import { transformationDocsContent, getLinkToDocs } from './content';
+import { transformationDocsContent, getLinkToDocs, ImageRenderType } from './content';
 
 export function getTransformationContent(id: string): { name: string; helperDocs: string } {
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
+
+    const cleansedMarkdown = removeMarkdownAnchorLinks(getHelperDocs(ImageRenderType.UIImage));
 
     if (links?.length) {
       const renderedLinks = links
@@ -17,7 +19,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
       return {
         name,
         helperDocs: `
-        ${getHelperDocs()}
+        ${cleansedMarkdown}
         ${getLinkToDocs()}
   ${renderedLinks}
         `,
@@ -28,7 +30,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
     return {
       name,
       helperDocs: `
-      ${getHelperDocs()}
+      ${cleansedMarkdown}
       ${getLinkToDocs()}
       `,
     };
@@ -40,3 +42,13 @@ export function getTransformationContent(id: string): { name: string; helperDocs
     helperDocs: getLinkToDocs(),
   };
 }
+
+const removeMarkdownAnchorLinks = (markdown: string) => {
+  // Define the regular expression pattern to match the [text](#text-text-text) pattern
+  const pattern = /\[(.*?)\]\(#.*?\)/g;
+
+  // Replace all occurrences of the pattern with the captured "text" part
+  const result = markdown.replace(pattern, '$1');
+
+  return result;
+};
