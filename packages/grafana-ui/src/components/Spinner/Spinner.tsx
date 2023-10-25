@@ -14,19 +14,27 @@ export interface Props {
   style?: React.CSSProperties;
   iconClassName?: string;
   inline?: boolean;
-  size?: IconSize | DeprecatedSize;
+  size?: IconSize;
 }
 
 /**
  * @deprecated
  * use a predefined size, e.g. 'md' or 'lg' instead
  */
-type DeprecatedSize = number | string;
+interface PropsWithDeprecatedSize extends Omit<Props, 'size'> {
+  size?: number | string;
+}
 
 /**
  * @public
  */
-export const Spinner = ({ className, inline = false, iconClassName, style, size = 'md' }: Props) => {
+export const Spinner = ({
+  className,
+  inline = false,
+  iconClassName,
+  style,
+  size = 'md',
+}: Props | PropsWithDeprecatedSize) => {
   const styles = useStyles2(getStyles);
 
   const deprecatedStyles = useStyles2(getDeprecatedStyles, size);
