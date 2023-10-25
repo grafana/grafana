@@ -927,5 +927,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "panelFilterVariable",
+			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
 	}
 )
