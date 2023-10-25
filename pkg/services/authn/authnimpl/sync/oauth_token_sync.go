@@ -104,7 +104,10 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	_, err, _ = s.sf.Do(identity.ID, func() (interface{}, error) {
+	lockKey := fmt.Sprintf("oauth-token-sync-%s", identity.ID)
+	_, err, _ = s.sf.Do(lockKey, func() (interface{}, error) {
+		s.log.Debug("Singleflight request for OAuth token sync", "key", lockKey)
+
 		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
 		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
