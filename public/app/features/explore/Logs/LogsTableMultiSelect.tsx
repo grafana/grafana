@@ -41,23 +41,11 @@ export const LogsTableMultiSelect = (props: {
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
-        <div className={styles.columnHeader}>Common columns</div>
+        <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => value === 100}
-        />
-        <div className={styles.columnHeader}>Available columns</div>
-        <LogsTableNavColumn
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !!value && value !== 100}
-        />
-        <div className={styles.columnHeader}>Empty columns</div>
-        <LogsTableNavColumn
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !value}
+          valueFilter={(value) => !!value}
         />
       </>
     </div>
