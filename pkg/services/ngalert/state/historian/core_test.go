@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 func TestShouldRecord(t *testing.T) {
@@ -95,6 +96,82 @@ func TestShouldRecord(t *testing.T) {
 			require.Equal(t, !ok, shouldRecord(trans))
 		})
 	}
+}
+
+func TestShouldRecordAnnotation(t *testing.T) {
+	rule := func() history_model.RuleMeta {
+		return history_model.RuleMeta{
+			UID: "some-rule",
+		}
+	}
+	transition := func(from eval.State, fromReason string, to eval.State, toReason string) state.StateTransition {
+		return state.StateTransition{
+			PreviousState:       from,
+			PreviousStateReason: fromReason,
+			State:               &state.State{State: to, StateReason: toReason},
+		}
+	}
+
+	t.Run("transitions between Normal and Normal(NoData) not recorded if NoData->OK", func(t *testing.T) {
+		r := rule()
+		r.NoDataState = models.OK
+		forward := transition(eval.Normal, "", eval.Normal, models.StateReasonNoData)
+		backward := transition(eval.Normal, models.StateReasonNoData, eval.Normal, "")
+
+		require.False(t, shouldRecordAnnotation(r, forward), "Normal -> Normal(NoData) should be false")
+		require.False(t, shouldRecordAnnotation(r, backward), "Normal(NoData) -> Normal should be false")
+	})
+
+	t.Run("transitions between Normal and Normal(NoData) are recorded if NoData not mapped to OK", func(t *testing.T) {
+		noDataToAlerting := rule()
+		noDataToAlerting.NoDataState = models.Alerting
+		noDataToNoData := rule()
+		noDataToNoData.NoDataState = models.NoData
+		forward := transition(eval.Normal, "", eval.Normal, models.StateReasonNoData)
+		backward := transition(eval.Normal, models.StateReasonNoData, eval.Normal, "")
+
+		require.True(t, shouldRecordAnnotation(noDataToAlerting, forward), "Normal -> Normal(NoData) should be true")
+		require.True(t, shouldRecordAnnotation(noDataToAlerting, backward), "Normal(NoData) -> Normal should be true")
+		require.True(t, shouldRecordAnnotation(noDataToNoData, forward), "Normal -> Normal(NoData) should be true")
+		require.True(t, shouldRecordAnnotation(noDataToNoData, backward), "Normal(NoData) -> Normal should be true")
+	})
+
+	t.Run("other normal transitions involving NoData still recorded even if NoData->OK", func(t *testing.T) {
+		r := rule()
+		r.NoDataState = models.OK
+		pauseForward := transition(eval.Normal, models.StateReasonNoData, eval.Normal, models.StateReasonPaused)
+		pauseBackward := transition(eval.Normal, models.StateReasonPaused, eval.Normal, models.StateReasonNoData)
+		errorForward := transition(eval.Normal, models.StateReasonNoData, eval.Normal, models.StateReasonError)
+		errorBackward := transition(eval.Normal, models.StateReasonError, eval.Normal, models.StateReasonNoData)
+		missingSeriesBackward := transition(eval.Normal, models.StateReasonMissingSeries, eval.Normal, models.StateReasonNoData)
+
+		require.True(t, shouldRecordAnnotation(r, pauseForward), "Normal(NoData) -> Normal(Paused) should be true")
+		require.True(t, shouldRecordAnnotation(r, pauseBackward), "Normal(Paused) -> Normal(NoData) should be true")
+		require.True(t, shouldRecordAnnotation(r, errorForward), "Normal(NoData) -> Normal(Error) should be true")
+		require.True(t, shouldRecordAnnotation(r, errorBackward), "Normal(Error) -> Normal(NoData) should be true")
+		require.True(t, shouldRecordAnnotation(r, missingSeriesBackward), "Normal(MissingSeries) -> Normal(NoData) should be true")
+	})
+
+	t.Run("respects filters in shouldRecord()", func(t *testing.T) {
+		r := rule()
+		missingSeries := transition(eval.Normal, "", eval.Normal, models.StateReasonMissingSeries)
+		unpause := transition(eval.Normal, models.StateReasonPaused, eval.Normal, "")
+		afterUpdate := transition(eval.Normal, models.StateReasonUpdated, eval.Normal, "")
+
+		require.False(t, shouldRecordAnnotation(r, missingSeries), "Normal -> Normal(MissingSeries) should be false")
+		require.False(t, shouldRecordAnnotation(r, unpause), "Normal(Paused) -> Normal should be false")
+		require.False(t, shouldRecordAnnotation(r, afterUpdate), "Normal(Updated) -> Normal should be false")
+
+		// Smoke test a few basic ones, exhaustive tests for shouldRecord() already exist elsewhere.
+		basicPending := transition(eval.Normal, "", eval.Pending, "")
+		basicAlerting := transition(eval.Pending, "", eval.Alerting, "")
+		basicResolve := transition(eval.Alerting, "", eval.Normal, "")
+		basicError := transition(eval.Normal, "", eval.Error, "")
+		require.True(t, shouldRecordAnnotation(r, basicPending), "Normal -> Pending should be true")
+		require.True(t, shouldRecordAnnotation(r, basicAlerting), "Pending -> Alerting should be true")
+		require.True(t, shouldRecordAnnotation(r, basicResolve), "Alerting -> Normal should be true")
+		require.True(t, shouldRecordAnnotation(r, basicError), "Normal -> Error should be true")
+	})
 }
 
 func TestRemovePrivateLabels(t *testing.T) {

@@ -20,6 +20,7 @@ type RuleMeta struct {
 	DashboardUID string
 	PanelID      int64
 	Condition    string
+	NoDataState  models.NoDataState
 }
 
 func NewRuleMeta(r *models.AlertRule, log log.Logger) RuleMeta {
@@ -45,6 +46,7 @@ func NewRuleMeta(r *models.AlertRule, log log.Logger) RuleMeta {
 		DashboardUID: dashUID,
 		PanelID:      panelID,
 		Condition:    r.Condition,
+		NoDataState:  r.NoDataState,
 	}
 }
 
