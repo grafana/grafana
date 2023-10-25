@@ -133,5 +133,5 @@ export const renameByRegexTransformRegistryItem: TransformerRegistryItem<RenameB
   name: standardTransformers.renameByRegexTransformer.name,
   description: 'Renames part of the query result by using regular expression with placeholders.',
   categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.renameByRegex).helperDocs,
+  help: getTransformationContent(DataTransformerID.renameByRegex).getHelperDocs(),
 };
