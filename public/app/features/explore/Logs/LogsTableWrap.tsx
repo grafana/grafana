@@ -32,6 +32,7 @@ interface Props extends Themeable2 {
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  datasourceType?: string;
 }
 
 export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
@@ -261,6 +262,7 @@ export function LogsTableWrap(props: Props) {
         logsFrames={logsFrames}
         columnsWithMeta={columnsWithMeta}
         height={height}
+        datasourceType={props.datasourceType}
       />
     </div>
   );

@@ -5,10 +5,8 @@ import {
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
-  DataFrameType,
   DataTransformerConfig,
   Field,
-  FieldType,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -37,6 +35,7 @@ interface Props {
   height: number;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  datasourceType?: string;
 }
 
 export function LogsTable(props: Props) {
@@ -107,8 +106,10 @@ export function LogsTable(props: Props) {
       let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> =
-        extractFieldsAndExclude(dataFrame);
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFieldsAndExclude(
+        dataFrame,
+        props.datasourceType
+      );
 
       // remove hidden fields
       transformations.push(...removeHiddenFields(dataFrame));
@@ -129,7 +130,7 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, props.datasourceType, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
@@ -177,13 +178,10 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFieldsAndExclude(dataFrame: DataFrame) {
+function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return (
-        (field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels') ||
-        (field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines)
-      );
+      return field.typeInfo?.frame === 'json.RawMessage' && datasourceType === 'loki';
     })
     .flatMap((field: Field) => {
       return [

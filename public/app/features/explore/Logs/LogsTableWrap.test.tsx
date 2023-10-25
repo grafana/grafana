@@ -23,6 +23,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
+      datasourceType={'loki'}
       onClickFilterOutLabel={() => undefined}
       onClickFilterLabel={() => undefined}
       updatePanelState={() => undefined}

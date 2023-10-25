@@ -731,6 +731,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   timeZone={timeZone}
                   width={width - 80}
                   logsFrames={this.props.logsFrames ?? []}
+                  datasourceType={this.props.datasourceType}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   panelState={this.props.panelState?.logs}

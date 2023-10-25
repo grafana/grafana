@@ -91,6 +91,7 @@ describe('LogsTable', () => {
     return render(
       getComponent(
         {
+          datasourceType: 'loki',
           ...partialProps,
         },
         logs
@@ -131,6 +132,7 @@ describe('LogsTable', () => {
 
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
+      datasourceType: 'elasticsearch',
       logsFrames: [getMockElasticFrame()],
     });
 
@@ -145,6 +147,7 @@ describe('LogsTable', () => {
 
   it('should render extracted labels as columns (loki)', async () => {
     setup({
+      datasourceType: 'loki',
       columnsWithMeta: {
         foo: { active: true, percentOfLinesWithLabel: 3 },
       },
