@@ -3,6 +3,7 @@ package channels_config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -1292,6 +1293,36 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					},
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
+				},
+				{
+					Label:        "Responders",
+					PropertyName: "responders",
+					Description:  "If API key belongs to a team, this field is ignored.",
+					Element:      ElementSubformArray,
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Type",
+							Description:  fmt.Sprintf("%s or a template", strings.Join(alertingOpsgenie.SupportedResponderTypes, ",")),
+							Element:      ElementTypeInput,
+							Required:     true,
+							PropertyName: "type",
+						},
+						{
+							Label:        "ID",
+							Element:      ElementTypeInput,
+							PropertyName: "id",
+						},
+						{
+							Label:        "Name",
+							Element:      ElementTypeInput,
+							PropertyName: "name",
+						},
+						{
+							Label:        "Username",
+							Element:      ElementTypeInput,
+							PropertyName: "username",
+						},
+					},
 				},
 			},
 		},
