@@ -156,7 +156,7 @@ export const RolePicker = ({
     return (
       <div style={{ maxWidth: widthPx || maxWidth, width: widthPx }}>
         <span>Loading...</span>
-        <Spinner size={16} inline className={styles.loadingSpinner} />
+        <Spinner inline className={styles.loadingSpinner} />
       </div>
     );
   }
