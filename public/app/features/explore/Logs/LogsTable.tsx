@@ -184,7 +184,8 @@ function extractFieldsAndExclude(dataFrame: DataFrame) {
         (field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels') ||
         (field.type === FieldType.other &&
           dataFrame?.meta?.type === DataFrameType.LogLines &&
-          field.name === 'attributes')
+          field.name === 'attributes') ||
+        field?.config?.custom?.hidden === true
       );
     })
     .flatMap((field: Field) => {

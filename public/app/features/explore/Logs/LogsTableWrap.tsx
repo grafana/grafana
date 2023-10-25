@@ -62,7 +62,7 @@ export function LogsTableWrap(props: Props) {
     const logsFrame = parseLogsFrame(dataFrame);
     const labels = logsFrame?.getAttributesAsLabels();
 
-    const otherFields = logsFrame ? logsFrame.extraFields : [];
+    const otherFields = logsFrame ? logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden) : [];
     if (logsFrame?.severityField) {
       otherFields.push(logsFrame?.severityField);
     }
