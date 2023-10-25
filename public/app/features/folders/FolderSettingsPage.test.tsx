@@ -25,8 +25,6 @@ const setup = (propOverrides?: object) => {
       url: 'url',
       hasChanged: false,
       version: 1,
-      permissions: [],
-      canViewFolderPermissions: true,
     },
     getFolderByUid: jest.fn(),
     setFolderTitle: mockToolkitActionCreator(setFolderTitle),
