@@ -78,22 +78,6 @@ func TestIntegrationCreateFolder(t *testing.T) {
 			require.JSONEq(t, fmt.Sprintf(`{"message":"%s"}`, dashboards.ErrFolderSameNameExists), string(b))
 		})
 	})
-
-	/*
-		grafanaClient := client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
-			Host:     grafanaListedAddr,
-			BasePath: "/api",
-			Schemes:  []string{"http"},
-		})
-		_, err := grafanaClient.Folders.CreateFolder(&folders.CreateFolderParams{
-			Body: &models.CreateFolderCommand{
-				Title: "folder",
-			},
-		}, runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
-			return r.SetHeaderParam("Authorization", "Bearer ")
-		}))
-		require.NoError(t, err)
-	*/
 }
 
 func TestIntegrationNestedFoldersOn(t *testing.T) {
