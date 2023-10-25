@@ -8,7 +8,7 @@ import {
   preparePlotFrame,
   TimeSeries,
   TooltipDisplayMode,
-  TooltipPlugin,
+  TooltipPlugin2,
   usePanelContext,
 } from '@grafana/ui';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
@@ -16,6 +16,7 @@ import { findFieldIndex } from 'app/features/dimensions';
 
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
+import { TrendTooltip } from './TrendTooltip';
 import { Options } from './panelcfg.gen';
 
 export const TrendPanel = ({
@@ -126,14 +127,23 @@ export const TrendPanel = ({
           <>
             <KeyboardPlugin config={config} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin
-                frames={info.frames!}
-                data={alignedDataFrame}
+              <TooltipPlugin2
                 config={config}
-                mode={options.tooltip.mode}
-                sortOrder={options.tooltip.sort}
-                sync={sync}
-                timeZone={timeZone}
+                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                  return (
+                    <TrendTooltip
+                      frames={info.frames!}
+                      data={alignedDataFrame}
+                      mode={options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
+                      sync={sync}
+                      timeZone={timeZone}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      isPinned={isPinned}
+                    />
+                  );
+                }}
               />
             )}
           </>
