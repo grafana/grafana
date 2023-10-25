@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import memoizeOne from 'memoize-one';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   DataFrame,
