@@ -100,7 +100,7 @@ export const TeamList = ({
                   AccessControlAction.ActionTeamsRolesList,
                   original
                 );
-                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
+                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} width={40} />;
               },
             },
           ]

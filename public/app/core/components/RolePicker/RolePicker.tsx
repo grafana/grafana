@@ -1,11 +1,12 @@
 import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
-import { ClickOutsideWrapper, HorizontalGroup, Spinner } from '@grafana/ui';
+import { ClickOutsideWrapper, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
 import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH, ROLE_PICKER_WIDTH } from './constants';
+import { getStyles } from './styles';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -24,6 +25,7 @@ export interface Props {
    */
   apply?: boolean;
   maxWidth?: string | number;
+  width?: string | number;
 }
 
 export const RolePicker = ({
@@ -40,6 +42,7 @@ export const RolePicker = ({
   canUpdateRoles = true,
   apply = false,
   maxWidth = ROLE_PICKER_WIDTH,
+  width,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -47,6 +50,9 @@ export const RolePicker = ({
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
 
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
@@ -148,10 +154,10 @@ export const RolePicker = ({
 
   if (isLoading) {
     return (
-      <HorizontalGroup justify="center">
+      <div style={{ maxWidth: widthPx || maxWidth, width: widthPx }}>
         <span>Loading...</span>
-        <Spinner size={16} />
-      </HorizontalGroup>
+        <Spinner size={16} inline className={styles.loadingSpinner} />
+      </div>
     );
   }
 
@@ -160,7 +166,8 @@ export const RolePicker = ({
       data-testid="role-picker"
       style={{
         position: 'relative',
-        maxWidth,
+        maxWidth: widthPx || maxWidth,
+        width: widthPx,
       }}
       ref={ref}
     >
@@ -175,6 +182,7 @@ export const RolePicker = ({
           isFocused={isOpen}
           disabled={disabled}
           showBasicRole={showBasicRole}
+          width={widthPx}
         />
         {isOpen && (
           <RolePickerMenu

@@ -134,6 +134,7 @@ export const OrgUsersTable = ({
               onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
               basicRoleDisabled={basicRoleDisabled}
               basicRoleDisabledMessage={disabledRoleMessage}
+              width={40}
             />
           ) : (
             <OrgRolePicker
