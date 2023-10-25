@@ -83,16 +83,6 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 }
 
 func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
-	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, *query.OrgID, *query.ServiceAccountID)
-	if err != nil {
-		return nil, err
-	}
-
-	if isExternalServiceAccount(sa.Login) {
-		s.log.Error("unable to list tokens for external service accounts", "serviceAccountID", *query.ServiceAccountID)
-		return nil, extsvcaccounts.ErrCannotListTokens
-	}
-
 	return s.proxiedService.ListTokens(ctx, query)
 }
 
