@@ -178,9 +178,6 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      if (field.typeInfo?.frame === 'json.RawMessage') {
-        console.log('field', field);
-      }
       return field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
     })
     .flatMap((field: Field) => {
