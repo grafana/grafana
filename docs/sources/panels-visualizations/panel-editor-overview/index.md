@@ -37,9 +37,9 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
-## Panel actions menu
+## Panel menu
 
-When you hover over the top-right corner of any panel, the actions menu appears. Click the menu icon to access the following actions:
+When you hover over the top-right corner of any panel, the panel menu icon appears. Click the icon to access the following actions:
 
 - **View**: View the panel in full screen.
 - **Edit**: Open the panel editor to edit panel and visualization options.
