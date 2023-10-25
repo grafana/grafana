@@ -13,6 +13,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
         })
         .join('');
 
+      // If links exist, build and add them to the returned documentation.
       return {
         name,
         helperDocs: `
@@ -23,6 +24,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
       };
     }
 
+    // If NO links exist, simply return the basic documentation.
     return {
       name,
       helperDocs: `
@@ -32,6 +34,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
     };
   }
 
+  // If the transformation has no documentation, return a link to the online documentation.
   return {
     name: 'No documentation found',
     helperDocs: getLinkToDocs(),
