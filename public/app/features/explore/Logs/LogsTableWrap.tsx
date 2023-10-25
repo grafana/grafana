@@ -102,7 +102,7 @@ export function LogsTableWrap(props: Props) {
       // Convert count to percent of log lines
       Object.keys(pendingLabelState).forEach((key) => {
         pendingLabelState[key].percentOfLinesWithLabel = normalize(
-          pendingLabelState[key].percentOfLinesWithLabel ?? 0,
+          pendingLabelState[key].percentOfLinesWithLabel,
           numberOfLogLines
         );
       });
