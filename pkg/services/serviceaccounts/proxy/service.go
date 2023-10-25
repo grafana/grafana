@@ -29,7 +29,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts),
+		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth),
 	}
 	return s, nil
 }
@@ -79,7 +79,7 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 
 func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, orgID int64, serviceAccountID int64, tokenID int64) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, 0, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 		if err != nil {
 			return err
 		}
