@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 func ProvideService(db db.DB, secretsService secrets.Service) *Service {
@@ -28,7 +27,6 @@ func ProvideService(db db.DB, secretsService secrets.Service) *Service {
 type Service struct {
 	db              db.DB
 	decryptionCache secureJSONDecryptionCache
-	saSvc           serviceaccounts.ExtSvcAccountsService
 	secretsService  secrets.Service
 
 	logger log.Logger
