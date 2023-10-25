@@ -417,6 +417,16 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "取消",
@@ -757,6 +767,7 @@
   "panel": {
     "header-menu": {
       "copy": "复制",
+      "create-alert": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",

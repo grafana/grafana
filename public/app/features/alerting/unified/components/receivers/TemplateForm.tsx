@@ -203,7 +203,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                           </Field>
                           <div className={styles.buttons}>
                             {loading && (
-                              <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                              <Button disabled={true} icon="spinner" variant="primary">
                                 Saving...
                               </Button>
                             )}

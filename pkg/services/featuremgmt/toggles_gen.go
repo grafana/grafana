@@ -55,6 +55,10 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
+	// FlagExploreContentOutline
+	// Content outline sidebar
+	FlagExploreContentOutline = "exploreContentOutline"
+
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -475,6 +479,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagFormatString
+	// Enable format string transformer
+	FlagFormatString = "formatString"
+
 	// FlagTransformationsVariableSupport
 	// Allows using variables in transformations
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
@@ -483,6 +491,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagCloudWatchBatchQueries
+	// Runs CloudWatch metrics queries as separate batches
+	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
+
 	// FlagNavAdminSubsections
 	// Splits the administration section of the nav tree into subsections
 	FlagNavAdminSubsections = "navAdminSubsections"
@@ -490,6 +502,10 @@ const (
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagTeamHttpHeaders
+	// Enables datasources to apply team headers to the client requests
+	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins
@@ -502,4 +518,20 @@ const (
 	// FlagPanelTitleSearchInV1
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
+
+	// FlagPluginsInstrumentationStatusSource
+	// Include a status source label for plugin request metrics and logs
+	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+
+	// FlagCostManagementUi
+	// Toggles the display of the cost management ui plugin
+	FlagCostManagementUi = "costManagementUi"
+
+	// FlagManagedPluginsInstall
+	// Install managed plugins directly from plugins catalog
+	FlagManagedPluginsInstall = "managedPluginsInstall"
+
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 )
