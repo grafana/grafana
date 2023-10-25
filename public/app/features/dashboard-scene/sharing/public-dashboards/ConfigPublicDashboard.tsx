@@ -15,7 +15,6 @@ import { ConfirmModal } from './ConfirmModal';
 import { getUnsupportedDashboardDatasources, panelTypes } from './CreatePublicDashboard';
 import { SharePublicDashboardTab } from './SharePublicDashboardTab';
 
-
 export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublicDashboardTab>) {
   const styles = useStyles2(getStyles);
 

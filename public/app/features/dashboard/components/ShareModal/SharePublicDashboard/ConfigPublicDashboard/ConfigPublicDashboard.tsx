@@ -5,16 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { config, featureEnabled } from '@grafana/runtime/src';
-import {
-  Button,
-  ClipboardButton,
-  Field,
-  HorizontalGroup,
-  Input,
-  Label,
-  Switch,
-  useStyles2,
-} from '@grafana/ui/src';
+import { Button, ClipboardButton, Field, HorizontalGroup, Input, Label, Switch, useStyles2 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
@@ -52,7 +43,16 @@ interface Props {
   onRevoke: () => void;
 }
 
-const ConfigPublicDashboard = ({ onRevoke, timeRange, hasTemplateVariables = false, showSaveChangesAlert = false, onUpdate, isLoading = false, unsupportedDatasources = [], publicDashboard}: Props) => {
+const ConfigPublicDashboard = ({
+  onRevoke,
+  timeRange,
+  hasTemplateVariables = false,
+  showSaveChangesAlert = false,
+  onUpdate,
+  isLoading = false,
+  unsupportedDatasources = [],
+  publicDashboard,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const isDesktop = useIsDesktop();
 
@@ -169,7 +169,7 @@ const ConfigPublicDashboard = ({ onRevoke, timeRange, hasTemplateVariables = fal
         align={isDesktop ? 'center' : 'normal'}
       >
         <HorizontalGroup justify="flex-end">
-        <Button
+          <Button
             aria-label="Revoke public URL"
             title="Revoke public URL"
             onClick={onRevoke}

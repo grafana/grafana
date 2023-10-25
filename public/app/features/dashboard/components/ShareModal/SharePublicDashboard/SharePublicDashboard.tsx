@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { ModalsController, Spinner, useStyles2 } from '@grafana/ui/src';
+import { contextSrv } from 'app/core/core';
 import {
   useCreatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
@@ -14,19 +15,18 @@ import {
   publicDashboardPersisted,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
+import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../../../../plugins/admin/components/HorizontalGroup';
+import { ShareModal } from '../ShareModal';
+import { trackDashboardSharingActionPerType } from '../analytics';
+import { shareDashboardType } from '../utils';
 
 import ConfigPublicDashboard from './ConfigPublicDashboard/ConfigPublicDashboard';
 import CreatePublicDashboard from './CreatePublicDashboard/CreatePublicDashboard';
-import { AccessControlAction, useSelector } from 'app/types';
 import { useGetUnsupportedDataSources } from './useGetUnsupportedDataSources';
-import { trackDashboardSharingActionPerType } from '../analytics';
-import { shareDashboardType } from '../utils';
-import { contextSrv } from 'app/core/core';
-import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { ShareModal } from '../ShareModal';
-import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 interface Props extends ShareModalTabProps {}
 
