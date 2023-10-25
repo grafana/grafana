@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -79,7 +81,7 @@ func NewK8sTestContext(t *testing.T) K8sTestContext {
 }
 
 type User struct {
-	User     user.User
+	User     *user.SignedInUser
 	password string
 }
 
@@ -196,23 +198,35 @@ func (c K8sTestContext) createTestUsers(orgId int64) TestUsers {
 	require.NoError(c.t, err)
 	require.Equal(c.t, orgId, gotID)
 
+	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(store,
-		orgService, store.Cfg, nil, nil, quotaService,
+		orgService, store.Cfg, teamSvc, cache, quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
 	createUser := func(key string, role org.RoleType) User {
-		user, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
+		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
 			Password:       key,
 			Login:          fmt.Sprintf("%s%d", key, orgId),
 			OrgID:          orgId,
 		})
 		require.NoError(c.t, err)
-		require.Equal(c.t, orgId, user.OrgID)
-		require.True(c.t, user.ID > 0)
+		require.Equal(c.t, orgId, u.OrgID)
+		require.True(c.t, u.ID > 0)
+
+		s, err := userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+			UserID: u.ID,
+			Login:  u.Login,
+			Email:  u.Email,
+			OrgID:  orgId,
+		})
+		require.NoError(c.t, err)
+		require.Equal(c.t, orgId, s.OrgID)
+		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
 		return User{
-			User:     *user,
+			User:     s,
 			password: key,
 		}
 	}

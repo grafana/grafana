@@ -28,25 +28,25 @@ func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 
 	switch signedInUser.OrgRole {
 	case org.RoleAdmin:
-		return authorizer.DecisionAllow, "", nil
+		return authorizer.DecisionNoOpinion, "", nil
 	case org.RoleEditor:
 		switch a.GetVerb() {
 		case "get", "list", "watch", "create", "update", "patch", "delete", "put", "post":
-			return authorizer.DecisionAllow, "", nil
+			return authorizer.DecisionNoOpinion, "", nil
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 		}
 	case org.RoleViewer:
 		switch a.GetVerb() {
 		case "get", "list", "watch":
-			return authorizer.DecisionAllow, "", nil
+			return authorizer.DecisionNoOpinion, "", nil
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 		}
 	case org.RoleNone:
 		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 	}
-	return authorizer.DecisionNoOpinion, "", nil
+	return authorizer.DecisionDeny, "", nil
 }
 
 func errorMessageForGrafanaOrgRole(grafanaOrgRole string, a authorizer.Attributes) string {
