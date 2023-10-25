@@ -135,5 +135,5 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
-  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
+  help: getTransformationContent(DataTransformerID.groupBy).getHelperDocs(),
 };
