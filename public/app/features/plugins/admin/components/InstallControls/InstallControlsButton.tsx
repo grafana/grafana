@@ -76,7 +76,6 @@ export function InstallControlsButton({
         setNeedReload?.(true);
       }
 
-
       if (isExternallyManaged && configCore.featureToggles.managedPluginsInstall) {
         onManagedInstallCallback?.(true);
       } else {
