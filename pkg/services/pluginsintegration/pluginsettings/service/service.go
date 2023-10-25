@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -9,14 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func ProvideService(db db.DB, secretsService secrets.Service) *Service {
+func ProvideService(db db.DB, secretsService secrets.Service, saSvc serviceaccounts.ExtSvcAccountsService) *Service {
 	s := &Service{
 		db: db,
 		decryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		saSvc:          saSvc,
 		secretsService: secretsService,
 		logger:         log.New("pluginsettings"),
 	}
@@ -27,6 +30,7 @@ func ProvideService(db db.DB, secretsService secrets.Service) *Service {
 type Service struct {
 	db              db.DB
 	decryptionCache secureJSONDecryptionCache
+	saSvc           serviceaccounts.ExtSvcAccountsService
 	secretsService  secrets.Service
 
 	logger log.Logger
@@ -90,6 +94,15 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.
 	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, args.SecureJSONData, secrets.WithoutScope())
 	if err != nil {
 		return err
+	}
+
+	errEnable := s.saSvc.EnableExtSvcAccount(ctx, &serviceaccounts.EnableExtSvcAccountCmd{
+		OrgID:      args.OrgID, // TODO check the OrgID
+		Enabled:    args.Enabled,
+		ExtSvcSlug: args.PluginID,
+	})
+	if errEnable != nil && !errors.Is(errEnable, serviceaccounts.ErrServiceAccountNotFound) {
+		return errEnable
 	}
 
 	return s.updatePluginSetting(ctx, &pluginsettings.UpdatePluginSettingCmd{

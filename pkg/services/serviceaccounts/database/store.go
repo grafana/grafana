@@ -171,6 +171,23 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 	return nil
 }
 
+// EnableServiceAccount enable/disable service account
+func (s *ServiceAccountsStoreImpl) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		query := "UPDATE " + s.sqlStore.GetDialect().Quote("user") + " SET is_disabled = ? WHERE id = ? AND is_service_account = ?"
+		res, err := sess.Exec(query, enable, serviceAccountID, true)
+		if err != nil {
+			return err
+		}
+		if cnt, _ := res.RowsAffected(); cnt == 0 {
+			return serviceaccounts.ErrServiceAccountNotFound.
+				Errorf("cannot set is_disabled to '%v' service account '%v' not found", enable, serviceAccountID)
+		}
+
+		return nil
+	})
+}
+
 // RetrieveServiceAccount returns a service account by its ID
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgId, serviceAccountId int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}

@@ -47,6 +47,18 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, db db.DB, features *featurem
 	return esa
 }
 
+// EnableExtSvcAccount enables or disables the service account associated to an external service
+func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *sa.EnableExtSvcAccountCmd) error {
+	saName := sa.ExtSvcPrefix + slugify.Slugify(cmd.ExtSvcSlug)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, saName)
+	if errRetrieve != nil {
+		return errRetrieve
+	}
+
+	return esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, saID, cmd.Enabled)
+}
+
 // RetrieveExtSvcAccount fetches an external service account by ID
 func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*sa.ExtSvcAccount, error) {
 	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)

@@ -495,3 +495,56 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+	initUsers := []tests.TestUser{
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
+		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
+	}
+
+	db, store := setupTestDatabase(t)
+	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+
+	tt := []struct {
+		desc        string
+		id          int64
+		enable      bool
+		expectedErr error
+	}{
+		{
+			desc:   "should disable service account",
+			id:     1,
+			enable: false,
+		},
+		{
+			desc:   "should enable service account",
+			id:     1,
+			enable: true,
+		},
+		{
+			desc:        "should error for unexisting service account",
+			id:          101,
+			enable:      true,
+			expectedErr: serviceaccounts.ErrServiceAccountNotFound,
+		},
+		{
+			desc:        "should not disable user",
+			id:          2,
+			enable:      false,
+			expectedErr: serviceaccounts.ErrServiceAccountNotFound,
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			err := store.EnableServiceAccount(ctx, orgID, tc.id, tc.enable)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

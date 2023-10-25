@@ -196,6 +196,12 @@ type ManageExtSvcAccountCmd struct {
 	Permissions []accesscontrol.Permission
 }
 
+type EnableExtSvcAccountCmd struct {
+	ExtSvcSlug string
+	Enabled    bool
+	OrgID      int64
+}
+
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access
 var AccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionRead),
