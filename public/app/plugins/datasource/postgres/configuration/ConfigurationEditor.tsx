@@ -11,7 +11,6 @@ import {
 import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
-  Divider,
   Input,
   Select,
   SecretInput,
@@ -24,6 +23,7 @@ import {
   Collapse,
 } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { Divider } from 'app/features/plugins/sql/components/configuration/Divider';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
