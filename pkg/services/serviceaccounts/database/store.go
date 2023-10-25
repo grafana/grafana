@@ -175,7 +175,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 func (s *ServiceAccountsStoreImpl) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		query := "UPDATE " + s.sqlStore.GetDialect().Quote("user") + " SET is_disabled = ? WHERE id = ? AND is_service_account = ?"
-		res, err := sess.Exec(query, enable, serviceAccountID, true)
+		res, err := sess.Exec(query, !enable, serviceAccountID, true)
 		if err != nil {
 			return err
 		}
