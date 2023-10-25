@@ -175,7 +175,9 @@ Use this transformation to select one query and from it extract standard options
 **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
 This enables dynamic query driven visualization configuration.
 
-- **Config query**: Selet the query that returns the data you want to use as configuration.
+#### Options
+
+- **Config query**: Select the query that returns the data you want to use as configuration.
 - **Apply to**: Select what fields or series to apply the configuration to.
 - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 
@@ -348,7 +350,7 @@ You'll get the following output:
 
 ### Filter data by query refId
 
-Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
+Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
