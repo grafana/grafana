@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -107,7 +106,6 @@ func TestBuildResourceURI(t *testing.T) {
 			}
 
 			url := *ub.buildResourceURI()
-			fmt.Println("url:", url)
 			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Web/serverFarms/rn1", url)
 		})
 
