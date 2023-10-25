@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
@@ -26,6 +27,8 @@ type InstallControlsButtonProps = {
   latestCompatibleVersion?: Version;
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
+  isExternallyManaged?: boolean;
+  onManagedInstallCallback?: (showInstallationInfoModal: boolean) => void;
 };
 
 export function InstallControlsButton({
@@ -34,6 +37,8 @@ export function InstallControlsButton({
   latestCompatibleVersion,
   hasInstallWarning,
   setNeedReload,
+  isExternallyManaged = false,
+  onManagedInstallCallback,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -65,12 +70,18 @@ export function InstallControlsButton({
   const onInstall = async () => {
     trackPluginInstalled(trackingProps);
     const result = await install(plugin.id, latestCompatibleVersion?.version);
-    // refresh the store to have the new installed plugin
-    await fetchDetails(plugin.id);
     if (!errorInstalling && !('error' in result)) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
       if (plugin.type === 'app') {
         setNeedReload?.(true);
+      }
+
+
+      if (isExternallyManaged && configCore.featureToggles.managedPluginsInstall) {
+        onManagedInstallCallback?.(true);
+      } else {
+        // refresh the store to have the new installed plugin
+        await fetchDetails(plugin.id);
       }
     }
   };
