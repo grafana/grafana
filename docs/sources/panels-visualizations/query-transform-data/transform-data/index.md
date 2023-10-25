@@ -6,8 +6,9 @@ comments: |
 
   scripts/docs/generate-transformations.ts - Includes all content not specific to a transformation.
   public/app/features/transformers/docs/content.ts - Transformation-specific content.
-  
-  Only use reference style links in the `content.ts` file or else link text will be visible in the UI.
+
+  Only use reference style links in the 'content.ts' file or else link text will be visible in the UI.
+
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
@@ -918,7 +919,7 @@ With the _Partition by values_ transformer, you can now issue a single query and
 
 ### Prepare time series
 
-Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/developers/plugin-tools/introduction/data-frames).
+Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
