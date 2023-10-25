@@ -496,6 +496,27 @@ func TestParse(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
+
+	t.Run("parsing query with custom interval, minStep and scrape interval values", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(1 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "rate(rpc_durations_seconds_count[$__rate_interval])",
+			"format": "time_series",
+			"interval": "150s",
+			"intervalMs": 100000,
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		res, err := models.Parse(q, "30s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, "rate(rpc_durations_seconds_count[10m0s])", res.Expr)
+		require.Equal(t, time.Second*150, res.Step)
+	})
 }
 
 func queryContext(json string, timeRange backend.TimeRange) backend.DataQuery {
