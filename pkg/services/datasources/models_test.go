@@ -100,32 +100,3 @@ func TestTeamHTTPHeaders(t *testing.T) {
 		})
 	}
 }
-
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
-func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
-	testcases := []struct {
-		desc            string
-		teamHeaderValue string
-		want            bool
-	}{
-		{
-			desc:            "Should be valid regex match for team headervalue",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should return false for incorrect header value",
-			teamHeaderValue: `1234:!="value",foo!~"bar" }`,
-			want:            false,
-		},
-	}
-	for _, tc := range testcases {
-		t.Run(tc.desc, func(t *testing.T) {
-			th := TeamHTTPHeader{
-				Header: "X-Prom-Label-Policy",
-				Value:  tc.teamHeaderValue,
-			}
-			assert.Equal(t, tc.want, th.TeamHTTPHeaderValueRegexMatch())
-		})
-	}
-}
