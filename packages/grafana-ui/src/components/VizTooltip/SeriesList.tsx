@@ -44,16 +44,12 @@ const SingleSeries = ({ label, value, color, colorIndicator = ColorIndicator.ser
   const styles = useStyles2(getStyles);
 
   return (
-    <HorizontalGroup
-      justify="space-between"
-      spacing="md"
-      className={cx(styles.hgContainer, isActive && styles.activeSeries)}
-    >
+    <HorizontalGroup justify="space-between" spacing="md" className={styles.hgContainer}>
       <>
         {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />}
-        {label && <div className={styles.label}>{label}</div>}
+        {label && <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>}
       </>
-      {value && <div>{value}</div>}
+      {value && <div className={cx(isActive && styles.activeSeries)}>{value}</div>}
     </HorizontalGroup>
   );
 };

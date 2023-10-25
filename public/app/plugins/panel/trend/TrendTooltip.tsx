@@ -110,7 +110,6 @@ export const TrendTooltip = ({
       sortIdx.push(v);
       series.push({
         color: display.color || FALLBACK_COLOR,
-        // label: getFieldDisplayName(field, frame, frames),
         label: field.state?.displayName ?? field.name,
         value: display ? formattedValueToString(display) : null,
         isActive: seriesIdx === i,
@@ -131,7 +130,6 @@ export const TrendTooltip = ({
     }
 
     tooltip = <SeriesList series={series} />;
-    // <SeriesTable series={series} timestamp={xVal} />;
   }
 
   const getHeaderLabel = (): LabelValue => {
