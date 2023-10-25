@@ -69,8 +69,9 @@ func (c K8sTestContext) PostResource(user User, resource string, payload AnyReso
 	namespace := payload.Namespace
 	if namespace == "" {
 		namespace = "default"
-		if user.User.OrgID > 1 {
-			namespace = fmt.Sprintf("org-%d", user.User.OrgID)
+		orgId := user.Identity.GetOrgID()
+		if orgId > 1 {
+			namespace = fmt.Sprintf("org-%d", orgId)
 		}
 	}
 
@@ -83,10 +84,11 @@ func (c K8sTestContext) PostResource(user User, resource string, payload AnyReso
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return newK8sResponse(c.Post(PostParams{
-		path: path,
-		user: user,
-		body: string(body),
+	return newK8sResponse(c.Request(RequestParams{
+		Method: http.MethodPost,
+		Path:   path,
+		User:   user,
+		Body:   body,
 	}), &AnyResource{})
 }
 
@@ -99,10 +101,11 @@ func (c K8sTestContext) PutResource(user User, resource string, payload AnyResou
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return newK8sResponse(c.Put(PostParams{
-		path: path,
-		user: user,
-		body: string(body),
+	return newK8sResponse(c.Request(RequestParams{
+		Method: http.MethodPut,
+		Path:   path,
+		User:   user,
+		Body:   body,
 	}), &AnyResource{})
 }
 
@@ -134,9 +137,9 @@ func (c K8sTestContext) readAnyResource(raw []byte) AnyResource {
 func (c K8sTestContext) List(user User, gvr schema.GroupVersionResource, namespace string) AnyResourceListResponse {
 	c.t.Helper()
 
-	return newK8sResponse(c.Get(GetParams{
-		url: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
+	return newK8sResponse(c.Request(RequestParams{
+		User: user,
+		Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
 			gvr.Group, gvr.Version, namespace, gvr.Resource),
-		user: user,
 	}), &AnyResourceList{})
 }

@@ -3,7 +3,9 @@ package apis
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
@@ -12,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -37,7 +40,7 @@ type K8sTestContext struct {
 	Org1 TestUsers
 	Org2 TestUsers
 
-	// Available groups
+	// Registered groups
 	Groups map[string]metav1.APIGroup
 }
 
@@ -62,9 +65,9 @@ func NewK8sTestContext(t *testing.T) K8sTestContext {
 	c.Org2 = c.createTestUsers(int64(2))
 
 	// Read the groups
-	rsp := newK8sResponse(c.Get(GetParams{
-		url:  "/apis",
-		user: c.Org1.Viewer,
+	rsp := newK8sResponse(c.Request(RequestParams{
+		User: c.Org1.Viewer,
+		Path: "/apis",
 	}), &metav1.APIGroupList{})
 	for _, g := range rsp.Result.Groups {
 		c.Groups[g.Name] = g
@@ -73,105 +76,54 @@ func NewK8sTestContext(t *testing.T) K8sTestContext {
 }
 
 type User struct {
-	User     *user.SignedInUser
+	Identity identity.Requester
 	password string
 }
 
-type GetParams struct {
-	url  string
-	user User
+type RequestParams struct {
+	User        User
+	Method      string // GET/POST
+	Path        string
+	Body        []byte
+	ContentType string
 }
 
-func (c K8sTestContext) Get(params GetParams) *http.Response {
+func (c K8sTestContext) Request(params RequestParams) *http.Response {
 	c.t.Helper()
 
-	//fmtUrl := fmt.Sprintf("%s", params.url, params.page)
-	resp, err := http.Get(c.getURL(params.url, params.user))
+	if params.Method == "" {
+		params.Method = http.MethodGet
+	}
+
+	// Get the URL
+	addr := c.env.Server.HTTPServer.Listener.Addr()
+	baseUrl := fmt.Sprintf("http://%s", addr)
+	login := params.User.Identity.GetLogin()
+	if login != "" && params.User.password != "" {
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+	}
+
+	contentType := params.ContentType
+	var body io.Reader
+	if params.Body != nil {
+		body = bytes.NewReader([]byte(params.Body))
+		if contentType == "" && json.Valid(params.Body) {
+			contentType = "application/json"
+		}
+	}
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf(
+		"%s%s",
+		baseUrl,
+		body,
+	), body)
 	require.NoError(c.t, err)
-
-	return resp
-}
-
-type PostParams struct {
-	path string
-	body string
-	user User
-}
-
-func (c K8sTestContext) Post(params PostParams) *http.Response {
-	c.t.Helper()
-	buf := bytes.NewReader([]byte(params.body))
-
-	// nolint:gosec
-	resp, err := http.Post(
-		c.getURL(params.path, params.user),
-		"application/json",
-		buf,
-	)
-	require.NoError(c.t, err)
-
-	return resp
-}
-
-func (c K8sTestContext) Put(params PostParams) *http.Response {
-	c.t.Helper()
-	buf := bytes.NewReader([]byte(params.body))
-
-	req, err := http.NewRequest("PUT", c.getURL(params.path, params.user), buf)
-	require.NoError(c.t, err)
-	req.Header.Set("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	r, err := http.DefaultClient.Do(req)
 	require.NoError(c.t, err)
 	return r
-}
-
-type PatchParams struct {
-	url  string
-	body string
-	user User
-}
-
-func (c K8sTestContext) Patch(params PatchParams) *http.Response {
-	c.t.Helper()
-
-	req, err := http.NewRequest(http.MethodPatch, c.getURL(params.url, params.user), bytes.NewBuffer([]byte(params.body)))
-	req.Header.Set("Content-Type", "application/json")
-	require.NoError(c.t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(c.t, err)
-
-	return resp
-}
-
-type DeleteParams struct {
-	url  string
-	user User
-}
-
-func (c K8sTestContext) Delete(params DeleteParams) *http.Response {
-	c.t.Helper()
-
-	req, err := http.NewRequest("DELETE", c.getURL(params.url, params.user), nil)
-	require.NoError(c.t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(c.t, err)
-
-	return resp
-}
-
-func (c K8sTestContext) getURL(path string, user User) string {
-	c.t.Helper()
-
-	addr := c.env.Server.HTTPServer.Listener.Addr()
-	baseUrl := fmt.Sprintf("http://%s", addr)
-	if user.User.Login != "" && user.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.User.Login, user.password, addr)
-	}
-	return fmt.Sprintf(
-		"%s%s",
-		baseUrl,
-		path,
-	)
 }
 
 func (c K8sTestContext) createTestUsers(orgId int64) TestUsers {
@@ -217,7 +169,7 @@ func (c K8sTestContext) createTestUsers(orgId int64) TestUsers {
 		require.Equal(c.t, orgId, s.OrgID)
 		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
 		return User{
-			User:     s,
+			Identity: s,
 			password: key,
 		}
 	}
