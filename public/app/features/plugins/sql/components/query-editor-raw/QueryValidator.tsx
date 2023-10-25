@@ -79,7 +79,7 @@ export function QueryValidator({ db, query, onValidate, range }: QueryValidatorP
     <>
       {state.loading && (
         <div className={styles.info}>
-          <Spinner inline={true} size="sm" /> Validating query...
+          <Spinner inline={true} size="xs" /> Validating query...
         </div>
       )}
       {!state.loading && state.value && (
