@@ -1,4 +1,7 @@
 import { DataFrame, Labels, roundDecimals } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+
+import { isCloudRulesSource } from '../../utils/datasource';
 
 /**
  * ⚠️ `frame.fields` could be an empty array ⚠️
@@ -37,10 +40,20 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
+const formatRuleName = (namespace: CombinedRuleNamespace): string => {
+  const ruleName = namespace.name;
+
+  if (isCloudRulesSource(namespace.rulesSource)) {
+    return ruleName;
+  }
+
+  return ruleName.substring(ruleName.indexOf('/') + 1);
+};
+
 const isEmptySeries = (series: DataFrame[]): boolean => {
   const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
 
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, isEmptySeries };
+export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, formatRuleName, isEmptySeries };

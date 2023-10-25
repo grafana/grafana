@@ -1,6 +1,9 @@
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { mockDataSource } from '../../mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { getSeriesName, formatLabels, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
+import { getSeriesName, formatLabels, formatRuleName, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
 
 const EMPTY_FRAME: DataFrame = toDataFrame([]);
 const NAMED_FRAME: DataFrame = {
@@ -31,6 +34,55 @@ describe('formatLabels', () => {
 
   it('should work with multiple labels', () => {
     expect(formatLabels({ foo: 'bar', baz: 'qux' })).toBe('foo=bar, baz=qux');
+  });
+});
+
+describe('formatRuleName', () => {
+  it('should work for Grafana namespaces', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: '/my_rule_namespace',
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(formatRuleName(grafanaNamespace)).toBe('my_rule_namespace');
+  });
+
+  it('should not change output for cloud namespaces', () => {
+    const cloudNamespace: CombinedRuleNamespace = {
+      name: '/etc/prometheus/rules',
+      rulesSource: mockDataSource(),
+      groups: [
+        {
+          name: 'Prom group',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(formatRuleName(cloudNamespace)).toBe('/etc/prometheus/rules');
+  });
+
+  it('should work when there is more than one separator', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: '/my_rule_namespace/with/slashes',
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+    expect(formatRuleName(grafanaNamespace)).toBe('my_rule_namespace/with/slashes');
   });
 });
 

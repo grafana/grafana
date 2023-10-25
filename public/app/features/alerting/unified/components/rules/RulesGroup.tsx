@@ -27,6 +27,7 @@ import { EditCloudGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
+import { formatRuleName } from '../expressions/util';
 
 type ViewMode = 'grouped' | 'list';
 
@@ -206,9 +207,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={namespace.name} />
+    <RuleLocation namespace={formatRuleName(namespace)} />
   ) : (
-    <RuleLocation namespace={namespace.name} group={group.name} />
+    <RuleLocation namespace={formatRuleName(namespace)} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {
