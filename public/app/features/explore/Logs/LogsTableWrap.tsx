@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -45,6 +45,8 @@ export function LogsTableWrap(props: Props) {
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+
+  const [height, setHeight] = useState<number>(600);
 
   const dataFrame = logsFrames[0];
 
@@ -122,6 +124,11 @@ export function LogsTableWrap(props: Props) {
     // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
   }, [dataFrame]);
 
+  // As the number of rows change, so too must the height of the table
+  useEffect(() => {
+    setHeight(getTableHeight(dataFrame.length, false));
+  }, [dataFrame.length]);
+
   if (!columnsWithMeta) {
     return null;
   }
@@ -181,7 +188,6 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
-  const height = getTableHeight(logsFrames);
   const sidebarWidth = 220;
   const totalWidth = props.width;
   const tableWidth = totalWidth - sidebarWidth;
@@ -213,14 +219,6 @@ export function LogsTableWrap(props: Props) {
   );
 }
 
-const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-  const largestFrameLength = dataFrames?.reduce((length, frame) => {
-    return frame.length > length ? frame.length : length;
-  }, 0);
-  // from TableContainer.tsx
-  return Math.min(600, Math.max(largestFrameLength ?? 0, 300) + 40 + 46);
-});
-
 const normalize = (value: number, total: number): number => {
   return Math.floor((100 * value) / total);
 };
@@ -242,3 +240,18 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
     checkbox: css({}),
   };
 }
+
+/**
+ * from public/app/features/explore/Table/TableContainer.tsx
+ */
+const getTableHeight = (rowCount: number, hasSubFrames: boolean) => {
+  if (rowCount === 0) {
+    return 200;
+  }
+  // 600px is pretty small for taller monitors, using the innerHeight minus an arbitrary 500px so the table can be viewed in its entirety without needing to scroll outside the panel to see the top and the bottom
+  const max = Math.max(window.innerHeight - 500, 600);
+  const min = Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46;
+  // tries to estimate table height, with a min of 300 and a max of 600
+  // if there are multiple tables, there is no min
+  return Math.min(max, min);
+};
