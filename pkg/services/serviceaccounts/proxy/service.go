@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -73,6 +74,8 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("sa.Login: ", sa.Login)
 
 	if isExternalServiceAccount(sa.Login) {
 		s.log.Error("unable to delete tokens for external service accounts", "serviceAccountID", serviceAccountID)
