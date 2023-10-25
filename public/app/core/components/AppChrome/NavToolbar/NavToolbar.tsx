@@ -14,6 +14,8 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { NavToolbarSeparator } from './NavToolbarSeparator';
 
+export const TOGGLE_BUTTON_ID = 'mega-menu-toggle';
+
 export interface Props {
   onToggleSearchBar(): void;
   onToggleMegaMenu(): void;
@@ -41,6 +43,7 @@ export function NavToolbar({
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
       <div className={styles.menuButton}>
         <IconButton
+          id={TOGGLE_BUTTON_ID}
           name="bars"
           tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
           tooltipPlacement="bottom"

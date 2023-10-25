@@ -13,7 +13,7 @@ import { e2e } from '../utils';
 
 describe('Dashboard time zone support', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests dashboard time zone scenarios', () => {
@@ -66,18 +66,18 @@ describe('Dashboard time zone support', () => {
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.title(title)
         .should('be.visible')
-        .within(() =>
+        .within(() => {
+          e2e.components.Panels.Visualization.Graph.xAxis.labels().should('be.visible');
           e2e.components.Panels.Visualization.Graph.xAxis
             .labels()
-            .should('be.visible')
             .last()
             .should((element) => {
               const inUtc = timesInUtc[title];
               const inTz = element.text();
               const isCorrect = isTimeCorrect(inUtc, inTz, offset);
               expect(isCorrect).to.be.equal(true);
-            })
-        );
+            });
+        });
     }
   });
 

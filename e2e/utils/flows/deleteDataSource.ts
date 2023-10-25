@@ -18,7 +18,7 @@ export const deleteDataSource = ({ id, name, quick = false }: DeleteDataSourceCo
 
   cy.logToConsole('Deleted data source with name:', name);
 
-  e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+  e2e.getScenarioContext().then(({ addedDataSources }) => {
     e2e.setScenarioContext({
       addedDataSources: addedDataSources.filter((dataSource: DeleteDataSourceConfig) => {
         return dataSource.id !== id && dataSource.name !== name;

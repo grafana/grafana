@@ -4,6 +4,7 @@ import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
@@ -22,6 +23,7 @@ interface Props {
   alertManagerSourceName: string;
   config: AlertManagerCortexConfig;
   existing?: Receiver;
+  readOnly?: boolean;
 }
 
 const defaultChannelValues: CloudChannelValues = Object.freeze({
@@ -35,7 +37,7 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
 
 const cloudNotifiers = cloudNotifierTypes.map<Notifier>((n) => ({ dto: n }));
 
-export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
+export const CloudReceiverForm = ({ existing, alertManagerSourceName, config, readOnly = false }: Props) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
@@ -57,7 +59,9 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
         successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
         redirectPath: '/alerting/notifications',
       })
-    );
+    ).then(() => {
+      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+    });
   };
 
   const takenReceiverNames = useMemo(
@@ -67,7 +71,8 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
 
   // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
   // or a Mimir-based AlertManager
-  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const isManageableAlertManagerDataSource =
+    !readOnly ?? !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
   return (
     <>

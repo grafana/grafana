@@ -222,10 +222,17 @@ export function graphToTimeseriesOptions(angular: any): {
             }
             break;
           case 'lines':
-            rule.properties.push({
-              id: 'custom.lineWidth',
-              value: 0, // don't show lines
-            });
+            if (v) {
+              rule.properties.push({
+                id: 'custom.drawStyle',
+                value: 'line',
+              });
+            } else {
+              rule.properties.push({
+                id: 'custom.lineWidth',
+                value: 0,
+              });
+            }
             break;
           case 'linewidth':
             rule.properties.push({
@@ -642,8 +649,7 @@ function fillY2DynamicValues(
   props: DynamicConfigValue[]
 ) {
   // The standard properties
-  for (const key of Object.keys(y2)) {
-    const value = (y2 as any)[key];
+  for (const [key, value] of Object.entries(y2)) {
     if (key !== 'custom' && value !== (y1 as any)[key]) {
       props.push({
         id: key,
@@ -655,8 +661,7 @@ function fillY2DynamicValues(
   // Add any custom property
   const y1G = y1.custom ?? {};
   const y2G = y2.custom ?? {};
-  for (const key of Object.keys(y2G)) {
-    const value = (y2G as any)[key];
+  for (const [key, value] of Object.entries(y2G)) {
     if (value !== (y1G as any)[key]) {
       props.push({
         id: `custom.${key}`,

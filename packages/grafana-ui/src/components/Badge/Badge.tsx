@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,7 +19,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
+  const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && <Icon name={icon} size="sm" />}
@@ -46,11 +46,11 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
 
   if (theme.isDark) {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).darken(30).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).lighten(15).toString();
   } else {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).lighten(20).toString();
+    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).darken(20).toString();
   }
 

@@ -30,6 +30,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
+  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -41,11 +42,13 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
+  dockedMegaMenu?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -63,8 +66,6 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
-  timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -107,6 +108,7 @@ export interface FeatureToggles {
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
+  grafanaAPIServerWithExperimentalAPIs?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -115,7 +117,6 @@ export interface FeatureToggles {
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
-  noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -123,6 +124,31 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
+  lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
+  alertingContactPointsV2?: boolean;
+  externalCorePlugins?: boolean;
+  pluginsAPIMetrics?: boolean;
+  httpSLOLevels?: boolean;
+  idForwarding?: boolean;
+  cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  panelMonitoring?: boolean;
+  enableNativeHTTPHistogram?: boolean;
+  formatString?: boolean;
+  transformationsVariableSupport?: boolean;
+  kubernetesPlaylists?: boolean;
+  cloudWatchBatchQueries?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
+  cachingOptimizeSerializationMemoryUsage?: boolean;
+  panelTitleSearchInV1?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
 }

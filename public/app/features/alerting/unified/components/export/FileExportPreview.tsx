@@ -6,10 +6,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ClipboardButton, CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { grafanaRuleExportProviders, RuleExportFormats } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface FileExportPreviewProps {
-  format: RuleExportFormats;
+  format: ExportFormats;
   textDefinition: string;
 
   /*** Filename without extension ***/
@@ -25,12 +25,10 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
       type: `application/${format};charset=utf-8`,
     });
     saveAs(blob, `${downloadFileName}.${format}`);
-
-    onClose();
-  }, [textDefinition, downloadFileName, format, onClose]);
+  }, [textDefinition, downloadFileName, format]);
 
   const formattedTextDefinition = useMemo(() => {
-    const provider = grafanaRuleExportProviders[format];
+    const provider = allGrafanaExportProviders[format];
     return provider.formatter ? provider.formatter(textDefinition) : textDefinition;
   }, [format, textDefinition]);
 
@@ -49,6 +47,7 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
                 minimap: {
                   enabled: false,
                 },
+                scrollBeyondLastLine: false,
                 lineNumbers: 'on',
                 readOnly: true,
               }}

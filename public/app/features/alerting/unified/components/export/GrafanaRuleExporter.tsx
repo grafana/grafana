@@ -6,32 +6,17 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { RuleExportFormats } from './providers';
-
-interface GrafanaRuleExporterProps {
-  onClose: () => void;
-  alertUid: string;
-}
-
-export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRuleExporterProps) => {
-  const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
-
-  return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
-      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
-    </GrafanaExportDrawer>
-  );
-};
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface GrafanaRuleExportPreviewProps {
   alertUid: string;
-  exportFormat: RuleExportFormats;
+  exportFormat: ExportFormats;
   onClose: () => void;
 }
 
 const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRuleExportPreviewProps) => {
-  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
-    uid: alertUid,
+  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
+    ruleUid: alertUid,
     format: exportFormat,
   });
 
@@ -48,5 +33,25 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
+  );
+};
+
+interface GrafanaRulerExporterProps {
+  onClose: () => void;
+  alertUid: string;
+}
+
+export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+
+  return (
+    <GrafanaExportDrawer
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
+      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
+    </GrafanaExportDrawer>
   );
 };

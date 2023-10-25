@@ -69,7 +69,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setTagKeys(undefined);
     setTagValues({});
     setSearch(defaultFilters);
-  }, [setSearch]);
+    setShowSpanFilterMatchesOnly(false);
+  }, [setSearch, setShowSpanFilterMatchesOnly]);
 
   useEffect(() => {
     clear();
@@ -337,9 +338,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField
-            label="Duration"
+            label="Span Duration"
             labelWidth={16}
-            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+            tooltip="Filter by span duration. Accepted units are ns, us, ms, s, m, h"
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select

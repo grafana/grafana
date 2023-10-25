@@ -1,29 +1,72 @@
+/*
+  NOTE: This file is used to generate the transformation docs markdown content. If you change/update the content here,
+  please then rebuild the markdown by doing the following:
+
+  $ cd /docs (from the root of the repository)
+  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make docs
+
+  Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
+
+  Refer to ./docs/README.md for more information about building docs. 
+*/
+
 interface Link {
   title: string;
   url: string;
 }
 export interface TransformationInfo {
   name: string;
-  helperDocs: string;
+  getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
 }
 
-export const transformationDocsContent: Record<string, TransformationInfo> = {
+export enum ImageRenderType {
+  ShortcodeFigure = 'shortcodeFigure',
+  UIImage = 'uiImage',
+}
+
+export interface TransformationDocsContentType {
+  [key: string]: TransformationInfo;
+}
+
+export const transformationDocsContent: TransformationDocsContentType = {
   calculateField: {
     name: 'Add field from calculation',
-    helperDocs: `
+    /*
+      `getHelperDocs` will build the markdown content based in the `ImageRenderType`.
+      The images will either be rendered in Hugo Shortcode format or as standard markdown for UI usage.
+    */
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
   - **Mode -** Select a mode:
     - **Reduce row -** Apply selected calculation on each row of selected fields independently.
-    - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
-    - **Index -** Will insert a field with the row index.
+    - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
+    - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
+      - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
+      - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
+      - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
+      - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
+      - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+    - **Row index -** Insert a field with the row index.
   - **Field name -** Select the names of fields you want to use in the calculation for the new field.
   - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
-  - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+  - **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+  - **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
   - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
-  `,
+  
+  In the example below, we added two fields together and named them Sum.
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
+    imageRenderType,
+    this.name
+  )}
+  `;
+    },
     links: [
       {
         title: 'Calculation types',
@@ -33,7 +76,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   },
   concatenate: {
     name: 'Concatenate fields',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to combine all fields from all frames into one result. Consider the following:
 
   **Query A:**
@@ -42,7 +86,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | ----- | --------- |
   | 15.4  | 1230233   |
 
-  Query B:
+  **Query B:**
 
   | AQI   | Errors |
   | ----- | ------ |
@@ -53,22 +97,24 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | Temp  | Uptime   | AQI   | Errors |
   | ----- | -------- | ----- | ------ |
   | 15.4  | 1230233  | 3.2   | 5      |
-  `,
+  `;
+    },
   },
   configFromData: {
     name: 'Config from query results',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to select one query and from it extract standard options such as
   **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
   This enables dynamic query driven visualization configuration.
 
-  ### Options
+  #### Options
 
-  - **Config query**: Selet the query that returns the data you want to use as configuration.
+  - **Config query**: Select the query that returns the data you want to use as configuration.
   - **Apply to**: Select what fields or series to apply the configuration to.
   - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 
-  ### Field mapping table
+  #### Field mapping table
 
   Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
 
@@ -121,11 +167,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | Color | Value mappings / Ciolor | All values |
 
   Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
-  `,
+  `;
+    },
   },
   convertFieldType: {
     name: 'Convert field type',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to change the field type of the specified field.
 
   - **Field -** Select from available fields
@@ -157,11 +205,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 2018-01-01 00:00:00 | below     | 22    |
   | 2019-01-01 00:00:00 | below     | 29    |
   | 2020-01-01 00:00:00 | above     | 22    |
-  `,
+  `;
+    },
   },
   extractFields: {
     name: 'Extract fields',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 
   - **Source** - Select the field for the source of data.
@@ -200,7 +250,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 1636678740000000000 | 1        |
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
-  `,
+  `;
+    },
     links: [
       {
         title: 'Time series panel',
@@ -210,7 +261,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   },
   fieldLookup: {
     name: 'Lookup fields from resource',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation on a field value to look up additional fields from an external source.
 
   - **Field** - Select a text field.
@@ -246,21 +298,33 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | Arizona   |    |           |            |            | 5      |
   | Arkansas  |    |           |            |            | 1      |
   | Somewhere |    |           |            |            | 5      |
-  `,
+  `;
+    },
   },
   filterByRefId: {
     name: 'Filter data by query refId',
-    helperDocs: `
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
   Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
   Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
   > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
-  `,
+
+  In the example below, the panel has three queries (A, B, C). We removed the B query from the visualization.
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
+    imageRenderType,
+    this.name
+  )}
+  `;
+    },
   },
   filterByValue: {
     name: 'Filter data by values',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
   This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
@@ -323,32 +387,108 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   In the example above, we chose **Match all** because we wanted to include the rows that have a temperature lower than 30°C *AND* an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30°C *OR* an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
 
   Conditions that are invalid or incompletely configured are ignored.
-  `,
+  `;
+    },
   },
   filterFieldsByName: {
     name: 'Filter fields by name',
-    helperDocs: `
-  Use this transformation to remove portions of the query results.
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+  Use this transformation to remove parts of the query results.
 
-  Grafana displays the **Identifier** field, followed by the fields returned by your query.
+  You can filter field names in three different ways:
+  
+  - [Using a regular expression](#use-a-regular-expression)
+  - [Manually selecting included fields](#manually-select-included-fields)
+  - [Using a dashboard variable](#use-a-dashboard-variable)
+  
+  #### Use a regular expression
+  
+  When you filter using a regular expression, field names that match the regular expression are included.
+  
+  From the input data:
+  
+  | Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
+  | ------------------- | ----------- | ------------ | ------------ | ------------- |
+  | 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
+  | 2023-03-04 23:56:23 | 23.6        | 24.4         | 22.1         | 20.1          |
+  
+  The result from using the regular expression 'prod.*' would be:
+  
+  | Time                | prod-eu-west | prod-eu-north |
+  | ------------------- | ------------ | ------------- |
+  | 2023-03-04 23:56:23 | 22.2         | 20.2          |
+  | 2023-03-04 23:56:23 | 22.1         | 20.1          |
+  
+  The regular expression can include an interpolated dashboard variable by using the \${$${'variableName'}} syntax.
+  
+  #### Manually select included fields
+  
+  Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
+  
+  #### Use a dashboard variable
+  
+  Enable 'From variable' to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
-  You can apply filters in one of two ways:
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-table-before-7-0.png',
+    imageRenderType,
+    this.name + 1
+  )}
 
-  - Enter a regex expression.
-  - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
-  `,
+  Here's the table after we applied the transformation to remove the Min field.
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-table-after-7-0.png',
+    imageRenderType,
+    this.name + 2
+  )}
+
+  Here is the same query using a Stat visualization.
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
+    imageRenderType,
+    this.name + 3
+  )}
+  `;
+    },
+  },
+  formatString: {
+    name: 'Format string',
+    getHelperDocs: function () {
+      return `
+  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+
+  Use this transformation to format the output of a string field. You can format output in the following ways:
+  
+  - Upper case - Formats the entire string in upper case characters.
+  - Lower case - Formats the entire string in lower case characters.
+  - Sentence case - Formats the the first character of the string in upper case.
+  - Title case - Formats the first character of each word in the string in upper case.
+  - Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
+  - Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
+  - Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
+  - Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
+  - Trim - Removes all leading and trailing spaces from the string.
+  - Substring - Returns a substring of the string, using the specified start and end positions.
+  `;
+    },
   },
   formatTime: {
     name: 'Format time',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
   > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
-  `,
+  `;
+    },
   },
   groupBy: {
     name: 'Group by',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
   Here's an example of original data.
@@ -404,7 +544,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
 
   This transformation enables you to extract key information from your time series and display it in a convenient way.
-  `,
+  `;
+    },
     links: [
       {
         title: 'Calculation types',
@@ -414,7 +555,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   },
   groupingToMatrix: {
     name: 'Grouping to matrix',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
 
   **Original data**
@@ -434,11 +576,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | server 1                | 82   |          |
   | server 2                | 88.6 |          |
   | server 3                |      | 59.6     |
-  `,
+  `;
+    },
   },
   heatmap: {
     name: 'Create heatmap',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to prepare histogram data to be visualized over time. Similar to the Heatmap panel, this transformation allows you to convert histogram metrics to buckets over time.
 
   #### X Bucket
@@ -455,11 +599,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   - **Linear**
   - **Logarithmic** - Use a base 2 or base 10.
   - **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
-  `,
+  `;
+    },
   },
   histogram: {
     name: 'Histogram',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to generate a histogram based on the input data.
 
   - **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
@@ -501,11 +647,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 7    | 8    | 0   | 1   | 1   | 1   |
   | 8    | 9    | 0   | 0   | 1   | 1   |
   | 9    | 10   | 0   | 0   | 1   | 1   |
-  `,
+  `;
+    },
   },
   joinByField: {
     name: 'Join by field',
-    helperDocs: `
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
   Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
   time series results into a single wide table with a shared time field.
 
@@ -571,11 +719,21 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 2020-07-07 11:14:20 | postgre | 345001233 |          |        |
   | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
   | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
-  `,
+
+  In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
+
+  ${buildImageContent('/static/img/docs/transformations/join-fields-before-7-0.png', imageRenderType, this.name + 1)}
+
+  I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
+
+  ${buildImageContent('/static/img/docs/transformations/join-fields-after-7-0.png', imageRenderType, this.name + 2)}
+  `;
+    },
   },
   joinByLabels: {
     name: 'Join by labels',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
   time series results into a single wide table with a shared **Label** field.
 
@@ -619,11 +777,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | A       | J1  | 200  |       |
   | B       | J1  | 10   | 22    |
   | B       | J1  | 200  | 77    |
-  `,
+  `;
+    },
   },
   labelsToFields: {
     name: 'Labels to fields',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to change time series results that include labels or tags into a table where each label's keys and values are included in the table result. The labels can be displayed as either columns or row values.
 
   Given a query result of two time series:
@@ -683,11 +843,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | ------------------- | ------- | ----- | ---------- |
   | 2020-07-07 11:34:20 | ServerA | 10    |            |
   | 2020-07-07 11:34:20 |         | 20    | EU         |
-  `,
+  `;
+    },
   },
   limit: {
     name: 'Limit',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to limit the number of rows displayed.
 
   In the example below, we have the following response from the data source:
@@ -708,11 +870,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 2020-07-07 11:34:20 | Temperature | 25    |
   | 2020-07-07 11:34:20 | Humidity    | 22    |
   | 2020-07-07 10:32:20 | Humidity    | 29    |
-  `,
+  `;
+    },
   },
   merge: {
     name: 'Merge',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel][].
 
   In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
@@ -737,7 +901,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | ------------------- | ------- | ------ | --------- |
   | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
   | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
-  `,
+  `;
+    },
     links: [
       {
         title: 'Table panel',
@@ -746,8 +911,9 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     ],
   },
   organize: {
-    name: 'Oraganize',
-    helperDocs: `
+    name: 'Oraganize fields',
+    getHelperDocs: function () {
+      return `
   Use this transformation to rename, reorder, or hide fields returned by the query.
 
   > **Note:** This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
@@ -757,11 +923,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   - Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
   - Hide or show a field by clicking the eye icon next to the field name.
   - Rename fields by typing a new name in the **Rename <field>** box.
-  `,
+  `;
+    },
   },
   partitionByValues: {
     name: 'Partition by values',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to eliminate the need for multiple queries to the same data source with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
   | Time                | Region | Value |
@@ -791,11 +959,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | ------------------- | ------ | ----- |
   | 2022-10-20 12:00:00 | EU     | 2936  |
   | 2022-10-20 01:00:00 | EU     | 912   |
-  `,
+  `;
+    },
   },
   prepareTimeSeries: {
     name: 'Prepare time series',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
   This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
@@ -805,7 +975,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   Select the 'Wide time series' option to transform the time series data frame from the long to the wide format.
 
   > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
-  `,
+  `;
+    },
     links: [
       {
         title: 'Data frames',
@@ -815,7 +986,8 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   },
   reduce: {
     name: 'Reduce',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
   Consider the input:
@@ -863,19 +1035,35 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | AQI | Errors |
   | --- | ------ |
   | 3.2 | 5      |
-  `,
+  `;
+    },
   },
   renameByRegex: {
     name: 'Rename by regex',
-    helperDocs: `
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
   Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
   You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
-  `,
+  
+  In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+
+  ${buildImageContent(
+    '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
+    imageRenderType,
+    this.name + 1
+  )}
+
+  With the transformation applied, you can see we are left with just the remainder of the string.
+
+  ${buildImageContent('/static/img/docs/transformations/rename-by-regex-after-7-3.png', imageRenderType, this.name + 1)}
+  `;
+    },
   },
   rowsToFields: {
     name: 'Rows to fields',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
   This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
@@ -915,7 +1103,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   The extra labels can now be used in the field display name provide more complete field names.
 
-  If you want to extract config from one query and appply it to another you should use the config from query results transformation.
+  If you want to extract config from one query and apply it to another you should use the config from query results transformation.
 
   #### Example
 
@@ -934,11 +1122,13 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 10                        | 20                        | 30                        |
 
   As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
-  `,
+  `;
+    },
   },
   seriesToRows: {
     name: 'Series to rows',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
   The result from this transformation will contain three columns: Time, Metric, and Value. The Metric column is added so you easily can see from which query the metric originates from. Customize this value by defining Label on the source query.
@@ -973,22 +1163,37 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 2020-07-07 09:30:05 | Temperature | 19    |
 
   > **Note:** This transformation is available in Grafana 7.1+.
-  `,
+  `;
+    },
   },
   sortBy: {
     name: 'Sort by',
-    helperDocs: `
+    getHelperDocs: function () {
+      return `
   Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
-  `,
+  `;
+    },
   },
-  spatial: { name: 'Spatial', helperDocs: `Use this transformation to apply spatial operations to query results` },
+  spatial: {
+    name: 'Spatial',
+    getHelperDocs: function () {
+      // This template string space-formatting is intentional.
+      return `
+  Use this transformation to apply spatial operations to query results
+  `;
+    },
+  },
   timeSeriesTable: {
-    name: 'Time series table',
-    helperDocs: `
-  Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+    name: 'Time series to table transform',
+    getHelperDocs: function () {
+      return `
+  Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+  For each generated "Trend" field value calculation function can be selected. Default is "last non null value". This value will be displayed next to the sparkline and used for sorting table rows.
 
   > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
-  `,
+  `;
+    },
     links: [
       {
         title: 'sparkline cell type',
@@ -1008,4 +1213,12 @@ export function getLinkToDocs(): string {
   transformation documentation
   </a> for more general documentation.
   `;
+}
+
+function buildImageContent(source: string, imageRenderType: ImageRenderType, imageName?: string) {
+  return imageRenderType === 'shortcodeFigure'
+    ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
+      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
+    : // This will build generic Markdown image syntax for UI rendering.
+      `![${imageName} helper image](${source})`;
 }

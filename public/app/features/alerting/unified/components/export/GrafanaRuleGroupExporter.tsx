@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { RuleExportFormats } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface GrafanaRuleGroupExporterProps {
   folderUid: string;
@@ -15,10 +15,16 @@ interface GrafanaRuleGroupExporterProps {
 }
 
 export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: GrafanaRuleGroupExporterProps) {
-  const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+    <GrafanaExportDrawer
+      title={`Export ${groupName} rules`}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
       <GrafanaRuleGroupExportPreview
         folderUid={folderUid}
         groupName={groupName}
@@ -32,7 +38,7 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
 interface GrafanaRuleGroupExportPreviewProps {
   folderUid: string;
   groupName: string;
-  exportFormat: RuleExportFormats;
+  exportFormat: ExportFormats;
   onClose: () => void;
 }
 
@@ -42,9 +48,9 @@ function GrafanaRuleGroupExportPreview({
   exportFormat,
   onClose,
 }: GrafanaRuleGroupExportPreviewProps) {
-  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.useExportRuleGroupQuery({
+  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
     folderUid,
-    groupName,
+    group: groupName,
     format: exportFormat,
   });
 

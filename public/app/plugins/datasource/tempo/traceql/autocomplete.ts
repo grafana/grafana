@@ -138,6 +138,20 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         'Child operator. Looks for spans matching {condB} that are direct child spans of a parent matching {condA}',
     },
     {
+      label: '<<',
+      insertText: '<<',
+      detail: 'Ancestor',
+      documentation:
+        'Ancestor operator. Looks for spans matching {condB} that are ancestors of a span matching {condA}',
+    },
+    {
+      label: '<',
+      insertText: '<',
+      detail: 'Parent',
+      documentation:
+        'Parent operator. Looks for spans matching {condB} that are direct parent spans of a child matching {condA}',
+    },
+    {
       label: '~',
       insertText: '~',
       detail: 'Sibling',
@@ -337,11 +351,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
-        return CompletionProvider.functions.map((key) => ({
+        const functions = CompletionProvider.functions.map((key) => ({
           ...key,
           insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
-          type: 'FUNCTION',
+          type: 'FUNCTION' as const,
         }));
+        const tags = this.getScopesCompletions()
+          .concat(this.getIntrinsicsCompletions())
+          .concat(this.getTagsCompletions('.'));
+        return [...functions, ...tags];
       case 'SPANSET_COMPARISON_OPERATORS':
         return CompletionProvider.comparisonOps.map((key) => ({
           ...key,

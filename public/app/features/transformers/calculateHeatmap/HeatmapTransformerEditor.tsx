@@ -30,7 +30,6 @@ export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransf
     if (!props.options.xBuckets?.mode) {
       const opts = getDefaultOptions(supplier);
       props.onChange({ ...opts, ...props.options });
-      console.log('geometry useEffect', opts);
     }
   });
 

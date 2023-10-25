@@ -46,7 +46,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
-export { InteractiveTable } from './InteractiveTable/InteractiveTable';
+export { InteractiveTable, type FetchDataArgs, type FetchDataFunc } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { AutoSaveField } from './AutoSaveField/AutoSaveField';
 export { Pagination } from './Pagination/Pagination';
@@ -138,8 +138,6 @@ export {
   type PanelChromeType,
   PanelChromeLoadingIndicator,
   type PanelChromeLoadingIndicatorProps,
-  PanelChromeErrorIndicator,
-  type PanelChromeErrorIndicatorProps,
   PanelContextProvider,
   type PanelContext,
   PanelContextRoot,
@@ -263,10 +261,12 @@ export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
+export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 
+/** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
   FormField,

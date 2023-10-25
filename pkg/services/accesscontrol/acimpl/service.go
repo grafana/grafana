@@ -120,7 +120,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 
 	var userID int64
 	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount, identity.NamespaceRenderService:
+	case authn.NamespaceUser, authn.NamespaceServiceAccount:
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
@@ -397,7 +397,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -410,7 +410,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

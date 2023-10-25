@@ -151,10 +151,14 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        title={uiConfig.name}
+        title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
         disabled={disabled}
+      expanderMessages={{
+        close: 'Collapse transformation row',
+        open: 'Expand transformation row',
+      }}
       >
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />

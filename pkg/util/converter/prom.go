@@ -387,6 +387,7 @@ l1Fields:
 			frame.Meta = &data.FrameMeta{
 				Custom: resultTypeToCustomMeta("exemplar"),
 			}
+			exCount := 0
 			for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 				if err != nil {
 					return nil, nil, err
@@ -417,7 +418,6 @@ l1Fields:
 						timeField.Append(ts)
 
 					case "labels":
-						max := 0
 						pairs, err := readLabelsAsPairs(iter)
 						if err != nil {
 							return nil, nil, err
@@ -427,20 +427,17 @@ l1Fields:
 							v := pair[1]
 							f, ok := lookup[k]
 							if !ok {
-								f = data.NewFieldFromFieldType(data.FieldTypeString, 0)
+								f = data.NewFieldFromFieldType(data.FieldTypeString, exCount)
 								f.Name = k
 								lookup[k] = f
 								frame.Fields = append(frame.Fields, f)
 							}
 							f.Append(v)
-							if f.Len() > max {
-								max = f.Len()
-							}
 						}
 
 						// Make sure all fields have equal length
 						for _, f := range lookup {
-							diff := max - f.Len()
+							diff := exCount + 1 - f.Len()
 							if diff > 0 {
 								f.Extend(diff)
 							}
@@ -457,6 +454,7 @@ l1Fields:
 						})
 					}
 				}
+				exCount++
 			}
 		case "":
 			if err != nil {

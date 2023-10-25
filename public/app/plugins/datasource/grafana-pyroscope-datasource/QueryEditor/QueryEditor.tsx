@@ -5,8 +5,8 @@ import { useAsync } from 'react-use';
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import { normalizeQuery, PhlareDataSource } from '../datasource';
-import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { normalizeQuery, PyroscopeDataSource } from '../datasource';
+import { PyroscopeDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -14,7 +14,7 @@ import { LabelsEditor } from './LabelsEditor';
 import { ProfileTypesCascader, useProfileTypes } from './ProfileTypesCascader';
 import { QueryOptions } from './QueryOptions';
 
-export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
+export type Props = QueryEditorProps<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>;
 
 export function QueryEditor(props: Props) {
   const { onChange, onRunQuery, datasource, query, range, app } = props;
@@ -28,25 +28,28 @@ export function QueryEditor(props: Props) {
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
+  let cascader = <LoadingPlaceholder text={'Loading'} />;
+
+  // The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
+  // render, so we are waiting until we have the profileTypes and know what the default value should be before
+  // rendering.
+  if (profileTypes && query.profileTypeId !== undefined) {
+    cascader = (
+      <ProfileTypesCascader
+        placeholder={profileTypes.length === 0 ? 'No profile types found' : 'Select profile type'}
+        profileTypes={profileTypes}
+        initialProfileTypeId={query.profileTypeId}
+        onChange={(val) => {
+          onChange({ ...query, profileTypeId: val });
+        }}
+      />
+    );
+  }
+
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        {/*
-            The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
-            render, so we are waiting until we have the profileTypes and know what the default value should be before
-            rendering.
-         */}
-        {profileTypes && query.profileTypeId ? (
-          <ProfileTypesCascader
-            profileTypes={profileTypes}
-            initialProfileTypeId={query.profileTypeId}
-            onChange={(val) => {
-              onChange({ ...query, profileTypeId: val });
-            }}
-          />
-        ) : (
-          <LoadingPlaceholder text={'Loading'} />
-        )}
+        {cascader}
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
@@ -98,12 +101,12 @@ function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
   }
 
   // Fallback to first profile type from response data
-  return profileTypes[0].id;
+  return profileTypes[0]?.id || '';
 }
 
 function useLabels(
   range: TimeRange | undefined,
-  datasource: PhlareDataSource,
+  datasource: PyroscopeDataSource,
   query: Query,
   onChange: (value: Query) => void
 ) {

@@ -1,9 +1,9 @@
 import { DataSourceJsonData } from '@grafana/data';
 
-import { GrafanaPyroscope, PhlareQueryType } from './dataquery.gen';
+import { GrafanaPyroscope, PyroscopeQueryType } from './dataquery.gen';
 
 export interface Query extends GrafanaPyroscope {
-  queryType: PhlareQueryType;
+  queryType: PyroscopeQueryType;
 }
 
 export interface ProfileTypeMessage {
@@ -14,12 +14,9 @@ export interface ProfileTypeMessage {
 /**
  * These are options configured for each DataSource instance.
  */
-export interface PhlareDataSourceOptions extends DataSourceJsonData {
+export interface PyroscopeDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
-  backendType?: BackendType; // if not set we assume it's phlare
 }
-
-export type BackendType = 'phlare' | 'pyroscope';
 
 export type ProfileTypeQuery = {
   type: 'profileType';

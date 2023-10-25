@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardUrl } from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -113,9 +113,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
-    dashboardRef: new SceneObjectRef(dashboard),
-    sourcePanelRef: new SceneObjectRef(panel),
-    panelRef: new SceneObjectRef(panelClone),
+    dashboardRef: dashboard.getRef(),
+    sourcePanelRef: panel.getRef(),
+    panelRef: panelClone.getRef(),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,

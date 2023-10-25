@@ -21,7 +21,7 @@ import (
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), tracing.NewFakeTracer(), featuremgmt.WithFeatures(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
 	})
@@ -57,7 +57,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{IsAnonymous: true},
+			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -65,7 +65,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{IsAnonymous: true},
+			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -73,7 +73,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{IsAnonymous: true, OrgID: 1},
+			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -81,7 +81,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{IsAnonymous: true},
+			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},

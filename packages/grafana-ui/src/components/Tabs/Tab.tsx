@@ -67,10 +67,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
+      padding: theme.spacing(0.5),
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1.5, 2, 1),
+      padding: theme.spacing(1, 1.5, 0.5),
+      borderRadius: theme.shape.radius.default,
+
       display: 'block',
       height: '100%',
 

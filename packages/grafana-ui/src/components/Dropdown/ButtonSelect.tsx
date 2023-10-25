@@ -20,9 +20,11 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
+  /** @deprecated use tooltip instead, tooltipContent is not being processed in ToolbarButton*/
   tooltipContent?: PopoverContent;
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
+  tooltip?: string;
 }
 
 /**
@@ -87,6 +89,9 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
 
 ButtonSelectComponent.displayName = 'ButtonSelect';
 
+// needed to properly forward the generic type through React.memo
+// see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087#issuecomment-656596623
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
 
 const getStyles = (theme: GrafanaTheme2) => {

@@ -1,30 +1,33 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-const QUERY_A = 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
-export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+import { PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
+
+export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)',
         range: true,
         legendFormat: '{{cluster}}',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
-    body: PanelBuilders.timeseries()
+    ...PANEL_STYLES,
+    body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription('The current state of your alertmanager configuration')
       .setData(query)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('bool_yes_no')
+      .setOption('graphMode', BigValueGraphMode.None)
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

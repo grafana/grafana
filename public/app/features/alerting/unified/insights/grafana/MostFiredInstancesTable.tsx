@@ -1,35 +1,32 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Observable, map } from 'rxjs';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import {
   CustomTransformOperator,
   PanelBuilders,
   SceneDataTransformer,
   SceneFlexItem,
   SceneQueryRunner,
-  SceneTimeRange,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { Icon, Link } from '@grafana/ui';
+import { Link, useStyles2 } from '@grafana/ui';
 
+import { PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
+import { InsightsRatingModal } from '../RatingModal';
 
-const TOP_FIRING_INSTANCES =
-  'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
-
-export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: TOP_FIRING_INSTANCES,
+        expr: 'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))',
         instant: true,
       },
     ],
-
-    $timeRange: timeRange,
   });
 
   const createRuleLink = (field: Field<string>, frame: DataFrame) => {
@@ -38,11 +35,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
       values: field.values.map((value, index) => {
         const ruleUIDs = frame.fields.find((field) => field.name === 'ruleUID');
         const ruleUID = ruleUIDs?.values[index];
-        return (
-          <Link key={value} target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
-            {value} <Icon name="external-link-alt" />
-          </Link>
-        );
+        return <RuleLink key={value} value={value} ruleUID={ruleUID} />;
       }),
     };
   };
@@ -94,8 +87,8 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
             'Value #A': 1,
           },
           renameByName: {
-            labels_alertname: 'Alert Name',
-            'Value #A': 'Fires this week',
+            labels_alertname: 'Alert rule name',
+            'Value #A': 'Number of fires',
           },
         },
       },
@@ -103,8 +96,33 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
-    body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
+    ...PANEL_STYLES,
+    body: PanelBuilders.table()
+      .setTitle(panelTitle)
+      .setDescription('The alert rule instances that have fired the most')
+      .setData(transformation)
+      .setNoValue('No new alerts fired last week')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .build(),
   });
+}
+
+export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string }) {
+  const getStyles = (theme: GrafanaTheme2) => ({
+    link: css({
+      '& > a': {
+        color: theme.colors.text.link,
+      },
+    }),
+  });
+
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.link}>
+      <Link target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
+        {value}
+      </Link>
+    </div>
+  );
 }

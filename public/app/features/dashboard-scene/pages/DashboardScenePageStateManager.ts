@@ -1,5 +1,6 @@
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -66,6 +67,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public clearState() {
+    getDashboardSrv().setCurrent(undefined);
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
   }
 }

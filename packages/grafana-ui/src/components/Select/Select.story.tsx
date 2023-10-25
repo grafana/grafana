@@ -7,7 +7,6 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
@@ -16,7 +15,6 @@ import { SelectCommonProps } from './types';
 const meta: Meta = {
   title: 'Forms/Select',
   component: Select,
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   // SB7 has broken subcomponent types due to dropping support for the feature
   // https://github.com/storybookjs/storybook/issues/20782
   // @ts-ignore

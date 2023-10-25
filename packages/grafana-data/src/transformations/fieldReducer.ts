@@ -30,6 +30,10 @@ export enum ReducerID {
   uniqueValues = 'uniqueValues',
 }
 
+export function isReducerID(id: string): id is ReducerID {
+  return Object.keys(ReducerID).includes(id);
+}
+
 // Internal function
 type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
@@ -254,7 +258,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values }),
+    reduce: (field: Field) => ({ allValues: [...field.values] }),
   },
   {
     id: ReducerID.uniqueValues,

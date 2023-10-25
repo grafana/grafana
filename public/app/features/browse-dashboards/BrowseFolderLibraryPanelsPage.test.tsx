@@ -37,9 +37,10 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
-    canCreateFolder: true,
-    canDeleteFolder: true,
-    canEditFolder: true,
+    canEditDashboards: true,
+    canCreateFolders: true,
+    canDeleteFolders: true,
+    canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
   };
@@ -110,8 +111,8 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
       return {
         ...mockPermissions,
-        canDeleteFolder: false,
-        canEditFolder: false,
+        canDeleteFolders: false,
+        canEditFolders: false,
         canViewPermissions: false,
         canSetPermissions: false,
       };

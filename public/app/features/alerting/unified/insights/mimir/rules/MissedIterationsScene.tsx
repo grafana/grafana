@@ -1,29 +1,35 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
 
-const QUERY_A = 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
+
+export function getMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
         range: true,
         legendFormat: 'missed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription('The number of evaluations missed')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false })
+      .setOverrides((b) => b.matchFieldsWithName('missed').overrideColor(overrideToFixedColor('missed')))
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

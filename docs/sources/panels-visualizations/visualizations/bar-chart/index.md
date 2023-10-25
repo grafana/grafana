@@ -20,7 +20,7 @@ weight: 100
 
 # Bar chart
 
-This panel visualization allows you to graph categorical data.
+Bar charts allow you to graph categorical data.
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
 
@@ -35,7 +35,7 @@ Example:
 | Chrome  | 50           |
 | IE      | 17.5         |
 
-If you have more than one numerical field the panel will show grouped bars.
+If you have more than one numerical field the visualization will show grouped bars.
 
 ### Visualizing time series or multiple result sets
 

@@ -3,7 +3,6 @@ import { sortBy } from 'lodash';
 
 import {
   Identifier,
-  JsonExpressionParser,
   LabelFilter,
   LabelParser,
   LineComment,
@@ -17,11 +16,16 @@ import {
   UnwrapExpr,
   String,
   PipelineStage,
+  LogfmtParser,
+  JsonExpressionParser,
+  LogfmtExpressionParser,
+  Expr,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
+import { getNodePositionsFromQuery } from './queryUtils';
 import { lokiQueryModeller as modeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString, handleQuotes } from './querybuilder/parsing';
 
@@ -184,8 +188,20 @@ export function addLabelToQuery(
     const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
-    const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
-    return addFilterAsLabelFilter(query, [positionToAdd], filter);
+    // in case we are not adding the label to stream selectors we need to find the last position to add in each expression
+    const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
+    const parserFilterPositions = [...parserPositions, ...labelFilterPositions];
+
+    // find last position for each subexpression
+    const lastPositionsPerExpression = subExpressions.map((subExpression) => {
+      return findLastPosition(
+        parserFilterPositions.filter((p) => {
+          return subExpression.contains(p);
+        })
+      );
+    });
+
+    return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
   } else {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   }
@@ -271,9 +287,9 @@ export function getStreamSelectorPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
   tree.iterate({
-    enter: ({ type, from, to }): false | void => {
+    enter: ({ type, node }): false | void => {
       if (type.id === Selector) {
-        positions.push(new NodePosition(from, to, type));
+        positions.push(NodePosition.fromNode(node));
         return false;
       }
     },
@@ -287,7 +303,7 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
   tree.iterate({
     enter: ({ node }): false | void => {
       if (node.type.id === Selector) {
-        positions.push(...getAllPositionsInNodeByType(query, node, Matcher));
+        positions.push(...getAllPositionsInNodeByType(node, Matcher));
       }
     },
   });
@@ -301,10 +317,11 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
 export function getParserPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
+  const parserNodeTypes = [LabelParser, JsonExpressionParser, LogfmtParser, LogfmtExpressionParser];
   tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === LabelParser || type.id === JsonExpressionParser) {
-        positions.push(new NodePosition(from, to, type));
+    enter: ({ type, node }): false | void => {
+      if (parserNodeTypes.includes(type.id)) {
+        positions.push(NodePosition.fromNode(node));
         return false;
       }
     },
@@ -320,9 +337,9 @@ export function getLabelFilterPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
   tree.iterate({
-    enter: ({ type, from, to }): false | void => {
+    enter: ({ type, node }): false | void => {
       if (type.id === LabelFilter) {
-        positions.push(new NodePosition(from, to, type));
+        positions.push(NodePosition.fromNode(node));
         return false;
       }
     },
@@ -338,9 +355,9 @@ function getLineFiltersPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
   tree.iterate({
-    enter: ({ type, from, to }): false | void => {
+    enter: ({ type, node }): false | void => {
       if (type.id === LineFilters) {
-        positions.push(new NodePosition(from, to, type));
+        positions.push(NodePosition.fromNode(node));
         return false;
       }
     },
@@ -356,9 +373,9 @@ function getLogQueryPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
   tree.iterate({
-    enter: ({ type, from, to, node }): false | void => {
+    enter: ({ type, node }): false | void => {
       if (type.id === LogExpr) {
-        positions.push(new NodePosition(from, to, type));
+        positions.push(NodePosition.fromNode(node));
         return false;
       }
 
@@ -565,7 +582,7 @@ export function findLastPosition(positions: NodePosition[]): NodePosition {
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
 }
 
-function getAllPositionsInNodeByType(query: string, node: SyntaxNode, type: number): NodePosition[] {
+function getAllPositionsInNodeByType(node: SyntaxNode, type: number): NodePosition[] {
   if (node.type.id === type) {
     return [NodePosition.fromNode(node)];
   }
@@ -574,9 +591,19 @@ function getAllPositionsInNodeByType(query: string, node: SyntaxNode, type: numb
   let pos = 0;
   let child = node.childAfter(pos);
   while (child) {
-    positions.push(...getAllPositionsInNodeByType(query, child, type));
+    positions.push(...getAllPositionsInNodeByType(child, type));
     pos = child.to;
     child = node.childAfter(pos);
   }
   return positions;
+}
+
+/**
+ * Gets all leaves of the nodes given. Leaves are nodes that don't contain any other nodes.
+ *
+ * @param {NodePosition[]} nodes
+ * @return
+ */
+function findLeaves(nodes: NodePosition[]): NodePosition[] {
+  return nodes.filter((node) => nodes.every((n) => node.contains(n) === false || node === n));
 }

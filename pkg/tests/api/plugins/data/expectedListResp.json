@@ -671,7 +671,7 @@
         "name": "Grafana Labs",
         "url": "https://www.grafana.com"
       },
-      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
       "links": [
         {
           "name": "GitHub Project",
@@ -1598,7 +1598,7 @@
   {
     "name": "TestData",
     "type": "datasource",
-    "id": "testdata",
+    "id": "grafana-testdata-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1609,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/testdata/img/testdata.svg",
-        "large": "/public/app/plugins/datasource/testdata/img/testdata.svg"
+        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
+        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1624,7 +1624,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/testdata/",
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
     "category": "",
     "state": "",
     "signature": "internal",

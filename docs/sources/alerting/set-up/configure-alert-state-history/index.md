@@ -16,10 +16,6 @@ weight: 600
 
 # Configure Alert State History
 
-{{% admonition type="note" %}}
-This applies to Open Source only. There is no configuration required if you are using Grafana Cloud.
-{{% /admonition %}}
-
 Starting with Grafana 10, Alerting can record all alert rule state changes for your Grafana managed alert rules in a Loki instance.
 
 This allows you to explore the behavior of your alert rules in the Grafana explore view and levels up the existing state history modal with a powerful new visualisation.

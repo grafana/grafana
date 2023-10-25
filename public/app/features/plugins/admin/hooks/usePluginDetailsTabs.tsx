@@ -7,7 +7,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { isOrgAdmin } from '../permissions';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
 type ReturnType = {
@@ -25,8 +24,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
 
   const currentPageId = pageId || defaultTab;
   const navModelChildren = useMemo(() => {
-    const canConfigurePlugins =
-      plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
+    const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
     if (isPublished) {
       navModelChildren.push({
@@ -122,7 +120,7 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
     return PluginTabIds.OVERVIEW;
   }
 
-  const hasAccess = contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
+  const hasAccess = contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
 
   if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
     return PluginTabIds.OVERVIEW;

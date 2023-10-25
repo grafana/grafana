@@ -4,7 +4,22 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+
+export const getOverviewScene = () => {
+  return new EmbeddedScene({
+    body: new SceneFlexLayout({
+      children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: GettingStarted,
+          }),
+        }),
+      ],
+    }),
+  });
+};
 
 export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeader?: boolean }) {
   const theme = useTheme2();
@@ -130,32 +145,43 @@ export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <ContentBox className={cx(styles.ctaContainer, className)}>
-      <WelcomeCTABox
-        title="Alert rules"
-        description="Define the condition that must be met before an alert rule fires"
-        href="/alerting/list"
-        hrefText="Manage alert rules"
-      />
-      <div className={styles.separator} />
-      <WelcomeCTABox
-        title="Contact points"
-        description="Configure who receives notifications and how they are sent"
-        href="/alerting/notifications"
-        hrefText="Manage contact points"
-      />
-      <div className={styles.separator} />
-      <WelcomeCTABox
-        title="Notification policies"
-        description="Configure how firing alert instances are routed to contact points"
-        href="/alerting/routes"
-        hrefText="Manage notification policies"
-      />
-    </ContentBox>
+    <div className={styles.welcomeHeaderWrapper}>
+      <div className={styles.subtitle}>Learn about problems in your systems moments after they occur</div>
+
+      <ContentBox className={cx(styles.ctaContainer, className)}>
+        <WelcomeCTABox
+          title="Alert rules"
+          description="Define the condition that must be met before an alert rule fires"
+          href="/alerting/list"
+          hrefText="Manage alert rules"
+        />
+        <div className={styles.separator} />
+        <WelcomeCTABox
+          title="Contact points"
+          description="Configure who receives notifications and how they are sent"
+          href="/alerting/notifications"
+          hrefText="Manage contact points"
+        />
+        <div className={styles.separator} />
+        <WelcomeCTABox
+          title="Notification policies"
+          description="Configure how firing alert instances are routed to contact points"
+          href="/alerting/routes"
+          hrefText="Manage notification policies"
+        />
+      </ContentBox>
+    </div>
   );
 }
 
 const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
+  welcomeHeaderWrapper: css({
+    color: theme.colors.text.primary,
+  }),
+  subtitle: css({
+    color: theme.colors.text.secondary,
+    paddingBottom: theme.spacing(2),
+  }),
   ctaContainer: css`
     padding: ${theme.spacing(4, 2)};
     display: flex;

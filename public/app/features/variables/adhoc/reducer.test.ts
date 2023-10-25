@@ -25,7 +25,7 @@ describe('adHocVariableReducer', () => {
         .thenStateShouldEqual({
           [id]: {
             ...initialState[id],
-            filters: [{ value: 'a', operator: '=', condition: '', key: 'a' }],
+            filters: [{ value: 'a', operator: '=', key: 'a' }],
           } as AdHocVariableModel,
         });
     });
@@ -46,8 +46,8 @@ describe('adHocVariableReducer', () => {
           [id]: {
             ...initialState[id],
             filters: [
-              { value: 'a', operator: '=', condition: '', key: 'a' },
-              { value: 'b', operator: '=', condition: '', key: 'b' },
+              { value: 'a', operator: '=', key: 'a' },
+              { value: 'b', operator: '=', key: 'b' },
             ],
           } as AdHocVariableModel,
         });
@@ -69,7 +69,7 @@ describe('adHocVariableReducer', () => {
         .thenStateShouldEqual({
           [id]: {
             ...initialState[id],
-            filters: [{ value: 'a', operator: '=', condition: '', key: 'a' }],
+            filters: [{ value: 'a', operator: '=', key: 'a' }],
           } as AdHocVariableModel,
         });
     });
@@ -90,7 +90,7 @@ describe('adHocVariableReducer', () => {
         .thenStateShouldEqual({
           [id]: {
             ...initialState[id],
-            filters: [{ value: 'b', operator: '=', condition: '', key: 'b' }],
+            filters: [{ value: 'b', operator: '=', key: 'b' }],
           } as AdHocVariableModel,
         });
     });
@@ -133,8 +133,8 @@ describe('adHocVariableReducer', () => {
           [id]: {
             ...initialState[id],
             filters: [
-              { value: 'b', operator: '=', condition: '', key: 'b' },
-              { value: 'aa', operator: '=', condition: '', key: 'aa' },
+              { value: 'b', operator: '=', key: 'b' },
+              { value: 'aa', operator: '=', key: 'aa' },
             ],
           } as AdHocVariableModel,
         });
@@ -158,8 +158,8 @@ describe('adHocVariableReducer', () => {
           [id]: {
             ...initialState[id],
             filters: [
-              { value: 'b', operator: '=', condition: '', key: 'b' },
-              { value: 'aa', operator: '>', condition: '', key: 'aa' },
+              { value: 'b', operator: '=', key: 'b' },
+              { value: 'aa', operator: '>', key: 'aa' },
             ],
           } as AdHocVariableModel,
         });
@@ -181,8 +181,8 @@ describe('adHocVariableReducer', () => {
           [id]: {
             ...initialState[id],
             filters: [
-              { value: 'aa', operator: '=', condition: '', key: 'aa' },
-              { value: 'bb', operator: '=', condition: '', key: 'bb' },
+              { value: 'aa', operator: '=', key: 'aa' },
+              { value: 'bb', operator: '=', key: 'bb' },
             ],
           } as AdHocVariableModel,
         });
@@ -203,8 +203,8 @@ describe('adHocVariableReducer', () => {
           [id]: {
             ...initialState[id],
             filters: [
-              { value: 'aa', operator: '=', condition: '', key: 'aa' },
-              { value: 'bb', operator: '=', condition: '', key: 'bb' },
+              { value: 'aa', operator: '=', key: 'aa' },
+              { value: 'bb', operator: '=', key: 'bb' },
             ],
           } as AdHocVariableModel,
         });
@@ -216,7 +216,7 @@ function createFilter(value: string, operator = '='): AdHocVariableFilter {
   return {
     value,
     operator,
-    condition: '',
+
     key: value,
   };
 }

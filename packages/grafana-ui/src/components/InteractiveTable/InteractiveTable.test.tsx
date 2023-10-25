@@ -1,4 +1,5 @@
-import { fireEvent, getByRole, render, screen, cleanup } from '@testing-library/react';
+import { getByRole, render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { InteractiveTable } from './InteractiveTable';
@@ -11,6 +12,13 @@ interface TableData {
 }
 function getRowId(row: TableData) {
   return row.id;
+}
+
+function setup(jsx: React.JSX.Element) {
+  render(jsx);
+  return {
+    user: userEvent.setup(),
+  };
 }
 
 describe('InteractiveTable', () => {
@@ -29,7 +37,7 @@ describe('InteractiveTable', () => {
     expect(screen.queryByRole('columnheader', { name: 'Country' })).not.toBeInTheDocument();
   });
 
-  it('should correctly sort rows', () => {
+  it('should correctly sort rows', async () => {
     // We are not testing the sorting logic here since it is already tested in react-table,
     // but instead we are testing that the sorting is applied correctly to the table and correct aria attributes are set
     // according to https://www.w3.org/WAI/ARIA/apg/example-index/table/sortable-table
@@ -43,7 +51,7 @@ describe('InteractiveTable', () => {
       { id: '2', value: '3', country: 'Portugal' },
       { id: '3', value: '2', country: 'Italy' },
     ];
-    render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+    const { user } = setup(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
 
     const valueColumnHeader = screen.getByRole('columnheader', { name: 'Value' });
     const countryColumnHeader = screen.getByRole('columnheader', { name: 'Country' });
@@ -53,27 +61,27 @@ describe('InteractiveTable', () => {
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
 
-    fireEvent.click(countryColumnSortButton);
+    await user.click(countryColumnSortButton);
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).toHaveAttribute('aria-sort', 'ascending');
 
-    fireEvent.click(valueColumnSortButton);
+    await user.click(valueColumnSortButton);
     expect(valueColumnHeader).toHaveAttribute('aria-sort', 'ascending');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
 
-    fireEvent.click(valueColumnSortButton);
+    await user.click(valueColumnSortButton);
     expect(valueColumnHeader).toHaveAttribute('aria-sort', 'descending');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
 
-    fireEvent.click(valueColumnSortButton);
+    await user.click(valueColumnSortButton);
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
   });
 
-  it('correctly expands rows', () => {
+  it('correctly expands rows', async () => {
     const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
     const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
-    render(
+    const { user } = setup(
       <InteractiveTable
         columns={columns}
         data={data}
@@ -83,12 +91,12 @@ describe('InteractiveTable', () => {
     );
 
     const expanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
-    fireEvent.click(expanderButton);
+    await user.click(expanderButton);
 
     expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
 
     expect(expanderButton.getAttribute('aria-controls')).toBe(
-      // anchestor tr's id should match the expander button's aria-controls attribute
+      // ancestor tr's id should match the expander button's aria-controls attribute
       screen.getByTestId('test-1').parentElement?.parentElement?.id
     );
   });
@@ -135,6 +143,23 @@ describe('InteractiveTable', () => {
       render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} headerTooltips={headerTooltips} />);
 
       expect(screen.getByTestId('header-tooltip-icon')).toBeInTheDocument();
+    });
+  });
+
+  describe('controlled sort', () => {
+    it('should call fetchData with the correct sortBy argument', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID', sortType: 'string' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      const fetchData = jest.fn();
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} fetchData={fetchData} />);
+
+      const valueColumnHeader = screen.getByRole('button', {
+        name: /id/i,
+      });
+
+      await userEvent.click(valueColumnHeader);
+
+      expect(fetchData).toHaveBeenCalledWith({ sortBy: [{ id: 'id', desc: false }] });
     });
   });
 });

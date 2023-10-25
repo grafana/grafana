@@ -10,7 +10,8 @@ var _ authn.Service = new(MockService)
 var _ authn.IdentitySynchronizer = new(MockService)
 
 type MockService struct {
-	SyncIdentityFunc func(ctx context.Context, identity *authn.Identity) error
+	SyncIdentityFunc         func(ctx context.Context, identity *authn.Identity) error
+	RegisterPostAuthHookFunc func(hook authn.PostAuthHookFn, priority uint)
 }
 
 func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -30,7 +31,9 @@ func (m *MockService) RegisterClient(c authn.Client) {
 }
 
 func (m *MockService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {
-	panic("unimplemented")
+	if m.RegisterPostAuthHookFunc != nil {
+		m.RegisterPostAuthHookFunc(hook, priority)
+	}
 }
 
 func (m *MockService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {

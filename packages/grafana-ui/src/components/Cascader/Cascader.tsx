@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 import RCCascader from 'rc-cascader';
 import React, { PureComponent } from 'react';
 
@@ -106,7 +106,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     return selectOptions;
   };
 
-  getSearchableOptions = memoizeOne((options: CascaderOption[]) => this.flattenOptions(options));
+  getSearchableOptions = memoize((options: CascaderOption[]) => this.flattenOptions(options));
 
   setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
     if (!initValue) {

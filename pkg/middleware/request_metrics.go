@@ -42,16 +42,33 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	}
 
 	if cfg.MetricsIncludeTeamLabel {
-		histogramLabels = append(histogramLabels, "team")
+		histogramLabels = append(histogramLabels, "grafana_team")
+	}
+
+	if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+		histogramLabels = append(histogramLabels, "slo_group")
+	}
+
+	histogramOptions := prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "http_request_duration_seconds",
+		Help:      "Histogram of latencies for HTTP requests.",
+		Buckets:   defBuckets,
+	}
+
+	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+		// the recommended default value from the prom_client
+		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
+		// Giving this variable an value means the client will expose the histograms as an
+		// native histogram instead of normal a normal histogram.
+		histogramOptions.NativeHistogramBucketFactor = 1.1
+		// The default value in OTel. It probably good enough for us as well.
+		histogramOptions.NativeHistogramMaxBucketNumber = 160
+		histogramOptions.NativeHistogramMinResetDuration = time.Hour
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "http_request_duration_seconds",
-			Help:      "Histogram of latencies for HTTP requests.",
-			Buckets:   defBuckets,
-		},
+		histogramOptions,
 		histogramLabels,
 	)
 
@@ -95,21 +112,27 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				labelValues = append(labelValues, rmd.Team)
 			}
 
+			if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+				labelValues = append(labelValues, string(rmd.SLOGroup))
+			}
+
 			// avoiding the sanitize functions for in the new instrumentation
 			// since they dont make much sense. We should remove them later.
 			histogram := httpRequestDurationHistogram.
 				WithLabelValues(labelValues...)
+
+			elapsedTime := time.Since(now).Seconds()
 
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
 				// ExemplarObserver. This will always work for a
 				// HistogramVec.
 				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+					elapsedTime, prometheus.Labels{"traceID": traceID},
 				)
-				return
+			} else {
+				histogram.Observe(elapsedTime)
 			}
-			histogram.Observe(time.Since(now).Seconds())
 
 			switch {
 			case strings.HasPrefix(r.RequestURI, "/api/datasources/proxy"):

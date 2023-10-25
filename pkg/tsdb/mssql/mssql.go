@@ -64,7 +64,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
@@ -111,8 +111,8 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		}
 
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
-		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			URL, err := ParseURL(dsInfo.URL)
 			if err != nil {
 				return nil, err

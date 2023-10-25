@@ -5,8 +5,8 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { VariableQueryEditor } from './VariableQueryEditor';
-import { PhlareDataSource } from './datasource';
-import { PhlareDataSourceOptions } from './types';
+import { PyroscopeDataSource } from './datasource';
+import { PyroscopeDataSourceOptions } from './types';
 
 describe('VariableQueryEditor', () => {
   it('renders correctly with type profileType', () => {
@@ -69,12 +69,7 @@ describe('VariableQueryEditor', () => {
 });
 
 function getMockDatasource() {
-  const ds = new PhlareDataSource(
-    {
-      jsonData: { backendType: 'phlare' },
-    } as DataSourceInstanceSettings<PhlareDataSourceOptions>,
-    new TemplateSrv()
-  );
+  const ds = new PyroscopeDataSource({} as DataSourceInstanceSettings<PyroscopeDataSourceOptions>, new TemplateSrv());
   ds.getResource = jest.fn();
   (ds.getResource as jest.Mock).mockImplementation(async (type: string) => {
     if (type === 'profileTypes') {

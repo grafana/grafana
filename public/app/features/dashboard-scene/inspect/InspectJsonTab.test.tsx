@@ -7,7 +7,6 @@ import {
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
-  SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -154,7 +153,7 @@ async function buildTestScene() {
   await new Promise((r) => setTimeout(r, 1));
 
   const tab = new InspectJsonTab({
-    panelRef: new SceneObjectRef(panel),
+    panelRef: panel.getRef(),
     onClose: jest.fn(),
   });
 

@@ -101,9 +101,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
-    canCreateFolder: true,
-    canDeleteFolder: true,
-    canEditFolder: true,
+    canEditDashboards: true,
+    canCreateFolders: true,
+    canDeleteFolders: true,
+    canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
   };
@@ -173,7 +174,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         return {
           ...mockPermissions,
           canCreateDashboards: false,
-          canCreateFolder: false,
+          canCreateFolders: false,
         };
       });
       render(<BrowseDashboardsPage {...props} />);
@@ -277,7 +278,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         return {
           ...mockPermissions,
           canCreateDashboards: false,
-          canCreateFolder: false,
+          canCreateFolders: false,
         };
       });
       render(<BrowseDashboardsPage {...props} />);
@@ -294,8 +295,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
           ...mockPermissions,
-          canDeleteFolder: false,
-          canEditFolder: false,
+          canDeleteFolders: false,
+          canEditFolders: false,
           canSetPermissions: false,
           canViewPermissions: false,
         };
@@ -314,7 +315,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
           ...mockPermissions,
-          canEditFolder: false,
+          canEditFolders: false,
         };
       });
       render(<BrowseDashboardsPage {...props} />);

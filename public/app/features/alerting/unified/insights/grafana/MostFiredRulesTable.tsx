@@ -1,20 +1,18 @@
-import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const TOP_5_FIRING_RULES =
-  'topk(5, sum by(group, labels_grafana_folder) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
+import { PANEL_STYLES } from '../../home/Insights';
 
-export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: TOP_5_FIRING_RULES,
+        expr: 'topk(5, sum by(group, labels_grafana_folder) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))',
         instant: true,
       },
     ],
-    $timeRange: timeRange,
   });
 
   const transformation = new SceneDataTransformer({
@@ -46,7 +44,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
           renameByName: {
             group: 'Group',
             labels_grafana_folder: 'Folder',
-            'Value #A': 'Fires this week',
+            'Value #A': 'Number of fires',
           },
         },
       },
@@ -54,8 +52,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
-    body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
+    ...PANEL_STYLES,
+    body: PanelBuilders.table().setTitle(panelTitle).setDescription(panelTitle).setData(transformation).build(),
   });
 }

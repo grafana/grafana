@@ -83,7 +83,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisShow": false,
+            "axisBorderShow": false,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -348,6 +348,5 @@
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

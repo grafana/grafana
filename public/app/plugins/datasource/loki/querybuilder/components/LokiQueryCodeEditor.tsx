@@ -8,16 +8,13 @@ import { getModKey } from 'app/core/utils/browser';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
-import { getStats } from '../../components/stats';
 import { LokiQueryEditorProps } from '../../components/types';
 import { formatLogqlQuery } from '../../queryUtils';
-import { QueryStats } from '../../types';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 
 type Props = LokiQueryEditorProps & {
   showExplain: boolean;
-  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | null>>;
 };
 
 export function LokiQueryCodeEditor({
@@ -30,7 +27,6 @@ export function LokiQueryCodeEditor({
   app,
   showExplain,
   history,
-  setQueryStats,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -49,10 +45,6 @@ export function LokiQueryCodeEditor({
         data={data}
         app={app}
         data-testid={testIds.editor}
-        onQueryType={async (query: string) => {
-          const stats = await getStats(datasource, query);
-          setQueryStats(stats);
-        }}
         ExtraFieldElement={
           <>
             {lokiFormatQuery && (

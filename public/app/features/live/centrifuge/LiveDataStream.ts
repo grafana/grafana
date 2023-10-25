@@ -171,14 +171,14 @@ export class LiveDataStream<T = unknown> {
 
     const liveChannelStatusEvent = isLiveChannelStatusEvent(evt);
     if (liveChannelStatusEvent && evt.error) {
+      const err = toDataQueryError(evt.error);
       this.stream.next({
         type: InternalStreamMessageType.Error,
         error: {
-          ...toDataQueryError(evt.error),
-          message: `Streaming channel error: ${evt.error.message}`,
+          ...err,
+          message: `Streaming channel error: ${err.message}`,
         },
       });
-      return;
     }
 
     if (
@@ -315,9 +315,7 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes
-        ? values.filter((v, i) => (matchingFieldIndexes as number[]).includes(i))
-        : values;
+      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
 
       return {
         key: subKey,

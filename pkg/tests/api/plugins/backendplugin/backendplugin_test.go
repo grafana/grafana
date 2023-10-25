@@ -880,7 +880,7 @@ func (tp *testPlugin) Target() backendplugin.Target {
 }
 
 func (tp *testPlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -888,7 +888,7 @@ func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 		return tp.CheckHealthHandler.CheckHealth(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -896,7 +896,7 @@ func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 		return tp.QueryDataHandler.QueryData(ctx, req)
 	}
 
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -904,28 +904,28 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return tp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
-	return backendplugin.ErrMethodNotImplemented
+	return plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if tp.StreamHandler != nil {
 		return tp.StreamHandler.SubscribeStream(ctx, req)
 	}
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if tp.StreamHandler != nil {
 		return tp.StreamHandler.PublishStream(ctx, req)
 	}
-	return nil, backendplugin.ErrMethodNotImplemented
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if tp.StreamHandler != nil {
 		return tp.StreamHandler.RunStream(ctx, req, sender)
 	}
-	return backendplugin.ErrMethodNotImplemented
+	return plugins.ErrMethodNotImplemented
 }
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {

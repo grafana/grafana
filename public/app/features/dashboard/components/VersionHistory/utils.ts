@@ -28,16 +28,16 @@ export const jsonDiff = (lhs: any, rhs: any): Diffs => {
 
       const path = tail(diff.path.split('/'));
 
-      if (diff.op === 'replace') {
+      if (diff.op === 'replace' && rhsMap.pointers[diff.path]) {
         originalValue = get(lhs, path);
         value = diff.value;
         startLineNumber = rhsMap.pointers[diff.path].value.line;
       }
-      if (diff.op === 'add') {
+      if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
         value = diff.value;
         startLineNumber = rhsMap.pointers[diff.path].value.line;
       }
-      if (diff.op === 'remove') {
+      if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
         originalValue = get(lhs, path);
         startLineNumber = lhsMap.pointers[diff.path].value.line;
       }

@@ -13,12 +13,6 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="note" %}}
-
-This feature is in [public preview](/docs/release-life-cycle/).
-
-{{% /admonition %}}
-
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
@@ -164,10 +158,8 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
-        <li>Altinity plugin for ClickHouse</li>
         <li>ClickHouse</li>
         <li>Elasticsearch</li>
-        <li>Graphite</li>
         <li>Infinity</li>
         <li>InfluxDB</li>
         <li>Loki</li>
@@ -178,7 +170,6 @@ guaranteed because plugin developers can override this functionality. The follow
       <ul>
         <li>MongoDB</li>
         <li>MySQL</li>
-        <li>OpenTSDB</li>
         <li>Oracle Database</li>
         <li>PostgreSQL</li>
         <li>Prometheus</li>
@@ -189,18 +180,26 @@ guaranteed because plugin developers can override this functionality. The follow
   </tr>
 </table>
 
-### Unconfirmed:
-
-{{% admonition type="note" %}}
-
-If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
-
-{{% /admonition %}}
+### Unsupported:
 
 <table>
   <tr>
     <td>
       <ul>
+        <li>CloudWatch</li>
+        <li>Graphite</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+### Unconfirmed:
+
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>Altinity plugin for ClickHouse</li>
         <li>Amazon Athena</li>
         <li>Amazon Redshift</li>
         <li>Amazon Timestream</li>
@@ -209,7 +208,6 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>Azure Data Explorer Datasource</li>
         <li>Azure Monitor</li>
         <li>CSV</li>
-        <li>CloudWatch</li>
         <li>DB2 Datasource</li>
         <li>Databricks</li>
         <li>Datadog</li>
@@ -231,12 +229,13 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>OPC UA (Unified Architecture)</li>
         <li>Open Distro for Elasticsearch</li>
         <li>OpenSearch</li>
-        <li>Orbit</li>
-        <li>SAP HANA®</li>
+        <li>OpenTSDB</li>
       </ul>
     </td>
     <td>
       <ul>
+        <li>Orbit</li>
+        <li>SAP HANA®</li>
         <li>Salesforce</li>
         <li>Sentry</li>
         <li>ServiceNow</li>

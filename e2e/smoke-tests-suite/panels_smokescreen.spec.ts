@@ -4,7 +4,7 @@ import { e2e } from '../utils';
 
 describe('Panels smokescreen', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
   });
 
   after(() => {
@@ -33,9 +33,6 @@ describe('Panels smokescreen', () => {
         if (!panel.hideFromList && panel.state !== 'deprecated') {
           e2e.components.PanelEditor.toggleVizPicker().click();
           e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
-
-          // Wait for panel to load (TODO: Better way to do this?)
-          cy.wait(500);
 
           e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain(panel.name));
           // TODO: Come up with better check / better failure messaging to clearly indicate which panel failed
