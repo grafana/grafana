@@ -85,5 +85,5 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   name: standardTransformers.limitTransformer.name,
   description: `Limit the number of items displayed.`,
   categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.limit).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.limit).helperDocs,
 };

@@ -89,5 +89,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
   categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(DataTransformerID.joinByField).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
 };

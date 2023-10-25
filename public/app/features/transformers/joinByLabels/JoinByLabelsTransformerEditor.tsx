@@ -164,5 +164,5 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(joinByLabelsTransformer.id).getHelperDocs(),
+  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
 };

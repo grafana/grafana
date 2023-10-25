@@ -34,5 +34,5 @@ export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFie
   description: rowsToFieldsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(rowsToFieldsTransformer.id).getHelperDocs(),
+  help: getTransformationContent(rowsToFieldsTransformer.id).helperDocs,
 };

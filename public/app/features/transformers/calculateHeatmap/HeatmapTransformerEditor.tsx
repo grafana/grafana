@@ -50,5 +50,5 @@ export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransf
   description: heatmapTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getTransformationContent(heatmapTransformer.id).getHelperDocs(),
+  help: getTransformationContent(heatmapTransformer.id).helperDocs,
 };

@@ -121,5 +121,5 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(prepareTimeSeriesTransformer.id).getHelperDocs(),
+  help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
 };

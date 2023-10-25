@@ -110,5 +110,5 @@ export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTi
   name: standardTransformers.formatTimeTransformer.name,
   state: PluginState.alpha,
   description: standardTransformers.formatTimeTransformer.description,
-  help: getTransformationContent(DataTransformerID.formatTime).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
 };

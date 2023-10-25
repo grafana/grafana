@@ -104,5 +104,5 @@ export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransfor
   name: standardTransformers.reduceTransformer.name,
   description: standardTransformers.reduceTransformer.description,
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.reduce).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.reduce).helperDocs,
 };

@@ -66,5 +66,5 @@ export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransfor
   name: standardTransformers.sortByTransformer.name,
   description: standardTransformers.sortByTransformer.description,
   categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.sortBy).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
 };

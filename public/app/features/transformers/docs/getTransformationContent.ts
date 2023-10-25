@@ -1,8 +1,8 @@
-import { transformationDocsContent, getLinkToDocs, TransformationInfo } from './content';
+import { transformationDocsContent, getLinkToDocs } from './content';
 
-export function getTransformationContent(id: string): TransformationInfo {
+export function getTransformationContent(id: string): { name: string; helperDocs: string } {
   if (id in transformationDocsContent) {
-    const { name, helperDocs, links } = transformationDocsContent[id];
+    const { name, getHelperDocs, links } = transformationDocsContent[id];
 
     if (links?.length) {
       const renderedLinks = links
@@ -16,7 +16,7 @@ export function getTransformationContent(id: string): TransformationInfo {
       return {
         name,
         helperDocs: `
-        ${helperDocs}
+        ${getHelperDocs()}
         ${getLinkToDocs()}
   ${renderedLinks}
         `,
@@ -26,7 +26,7 @@ export function getTransformationContent(id: string): TransformationInfo {
     return {
       name,
       helperDocs: `
-      ${helperDocs}
+      ${getHelperDocs()}
       ${getLinkToDocs()}
       `,
     };

@@ -205,5 +205,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.convertFieldType).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
 };

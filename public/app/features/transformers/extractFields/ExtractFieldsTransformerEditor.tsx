@@ -122,5 +122,5 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   name: extractFieldsTransformer.name,
   description: `Parse fields from content (JSON, labels, etc).`,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.extractFields).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
 };

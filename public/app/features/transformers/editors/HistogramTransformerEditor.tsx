@@ -190,5 +190,5 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getTransformationContent(DataTransformerID.histogram).getHelperDocs(),
+  help: getTransformationContent(DataTransformerID.histogram).helperDocs,
 };
