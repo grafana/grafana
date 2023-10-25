@@ -109,8 +109,8 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 
-		if err := s.service.TryTokenRefresh(updateCtx, token); err != nil {
-			if errors.Is(err, context.Canceled) {
+		if refreshErr := s.service.TryTokenRefresh(updateCtx, token); refreshErr != nil {
+			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
 			}
 
@@ -126,7 +126,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 				return nil, nil
 			}
 
-			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
+			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", refreshErr)
 
 			if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
 				s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
@@ -136,7 +136,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 				s.log.Warn("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 			}
 
-			return nil, err
+			return nil, refreshErr
 		}
 		return nil, nil
 	})
