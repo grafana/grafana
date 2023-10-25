@@ -114,21 +114,19 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 				return nil, nil
 			}
 
-			// if the access token has already refreshed by another request, we can skip the hook
 			token, _, err := s.service.HasOAuthEntry(ctx, identity)
 			if err != nil {
 				s.log.Error("Failed to get OAuth entry for verifying if token has already been refreshed", "id", identity.ID, "error", err)
 				return nil, err
 			}
 
+			// if the access token has already been refreshed by another request (for example in HA scenario)
 			tokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 			if !tokenExpires.Before(time.Now()) {
 				return nil, nil
 			}
 
-			if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
-				s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
-			}
+			s.log.Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
 
 			if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
 				s.log.Warn("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
@@ -144,7 +142,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	})
 
 	if err != nil {
-		return authn.ErrExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
+		return authn.ErrExpiredAccessToken.Errorf("OAuth access token could not be refreshed: %w", err)
 	}
 
 	return nil
