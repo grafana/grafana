@@ -2,9 +2,10 @@ package v0alpha1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -105,8 +106,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		OrgId: info.OrgID,
 	})
 	if err != nil || dto == nil {
-		if err == playlist.ErrPlaylistNotFound || err == nil {
-			err = errors.NewNotFound(s.SingularQualifiedResource, name)
+		if errors.Is(err, playlist.ErrPlaylistNotFound) || err == nil {
+			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
 		}
 		return nil, err
 	}

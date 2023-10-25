@@ -3,11 +3,12 @@ package apis
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
@@ -21,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TestUsers struct {
@@ -63,18 +62,11 @@ func NewK8sTestContext(t *testing.T) K8sTestContext {
 	c.Org2 = c.createTestUsers(int64(2))
 
 	// Read the groups
-	resp := c.Get(GetParams{
+	rsp := newK8sResponse(c.Get(GetParams{
 		url:  "/apis",
 		user: c.Org1.Viewer,
-	})
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(c.t, err)
-
-	groups := &metav1.APIGroupList{}
-	err = json.Unmarshal(body, groups)
-	require.NoError(c.t, err)
-	for _, g := range groups.Groups {
+	}), &metav1.APIGroupList{})
+	for _, g := range rsp.Result.Groups {
 		c.Groups[g.Name] = g
 	}
 	return c
@@ -146,7 +138,6 @@ func (c K8sTestContext) Patch(params PatchParams) *http.Response {
 	req.Header.Set("Content-Type", "application/json")
 	require.NoError(c.t, err)
 	resp, err := http.DefaultClient.Do(req)
-	require.NoError(c.t, err)
 	require.NoError(c.t, err)
 
 	return resp

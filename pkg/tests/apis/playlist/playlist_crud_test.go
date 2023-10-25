@@ -27,23 +27,23 @@ func TestPlaylistCRUD(t *testing.T) {
 		require.Equal(t, gvr.Version, g.PreferredVersion.Version)
 
 		// Check view permissions
-		r, list, status := ctx.List(ctx.Org1.Viewer, gvr, "default")
-		require.Equal(t, 200, r.StatusCode)
-		require.NotNil(t, list)
-		require.Empty(t, list.Items)
-		require.Nil(t, status)
+		rsp := ctx.List(ctx.Org1.Viewer, gvr, "default")
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.NotNil(t, rsp.Result)
+		require.Empty(t, rsp.Result.Items)
+		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		r, list, status = ctx.List(ctx.Org2.Viewer, gvr, "default")
-		require.Equal(t, 403, r.StatusCode) // Org2 can not see default namespace
-		require.Nil(t, list)
-		require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
+		rsp = ctx.List(ctx.Org2.Viewer, gvr, "default")
+		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
+		require.Nil(t, rsp.Result)
+		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		r, list, status = ctx.List(ctx.Org2.Viewer, gvr, "org-22")
-		require.Equal(t, 403, r.StatusCode) // Unknown/not a member
-		require.Nil(t, list)
-		require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
+		rsp = ctx.List(ctx.Org2.Viewer, gvr, "org-22")
+		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
+		require.Nil(t, rsp.Result)
+		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 	})
 
 	t.Run("Do simple CRUD via k8s", func(t *testing.T) {
@@ -53,17 +53,17 @@ func TestPlaylistCRUD(t *testing.T) {
 		// Create with auto generated name
 		rsp := ctx.PostResource(ctx.Org1.Editor, "playlists", v)
 		require.Equal(t, 201, rsp.Response.StatusCode) // created!
-		require.NotEmpty(t, rsp.Resource.Name)
+		require.NotEmpty(t, rsp.Result.Name)
 		require.Equal(t, "Playlist with auto generated UID", v.Spec["title"])
-		require.Equal(t, "Playlist with auto generated UID", rsp.Resource.Spec["title"])
+		require.Equal(t, "Playlist with auto generated UID", rsp.Result.Spec["title"])
 
 		// Now Update the title
-		update := rsp.Resource
+		update := rsp.Result
 		update.Spec["title"] = "Change the title"
 		rsp = ctx.PutResource(ctx.Org1.Editor, "playlists", *update)
 		require.Equal(t, 200, rsp.Response.StatusCode) // OK
-		require.Equal(t, "Change the title", rsp.Resource.Spec["title"])
-		require.NotEqual(t, update.ResourceVersion, rsp.Resource.ResourceVersion) // should be bigger!
+		require.Equal(t, "Change the title", rsp.Result.Spec["title"])
+		require.NotEqual(t, update.ResourceVersion, rsp.Result.ResourceVersion) // should be bigger!
 
 		// Viewer can not update!
 		update.Spec["interval"] = "1m"

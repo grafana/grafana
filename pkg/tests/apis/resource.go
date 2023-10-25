@@ -29,13 +29,41 @@ type AnyResourceList struct {
 	Items []map[string]any `json:"items,omitempty"`
 }
 
-type ResourceResponse struct {
+type K8sResponse[T any] struct {
 	Response *http.Response
-	Resource *AnyResource
+	Body     []byte
+	Result   *T
 	Status   *metav1.Status
 }
 
-func (c K8sTestContext) PostResource(user User, resource string, payload AnyResource) ResourceResponse {
+type AnyResourceResponse = K8sResponse[AnyResource]
+type AnyResourceListResponse = K8sResponse[AnyResourceList]
+
+func newK8sResponse[T any](rsp *http.Response, result *T) K8sResponse[T] {
+	r := K8sResponse[T]{
+		Response: rsp,
+		Result:   result,
+	}
+	defer func() {
+		_ = rsp.Body.Close() // ignore any close errors
+	}()
+	r.Body, _ = io.ReadAll(rsp.Body)
+	if json.Valid(r.Body) {
+		_ = json.Unmarshal(r.Body, r.Result)
+
+		s := &metav1.Status{}
+		err := json.Unmarshal(r.Body, s)
+		if err == nil && s.Kind == "Status" { // Usually an error!
+			r.Status = s
+			r.Result = nil
+		}
+	} else {
+		_ = yaml.Unmarshal(r.Body, r.Result)
+	}
+	return r
+}
+
+func (c K8sTestContext) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
 
 	namespace := payload.Namespace
@@ -55,14 +83,14 @@ func (c K8sTestContext) PostResource(user User, resource string, payload AnyReso
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return c.processResourceResponse(c.Post(PostParams{
+	return newK8sResponse(c.Post(PostParams{
 		path: path,
 		user: user,
 		body: string(body),
-	}))
+	}), &AnyResource{})
 }
 
-func (c K8sTestContext) PutResource(user User, resource string, payload AnyResource) ResourceResponse {
+func (c K8sTestContext) PutResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
 
 	path := fmt.Sprintf("/apis/%s/namespaces/%s/%s/%s",
@@ -71,41 +99,18 @@ func (c K8sTestContext) PutResource(user User, resource string, payload AnyResou
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return c.processResourceResponse(c.Put(PostParams{
+	return newK8sResponse(c.Put(PostParams{
 		path: path,
 		user: user,
 		body: string(body),
-	}))
-}
-
-func (c K8sTestContext) processResourceResponse(response *http.Response) ResourceResponse {
-	c.t.Helper()
-
-	out := ResourceResponse{Response: response}
-	defer response.Body.Close()
-	raw, err := io.ReadAll(response.Body)
-	require.NoError(c.t, err)
-
-	if json.Valid(raw) {
-		out.Resource = &AnyResource{}
-		err = json.Unmarshal(raw, out.Resource)
-		require.NoError(c.t, err)
-
-		// It may be a response status
-		if out.Resource.Kind == "Status" {
-			out.Resource = nil
-			out.Status = &metav1.Status{}
-			err = json.Unmarshal(raw, out.Status)
-			require.NoError(c.t, err)
-		}
-	}
-	return out
+	}), &AnyResource{})
 }
 
 // Read local JSON or YAML file into a resource
 func (c K8sTestContext) LoadAnyResource(fpath string) AnyResource {
 	c.t.Helper()
 
+	//nolint:gosec
 	raw, err := os.ReadFile(fpath)
 	require.NoError(c.t, err)
 	return c.readAnyResource(raw)
@@ -126,37 +131,12 @@ func (c K8sTestContext) readAnyResource(raw []byte) AnyResource {
 	return *res
 }
 
-func (c K8sTestContext) List(user User, gvr schema.GroupVersionResource, namespace string) (*http.Response, *AnyResourceList, *metav1.Status) {
+func (c K8sTestContext) List(user User, gvr schema.GroupVersionResource, namespace string) AnyResourceListResponse {
 	c.t.Helper()
 
-	resp := c.Get(GetParams{
+	return newK8sResponse(c.Get(GetParams{
 		url: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
 			gvr.Group, gvr.Version, namespace, gvr.Resource),
 		user: user,
-	})
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
-	require.NoError(c.t, err)
-
-	var status *metav1.Status
-	list := &AnyResourceList{}
-	if json.Valid(raw) {
-		err = json.Unmarshal(raw, list)
-	} else {
-		err = yaml.Unmarshal(raw, list)
-	}
-	require.NoError(c.t, err)
-
-	// It may be a response status
-	if list.Kind == "Status" {
-		list = nil
-		status = &metav1.Status{}
-		if json.Valid(raw) {
-			err = json.Unmarshal(raw, status)
-		} else {
-			err = yaml.Unmarshal(raw, status)
-		}
-		require.NoError(c.t, err)
-	}
-	return resp, list, status
+	}), &AnyResourceList{})
 }
