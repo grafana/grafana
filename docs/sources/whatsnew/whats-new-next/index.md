@@ -39,6 +39,27 @@ _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
+## Configure refresh token handling separately for OAuth providers
+
+<!-- Mihaly Gyongyosi -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
+
+With the current release, we've introduced a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh access tokens when they expire. In addition, to further improve security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It's enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
+
+For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
+
+{{% admonition type="note" %}}
+The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
+
+The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
+{{% /admonition %}}
+
 ## Use AI to generate dashboard titles, descriptions, and change summaries
 
 <!-- Nathan Marrs -->
