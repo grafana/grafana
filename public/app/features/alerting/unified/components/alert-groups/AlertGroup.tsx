@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { useStyles2 } from '@grafana/ui';
 import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
@@ -19,7 +20,8 @@ interface Props {
 export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
-
+  // When group is grouped, receiver.name is 'NONE' as it can contain multiple receivers
+  const receiverInGroup = group.receiver.name !== 'NONE';
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
@@ -31,7 +33,10 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
             data-testid="alert-group-collapse-toggle"
           />
           {Object.keys(group.labels).length ? (
-            <AlertLabels labels={group.labels} size="sm" />
+            <Stack direction="row">
+              <AlertLabels labels={group.labels} size="sm" />
+              {receiverInGroup && <span className={styles.spanElement}> @ Delivered to {group.receiver.name}</span>}
+            </Stack>
           ) : (
             <span>No grouping</span>
           )}
