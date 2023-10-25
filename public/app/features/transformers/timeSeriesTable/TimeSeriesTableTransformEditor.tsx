@@ -80,8 +80,8 @@ export function TimeSeriesTableTransformEditor({
     configRows.push(
       <InlineFieldRow key={refId}>
         <InlineField
-          label="Time Field"
-          tooltip="The the time field that will be used for the time series. If not selected the first found will be used."
+          label="Time field"
+          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
