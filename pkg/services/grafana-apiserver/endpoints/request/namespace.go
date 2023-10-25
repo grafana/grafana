@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type NamespaceInfo struct {
@@ -18,6 +20,22 @@ type NamespaceInfo struct {
 
 	// The original namespace string regardless the input
 	Value string
+}
+
+// NamespaceMapper converts an orgID into a namespace
+type NamespaceMapper = func(orgId int64) string
+
+// GetNamespaceMapper returns a function that will convert orgIds into a consistent namespace
+func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
+	if cfg != nil && cfg.StackID != "" {
+		return func(orgId int64) string { return "stack-" + cfg.StackID }
+	}
+	return func(orgId int64) string {
+		if orgId == 1 {
+			return "default"
+		}
+		return fmt.Sprintf("org-%d", orgId)
+	}
 }
 
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (NamespaceInfo, error) {

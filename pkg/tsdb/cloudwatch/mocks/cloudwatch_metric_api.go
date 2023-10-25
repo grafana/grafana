@@ -14,7 +14,7 @@ type FakeMetricsAPI struct {
 	MetricsPerPage int
 }
 
-func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c *FakeMetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
 	if c.MetricsPerPage == 0 {
 		c.MetricsPerPage = 1000
 	}
@@ -62,7 +62,7 @@ func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
 }
 
-func (m *MetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (m *MetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
 	fn(&cloudwatch.ListMetricsOutput{
 		Metrics: m.Metrics,
 	}, true)

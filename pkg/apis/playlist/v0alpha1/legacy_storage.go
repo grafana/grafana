@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -22,8 +22,9 @@ var (
 )
 
 type legacyStorage struct {
-	service    playlist.Service
-	namespacer namespaceMapper
+	service        playlist.Service
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -45,65 +46,13 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	p, ok := object.(*PlaylistList)
-	if ok {
-		t := &metav1.Table{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Table",
-				APIVersion: "meta.k8s.io/v1",
-			},
-			ColumnDefinitions: []metav1.TableColumnDefinition{{
-				Name:        "Name",
-				Type:        "string",
-				Format:      "name",
-				Description: "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-				Priority:    0,
-			}, {
-				Name:        "Title",
-				Type:        "string",
-				Format:      "string",
-				Description: "The playlist display name",
-				Priority:    0,
-			}, {
-				Name:        "Interval",
-				Type:        "string",
-				Format:      "string",
-				Description: "Refresh interval",
-				Priority:    0,
-			}},
-		}
-
-		for _, v := range p.Items {
-			raw := v
-			t.Rows = append(t.Rows, metav1.TableRow{
-				Cells: []interface{}{
-					v.Name,
-					v.Spec.Title,
-					v.Spec.Interval,
-				},
-				Object: runtime.RawExtension{
-					Object: &raw,
-				},
-			})
-		}
-		return t, nil
-	}
-
-	// It may already be a table
-	t, ok := object.(*metav1.Table)
-	if ok {
-		return t, nil
-	}
-
-	// Fallback to the default converter
-	return rest.NewDefaultTableConvertor(Resource("playlists")).
-		ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +69,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	if true { // TODO!!! is this a table response?
 		for _, v := range res {
 			list.Items = append(list.Items,
@@ -154,7 +98,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
