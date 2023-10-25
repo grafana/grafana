@@ -126,9 +126,6 @@ ${buildTransformationDocsContent(transformationDocsContent)}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 
-[Data frames]: "/docs/grafana/ -> /docs/developers/plugin-tools/introduction/data-frames"
-[Data frames]: "/docs/grafana-cloud/ -> /docs/developers/plugin-tools/introduction/data-frames"
-
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 [Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 
@@ -151,6 +148,8 @@ ${buildTransformationDocsContent(transformationDocsContent)}
 [dashboard variable]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 
 {{% /docs/reference %}}
+
+[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
 `;
 
 function buildTransformationDocsContent(transformationDocsContent: TransformationDocsContentType) {
