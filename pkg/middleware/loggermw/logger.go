@@ -128,9 +128,13 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		logParams = append(logParams, "handler", handler)
 	}
 
+	rmd := requestmeta.GetRequestMetaData(c.Req.Context())
 	if l.flags.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
-		rmd := requestmeta.GetRequestMetaData(c.Req.Context())
 		logParams = append(logParams, "status_source", rmd.StatusSource)
+	}
+
+	if l.cfg.MetricsIncludeTeamLabel {
+		logParams = append(logParams, "grafana_team", rmd.Team)
 	}
 
 	logParams = append(logParams, errorLogParams(c.Error)...)
