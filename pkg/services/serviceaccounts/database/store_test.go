@@ -507,13 +507,18 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
 
 	tt := []struct {
-		desc        string
-		id          int64
-		enable      bool
-		expectedErr error
+		desc   string
+		id     int64
+		enable bool
+		isUser bool
 	}{
 		{
 			desc:   "should disable service account",
+			id:     1,
+			enable: false,
+		},
+		{
+			desc:   "should disable service account again",
 			id:     1,
 			enable: false,
 		},
@@ -523,16 +528,10 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 			enable: true,
 		},
 		{
-			desc:        "should error for unexisting service account",
-			id:          101,
-			enable:      true,
-			expectedErr: serviceaccounts.ErrServiceAccountNotFound,
-		},
-		{
-			desc:        "should not disable user",
-			id:          2,
-			enable:      false,
-			expectedErr: serviceaccounts.ErrServiceAccountNotFound,
+			desc:   "should not disable user",
+			id:     2,
+			enable: false,
+			isUser: true,
 		},
 	}
 	for _, tc := range tt {
@@ -540,11 +539,18 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 			ctx := context.Background()
 
 			err := store.EnableServiceAccount(ctx, orgID, tc.id, tc.enable)
-			if tc.expectedErr != nil {
-				require.ErrorIs(t, err, tc.expectedErr)
-				return
-			}
 			require.NoError(t, err)
+
+			switch tc.isUser {
+			case true:
+				user, err := store.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: tc.id})
+				require.NoError(t, err)
+				require.Equal(t, false, user.IsDisabled)
+			case false:
+				sa, err := store.RetrieveServiceAccount(ctx, orgID, tc.id)
+				require.NoError(t, err)
+				require.Equal(t, !tc.enable, sa.IsDisabled)
+			}
 		})
 	}
 }
