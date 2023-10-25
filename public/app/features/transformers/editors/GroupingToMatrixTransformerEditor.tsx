@@ -96,5 +96,5 @@ export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<Grou
   name: standardTransformers.groupingToMatrixTransformer.name,
   description: 'Takes a three fields combination and produces a Matrix.',
   categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
+  help: getTransformationContent(DataTransformerID.groupingToMatrix).getHelperDocs(),
 };
