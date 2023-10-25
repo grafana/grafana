@@ -23,6 +23,8 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
+const readyPath = "/-/ready"
+
 type Alertmanager struct {
 	log      log.Logger
 	orgID    int64
@@ -31,6 +33,7 @@ type Alertmanager struct {
 
 	amClient   *amclient.AlertmanagerAPI
 	httpClient *http.Client
+	ready      bool
 	sender     *sender.ExternalAlertmanager
 }
 
@@ -87,7 +90,53 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 }
 
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if am.ready {
+		return nil
+	}
+
+	return am.checkReadiness(ctx)
+}
+
+func (am *Alertmanager) checkReadiness(ctx context.Context) error {
+	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
+	if err != nil {
+		return fmt.Errorf("error creating readiness request: %w", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error performing readiness check: %w", err)
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error closing response body", "err", err)
+		}
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w, status code: %d", notifier.ErrAlertmanagerNotReady, res.StatusCode)
+	}
+
+	// Wait for active senders.
+	var attempts int
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			attempts++
+			if len(am.sender.Alertmanagers()) > 0 {
+				am.log.Debug("Alertmanager readiness check successful", "attempts", attempts)
+				am.ready = true
+				return nil
+			}
+		case <-time.After(10 * time.Second):
+			return notifier.ErrAlertmanagerNotReady
+		}
+	}
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
@@ -241,42 +290,8 @@ func (am *Alertmanager) StopAndWait() {
 	am.sender.Stop()
 }
 
-// TODO: change implementation, this is only useful for testing other methods
 func (am *Alertmanager) Ready() bool {
-	readyURL := strings.TrimSuffix(am.url, "/") + "/-/ready"
-	res, err := am.httpClient.Get(readyURL)
-	if err != nil {
-		return false
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			am.log.Warn("Error closing response body", "err", err)
-		}
-	}()
-
-	if res.StatusCode != http.StatusOK {
-		am.log.Debug("Alertmanager readiness check unsuccessful", "statusCode", res.StatusCode)
-		return false
-	}
-
-	// Wait for active senders.
-	var attempts int
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			attempts++
-			if len(am.sender.Alertmanagers()) > 0 {
-				am.log.Debug("Alertmanager readiness check successful", "attempts", attempts)
-				return true
-			}
-		case <-time.After(10 * time.Second):
-			return false
-		}
-	}
+	return am.ready
 }
 
 func (am *Alertmanager) FileStore() *notifier.FileStore {

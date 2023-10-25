@@ -190,6 +190,10 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
+	// Wait until the Alertmanager is ready to send alerts.
+	require.NoError(t, am.checkReadiness(context.Background()))
+	require.True(t, am.Ready())
+
 	// We should have no alerts and no groups at first.
 	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
@@ -198,9 +202,6 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	alertGroups, err := am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 0, len(alertGroups))
-
-	// Wait until the Alertmanager is ready to send alerts.
-	require.True(t, am.Ready())
 
 	// Let's create two active alerts and one expired one.
 	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
