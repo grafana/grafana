@@ -22,8 +22,8 @@ type IDClaims struct {
 	jwt.Claims
 }
 
-const settingKey = "grafanaIdForward"
+const forwardIDToken = "grafanaIdForward"
 
 func IsIDForwardingEnabledForDataSource(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get(settingKey).MustBool()
+	return ds.JsonData != nil && ds.JsonData.Get(forwardIDToken).MustBool()
 }
