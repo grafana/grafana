@@ -58,14 +58,7 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
         width={svgWid}
         height={svgHgt}
         title={title}
-        className={cx(
-          styles.icon,
-          {
-            'fa-spin': iconName === 'spinner',
-          },
-          className,
-          type === 'mono' ? { [styles.orange]: name === 'favorite' } : ''
-        )}
+        className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
         style={style}
         {...rest}
       />
