@@ -10,7 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -163,7 +162,19 @@ func (s *service) start(ctx context.Context) error {
 		logger.Error(err, "failed to set log level")
 	}
 
-	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
+	// Get the list of groups the server will support
+	builders := s.builders
+
+	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+	// Install schemas
+	for _, b := range builders {
+		groupVersions = append(groupVersions, b.GetGroupVersion())
+		if err := b.InstallSchema(Scheme); err != nil {
+			return err
+		}
+	}
+
+	o := options.NewRecommendedOptions("/registry/grafana.app", Codecs.LegacyCodec(groupVersions...))
 	o.SecureServing.BindAddress = s.config.ip
 	o.SecureServing.BindPort = s.config.port
 	o.Authentication.RemoteKubeConfigFileOptional = true
@@ -209,22 +220,15 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	if o.Etcd != nil {
+		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
+			return err
+		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
-
-	// Get the list of groups the server will support
-	builders := s.builders
-
-	// Install schemas
-	for _, b := range builders {
-		if err := b.InstallSchema(Scheme); err != nil {
-			return err
-		}
-	}
 
 	// Add OpenAPI specs for each group+version
 	defsGetter := getOpenAPIDefinitions(builders)

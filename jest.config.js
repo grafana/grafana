@@ -28,6 +28,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
+    'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
