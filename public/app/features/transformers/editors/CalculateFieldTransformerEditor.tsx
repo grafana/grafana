@@ -23,7 +23,6 @@ import {
 import {
   BinaryOptions,
   UnaryOptions,
-  CumulativeOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
@@ -613,7 +612,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
-        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.cumulative)}
+        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.reduce)}
         {mode === CalculateFieldMode.WindowFunctions && this.renderWindowFunctions(options.window)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
