@@ -29,17 +29,13 @@ func (params *urlBuilder) buildResourceURI() *string {
 		subscription = params.DefaultSubscription
 	}
 
-	// metricNamespace := params.MetricNamespace
-
-	// if params.MetricNamespace == nil || *params.MetricNamespace == "" {
-	// 	metricNamespace = params.MetricDefinition
-	// }
+	metricNamespace := params.MetricNamespace
 
 	if params.MetricNamespace == nil || *params.MetricNamespace == "" {
-		return nil
+		metricNamespace = params.MetricDefinition
 	}
 
-	metricNamespaceArray := strings.Split(*params.MetricNamespace, "/")
+	metricNamespaceArray := strings.Split(*metricNamespace, "/")
 	var resourceNameArray []string
 	if params.ResourceName != nil && *params.ResourceName != "" {
 		resourceNameArray = strings.Split(*params.ResourceName, "/")
@@ -47,7 +43,7 @@ func (params *urlBuilder) buildResourceURI() *string {
 	provider := metricNamespaceArray[0]
 	metricNamespaceArray = metricNamespaceArray[1:]
 
-	if strings.HasPrefix(strings.ToLower(*params.MetricNamespace), "microsoft.storage/storageaccounts/") &&
+	if strings.HasPrefix(strings.ToLower(*metricNamespace), "microsoft.storage/storageaccounts/") &&
 		params.ResourceName != nil &&
 		!strings.HasSuffix(*params.ResourceName, "default") {
 		resourceNameArray = append(resourceNameArray, "default")
