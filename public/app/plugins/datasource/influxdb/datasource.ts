@@ -313,7 +313,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
       return lastValueFrom(
         super.query({
-          ...options, // includes 'range'
+          ...(options ?? {}), // includes 'range'
           targets: [target],
         })
       ).then((rsp) => {
@@ -324,7 +324,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, options.scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, options?.scopedVars, this.interpolateQueryExpr);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
