@@ -294,9 +294,8 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-func (am *Alertmanager) FileStore() *notifier.FileStore {
-	return &notifier.FileStore{}
-}
+// We don't have files on disk, no-op.
+func (am *Alertmanager) CleanUp() {}
 
 func (am *Alertmanager) OrgID() int64 {
 	return am.orgID
