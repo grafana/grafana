@@ -68,12 +68,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
 		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			UID:   v.UID,
