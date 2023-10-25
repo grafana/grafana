@@ -91,7 +91,14 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, dsScrapeInterval)
+	expr := interpolateVariables(
+		model.Expr,
+		model.Interval,
+		time.Duration(model.IntervalMs)*time.Millisecond,
+		interval,
+		timeRange,
+		dsScrapeInterval,
+	)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -211,20 +218,33 @@ func calculateRateInterval(
 	return rateInterval
 }
 
-func interpolateVariables(expr, finalInterval string, interval time.Duration,
-	timeRange time.Duration, dsScrapeInterval string) string {
+// interpolateVariables interpolates built-in variables
+// expr                         PromQL query
+// queryInterval                Requested interval. This value may be overridden by MinStep in query options
+// queryIntervalMs              Requested interval in milliseconds
+// finalCalculatedInterval      Calculated final step value. It was calculated in calculatePrometheusInterval
+// timeRange                    Requested time range for query
+// dsScrapeInterval             Scrape interval value defined in datasource settings
+func interpolateVariables(
+	expr string,
+	queryInterval string,
+	queryIntervalMs time.Duration,
+	finalCalculatedInterval time.Duration,
+	timeRange time.Duration,
+	dsScrapeInterval string,
+) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
 	var rateInterval time.Duration
-	if finalInterval == varRateInterval || finalInterval == varRateIntervalAlt {
-		rateInterval = interval
+	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
+		rateInterval = finalCalculatedInterval
 	} else {
-		rateInterval = calculateRateInterval(interval, dsScrapeInterval)
+		rateInterval = calculateRateInterval(finalCalculatedInterval, dsScrapeInterval)
 	}
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(finalCalculatedInterval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(finalCalculatedInterval))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -232,8 +252,8 @@ func interpolateVariables(expr, finalInterval string, interval time.Duration,
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(interval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(interval))
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(finalCalculatedInterval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(finalCalculatedInterval))
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
