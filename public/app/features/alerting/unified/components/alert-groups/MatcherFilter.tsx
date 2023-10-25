@@ -4,10 +4,9 @@ import React, { FormEvent, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
 import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
 
-import { LogMessages } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
 
 interface Props {
   className?: string;
