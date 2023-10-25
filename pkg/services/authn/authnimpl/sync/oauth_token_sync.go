@@ -40,7 +40,7 @@ type OAuthTokenSync struct {
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	namespace, id := identity.NamespacedID()
+	namespace, _ := identity.NamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {
 		return nil
@@ -87,17 +87,16 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	accessTokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+	accessTokenExpires, hasAccessTokenExpired := getExpiryWithSkew(token.OAuthExpiry)
 
 	hasIdTokenExpired := false
 	idTokenExpires := time.Time{}
 
 	if !idTokenExpiry.IsZero() {
-		idTokenExpires = idTokenExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
-		hasIdTokenExpired = idTokenExpires.Before(time.Now())
+		idTokenExpires, hasIdTokenExpired = getExpiryWithSkew(idTokenExpiry)
 	}
 	// token has not expired, so we don't have to refresh it
-	if !accessTokenExpires.Before(time.Now()) && !hasIdTokenExpired {
+	if !hasAccessTokenExpired && !hasIdTokenExpired {
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil
@@ -194,4 +193,10 @@ func getIDTokenExpiry(token *login.UserAuth) (time.Time, error) {
 	}
 
 	return time.Unix(claims.Exp, 0), nil
+}
+
+func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpired bool) {
+	adjustedExpiry = expiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+	hasTokenExpired = adjustedExpiry.Before(time.Now())
+	return
 }
