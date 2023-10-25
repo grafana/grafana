@@ -214,7 +214,7 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 	return nil, nil
 }
 
-func (c fakeCheckHealthClient) GetLogGroupFields(input *cloudwatchlogs.GetLogGroupFieldsInput) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (c fakeCheckHealthClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return nil, nil
 }
 

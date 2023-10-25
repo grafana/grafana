@@ -31,7 +31,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 
 	t.Run("returns 500 if GetLogGroupFields method fails", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
+		mockLogsService.On("GetLogGroupFieldsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
 		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
@@ -47,7 +47,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 
 	t.Run("returns valid json response if everything is ok", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{
+		mockLogsService.On("GetLogGroupFieldsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{
 			{
 				AccountId: new(string),
 				Value: resources.LogGroupField{

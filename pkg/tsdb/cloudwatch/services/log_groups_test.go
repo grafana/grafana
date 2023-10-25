@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -290,7 +291,7 @@ func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 func TestGetLogGroupFields(t *testing.T) {
 	t.Run("Should map log group fields response", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
-		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+		mockLogsAPI.On("GetLogGroupFieldsWithContext", mock.Anything).Return(
 			&cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -307,7 +308,7 @@ func TestGetLogGroupFields(t *testing.T) {
 			}, nil)
 
 		service := NewLogGroupsService(mockLogsAPI, false)
-		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{})
+		resp, err := service.GetLogGroupFieldsWithContext(context.Background(), resources.LogGroupFieldsRequest{})
 
 		assert.NoError(t, err)
 		assert.Equal(t, []resources.ResourceResponse[resources.LogGroupField]{
@@ -355,16 +356,16 @@ func TestGetLogGroupFields(t *testing.T) {
 	// remove this test once the above test is uncommented
 	t.Run("Should only set LogGroupName as api input in case both LogGroupName and LogGroupARN are specified", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
-		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+		mockLogsAPI.On("GetLogGroupFieldsWithContext", mock.Anything).Return(
 			&cloudwatchlogs.GetLogGroupFieldsOutput{}, nil)
 
 		service := NewLogGroupsService(mockLogsAPI, false)
-		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{
+		resp, err := service.GetLogGroupFieldsWithContext(context.Background(), resources.LogGroupFieldsRequest{
 			LogGroupName: "logGroupName",
 			LogGroupARN:  "logGroupARN",
 		})
 
-		mockLogsAPI.AssertCalled(t, "GetLogGroupFields", &cloudwatchlogs.GetLogGroupFieldsInput{
+		mockLogsAPI.AssertCalled(t, "GetLogGroupFieldsWithContext", &cloudwatchlogs.GetLogGroupFieldsInput{
 			LogGroupIdentifier: nil,
 			LogGroupName:       utils.Pointer("logGroupName"),
 		})
@@ -374,16 +375,16 @@ func TestGetLogGroupFields(t *testing.T) {
 
 	t.Run("Should only set LogGroupName as api input in case only LogGroupName is specified", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
-		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+		mockLogsAPI.On("GetLogGroupFieldsWithContext", mock.Anything).Return(
 			&cloudwatchlogs.GetLogGroupFieldsOutput{}, nil)
 
 		service := NewLogGroupsService(mockLogsAPI, false)
-		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{
+		resp, err := service.GetLogGroupFieldsWithContext(context.Background(), resources.LogGroupFieldsRequest{
 			LogGroupName: "logGroupName",
 			LogGroupARN:  "",
 		})
 
-		mockLogsAPI.AssertCalled(t, "GetLogGroupFields", &cloudwatchlogs.GetLogGroupFieldsInput{
+		mockLogsAPI.AssertCalled(t, "GetLogGroupFieldsWithContext", &cloudwatchlogs.GetLogGroupFieldsInput{
 			LogGroupIdentifier: nil,
 			LogGroupName:       utils.Pointer("logGroupName"),
 		})
