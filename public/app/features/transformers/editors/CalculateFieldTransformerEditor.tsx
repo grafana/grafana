@@ -253,7 +253,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
-  renderCumulativeFunctions(options?: CumulativeOptions) {
+  renderCumulativeFunctions(options?: ReduceOptions) {
     const { names, selected } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
 
@@ -340,7 +340,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     this.updateWindowOptions({ ...window, reducer });
   };
 
-  renderWindowFunctions(options?: CumulativeOptions) {
+  renderWindowFunctions(options?: WindowOptions) {
     const { names, selected } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
 
