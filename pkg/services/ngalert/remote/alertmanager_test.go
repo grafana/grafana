@@ -74,7 +74,6 @@ func TestNewAlertmanager(t *testing.T) {
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
-				DefaultConfig:     test.defaultConfig,
 			}
 			am, err := NewAlertmanager(cfg, test.orgID)
 			if test.expErr != "" {
@@ -85,7 +84,6 @@ func TestNewAlertmanager(t *testing.T) {
 			require.NoError(tt, err)
 			require.Equal(tt, am.tenantID, test.tenantID)
 			require.Equal(tt, am.url, test.url)
-			require.Equal(tt, am.defaultConfig, test.defaultConfig)
 			require.Equal(tt, am.OrgID(), test.orgID)
 			require.NotNil(tt, am.amClient)
 			require.NotNil(tt, am.httpClient)
@@ -109,7 +107,6 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
@@ -189,7 +186,6 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
@@ -250,7 +246,6 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 
 	am, err := NewAlertmanager(cfg, 1)

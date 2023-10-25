@@ -24,11 +24,10 @@ import (
 )
 
 type Alertmanager struct {
-	defaultConfig string
-	log           log.Logger
-	orgID         int64
-	tenantID      string
-	url           string
+	log      log.Logger
+	orgID    int64
+	tenantID string
+	url      string
 
 	amClient   *amclient.AlertmanagerAPI
 	httpClient *http.Client
@@ -39,7 +38,6 @@ type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
-	DefaultConfig     string
 }
 
 func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
@@ -59,16 +57,9 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	if err != nil {
 		return nil, err
 	}
+
 	u = u.JoinPath(amclient.DefaultBasePath)
-
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
-
-	_, err = notifier.Load([]byte(cfg.DefaultConfig))
-	if err != nil {
-		return nil, err
-	}
-
-	logger := log.New("ngalert.remote.alertmanager")
 
 	// Using our client with custom headers and basic auth credentials.
 	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
@@ -85,14 +76,13 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	}
 
 	return &Alertmanager{
-		amClient:      amclient.New(transport, nil),
-		defaultConfig: cfg.DefaultConfig,
-		httpClient:    &client,
-		log:           logger,
-		sender:        s,
-		orgID:         orgID,
-		tenantID:      cfg.TenantID,
-		url:           cfg.URL,
+		amClient:   amclient.New(transport, nil),
+		httpClient: &client,
+		log:        log.New("ngalert.remote.alertmanager"),
+		sender:     s,
+		orgID:      orgID,
+		tenantID:   cfg.TenantID,
+		url:        cfg.URL,
 	}, nil
 }
 
