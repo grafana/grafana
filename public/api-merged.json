@@ -639,6 +639,30 @@
         }
       }
     },
+    "/admin/ldap-sync-status": {
+      "get": {
+        "description": "You need to have a permission with action `ldap.status:read`.",
+        "tags": [
+          "ldap_debug"
+        ],
+        "summary": "Returns the current state of the LDAP background sync integration.",
+        "operationId": "getSyncStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSyncStatusResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/admin/ldap/reload": {
       "post": {
         "security": [
@@ -15142,53 +15166,6 @@
         }
       }
     },
-    "JSONWebKey": {
-      "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
-      "properties": {
-        "Algorithm": {
-          "description": "Key algorithm, parsed from `alg` header.",
-          "type": "string"
-        },
-        "CertificateThumbprintSHA1": {
-          "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "CertificateThumbprintSHA256": {
-          "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "Certificates": {
-          "description": "X.509 certificate chain, parsed from `x5c` header.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Certificate"
-          }
-        },
-        "CertificatesURL": {
-          "$ref": "#/definitions/URL"
-        },
-        "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
-        },
-        "KeyID": {
-          "description": "Key identifier, parsed from `kid` header.",
-          "type": "string"
-        },
-        "Use": {
-          "description": "Key use, parsed from `use` header.",
-          "type": "string"
-        }
-      }
-    },
     "Json": {
       "type": "object"
     },
@@ -17948,6 +17925,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -18185,6 +18163,10 @@
           "type": "boolean",
           "example": false
         },
+        "isExternal": {
+          "type": "boolean",
+          "example": false
+        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -18233,6 +18215,10 @@
           "example": 2
         },
         "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
