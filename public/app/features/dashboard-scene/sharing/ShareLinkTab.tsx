@@ -74,6 +74,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
+      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {

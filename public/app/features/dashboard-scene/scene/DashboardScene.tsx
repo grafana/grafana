@@ -2,7 +2,7 @@ import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
 import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -166,6 +166,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         uid: this.state.uid,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null },
+        useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
 
