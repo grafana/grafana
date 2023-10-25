@@ -77,21 +77,21 @@ type Query struct {
 	UtcOffsetSec  int64
 }
 
-func Parse(query backend.DataQuery, timeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
+func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &QueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
 
 	// Final interval value
-	interval, err := calculatePrometheusInterval(model.Interval, timeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
+	interval, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, timeInterval)
+	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, dsScrapeInterval)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -154,7 +154,7 @@ func (query *Query) TimeRange() TimeRange {
 }
 
 func calculatePrometheusInterval(
-	queryInterval, timeInterval string,
+	queryInterval, dsScrapeInterval string,
 	intervalMs, intervalFactor int64,
 	query backend.DataQuery,
 	intervalCalculator intervalv2.Calculator,
@@ -168,7 +168,7 @@ func calculatePrometheusInterval(
 		queryInterval = ""
 	}
 
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, queryInterval, intervalMs, 15*time.Second)
+	minInterval, err := intervalv2.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -183,7 +183,7 @@ func calculatePrometheusInterval(
 	// here is where we compare for $__rate_interval or ${__rate_interval}
 	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
 		// Rate interval is final and is not affected by resolution
-		return calculateRateInterval(adjustedInterval, timeInterval), nil
+		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
 	} else {
 		queryIntervalFactor := intervalFactor
 		if queryIntervalFactor == 0 {
@@ -212,7 +212,7 @@ func calculateRateInterval(
 }
 
 func interpolateVariables(expr, queryInterval string, interval time.Duration,
-	timeRange time.Duration, timeInterval string) string {
+	timeRange time.Duration, dsScrapeInterval string) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
@@ -220,7 +220,7 @@ func interpolateVariables(expr, queryInterval string, interval time.Duration,
 	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
 		rateInterval = interval
 	} else {
-		rateInterval = calculateRateInterval(interval, timeInterval)
+		rateInterval = calculateRateInterval(interval, dsScrapeInterval)
 	}
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
