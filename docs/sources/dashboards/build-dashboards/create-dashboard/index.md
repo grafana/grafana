@@ -43,7 +43,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
    The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
+   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources][] for specific guidelines.
 
@@ -71,11 +71,18 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds][]
    - [Configure standard options][]
 
-1. When you've finished editing your panel, click **Save** to save the dashboard.
+1. When you've finished editing your panel, click **Save** to save the dashboard. If you have Grafana's LLM plugin installed and the `dashgpt` feature toggle enabled, Grafana can generate a
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
+1. Enter a summary of your dashboard changes.
+
+   Alternatively, Grafana can generate a summary for you using the OpenAI integration. For more information, refer to the [Set up generative AI features for dashboards][] and the [Grafana LLM plugin][] documentation. <!--to do, figure out which place to link to-->
+
 1. Enter a name for your dashboard and select a folder, if applicable.
+
+   Alternatively, Grafana can generate a summary for you using the OpenAI integration. For more information, refer to the [Set up generative AI features for dashboards][] and the [Grafana LLM plugin][] documentation. <!--to do, figure out which place to link to-->
+
 1. Click **Save**.
 1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
 

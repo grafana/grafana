@@ -53,6 +53,8 @@ After you add a panel to a dashboard, you can open it at any time to change or u
 
 ## Add a title and description to a panel
 
+You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
+
 Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
 
 1. [Edit a panel](#edit-a-panel).

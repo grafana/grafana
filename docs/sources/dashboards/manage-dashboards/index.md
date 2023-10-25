@@ -136,6 +136,19 @@ A template variable of the type `Constant` will automatically be hidden in the d
 
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 
+### Set up generative AI features for dashboards
+
+{{< docs/public-preview product="dashgpt" featureFlag="dashgpt" >}}
+
+You can use generative AI to help you with the following tasks:
+
+- **Generate panel and dashboard titles and descriptions**: Generate a title and description for your panel or dashboard based on the data you’ve added to it. This is useful when you want to quickly visualize your data and don’t want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
+
+To enable these features, you must first enable the `dashgpt` feature toggle. Then install and configure Grafana’s LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation][].
+
+When enabled, the **✨ Auto generate** option is displayed next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
+
 ### Discover dashboards on Grafana.com
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
