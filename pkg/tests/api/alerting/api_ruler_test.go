@@ -154,16 +154,19 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			for _, rule := range allRules["/folder1"][0].Rules {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
+				//nolint: staticcheck
 				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
 			}
 
 			for _, rule := range allRules["/folder2"][0].Rules {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
+				// nolint: staticcheck
 				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
 			}
 
 			for _, rule := range allRules["folder1/subfolder"][0].Rules {
 				assert.Equal(t, "subfolder", rule.GrafanaManagedAlert.NamespaceUID)
+				// nolint: staticcheck
 				assert.Equal(t, int64(3), rule.GrafanaManagedAlert.NamespaceID)
 			}
 		})
