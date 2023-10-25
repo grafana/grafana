@@ -138,7 +138,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
   categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
+  help: getTransformationContent(DataTransformerID.filterByValue).getHelperDocs(),
 };
 
 const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {
