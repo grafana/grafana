@@ -33,7 +33,9 @@ Learn how to create correlations using the [Administration page]({{< relref "./c
 
 ## Source data source and result field
 
-Links are shown in Explore visualizations for the results from the correlation’s source data source. A link is assigned to one of the fields from the result provided in the correlation configuration (the results field). Each visualization displays fields with links in a different way ([Correlations in Logs Panel]({{< relref "./use-correlations-in-visualizations#correlations-in-logs-panel">}}) and see [Correlations in Table]({{< relref "./use-correlations-in-visualizations#correlations-in-table">}}))
+Links are shown in Explore visualizations for the results from the correlation’s source data source.
+A link is assigned to one of the fields from the result provided in the correlation configuration (the results field).
+Each visualization displays fields with links in a different way ([Correlations in Logs Panel]({{< relref "./use-correlations-in-visualizations#correlations-in-logs-panel">}}) and see [Correlations in Table]({{< relref "./use-correlations-in-visualizations#correlations-in-table">}})).
 
 ## Target query
 
@@ -41,9 +43,11 @@ The target query is run when a link is clicked in the visualization. You can use
 
 ### Correlation Variables
 
-You can use variables inside the target query to access the source data related to the query. Correlations use [Grafana variable syntax]({{< relref "/docs/grafana/latest/dashboards/variables/variable-syntax" >}}). Variables are filled with values from the source results when the link is clicked. There are two types of variables you can use:
+You can use variables inside the target query to access the source data related to the query.
+Correlations use [Grafana variable syntax]({{< relref "../../../dashboards/variables/variable-syntax" >}}).
+Variables are filled with values from the source results when the link is clicked. There are two types of variables you can use:
 
-- [field variables]({{< relref "/docs/grafana/latest/panels-visualizations/configure-data-links#field-variables" >}}) (allows to access field values and labels)
+- [field variables]({{< relref "../../../panels-visualizations/configure-data-links#field-variables" >}}) (allows to access field values and labels)
 - correlation variables (allows to access field values and transformations)
 
 Example: If source results contain a field called “employee”, the value of the field can be accessed with:

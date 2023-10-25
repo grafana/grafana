@@ -130,7 +130,7 @@ describe('InfluxDataSource Backend Mode', () => {
         ...queryOptions,
         targets: [...queryOptions.targets, { ...influxQuery, adhocFilters }],
       };
-      await ctx.ds.query(req);
+      ctx.ds.query(req);
     });
 
     it('should add adhocFilters to the tags in the query', () => {
@@ -244,6 +244,7 @@ describe('InfluxDataSource Backend Mode', () => {
 
     it('should render chained regex variables with floating point number', () => {
       ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
+        ...queryOptions,
         scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
       });
       const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
@@ -253,6 +254,7 @@ describe('InfluxDataSource Backend Mode', () => {
 
     it('should render chained regex variables with URL', () => {
       ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
+        ...queryOptions,
         scopedVars: {
           var1: {
             text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
@@ -269,6 +271,7 @@ describe('InfluxDataSource Backend Mode', () => {
       ds.metricFindQuery(
         'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
         {
+          ...queryOptions,
           scopedVars: {
             var1: {
               text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',

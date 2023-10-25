@@ -57,13 +57,16 @@ func (m *ContextualLoggerMiddleware) CollectMetrics(ctx context.Context, req *ba
 }
 
 func (m *ContextualLoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	ctx = instrumentContext(ctx, endpointSubscribeStream, req.PluginContext)
 	return m.next.SubscribeStream(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	ctx = instrumentContext(ctx, endpointPublishStream, req.PluginContext)
 	return m.next.PublishStream(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
 	return m.next.RunStream(ctx, req, sender)
 }
