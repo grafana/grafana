@@ -147,5 +147,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
+  help: getTransformationContent(DataTransformerID.partitionByValues).getHelperDocs(),
 };
