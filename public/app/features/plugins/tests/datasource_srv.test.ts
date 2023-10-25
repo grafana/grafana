@@ -278,7 +278,7 @@ describe('datasource_srv', () => {
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(7);
+        expect(externalSources.length).toBe(8);
       });
     });
 
@@ -354,6 +354,18 @@ describe('datasource_srv', () => {
             "name": "mmm",
             "type": "test-db",
             "uid": "uid-code-mmm",
+          },
+          {
+            "meta": {
+              "aliasIDs": [
+                "testdata",
+              ],
+              "id": "grafana-testdata-datasource",
+              "metrics": true,
+            },
+            "name": "TestData",
+            "type": "grafana-testdata-datasource",
+            "uid": "TestData",
           },
           {
             "meta": {
