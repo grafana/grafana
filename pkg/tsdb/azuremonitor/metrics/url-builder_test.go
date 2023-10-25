@@ -15,7 +15,6 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.BuildMetricsURL()
-			fmt.Println(url)
 			assert.Equal(t, "/subscriptions/sub/resource/uri/providers/microsoft.insights/metrics", url)
 		})
 
@@ -93,18 +92,6 @@ func TestURLBuilder(t *testing.T) {
 				url := ub.BuildMetricsURL()
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics", url)
 			})
-
-			t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
-				ub := &urlBuilder{
-					DefaultSubscription: strPtr("default-sub"),
-					ResourceGroup:       strPtr("rg"),
-					MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/blobServices"),
-					ResourceName:        strPtr("rn1"),
-				}
-
-				url := *ub.buildResourceURI()
-				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
-			})
 		})
 	})
 }
@@ -122,6 +109,18 @@ func TestBuildResourceURI(t *testing.T) {
 			url := *ub.buildResourceURI()
 			fmt.Println("url:", url)
 			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Web/serverFarms/rn1", url)
+		})
+
+		t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				ResourceGroup:       strPtr("rg"),
+				MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/blobServices"),
+				ResourceName:        strPtr("rn1"),
+			}
+
+			url := *ub.buildResourceURI()
+			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
 		})
 	})
 }
