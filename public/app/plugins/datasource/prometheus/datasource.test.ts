@@ -16,8 +16,8 @@ import {
   toDataFrame,
   VariableHide,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
 
 import {
