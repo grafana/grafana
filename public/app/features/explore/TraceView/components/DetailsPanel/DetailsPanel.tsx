@@ -30,7 +30,6 @@ type Props = {
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  setDetailsPanelOffset: (offset: number) => void;
   defaultDetailsPanelHeight: number;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
@@ -56,7 +55,6 @@ export function DetailsPanel(props: Props) {
     detailLogItemToggle,
     detailReferenceItemToggle,
     createFocusSpanLink,
-    setDetailsPanelOffset,
     defaultDetailsPanelHeight,
     createSpanLink,
     datasourceType,
@@ -135,23 +133,13 @@ export function DetailsPanel(props: Props) {
 
   const linksGetter = () => [];
 
-  const onDrawerResize = () => {
-    const container = document.querySelector(`.${styles.container}`)?.firstChild;
-    if (container instanceof HTMLElement) {
-      const height = container.style.height;
-      const heightVal =
-        height && typeof parseInt(height.split('px')[0], 10) === 'number' ? parseInt(height.split('px')[0], 10) : 0;
-      setDetailsPanelOffset(heightVal);
-    }
-  };
-
   return (
     <div className={styles.container}>
       {/* The first child here needs to be the ExploreDrawer to we can get it's height via onDrawerResize. This is so we can set a paddingBottom in the TraceView according to this components height */}
       <ExploreDrawer
         width={width}
-        onResize={onDrawerResize}
         defaultHeight={defaultDetailsPanelHeight}
+        minHeight={topOfViewRefType === TopOfViewRefType.Explore ? 200 : 150}
         className={styles.drawer}
       >
         <div className={cx(styles.header, styles.flexSpaceBetween)}>
@@ -262,10 +250,11 @@ export function DetailsPanel(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    position: 'fixed',
-    overflow: 'auto',
+    label: 'DetailsPanel',
+    overflow: 'scroll',
+    position: 'sticky',
     bottom: 0,
-    zIndex: 9,
+    zIndex: `${theme.zIndex.activePanel}`,
   }),
   drawer: css`
     margin: 0;

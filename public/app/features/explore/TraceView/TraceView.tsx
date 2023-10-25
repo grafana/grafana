@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useEffect, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -106,20 +106,9 @@ export function TraceView(props: Props) {
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
   const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
-  const [detailsPanelOffset, setDetailsPanelOffset] = useState(0);
 
   const styles = useStyles2(getStyles);
   const defaultDetailsPanelHeight = theme.components.horizontalDrawer.defaultHeight - (exploreId ? 80 : 165);
-
-  useEffect(() => {
-    if (selectedSpan) {
-      if (detailsPanelOffset === 0) {
-        setDetailsPanelOffset(defaultDetailsPanelHeight);
-      }
-    } else {
-      setDetailsPanelOffset(0);
-    }
-  }, [selectedSpan, theme.components.horizontalDrawer.defaultHeight, detailsPanelOffset, defaultDetailsPanelHeight]);
 
   /**
    * Keeps state of resizable name column width
@@ -203,48 +192,46 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
           />
-          <div style={{ paddingBottom: config.featureToggles.traceViewDrawer ? detailsPanelOffset : 0 }}>
-            <TraceTimelineViewer
-              findMatchesIDs={spanFilterMatches}
-              trace={traceProp}
-              datasourceType={datasourceType}
-              spanBarOptions={spanBarOptions?.spanBar}
-              traceTimeline={traceTimeline}
-              updateNextViewRangeTime={updateNextViewRangeTime}
-              updateViewRangeTime={updateViewRangeTime}
-              viewRange={viewRange}
-              timeZone={timeZone}
-              setSpanNameColumnWidth={setSpanNameColumnWidth}
-              collapseAll={collapseAll}
-              collapseOne={collapseOne}
-              expandAll={expandAll}
-              expandOne={expandOne}
-              childrenToggle={childrenToggle}
-              detailLogItemToggle={detailLogItemToggle}
-              detailLogsToggle={detailLogsToggle}
-              detailWarningsToggle={detailWarningsToggle}
-              detailStackTracesToggle={detailStackTracesToggle}
-              detailReferencesToggle={detailReferencesToggle}
-              detailReferenceItemToggle={detailReferenceItemToggle}
-              detailProcessToggle={detailProcessToggle}
-              detailTagsToggle={detailTagsToggle}
-              detailToggle={toggleDetail}
-              addHoverIndentGuideId={addHoverIndentGuideId}
-              removeHoverIndentGuideId={removeHoverIndentGuideId}
-              linksGetter={() => []}
-              createSpanLink={createSpanLink}
-              scrollElement={scrollElement}
-              focusedSpanId={focusedSpanId}
-              focusedSpanIdForSearch={focusedSpanIdForSearch}
-              showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-              createFocusSpanLink={createFocusSpanLink}
-              topOfViewRef={topOfViewRef}
-              topOfViewRefType={topOfViewRefType}
-              headerHeight={headerHeight}
-              setSelectedSpan={setSelectedSpan}
-              selectedSpanId={selectedSpan?.spanID}
-            />
-          </div>
+          <TraceTimelineViewer
+            findMatchesIDs={spanFilterMatches}
+            trace={traceProp}
+            datasourceType={datasourceType}
+            spanBarOptions={spanBarOptions?.spanBar}
+            traceTimeline={traceTimeline}
+            updateNextViewRangeTime={updateNextViewRangeTime}
+            updateViewRangeTime={updateViewRangeTime}
+            viewRange={viewRange}
+            timeZone={timeZone}
+            setSpanNameColumnWidth={setSpanNameColumnWidth}
+            collapseAll={collapseAll}
+            collapseOne={collapseOne}
+            expandAll={expandAll}
+            expandOne={expandOne}
+            childrenToggle={childrenToggle}
+            detailLogItemToggle={detailLogItemToggle}
+            detailLogsToggle={detailLogsToggle}
+            detailWarningsToggle={detailWarningsToggle}
+            detailStackTracesToggle={detailStackTracesToggle}
+            detailReferencesToggle={detailReferencesToggle}
+            detailReferenceItemToggle={detailReferenceItemToggle}
+            detailProcessToggle={detailProcessToggle}
+            detailTagsToggle={detailTagsToggle}
+            detailToggle={toggleDetail}
+            addHoverIndentGuideId={addHoverIndentGuideId}
+            removeHoverIndentGuideId={removeHoverIndentGuideId}
+            linksGetter={() => []}
+            createSpanLink={createSpanLink}
+            scrollElement={scrollElement}
+            focusedSpanId={focusedSpanId}
+            focusedSpanIdForSearch={focusedSpanIdForSearch}
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+            createFocusSpanLink={createFocusSpanLink}
+            topOfViewRef={topOfViewRef}
+            topOfViewRefType={topOfViewRefType}
+            headerHeight={headerHeight}
+            setSelectedSpan={setSelectedSpan}
+            selectedSpanId={selectedSpan?.spanID}
+          />
           {config.featureToggles.traceViewDrawer && (
             <DetailsPanel
               span={selectedSpan}
@@ -259,7 +246,6 @@ export function TraceView(props: Props) {
               detailLogItemToggle={detailLogItemToggle}
               detailReferenceItemToggle={detailReferenceItemToggle}
               createFocusSpanLink={createFocusSpanLink}
-              setDetailsPanelOffset={setDetailsPanelOffset}
               defaultDetailsPanelHeight={defaultDetailsPanelHeight}
               createSpanLink={createSpanLink}
               datasourceType={datasourceType}

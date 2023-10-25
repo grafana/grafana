@@ -56,11 +56,12 @@ export interface Props {
   children: React.ReactNode;
   onResize?: ResizeCallback;
   defaultHeight?: number;
+  minHeight?: number;
   className?: string;
 }
 
 export function ExploreDrawer(props: Props) {
-  const { width, children, onResize, defaultHeight, className } = props;
+  const { width, children, onResize, defaultHeight, minHeight, className } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const drawerWidth = `${width + (className ? 0 : 31.5)}px`;
@@ -85,6 +86,7 @@ export function ExploreDrawer(props: Props) {
       }}
       maxHeight="100vh"
       maxWidth={drawerWidth}
+      minHeight={minHeight}
       minWidth={drawerWidth}
       onResize={onResize}
     >

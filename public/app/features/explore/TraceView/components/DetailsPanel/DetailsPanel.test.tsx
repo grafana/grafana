@@ -93,7 +93,6 @@ const setup = () => {
         origin: {},
       } as LinkModel;
     },
-    setDetailsPanelOffset: jest.fn(),
     defaultDetailsPanelHeight: 200,
     createSpanLink: () => {
       return [
