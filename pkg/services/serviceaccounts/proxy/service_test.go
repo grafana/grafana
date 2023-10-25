@@ -8,52 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
-type FakeServiceAccountsService struct {
-	ExpectedServiceAccountProfileDTO       *serviceaccounts.ServiceAccountProfileDTO
-	ExpectedSearchOrgServiceAccountsResult *serviceaccounts.SearchOrgServiceAccountsResult
-}
-
-var _ serviceaccounts.Service = (*FakeServiceAccountsService)(nil)
-
-func newServiceAccountServiceFake() *FakeServiceAccountsService {
-	return &FakeServiceAccountsService{}
-}
-
-func (f *FakeServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	return nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return f.ExpectedServiceAccountProfileDTO, nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return 0, nil
-}
-
-func (f *FakeServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
-	cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
-	return f.ExpectedSearchOrgServiceAccountsResult, nil
-}
+var _ serviceaccounts.Service = (*tests.FakeServiceAccountService)(nil)
 
 func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	testOrgId := int64(1)
@@ -267,7 +227,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 }
 
 func TestProvideServiceAccount_SearchServiceAccount(t *testing.T) {
-	serviceMock := newServiceAccountServiceFake()
+	serviceMock := &tests.FakeServiceAccountService{}
 	svc := ServiceAccountsProxy{
 		log.New("test"),
 		serviceMock,
