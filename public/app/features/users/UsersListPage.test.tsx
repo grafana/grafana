@@ -25,6 +25,7 @@ const setup = (propOverrides?: object) => {
   const store = configureStore();
   const props: Props = {
     users: [] as OrgUser[],
+    usersRoles: [],
     invitees: [] as Invitee[],
     searchQuery: '',
     page: 1,

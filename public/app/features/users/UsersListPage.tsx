@@ -19,6 +19,7 @@ function mapStateToProps(state: StoreState) {
   const searchQuery = getUsersSearchQuery(state.users);
   return {
     users: getUsers(state.users),
+    usersRoles: state.users.usersRoles,
     searchQuery: getUsersSearchQuery(state.users),
     page: state.users.page,
     totalPages: state.users.totalPages,
@@ -48,6 +49,7 @@ export interface State {
 
 export const UsersListPageUnconnected = ({
   users,
+  usersRoles,
   page,
   totalPages,
   invitees,
@@ -64,7 +66,8 @@ export const UsersListPageUnconnected = ({
   const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
 
   useEffect(() => {
-    loadUsers();
+    const withRoles = contextSrv.licensedAccessControlEnabled();
+    loadUsers(withRoles);
     fetchInvitees();
   }, [fetchInvitees, loadUsers]);
 
@@ -85,6 +88,7 @@ export const UsersListPageUnconnected = ({
       return (
         <OrgUsersTable
           users={users}
+          usersRoles={usersRoles}
           orgId={contextSrv.user.orgId}
           onRoleChange={onRoleChange}
           onRemoveUser={onRemoveUser}

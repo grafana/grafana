@@ -1,6 +1,8 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { Role } from 'app/types';
 
 import { OrgRole } from '.';
+
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
@@ -71,6 +73,7 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
+  usersRoles?: Record<number, Role[]>;
   searchQuery: string;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;

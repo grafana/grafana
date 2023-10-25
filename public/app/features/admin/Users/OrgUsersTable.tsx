@@ -49,6 +49,7 @@ const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
 
 export interface Props {
   users: OrgUser[];
+  usersRoles?: Record<number, Role[]>;
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
@@ -60,6 +61,7 @@ export interface Props {
 
 export const OrgUsersTable = ({
   users,
+  usersRoles,
   orgId,
   onRoleChange,
   onRemoveUser,
@@ -87,6 +89,7 @@ export const OrgUsersTable = ({
     }
   }, [orgId]);
 
+  console.log(usersRoles);
   const columns: Array<Column<OrgUser>> = useMemo(
     () => [
       {
@@ -126,6 +129,8 @@ export const OrgUsersTable = ({
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
+              roles={usersRoles ? usersRoles[original.userId] || [] : []}
+              isLoading={!usersRoles}
               orgId={orgId}
               roleOptions={roleOptions}
               basicRole={value}
@@ -210,7 +215,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange]
+    [orgId, roleOptions, usersRoles, onRoleChange]
   );
 
   return (
