@@ -60,7 +60,7 @@ type CloudWatchMetricsAPIProvider interface {
 }
 
 type CloudWatchLogsAPIProvider interface {
-	DescribeLogGroups(*cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+	DescribeLogGroupsWithContext(ctx context.Context, in *cloudwatchlogs.DescribeLogGroupsInput, opts ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
 	GetLogGroupFieldsWithContext(ctx context.Context, in *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error)
 }
 

@@ -15,7 +15,7 @@ type LogsAPI struct {
 	mock.Mock
 }
 
-func (l *LogsAPI) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (l *LogsAPI) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	args := l.Called(input)
 
 	return args.Get(0).(*cloudwatchlogs.DescribeLogGroupsOutput), args.Error(1)
