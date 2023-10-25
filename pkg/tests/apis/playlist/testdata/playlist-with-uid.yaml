@@ -1,4 +1,4 @@
-apiVersion: playlist.x.grafana.com/v0alpha1
+apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
 metadata:
   name: abcdefgh

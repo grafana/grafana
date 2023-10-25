@@ -3,10 +3,11 @@ package playlist
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestPlaylistCRUD(t *testing.T) {
@@ -17,7 +18,7 @@ func TestPlaylistCRUD(t *testing.T) {
 
 	t.Run("Check API Setup", func(t *testing.T) {
 		gvr := schema.GroupVersionResource{
-			Group:    "playlist.x.grafana.com",
+			Group:    "playlist.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "playlists",
 		}
@@ -47,7 +48,7 @@ func TestPlaylistCRUD(t *testing.T) {
 
 	t.Run("Do simple CRUD via k8s", func(t *testing.T) {
 		v := ctx.LoadAnyResource("testdata/playlist-generate.yaml")
-		require.Equal(t, "playlist.x.grafana.com/v0alpha1", v.APIVersion)
+		require.Equal(t, "playlist.grafana.app/v0alpha1", v.APIVersion)
 
 		// Create with auto generated name
 		rsp := ctx.PostResource(ctx.Org1.Editor, "playlists", v)
