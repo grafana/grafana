@@ -14,6 +14,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -29,7 +30,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
 	service    playlist.Service
-	namespacer namespaceMapper
+	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
 }
 
@@ -39,7 +40,7 @@ func RegisterAPIService(p playlist.Service,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
-		namespacer: getNamespaceMapper(cfg),
+		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
 	apiregistration.RegisterAPI(builder)
