@@ -81,6 +81,7 @@ describe('LogsTableWrap', () => {
   });
 
   it('search input should search matching columns', async () => {
+    config.featureToggles.lokiLogsDataplane = false;
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({
       panelState: {},

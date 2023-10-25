@@ -92,6 +92,19 @@ export const getMockLokiFrameDataPlane = (override?: Partial<DataFrame>): DataFr
         type: FieldType.string,
         values: ['1697561006608165746_b4cc4b72', '1697560998869868000_eeb96c0f', '1697561010006578474_ad5e2e5a'],
       },
+      {
+        config: {
+          links: [
+            {
+              url: 'http://example.com',
+              title: 'foo',
+            },
+          ],
+        },
+        name: 'traceID',
+        type: FieldType.string,
+        values: ['trace1', 'trace2', 'trace3'],
+      },
     ],
     length: 3,
   };
