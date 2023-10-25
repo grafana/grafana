@@ -314,6 +314,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
+            // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
+            // @ts-ignore
+            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+
+            dataMax *= bucketFactor;
+
             let scaleMin: number | null, scaleMax: number | null;
 
             [scaleMin, scaleMax] = shouldUseLogScale
@@ -901,7 +907,7 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           ySize = Math.max(1, ySize - cellGap);
 
           let x = xMaxPx;
-          let y = yMinPx;
+          let y = yMaxPx;
 
           let fillPath = fillPaths[fills[i]];
 

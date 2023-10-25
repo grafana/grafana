@@ -50,6 +50,11 @@ export function getBucketSize(frame: DataFrame) {
   return frame.fields[1].values[0] - frame.fields[0].values[0];
 }
 
+export function getBucketSize1(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[1].values[1] - frame.fields[0].values[1];
+}
+
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   // todo: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
 
@@ -61,6 +66,11 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
+  let bucketSize1 = getBucketSize1(frame);
+
+  let bucketFactor = bucketSize1 / bucketSize;
+
+  let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -84,10 +94,13 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   builder.addScale({
     scaleKey: 'x', // bukkits
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: useLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
+    log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, wantedMin, wantedMax) => {
+    range: useLogScale ? (u, wantedMin, wantedMax) => {
+      return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+    } : (u, wantedMin, wantedMax) => {
       // these settings will prevent zooming, probably okay?
       if (xScaleMin != null) {
         wantedMin = xScaleMin;
@@ -132,8 +145,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
-    incrs: histogramBucketSizes,
-    splits: xSplits,
+    incrs: useLogScale ? undefined : histogramBucketSizes,
+    splits: useLogScale ? undefined : xSplits,
     values: (u: uPlot, splits: any[]) => {
       const tickLabels = splits.map(xAxisFormatter);
 
