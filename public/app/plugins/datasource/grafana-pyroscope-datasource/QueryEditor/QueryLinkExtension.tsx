@@ -9,12 +9,12 @@ import { PyroscopeDataSource } from '../datasource';
 import { PyroscopeDataSourceOptions, Query } from '../types';
 
 const EXTENSION_POINT_ID = 'plugins/grafana-pyroscope-datasource/query-links';
-const DESCRIPTION_INDICATING_CONFIGURATION_NOT_READY = 'configuration-not-ready-yet';
 
 /** A subset of the datasource settings that are relevant for this integration */
 type PyroscopeDatasourceSettings = {
   uid: string;
   url: string;
+  type: string;
   basicAuthUser: string;
 };
 
@@ -48,7 +48,6 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
   } = props;
 
   const [datasourceSettings, setDatasourceSettings] = useState<PyroscopeDatasourceSettings>();
-  const [waitingOnExtensionConfigure, setWaitingOnExtensionConfigure] = useState(false);
 
   const context: ExtensionQueryLinksContext = {
     datasourceUid,
@@ -61,21 +60,6 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
     extensionPointId: EXTENSION_POINT_ID,
     context,
   });
-
-  if (!waitingOnExtensionConfigure) {
-    const delayedExtension = extensions.find(
-      (extension) => extension.description === DESCRIPTION_INDICATING_CONFIGURATION_NOT_READY
-    );
-
-    if (delayedExtension) {
-      // Declare that we are waiting on the extension configuration
-      setWaitingOnExtensionConfigure(true);
-
-      // Wait a second, and then declare that we are no longer waiting.
-      // This trigger another `configure` call to each extension.
-      setTimeout(() => setWaitingOnExtensionConfigure(false), 1000);
-    }
-  }
 
   const styles = useStyles2(getStyles);
 
@@ -95,13 +79,9 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
     return null;
   }
 
-  const configuredExtensions = extensions.filter(
-    (extension) => extension.description !== DESCRIPTION_INDICATING_CONFIGURATION_NOT_READY
-  );
-
   return (
     <>
-      {configuredExtensions.map((extension) => (
+      {extensions.map((extension) => (
         <LinkButton
           className={styles.linkButton}
           key={`${extension.id}`}

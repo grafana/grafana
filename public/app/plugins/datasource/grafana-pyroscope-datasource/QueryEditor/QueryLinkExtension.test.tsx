@@ -12,7 +12,6 @@ import { Props, PyroscopeQueryLinkExtensions, resetPyroscopeQueryLinkExtensionsF
 
 // Constants copied from `QueryLinkExtension.tsx`
 const EXTENSION_POINT_ID = 'plugins/grafana-pyroscope-datasource/query-links';
-const DESCRIPTION_INDICATING_CONFIGURATION_NOT_READY = 'configuration-not-ready-yet';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -68,22 +67,6 @@ describe('PyroscopeQueryLinkExtensions', () => {
   it('Should not render if no extension present', async () => {
     await act(setup);
     expect(screen.queryByText(EXPECTED_BUTTON_LABEL)).toBeNull();
-  });
-
-  it('Should not immediately render if extension description signals `configuration-not-ready-yet`', async () => {
-    getPluginLinkExtensionsMock.mockReturnValue({
-      extensions: [createExtension({ description: DESCRIPTION_INDICATING_CONFIGURATION_NOT_READY })],
-    }); // Extension config busy
-    await act(setup);
-    expect(screen.queryByText(EXPECTED_BUTTON_LABEL)).toBeNull();
-
-    // But if in the near future, the extension becomes available, it should then be rendered.
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [createExtension()] }); // No longer busy
-
-    await act(() => {
-      return new Promise((accept) => setTimeout(accept, 1000));
-    });
-    expect(await screen.findAllByText(EXPECTED_BUTTON_LABEL)).toBeDefined();
   });
 });
 
