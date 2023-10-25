@@ -21,13 +21,13 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
+import { formatRuleName } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
-import { formatRuleName } from '../expressions/util';
 
 type ViewMode = 'grouped' | 'list';
 
