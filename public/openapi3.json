@@ -12490,6 +12490,30 @@
         ]
       }
     },
+    "/admin/ldap-sync-status": {
+      "get": {
+        "description": "You need to have a permission with action `ldap.status:read`.",
+        "operationId": "getSyncStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getSyncStatusResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Returns the current state of the LDAP background sync integration.",
+        "tags": [
+          "ldap_debug"
+        ]
+      }
+    },
     "/admin/ldap/reload": {
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
