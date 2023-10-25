@@ -62,5 +62,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
+  help: getTransformationContent(timeSeriesTableTransformer.id).getHelperDocs(),
 };
