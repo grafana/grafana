@@ -182,7 +182,9 @@ function extractFieldsAndExclude(dataFrame: DataFrame) {
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       return (
         (field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels') ||
-        (field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines)
+        (field.type === FieldType.other &&
+          dataFrame?.meta?.type === DataFrameType.LogLines &&
+          field.name === 'attributes')
       );
     })
     .flatMap((field: Field) => {
