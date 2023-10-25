@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service) *OAuthTokenSync {
@@ -57,7 +56,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	token, exists, _ := s.service.HasOAuthEntry(ctx, &user.SignedInUser{UserID: id})
+	token, exists, _ := s.service.HasOAuthEntry(ctx, identity)
 	// user is not authenticated through oauth so skip further checks
 	if !exists {
 		return nil
@@ -104,9 +103,8 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	lockKey := fmt.Sprintf("oauth-token-sync-%s", identity.ID)
-	_, err, _ = s.sf.Do(lockKey, func() (interface{}, error) {
-		s.log.Debug("Singleflight request for OAuth token sync", "key", lockKey)
+	_, err, _ = s.sf.Do(identity.ID, func() (interface{}, error) {
+		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID)
 
 		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
 		updateCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
