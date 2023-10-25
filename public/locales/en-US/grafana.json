@@ -406,7 +406,7 @@
       "delete-confirm-text": "Are you sure you want to permanently delete your query history?",
       "delete-title": "Delete",
       "history-time-span": "History time span",
-      "history-time-span-description": "",
+      "history-time-span-description": "Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.",
       "only-show-active-datasource": "Only show queries for data source currently active in Explore",
       "query-history-deleted": "Query history deleted",
       "retention-period": {

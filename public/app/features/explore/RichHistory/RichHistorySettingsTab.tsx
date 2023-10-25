@@ -94,7 +94,8 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           label={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}
           description={t(
             'explore.rich-history-settings-tab.history-time-span-description',
-            `Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`
+            'Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.',
+            { MAX_HISTORY_ITEMS }
           )}
         >
           <div className={styles.input}>
