@@ -28,6 +28,7 @@ import {
   getNameFromOptions,
   IndexOptions,
   ReduceOptions,
+  WindowOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import {
@@ -41,6 +42,7 @@ import {
   Select,
   StatsPicker,
 } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -54,7 +56,8 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
-  { value: CalculateFieldMode.StatisticalFunctions, label: 'Statistical' },
+  { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
+  { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' },
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
 
@@ -204,7 +207,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   };
 
   //---------------------------------------------------------
-  // Reduce by Row
+  // Cumulative functions
   //---------------------------------------------------------
 
   updateReduceOptions = (v: ReduceOptions) => {
@@ -250,7 +253,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
-  renderStatisticalFunctions(options?: ReduceOptions) {
+  renderCumulativeFunctions(options?: ReduceOptions) {
     const { names, selected } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
 
@@ -287,6 +290,109 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       </>
     );
   }
+
+  //---------------------------------------------------------
+  // Window functions
+  //---------------------------------------------------------
+
+  updateWindowOptions = (v: WindowOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.WindowFunctions,
+      window: v,
+    });
+  };
+
+  onWindowFieldToggle = (fieldName: string) => {
+    const { selected } = this.state;
+    if (selected.indexOf(fieldName) > -1) {
+      this.setState({ selected: selected.filter((s) => s !== fieldName) });
+      const { window } = this.props.options;
+      this.updateWindowOptions({
+        ...window!,
+        include: selected.filter((s) => s !== fieldName),
+      });
+    } else {
+      this.setState({ selected: [...selected, fieldName] });
+      const { window } = this.props.options;
+      this.updateWindowOptions({
+        ...window!,
+        include: [...selected, fieldName],
+      });
+    }
+  };
+
+  onWindowSizeChange = (v?: number) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      numberOfRows: v,
+    });
+  };
+
+  onWindowStatsChange = (stats: string[]) => {
+    // TODO: try to fix this type assertion
+    // eslint-disable-next-line
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { window } = this.props.options;
+    this.updateWindowOptions({ ...window, reducer });
+  };
+
+  renderWindowFunctions(options?: WindowOptions) {
+    const { names, selected } = this.state;
+    options = defaults(options, { reducer: ReducerID.sum });
+
+    return (
+      <>
+        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
+          <HorizontalGroup spacing="xs" align="flex-start" wrap>
+            {names.map((o, i) => {
+              return (
+                <FilterPill
+                  key={`${o}/${i}`}
+                  onClick={() => {
+                    this.onWindowFieldToggle(o);
+                  }}
+                  label={o}
+                  selected={selected.indexOf(o) > -1}
+                />
+              );
+            })}
+          </HorizontalGroup>
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onWindowStatsChange}
+            defaultStat={ReducerID.sum}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
+            }
+          />
+        </InlineField>
+        <InlineField label="Window size" labelWidth={labelWidth}>
+          <NumberInput onChange={this.onWindowSizeChange}></NumberInput>
+        </InlineField>
+      </>
+    );
+  }
+
+  //---------------------------------------------------------
+  // Reduce by Row
+  //---------------------------------------------------------
+
+  onReducerStatsChange = (stats: string[]) => {
+    // TODO: try to fix this type assertion
+    // eslint-disable-next-line
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { reduce } = this.props.options;
+    this.updateReduceOptions({ ...reduce, reducer });
+  };
 
   renderReduceRow(options?: ReduceOptions) {
     const { names, selected } = this.state;
@@ -506,7 +612,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
-        {mode === CalculateFieldMode.StatisticalFunctions && this.renderStatisticalFunctions(options.reduce)}
+        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.reduce)}
+        {mode === CalculateFieldMode.WindowFunctions && this.renderWindowFunctions(options.window)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
           <Input
