@@ -37,6 +37,28 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
+Panel actions menu
+
+When you hover over the top-right corner of any panel, the actions menu appears. Click the menu icon to access the following actions:
+
+- View: View the panel in full screen.
+- Edit: Edit panel and visualization options.
+- Share: Share the panel as a link, embed, or library panel.
+- Explore: Open the panel in **Explore**, where you can focus on your query.
+- Inspect: Open the **Inspect** drawer, where you can review the panel data, stats, meta data, JSON, and query.  
+  - Data: Open the **Inspect** drawer in the **Data** tab.
+  - Query: Open the **Inspect** drawer in the **Query** tab.
+  - Panel JSON: Open the **Inspect** drawer in the **JSON** tab.
+- Extensions: Access installed extensions that let you quickly... such as, declaring an incident.
+- More: Access other panel actions.
+  - Duplicate: Make a copy of the panel (duplicated panels query data separately from the original panel).
+  - Copy: Copy the panel to the clipboard.
+  - Create library panel: Create a source panel that can be used in other dashboards.
+  - Create alert: Create an alert directly from the panel. [add link]
+  - Hide legend: Hide the panel legend.
+  - Get help: Send a snapshot or panel data to Grafana Labs Technical Support.
+- Remove: Remove the panel from the dashboard.
+
 ## Panel editor
 
 This section describes the areas of the Grafana panel editor.
