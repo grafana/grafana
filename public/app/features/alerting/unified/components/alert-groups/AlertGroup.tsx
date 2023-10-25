@@ -8,6 +8,8 @@ import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanag
 
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
+import { MetaText } from '../MetaText';
+import { Strong } from '../Strong';
 
 import { AlertGroupAlertsTable } from './AlertGroupAlertsTable';
 import { AlertGroupHeader } from './AlertGroupHeader';
@@ -33,9 +35,13 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
             data-testid="alert-group-collapse-toggle"
           />
           {Object.keys(group.labels).length ? (
-            <Stack direction="row">
+            <Stack direction="row" alignItems="center">
               <AlertLabels labels={group.labels} size="sm" />
-              {receiverInGroup && <span className={styles.spanElement}> @ Delivered to {group.receiver.name}</span>}
+              {receiverInGroup && (
+                <MetaText icon="at">
+                  Delivered to <Strong>{group.receiver.name}</Strong>
+                </MetaText>
+              )}
             </Stack>
           ) : (
             <span>No grouping</span>
@@ -70,8 +76,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
   `,
   summary: css``,
-  spanElement: css`
+  receiver: css`
     margin-left: ${theme.spacing(0.5)};
+    margin-right: ${theme.spacing(0.5)};
+    color: ${theme.colors.text.secondary};
   `,
   [AlertState.Active]: css`
     color: ${theme.colors.error.main};
