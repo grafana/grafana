@@ -202,6 +202,105 @@
         "name": "Filters",
         "skipUrlSync": false,
         "type": "adhoc"
+      },
+      {
+        "auto": true,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": false,
+          "text": "1m",
+          "value": "1m"
+        },
+        "hide": 0,
+        "name": "intervalVar",
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "queryValue": "",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ["a"],
+          "value": ["a"]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "customVar",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "a",
+            "value": "a"
+          },
+          {
+            "selected": false,
+            "text": "b",
+            "value": "b"
+          },
+          {
+            "selected": false,
+            "text": "c",
+            "value": "c"
+          }
+        ],
+        "query": "a, b, c",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "gdev-testdata",
+          "value": "PD8C576611E62080A"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "dsVar",
+        "options": [],
+        "query": "grafana-testdata-datasource",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "A",
+          "value": "A"
+        },
+        "definition": "*",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "query0",
+        "options": [],
+        "query": {
+          "query": "*",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "hide": 2,
+        "name": "constant",
+        "query": "test",
+        "skipUrlSync": false,
+        "type": "constant"
       }
     ]
   },

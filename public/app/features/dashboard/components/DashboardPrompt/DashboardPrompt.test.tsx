@@ -35,7 +35,7 @@ function getTestContext() {
   const contextSrv = { isSignedIn: true, isEditor: true } as ContextSrv;
   setContextSrv(contextSrv);
   const dash = getDefaultDashboardModel();
-  const original = dash.getSaveModelClone();
+  const original = dash.getSaveModelCloneOld();
 
   return { dash, original, contextSrv };
 }
@@ -98,7 +98,7 @@ describe('DashboardPrompt', () => {
       it('then it should return true', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: false });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isEditor = false;
         expect(ignoreChanges(dash, original)).toBe(true);
       });
@@ -108,7 +108,7 @@ describe('DashboardPrompt', () => {
       it('then it should return undefined', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isEditor = false;
         expect(ignoreChanges(dash, original)).toBe(undefined);
       });
@@ -118,7 +118,7 @@ describe('DashboardPrompt', () => {
       it('then it should return true', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isSignedIn = false;
         expect(ignoreChanges(dash, original)).toBe(true);
       });
@@ -127,7 +127,7 @@ describe('DashboardPrompt', () => {
     describe('when called with fromScript', () => {
       it('then it should return true', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: true, fromFile: undefined });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
@@ -146,7 +146,7 @@ describe('DashboardPrompt', () => {
     describe('when called with fromFile', () => {
       it('then it should return true', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
@@ -154,7 +154,7 @@ describe('DashboardPrompt', () => {
     describe('when called with canSave but without fromScript and fromFile', () => {
       it('then it should return false', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: undefined });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(undefined);
       });
     });

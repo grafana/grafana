@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { Field } from '../../types';
+import { DataFrame, Field, TransformationApplicabilityLevels } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { fieldToStringField } from './convertFieldType';
@@ -16,9 +16,24 @@ export interface FormatTimeTransformerOptions {
 
 export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOptions> = {
   id: DataTransformerID.formatTime,
-  name: 'Format Time',
+  name: 'Format time',
   description: 'Set the output format of a time field',
   defaultOptions: { timeField: '', outputFormat: '', useTimezone: true },
+  isApplicable: (data: DataFrame[]) => {
+    // Search for a time field
+    // if there is one then we can use this transformation
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type === 'time') {
+          return TransformationApplicabilityLevels.Applicable;
+        }
+      }
+    }
+
+    return TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription:
+    'The Format time transformation requires a time field to work. No time field could be found.',
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {

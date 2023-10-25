@@ -285,7 +285,7 @@ describe('LogGroupsSelector', () => {
       />
     );
     await userEvent.click(screen.getByText('Select log groups'));
-    await screen.getByRole('button', { name: 'select-clear-value' }).click();
+    await userEvent.click(screen.getByRole('button', { name: 'select-clear-value' }));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {

@@ -28,7 +28,7 @@ export const Spinner = ({ className, inline = false, iconClassName, style, size 
   const styles = getStyles(size, inline);
   return (
     <div data-testid="Spinner" style={style} className={cx(styles, className)}>
-      <Icon className={cx('fa-spin', iconClassName)} name="fa fa-spinner" aria-label="loading spinner" />
+      <Icon className={cx('fa-spin', iconClassName)} name="spinner" aria-label="loading spinner" />
     </div>
   );
 };

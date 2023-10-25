@@ -46,7 +46,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   return (
     <div className={styles.container}>
       <div>
-        <p className={styles.title}>Welcome to public dashboards public preview!</p>
+        <p className={styles.title}>Welcome to public dashboards!</p>
         <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
       </div>
 
