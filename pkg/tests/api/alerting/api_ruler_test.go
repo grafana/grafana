@@ -64,7 +64,9 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
 	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder2", "folder2", "folder1")
+	apiClient.CreateFolder(t, "folder2", "folder2")
+	// Create a subfolder
+	apiClient.CreateFolder(t, "subfolder", "subfolder", "folder1")
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-post.json"))
 	require.NoError(t, err)
@@ -84,6 +86,15 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	_, status, response = apiClient.PostRulesGroupWithStatus(t, "folder2", &group2)
 	require.Equalf(t, http.StatusAccepted, status, response)
 
+	postGroupRaw, err = testData.ReadFile(path.Join("test-data", "rulegroup-3-post.json"))
+	require.NoError(t, err)
+	var group3 apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &group3))
+
+	// Create rule under subfolder
+	_, status, response = apiClient.PostRulesGroupWithStatus(t, "subfolder", &group3)
+	require.Equalf(t, http.StatusAccepted, status, response)
+
 	// With the rules created, let's make sure that rule definitions are stored.
 	allRules, status, _ := apiClient.GetAllRulesWithStatus(t)
 	require.Equal(t, http.StatusOK, status)
@@ -96,7 +107,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 	t.Run("when user has all permissions", func(t *testing.T) {
 		t.Run("Get all returns all rules", func(t *testing.T) {
-			var group1, group2 apimodels.GettableRuleGroupConfig
+			var group1, group2, group3 apimodels.GettableRuleGroupConfig
 
 			getGroup1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-get.json"))
 			require.NoError(t, err)
@@ -104,13 +115,19 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			getGroup2Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-2-get.json"))
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(getGroup2Raw, &group2))
+			getGroup3Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-3-get.json"))
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup3Raw, &group3))
 
 			expected := apimodels.NamespaceConfigResponse{
 				"/folder1": []apimodels.GettableRuleGroupConfig{
 					group1,
 				},
-				"folder1/folder2": []apimodels.GettableRuleGroupConfig{
+				"/folder2": []apimodels.GettableRuleGroupConfig{
 					group2,
+				},
+				"folder1/subfolder": []apimodels.GettableRuleGroupConfig{
+					group3,
 				},
 			}
 
@@ -139,9 +156,15 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
 			}
-			for _, rule := range allRules["folder1/folder2"][0].Rules {
-				assert.Equal(t, "folder1/folder2", rule.GrafanaManagedAlert.NamespaceUID)
+
+			for _, rule := range allRules["/folder2"][0].Rules {
+				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
 				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
+			}
+
+			for _, rule := range allRules["folder1/subfolder"][0].Rules {
+				assert.Equal(t, "subfolder", rule.GrafanaManagedAlert.NamespaceUID)
+				assert.Equal(t, int64(3), rule.GrafanaManagedAlert.NamespaceID)
 			}
 		})
 
@@ -158,16 +181,28 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			cmp.Diff(allRules["/folder2"][0], rules.GettableRuleGroupConfig)
 		})
 
+		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
+			rules, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "subfolder")
+			require.Equal(t, http.StatusAccepted, status)
+			require.Contains(t, rules, "folder1/subfolder")
+			require.Len(t, rules["folder1/subfolder"], 1)
+			require.Equal(t, allRules["folder1/subfolder"], rules["folder1/subfolder"])
+		})
+
 		t.Run("Export returns all rules", func(t *testing.T) {
-			var group1File, group2File apimodels.AlertingFileExport
+			var group1File, group2File, group3File apimodels.AlertingFileExport
 			getGroup1Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1-export.json"))
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(getGroup1Raw, &group1File))
 			getGroup2Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-2-export.json"))
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(getGroup2Raw, &group2File))
+			getGroup3Raw, err := testData.ReadFile(path.Join("test-data", "rulegroup-3-export.json"))
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(getGroup3Raw, &group3File))
 
 			group1File.Groups = append(group1File.Groups, group2File.Groups...)
+			group1File.Groups = append(group1File.Groups, group3File.Groups...)
 			expected := group1File
 
 			pathsToIgnore := []string{
@@ -189,6 +224,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
+			require.Equal(t, "subfolder", allExport.Groups[2].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -205,11 +241,40 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			require.Equal(t, expected, export.Groups[0])
 		})
 
+		t.Run("Export from a subfolder", func(t *testing.T) {
+			expected := allExport.Groups[2]
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"subfolder"},
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, expected, export.Groups[0])
+		})
+
 		t.Run("Export from one group", func(t *testing.T) {
 			expected := allExport.Groups[0]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
 				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
 				FolderUID:         []string{"folder1"},
+				GroupName:         expected.Name,
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export apimodels.AlertingFileExport
+			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
+
+			require.Len(t, export.Groups, 1)
+			require.Equal(t, expected, export.Groups[0])
+		})
+
+		t.Run("Export from one group under subfolder", func(t *testing.T) {
+			expected := allExport.Groups[2]
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
+				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				FolderUID:         []string{"subfolder"},
 				GroupName:         expected.Name,
 			})
 			require.Equal(t, http.StatusOK, status)
@@ -241,15 +306,18 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	t.Run("when permissions for folder2 removed", func(t *testing.T) {
-		// reload permissions for folder1 (folder2 leaves under folder1 and inherite its permissions)
-		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		// remove permissions for folder2
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
+		// remove permissions for subfolder (inherits from folder1)
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "subfolder")
 		apiClient.ReloadCachedPermissions(t)
 
 		t.Run("Get all returns all rules", func(t *testing.T) {
 			newAll, status, _ := apiClient.GetAllRulesWithStatus(t)
 			require.Equal(t, http.StatusOK, status)
-			require.NotContains(t, newAll, "/folder1")
-			require.Contains(t, newAll, "folder1/folder2")
+			require.Contains(t, newAll, "/folder1")
+			require.NotContains(t, newAll, "/folder2")
+			require.Contains(t, newAll, "folder1/subfolder")
 		})
 
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
@@ -277,8 +345,9 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(exportRaw), &export))
 
 			require.Equal(t, http.StatusOK, status)
-			require.Len(t, export.Groups, 1)
+			require.Len(t, export.Groups, 2)
 			require.Equal(t, "folder1", export.Groups[0].Folder)
+			require.Equal(t, "subfolder", export.Groups[1].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -900,8 +969,10 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	})
 
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	parentFolderUID := util.GenerateShortUID()
+	client.CreateFolder(t, parentFolderUID, "parent")
 	folderUID := util.GenerateShortUID()
-	client.CreateFolder(t, folderUID, "folder1")
+	client.CreateFolder(t, folderUID, "folder1", "parent")
 
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())
