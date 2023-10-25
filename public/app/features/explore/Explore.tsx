@@ -504,7 +504,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
             queryResponse={queryResponse}
-            topOfViewRef={this.topOfViewRef}
           />
         </ContentOutlineItem>
       )

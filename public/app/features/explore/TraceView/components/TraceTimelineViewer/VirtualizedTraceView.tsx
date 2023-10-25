@@ -566,6 +566,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
+        {this.props.topOfViewRef && (
+          <ToolbarButton
+            className={styles.scrollToTopButton}
+            onClick={this.scrollToTop}
+            title="Scroll to top"
+            icon="arrow-up"
+          ></ToolbarButton>
+        )}
       </>
     );
   }

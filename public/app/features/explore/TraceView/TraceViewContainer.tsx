@@ -14,7 +14,7 @@ interface Props {
   exploreId: string;
   scrollElement?: Element;
   queryResponse: PanelData;
-  topOfViewRef: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
 export function TraceViewContainer(props: Props) {
@@ -40,8 +40,6 @@ export function TraceViewContainer(props: Props) {
         traceProp={traceProp}
         queryResponse={queryResponse}
         datasource={datasource}
-        topOfViewRef={topOfViewRef}
-        topOfViewRefType={TopOfViewRefType.Explore}
       />
     </PanelChrome>
   );

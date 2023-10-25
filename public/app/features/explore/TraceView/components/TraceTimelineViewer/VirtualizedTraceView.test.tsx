@@ -25,7 +25,7 @@ import VirtualizedTraceView, { VirtualizedTraceViewProps } from './VirtualizedTr
 jest.mock('./SpanTreeOffset');
 
 const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 2 }))!;
-const topOfExploreViewRef = jest.fn();
+
 let props = {
   childrenHiddenIDs: new Set(),
   childrenToggle: jest.fn(),
@@ -41,7 +41,7 @@ let props = {
   spanNameColumnWidth: 0.5,
   trace,
   uiFind: 'uiFind',
-  topOfExploreViewRef,
+  topOfViewRef: jest.fn(),
 } as unknown as VirtualizedTraceViewProps;
 
 describe('<VirtualizedTraceViewImpl>', () => {
@@ -72,16 +72,27 @@ describe('<VirtualizedTraceViewImpl>', () => {
   it('renders without exploding', () => {
     render(<VirtualizedTraceView {...props} />);
     expect(screen.getByTestId('ListView')).toBeInTheDocument();
+    expect(screen.getByTitle('Scroll to top')).toBeInTheDocument();
   });
 
   it('renders when a trace is not set', () => {
     props = { ...props, trace: null as unknown as Trace };
     render(<VirtualizedTraceView {...props} />);
     expect(screen.getByTestId('ListView')).toBeInTheDocument();
+    expect(screen.getByTitle('Scroll to top')).toBeInTheDocument();
   });
 
   it('renders ListView', () => {
     render(<VirtualizedTraceView {...props} />);
     expect(screen.getByTestId('ListView')).toBeInTheDocument();
+  });
+
+  it('renders scrollToTopButton', () => {
+    render(<VirtualizedTraceView {...props} />);
+    expect(
+      screen.getByRole('button', {
+        name: /Scroll to top/i,
+      })
+    ).toBeInTheDocument();
   });
 });
