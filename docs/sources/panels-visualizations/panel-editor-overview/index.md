@@ -41,23 +41,23 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 When you hover over the top-right corner of any panel, the actions menu appears. Click the menu icon to access the following actions:
 
-- View: View the panel in full screen.
-- Edit: Edit panel and visualization options.
-- Share: Share the panel as a link, embed, or library panel.
-- Explore: Open the panel in **Explore**, where you can focus on your query.
-- Inspect: Open the **Inspect** drawer, where you can review the panel data, stats, meta data, JSON, and query.  
-  - Data: Open the **Inspect** drawer in the **Data** tab.
-  - Query: Open the **Inspect** drawer in the **Query** tab.
-  - Panel JSON: Open the **Inspect** drawer in the **JSON** tab.
-- Extensions: Access installed extensions that let you quickly... such as, declaring an incident.
-- More: Access other panel actions.
-  - Duplicate: Make a copy of the panel (duplicated panels query data separately from the original panel).
-  - Copy: Copy the panel to the clipboard.
-  - Create library panel: Create a source panel that can be used in other dashboards.
-  - Create alert: Create an alert directly from the panel. [add link]
-  - Hide legend: Hide the panel legend.
-  - Get help: Send a snapshot or panel data to Grafana Labs Technical Support.
-- Remove: Remove the panel from the dashboard.
+- **View**: View the panel in full screen.
+- **Edit**: Open the panel editor and edit panel and visualization options.
+- **Share**: Share the panel as a link, embed, or library panel.
+- **Explore**: Open the panel in **Explore**, where you can focus on your query.
+- **Inspect**: Open the **Inspect** drawer, where you can review the panel data, stats, metadata, JSON, and query.
+  - **Data**: Open the **Inspect** drawer in the **Data** tab.
+  - **Query**: Open the **Inspect** drawer in the **Query** tab.
+  - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
+- **Extensions**: Access installed extensions that let you quickly... such as, declaring an incident.
+- **More**: Access other panel actions.
+  - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the Dashboard data source to [share the same query results across panels][].
+  - **Copy**: Copy the panel to the clipboard.
+  - **Create library panel**: Create a panel that can be imported into other dashboards.
+  - **Create alert**: [Create an alert][] directly from the panel.
+  - **Hide legend**: Hide the panel legend.
+  - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
+- **Remove**: Remove the panel from the dashboard.
 
 ## Panel editor
 
@@ -120,4 +120,10 @@ The panel inspector consists of the following options:
 
 [the overview of Grafana Alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
 [the overview of Grafana Alerting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+
+[share the same query results across panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/share-query"
+[share the same query results across panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/share-query"
+
+[Create an alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels"
+[Create an alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
 {{% /docs/reference %}}
