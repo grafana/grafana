@@ -211,13 +211,13 @@ func calculateRateInterval(
 	return rateInterval
 }
 
-func interpolateVariables(expr, queryInterval string, interval time.Duration,
+func interpolateVariables(expr, finalInterval string, interval time.Duration,
 	timeRange time.Duration, dsScrapeInterval string) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
 	var rateInterval time.Duration
-	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
+	if finalInterval == varRateInterval || finalInterval == varRateIntervalAlt {
 		rateInterval = interval
 	} else {
 		rateInterval = calculateRateInterval(interval, dsScrapeInterval)
