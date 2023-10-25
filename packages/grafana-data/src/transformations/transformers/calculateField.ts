@@ -29,11 +29,14 @@ export interface ReduceOptions {
   nullValueMode?: NullValueMode;
 }
 
-export interface WindowOptions {
-  include?: string[]; // Assume all fields
+export interface CumulativeOptions {
+  field?: string;
   reducer: ReducerID;
-  numberOfRows?: number;
   nullValueMode?: NullValueMode;
+}
+
+export interface WindowOptions extends CumulativeOptions {
+  numberOfRows?: number;
 }
 
 export interface UnaryOptions {
@@ -79,6 +82,7 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   window?: WindowOptions;
+  cumulative?: CumulativeOptions;
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
@@ -124,7 +128,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.CumulativeFunctions:
-            creator = getCumulativeCreator(defaults(options.reduce, defaultReduceOptions), data);
+            creator = getCumulativeCreator(defaults(options.cumulative, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.WindowFunctions:
             creator = getWindowCreator(defaults(options.window, defaultWindowOptions), data);
@@ -210,11 +214,11 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     id: FieldMatcherID.numeric,
   });
 
-  if (options.include && options.include.length) {
+  if (options.field) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
       options: {
-        names: options.include,
+        names: [options.field],
       },
     });
   }
@@ -231,50 +235,50 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns = [];
+    let selectedField: Field | null = null;
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
-        columns.push(field.values);
+        selectedField = field;
+        break;
       }
     }
 
+    if (!selectedField) {
+      return;
+    }
+
     // Prepare a "fake" field for the row
-    const size = columns.length;
-    const row: Field = {
+    const fakeField: Field = {
       name: 'temp',
-      values: new Array(size),
+      values: [],
       type: FieldType.number,
       config: {},
     };
     const vals: number[] = [];
 
-    // This is just copied from cumulative and needs to change. To keep this simple we should probably limit it to one field.
     for (let i = 0; i < frame.length; i++) {
-      let cumulative = 0;
-
-      for (let j = 0; j < size; j++) {
-        cumulative += columns[j][i];
+      fakeField.values.push(selectedField.values[i]);
+      if (fakeField.values.length > options.numberOfRows!) {
+        fakeField.values.shift();
       }
 
-      row.values[i] = cumulative;
-
-      vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
+      vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
     }
 
     return vals;
   };
 }
 
-function getCumulativeCreator(options: ReduceOptions, allFrames: DataFrame[]): ValuesCreator {
+function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]): ValuesCreator {
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
 
-  if (options.include && options.include.length) {
+  if (options.field) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
       options: {
-        names: options.include,
+        names: [options.field],
       },
     });
   }
@@ -291,34 +295,30 @@ function getCumulativeCreator(options: ReduceOptions, allFrames: DataFrame[]): V
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns = [];
+    let selectedField: Field | null = null;
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
-        columns.push(field.values);
+        selectedField = field;
+        break;
       }
     }
 
+    if (!selectedField) {
+      return;
+    }
+
     // Prepare a "fake" field for the row
-    const size = columns.length;
-    const row: Field = {
+    const fakeField: Field = {
       name: 'temp',
-      values: new Array(size),
+      values: new Array(selectedField.values.length),
       type: FieldType.number,
       config: {},
     };
     const vals: number[] = [];
 
     for (let i = 0; i < frame.length; i++) {
-      let cumulative = 0;
-
-      for (let j = 0; j < size; j++) {
-        // This will probably only work for sum, not for other reducers
-        cumulative += columns[j][i];
-      }
-
-      row.values[i] = cumulative;
-
-      vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
+      fakeField.values[i] = selectedField.values[i];
+      vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
     }
 
     return vals;
@@ -455,6 +455,14 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   }
 
   switch (options.mode) {
+    case CalculateFieldMode.CumulativeFunctions: {
+      const { cumulative } = options;
+      return `Cumulative ${cumulative?.reducer ?? ''}${cumulative?.field ? `(${cumulative.field})` : ''}`;
+    }
+    case CalculateFieldMode.WindowFunctions: {
+      const { window } = options;
+      return `Moving ${window?.reducer ?? ''}${window?.field ? `(${window.field})` : ''}`;
+    }
     case CalculateFieldMode.UnaryOperation: {
       const { unary } = options;
       return `${unary?.operator ?? ''}${unary?.fieldName ? `(${unary.fieldName})` : ''}`;

@@ -28,6 +28,7 @@ import {
   getNameFromOptions,
   IndexOptions,
   ReduceOptions,
+  CumulativeOptions,
   WindowOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
@@ -253,44 +254,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
-  renderCumulativeFunctions(options?: ReduceOptions) {
-    const { names, selected } = this.state;
-    options = defaults(options, { reducer: ReducerID.sum });
-
-    return (
-      <>
-        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
-          <HorizontalGroup spacing="xs" align="flex-start" wrap>
-            {names.map((o, i) => {
-              return (
-                <FilterPill
-                  key={`${o}/${i}`}
-                  onClick={() => {
-                    this.onFieldToggle(o);
-                  }}
-                  label={o}
-                  selected={selected.indexOf(o) > -1}
-                />
-              );
-            })}
-          </HorizontalGroup>
-        </InlineField>
-        <InlineField label="Calculation" labelWidth={labelWidth}>
-          <StatsPicker
-            allowMultiple={false}
-            className="width-18"
-            stats={[options.reducer]}
-            onChange={this.onStatsChange}
-            defaultStat={ReducerID.sum}
-            filterOptions={(ext) =>
-              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
-            }
-          />
-        </InlineField>
-      </>
-    );
-  }
-
   //---------------------------------------------------------
   // Window functions
   //---------------------------------------------------------
@@ -304,23 +267,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onWindowFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
-    if (selected.indexOf(fieldName) > -1) {
-      this.setState({ selected: selected.filter((s) => s !== fieldName) });
-      const { window } = this.props.options;
-      this.updateWindowOptions({
-        ...window!,
-        include: selected.filter((s) => s !== fieldName),
-      });
-    } else {
-      this.setState({ selected: [...selected, fieldName] });
-      const { window } = this.props.options;
-      this.updateWindowOptions({
-        ...window!,
-        include: [...selected, fieldName],
-      });
-    }
+  onWindowFieldChange = (v: SelectableValue<string>) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      field: v.value!,
+    });
   };
 
   onWindowSizeChange = (v?: number) => {
@@ -341,26 +293,20 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   };
 
   renderWindowFunctions(options?: WindowOptions) {
-    const { names, selected } = this.state;
+    const { names } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
 
     return (
       <>
-        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
-          <HorizontalGroup spacing="xs" align="flex-start" wrap>
-            {names.map((o, i) => {
-              return (
-                <FilterPill
-                  key={`${o}/${i}`}
-                  onClick={() => {
-                    this.onWindowFieldToggle(o);
-                  }}
-                  label={o}
-                  selected={selected.indexOf(o) > -1}
-                />
-              );
-            })}
-          </HorizontalGroup>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={this.onWindowFieldChange}
+          />
         </InlineField>
         <InlineField label="Calculation" labelWidth={labelWidth}>
           <StatsPicker
@@ -369,13 +315,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             stats={[options.reducer]}
             onChange={this.onWindowStatsChange}
             defaultStat={ReducerID.sum}
-            filterOptions={(ext) =>
-              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
-            }
+            filterOptions={(ext) => ext.id === ReducerID.mean || ext.id === ReducerID.variance}
           />
         </InlineField>
         <InlineField label="Window size" labelWidth={labelWidth}>
-          <NumberInput onChange={this.onWindowSizeChange}></NumberInput>
+          <NumberInput value={options.numberOfRows} onChange={this.onWindowSizeChange}></NumberInput>
         </InlineField>
       </>
     );
@@ -423,6 +367,66 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             stats={[options.reducer]}
             onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
+          />
+        </InlineField>
+      </>
+    );
+  }
+
+  //---------------------------------------------------------
+  // Cumulative Operator
+  //---------------------------------------------------------
+
+  onCumulativeStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { reduce } = this.props.options;
+    this.updateCumulativeOptions({ ...reduce, reducer });
+  };
+
+  updateCumulativeOptions = (v: CumulativeOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: v,
+    });
+  };
+
+  onCumulativeFieldChange = (v: SelectableValue<string>) => {
+    const { cumulative } = this.props.options;
+    this.updateCumulativeOptions({
+      ...cumulative!,
+      field: v.value!,
+    });
+  };
+
+  renderCumulativeFunctions(options?: CumulativeOptions) {
+    const { names } = this.state;
+    options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
+
+    return (
+      <>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={this.onCumulativeFieldChange}
+          />
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onCumulativeStatsChange}
+            defaultStat={ReducerID.sum}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
+            }
           />
         </InlineField>
       </>
@@ -612,7 +616,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
-        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.reduce)}
+        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.cumulative)}
         {mode === CalculateFieldMode.WindowFunctions && this.renderWindowFunctions(options.window)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
