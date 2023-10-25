@@ -60,5 +60,5 @@ export const LogsTableNavColumn = (props: {
     );
   }
 
-  return <div className={styles.empty}>No columns</div>;
+  return <div className={styles.empty}>No fields</div>;
 };

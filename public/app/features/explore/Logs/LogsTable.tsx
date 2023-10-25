@@ -180,13 +180,14 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return (
-        (field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels') ||
-        (field.type === FieldType.other &&
-          dataFrame?.meta?.type === DataFrameType.LogLines &&
-          field.name === 'attributes') ||
-        field?.config?.custom?.hidden === true
-      );
+      const isFieldLokiLabels = field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
+      const isFieldDataplaneLabels =
+        field.name === 'attributes' &&
+        field.type === FieldType.other &&
+        dataFrame?.meta?.type === DataFrameType.LogLines;
+      const isFieldHidden = field?.config?.custom?.hidden === true;
+
+      return isFieldLokiLabels || isFieldDataplaneLabels || isFieldHidden;
     })
     .flatMap((field: Field) => {
       return [
