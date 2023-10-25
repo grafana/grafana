@@ -14,7 +14,7 @@ const MoreButton = forwardRef(function MoreButton(props: ButtonProps, ref: Ref<H
       ref={ref}
       {...props}
     >
-      <Stack direction="row" alignItems="baseline" gap={0}>
+      <Stack direction="row" alignItems="center" gap={0}>
         More <Icon name="angle-down" />
       </Stack>
     </Button>
