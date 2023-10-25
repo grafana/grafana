@@ -140,9 +140,15 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
 }
