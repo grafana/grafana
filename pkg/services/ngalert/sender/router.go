@@ -188,10 +188,10 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func buildRedactedAMs(l log.Logger, alertmanagers []externalAMcfg, ordId int64) []string {
+func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAMcfg, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
-		parsedAM, err := url.Parse(am.amURL)
+		parsedAM, err := url.Parse(am.URL)
 		if err != nil {
 			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
 			continue
@@ -208,9 +208,9 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcfg, error) {
+func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcfg, error) {
 	var (
-		alertmanagers []externalAMcfg
+		alertmanagers []ExternalAMcfg
 	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
@@ -246,9 +246,9 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcf
 				"error", err)
 			continue
 		}
-		alertmanagers = append(alertmanagers, externalAMcfg{
-			amURL:   amURL,
-			headers: headers,
+		alertmanagers = append(alertmanagers, ExternalAMcfg{
+			URL:     amURL,
+			Headers: headers,
 		})
 	}
 	return alertmanagers, nil

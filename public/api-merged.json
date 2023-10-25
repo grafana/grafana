@@ -643,7 +643,8 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug"
+          "ldap_debug",
+          "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
@@ -17925,6 +17926,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -18162,6 +18164,10 @@
           "type": "boolean",
           "example": false
         },
+        "isExternal": {
+          "type": "boolean",
+          "example": false
+        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -18210,6 +18216,10 @@
           "example": 2
         },
         "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "isExternal": {
           "type": "boolean",
           "example": false
         },

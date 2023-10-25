@@ -2,12 +2,13 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
@@ -68,6 +69,34 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 	return s.proxiedService.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
+func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, orgID int64, serviceAccountID int64, tokenID int64) error {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, 0, serviceAccountID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("sa.Login: ", sa.Login)
+
+	if isExternalServiceAccount(sa.Login) {
+		s.log.Error("unable to delete tokens for external service accounts", "serviceAccountID", serviceAccountID)
+		return extsvcaccounts.ErrCannotDeleteToken
+	}
+
+	return s.proxiedService.DeleteServiceAccountToken(ctx, sa.OrgId, serviceAccountID, tokenID)
+}
+
+func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+	return s.proxiedService.ListTokens(ctx, query)
+}
+
+func (s *ServiceAccountsProxy) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
+	return s.proxiedService.MigrateApiKey(ctx, orgID, keyId)
+}
+
+func (s *ServiceAccountsProxy) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
+	return s.proxiedService.MigrateApiKeysToServiceAccounts(ctx, orgID)
+}
+
 func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 	if err != nil {
@@ -100,10 +129,22 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 	return s.proxiedService.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
+func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	sa, err := s.proxiedService.SearchOrgServiceAccounts(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range sa.ServiceAccounts {
+		sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+	}
+	return sa, nil
+}
+
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, extsvcaccounts.ExtSvcPrefix)
+	return !strings.HasPrefix(name, serviceaccounts.ExtSvcPrefix)
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+extsvcaccounts.ExtSvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix)
 }
