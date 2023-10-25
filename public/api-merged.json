@@ -17925,6 +17925,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -18162,6 +18163,10 @@
           "type": "boolean",
           "example": false
         },
+        "isExternal": {
+          "type": "boolean",
+          "example": false
+        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -18210,6 +18215,10 @@
           "example": 2
         },
         "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
