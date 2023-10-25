@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,7 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.BuildMetricsURL()
+			fmt.Println(url)
 			assert.Equal(t, "/subscriptions/sub/resource/uri/providers/microsoft.insights/metrics", url)
 		})
 
@@ -103,6 +105,23 @@ func TestURLBuilder(t *testing.T) {
 				url := *ub.buildResourceURI()
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
 			})
+		})
+	})
+}
+
+func TestBuildResourceURI(t *testing.T) {
+	t.Run("AzureMonitor Resource URI Builder", func(t *testing.T) {
+		t.Run("when there is no resource uri", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricDefinition:    strPtr("Microsoft.Web/serverFarms"),
+				ResourceGroup:       strPtr("rg"),
+				ResourceName:        strPtr("rn1"),
+			}
+
+			url := *ub.buildResourceURI()
+			fmt.Println("url:", url)
+			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Web/serverFarms/rn1", url)
 		})
 	})
 }
