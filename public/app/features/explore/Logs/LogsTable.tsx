@@ -35,7 +35,6 @@ interface Props {
   height: number;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  datasourceType?: string;
 }
 
 export function LogsTable(props: Props) {
@@ -106,10 +105,8 @@ export function LogsTable(props: Props) {
       let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFieldsAndExclude(
-        dataFrame,
-        props.datasourceType
-      );
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> =
+        extractFieldsAndExclude(dataFrame);
 
       // remove hidden fields
       transformations.push(...removeHiddenFields(dataFrame));
@@ -130,7 +127,7 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, props.datasourceType, prepareTableFrame]);
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
@@ -178,10 +175,13 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) {
+function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return field.typeInfo?.frame === 'json.RawMessage' && datasourceType === 'loki';
+      if (field.typeInfo?.frame === 'json.RawMessage') {
+        console.log('field', field);
+      }
+      return field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
     })
     .flatMap((field: Field) => {
       return [
