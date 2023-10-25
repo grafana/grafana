@@ -37,9 +37,7 @@ func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, valid
 }
 
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-	start := time.Now()
-	sourceLogger := l.log.New("source", src.PluginClass(ctx)).FromContext(ctx)
-	sourceLogger.Debug("Loading plugin source...")
+	end := l.instrumentLoad(ctx, src)
 
 	discoveredPlugins, err := l.discovery.Discover(ctx, src)
 	if err != nil {
@@ -61,18 +59,30 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	names := make([]string, len(initializedPlugins))
-	for i, p := range initializedPlugins {
-		names[i] = p.ID
-	}
-	sort.Strings(names)
-	plugins := strings.Join(names, ", ")
-
-	sourceLogger.Debug("Plugin source loaded", "plugins", plugins, "duration", time.Since(start))
+	end(initializedPlugins)
 
 	return initializedPlugins, nil
 }
 
 func (l *Loader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	return l.termination.Terminate(ctx, p)
+}
+
+func (l *Loader) instrumentLoad(ctx context.Context, src plugins.PluginSource) func([]*plugins.Plugin) {
+	start := time.Now()
+	sourceLogger := l.log.New("source", src.PluginClass(ctx)).FromContext(ctx)
+	sourceLogger.Debug("Loading plugin source...")
+
+	return func(logger log.Logger, start time.Time) func([]*plugins.Plugin) {
+		return func(plugins []*plugins.Plugin) {
+			names := make([]string, len(plugins))
+			for i, p := range plugins {
+				names[i] = p.ID
+			}
+			sort.Strings(names)
+			pluginsStr := strings.Join(names, ", ")
+
+			logger.Debug("Plugin source loaded", "plugins", pluginsStr, "duration", time.Since(start))
+		}
+	}(sourceLogger, start)
 }
