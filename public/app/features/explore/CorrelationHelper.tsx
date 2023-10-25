@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
+import { useAsync } from 'react-use';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
 import {
@@ -42,7 +43,19 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
   const panesVals = Object.values(panes);
-  const { register, watch, getValues } = useForm<FormValues>();
+  const { value: defaultLabel } = useAsync(async () => await generateDefaultLabel(panesVals[0]!, panesVals[1]!), []);
+
+  const {
+    register,
+    watch,
+    getValues,
+    formState: { isDirty },
+  } = useForm<FormValues>({
+    defaultValues: {
+      label: defaultLabel,
+      description: '',
+    },
+  });
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
@@ -50,27 +63,18 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const [transformationIdxToEdit, setTransformationIdxToEdit] = useState<number | undefined>(undefined);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const id = useId();
-  // this needs to change when the datasource does
-  const defaultLabelVal =
-    panesVals[0]?.datasourceInstance && panesVals[1]?.datasourceInstance
-      ? generateDefaultLabel(panesVals[0]?.datasourceInstance, panesVals[1]?.datasourceInstance)
-      : '';
-
   useEffect(() => {
     const subscription = watch((value) => {
-      let dirty = false;
-
-      if (!correlationDetails?.correlationDirty && (value.label !== '' || value.description !== '')) {
-        dirty = true;
-      } else if (correlationDetails?.correlationDirty && value.label.trim() === '' && value.description.trim() === '') {
-        dirty = false;
-      }
       dispatch(
-        changeCorrelationEditorDetails({ label: value.label, description: value.description, correlationDirty: dirty })
+        changeCorrelationEditorDetails({
+          label: value.label,
+          description: value.description,
+          correlationDirty: isDirty,
+        })
       );
     });
     return () => subscription.unsubscribe();
-  }, [correlationDetails?.correlationDirty, dispatch, watch]);
+  }, [dispatch, isDirty, watch]);
 
   // only fire once on mount to allow save button to enable / disable when unmounted
   useEffect(() => {
@@ -158,13 +162,13 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
               Label / Description
               {!isLabelDescOpen && (
-                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabelVal}`}</span>
+                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label')}`}</span>
               )}
             </Flex>
           }
         >
           <Field label="Label" htmlFor={`${id}-label`}>
-            <Input {...register('label')} id={`${id}-label`} value={getValues('label') || defaultLabelVal} />
+            <Input {...register('label')} id={`${id}-label`} />
           </Field>
           <Field label="Description" htmlFor={`${id}-description`}>
             <Input {...register('description')} id={`${id}-description`} />

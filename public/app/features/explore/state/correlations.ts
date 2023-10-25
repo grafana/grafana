@@ -79,7 +79,7 @@ export function saveCurrentCorrelation(
       const correlation: CreateCorrelationParams = {
         sourceUID: sourceDatasource.uid,
         targetUID: targetDatasource.uid,
-        label: label || generateDefaultLabel(sourceDatasource, targetDatasource),
+        label: label || (await generateDefaultLabel(sourcePane, targetPane)),
         description,
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
