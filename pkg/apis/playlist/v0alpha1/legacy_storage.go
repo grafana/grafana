@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -26,8 +27,12 @@ var (
 )
 
 type legacyStorage struct {
-	service    playlist.Service
-	namespacer namespaceMapper
+	service        playlist.Service
+	namespacer     namespaceMapper
+	tableConverter rest.TableConvertor
+
+	DefaultQualifiedResource  schema.GroupResource
+	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -49,7 +54,7 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -72,12 +77,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
 		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			UID:   v.UID,
@@ -106,7 +106,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if err == playlist.ErrPlaylistNotFound || err == nil {
-			err = errors.NewNotFound(Resource("playlist"), name)
+			err = errors.NewNotFound(s.SingularQualifiedResource, name)
 		}
 		return nil, err
 	}

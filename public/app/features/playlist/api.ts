@@ -55,7 +55,7 @@ interface K8sPlaylist {
 }
 
 class K8sAPI implements PlaylistAPI {
-  readonly apiVersion = 'playlist.x.grafana.com/v0alpha1';
+  readonly apiVersion = 'playlist.grafana.app/v0alpha1';
   readonly url: string;
 
   constructor() {

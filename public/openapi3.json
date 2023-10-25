@@ -12510,7 +12510,8 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug"
+          "ldap_debug",
+          "enterprise"
         ]
       }
     },
