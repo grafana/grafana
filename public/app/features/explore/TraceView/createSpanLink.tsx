@@ -3,7 +3,6 @@ import React from 'react';
 import {
   DataFrame,
   DataLink,
-  DataLinkConfigOrigin,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateTime,
@@ -91,28 +90,8 @@ export function createSpanLinkFactory({
 
         let links: ExploreFieldLinkModel[] = [];
         fields.forEach((field) => {
-          let filteredLinks = field.config.links;
-          if (field.config.links) {
-            // if the span does not have a profile, we do not want to render a link to pyroscope
-            // DataLinkConfigOrigin.Datasource set on the link means that the link is defined in the datasource's dataframe
-            if (!shouldCreatePyroscopeLink && field.name === 'tags') {
-              filteredLinks = field.config.links.filter((link) =>
-                link.internal?.datasourceUid === profilesDataSourceSettings?.uid &&
-                link.origin === DataLinkConfigOrigin.Datasource
-                  ? false
-                  : true
-              );
-            }
-          }
-
           const fieldLinksForExplore = getFieldLinksForExplore({
-            field: {
-              ...field,
-              config: {
-                ...field.config,
-                links: filteredLinks,
-              },
-            },
+            field,
             rowIndex: span.dataFrameRowIndex!,
             splitOpenFn,
             range: getTimeRangeFromSpan(span, undefined, undefined, shouldCreatePyroscopeLink),
