@@ -204,6 +204,7 @@ type FakePluginRepo struct {
 	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
+	PluginVersionFunc         func(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -230,6 +231,13 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
 	return &repo.PluginArchiveInfo{}, nil
+}
+
+func (r *FakePluginRepo) PluginVersion(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
+	if r.PluginVersionFunc != nil {
+		return r.PluginVersionFunc(pluginID, version, compatOpts)
+	}
+	return repo.VersionData{}, nil
 }
 
 type FakePluginStorage struct {
