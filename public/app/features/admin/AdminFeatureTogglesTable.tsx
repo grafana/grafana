@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, type SortByFn } from '@grafana/ui';
 
@@ -30,9 +30,9 @@ const sortByEnabled: SortByFn<FeatureToggle> = (a, b) => {
 };
 
 export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdateSuccess }: Props) {
+  const serverToggles = useRef<FeatureToggle[]>(featureToggles);
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [updateFeatureToggles] = useUpdateFeatureTogglesMutation();
-  const [modifiedToggles, setModifiedToggles] = useState<FeatureToggle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
@@ -41,43 +41,30 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     // Update the local state
     const updatedToggles = localToggles.map((t) => (t.name === toggle.name ? updatedToggle : t));
     setLocalToggles(updatedToggles);
-
-    // Check if the toggle exists in modifiedToggles
-    const existingToggle = modifiedToggles.find((t) => t.name === toggle.name);
-
-    // If it exists and its state is the same as the updated one, remove it from modifiedToggles
-    if (existingToggle && existingToggle.enabled === newValue) {
-      setModifiedToggles((prev) => prev.filter((t) => t.name !== toggle.name));
-    } else {
-      // Else, add/update the toggle in modifiedToggles
-      setModifiedToggles((prev) => {
-        const newToggles = prev.filter((t) => t.name !== toggle.name);
-        newToggles.push(updatedToggle);
-        return newToggles;
-      });
-    }
   };
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
+      const modifiedToggles = getModifiedToggles();
       const resp = await updateFeatureToggles(modifiedToggles);
-      // Reset modifiedToggles after successful update
       if (!('error' in resp)) {
+        // server toggles successfully updated
+        serverToggles.current = [...localToggles];
         onUpdateSuccess();
-        setModifiedToggles([]);
       }
     } finally {
       setIsSaving(false);
     }
   };
 
+  const getModifiedToggles = (): FeatureToggle[] => {
+    return localToggles.filter((toggle, index) => toggle.enabled !== serverToggles.current[index].enabled);
+  };
+
   const hasModifications = () => {
     // Check if there are any differences between the original toggles and the local toggles
-    return featureToggles.some((originalToggle) => {
-      const modifiedToggle = localToggles.find((t) => t.name === originalToggle.name);
-      return modifiedToggle && modifiedToggle.enabled !== originalToggle.enabled;
-    });
+    return localToggles.some((toggle, index) => toggle.enabled !== serverToggles.current[index].enabled);
   };
 
   const getToggleTooltipContent = (readOnlyToggle?: boolean) => {
