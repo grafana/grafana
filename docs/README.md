@@ -39,6 +39,8 @@ Typescript location for editing and instructions:
 - scripts/docs/generate-transformations.ts - Includes all content not specific to a transformation.
 - public/app/features/transformers/docs/content.ts - Transformation-specific content.
 
+Only use [reference style links](https://grafana.com/docs/writers-toolkit/write/shortcodes/#docsreference) in the `content.ts` file or else link text will be visible in the UI.
+
 ### [Contributing](/contribute/documentation/README.md)
 
 ### Using `relref` for internal links

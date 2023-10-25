@@ -6,9 +6,8 @@ comments: |
 
   scripts/docs/generate-transformations.ts - Includes all content not specific to a transformation.
   public/app/features/transformers/docs/content.ts - Transformation-specific content.
-
-  Only use reference style links in the 'content.ts' file or else link text will be visible in the UI.
-
+  
+  Only use reference style links in the `content.ts` file or else link text will be visible in the UI.
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
