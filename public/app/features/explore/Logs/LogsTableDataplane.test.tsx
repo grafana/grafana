@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { LogsTable } from './LogsTable';
-import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+import { getMockLokiFrameDataPlane } from './utils/testMocks.test';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -81,7 +81,7 @@ const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: 
   );
 };
 
-describe('LogsTable', () => {
+describe('LogsTable (loki dataplane)', () => {
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
     standardTransformersRegistry.setInit(() => {
@@ -99,18 +99,22 @@ describe('LogsTable', () => {
   });
 
   let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
+  let originalLokiDataplaneValue = config.featureToggles.lokiLogsDataplane;
 
   beforeAll(() => {
     originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
+    originalLokiDataplaneValue = config.featureToggles.lokiLogsDataplane;
     config.featureToggles.logsExploreTableVisualisation = true;
+    config.featureToggles.lokiLogsDataplane = true;
   });
 
   afterAll(() => {
     config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    config.featureToggles.lokiLogsDataplane = originalLokiDataplaneValue;
   });
 
   it('should render 4 table rows', async () => {
-    setup();
+    setup(undefined, getMockLokiFrameDataPlane());
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
@@ -119,21 +123,37 @@ describe('LogsTable', () => {
     });
   });
 
-  it('should render extracted labels as columns (elastic)', async () => {
-    setup({
-      logsFrames: [getMockElasticFrame()],
-    });
+  it('should render a datalink for each row', async () => {
+    render(getComponent({}, getMockLokiFrameDataPlane()));
 
     await waitFor(() => {
-      const columns = screen.getAllByRole('columnheader');
-      expect(columns[0].textContent).toContain('@timestamp');
-      expect(columns[1].textContent).toContain('line');
-      expect(columns[2].textContent).toContain('counter');
-      expect(columns[3].textContent).toContain('level');
+      const links = screen.getAllByRole('link');
+
+      expect(links.length).toBe(3);
     });
   });
 
-  it('should render extracted labels as columns (loki)', async () => {
+  it('should not render `attributes`', async () => {
+    setup(undefined, getMockLokiFrameDataPlane());
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'attributes' });
+
+      expect(columns.length).toBe(0);
+    });
+  });
+
+  it('should not render `tsNs`', async () => {
+    setup(undefined, getMockLokiFrameDataPlane());
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
+
+      expect(columns.length).toBe(0);
+    });
+  });
+
+  it('should render extracted labels as columns (loki dataplane)', async () => {
     setup({
       columnsWithMeta: {
         foo: { active: true, percentOfLinesWithLabel: 3 },
@@ -146,26 +166,6 @@ describe('LogsTable', () => {
       expect(columns[0].textContent).toContain('Time');
       expect(columns[1].textContent).toContain('line');
       expect(columns[2].textContent).toContain('foo');
-    });
-  });
-
-  it('should not render `tsNs`', async () => {
-    setup(undefined, getMockLokiFrame());
-
-    await waitFor(() => {
-      const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
-
-      expect(columns.length).toBe(0);
-    });
-  });
-
-  it('should not render `labels`', async () => {
-    setup();
-
-    await waitFor(() => {
-      const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
-
-      expect(columns.length).toBe(0);
     });
   });
 });
