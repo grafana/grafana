@@ -24,6 +24,7 @@ import {
   BinaryOptions,
   UnaryOptions,
   CalculateFieldMode,
+  WindowType,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   IndexOptions,
@@ -40,6 +41,7 @@ import {
   InlineLabel,
   InlineSwitch,
   Input,
+  RadioButtonGroup,
   Select,
   StatsPicker,
 } from '@grafana/ui';
@@ -57,10 +59,15 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
-  { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
-  { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' },
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
+
+if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
+  calculationModes.push(
+    { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
+    { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' }
+  );
+}
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
@@ -279,7 +286,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { window } = this.props.options;
     this.updateWindowOptions({
       ...window!,
-      numberOfRows: v,
+      windowSize: v,
     });
   };
 
@@ -292,10 +299,22 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     this.updateWindowOptions({ ...window, reducer });
   };
 
+  onTypeChange = (val: string) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      type: val as WindowType,
+    });
+  };
+
   renderWindowFunctions(options?: WindowOptions) {
     const { names } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
     const selectOptions = names.map((v) => ({ label: v, value: v }));
+    const typeOptions = [
+      { label: 'Trailing', value: WindowType.Trailing },
+      { label: 'Centered', value: WindowType.Centered },
+    ];
 
     return (
       <>
@@ -318,8 +337,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             filterOptions={(ext) => ext.id === ReducerID.mean || ext.id === ReducerID.variance}
           />
         </InlineField>
+        <InlineField label="Type" labelWidth={labelWidth}>
+          <RadioButtonGroup value={options.type ?? 'trailing'} options={typeOptions} onChange={this.onTypeChange} />
+        </InlineField>
         <InlineField label="Window size" labelWidth={labelWidth}>
-          <NumberInput value={options.numberOfRows} onChange={this.onWindowSizeChange}></NumberInput>
+          <NumberInput min={1} value={options.windowSize} onChange={this.onWindowSizeChange}></NumberInput>
         </InlineField>
       </>
     );

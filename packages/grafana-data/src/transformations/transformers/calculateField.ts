@@ -23,6 +23,11 @@ export enum CalculateFieldMode {
   Index = 'index',
 }
 
+export enum WindowType {
+  Trailing = 'trailing',
+  Centered = 'centered',
+}
+
 export interface ReduceOptions {
   include?: string[]; // Assume all fields
   reducer: ReducerID;
@@ -36,7 +41,8 @@ export interface CumulativeOptions {
 }
 
 export interface WindowOptions extends CumulativeOptions {
-  numberOfRows?: number;
+  windowSize?: number;
+  type?: WindowType;
 }
 
 export interface UnaryOptions {
@@ -60,7 +66,8 @@ const defaultReduceOptions: ReduceOptions = {
 
 const defaultWindowOptions: WindowOptions = {
   reducer: ReducerID.mean,
-  numberOfRows: 10,
+  type: WindowType.Trailing,
+  windowSize: 10,
 };
 
 const defaultBinaryOptions: BinaryOptions = {
@@ -210,6 +217,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 };
 
 function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): ValuesCreator {
+  if (options.windowSize! < 1) {
+    throw new Error('Add field from calculation transformation - Window size must be larger than 0');
+  }
+
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
@@ -256,13 +267,25 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     };
     const vals: number[] = [];
 
-    for (let i = 0; i < frame.length; i++) {
-      fakeField.values.push(selectedField.values[i]);
-      if (fakeField.values.length > options.numberOfRows!) {
-        fakeField.values.shift();
-      }
+    if (options.type === WindowType.Centered) {
+      for (let i = 0; i < frame.length; i++) {
+        const boundary = options.windowSize! / 2;
+        const start = Math.ceil(Math.max(0, i - boundary));
+        const end = Math.ceil(Math.min(i + boundary, frame.length));
 
-      vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+        fakeField.values = selectedField.values.slice(start, end);
+
+        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+      }
+    } else {
+      for (let i = 0; i < frame.length; i++) {
+        fakeField.values.push(selectedField.values[i]);
+        if (fakeField.values.length > options.windowSize!) {
+          fakeField.values.shift();
+        }
+
+        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+      }
     }
 
     return vals;
@@ -457,11 +480,11 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   switch (options.mode) {
     case CalculateFieldMode.CumulativeFunctions: {
       const { cumulative } = options;
-      return `Cumulative ${cumulative?.reducer ?? ''}${cumulative?.field ? `(${cumulative.field})` : ''}`;
+      return `cumulative ${cumulative?.reducer ?? ''}${cumulative?.field ? `(${cumulative.field})` : ''}`;
     }
     case CalculateFieldMode.WindowFunctions: {
       const { window } = options;
-      return `Moving ${window?.reducer ?? ''}${window?.field ? `(${window.field})` : ''}`;
+      return `${window?.type ?? ''} moving ${window?.reducer ?? ''}${window?.field ? `(${window.field})` : ''}`;
     }
     case CalculateFieldMode.UnaryOperation: {
       const { unary } = options;

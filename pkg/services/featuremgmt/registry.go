@@ -926,5 +926,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "addFieldFromCalculationStatFunctions",
+			Description:  "Add cumulative and window functions to the add field from calculation transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )
