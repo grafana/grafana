@@ -29,7 +29,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const rowIndex = dataIdxs.find((idx) => idx !== null);
   const seriesIndex = dataIdxs.findIndex((idx) => idx != null);
   // @todo: remove -1 when uPlot v2 arrive
-  // context: first value in dataIdxs always null and represent X serie
+  // context: first value in dataIdxs always null and represent X series
   const hoveredPointIndex = seriesIndex - 1;
 
   if (!allSeries || rowIndex == null) {
@@ -54,17 +54,6 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       colorIndicator: ColorIndicator.marker_md,
     };
   };
-
-  // const getLabelValue = (): LabelValue[] => {
-  //   return [
-  //     {
-  //       label: getFieldDisplayName(yField, frame),
-  //       value: fmt(yField, yField.values[rowIndex]),
-  //       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  //       color: series.pointColor(frame) as string,
-  //     },
-  //   ];
-  // };
 
   const getContentLabel = (): LabelValue[] => {
     const yValue: YValue = {

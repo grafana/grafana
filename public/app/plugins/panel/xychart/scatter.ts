@@ -1,4 +1,3 @@
-import { MutableRefObject } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -31,7 +30,7 @@ import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
 import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
-import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
+import { DimensionValues, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -42,20 +41,13 @@ export interface ScatterPanelInfo {
 /**
  * This is called when options or structure rev changes
  */
-export function prepScatter(
-  options: Options,
-  getData: () => DataFrame[],
-  theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
-): ScatterPanelInfo {
+export function prepScatter(options: Options, getData: () => DataFrame[], theme: GrafanaTheme2): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
 
   try {
     series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme, ttip, onUPlotClick, isToolTipOpen);
+    builder = prepConfig(getData, series, theme);
   } catch (e) {
     let errorMsg = 'Unknown error in prepScatter';
     if (typeof e === 'string') {
@@ -294,15 +286,7 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
-const prepConfig = (
-  getData: () => DataFrame[],
-  scatterSeries: ScatterSeries[],
-  theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
-) => {
+const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -518,65 +502,7 @@ const prepConfig = (
     },
   });
 
-  const clearPopupIfOpened = () => {
-    if (isToolTipOpen.current) {
-      ttip(undefined);
-      if (onUPlotClick) {
-        onUPlotClick();
-      }
-    }
-  };
-
-  let ref_parent: HTMLElement | null = null;
-
-  // clip hover points/bubbles to plotting area
-  builder.addHook('init', (u, r) => {
-    // u.over.style.overflow = 'hidden';
-    ref_parent = u.root.parentElement;
-
-    if (onUPlotClick) {
-      ref_parent?.addEventListener('click', onUPlotClick);
-    }
-  });
-
-  builder.addHook('destroy', (u) => {
-    if (onUPlotClick) {
-      ref_parent?.removeEventListener('click', onUPlotClick);
-      clearPopupIfOpened();
-    }
-  });
-
-  let rect: DOMRect;
-
-  // rect of .u-over (grid area)
-  builder.addHook('syncRect', (u, r) => {
-    rect = r;
-  });
-
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          ttip({
-            scatterIndex: i - 1,
-            xIndex: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-          return; // only show the first one
-        }
-      }
-    }
-
-    if (!isToolTipOpen.current) {
-      ttip(undefined);
-    }
-  });
-
   builder.addHook('drawClear', (u) => {
-    clearPopupIfOpened();
-
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
