@@ -111,7 +111,6 @@ describe('Logs', () => {
     const testDataFrame = dataFrame ?? getMockLokiFrame();
     return (
       <Logs
-        datasourceType={'loki'}
         exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
@@ -473,9 +472,7 @@ describe('Logs', () => {
     });
 
     it('should change visualisation to table on toggle (loki)', async () => {
-      setup({
-        datasourceType: 'loki',
-      });
+      setup({});
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
 
@@ -484,12 +481,7 @@ describe('Logs', () => {
     });
 
     it('should change visualisation to table on toggle (elastic)', async () => {
-      setup(
-        {
-          datasourceType: 'elasticsearch',
-        },
-        getMockElasticFrame()
-      );
+      setup({}, getMockElasticFrame());
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
 

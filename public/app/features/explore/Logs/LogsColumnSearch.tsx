@@ -17,7 +17,7 @@ export function LogsColumnSearch(props: { onChange: (e: React.FormEvent<HTMLInpu
   const styles = getStyles(theme);
   return (
     <Field className={styles.searchWrap}>
-      <Input type={'text'} placeholder={'Search columns by name'} onChange={props.onChange} />
+      <Input type={'text'} placeholder={'Search fields by name'} onChange={props.onChange} />
     </Field>
   );
 }
