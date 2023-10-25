@@ -314,7 +314,6 @@ describe('datasource_srv', () => {
 
     it('Can get get list and filter by an alias', () => {
       const list = dataSourceSrv.getList({ pluginId: 'testdata' });
-      console.log('List? ', list);
       expect(list[0].name).toBe('TestData');
       expect(list.length).toBe(1);
     });
