@@ -87,7 +87,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.disabled,
 
     '&:after': {
-      content: '>',
+      content: '">"',
     },
   }),
   menuOptionInfoSign: css({
