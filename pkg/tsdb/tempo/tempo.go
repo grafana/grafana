@@ -63,6 +63,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
 			ctxLogger.Error("Failed to get HTTP client provider", "error", err, "function", logEntrypoint())
+			return nil, err
 		}
 
 		streamingClient, err := newGrpcClient(settings, opts)
