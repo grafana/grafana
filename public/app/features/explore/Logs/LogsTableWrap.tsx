@@ -14,12 +14,12 @@ import {
 } from '@grafana/data/src';
 import { Themeable2 } from '@grafana/ui/src';
 
-import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
 import { LogsTableMultiSelect } from './LogsTableMultiSelect';
+import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
   logsFrames: DataFrame[];

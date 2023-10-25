@@ -8,7 +8,6 @@ export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
       },
     },
     fields: [
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       {
         config: {},
         name: 'labels',

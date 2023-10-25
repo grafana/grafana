@@ -13,6 +13,7 @@ import {
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
+  FeatureState,
   Field,
   GrafanaTheme2,
   LinkModel,
@@ -36,12 +37,12 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
+  FeatureBadge,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
   RadioButtonGroup,
-  Tag,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
@@ -578,15 +579,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             config.featureToggles.logsExploreTableVisualisation ? (
               this.state.visualisationType === 'logs' ? null : (
                 <PanelChrome.TitleItem title="Experimental" key="A">
-                  <Tag
-                    className={css({
-                      fontSize: 10,
-                      padding: '1px 5px',
-                      verticalAlign: 'text-bottom',
-                    })}
-                    name={'Beta'}
-                    colorIndex={1}
-                  />
+                  <FeatureBadge featureState={FeatureState.beta} />
                 </PanelChrome.TitleItem>
               )
             ) : null,
