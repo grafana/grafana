@@ -14,57 +14,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	validConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-
-	// Valid config for Cloud AM, no `grafana_managed_receievers` field.
-	upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
-)
+// Valid config for Cloud AM, no `grafana_managed_receievers` field.
+const upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
 
 func TestNewAlertmanager(t *testing.T) {
 	tests := []struct {
-		name          string
-		url           string
-		tenantID      string
-		password      string
-		orgID         int64
-		defaultConfig string
-		expErr        string
+		name     string
+		url      string
+		tenantID string
+		password string
+		orgID    int64
+		expErr   string
 	}{
 		{
-			name:          "empty URL",
-			url:           "",
-			tenantID:      "1234",
-			password:      "test",
-			defaultConfig: validConfig,
-			orgID:         1,
-			expErr:        "empty URL for tenant 1234",
+			name:     "empty URL",
+			url:      "",
+			tenantID: "1234",
+			password: "test",
+			orgID:    1,
+			expErr:   "empty URL for tenant 1234",
 		},
 		{
-			name:          "empty default config",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: "",
-			password:      "test",
-			orgID:         1,
-			expErr:        "unable to parse Alertmanager configuration: unexpected end of JSON input",
-		},
-		{
-			name:          "invalid default config",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: `{"invalid": true}`,
-			password:      "test",
-			orgID:         1,
-			expErr:        "unable to parse Alertmanager configuration: no route provided in config",
-		},
-		{
-			name:          "valid parameters",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: validConfig,
-			password:      "test",
-			orgID:         1,
+			name:     "valid parameters",
+			url:      "http://localhost:8080",
+			tenantID: "1234",
+			password: "test",
+			orgID:    1,
 		},
 	}
 
