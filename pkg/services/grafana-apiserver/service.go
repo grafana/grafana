@@ -28,6 +28,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -89,6 +90,8 @@ type service struct {
 	handler  web.Handler
 	builders []APIGroupBuilder
 
+	tracing *tracing.TracingService
+
 	authorizer authorizer.Authorizer
 }
 
@@ -96,12 +99,14 @@ func ProvideService(
 	cfg *setting.Cfg,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
+	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
 		config:     newConfig(cfg),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
+		tracing:    tracing,
 		authorizer: authz,
 	}
 
@@ -257,6 +262,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
+
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
