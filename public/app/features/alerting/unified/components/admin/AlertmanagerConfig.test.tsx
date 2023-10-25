@@ -4,6 +4,7 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
@@ -82,7 +83,7 @@ const ui = {
   confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   resetButton: byRole('button', { name: /Reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
-  configInput: byLabelText(/Code editor container/),
+  configInput: byTestId(selectors.components.CodeEditor.container),
   readOnlyConfig: byTestId('readonly-config'),
 };
 
