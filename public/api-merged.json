@@ -643,7 +643,8 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug"
+          "ldap_debug",
+          "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
