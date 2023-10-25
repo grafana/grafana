@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -54,14 +55,14 @@ type OAuth2ServiceImpl struct {
 	logger        log.Logger
 	accessControl ac.AccessControl
 	acService     ac.Service
-	saService     extsvcauth.ExtSvcAccountsService
+	saService     serviceaccounts.ExtSvcAccountsService
 	userService   user.Service
 	teamService   team.Service
 	publicKey     any
 }
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
-	extSvcAccSvc extsvcauth.ExtSvcAccountsService, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
+	extSvcAccSvc serviceaccounts.ExtSvcAccountsService, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
 	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		return nil, nil
@@ -245,7 +246,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	client.Secret = string(hashedSecret)
 
 	s.logger.Debug("Save service account")
-	saID, errSaveServiceAccount := s.saService.ManageExtSvcAccount(ctx, &extsvcauth.ManageExtSvcAccountCmd{
+	saID, errSaveServiceAccount := s.saService.ManageExtSvcAccount(ctx, &serviceaccounts.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slugify.Slugify(client.Name),
 		Enabled:     registration.Self.Enabled,
 		OrgID:       oauthserver.TmpOrgID,

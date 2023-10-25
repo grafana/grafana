@@ -293,6 +293,7 @@
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
+/pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Backend code docs
@@ -512,6 +513,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
+/scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
