@@ -277,7 +277,7 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 
 {{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
 
-### Microsoft SQL Server: Support for Azure Authentication (Service principal / MSI)
+### Microsoft SQL Server: Support for Azure Authentication (Service principal/MSI)
 
 <!-- Jev Forsberg, Oscar Kilhed -->
 
