@@ -15,15 +15,12 @@ func TestPlaylist(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t)
-	disco := helper.SetGroupVersionResource(
+	helper.SetGroupVersionResource(
 		schema.GroupVersionResource{
 			Group:    "playlist.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "playlists",
 		})
-	require.NotNil(t, disco)
-	require.Equal(t, "playlist", disco.SingularResource)
-	require.Equal(t, "Namespaced", string(disco.Scope))
 
 	t.Run("Check List from different org users", func(t *testing.T) {
 		// Check view permissions

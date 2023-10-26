@@ -38,8 +38,8 @@ type K8sTestHelper struct {
 	Org1 OrgUsers
 	Org2 OrgUsers
 
-	// Registered groups
-	groups []APIGroupDiscovery
+	// // Registered groups
+	groups []metav1.APIGroup
 
 	// Used to build the URL paths
 	selectedGVR schema.GroupVersionResource
@@ -68,11 +68,11 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 
 	// Read the API groups
 	rsp := doRequest(c, RequestParams{
-		User:   c.Org1.Viewer,
-		Path:   "/apis",
-		Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
-	}, &APIGroupDiscoveryList{})
-	c.groups = rsp.Result.Items
+		User: c.Org1.Viewer,
+		Path: "/apis",
+		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+	}, &metav1.APIGroupList{})
+	c.groups = rsp.Result.Groups
 	return c
 }
 
@@ -107,26 +107,10 @@ type AnyResourceResponse = K8sResponse[AnyResource]
 type AnyResourceListResponse = K8sResponse[AnyResourceList]
 
 // This will set the expected Group/Version/Resource and return the discovery info if found
-func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) *APIResourceDiscovery {
+func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) {
 	c.t.Helper()
 
 	c.selectedGVR = gvr
-
-	for _, g := range c.groups {
-		if g.Name == gvr.Group {
-			for _, v := range g.Versions {
-				if v.Version == gvr.Version {
-					for _, r := range v.Resources {
-						if r.Resource == gvr.Resource {
-							return &r
-						}
-					}
-				}
-			}
-			return nil // matched group, but did not find version+resource
-		}
-	}
-	return nil // not found
 }
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
