@@ -43,6 +43,7 @@ type Query struct {
 	FolderUIDs []string
 	Permission dashboardaccess.PermissionType
 	Sort       string
+	PanelTitle string
 }
 
 type Service interface {
@@ -91,6 +92,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Limit:         query.Limit,
 		Page:          query.Page,
 		Permission:    query.Permission,
+		PanelTitle:    query.PanelTitle,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
