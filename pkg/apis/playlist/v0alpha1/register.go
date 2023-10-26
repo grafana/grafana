@@ -73,34 +73,33 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		namespacer:                b.namespacer,
 		DefaultQualifiedResource:  b.gv.WithResource("playlists").GroupResource(),
 		SingularQualifiedResource: b.gv.WithResource("playlist").GroupResource(),
-		tableConverter: utils.NewTableConverter(
-			b.gv.WithResource("playlists").GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-				{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj runtime.Object) ([]interface{}, error) {
-				m, ok := obj.(*Playlist)
-				if !ok {
-					return nil, fmt.Errorf("expected playlist")
-				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.Spec.Interval,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		),
 	}
+	legacyStore.tableConverter = utils.NewTableConverter(
+		legacyStore.DefaultQualifiedResource,
+		[]metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
+			{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
+			{Name: "Created At", Type: "date"},
+		},
+		func(obj runtime.Object) ([]interface{}, error) {
+			m, ok := obj.(*Playlist)
+			if !ok {
+				return nil, fmt.Errorf("expected playlist")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.Spec.Interval,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	)
 	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
-		store, err := newStorage(scheme, optsGetter, b.gv)
-		store.TableConvertor = legacyStore.tableConverter
+		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
 		}

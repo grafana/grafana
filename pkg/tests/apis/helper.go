@@ -10,9 +10,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
+
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
@@ -38,11 +43,8 @@ type K8sTestHelper struct {
 	Org1 OrgUsers
 	Org2 OrgUsers
 
-	// Registered groups
-	groups []APIGroupDiscovery
-
-	// Used to build the URL paths
-	selectedGVR schema.GroupVersionResource
+	// // Registered groups
+	groups []metav1.APIGroup
 }
 
 func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
@@ -67,13 +69,89 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	c.Org2 = c.createTestUsers(int64(2))
 
 	// Read the API groups
-	rsp := doRequest(c, RequestParams{
-		User:   c.Org1.Viewer,
-		Path:   "/apis",
-		Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
-	}, &APIGroupDiscoveryList{})
-	c.groups = rsp.Result.Items
+	rsp := DoRequest(c, RequestParams{
+		User: c.Org1.Viewer,
+		Path: "/apis",
+		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+	}, &metav1.APIGroupList{})
+	c.groups = rsp.Result.Groups
 	return c
+}
+
+type ResourceClientArgs struct {
+	User      User
+	Namespace string
+	GVR       schema.GroupVersionResource
+}
+
+type K8sResourceClient struct {
+	t        *testing.T
+	Args     ResourceClientArgs
+	Resource dynamic.ResourceInterface
+}
+
+// This will set the expected Group/Version/Resource and return the discovery info if found
+func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
+	c.t.Helper()
+
+	if args.Namespace == "" {
+		args.Namespace = c.namespacer(args.User.Identity.GetOrgID())
+	}
+
+	addr := c.env.Server.HTTPServer.Listener.Addr()
+	baseUrl := fmt.Sprintf("http://%s", addr)
+	login := args.User.Identity.GetLogin()
+	if login != "" && args.User.password != "" {
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, args.User.password, addr)
+	}
+
+	config := &rest.Config{
+		Host: baseUrl,
+		//	BearerToken: "example",
+	}
+
+	client, err := dynamic.NewForConfig(config)
+	require.NoError(c.t, err)
+	return &K8sResourceClient{
+		t:        c.t,
+		Args:     args,
+		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
+	}
+}
+
+// Cast the error to status error
+func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
+	c.t.Helper()
+
+	if err == nil {
+		return nil
+	}
+
+	//nolint:errorlint
+	statusError, ok := err.(*errors.StatusError)
+	require.True(c.t, ok)
+	return statusError
+}
+
+// remove the meta keys that are expected to change each time
+func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
+	c.t.Helper()
+
+	copy := v.DeepCopy().Object
+	meta, ok := copy["metadata"].(map[string]any)
+	require.True(c.t, ok)
+
+	replaceMeta := []string{"creationTimestamp", "resourceVersion", "uid"}
+	for _, key := range replaceMeta {
+		old, ok := meta[key]
+		require.True(c.t, ok)
+		require.NotEmpty(c.t, old)
+		meta[key] = fmt.Sprintf("${%s}", key)
+	}
+
+	out, err := json.MarshalIndent(copy, "", "  ")
+	require.NoError(c.t, err)
+	return string(out)
 }
 
 type OrgUsers struct {
@@ -106,29 +184,6 @@ type K8sResponse[T any] struct {
 type AnyResourceResponse = K8sResponse[AnyResource]
 type AnyResourceListResponse = K8sResponse[AnyResourceList]
 
-// This will set the expected Group/Version/Resource and return the discovery info if found
-func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) *APIResourceDiscovery {
-	c.t.Helper()
-
-	c.selectedGVR = gvr
-
-	for _, g := range c.groups {
-		if g.Name == gvr.Group {
-			for _, v := range g.Versions {
-				if v.Version == gvr.Version {
-					for _, r := range v.Resources {
-						if r.Resource == gvr.Resource {
-							return &r
-						}
-					}
-				}
-			}
-			return nil // matched group, but did not find version+resource
-		}
-	}
-	return nil // not found
-}
-
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
 
@@ -146,7 +201,7 @@ func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyReso
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		Method: http.MethodPost,
 		Path:   path,
 		User:   user,
@@ -163,7 +218,7 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		Method: http.MethodPut,
 		Path:   path,
 		User:   user,
@@ -171,20 +226,20 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	}, &AnyResource{})
 }
 
-func (c *K8sTestHelper) List(user User, namespace string) AnyResourceListResponse {
+func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersionResource) AnyResourceListResponse {
 	c.t.Helper()
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		User: user,
 		Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
-			c.selectedGVR.Group,
-			c.selectedGVR.Version,
+			gvr.Group,
+			gvr.Version,
 			namespace,
-			c.selectedGVR.Resource),
+			gvr.Resource),
 	}, &AnyResourceList{})
 }
 
-func doRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
+func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
 	c.t.Helper()
 
 	if params.Method == "" {
