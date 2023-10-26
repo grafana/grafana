@@ -482,9 +482,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		}
-
-		if err != nil && namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.NamespaceUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
