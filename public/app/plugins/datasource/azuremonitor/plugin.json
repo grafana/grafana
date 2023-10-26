@@ -12,6 +12,11 @@
     },
     {
       "type": "dashboard",
+      "name": "Azure Monitor / Container Insights / Syslog",
+      "path": "dashboards/containerInsightsSyslog.json"
+    },
+    {
+      "type": "dashboard",
       "name": "Azure / Insights / Applications",
       "path": "dashboards/appInsights.json"
     },
