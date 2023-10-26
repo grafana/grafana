@@ -206,7 +206,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
-    if (!row || !row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+    if (!row?.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
       return false;
     }
 
