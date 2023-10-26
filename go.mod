@@ -282,6 +282,7 @@ require (
 	k8s.io/component-base v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
+	sigs.k8s.io/yaml v1.3.0 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
@@ -289,8 +290,6 @@ require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana
 require github.com/grafana/pyroscope/api v0.2.0 // @grafana/observability-traces-and-profiling
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
-
-require sigs.k8s.io/yaml v1.3.0
 
 require (
 	cloud.google.com/go v0.110.8 // indirect
