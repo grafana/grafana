@@ -12,8 +12,8 @@ import {
   Label,
   HorizontalGroup,
   TextArea,
+  Box,
 } from '@grafana/ui';
-import { Box } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
