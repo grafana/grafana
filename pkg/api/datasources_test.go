@@ -270,7 +270,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 		// 	data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
 		// 		{
 		// 			Header: "X-Prom-Label-Policy",
-		// 			Value:  "foo!=bar",
+		// 			Value:  `1234:{ name!="value",foo!~"bar" }`,
 		// 		},
 		// 	},
 		// 	},
