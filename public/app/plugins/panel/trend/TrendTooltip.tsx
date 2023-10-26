@@ -6,16 +6,19 @@ import {
   DashboardCursorSync,
   DataFrame,
   FALLBACK_COLOR,
+  Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
   GrafanaTheme2,
+  LinkModel,
   TimeZone,
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { SeriesTableRowProps, useStyles2, useTheme2 } from '@grafana/ui';
 import { SeriesList } from '@grafana/ui/src/components/VizTooltip/SeriesList';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 
@@ -59,18 +62,33 @@ export const TrendTooltip = ({
   let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
   let tooltip: React.ReactNode = null;
 
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
   // Single mode
-  if (mode === TooltipDisplayMode.Single && seriesIdx !== null) {
-    const field = data.fields[seriesIdx];
+  if (mode === TooltipDisplayMode.Single || isPinned) {
+    const field = data.fields[seriesIdx!];
 
     if (!field) {
       return null;
     }
 
-    const dataIdx = dataIdxs[seriesIdx]!;
+    const dataIdx = dataIdxs[seriesIdx!]!;
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
     const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
     const display = fieldFmt(field.values[dataIdx]);
+
+    if (field.getLinks) {
+      const v = field.values[dataIdx];
+      const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+      field.getLinks({ calculatedValue: disp, valueRowIndex: dataIdx }).forEach((link) => {
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
+        }
+      });
+    }
 
     tooltip = (
       <SeriesList
@@ -85,7 +103,7 @@ export const TrendTooltip = ({
     );
   }
 
-  if (mode === TooltipDisplayMode.Multi) {
+  if (mode === TooltipDisplayMode.Multi && !isPinned) {
     let series: SeriesTableRowProps[] = [];
     const frame = data;
     const fields = frame.fields;
@@ -143,6 +161,7 @@ export const TrendTooltip = ({
     <div>
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} customValueDisplay={tooltip} />
+        {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
       </div>
     </div>
   );
@@ -153,6 +172,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     width: '280px',
-    padding: theme.spacing(0.5),
   }),
 });
