@@ -1,16 +1,98 @@
 package azmoncredentials
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-azure-sdk-go/util/maputil"
 )
 
-// Azure cloud names specific to Azure Monitor
+func FromDatasourceData(data map[string]interface{}, secureData map[string]string) (azcredentials.AzureCredentials, error) {
+	var credentials azcredentials.AzureCredentials
+	var err error
+
+	credentials, err = azcredentials.FromDatasourceData(data, secureData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fallback to legacy credentials format
+	if credentials == nil {
+		credentials, err = getFromLegacy(data, secureData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return credentials, err
+}
+
+func getFromLegacy(data map[string]interface{}, secureData map[string]string) (azcredentials.AzureCredentials, error) {
+	authType, err := maputil.GetStringOptional(data, "azureAuthType")
+	if err != nil {
+		return nil, err
+	}
+	tenantId, err := maputil.GetStringOptional(data, "tenantId")
+	if err != nil {
+		return nil, err
+	}
+	clientId, err := maputil.GetStringOptional(data, "clientId")
+	if err != nil {
+		return nil, err
+	}
+
+	if authType == "" {
+		// Some very old legacy datasources may not have explicit auth type specified,
+		// but they imply App Registration authentication
+		if tenantId != "" && clientId != "" {
+			authType = azcredentials.AzureAuthClientSecret
+		}
+
+		return nil, nil
+	}
+
+	switch authType {
+	case azcredentials.AzureAuthManagedIdentity:
+		credentials := &azcredentials.AzureManagedIdentityCredentials{}
+		return credentials, nil
+
+	case azcredentials.AzureAuthWorkloadIdentity:
+		credentials := &azcredentials.AzureWorkloadIdentityCredentials{}
+		return credentials, nil
+
+	case azcredentials.AzureAuthClientSecret:
+		legacyCloud, err := maputil.GetStringOptional(data, "cloudName")
+		if err != nil {
+			return nil, err
+		}
+		cloud, err := resolveLegacyCloudName(legacyCloud)
+		if err != nil {
+			return nil, err
+		}
+		clientSecret := secureData["clientSecret"]
+
+		// If any of the required fields are not set then credentials are not configured
+		if tenantId == "" || clientId == "" || clientSecret == "" {
+			return nil, nil
+		}
+
+		credentials := &azcredentials.AzureClientSecretCredentials{
+			AzureCloud:   cloud,
+			TenantId:     tenantId,
+			ClientId:     clientId,
+			ClientSecret: clientSecret,
+		}
+
+		return credentials, nil
+
+	default:
+		err := fmt.Errorf("the authentication type '%s' not supported", authType)
+		return nil, err
+	}
+}
+
+// Legacy Azure cloud names used by the Azure Monitor datasource
 const (
 	azureMonitorPublic       = "azuremonitor"
 	azureMonitorChina        = "chinaazuremonitor"
@@ -18,50 +100,7 @@ const (
 	azureMonitorCustomized   = "customizedazuremonitor"
 )
 
-type azureClientSettings struct {
-	AzureAuthType string
-	CloudName     string
-	TenantId      string
-	ClientId      string
-}
-
-func FromDatasourceData(cfg *setting.Cfg, jsonDataRaw json.RawMessage, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
-	azClientSettings := azureClientSettings{}
-	err := json.Unmarshal(jsonDataRaw, &azClientSettings)
-	if err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
-	}
-	return getAzureCredentials(cfg, &azClientSettings, secureJsonData)
-}
-
-func getAuthType(cfg *setting.Cfg, jsonData *azureClientSettings) string {
-	if azureAuthType := jsonData.AzureAuthType; azureAuthType != "" {
-		return azureAuthType
-	} else {
-		tenantId := jsonData.TenantId
-		clientId := jsonData.ClientId
-
-		// If authentication type isn't explicitly specified and datasource has client credentials,
-		// then this is existing datasource which is configured for app registration (client secret)
-		if tenantId != "" && clientId != "" {
-			return azcredentials.AzureAuthClientSecret
-		}
-
-		// For newly created datasource with no configuration the order is as follows:
-		// Managed identity is the default if enabled
-		// Workload identity is the next option if enabled
-		// Client secret is the final fallback
-		if cfg.Azure.ManagedIdentityEnabled {
-			return azcredentials.AzureAuthManagedIdentity
-		} else if cfg.Azure.WorkloadIdentityEnabled {
-			return azcredentials.AzureAuthWorkloadIdentity
-		} else {
-			return azcredentials.AzureAuthClientSecret
-		}
-	}
-}
-
-func normalizeAzureCloud(cloudName string) (string, error) {
+func resolveLegacyCloudName(cloudName string) (string, error) {
 	switch cloudName {
 	case azureMonitorPublic:
 		return azsettings.AzurePublic, nil
@@ -71,58 +110,10 @@ func normalizeAzureCloud(cloudName string) (string, error) {
 		return azsettings.AzureUSGovernment, nil
 	case azureMonitorCustomized:
 		return azsettings.AzureCustomized, nil
+	case "":
+		return azsettings.AzurePublic, nil
 	default:
-		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
+		err := fmt.Errorf("the Azure cloud '%s' not supported by Azure Monitor datasource", cloudName)
 		return "", err
-	}
-}
-
-func getAzureCloud(cfg *setting.Cfg, jsonData *azureClientSettings) (string, error) {
-	authType := getAuthType(cfg, jsonData)
-	switch authType {
-	case azcredentials.AzureAuthManagedIdentity, azcredentials.AzureAuthWorkloadIdentity:
-		// In case of managed identity and workload identity, the cloud is always same as where Grafana is hosted
-		return cfg.Azure.GetDefaultCloud(), nil
-	case azcredentials.AzureAuthClientSecret:
-		if cloud := jsonData.CloudName; cloud != "" {
-			return normalizeAzureCloud(cloud)
-		} else {
-			return cfg.Azure.GetDefaultCloud(), nil
-		}
-	default:
-		err := fmt.Errorf("the authentication type '%s' not supported", authType)
-		return "", err
-	}
-}
-
-func getAzureCredentials(cfg *setting.Cfg, jsonData *azureClientSettings, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
-	authType := getAuthType(cfg, jsonData)
-
-	switch authType {
-	case azcredentials.AzureAuthManagedIdentity:
-		credentials := &azcredentials.AzureManagedIdentityCredentials{}
-		return credentials, nil
-	case azcredentials.AzureAuthWorkloadIdentity:
-		credentials := &azcredentials.AzureWorkloadIdentityCredentials{}
-		return credentials, nil
-	case azcredentials.AzureAuthClientSecret:
-		cloud, err := getAzureCloud(cfg, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		if secureJsonData["clientSecret"] == "" {
-			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
-		}
-		credentials := &azcredentials.AzureClientSecretCredentials{
-			AzureCloud:   cloud,
-			TenantId:     jsonData.TenantId,
-			ClientId:     jsonData.ClientId,
-			ClientSecret: secureJsonData["clientSecret"],
-		}
-		return credentials, nil
-
-	default:
-		err := fmt.Errorf("the authentication type '%s' not supported", authType)
-		return nil, err
 	}
 }

@@ -79,8 +79,8 @@ func getDatasourceService(ctx context.Context, settings *backend.DataSourceInsta
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonDataObj := map[string]any{}
-		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
+		jsonData := map[string]any{}
+		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -91,9 +91,11 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		credentials, err := azmoncredentials.FromDatasourceData(cfg, settings.JSONData, settings.DecryptedSecureJSONData)
+		credentials, err := azmoncredentials.FromDatasourceData(jsonData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
+		} else if credentials == nil {
+			credentials = azmoncredentials.GetDefaultCredentials(cfg.Azure)
 		}
 
 		cloud, err := azcredentials.GetAzureCloud(cfg.Azure, credentials)
@@ -110,7 +112,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			Cloud:                   cloud,
 			Credentials:             credentials,
 			Settings:                azMonitorSettings,
-			JSONData:                jsonDataObj,
+			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Routes:                  routesForModel,
