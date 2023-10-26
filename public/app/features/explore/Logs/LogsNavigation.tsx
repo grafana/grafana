@@ -91,7 +91,7 @@ function LogsNavigation({
     if (!scrollView) {
       return;
     }
-    const delta = 0;
+    const delta = 1;
     function handleScroll(e: Event) {
       if (!e.target || !loadMore) {
         return;
