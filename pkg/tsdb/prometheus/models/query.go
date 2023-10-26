@@ -93,7 +93,6 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := interpolateVariables(
 		model.Expr,
-		model.Interval,
 		time.Duration(model.IntervalMs)*time.Millisecond,
 		calculatedMinStep,
 		timeRange,
@@ -215,7 +214,6 @@ func calculateRateInterval(
 // timeRange                    Requested time range for query
 func interpolateVariables(
 	expr string,
-	queryInterval string,
 	queryIntervalMs time.Duration,
 	calculatedMinStep time.Duration,
 	timeRange time.Duration,
@@ -223,12 +221,7 @@ func interpolateVariables(
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
-	var rateInterval time.Duration
-	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
-		rateInterval = calculatedMinStep
-	} else {
-		rateInterval = calculateRateInterval(queryIntervalMs, calculatedMinStep.String())
-	}
+	rateInterval := calculateRateInterval(queryIntervalMs, calculatedMinStep.String())
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryIntervalMs/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(queryIntervalMs))
