@@ -112,7 +112,10 @@ export function LogsTableWrap(props: Props) {
     // Normalize the other fields
     otherFields.forEach((field) => {
       pendingLabelState[field.name] = {
-        percentOfLinesWithLabel: normalize(field.values.filter((value) => value).length, numberOfLogLines),
+        percentOfLinesWithLabel: normalize(
+          field.values.filter((value) => value !== null && value !== undefined).length,
+          numberOfLogLines
+        ),
         active: pendingLabelState[field.name]?.active,
       };
     });
@@ -219,7 +222,7 @@ export function LogsTableWrap(props: Props) {
 }
 
 const normalize = (value: number, total: number): number => {
-  return Math.floor((100 * value) / total);
+  return Math.ceil((100 * value) / total);
 };
 
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {
