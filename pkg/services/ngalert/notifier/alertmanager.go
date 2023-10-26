@@ -395,10 +395,6 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-func (am *alertmanager) ConfigHash() [16]byte {
-	return am.Base.ConfigHash()
-}
-
 func (am *alertmanager) OrgID() int64 {
 	return am.orgID
 }
