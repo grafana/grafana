@@ -34,6 +34,8 @@ const ui = {
   setDashboardButton: byRole('button', { name: 'Link dashboard and panel' }),
   annotationKeys: byTestId('annotation-key-', { exact: false }),
   annotationValues: byTestId('annotation-value-', { exact: false }),
+  dashboardAnnotation: byTestId('dashboard-annotation'),
+  panelAnnotation: byTestId('panel-annotation'),
   dashboardPicker: {
     dialog: byRole('dialog'),
     heading: byRole('heading', { name: 'Select dashboard and panel' }),
@@ -325,5 +327,34 @@ describe('AnnotationsField', function () {
     const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
 
     expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
+  });
+
+  it('should render when panels do not contain certain fields', async () => {
+    mockDashboardApi(server).search([
+      mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+    ]);
+
+    mockDashboardApi(server).dashboard(
+      mockDashboardDto({
+        title: 'My dashboard',
+        uid: 'dash-test-uid',
+        panels: [{ type: 'row' }, { type: 'timeseries' }, { id: 4, type: 'graph' }, { title: 'Graph', type: 'graph' }],
+      })
+    );
+
+    render(
+      <FormWrapper
+        formValues={{
+          annotations: [
+            { key: Annotation.dashboardUID, value: 'dash-test-uid' },
+            { key: Annotation.panelID, value: '1' },
+          ],
+        }}
+      />
+    );
+
+    expect(await ui.dashboardAnnotation.find()).toBeInTheDocument();
+    expect(ui.dashboardAnnotation.get()).toHaveTextContent('My dashboard');
+    expect(ui.panelAnnotation.query()).not.toBeInTheDocument();
   });
 });
