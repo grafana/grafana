@@ -161,7 +161,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
     </>
   );
 };
-const getUnloadEvaluatorTypeFromCondition = (condition: ClassicCondition) => {
+export function getUnloadEvaluatorTypeFromCondition(condition: ClassicCondition) {
   // we don't let the user change the unload evaluator type. We just change it to the opposite of the evaluator type
   if (condition.evaluator.type === EvalFunction.IsAbove) {
     return EvalFunction.IsBelow;
@@ -176,7 +176,7 @@ const getUnloadEvaluatorTypeFromCondition = (condition: ClassicCondition) => {
     return EvalFunction.IsWithinRange;
   }
   return EvalFunction.IsBelow;
-};
+}
 
 function updateEvaluatorConditions(
   conditions: ClassicCondition[],
