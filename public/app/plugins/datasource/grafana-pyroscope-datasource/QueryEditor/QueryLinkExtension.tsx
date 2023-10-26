@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps, TimeRange } from '@grafana/data';
 import { getBackendSrv, getPluginLinkExtensions } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { PyroscopeDataSource } from '../datasource';
 import { PyroscopeDataSourceOptions, Query } from '../types';
+import { useAsync } from 'react-use';
 
 const EXTENSION_POINT_ID = 'plugins/grafana-pyroscope-datasource/query-links';
 
@@ -69,18 +70,6 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
   });
 
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    let datasourceSettings = pyroscopeDatasourceSettingsByUid[datasourceUid];
-
-    if (datasourceSettings == null) {
-      // This explicit fetch of the datasource by its id ensures that we obtain its authentication settings
-      datasourceSettings = getBackendSrv().get<PyroscopeDatasourceSettings>(`/api/datasources/uid/${datasourceUid}`);
-      pyroscopeDatasourceSettingsByUid[datasourceUid] = datasourceSettings;
-    }
-
-    datasourceSettings.then(setDatasourceSettings, () => setDatasourceSettings(undefined));
-  }, [datasourceUid]);
 
   if (extensions.length === 0) {
     return null;
