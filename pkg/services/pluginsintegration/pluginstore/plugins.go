@@ -1,8 +1,6 @@
 package pluginstore
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 )
@@ -53,10 +51,10 @@ func (p Plugin) IsCorePlugin() bool {
 
 func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 	supportsStreaming := false
-	pc, exists := p.Client()
-	if exists && pc != nil && pc.(backend.StreamHandler) != nil {
-		supportsStreaming = true
-	}
+	//pc, exists := p.Client()
+	//if exists && pc != nil && pc.(backend.StreamHandler) != nil {
+	//	supportsStreaming = true
+	//}
 
 	return Plugin{
 		fs:                p.FS,

@@ -61,7 +61,6 @@ type Plugin struct {
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
-	client         backendplugin.Plugin
 	log            log.Logger
 
 	mu sync.Mutex
@@ -232,52 +231,30 @@ func (p *Plugin) Start(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if p.client == nil {
-		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
-	}
-
-	return p.client.Start(ctx)
+	//if p.client == nil {
+	//	return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
+	//}
+	//
+	//return p.client.Start(ctx)
+	return nil
 }
 
 func (p *Plugin) Stop(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if p.client == nil {
-		return nil
-	}
-
-	return p.client.Stop(ctx)
-}
-
-func (p *Plugin) IsManaged() bool {
-	if p.client != nil {
-		return p.client.IsManaged()
-	}
-	return false
-}
-
-func (p *Plugin) Decommission() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if p.client != nil {
-		return p.client.Decommission()
-	}
+	//if p.client == nil {
+	//	return nil
+	//}
+	//
+	//return p.client.Stop(ctx)
 	return nil
 }
 
 func (p *Plugin) IsDecommissioned() bool {
-	if p.client != nil {
-		return p.client.IsDecommissioned()
-	}
-	return false
-}
-
-func (p *Plugin) Exited() bool {
-	if p.client != nil {
-		return p.client.Exited()
-	}
+	//if p.client != nil {
+	//	return p.client.IsDecommissioned()
+	//}
 	return false
 }
 
@@ -285,66 +262,10 @@ func (p *Plugin) Target() backendplugin.Target {
 	if !p.Backend {
 		return backendplugin.TargetNone
 	}
-	if p.client == nil {
-		return backendplugin.TargetUnknown
-	}
-	return p.client.Target()
-}
-
-func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.QueryData(ctx, req)
-}
-
-func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return ErrPluginUnavailable
-	}
-	return pluginClient.CallResource(ctx, req, sender)
-}
-
-func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.CheckHealth(ctx, req)
-}
-
-func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.CollectMetrics(ctx, req)
-}
-
-func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.SubscribeStream(ctx, req)
-}
-
-func (p *Plugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.PublishStream(ctx, req)
-}
-
-func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return ErrPluginUnavailable
-	}
-	return pluginClient.RunStream(ctx, req, sender)
+	//if p.client == nil {
+	//	return backendplugin.TargetUnknown
+	//}
+	return backendplugin.TargetUnknown
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -364,17 +285,6 @@ func (p *Plugin) File(name string) (fs.File, error) {
 	}
 
 	return f, nil
-}
-
-func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
-	p.client = c
-}
-
-func (p *Plugin) Client() (PluginClient, bool) {
-	if p.client != nil {
-		return p.client, true
-	}
-	return nil, false
 }
 
 func (p *Plugin) ExecutablePath() string {

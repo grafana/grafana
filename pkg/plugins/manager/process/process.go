@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 var (
@@ -17,8 +17,8 @@ func ProvideService() *Service {
 	return &Service{}
 }
 
-func (*Service) Start(ctx context.Context, p *plugins.Plugin) error {
-	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
+func (*Service) Start(ctx context.Context, p backendplugin.Plugin) error {
+	if !p.IsManaged() {
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func (*Service) Start(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (*Service) Stop(ctx context.Context, p *plugins.Plugin) error {
+func (*Service) Stop(ctx context.Context, p backendplugin.Plugin) error {
 	p.Logger().Debug("Stopping plugin process")
 	if err := p.Decommission(); err != nil {
 		return err
@@ -43,16 +43,12 @@ func (*Service) Stop(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plugin) error {
+func startPluginAndKeepItAlive(ctx context.Context, p backendplugin.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
 	}
 
-	if p.IsCorePlugin() {
-		return nil
-	}
-
-	go func(p *plugins.Plugin) {
+	go func(p backendplugin.Plugin) {
 		if err := keepPluginAlive(p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
@@ -62,7 +58,7 @@ func startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plugin) error {
 }
 
 // keepPluginAlive will restart the plugin if the process is killed or exits
-func keepPluginAlive(p *plugins.Plugin) error {
+func keepPluginAlive(p backendplugin.Plugin) error {
 	ticker := time.NewTicker(keepPluginAliveTickerDuration)
 
 	for {

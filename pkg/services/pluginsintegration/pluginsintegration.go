@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
@@ -62,11 +63,15 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+	wire.Bind(new(client.Registry), new(*client.BackendClientRegistry)),
+	client.ProvideBackendClientRegistry,
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
+	wire.Bind(new(envvars.Provider), new(*envvars.Service)),
+	envvars.NewProvider,
 
 	pipeline.ProvideDiscoveryStage,
 	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
@@ -137,17 +142,19 @@ func ProvideClientDecorator(
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
 	promRegisterer prometheus.Registerer,
+	backendClientRegistry client.Registry,
 ) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
+	return NewClientDecorator(cfg, pCfg, backendClientRegistry, oAuthTokenService, tracer, cachingService, features,
+		promRegisterer, pluginRegistry)
 }
 
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
-	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
+	backendClientRegistry client.Registry, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
 	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*client.Decorator, error) {
-	c := client.ProvideService(pluginRegistry, pCfg)
+	c := client.ProvideService(pCfg, backendClientRegistry)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
 	return client.NewDecorator(c, middlewares...)
 }
