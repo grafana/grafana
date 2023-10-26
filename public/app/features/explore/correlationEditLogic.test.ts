@@ -24,11 +24,11 @@ describe('correlationEditLogic', function () {
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE} | ${true}  | ${true}  | ${true}  | ${'Changing the datasource will cause the correlation in progress to be lost. Would you like to save before continuing?'}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${false} | ${false} | ${false} | ${undefined}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${false} | ${true}  | ${false} | ${'Closing the editor will cause the correlation in progress to be lost. Would you like to save before continuing?'}
-    ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${false} | ${false} | ${true}  | ${'Closing the editor will lose the changed query. Would you like to save before continuing?'}
+    ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${false} | ${false} | ${true}  | ${'Closing the editor will remove the variables, and your changed query may no longer be valid. Would you like to save before continuing?'}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${false} | ${true}  | ${true}  | ${'Closing the editor will cause the correlation in progress to be lost. Would you like to save before continuing?'}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${true}  | ${false} | ${false} | ${undefined}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${true}  | ${true}  | ${false} | ${'Closing the editor will cause the correlation in progress to be lost. Would you like to save before continuing?'}
-    ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${true}  | ${false} | ${true}  | ${'Closing the editor will lose the changed query. Would you like to save before continuing?'}
+    ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${true}  | ${false} | ${true}  | ${'Closing the editor will remove the variables, and your changed query may no longer be valid. Would you like to save before continuing?'}
     ${CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_EDITOR}      | ${true}  | ${true}  | ${true}  | ${'Closing the editor will cause the correlation in progress to be lost. Would you like to save before continuing?'}
   `(
     "Action $action, isLeft=$isLeft, dirtyCorrelation=$dirCor, dirtyQueryEditor=$dirQuer should return message '$expected'",
