@@ -3,7 +3,6 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
-import { config } from 'yargs';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
