@@ -292,7 +292,7 @@ Enable this feature by setting the `managed_identity_enabled` property to `true`
 2. In this section, select either **Managed Identity** or **App Registration**.
 3. Enter the credentials accordingly.
 
-{{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-mssql-ui-cropped.png" caption="Azure MSI Authentication" max-width="500" >}}
+{{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-mssql-ui-cropped.png" caption="Azure MSI Authentication" max-width="550px" >}}
 
 Learn more in the [Microsoft SQL Server documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/).
 
