@@ -1,6 +1,6 @@
 import { DataFrameView } from '../../dataframe';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformContext, NullValueMode, ScopedVars } from '../../types';
+import { DataTransformContext, ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';
 import { BinaryOperationID, UnaryOperationID } from '../../utils';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
