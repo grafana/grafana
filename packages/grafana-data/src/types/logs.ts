@@ -139,8 +139,8 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    */
   getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
 
-  /**
-   * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
+  /** 
+   * @deprecated Deprecated since 10.3. To display the context option and support the feature implement this interface instead.
    */
   showContextToggle(row?: LogRowModel): boolean;
 
@@ -157,7 +157,7 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
     return false;
   }
 
-  return 'getLogRowContext' in datasource && 'showContextToggle' in datasource;
+  return 'getLogRowContext' in datasource;
 };
 
 /**
