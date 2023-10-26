@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	PluginInstallToken               string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -432,6 +433,7 @@ type Cfg struct {
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
 	RudderstackConfigURL                string
+	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 
 	// AzureAD
@@ -482,7 +484,8 @@ type Cfg struct {
 	// Zero value means in-memory single node setup.
 	LiveHAEngine string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
-	LiveHAEngineAddress string
+	LiveHAEngineAddress  string
+	LiveHAEnginePassword string
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
@@ -1112,6 +1115,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -1497,9 +1501,7 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	// FIXME: for now we skip org role sync for google auth
-	// as we do not sync organization roles from Google
-	cfg.GoogleSkipOrgRoleSync = true
+	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(true)
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
@@ -1628,7 +1630,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	// Extended JWT auth
-	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
 	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
@@ -1991,6 +1993,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 
 	var originPatterns []string
 	allowedOrigins := section.Key("allowed_origins").MustString("")

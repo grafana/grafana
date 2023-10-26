@@ -1,13 +1,24 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
-import { openai } from './llms';
+import { llms } from '@grafana/experimental';
+import { logError } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
+
 import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = openai.Message;
+type Message = llms.openai.Message;
+
+export enum StreamStatus {
+  IDLE = 'idle',
+  GENERATING = 'generating',
+  COMPLETED = 'completed',
+}
+
+export const TIMEOUT = 10000;
 
 // TODO: Add tests
 export function useOpenAIStream(
@@ -16,15 +27,15 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  isGenerating: boolean;
+  streamStatus: StreamStatus;
   error: Error | undefined;
   value:
     | {
-        enabled: boolean;
+        enabled: boolean | undefined;
         stream?: undefined;
       }
     | {
-        enabled: boolean;
+        enabled: boolean | undefined;
         stream: Subscription;
       }
     | undefined;
@@ -33,23 +44,39 @@ export function useOpenAIStream(
   const [messages, setMessages] = useState<Message[]>([]);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
+  const [error, setError] = useState<Error>();
+  const { error: notifyError } = useAppNotification();
 
-  const [isGenerating, setIsGenerating] = useState(false);
+  const onError = useCallback(
+    (e: Error) => {
+      setStreamStatus(StreamStatus.IDLE);
+      setMessages([]);
+      setError(e);
+      notifyError(
+        'Failed to generate content using OpenAI',
+        `Please try again or if the problem persists, contact your organization admin.`
+      );
+      console.error(e);
+      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+    },
+    [messages, model, temperature, notifyError]
+  );
 
-  const { error, value } = useAsync(async () => {
-    // Check if the LLM plugin is enabled and configured.
-    // If not, we won't be able to make requests, so return early.
-    const enabled = await isLLMPluginEnabled();
-    if (!enabled) {
+  const { error: enabledError, value: enabled } = useAsync(
+    async () => await isLLMPluginEnabled(),
+    [isLLMPluginEnabled]
+  );
+
+  const { error: asyncError, value } = useAsync(async () => {
+    if (!enabled || !messages.length) {
       return { enabled };
     }
-    if (messages.length === 0) {
-      return { enabled };
-    }
 
-    setIsGenerating(true);
+    setStreamStatus(StreamStatus.GENERATING);
+    setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = openai
+    const stream = llms.openai
       .streamChatCompletions({
         model,
         temperature,
@@ -58,40 +85,61 @@ export function useOpenAIStream(
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        openai.accumulateContent()
+        llms.openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
         // The operator decision tree on the rxjs website is a useful resource:
-        // https://rxjs.dev/operator-decision-tree.
+        // https://rxjs.dev/operator-decision-tree.)
       );
     // Subscribe to the stream and update the state for each returned value.
     return {
       enabled,
       stream: stream.subscribe({
         next: setReply,
-        error: (e) => {
-          console.log('The backend for the stream returned an error and nobody has implemented error handling yet!');
-          console.log(e);
-        },
+        error: onError,
         complete: () => {
-          setIsGenerating(false);
+          setStreamStatus(StreamStatus.COMPLETED);
+          setTimeout(() => {
+            setStreamStatus(StreamStatus.IDLE);
+          });
           setMessages([]);
+          setError(undefined);
         },
       }),
     };
-  }, [messages]);
+  }, [messages, enabled]);
 
-  if (error) {
-    // TODO: handle errors.
-    console.log('An error occurred');
-    console.log(error.message);
+  // Unsubscribe from the stream when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (value?.stream) {
+        value.stream.unsubscribe();
+      }
+    };
+  }, [value]);
+
+  // If the stream is generating and we haven't received a reply, it times out.
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+    if (streamStatus === StreamStatus.GENERATING && reply === '') {
+      timeout = setTimeout(() => {
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+      }, TIMEOUT);
+    }
+    return () => {
+      timeout && clearTimeout(timeout);
+    };
+  }, [streamStatus, reply, onError]);
+
+  if (asyncError || enabledError) {
+    setError(asyncError || enabledError);
   }
 
   return {
     setMessages,
     reply,
-    isGenerating,
+    streamStatus,
     error,
     value,
   };

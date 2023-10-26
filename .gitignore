@@ -20,7 +20,7 @@ tsconfig.tsbuildinfo
 __debug_bin*
 
 # Yarn
-.yarn/*
+.yarn/
 !.yarn/patches
 !.yarn/releases
 !.yarn/plugins
@@ -200,3 +200,10 @@ deployment_tools_config.json
 
 # Temporary file for backporting PRs
 .pr-body.txt
+
+# Core plugin builds
+public/app/plugins/**/dist/
+
+# Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
+/public/app/features/transformers/docs/*.js
+/scripts/docs/generate-transformations.js

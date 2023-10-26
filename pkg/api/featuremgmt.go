@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -36,6 +37,9 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 		}
 
 		dtos = append(dtos, dto)
+		sort.Slice(dtos, func(i, j int) bool {
+			return dtos[i].Name < dtos[j].Name
+		})
 	}
 
 	return response.JSON(http.StatusOK, dtos)
@@ -78,7 +82,14 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Respond(http.StatusBadRequest, "Failed to perform webhook request")
 	}
 
+	hs.Features.SetRestartRequired()
+
 	return response.Respond(http.StatusOK, "feature toggles updated successfully")
+}
+
+func (hs *HTTPServer) GetFeatureMgmtState(ctx *contextmodel.ReqContext) response.Response {
+	fmState := hs.Features.GetState()
+	return response.Respond(http.StatusOK, fmState)
 }
 
 // isFeatureHidden returns whether a toggle should be hidden from the admin page.

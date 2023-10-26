@@ -24,7 +24,7 @@ func InitializeTracerForTest(opts ...TracerForTestOption) Tracer {
 
 	otel.SetTracerProvider(tp)
 
-	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
+	ots := &TracingService{Propagation: "jaeger,w3c", tracerProvider: tp}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }

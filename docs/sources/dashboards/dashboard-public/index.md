@@ -13,12 +13,6 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="note" %}}
-
-This feature is in [public preview](/docs/release-life-cycle/).
-
-{{% /admonition %}}
-
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
@@ -47,12 +41,6 @@ If you are using Docker, use an environment variable to enable public dashboards
 ```
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
 
 ## Make a dashboard public
 

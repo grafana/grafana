@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -22,13 +22,9 @@ var (
 )
 
 type legacyStorage struct {
-	service playlist.Service
-}
-
-func newLegacyStorage(s playlist.Service) *legacyStorage {
-	return &legacyStorage{
-		service: s,
-	}
+	service        playlist.Service
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -50,15 +46,15 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	limit := 100
@@ -66,31 +62,23 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		limit = int(options.Limit)
 	}
 	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
-		OrgId: orgId,
+		OrgId: info.OrgID,
 		Limit: limit,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
-			},
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: info.OrgID,
+		})
+		if err != nil {
+			return nil, err
 		}
-		p.Name = v.Name + " // " + v.Interval
-		list.Items = append(list.Items, p)
+		list.Items = append(list.Items, *convertToK8sResource(p, s.namespacer))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -99,30 +87,21 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
-	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+	dto, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 		UID:   name,
-		OrgId: orgId,
+		OrgId: info.OrgID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
+	if dto == nil {
 		return nil, fmt.Errorf("not found?")
 	}
 
-	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
-		},
-		Name: p.Name + "//" + p.Interval,
-	}, nil
+	return convertToK8sResource(dto, s.namespacer), nil
 }

@@ -8,7 +8,7 @@ labels:
     - oss
 menuTitle: Set up
 title: Set up Alerting
-weight: 107
+weight: 110
 ---
 
 # Set up Alerting

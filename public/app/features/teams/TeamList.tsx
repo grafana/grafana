@@ -11,22 +11,20 @@ import {
   Icon,
   Tooltip,
   Column,
-  HorizontalGroup,
   Pagination,
-  VerticalGroup,
+  Avatar,
 } from '@grafana/ui';
+import { Stack, Flex } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { Avatar } from '../admin/Users/Avatar';
+import { TableWrapper } from '../admin/Users/TableWrapper';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
-import { isPermissionTeamAdmin } from './state/selectors';
 
 type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
 export interface OwnProps {}
@@ -44,8 +42,6 @@ export const TeamList = ({
   deleteTeam,
   changeQuery,
   totalPages,
-  signedInUser,
-  editorsCanAdmin,
   page,
   changePage,
   changeSort,
@@ -70,7 +66,7 @@ export const TeamList = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'name',
@@ -96,12 +92,11 @@ export const TeamList = ({
               id: 'role',
               header: 'Role',
               cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
                   AccessControlAction.ActionTeamsRolesList,
-                  original,
-                  false
+                  original
                 );
-                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
+                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} width={40} />;
               },
             },
           ]
@@ -110,16 +105,7 @@ export const TeamList = ({
         id: 'edit',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          const isTeamAdmin = isPermissionTeamAdmin({
-            permission: original.permission,
-            editorsCanAdmin,
-            signedInUser,
-          });
-          const canReadTeam = contextSrv.hasAccessInMetadata(
-            AccessControlAction.ActionTeamsRead,
-            original,
-            isTeamAdmin
-          );
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           return canReadTeam ? (
             <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
               <Tooltip content={'Edit team'}>
@@ -133,16 +119,7 @@ export const TeamList = ({
         id: 'delete',
         header: '',
         cell: ({ row: { original } }: Cell) => {
-          const isTeamAdmin = isPermissionTeamAdmin({
-            permission: original.permission,
-            editorsCanAdmin,
-            signedInUser,
-          });
-          const canDelete = contextSrv.hasAccessInMetadata(
-            AccessControlAction.ActionTeamsDelete,
-            original,
-            isTeamAdmin
-          );
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
 
           return (
             <DeleteButton
@@ -155,7 +132,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam]
+    [displayRolePicker, roleOptions, deleteTeam]
   );
 
   return (
@@ -184,17 +161,24 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <VerticalGroup spacing={'md'}>
-              <InteractiveTable
-                columns={columns}
-                data={teams}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <HorizontalGroup justify="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </HorizontalGroup>
-            </VerticalGroup>
+            <Stack gap={2}>
+              <TableWrapper>
+                <InteractiveTable
+                  columns={columns}
+                  data={teams}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Flex justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Flex>
+              </TableWrapper>
+            </Stack>
           </>
         )}
       </Page.Contents>
@@ -219,8 +203,6 @@ function mapStateToProps(state: StoreState) {
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 

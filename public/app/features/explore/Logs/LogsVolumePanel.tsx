@@ -80,7 +80,6 @@ export function LogsVolumePanel(props: Props) {
         anchorToZero
         yAxisMaximum={allLogsVolumeMaximum}
         eventBus={props.eventBus}
-        showAllTimeSeries
       />
       {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
     </div>

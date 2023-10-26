@@ -10,10 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -34,11 +38,16 @@ const (
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
 func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
+	defer span.End()
+
 	var qm queryModel
 	response := backend.DataResponse{}
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
 		return response
 	}
@@ -50,6 +59,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			var dsJson dsJsonModel
 			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
 
@@ -72,6 +83,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
 			)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				logger.Error("Querying SelectSeries()", "err", err)
 				return err
 			}
@@ -88,30 +101,42 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			logger.Debug("Calling GetProfile", "queryModel", qm)
 			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				logger.Error("Error GetProfile()", "err", err)
 				return err
 			}
-			frame := responseToDataFrames(prof)
+
+			var frame *data.Frame
+			if prof != nil {
+				frame = responseToDataFrames(prof)
+
+				// If query called with streaming on then return a channel
+				// to subscribe on a client-side and consume updates from a plugin.
+				// Feel free to remove this if you don't need streaming for your datasource.
+				if qm.WithStreaming {
+					channel := live.Channel{
+						Scope:     live.ScopeDatasource,
+						Namespace: pCtx.DataSourceInstanceSettings.UID,
+						Path:      "stream",
+					}
+					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				}
+			} else {
+				// We still send empty data frame to give feedback that query really run, just didn't return any data.
+				frame = getEmptyDataFrame()
+			}
 			responseMutex.Lock()
 			response.Frames = append(response.Frames, frame)
 			responseMutex.Unlock()
 
-			// If query called with streaming on then return a channel
-			// to subscribe on a client-side and consume updates from a plugin.
-			// Feel free to remove this if you don't need streaming for your datasource.
-			if qm.WithStreaming {
-				channel := live.Channel{
-					Scope:     live.ScopeDatasource,
-					Namespace: pCtx.DataSourceInstanceSettings.UID,
-					Path:      "stream",
-				}
-				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-			}
 			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = g.Wait()
 	}
 
@@ -271,6 +296,18 @@ func (pt *ProfileTree) String() string {
 		}
 	}
 	return tree.String()
+}
+
+func getEmptyDataFrame() *data.Frame {
+	var emptyProfileDataFrame = data.NewFrame("response")
+	emptyProfileDataFrame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
+	emptyProfileDataFrame.Fields = data.Fields{
+		data.NewField("level", nil, []int64{}),
+		data.NewField("value", nil, []int64{}),
+		data.NewField("self", nil, []int64{}),
+		data.NewField("label", nil, []string{}),
+	}
+	return emptyProfileDataFrame
 }
 
 type CustomMeta struct {

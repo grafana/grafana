@@ -249,6 +249,9 @@ export const Pages = {
     recipientInput: 'request-view-access-recipient-input',
     submitButton: 'request-view-access-submit-button',
   },
+  PublicDashboardConfirmAccess: {
+    submitButton: 'data-testid confirm-access-submit-button',
+  },
   Explore: {
     url: '/explore',
     General: {
@@ -280,8 +283,13 @@ export const Pages = {
   BrowseDashboards: {
     table: {
       body: 'data-testid browse-dashboards-table',
-      row: (uid: string) => `data-testid ${uid} row`,
+      row: (name: string) => `data-testid browse dashboards row ${name}`,
       checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+    NewFolderForm: {
+      form: 'data-testid new folder form',
+      nameInput: 'data-testid new-folder-name-input',
+      createButton: 'data-testid new-folder-create-button',
     },
   },
   Search: {

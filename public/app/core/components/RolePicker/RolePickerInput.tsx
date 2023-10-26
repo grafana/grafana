@@ -18,6 +18,7 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
   showBasicRole?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
+  width?: string;
   onQueryChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   onClose: () => void;
@@ -30,12 +31,13 @@ export const RolePickerInput = ({
   isFocused,
   query,
   showBasicRole,
+  width,
   onOpen,
   onClose,
   onQueryChange,
   ...rest
 }: InputProps): JSX.Element => {
-  const styles = useStyles2((theme) => getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false));
+  const styles = useStyles2(getRolePickerInputStyles, false, !!isFocused, !!disabled, false, width);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -49,18 +51,22 @@ export const RolePickerInput = ({
     onQueryChange(query);
   };
 
-  const numberOfRoles = appliedRoles.length;
+  const showBasicRoleOnLabel = showBasicRole && basicRole !== 'None';
 
   return !isFocused ? (
     // TODO: fix keyboard a11y
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
+      <RolesLabel
+        appliedRoles={appliedRoles}
+        numberOfRoles={appliedRoles.length}
+        showBuiltInRole={showBasicRoleOnLabel}
+      />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
+      {showBasicRoleOnLabel && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
       ))}
@@ -121,7 +127,8 @@ const getRolePickerInputStyles = (
   invalid: boolean,
   focused: boolean,
   disabled: boolean,
-  withPrefix: boolean
+  withPrefix: boolean,
+  width?: string
 ) => {
   const styles = getInputStyles({ theme, invalid });
 
@@ -135,7 +142,8 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        min-width: ${ROLE_PICKER_WIDTH}px;
+        min-width: ${width || ROLE_PICKER_WIDTH + 'px'};
+        width: ${width};
         min-height: 32px;
         height: auto;
         flex-direction: row;

@@ -413,11 +413,15 @@ schemas: [{
 		// External service registration information
 		externalServiceRegistration: #ExternalServiceRegistration
 
+		// ExternalServiceRegistration allows the service to get a service account token
+		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 		#ExternalServiceRegistration: {
+			// Permissions are the permissions that the external service needs its associated service account to have.
+			permissions?: [...#Permission]
+
 			// Impersonation describes the permissions that the external service will have on behalf of the user
+			// This is only available with the OAuth2 Server
 			impersonation?: #Impersonation
-			// Self describes the permissions that the external service will have on behalf of itself
-			self?: 		#Self
 		}
 
 		#Impersonation: {
@@ -430,14 +434,6 @@ schemas: [{
 			// Permissions are the permissions that the external service needs when impersonating a user.
 			// The intersection of this set with the impersonated user's permission guarantees that the client will not
 			// gain more privileges than the impersonated user has.
-			permissions?: [...#Permission]
-		}
-
-		#Self: {
-			// Enabled allows the service to request access tokens for itself using the client_credentials grant
-			// Defaults to true.
-			enabled?: bool
-			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 		}
 	}
