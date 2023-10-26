@@ -17,8 +17,25 @@ type Service interface {
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
+	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
+
+	// Tokens
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
 		cmd *AddServiceAccountTokenCommand) (*apikey.APIKey, error)
+	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
+	ListTokens(ctx context.Context, query *GetSATokensQuery) ([]apikey.APIKey, error)
+
+	// API specific functions
+	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
+	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*MigrationResult, error)
+}
+
+//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
+type ExtSvcAccountsService interface {
+	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
+	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
+	// RetrieveExtSvcAccount fetches an external service account by ID
+	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
 }

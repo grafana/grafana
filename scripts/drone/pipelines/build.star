@@ -70,17 +70,18 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
+                rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
             ],
         )
     else:
         build_steps.extend([
             update_package_json_version(),
             build_frontend_package_step(depends_on = ["update-package-json-version"]),
+            rgm_package_step(depends_on = ["update-package-json-version"], distros = "linux/amd64,linux/arm64", file = "packages.txt"),
         ])
 
     build_steps.extend(
         [
-            rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

@@ -88,8 +88,12 @@ exports[`VariableQueryEditor renders correctly 1`] = `
           <div
             className="css-zyjsuv-input-suffix"
           >
-            <div
-              className="css-1j2891d-Icon"
+            <svg
+              className="css-1d3xu67-Icon"
+              height={16}
+              id="public/img/icons/unicons/angle-down.svg"
+              title=""
+              width={16}
             />
           </div>
         </div>
