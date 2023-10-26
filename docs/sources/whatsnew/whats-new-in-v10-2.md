@@ -287,7 +287,6 @@ We've added support for Azure Authentication (Service principal/MSI) on our MS S
 
 Enable this feature by setting the `managed_identity_enabled` property to `true` under the `Azure` heading in your configuration file (/conf/<your_config_file>.ini). Then take the following steps in your Microsoft SQL Server data source configuration UI:
 
-
 1. Under **Authentication**, select **Azure AD Authentication** in the drop-down to reveal the **Azure Authentication Settings** section.
 2. In this section, select either **Managed Identity** or **App Registration**.
 3. Enter the credentials accordingly.
