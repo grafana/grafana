@@ -104,7 +104,7 @@ export function getDataTrailsApp() {
         ],
         bookmarks: [
           new DataTrail({
-            initialDS: 'sedemo-prom',
+            initialDS: 'kCLEK-Cnk',
             $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
             initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },
@@ -112,7 +112,7 @@ export function getDataTrailsApp() {
             ],
           }).getRef(),
           new DataTrail({
-            initialDS: 'sedemo-prom',
+            initialDS: 'kCLEK-Cnk',
             metric: 'grafana_plugin_request_duration_seconds_count',
             initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },
