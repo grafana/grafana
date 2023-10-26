@@ -883,7 +883,7 @@ export class DashboardMigrator {
               let newSettings: RefIdTransformerOptions = {};
               // In this case the easiest way is just to do a type
               // assertion as iterated entries have unknown types
-              newSettings.stat = stat as ReducerID; 
+              newSettings.stat = stat as ReducerID;
               tableTransformOptions[refId] = newSettings;
             }
 
