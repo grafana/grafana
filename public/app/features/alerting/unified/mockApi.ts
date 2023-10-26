@@ -23,7 +23,7 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { DashboardDTO, FolderDTO, NotifierDTO } from '../../../types';
-import { DashboardSearchHit, DashboardSearchItem } from '../../search/types';
+import { DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
 import { AlertingQueryResponse } from './state/AlertingQueryRunner';
@@ -397,7 +397,7 @@ export function mockFolderApi(server: SetupServer) {
 
 export function mockSearchApi(server: SetupServer) {
   return {
-    search: (results: DashboardSearchHit[]) => {
+    search: (results: DashboardSearchItem[]) => {
       server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
     },
   };
