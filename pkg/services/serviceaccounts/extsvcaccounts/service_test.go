@@ -288,7 +288,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 							cmd.Permissions[0] == extSvcPerms[0]
 					}))
 				_, ok, _ := env.SkvStore.Get(context.Background(), tmpOrgID, extSvcSlug, kvStoreType)
-				require.True(t, ok, "secret should have kept token in store")
+				require.True(t, ok, "secret should have been kept in store")
 			},
 			want: &extsvcauth.ExternalService{
 				Name:   extSvcSlug,
