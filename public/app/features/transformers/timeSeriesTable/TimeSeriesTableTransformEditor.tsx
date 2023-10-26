@@ -41,6 +41,7 @@ export function TimeSeriesTableTransformEditor({
       onChange({
         ...options,
         [refId]: {
+          ...options[refId],
           timeField: val,
         },
       });
@@ -55,6 +56,7 @@ export function TimeSeriesTableTransformEditor({
         onChange({
           ...options,
           [refId]: {
+            ...options[refId],
             stat: reducerID,
           },
         });
@@ -66,10 +68,12 @@ export function TimeSeriesTableTransformEditor({
   const onMergeSeriesToggle = useCallback(
     (refId: string) => {
       const mergeSeries = options[refId]?.mergeSeries !== undefined ? !options[refId].mergeSeries : false;
-
       onChange({
         ...options,
-        [refId]: { mergeSeries },
+        [refId]: {
+          ...options[refId],
+          mergeSeries,
+        },
       });
     },
     [onChange, options]
