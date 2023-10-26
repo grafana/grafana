@@ -58,7 +58,7 @@ _Generally available in all editions of Grafana_
 
 Introducing Content Outline in Grafana Explore. It's easy to lose track of your place when you're running complex mixed queries or switching between logs and traces. Content outline is our first step towards seamless navigation from log lines to traces and back to queries, ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
 
-{{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
+{{< youtube id="cE7J1-S4ZCQ?rel=0" >}}
 
 ## Correlations
 
