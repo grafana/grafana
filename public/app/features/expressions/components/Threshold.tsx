@@ -119,51 +119,53 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold);
 
-  const HysteresisSection = React.memo(
-    ({ isRange, onError }: { isRange: boolean; onError?: (error: string | undefined) => void }) => {
-      const hasHysteresis = Boolean(condition.unloadEvaluator);
+  const HysteresisSection = ({
+    isRange,
+    onError,
+  }: {
+    isRange: boolean;
+    onError?: (error: string | undefined) => void;
+  }) => {
+    const hasHysteresis = Boolean(condition.unloadEvaluator);
 
-      const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
-        if (!event.currentTarget.checked) {
-          onError && onError(undefined); // clear error
-          // change to not checked
-          onChange({
-            ...query,
-            conditions: updateUnloadEvaluatorConditions(conditions, { params: [] }, false),
-          });
-        } else {
-          // check to checked
-          onChange({
-            ...query,
-            conditions: updateUnloadEvaluatorConditions(conditions, {}, true),
-          });
-        }
-      };
-      return (
-        <>
-          <InlineFieldRow>
-            <Stack direction="row" gap={2} alignItems="center">
-              <Switch value={hasHysteresis} onChange={onHysteresisCheckChange} />
-              Custom recovery threshold
-            </Stack>
-          </InlineFieldRow>
-          {hasHysteresis && (
-            <RecoveryThresholdRow
-              isRange={isRange}
-              conditions={conditions}
-              condition={condition}
-              labelWidth={labelWidth}
-              onChange={onChange}
-              query={query}
-              onError={onError}
-            />
-          )}
-        </>
-      );
-    }
-  );
-
-  HysteresisSection.displayName = 'HysteresisSection';
+    const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
+      if (!event.currentTarget.checked) {
+        onError && onError(undefined); // clear error
+        // change to not checked
+        onChange({
+          ...query,
+          conditions: updateUnloadEvaluatorConditions(conditions, { params: [] }, false),
+        });
+      } else {
+        // check to checked
+        onChange({
+          ...query,
+          conditions: updateUnloadEvaluatorConditions(conditions, {}, true),
+        });
+      }
+    };
+    return (
+      <>
+        <InlineFieldRow>
+          <Stack direction="row" gap={2} alignItems="center">
+            <Switch value={hasHysteresis} onChange={onHysteresisCheckChange} />
+            Custom recovery threshold
+          </Stack>
+        </InlineFieldRow>
+        {hasHysteresis && (
+          <RecoveryThresholdRow
+            isRange={isRange}
+            conditions={conditions}
+            condition={condition}
+            labelWidth={labelWidth}
+            onChange={onChange}
+            query={query}
+            onError={onError}
+          />
+        )}
+      </>
+    );
+  };
 
   return (
     <>
