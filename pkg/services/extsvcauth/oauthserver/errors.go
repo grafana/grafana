@@ -1,6 +1,7 @@
 package oauthserver
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -24,4 +25,9 @@ func ErrClientNotFound(clientID string) error {
 		ErrClientNotFoundMessageID,
 		errutil.WithPublicMessage(fmt.Sprintf("Client '%s' not found", clientID))).
 		Errorf("client '%s' not found", clientID)
+}
+
+func IsErrClientNotFound(err error) bool {
+	var srcError errutil.Error
+	return errors.As(err, &srcError) && srcError.MessageID == ErrClientNotFoundMessageID
 }

@@ -4,14 +4,12 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"errors"
 
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type store struct {
@@ -101,13 +99,8 @@ func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.OAu
 	}
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		previous, errFetchExtSvc := getExternalServiceByName(sess, client.Name)
-		if errFetchExtSvc != nil {
-			var srcError errutil.Error
-			if errors.As(errFetchExtSvc, &srcError) {
-				if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
-					return errFetchExtSvc
-				}
-			}
+		if errFetchExtSvc != nil && !oauthserver.IsErrClientNotFound(errFetchExtSvc) {
+			return errFetchExtSvc
 		}
 		if previous == nil {
 			return registerExternalService(sess, client)
@@ -216,4 +209,16 @@ func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.OAuth
 	errPerm := sess.SQL(impersonatePermQuery, res.ClientID).Find(&res.ImpersonatePermissions)
 
 	return res, errPerm
+}
+
+func (s *store) UpdateExternalServiceGrantTypes(ctx context.Context, clientID, grantTypes string) error {
+	if clientID == "" {
+		return oauthserver.ErrClientRequiredID
+	}
+
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		query := `UPDATE oauth_client SET grant_types = ? WHERE client_id = ?`
+		_, err := sess.Exec(query, grantTypes, clientID)
+		return err
+	})
 }

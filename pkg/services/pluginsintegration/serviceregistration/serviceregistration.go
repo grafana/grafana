@@ -34,11 +34,8 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	impersonation := extsvcauth.ImpersonationCfg{}
 	if svc.Impersonation != nil {
 		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
-		if svc.Impersonation.Enabled != nil {
-			impersonation.Enabled = *svc.Impersonation.Enabled // TODO (gamab) set based on plugin settings
-		} else {
-			impersonation.Enabled = true
-		}
+		impersonation.Enabled = (settings != nil) && settings.Enabled
+
 		if svc.Impersonation.Groups != nil {
 			impersonation.Groups = *svc.Impersonation.Groups
 		} else {
