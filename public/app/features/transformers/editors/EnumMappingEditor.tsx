@@ -41,9 +41,14 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   };
 
   const generateEnumValues = () => {
-    const targetField = input[convertFieldTransformIndex]?.fields?.find(
-      (field) => field.name === options.conversions[convertFieldTransformIndex].targetField
-    );
+    // Loop through all fields in provided data frames to find the target field
+    const targetField = input
+      .flatMap((inputItem) => inputItem?.fields ?? [])
+      .find((field) => field.name === options.conversions[convertFieldTransformIndex].targetField);
+
+    if (!targetField) {
+      return;
+    }
 
     // create set of values for enum without any duplicate values (from targetField.values)
     // maybe this should run automatically on first render?
