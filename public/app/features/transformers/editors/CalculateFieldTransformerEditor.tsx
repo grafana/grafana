@@ -334,7 +334,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             stats={[options.reducer]}
             onChange={this.onWindowStatsChange}
             defaultStat={ReducerID.sum}
-            filterOptions={(ext) => ext.id === ReducerID.mean || ext.id === ReducerID.variance}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
+            }
           />
         </InlineField>
         <InlineField label="Type" labelWidth={labelWidth}>
@@ -446,9 +448,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             stats={[options.reducer]}
             onChange={this.onCumulativeStatsChange}
             defaultStat={ReducerID.sum}
-            filterOptions={(ext) =>
-              ext.id === ReducerID.sum || ext.id === ReducerID.mean || ext.id === ReducerID.variance
-            }
+            filterOptions={(ext) => ext.id === ReducerID.sum || ext.id === ReducerID.mean}
           />
         </InlineField>
       </>

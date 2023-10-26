@@ -37,7 +37,6 @@ export interface ReduceOptions {
 export interface CumulativeOptions {
   field?: string;
   reducer: ReducerID;
-  nullValueMode?: NullValueMode;
 }
 
 export interface WindowOptions extends CumulativeOptions {
@@ -240,10 +239,6 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     throw new Error(`Unknown reducer: ${options.reducer}`);
   }
 
-  const reducer = info.reduce ?? doStandardCalcs;
-  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
-  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
-
   return (frame: DataFrame) => {
     // Find the columns that should be examined
     let selectedField: Field | null = null;
@@ -258,13 +253,6 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
       return;
     }
 
-    // Prepare a "fake" field for the row
-    const fakeField: Field = {
-      name: 'temp',
-      values: [],
-      type: FieldType.number,
-      config: {},
-    };
     const vals: number[] = [];
 
     if (options.type === WindowType.Centered) {
@@ -273,23 +261,65 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
         const start = Math.ceil(Math.max(0, i - boundary));
         const end = Math.ceil(Math.min(i + boundary, frame.length));
 
-        fakeField.values = selectedField.values.slice(start, end);
-
-        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+        const nonNullWindowVals = selectedField.values.slice(start, end).filter((val) => val !== null);
+        if (options.reducer === ReducerID.mean) {
+          const total = nonNullWindowVals.reduce((total, val) => total + val, 0);
+          vals.push(total / nonNullWindowVals.length);
+        } else if (options.reducer === ReducerID.variance) {
+          vals.push(calculateVariance(nonNullWindowVals));
+        } else if (options.reducer === ReducerID.stdDev) {
+          vals.push(calculateStdDev(nonNullWindowVals));
+        }
       }
     } else {
+      const values = [];
       for (let i = 0; i < frame.length; i++) {
-        fakeField.values.push(selectedField.values[i]);
-        if (fakeField.values.length > options.windowSize!) {
-          fakeField.values.shift();
+        values.push(selectedField.values[i]);
+        if (values.length > options.windowSize!) {
+          values.shift();
         }
 
-        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+        if (options.reducer === ReducerID.mean) {
+          const reduced = values.reduce<{ nonNullValueCount: number; total: number }>(
+            (res, val) => {
+              if (val !== null) {
+                return { nonNullValueCount: ++res.nonNullValueCount, total: res.total + val };
+              }
+              return res;
+            },
+            { nonNullValueCount: 0, total: 0 }
+          );
+          vals.push(reduced.total / reduced.nonNullValueCount);
+        } else if (options.reducer === ReducerID.variance) {
+          vals.push(calculateVariance(values.filter((val) => val !== null)));
+        } else if (options.reducer === ReducerID.stdDev) {
+          vals.push(calculateStdDev(values.filter((val) => val !== null)));
+        }
       }
     }
 
     return vals;
   };
+}
+
+function calculateVariance(vals: number[]): number {
+  if (vals.length < 1) {
+    return 0;
+  }
+  let squareSum = 0;
+  let runningMean = 0;
+  for (let i = 0; i < vals.length; i++) {
+    const currentValue = vals[i];
+    let _oldMean = runningMean;
+    runningMean += (currentValue - _oldMean) / (i + 1);
+    squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+  }
+  const variance = squareSum / vals.length;
+  return variance;
+}
+
+function calculateStdDev(vals: number[]): number {
+  return Math.sqrt(calculateVariance(vals));
 }
 
 function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]): ValuesCreator {
@@ -312,10 +342,6 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
     throw new Error(`Unknown reducer: ${options.reducer}`);
   }
 
-  const reducer = info.reduce ?? doStandardCalcs;
-  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
-  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
-
   return (frame: DataFrame) => {
     // Find the columns that should be examined
     let selectedField: Field | null = null;
@@ -330,18 +356,16 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
       return;
     }
 
-    // Prepare a "fake" field for the row
-    const fakeField: Field = {
-      name: 'temp',
-      values: new Array(selectedField.values.length),
-      type: FieldType.number,
-      config: {},
-    };
     const vals: number[] = [];
 
+    let total = 0;
     for (let i = 0; i < frame.length; i++) {
-      fakeField.values[i] = selectedField.values[i];
-      vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+      total += selectedField.values[i];
+      if (options.reducer === ReducerID.sum) {
+        vals.push(total);
+      } else if (options.reducer === ReducerID.mean) {
+        vals.push(total / (i + 1));
+      }
     }
 
     return vals;
