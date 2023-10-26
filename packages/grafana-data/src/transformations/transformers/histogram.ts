@@ -222,7 +222,54 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 
     return fields;
   } else if (frame.meta?.type === DataFrameType.HeatmapRows) {
-    // TODO
+    // assumes le
+
+    // tick label strings (will be ordinal-ized)
+    let minVals: string[] = [];
+    let maxVals: string[] = [];
+
+    // sums of all timstamps per bucket
+    let countVals: number[] = [];
+
+    let minVal = '0';
+    frame.fields.forEach((f) => {
+      if (f.type === FieldType.number) {
+        let countsSum = f.values.reduce((acc, v) => acc + v, 0);
+        countVals.push(countsSum);
+        minVals.push(minVal);
+        maxVals.push((minVal = f.name));
+      }
+    });
+
+    // fake extra value for +Inf (for x scale ranging since bars are right-aligned)
+    countVals.push(0);
+    minVals.push(minVal);
+    maxVals.push(minVal);
+
+    let fields = {
+      xMin: {
+        ...frame.fields[1],
+        name: 'xMin',
+        type: FieldType.string,
+        values: minVals,
+      },
+      xMax: {
+        ...frame.fields[1],
+        name: 'xMax',
+        type: FieldType.string,
+        values: maxVals,
+      },
+      counts: [
+        {
+          ...frame.fields[1],
+          name: 'count',
+          type: FieldType.number,
+          values: countVals,
+        },
+      ],
+    };
+
+    return fields;
   }
 
   let xMin: Field | undefined = undefined;
