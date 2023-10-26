@@ -11,6 +11,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
@@ -172,16 +173,39 @@ export function LogsTableWrap(props: Props) {
     return null;
   }
 
+  function columnFilterEvent(columnName: string) {
+    if (columnsWithMeta) {
+      const newState = !columnsWithMeta[columnName]?.active;
+      const priorActiveCount = Object.keys(columnsWithMeta).filter((column) => columnsWithMeta[column]?.active)?.length;
+      const event = {
+        columnAction: newState ? 'add' : 'remove',
+        columnCount: newState ? priorActiveCount + 1 : priorActiveCount - 1,
+      };
+
+      reportInteraction('grafana_explore_logs_table_column_filter_clicked', event);
+    }
+  }
+
+  function searchFilterEvent(searchResultCount: number) {
+    reportInteraction('grafana_explore_logs_table_text_search_result_count', {
+      resultCount: searchResultCount,
+    });
+  }
+
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
   const toggleColumn = (columnName: fieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
       console.warn('failed to get column', columnsWithMeta);
       return;
     }
+
     const pendingLabelState = {
       ...columnsWithMeta,
       [columnName]: { ...columnsWithMeta[columnName], active: !columnsWithMeta[columnName]?.active },
     };
+
+    // Analytics
+    columnFilterEvent(columnName);
 
     // Set local state
     setColumnsWithMeta(pendingLabelState);
@@ -216,12 +240,15 @@ export function LogsTableWrap(props: Props) {
   const dispatcher = (data: string[][]) => {
     const matches = data[0];
     let newColumnsWithMeta: fieldNameMetaStore = {};
+    let numberOfResults = 0;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
+        numberOfResults++;
       }
     });
     setFilteredColumnsWithMeta(newColumnsWithMeta);
+    searchFilterEvent(numberOfResults);
   };
 
   // uFuzzy search
