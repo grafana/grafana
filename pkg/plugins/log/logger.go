@@ -23,7 +23,6 @@ func (d *grafanaInfraLogWrapper) New(ctx ...any) Logger {
 		}
 	}
 
-	ctx = append([]any{"logger"}, ctx...)
 	return &grafanaInfraLogWrapper{
 		l: d.l.New(ctx...),
 	}
