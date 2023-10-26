@@ -154,7 +154,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextOpen: false,
     contextRow: undefined,
     tableFrame: undefined,
-    visualisationType: 'logs',
+    visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
     logsContainer: undefined,
   };
 
@@ -179,6 +179,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...state.panelsState.logs,
+          columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
+          visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
         })
       );
     }
@@ -193,6 +195,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...this.props.panelState,
         })
       );
+    }
+    if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
+      this.setState({
+        visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+      });
     }
   }
 
@@ -402,7 +409,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = {
       ...this.props.panelState,
-      logs: { id: row.uid },
+      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? 'logs' },
     };
     urlState.range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),

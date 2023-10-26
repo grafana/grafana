@@ -80,11 +80,48 @@ describe('LogsTableWrap', () => {
     });
   });
 
+  it('updatePanelState should be called when a column is selected', async () => {
+    const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
+    setup({
+      panelState: {
+        visualisationType: 'table',
+        columns: undefined,
+      },
+      updatePanelState: updatePanelState,
+    });
+
+    expect.assertions(3);
+
+    const checkboxLabel = screen.getByLabelText('app');
+    expect(checkboxLabel).toBeInTheDocument();
+
+    // Add a new column
+    await waitFor(() => {
+      checkboxLabel.click();
+      expect(updatePanelState).toBeCalledWith({
+        visualisationType: 'table',
+        columns: { 0: 'app' },
+      });
+    });
+
+    // Remove the same column
+    await waitFor(() => {
+      checkboxLabel.click();
+      expect(updatePanelState).toBeCalledWith({
+        visualisationType: 'table',
+        columns: {},
+      });
+    });
+  });
+
   it('search input should search matching columns', async () => {
     config.featureToggles.lokiLogsDataplane = false;
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({
-      panelState: {},
+      panelState: {
+        visualisationType: 'table',
+        columns: undefined,
+      },
       updatePanelState: updatePanelState,
     });
 
