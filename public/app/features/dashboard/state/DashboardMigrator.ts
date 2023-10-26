@@ -43,9 +43,9 @@ import {
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { 
-  RefIdTransformerOptions, 
-  TimeSeriesTableTransformerOptions 
+import {
+  RefIdTransformerOptions,
+  TimeSeriesTableTransformerOptions,
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
@@ -871,13 +871,13 @@ export class DashboardMigrator {
           // and it doesn't have undefined options then we migrate
           if (
             transformation.id === 'timeSeriesTable' &&
-            transformation.options !== undefined && 
+            transformation.options !== undefined &&
             transformation.options.refIdToStat !== undefined
           ) {
             let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
 
             // For each {refIdtoStat} record which maps refId to a statistic
-            // we add that to the stat property of the the new 
+            // we add that to the stat property of the the new
             // RefIdTransformerOptions interface which includes multiple settings
             for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
               let newSettings: RefIdTransformerOptions = {};
