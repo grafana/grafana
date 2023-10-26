@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, QueryEditorProps, TimeRange } from '@grafana/data';
 import { getBackendSrv, getPluginLinkExtensions } from '@grafana/runtime';
@@ -7,7 +8,6 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { PyroscopeDataSource } from '../datasource';
 import { PyroscopeDataSourceOptions, Query } from '../types';
-import { useAsync } from 'react-use';
 
 const EXTENSION_POINT_ID = 'plugins/grafana-pyroscope-datasource/query-links';
 
@@ -48,7 +48,7 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
     range,
   } = props;
 
-  const { value:datasourceSettings } = useAsync(async () => {
+  const { value: datasourceSettings } = useAsync(async () => {
     if (pyroscopeDatasourceSettingsByUid[datasourceUid]) {
       return pyroscopeDatasourceSettingsByUid[datasourceUid];
     }
