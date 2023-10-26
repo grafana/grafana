@@ -201,6 +201,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               ) {
                 changeDatasourcePostAction(exploreId, changeDatasourceUid);
               }
+              dispatch(changeCorrelationEditorDetails({ isExiting: false }));
             } else {
               // exit correlations mode
               // if we are discarding the in progress correlation, reset everything

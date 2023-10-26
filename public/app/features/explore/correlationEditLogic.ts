@@ -6,6 +6,7 @@ enum CONSEQUENCES {
   SOURCE_TARGET_CHANGE = 'cause the query in the right pane to be re-ran and links added to that data',
   FULL_QUERY_LOSS = 'lose the changed query',
   FULL_CORR_LOSS = 'cause the correlation in progress to be lost',
+  INVALID_VAR = 'remove the variables, and your changed query may no longer be valid',
 }
 
 // returns a string if the modal should show, with what the message string should be
@@ -64,7 +65,7 @@ export const showModalMessage = (
     if (dirtyCorrelation) {
       consequenceStr = CONSEQUENCES.FULL_CORR_LOSS;
     } else if (dirtyQueryEditor) {
-      consequenceStr = CONSEQUENCES.FULL_QUERY_LOSS;
+      consequenceStr = CONSEQUENCES.INVALID_VAR;
     } else {
       return undefined;
     }
