@@ -22,7 +22,7 @@ export interface DashboardScenePageState {
   loadError?: string;
 }
 
-const DASHBOARD_CACHE_TTL = 2000;
+export const DASHBOARD_CACHE_TTL = 2000;
 
 interface DashboardCacheEntry {
   dashboard: DashboardDTO;
@@ -153,7 +153,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   private initDashboardMeta(dashboard: DashboardDTO): DashboardDTO {
     return {
       ...dashboard,
-      meta: initDashboardMeta(dashboard.meta, Boolean(dashboard.dashboard.editable)),
+      meta: initDashboardMeta(dashboard.meta, Boolean(dashboard.dashboard?.editable)),
     };
   }
 
