@@ -13,9 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODEJS_VERSION: 18.x
+  NODEJS_VERSION: 20.x
   GO_VERSION: 1.21
-  GO_LINT_VERSION: 1.51.1
   GRABPL_VERSION: 3.0.44
   GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
   GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
