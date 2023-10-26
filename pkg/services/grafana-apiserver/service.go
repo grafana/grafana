@@ -28,16 +28,31 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	jsonstorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/json"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const (
+	DefaultAPIServerIp   = "127.0.0.1"
+	DefaultAPIServerPort = 6443
+)
+
+type StorageType string
+
+const (
+	StorageTypeJson   StorageType = "json"
+	StorageTypeEtcd   StorageType = "etcd"
+	StorageTypeLegacy StorageType = "legacy"
+)
+
 var (
+	DefaultAPIServerHost = fmt.Sprintf("https://%s:%d", DefaultAPIServerIp, DefaultAPIServerPort)
+
 	_ Service                    = (*service)(nil)
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
@@ -90,8 +105,6 @@ type service struct {
 	handler  web.Handler
 	builders []APIGroupBuilder
 
-	tracing *tracing.TracingService
-
 	authorizer authorizer.Authorizer
 }
 
@@ -99,14 +112,12 @@ func ProvideService(
 	cfg *setting.Cfg,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
-	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
 		config:     newConfig(cfg),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
-		tracing:    tracing,
 		authorizer: authz,
 	}
 
@@ -184,17 +195,9 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = s.config.port
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 
 	o.Admission = nil
 	o.CoreAPI = nil
-	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
-		o.Etcd = nil
-	}
-
-	if err := o.Validate(); len(err) > 0 {
-		return err[0]
-	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 	serverConfig.ExternalAddress = s.config.host
@@ -224,13 +227,15 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if o.Etcd != nil {
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
-		}
+	if StorageType(s.config.storageType) == StorageTypeEtcd {
+		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
+	}
+
+	if StorageType(s.config.storageType) == StorageTypeJson {
+		serverConfig.RESTOptionsGetter = jsonstorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
@@ -246,7 +251,7 @@ func (s *service) start(ctx context.Context) error {
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+	//serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
@@ -262,8 +267,6 @@ func (s *service) start(ctx context.Context) error {
 		}
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
-
-	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())

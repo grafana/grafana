@@ -103,6 +103,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+		store.TableConvertor = legacyStore.tableConverter
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
