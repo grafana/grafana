@@ -119,13 +119,12 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold);
 
-  const HysteresisSection = ({
-    isRange,
-    onError,
-  }: {
+  interface HysteresisSectionProps {
     isRange: boolean;
     onError?: (error: string | undefined) => void;
-  }) => {
+  }
+
+  const HysteresisSection = ({ isRange, onError }: HysteresisSectionProps) => {
     const hasHysteresis = Boolean(condition.unloadEvaluator);
 
     const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
@@ -337,18 +336,20 @@ function RecoveryThresholdRow({
 }: RecoveryThresholdRowProps) {
   const styles = useStyles2(getStyles);
 
-  const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
+  const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, paramIndex: number) => {
+    //prepare new conditions with the new unload evaluator params
     const newValue = parseFloat(event.currentTarget.value);
     const newParams = condition.unloadEvaluator
       ? [...condition.unloadEvaluator.params]
       : [...defaultEvaluator.evaluator.params]; // if there is no unload evaluator, we use the default evaluator params
-    newParams[index] = newValue;
+    newParams[paramIndex] = newValue;
 
     const newConditions = updateUnloadEvaluatorConditions(conditions, { params: newParams }, true);
+    // check if is valid for the new unload evaluator params
     const error = isInvalid(newConditions[0]);
-    // check if is valid for new unload evaluator
     const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
     const errorMsg = invalidErrorMsg || errorMsgFrom || errorMsgTo;
+    // set error in form manually as we don't have a field for the unload evaluator
     onError && onError(errorMsg);
     onChange({
       ...query,
@@ -356,8 +357,9 @@ function RecoveryThresholdRow({
     });
   };
 
+  // check if is valid for the current unload evaluator params
   const error = isInvalid(condition);
-
+  // get the error message depending on the unload evaluator type
   const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
 
   if (isRange) {
