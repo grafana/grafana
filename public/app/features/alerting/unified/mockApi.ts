@@ -22,8 +22,8 @@ import {
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO } from '../../../types';
-import { DashboardSearchHit } from '../../search/types';
+import { DashboardDTO, FolderDTO, NotifierDTO } from '../../../types';
+import { DashboardSearchHit, DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
 import { AlertingQueryResponse } from './state/AlertingQueryRunner';
@@ -399,6 +399,21 @@ export function mockSearchApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchHit[]) => {
       server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
+    },
+  };
+}
+
+export function mockDashboardApi(server: SetupServer) {
+  return {
+    search: (results: DashboardSearchItem[]) => {
+      server.use(rest.get(`/api/search`, (_, res, ctx) => res(ctx.status(200), ctx.json(results))));
+    },
+    dashboard: (response: DashboardDTO) => {
+      server.use(
+        rest.get(`/api/dashboards/uid/${response.dashboard.uid}`, (_, res, ctx) =>
+          res(ctx.status(200), ctx.json(response))
+        )
+      );
     },
   };
 }
