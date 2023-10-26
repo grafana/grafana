@@ -13,10 +13,10 @@ jest.mock('../../../../hooks/useStatelessReducer');
 describe('DateHistogramSettingsEditor', () => {
   test('Renders the date histogram selector', async () => {
     const bucketAgg: DateHistogram = {
-      field: "@timestamp",
-      id: "2",
-      settings: {interval: 'auto'},
-      type: "date_histogram",
+      field: '@timestamp',
+      id: '2',
+      settings: { interval: 'auto' },
+      type: 'date_histogram',
     };
     render(<DateHistogramSettingsEditor bucketAgg={bucketAgg} />);
     expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
@@ -24,10 +24,10 @@ describe('DateHistogramSettingsEditor', () => {
   });
   test('Renders the date histogram selector with a fixed interval', async () => {
     const bucketAgg: DateHistogram = {
-      field: "@timestamp",
-      id: "2",
-      settings: {interval: '10s'},
-      type: "date_histogram",
+      field: '@timestamp',
+      id: '2',
+      settings: { interval: '10s' },
+      type: 'date_histogram',
     };
     render(<DateHistogramSettingsEditor bucketAgg={bucketAgg} />);
     expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
@@ -35,10 +35,10 @@ describe('DateHistogramSettingsEditor', () => {
   });
   test('Renders the date histogram selector with a calendar interval', async () => {
     const bucketAgg: DateHistogram = {
-      field: "@timestamp",
-      id: "2",
-      settings: {interval: '1w'},
-      type: "date_histogram",
+      field: '@timestamp',
+      id: '2',
+      settings: { interval: '1w' },
+      type: 'date_histogram',
     };
     render(<DateHistogramSettingsEditor bucketAgg={bucketAgg} />);
     expect(await screen.findByText('Calendar interval')).toBeInTheDocument();
@@ -53,29 +53,29 @@ describe('DateHistogramSettingsEditor', () => {
     });
     test('Handles changing from calendar to fixed interval type', async () => {
       const bucketAgg: DateHistogram = {
-        field: "@timestamp",
-        id: "2",
-        settings: {interval: '1w'},
-        type: "date_histogram",
+        field: '@timestamp',
+        id: '2',
+        settings: { interval: '1w' },
+        type: 'date_histogram',
       };
       render(<DateHistogramSettingsEditor bucketAgg={bucketAgg} />);
 
       expect(await screen.findByText('Calendar interval')).toBeInTheDocument();
       expect(await screen.findByText('1w')).toBeInTheDocument();
-      
+
       await selectOptionInTest(screen.getByLabelText('Calendar interval'), '10s');
 
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
     test('Renders the date histogram selector with a calendar interval', async () => {
       const bucketAgg: DateHistogram = {
-        field: "@timestamp",
-        id: "2",
-        settings: {interval: '1m'},
-        type: "date_histogram",
+        field: '@timestamp',
+        id: '2',
+        settings: { interval: '1m' },
+        type: 'date_histogram',
       };
       render(<DateHistogramSettingsEditor bucketAgg={bucketAgg} />);
-     
+
       expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
       expect(await screen.findByText('1m')).toBeInTheDocument();
 
@@ -83,5 +83,5 @@ describe('DateHistogramSettingsEditor', () => {
 
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
-  })
+  });
 });

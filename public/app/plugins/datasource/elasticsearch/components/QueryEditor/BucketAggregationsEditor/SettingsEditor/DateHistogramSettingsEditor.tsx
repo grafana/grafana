@@ -61,14 +61,25 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
   const { current: baseId } = useRef(uniqueId('es-date_histogram-'));
 
-  const handleIntervalChange = useCallback(({ value }: SelectableValue<string>) =>
-    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: value })), [bucketAgg, dispatch]);
+  const handleIntervalChange = useCallback(
+    ({ value }: SelectableValue<string>) =>
+      dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: value })),
+    [bucketAgg, dispatch]
+  );
 
-  const intervalType = getIntervalType(bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval);
+  const intervalType = getIntervalType(
+    bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval
+  );
 
   return (
     <>
-      <InlineField label={intervalType} tooltip={"Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes."} {...inlineFieldProps}>
+      <InlineField
+        label={intervalType}
+        tooltip={
+          'Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes.'
+        }
+        {...inlineFieldProps}
+      >
         <Select
           inputId={uniqueId('es-date_histogram-interval')}
           isValidNewOption={isValidNewOption}
