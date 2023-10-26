@@ -84,7 +84,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	}
 
 	// Final step value for prometheus
-	minStepForProm, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
+	calculatedMinStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		model.Expr,
 		model.Interval,
 		time.Duration(model.IntervalMs)*time.Millisecond,
-		minStepForProm,
+		calculatedMinStep,
 		timeRange,
 	)
 	var rangeQuery, instantQuery bool
@@ -125,7 +125,7 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 
 	return &Query{
 		Expr:          expr,
-		Step:          minStepForProm,
+		Step:          calculatedMinStep,
 		LegendFormat:  model.LegendFormat,
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
@@ -211,13 +211,13 @@ func calculateRateInterval(
 // expr                         PromQL query
 // queryInterval                Requested interval. This value may be overridden by MinStep in query options
 // queryIntervalMs              Requested interval in milliseconds
-// minStepForProm               Calculated final step value. It was calculated in calculatePrometheusInterval
+// calculatedMinStep            Calculated final step value. It was calculated in calculatePrometheusInterval
 // timeRange                    Requested time range for query
 func interpolateVariables(
 	expr string,
 	queryInterval string,
 	queryIntervalMs time.Duration,
-	minStepForProm time.Duration,
+	calculatedMinStep time.Duration,
 	timeRange time.Duration,
 ) string {
 	rangeMs := timeRange.Milliseconds()
@@ -225,9 +225,9 @@ func interpolateVariables(
 
 	var rateInterval time.Duration
 	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
-		rateInterval = minStepForProm
+		rateInterval = calculatedMinStep
 	} else {
-		rateInterval = calculateRateInterval(queryIntervalMs, minStepForProm.String())
+		rateInterval = calculateRateInterval(queryIntervalMs, calculatedMinStep.String())
 	}
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryIntervalMs/time.Millisecond), 10))
