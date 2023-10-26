@@ -45,29 +45,4 @@ func TestPlaylist(t *testing.T) {
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 	})
-
-	t.Run("Create playlist with old API/list with k8s", func(t *testing.T) {
-		// v := helper.LoadAnyResource("testdata/playlist-generate.yaml")
-		// require.Equal(t, "playlist.grafana.app/v0alpha1", v.APIVersion)
-
-		// // Create with auto generated name
-		// rsp := helper.PostResource(helper.Org1.Editor, "playlists", v)
-		// require.Equal(t, 201, rsp.Response.StatusCode) // created!
-		// require.NotEmpty(t, rsp.Result.Name)
-		// require.Equal(t, "Playlist with auto generated UID", v.Spec["title"])
-		// require.Equal(t, "Playlist with auto generated UID", rsp.Result.Spec["title"])
-
-		// // Now Update the title
-		// update := rsp.Result
-		// update.Spec["title"] = "Change the title"
-		// rsp = helper.PutResource(helper.Org1.Editor, "playlists", *update)
-		// require.Equal(t, 200, rsp.Response.StatusCode) // OK
-		// require.Equal(t, "Change the title", rsp.Result.Spec["title"])
-		// require.NotEqual(t, update.ResourceVersion, rsp.Result.ResourceVersion) // should be bigger!
-
-		// // Viewer can not update!
-		// update.Spec["interval"] = "1m"
-		// rsp = helper.PutResource(helper.Org1.Viewer, "playlists", *update)
-		require.Equal(t, 403, 403)
-	})
 }
