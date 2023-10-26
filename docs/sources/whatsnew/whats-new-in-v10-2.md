@@ -277,6 +277,20 @@ To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-dat
 
 {{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
 
+### Microsoft SQL Server: Support for Azure Authentication (Service principal / MSI)
+
+<!-- Jev Forsberg, Oscar Kilhed -->
+
+_Generally available in all editions of Grafana_
+
+We have added support for Azure Authentication (Service principal / MSI) on our MSSQL plugin to authenticate and allow querying of content stored in SQL Managed Instance databases.
+
+Enable this feature by setting the `managed_identity_enabled` property to `true` under the `Azure` heading in your configuration file (/conf/<your_config_file>.ini). Then, in your Microsoft SQL Server datasource configuration UI, choose **Authentication** > **Azure AD Authentication** > **Azure Authentication Settings** > then **Managed Identity** or **App Registration**.
+
+{{< figure src="media/docs/grafana/data-sources/screenshot-managed-identity-mssql.png" caption="Azure MSI Authentication" >}}
+
+Learn more in the [Microsoft SQL Server documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/).
+
 ## Transformations
 
 As our work on improving the user experience of transforming data continues, we've also been adding new capabilities to transformations.
