@@ -74,7 +74,11 @@ export class ShareLink extends PureComponent<Props, State> {
   };
 
   onCopy() {
-    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link, {
+      currentTimeRange: this.state.useCurrentTimeRange,
+      theme: this.state.selectedTheme,
+      shortenURL: this.state.useShortUrl,
+    });
   }
 
   render() {

@@ -11,9 +11,14 @@ export function trackDashboardSharingTypeOpen(sharingType: string) {
   reportInteraction(shareAnalyticsEventNames.sharingCategoryClicked, { item: sharingType });
 }
 
-export function trackDashboardSharingActionPerType(action: string, sharingType: string) {
+export function trackDashboardSharingActionPerType(
+  action: string,
+  sharingType: string,
+  options?: Record<string, unknown>
+) {
   reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
     item: action,
     sharing_category: sharingType,
+    ...options,
   });
 }
