@@ -49,7 +49,7 @@ When you hover over the top-right corner of any panel, the panel menu icon appea
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Extensions**: Access other actions that are added using UI extensions, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed. Learn more in the [UI extensions documentation](https://grafana.com/developers/plugin-tools/ui-extensions/).
+- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/ui-extensions/) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels][] instead.
   - **Copy**: Copy the panel to the clipboard.
