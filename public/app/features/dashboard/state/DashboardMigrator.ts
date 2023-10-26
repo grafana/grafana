@@ -881,7 +881,9 @@ export class DashboardMigrator {
             // RefIdTransformerOptions interface which includes multiple settings
             for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
               let newSettings: RefIdTransformerOptions = {};
-              newSettings.stat = stat as ReducerID;
+              // In this case the easiest way is just to do a type
+              // assertion as iterated entries have unknown types
+              newSettings.stat = stat as ReducerID; 
               tableTransformOptions[refId] = newSettings;
             }
 
