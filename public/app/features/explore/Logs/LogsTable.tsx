@@ -186,9 +186,8 @@ function extractFieldsAndExclude(dataFrame: DataFrame) {
         field.name === 'attributes' &&
         field.type === FieldType.other &&
         dataFrame?.meta?.type === DataFrameType.LogLines;
-      const isFieldHidden = field?.config?.custom?.hidden === true;
 
-      return isFieldLokiLabels || isFieldDataplaneLabels || isFieldHidden;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
     })
     .flatMap((field: Field) => {
       return [

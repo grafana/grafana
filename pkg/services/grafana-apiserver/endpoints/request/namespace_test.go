@@ -3,19 +3,22 @@ package request_test
 import (
 	"testing"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestParseNamespace(t *testing.T) {
 	tests := []struct {
 		name      string
 		namespace string
-		expected  grafanarequest.NamespaceInfo
+		expected  request.NamespaceInfo
 		expectErr bool
 	}{
 		{
 			name: "empty namespace",
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
@@ -23,7 +26,7 @@ func TestParseNamespace(t *testing.T) {
 			name:      "incorrect number of parts",
 			namespace: "org-123-a",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
@@ -31,14 +34,14 @@ func TestParseNamespace(t *testing.T) {
 			name:      "org id not a number",
 			namespace: "org-invalid",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
 		{
 			name:      "valid org id",
 			namespace: "org-123",
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: 123,
 			},
 		},
@@ -46,7 +49,7 @@ func TestParseNamespace(t *testing.T) {
 			name:      "org should not be 1 in the namespace",
 			namespace: "org-1",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
@@ -54,7 +57,7 @@ func TestParseNamespace(t *testing.T) {
 			name:      "can not be negative",
 			namespace: "org--5",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
@@ -62,21 +65,21 @@ func TestParseNamespace(t *testing.T) {
 			name:      "can not be zero",
 			namespace: "org-0",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
 		{
 			name:      "default is org 1",
 			namespace: "default",
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: 1,
 			},
 		},
 		{
 			name:      "valid stack",
 			namespace: "stack-abcdef",
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID:   1,
 				StackID: "abcdef",
 			},
@@ -85,7 +88,7 @@ func TestParseNamespace(t *testing.T) {
 			name:      "invalid stack id",
 			namespace: "stack-",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 			},
 		},
@@ -93,7 +96,7 @@ func TestParseNamespace(t *testing.T) {
 			name:      "invalid stack id (too short)",
 			namespace: "stack-1",
 			expectErr: true,
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID:   -1,
 				StackID: "1",
 			},
@@ -101,7 +104,7 @@ func TestParseNamespace(t *testing.T) {
 		{
 			name:      "other namespace",
 			namespace: "anything",
-			expected: grafanarequest.NamespaceInfo{
+			expected: request.NamespaceInfo{
 				OrgID: -1,
 				Value: "anything",
 			},
@@ -110,7 +113,7 @@ func TestParseNamespace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			info, err := grafanarequest.ParseNamespace(tt.namespace)
+			info, err := request.ParseNamespace(tt.namespace)
 			if tt.expectErr != (err != nil) {
 				t.Errorf("ParseNamespace() returned %+v, expected an error", info)
 			}
@@ -123,6 +126,39 @@ func TestParseNamespace(t *testing.T) {
 			if info.Value != tt.namespace {
 				t.Errorf("ParseNamespace() [Value] returned %s, expected %s", info.Value, tt.namespace)
 			}
+		})
+	}
+}
+
+func TestNamespaceMapper(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      string
+		orgId    int64
+		expected string
+	}{
+		{
+			name:     "default namespace",
+			orgId:    1,
+			expected: "default",
+		},
+		{
+			name:     "with org",
+			orgId:    123,
+			expected: "org-123",
+		},
+		{
+			name:     "with stackId",
+			cfg:      "abc",
+			orgId:    123, // ignored
+			expected: "stack-abc",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mapper := request.GetNamespaceMapper(&setting.Cfg{StackID: tt.cfg})
+			require.Equal(t, tt.expected, mapper(tt.orgId))
 		})
 	}
 }
