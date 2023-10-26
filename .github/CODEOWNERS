@@ -647,6 +647,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/snyk.yml @grafana/security-team
+/.github/workflows/secret-scanning.yml @grafana/security-team
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
