@@ -240,10 +240,6 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     throw new Error(`Unknown reducer: ${options.reducer}`);
   }
 
-  const reducer = info.reduce ?? doStandardCalcs;
-  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
-  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
-
   return (frame: DataFrame) => {
     // Find the columns that should be examined
     let selectedField: Field | null = null;
@@ -258,33 +254,41 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
       return;
     }
 
-    // Prepare a "fake" field for the row
-    const fakeField: Field = {
-      name: 'temp',
-      values: [],
-      type: FieldType.number,
-      config: {},
-    };
     const vals: number[] = [];
 
+    const values = [];
     if (options.type === WindowType.Centered) {
       for (let i = 0; i < frame.length; i++) {
         const boundary = options.windowSize! / 2;
         const start = Math.ceil(Math.max(0, i - boundary));
         const end = Math.ceil(Math.min(i + boundary, frame.length));
 
-        fakeField.values = selectedField.values.slice(start, end);
+        const total = selectedField.values.slice(start, end).reduce((total, val) => total + val, 0);
 
-        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+        if (options.reducer === ReducerID.mean) {
+          vals.push(total / (end - start));
+        } else if (options.reducer === ReducerID.variance) {
+          vals.push(1);
+        } else if (options.reducer === ReducerID.stdDev) {
+          vals.push(1);
+        }
       }
     } else {
       for (let i = 0; i < frame.length; i++) {
-        fakeField.values.push(selectedField.values[i]);
-        if (fakeField.values.length > options.windowSize!) {
-          fakeField.values.shift();
+        values.push(selectedField.values[i]);
+        if (values.length > options.windowSize!) {
+          values.shift();
         }
 
-        vals.push(reducer(fakeField, ignoreNulls, nullAsZero)[options.reducer]);
+        const total = values.reduce((total, val) => total + val, 0);
+
+        if (options.reducer === ReducerID.mean) {
+          vals.push(total / values.length);
+        } else if (options.reducer === ReducerID.variance) {
+          vals.push(1);
+        } else if (options.reducer === ReducerID.stdDev) {
+          vals.push(1);
+        }
       }
     }
 
