@@ -19,7 +19,10 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       left: 0,
-      padding: '6px 6px 6px 15px',
+      paddingTop: theme.spacing(0.75),
+      paddingRight: theme.spacing(0.75),
+      paddingBottom: theme.spacing(0.75),
+      paddingLeft: theme.spacing(1.5),
       zIndex: 3,
       marginBottom: theme.spacing(2),
     }),
@@ -38,23 +41,11 @@ export const LogsTableMultiSelect = (props: {
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
-        <div className={styles.columnHeader}>Common columns</div>
+        <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => value === 100}
-        />
-        <div className={styles.columnHeader}>Available columns</div>
-        <LogsTableNavColumn
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !!value && value !== 100}
-        />
-        <div className={styles.columnHeader}>Empty columns</div>
-        <LogsTableNavColumn
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !value}
+          valueFilter={(value) => !!value}
         />
       </>
     </div>
