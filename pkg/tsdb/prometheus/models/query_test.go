@@ -141,7 +141,7 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__interval]})",
 			"format": "time_series",
 			"intervalFactor": 1,
-            "intervalMs": 60000,
+			"intervalMs": 60000,
 			"refId": "A"
 		}`, timeRange)
 
