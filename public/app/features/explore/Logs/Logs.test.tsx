@@ -435,7 +435,7 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
-      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included' } };
+      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
       setup({ loading: false, panelState });
 
       const row = screen.getAllByRole('row');
@@ -449,6 +449,7 @@ describe('Logs', () => {
           'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D'
         )
       );
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
     });
   });
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -10,9 +10,9 @@ import {
   LogsSortOrder,
   SplitOpen,
   TimeRange,
-} from '@grafana/data/src';
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Themeable2 } from '@grafana/ui/src';
+import { Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -50,10 +50,46 @@ export function LogsTableWrap(props: Props) {
 
   const dataFrame = logsFrames[0];
 
+  const getColumnsFromProps = useCallback(
+    (fieldNames: fieldNameMetaStore) => {
+      const previouslySelected = props.panelState?.columns;
+      if (previouslySelected) {
+        Object.values(previouslySelected).forEach((key) => {
+          if (fieldNames[key]) {
+            fieldNames[key].active = true;
+          }
+        });
+      }
+      return fieldNames;
+    },
+    [props.panelState?.columns]
+  );
+
+  /**
+   * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
+   * which can be updated by explore browser history state changes
+   * This prevents an edge case bug where the user is navigating while a search is open.
+   */
+  useEffect(() => {
+    if (!columnsWithMeta || !filteredColumnsWithMeta) {
+      return;
+    }
+    let newFiltered = { ...filteredColumnsWithMeta };
+    let flag = false;
+    Object.keys(columnsWithMeta).forEach((key) => {
+      if (newFiltered[key] && newFiltered[key].active !== columnsWithMeta[key].active) {
+        newFiltered[key] = columnsWithMeta[key];
+        flag = true;
+      }
+    });
+    if (flag) {
+      setFilteredColumnsWithMeta(newFiltered);
+    }
+  }, [columnsWithMeta, filteredColumnsWithMeta]);
+
   /**
    * when the query results change, we need to update the columnsWithMeta state
    * and reset any local search state
-   * @todo refactor
    *
    * This will also find all the unique labels, and calculate how many log lines have each label into the labelCardinality Map
    * Then it normalizes the counts
@@ -121,11 +157,12 @@ export function LogsTableWrap(props: Props) {
       };
     });
 
+    pendingLabelState = getColumnsFromProps(pendingLabelState);
+
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-    // This updates the url, which updates the props of this component, we don't want to re-calculate the column state in this case even though it's used by this hook
-  }, [dataFrame]);
+  }, [dataFrame, getColumnsFromProps]);
 
   // As the number of rows change, so too must the height of the table
   useEffect(() => {
@@ -181,6 +218,22 @@ export function LogsTableWrap(props: Props) {
       };
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
+
+    const newPanelState: ExploreLogsPanelState = {
+      ...props.panelState,
+      // URL format requires our array of values be an object, so we convert it using object.assign
+      columns: Object.assign(
+        {},
+        // Get the keys of the object as an array
+        Object.keys(pendingLabelState)
+          // Only include active filters
+          .filter((key) => pendingLabelState[key]?.active)
+      ),
+      visualisationType: 'table',
+    };
+
+    // Update url state
+    props.updatePanelState(newPanelState);
   };
 
   // uFuzzy search dispatcher, adds any matches to the local state
