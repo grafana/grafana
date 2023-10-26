@@ -76,11 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
   `,
   summary: css``,
-  receiver: css`
-    margin-left: ${theme.spacing(0.5)};
-    margin-right: ${theme.spacing(0.5)};
-    color: ${theme.colors.text.secondary};
-  `,
   [AlertState.Active]: css`
     color: ${theme.colors.error.main};
   `,
