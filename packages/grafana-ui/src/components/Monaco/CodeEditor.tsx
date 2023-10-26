@@ -101,6 +101,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     if (getSuggestions && this.modelId) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions, this.modelId);
     }
+
     // Save when pressing Ctrl+S or Cmd+S
     editor.onKeyDown((e: monacoType.IKeyboardEvent) => {
       if (e.keyCode === monaco.KeyCode.KeyS && (e.ctrlKey || e.metaKey)) {
@@ -122,6 +123,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
   render() {
     const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, monacoOptions } = this.props;
+    const { alwaysConsumeMouseWheel, ...restMonacoOptions } = monacoOptions ?? {};
+
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
@@ -147,6 +150,10 @@ class UnthemedCodeEditor extends PureComponent<Props> {
         bottom: 0.5 * theme.spacing.gridSize,
       },
       fixedOverflowWidgets: true, // Ensures suggestions menu is drawn on top
+
+      scrollbar: {
+        alwaysConsumeMouseWheel: alwaysConsumeMouseWheel ?? false,
+      },
     };
 
     if (!showLineNumbers) {
@@ -157,7 +164,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     }
 
     return (
-      <div className={containerStyles} onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
+      <div className={containerStyles} onBlur={this.onBlur} data-testid={selectors.components.CodeEditor.container}>
         <ReactMonacoEditorLazy
           width={width}
           height={height}
@@ -165,7 +172,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
           value={value}
           options={{
             ...options,
-            ...(monacoOptions ?? {}),
+            ...(restMonacoOptions ?? {}),
           }}
           beforeMount={this.handleBeforeMount}
           onMount={this.handleOnMount}
