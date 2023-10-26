@@ -46,9 +46,9 @@ For more information about creating dashboards, refer to [Add and organize panel
 On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
 
 - Create folders and dashboards
-- Move dashboards between folders
-- Delete multiple dashboards and folders
-- Navigate to a folder
+- Move dashboards between folders.
+- Delete multiple dashboards and folders.
+- Navigate to a folder.
 - Manage folder permissions. For more information, refer to [Dashboard permissions][].
 
 {{% admonition type="note" %}}
@@ -142,7 +142,7 @@ The import process enables you to change the name of the dashboard, pick the dat
 
 You can use generative AI to help you with the following tasks:
 
-- **Generate panel and dashboard titles and descriptions**: Generate a title and description for your panel or dashboard based on the data you’ve added to it. This is useful when you want to quickly visualize your data and don’t want to spend time coming up with a title or description.
+- **Generate panel and dashboard titles and descriptions**: Generate a title and description based on the data you’ve added for your panel or dashboard.  This is useful when you want to visualize your data quickly and don’t want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
 
 To access these features, enable the `dashgpt` feature toggle. Then install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
