@@ -964,10 +964,16 @@ def redis_integration_tests_steps():
 def remote_alertmanager_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...",
+        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...",
     ]
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir", "8080", None)
+    environment = {
+        "AM_TENANT_ID": "test",
+        "AM_PASSWORD": "test",
+        "AM_URL": "http://mimir_backend:8080",
+    }
+
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
 
 def memcached_integration_tests_steps():
     cmds = [
@@ -1131,40 +1137,6 @@ def verify_gen_jsonnet_step():
             "apk add --update make",
             "CODEGEN_VERIFY=1 make gen-jsonnet",
         ],
-    }
-
-def trigger_test_release():
-    return {
-        "name": "trigger-test-release",
-        "image": images["git"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-            "TEST_TAG": "v0.0.0-test",
-        },
-        "commands": [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
-            "cd grafana-enterprise",
-            'git fetch origin "refs/tags/*:refs/tags/*" --quiet',
-            "if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG}; fi",
-            "git tag $${TEST_TAG} && git push origin $${TEST_TAG}",
-            "cd -",
-            'git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*" --quiet && git fetch --quiet',
-            "if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}; fi",
-            "git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}",
-        ],
-        "failure": "ignore",
-        "when": {
-            "paths": {
-                "include": [
-                    ".drone.yml",
-                    "pkg/build/**",
-                ],
-            },
-            "repo": [
-                "grafana/grafana",
-            ],
-            "branch": "main",
-        },
     }
 
 def end_to_end_tests_deps():

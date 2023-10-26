@@ -133,6 +133,17 @@ func TooManyRequests(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusTooManyRequests, msgID, opts...)
 }
 
+// ClientClosedRequest initializes a new [Base] error with reason StatusClientClosedRequest
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	plugin.requestCanceled
+func ClientClosedRequest(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusClientClosedRequest, msgID, opts...)
+}
+
 // NotImplemented initializes a new [Base] error with reason StatusNotImplemented
 // that is used to construct [Error]. The msgID is passed to the caller
 // to serve as the base for user facing error messages.

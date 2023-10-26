@@ -24,7 +24,6 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
 
@@ -62,10 +61,22 @@ const RuleList = withErrorBoundary(
     );
 
     const promRequests = Object.entries(promRuleRequests);
+    const rulerRequests = Object.entries(rulerRuleRequests);
+
     const allPromLoaded = promRequests.every(
       ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
     );
+    const allRulerLoaded = rulerRequests.every(
+      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+    );
+
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
+
+    const allRulerEmpty = rulerRequests.every(([_, state]) => {
+      const rulerRules = Object.entries(state?.result ?? {});
+      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
+      return noRules && state.dispatched;
+    });
 
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
@@ -86,12 +97,11 @@ const RuleList = withErrorBoundary(
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0;
+    const hasNoAlertRulesCreatedYet =
+      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-
-    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
@@ -116,11 +126,9 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules || canReadProvisioning) && (
-                <Stack direction="row" gap={0.5}>
-                  <MoreActionsRuleButtons />
-                </Stack>
-              )}
+              <Stack direction="row" gap={0.5}>
+                <MoreActionsRuleButtons />
+              </Stack>
             </div>
           </>
         )}

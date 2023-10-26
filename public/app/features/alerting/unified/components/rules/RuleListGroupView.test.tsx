@@ -4,25 +4,19 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { locationService, logInfo } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import * as analytics from '../../Analytics';
 import { mockCombinedRule, mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { RuleListGroupView } from './RuleListGroupView';
 
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    logInfo: jest.fn(),
-  };
-});
+jest.spyOn(analytics, 'logInfo');
 
 const ui = {
   grafanaRulesHeading: byRole('heading', { name: 'Grafana' }),
@@ -31,8 +25,6 @@ const ui = {
 
 describe('RuleListGroupView', () => {
   describe('RBAC', () => {
-    jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-
     it('Should display Grafana rules when the user has the alert rule read permission', async () => {
       const grafanaNamespace = getGrafanaNamespace();
       const namespaces: CombinedRuleNamespace[] = [grafanaNamespace];
@@ -99,7 +91,7 @@ describe('RuleListGroupView', () => {
 
       renderRuleList(namespaces);
 
-      expect(logInfo).toHaveBeenCalledWith(LogMessages.loadedList);
+      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.loadedList);
     });
   });
 });

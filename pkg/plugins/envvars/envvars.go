@@ -59,8 +59,10 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
-			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
 		)
+		if p.ExternalService.PrivateKey != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey))
+		}
 	}
 
 	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)

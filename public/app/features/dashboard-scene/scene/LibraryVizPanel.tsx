@@ -10,14 +10,15 @@ interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
+  name: string;
   panel?: VizPanel;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   static Component = LibraryPanelRenderer;
 
-  constructor({ uid, title }: Pick<LibraryVizPanelState, 'uid' | 'title'>) {
-    super({ uid, title });
+  constructor({ uid, title, key, name }: Pick<LibraryVizPanelState, 'uid' | 'title' | 'key' | 'name'>) {
+    super({ uid, title, key, name });
 
     this.addActivationHandler(this._onActivate);
   }
@@ -41,7 +42,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       });
     } catch (err) {
       vizPanel.setState({
-        pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
+        _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
       });
     }
 
