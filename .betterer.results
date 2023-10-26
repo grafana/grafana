@@ -853,9 +853,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -1965,16 +1962,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/features/alerting/unified/components/alert-groups/AlertGroup.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
     "public/app/features/alerting/unified/components/alert-groups/AlertGroupAlertsTable.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3311,9 +3298,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
-    ],
-    "public/app/features/dashboard/containers/EmbeddedDashboardPage.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
