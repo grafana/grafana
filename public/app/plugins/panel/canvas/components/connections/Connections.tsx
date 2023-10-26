@@ -106,7 +106,7 @@ export class Connections {
     const transformRef = this.scene.transformComponentRef?.current;
 
     const parentBoundingRect = transformRef?.instance.wrapperComponent?.getBoundingClientRect();
-    const transScale = transformRef?.instance.transformState.scale ?? 1;
+    const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
     const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
@@ -114,10 +114,10 @@ export class Connections {
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
       this.connectionAnchorDiv.style.display = 'block';
-      this.connectionAnchorDiv.style.top = `${relativeTop / transScale}px`;
-      this.connectionAnchorDiv.style.left = `${relativeLeft / transScale}px`;
-      this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transScale}px`;
-      this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transScale}px`;
+      this.connectionAnchorDiv.style.top = `${relativeTop / transformScale}px`;
+      this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
+      this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
+      this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
     }
   };
 
