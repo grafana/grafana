@@ -285,7 +285,11 @@ _Generally available in all editions of Grafana_
 
 We've added support for Azure Authentication (Service principal/MSI) on our MS SQL plugin to authenticate and allow querying of content stored in SQL Managed Instance databases.
 
-Enable this feature by setting the `managed_identity_enabled` property to `true` under the `Azure` heading in your configuration file (/conf/<your_config_file>.ini). Next, in your Microsoft SQL Server data source configuration UI, under **Authentication**, select **Azure AD Authentication** in the drop-down. This reveals the **Azure Authentication Settings** section, under which you then select either **Managed Identity** or **App Registration**, and enter the credentials accordingly.
+Enable this feature by setting the `managed_identity_enabled` property to `true` under the `Azure` heading in your configuration file (/conf/<your_config_file>.ini). Then take the following steps in your Microsoft SQL Server data source configuration UI:
+
+Under **Authentication**, select **Azure AD Authentication** in the drop-down to reveal the **Azure Authentication Settings** section.
+In this section, select either **Managed Identity** or **App Registration**.
+Enter the credentials accordingly.
 
 {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-mssql-ui.png" caption="Azure MSI Authentication" max-width="750px" >}}
 
