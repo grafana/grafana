@@ -61,7 +61,6 @@ The `datasource.languageProvider.fetchLabelValues()` method is designed for fetc
  * @param options - (Optional) An object containing additional options - currently only stream selector.
  * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
  * @returns A promise containing an array of label values.
- * @returns A promise containing an array of label values.
  * @throws An error if the fetch operation fails.
  */
 async function fetchLabelValues(labelName: string, options?: { streamSelector?: string }): Promise<string[]>;
