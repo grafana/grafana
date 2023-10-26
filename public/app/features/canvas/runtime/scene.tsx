@@ -385,7 +385,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
-      rootContainer: this.div,
+      rootContainer: this.transformComponentRef?.current?.instance.wrapperComponent,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,
@@ -706,6 +706,7 @@ export class Scene {
             this.moveable.zoom = 1 / scale;
           }
         }}
+        limitToBounds={true}
       >
         <div
           style={{
