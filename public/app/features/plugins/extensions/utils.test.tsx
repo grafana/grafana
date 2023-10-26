@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, dateTimeParse } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -311,6 +311,24 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       expect(proxy.a()).toBe('testing');
+    });
+
+    it('should return a moment/datetime object as ISO string', () => {
+      const proxy = getReadOnlyProxy({
+        a: dateTime('2023-10-26T18:25:01Z'),
+      });
+
+      expect(proxy.a).toBe('2023-10-26T18:25:01Z');
+    });
+
+    it('should return a moment/datetime object as ISO string', () => {
+      const proxy = getReadOnlyProxy({
+        a: dateTimeParse('2023-10-26T11:52:36', {
+          timeZone: 'MST',
+        }),
+      });
+
+      expect(proxy.a).toBe('2023-10-26T18:52:36Z');
     });
   });
 

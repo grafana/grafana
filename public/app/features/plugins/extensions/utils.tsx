@@ -9,6 +9,8 @@ import {
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
+  isDateTime,
+  dateTimeFormatISO,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -158,6 +160,12 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
       }
 
       const value = Reflect.get(target, prop, receiver);
+
+      if (isDateTime(value)) {
+        return dateTimeFormatISO(value, {
+          timeZone: 'UTC',
+        });
+      }
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
