@@ -37,7 +37,6 @@ export interface ReduceOptions {
 export interface CumulativeOptions {
   field?: string;
   reducer: ReducerID;
-  nullValueMode?: NullValueMode;
 }
 
 export interface WindowOptions extends CumulativeOptions {
@@ -256,44 +255,71 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
 
     const vals: number[] = [];
 
-    const values = [];
     if (options.type === WindowType.Centered) {
       for (let i = 0; i < frame.length; i++) {
         const boundary = options.windowSize! / 2;
         const start = Math.ceil(Math.max(0, i - boundary));
         const end = Math.ceil(Math.min(i + boundary, frame.length));
 
-        const total = selectedField.values.slice(start, end).reduce((total, val) => total + val, 0);
-
+        const nonNullWindowVals = selectedField.values.slice(start, end).filter((val) => val !== null);
         if (options.reducer === ReducerID.mean) {
-          vals.push(total / (end - start));
+          const total = nonNullWindowVals.reduce((total, val) => total + val, 0);
+          vals.push(total / nonNullWindowVals.length);
         } else if (options.reducer === ReducerID.variance) {
-          vals.push(1);
+          vals.push(calculateVariance(nonNullWindowVals));
         } else if (options.reducer === ReducerID.stdDev) {
-          vals.push(1);
+          vals.push(calculateStdDev(nonNullWindowVals));
         }
       }
     } else {
+      const values = [];
       for (let i = 0; i < frame.length; i++) {
         values.push(selectedField.values[i]);
         if (values.length > options.windowSize!) {
           values.shift();
         }
 
-        const total = values.reduce((total, val) => total + val, 0);
-
         if (options.reducer === ReducerID.mean) {
-          vals.push(total / values.length);
+          const reduced = values.reduce<{ nonNullValueCount: number; total: number }>(
+            (res, val) => {
+              if (val !== null) {
+                return { nonNullValueCount: ++res.nonNullValueCount, total: res.total + val };
+              }
+              return res;
+            },
+            { nonNullValueCount: 0, total: 0 }
+          );
+          vals.push(reduced.total / reduced.nonNullValueCount);
         } else if (options.reducer === ReducerID.variance) {
-          vals.push(1);
+          vals.push(calculateVariance(values.filter((val) => val !== null)));
         } else if (options.reducer === ReducerID.stdDev) {
-          vals.push(1);
+          vals.push(calculateStdDev(values.filter((val) => val !== null)));
         }
       }
     }
 
     return vals;
   };
+}
+
+function calculateVariance(vals: number[]): number {
+  if (vals.length < 1) {
+    return 0;
+  }
+  let squareSum = 0;
+  let runningMean = 0;
+  for (let i = 0; i < vals.length; i++) {
+    const currentValue = vals[i];
+    let _oldMean = runningMean;
+    runningMean += (currentValue - _oldMean) / (i + 1);
+    squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+  }
+  const variance = squareSum / vals.length;
+  return variance;
+}
+
+function calculateStdDev(vals: number[]): number {
+  return Math.sqrt(calculateVariance(vals));
 }
 
 function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]): ValuesCreator {

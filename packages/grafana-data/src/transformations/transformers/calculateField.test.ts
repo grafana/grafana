@@ -587,7 +587,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('calculates cumulative total with NullValueMode asZero', async () => {
+  it('calculates cumulative total with nulls', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -595,7 +595,6 @@ describe('calculateField transformer w/ timeseries', () => {
         cumulative: {
           field: 'x',
           reducer: ReducerID.sum,
-          NullValueMode: NullValueMode.AsZero,
         },
       },
     };
@@ -615,7 +614,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('calculates trailing moving average with NullValueMode asZero', async () => {
+  it('calculates trailing moving average with nulls', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -625,37 +624,6 @@ describe('calculateField transformer w/ timeseries', () => {
           field: 'x',
           windowSize: 3,
           reducer: ReducerID.mean,
-          nullValueMode: NullValueMode.AsZero,
-        },
-      },
-    };
-
-    const series = toDataFrame({
-      fields: [{ name: 'x', type: FieldType.number, values: [1, null, 2, 7] }],
-    });
-
-    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
-      const data = received[0][0];
-
-      expect(data.fields.length).toEqual(2);
-      expect(data.fields[1].values[0]).toEqual(1);
-      expect(data.fields[1].values[1]).toEqual(0.5);
-      expect(data.fields[1].values[2]).toEqual(1);
-      expect(data.fields[1].values[3]).toEqual(3);
-    });
-  });
-
-  it('calculates trailing moving average with NullValueMode ignore', async () => {
-    const cfg = {
-      id: DataTransformerID.calculateField,
-      options: {
-        mode: CalculateFieldMode.WindowFunctions,
-        window: {
-          type: WindowType.Trailing,
-          field: 'x',
-          windowSize: 3,
-          reducer: ReducerID.mean,
-          nullValueMode: NullValueMode.Ignore,
         },
       },
     };
@@ -672,6 +640,149 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[1]).toEqual(1);
       expect(data.fields[1].values[2]).toEqual(1.5);
       expect(data.fields[1].values[3]).toEqual(4.5);
+    });
+  });
+
+  it('calculates trailing moving variance', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Trailing,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.variance,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(0);
+      expect(data.fields[1].values[1]).toEqual(0.25);
+      expect(data.fields[1].values[2]).toBeCloseTo(0.6666666, 4);
+    });
+  });
+
+  it('calculates centered moving stddev', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Centered,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.stdDev,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(0.5);
+      expect(data.fields[1].values[1]).toBeCloseTo(0.8164, 2);
+      expect(data.fields[1].values[2]).toEqual(0.5);
+    });
+  });
+
+  it('calculates centered moving stddev with null', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Centered,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.stdDev,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, null, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(0);
+      expect(data.fields[1].values[1]).toEqual(0.5);
+      expect(data.fields[1].values[2]).toEqual(0.5);
+      expect(data.fields[1].values[3]).toEqual(0.5);
+    });
+  });
+
+  it('calculates trailing moving variance with null', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Trailing,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.variance,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, null, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(0);
+      expect(data.fields[1].values[1]).toEqual(0);
+      expect(data.fields[1].values[2]).toEqual(0.25);
+      expect(data.fields[1].values[3]).toEqual(0.25);
+    });
+  });
+
+  it('calculates trailing moving variance with null', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Trailing,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.variance,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [null, 1, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(0);
+      expect(data.fields[1].values[1]).toEqual(0);
+      expect(data.fields[1].values[2]).toEqual(0.25);
+      expect(data.fields[1].values[3]).toBeCloseTo(0.6666666, 4);
     });
   });
 });
