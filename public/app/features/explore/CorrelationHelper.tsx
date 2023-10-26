@@ -43,19 +43,17 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
   const panesVals = Object.values(panes);
-  const { value: defaultLabel } = useAsync(async () => await generateDefaultLabel(panesVals[0]!, panesVals[1]!), []);
+  const { value: defaultLabel, loading: loadingLabel } = useAsync(
+    async () => await generateDefaultLabel(panesVals[0]!, panesVals[1]!),
+    [
+      panesVals[0]?.datasourceInstance,
+      panesVals[0]?.queries[0].datasource,
+      panesVals[1]?.datasourceInstance,
+      panesVals[1]?.queries[0].datasource,
+    ]
+  );
 
-  const {
-    register,
-    watch,
-    getValues,
-    formState: { isDirty },
-  } = useForm<FormValues>({
-    defaultValues: {
-      label: defaultLabel,
-      description: '',
-    },
-  });
+  const { register, watch, getValues, setValue } = useForm<FormValues>();
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
@@ -63,27 +61,41 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const [transformationIdxToEdit, setTransformationIdxToEdit] = useState<number | undefined>(undefined);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const id = useId();
-  useEffect(() => {
-    const subscription = watch((value) => {
-      dispatch(
-        changeCorrelationEditorDetails({
-          label: value.label,
-          description: value.description,
-          correlationDirty: isDirty,
-        })
-      );
-    });
-    return () => subscription.unsubscribe();
-  }, [dispatch, isDirty, watch]);
 
   // only fire once on mount to allow save button to enable / disable when unmounted
   useEffect(() => {
     dispatch(changeCorrelationEditorDetails({ canSave: true }));
-
     return () => {
       dispatch(changeCorrelationEditorDetails({ canSave: false }));
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (
+      !loadingLabel &&
+      defaultLabel !== undefined &&
+      !correlationDetails?.correlationDirty &&
+      getValues('label') !== ''
+    ) {
+      setValue('label', defaultLabel);
+    }
+  }, [correlationDetails?.correlationDirty, defaultLabel, getValues, loadingLabel, setValue]);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      let dirty = correlationDetails?.correlationDirty || false;
+
+      if (!dirty && (value.label !== defaultLabel || value.description !== '')) {
+        dirty = true;
+      } else if (dirty && value.label === defaultLabel && value.description.trim() === '') {
+        dirty = false;
+      }
+      dispatch(
+        changeCorrelationEditorDetails({ label: value.label, description: value.description, correlationDirty: dirty })
+      );
+    });
+    return () => subscription.unsubscribe();
+  }, [correlationDetails?.correlationDirty, defaultLabel, dispatch, watch]);
 
   useEffect(() => {
     const dirty =
@@ -168,7 +180,15 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }
         >
           <Field label="Label" htmlFor={`${id}-label`}>
-            <Input {...register('label')} id={`${id}-label`} />
+            <Input
+              {...register('label')}
+              id={`${id}-label`}
+              onBlur={() => {
+                if (getValues('label') === '' && defaultLabel !== undefined) {
+                  setValue('label', defaultLabel);
+                }
+              }}
+            />
           </Field>
           <Field label="Description" htmlFor={`${id}-description`}>
             <Input {...register('description')} id={`${id}-description`} />
