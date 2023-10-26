@@ -22,7 +22,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		MetricQueryType: models.MetricQueryTypeQuery,
 		Id:              "i3",
 	}
-	metricStat := models.CloudWatchQuery{
+	s1 := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
 		MetricEditorMode: models.MetricEditorModeBuilder,
 		Id:               "s1",
@@ -32,6 +32,18 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		MetricEditorMode: models.MetricEditorModeRaw,
 		Expression:       "PERIOD(i1)",
 		Id:               "m1",
+	}
+	m1_ref_m1 := models.CloudWatchQuery{
+		MetricQueryType:  models.MetricQueryTypeSearch,
+		MetricEditorMode: models.MetricEditorModeRaw,
+		Expression:       "PERIOD(m1)",
+		Id:               "m1",
+	}
+	i99_ref_m99 := models.CloudWatchQuery{
+		MetricQueryType:  models.MetricQueryTypeSearch,
+		MetricEditorMode: models.MetricEditorModeRaw,
+		Expression:       "PERIOD(m1)",
+		Id:               "i99",
 	}
 	m2_ref_i1 := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
@@ -58,9 +70,29 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		Id:               "m5",
 	}
 
+	t.Run("math expression references itself", func(t *testing.T) {
+		batch := []*models.CloudWatchQuery{
+			&m1_ref_m1,
+		}
+
+		result := getMetricQueryBatches(batch, logger)
+		assert.Len(t, result, 1)
+		assert.Equal(t, batch, result[0])
+	})
+
+	t.Run("leaf expression references parent", func(t *testing.T) {
+		batch := []*models.CloudWatchQuery{
+			&m1_ref_m1,
+		}
+
+		result := getMetricQueryBatches(batch, logger)
+		assert.Len(t, result, 1)
+		assert.Equal(t, batch, result[0])
+	})
+
 	t.Run("zero insight queries should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
-			&metricStat,
+			&s1,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -75,7 +107,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 	t.Run("one insight query should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&metricStat,
+			&s1,
 		}
 
 		result := getMetricQueryBatches(batch, logger)
@@ -86,21 +118,21 @@ func TestGetMetricQueryBatches(t *testing.T) {
 	t.Run("multiple insight queries should separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&metricStat,
+			&s1,
 			&insight2,
 		}
 
 		result := getMetricQueryBatches(batch, logger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1}, result[0])
-		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat}, result[1])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&s1}, result[1])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[2])
 	})
 
 	t.Run("math queries with one insight query should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&metricStat,
+			&s1,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -115,7 +147,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
 			&insight2,
-			&metricStat,
+			&s1,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -126,7 +158,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &m1_ref_i1, &m2_ref_i1, &m3_ref_m1_m2}, result[1])
-		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat, &m4_ref_s1}, result[2])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&s1, &m4_ref_s1}, result[2])
 	})
 	t.Run("a math query with multiple insight queries should batch them together", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{

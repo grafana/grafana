@@ -54,6 +54,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 		queryReferences[idx] = references
 	}
 
+	// root query
 	// Create a new batch for every query not used in another query
 	batches := [][]*models.CloudWatchQuery{}
 	for i, used := range isReferenced {
@@ -65,12 +66,12 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 }
 
 // getReferencedQueries gets all the queries referenced by startQuery and its referenced queries
-func getReferencedQueries(queries []*models.CloudWatchQuery, queryReferences [][]int, startQuery int) []*models.CloudWatchQuery {
+func getReferencedQueries(queries []*models.CloudWatchQuery, queryReferences [][]int, rootQueryIndex int) []*models.CloudWatchQuery {
 	usedQueries := make([]bool, len(queries))
 	batch := []*models.CloudWatchQuery{}
 
-	queriesToAdd := []int{startQuery}
-	usedQueries[startQuery] = true
+	queriesToAdd := []int{rootQueryIndex}
+	usedQueries[rootQueryIndex] = true
 	for i := 0; i < len(queriesToAdd); i++ {
 		batch = append(batch, queries[queriesToAdd[i]])
 		for _, queryIdx := range queryReferences[queriesToAdd[i]] {
