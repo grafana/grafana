@@ -20,32 +20,11 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  function getMessages(panel: PanelModel): Message[] {
-    const dashboard = getDashboardSrv().getCurrent()!;
-
-    return [
-      {
-        content: TITLE_GENERATION_STANDARD_PROMPT,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
-        role: Role.system,
-      },
-      {
-        content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
-        role: Role.system,
-      },
-    ];
-  }
+  const messages = React.useMemo(() => getMessages(panel), [panel]);
 
   return (
     <GenAIButton
-      messages={getMessages(panel)}
+      messages={messages}
       onGenerate={onGenerate}
       loadingText={'Generating title'}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
@@ -53,3 +32,26 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
     />
   );
 };
+
+function getMessages(panel: PanelModel): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
+
+  return [
+    {
+      content: TITLE_GENERATION_STANDARD_PROMPT,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
+      role: Role.system,
+    },
+    {
+      content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      role: Role.system,
+    },
+  ];
+}
