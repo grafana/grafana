@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/yaml"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -295,10 +298,36 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 			r.Status = s
 			r.Result = nil
 		}
-	} else {
-		_ = yaml.Unmarshal(r.Body, r.Result)
 	}
 	return r
+}
+
+// Read local JSON or YAML file into a resource
+func (c *K8sTestHelper) LoadYAMLOrJSONFile(fpath string) *unstructured.Unstructured {
+	c.t.Helper()
+
+	//nolint:gosec
+	raw, err := os.ReadFile(fpath)
+	require.NoError(c.t, err)
+	require.NotEmpty(c.t, raw)
+	return c.LoadYAMLOrJSON(string(raw))
+}
+
+// Read local JSON or YAML file into a resource
+func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
+	c.t.Helper()
+
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(body)), 100)
+	var rawObj runtime.RawExtension
+	err := decoder.Decode(&rawObj)
+	require.NoError(c.t, err)
+
+	obj, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+	require.NoError(c.t, err)
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	require.NoError(c.t, err)
+
+	return &unstructured.Unstructured{Object: unstructuredMap}
 }
 
 func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {

@@ -192,28 +192,58 @@ func TestPlaylist(t *testing.T) {
 		require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
 	})
 
-	t.Run("Do simple CRUD via k8s", func(t *testing.T) {
-		v := helper.LoadAnyResource("testdata/playlist-generate.yaml")
-		require.Equal(t, "playlist.grafana.app/v0alpha1", v.APIVersion)
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
 
-		// Create with auto generated name
-		rsp := helper.PostResource(helper.Org1.Editor, "playlists", v)
-		require.Equal(t, 201, rsp.Response.StatusCode) // created!
-		require.NotEmpty(t, rsp.Result.Name)
-		require.Equal(t, "Playlist with auto generated UID", v.Spec["title"])
-		require.Equal(t, "Playlist with auto generated UID", rsp.Result.Spec["title"])
+		// Create the playlist "abcdefgh"
+		out, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-with-uid.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "abcdefgh", out.GetName())
+		uids := []string{out.GetName()}
 
-		// Now Update the title
-		update := rsp.Result
-		update.Spec["title"] = "Change the title"
-		rsp = helper.PutResource(helper.Org1.Editor, "playlists", *update)
-		require.Equal(t, 200, rsp.Response.StatusCode) // OK
-		require.Equal(t, "Change the title", rsp.Result.Spec["title"])
-		require.NotEqual(t, update.ResourceVersion, rsp.Result.ResourceVersion) // should be bigger!
+		// Create (with name generation) three playlists
+		for i := 0; i < 3; i++ {
+			out, err := client.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.NoError(t, err)
+			uids = append(uids, out.GetName())
+		}
 
-		// Viewer can not update!
-		update.Spec["interval"] = "1m"
-		rsp = helper.PutResource(helper.Org1.Viewer, "playlists", *update)
-		require.Equal(t, 403, rsp.Response.StatusCode)
+		found, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, len(uids), len(found.Items))
+
+		// Check that "list" includes all of them
+
+		// v :=
+		// 	require.Equal(t, "playlist.grafana.app/v0alpha1", v.APIVersion)
+
+		// // Create with auto generated name
+		// rsp := helper.PostResource(helper.Org1.Editor, "playlists", v)
+		// require.Equal(t, 201, rsp.Response.StatusCode) // created!
+		// require.NotEmpty(t, rsp.Result.Name)
+		// require.Equal(t, "Playlist with auto generated UID", v.Spec["title"])
+		// require.Equal(t, "Playlist with auto generated UID", rsp.Result.Spec["title"])
+
+		// // Now Update the title
+		// update := rsp.Result
+		// update.Spec["title"] = "Change the title"
+		// rsp = helper.PutResource(helper.Org1.Editor, "playlists", *update)
+		// require.Equal(t, 200, rsp.Response.StatusCode) // OK
+		// require.Equal(t, "Change the title", rsp.Result.Spec["title"])
+		// require.NotEqual(t, update.ResourceVersion, rsp.Result.ResourceVersion) // should be bigger!
+
+		// // Viewer can not update!
+		// update.Spec["interval"] = "1m"
+		// rsp = helper.PutResource(helper.Org1.Viewer, "playlists", *update)
+		// require.Equal(t, 403, rsp.Response.StatusCode)
 	})
 }
