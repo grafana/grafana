@@ -385,7 +385,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
-      rootContainer: this.transformComponentRef?.current?.instance.wrapperComponent,
+      rootContainer: this.transformComponentRef?.current?.instance.contentComponent,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,

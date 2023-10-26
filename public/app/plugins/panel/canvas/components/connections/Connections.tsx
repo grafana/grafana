@@ -105,7 +105,7 @@ export class Connections {
     const elementBoundingRect = element.div!.getBoundingClientRect();
     const transformRef = this.scene.transformComponentRef?.current;
 
-    const parentBoundingRect = transformRef?.instance.wrapperComponent?.getBoundingClientRect();
+    const parentBoundingRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
     const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
