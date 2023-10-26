@@ -25,9 +25,7 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
       type: `application/${format};charset=utf-8`,
     });
     saveAs(blob, `${downloadFileName}.${format}`);
-
-    onClose();
-  }, [textDefinition, downloadFileName, format, onClose]);
+  }, [textDefinition, downloadFileName, format]);
 
   const formattedTextDefinition = useMemo(() => {
     const provider = allGrafanaExportProviders[format];
@@ -49,6 +47,7 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
                 minimap: {
                   enabled: false,
                 },
+                scrollBeyondLastLine: false,
                 lineNumbers: 'on',
                 readOnly: true,
               }}

@@ -30,7 +30,7 @@ import { TableWrapper } from './TableWrapper';
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
 const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
-  Refer to the Grafana authentication docs for details.`;
+Refer to the Grafana authentication docs for details.`;
 
 const getBasicRoleDisabled = (user: OrgUser) => {
   let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
@@ -132,6 +132,7 @@ export const OrgUsersTable = ({
               onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
               basicRoleDisabled={basicRoleDisabled}
               basicRoleDisabledMessage={disabledRoleMessage}
+              width={40}
             />
           ) : (
             <OrgRolePicker
@@ -151,7 +152,25 @@ export const OrgUsersTable = ({
           return (
             basicRoleDisabled && (
               <Box display={'flex'} alignItems={'center'} marginLeft={1}>
-                <Tooltip content={disabledRoleMessage}>
+                <Tooltip
+                  interactive={true}
+                  content={
+                    <div>
+                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                      the&nbsp;
+                      <a
+                        href={
+                          'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
+                        }
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Grafana authentication docs
+                      </a>
+                      &nbsp;for details.
+                    </div>
+                  }
+                >
                   <Icon name="question-circle" />
                 </Tooltip>
               </Box>

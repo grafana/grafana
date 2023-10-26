@@ -7,7 +7,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -117,6 +116,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	// when running oss or enterprise without a license all users should be able to query data sources
 	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
 		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
+	}
+
+	datasourcesCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources:creator",
+			DisplayName: "Data source creator",
+			Description: "Create data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionCreate,
+				},
+			},
+		},
+		Grants: []string{},
 	}
 
 	datasourcesWriterRole := ac.RoleRegistration{
@@ -254,6 +268,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: teamCreatorGrants,
+	}
+
+	teamsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:teams:read",
+			DisplayName: "Team reader",
+			Description: "List all teams.",
+			Group:       "Teams",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+			},
+		},
+		Grants: []string{},
 	}
 
 	teamsWriterRole := ac.RoleRegistration{
@@ -431,7 +458,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all library panels.",
 			Group:       "Library panels",
 			Permissions: []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsRead, Scope: libraryelements.ScopeLibraryPanelsAll},
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -457,9 +484,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Library panels",
 			Description: "Create, read, write or delete all library panels and their permissions.",
 			Permissions: ac.ConcatPermissions(libraryPanelsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: libraryelements.ScopeLibraryPanelsAll},
-				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: libraryelements.ScopeLibraryPanelsAll},
-				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: libraryelements.ScopeLibraryPanelsAll},
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersAll},
 			}),
 		},
 		Grants: []string{"Admin"},
@@ -520,15 +547,13 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
-		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
-		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole}
-	if hs.Features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
-		roles = append(roles, libraryPanelsCreatorRole, libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole)
-	}
+		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
+		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }

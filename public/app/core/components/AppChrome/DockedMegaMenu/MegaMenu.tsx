@@ -4,6 +4,7 @@ import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { Flex } from '@grafana/ui/src/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -13,7 +14,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '300px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -39,7 +40,7 @@ export const MegaMenu = React.memo(
     };
 
     return (
-      <div data-testid="navbarmenu" ref={ref} {...restProps}>
+      <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
@@ -104,19 +105,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    minWidth: MENU_WIDTH,
+    padding: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
   }),
   dockMenuButton: css({
     display: 'none',
-    marginRight: theme.spacing(2),
 
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('xl')]: {
       display: 'inline-flex',
     },
   }),

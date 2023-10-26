@@ -39,6 +39,7 @@ describe('Tooltip', () => {
 
     expect(refObj.current).not.toBeNull();
   });
+
   it('to be shown on hover and be dismissable by pressing Esc key when show is undefined', async () => {
     render(
       <Tooltip content="Tooltip content">
@@ -50,6 +51,7 @@ describe('Tooltip', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
   });
+
   it('is always visible when show prop is true', async () => {
     render(
       <Tooltip content="Tooltip content" show={true}>
@@ -61,6 +63,7 @@ describe('Tooltip', () => {
     await userEvent.unhover(screen.getByText('On the page'));
     expect(screen.getByText('Tooltip content')).toBeInTheDocument();
   });
+
   it('is never visible when show prop is false', async () => {
     render(
       <Tooltip content="Tooltip content" show={false}>
@@ -69,5 +72,28 @@ describe('Tooltip', () => {
     );
     await userEvent.hover(screen.getByText('On the page'));
     expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
+  });
+
+  it('exposes the tooltip text to screen readers', async () => {
+    render(
+      <Tooltip content="Tooltip content">
+        <button>On the page</button>
+      </Tooltip>
+    );
+
+    // if tooltip is not visible, description won't be set
+    expect(
+      screen.queryByRole('button', {
+        description: 'Tooltip content',
+      })
+    ).not.toBeInTheDocument();
+
+    // tab to button to make tooltip visible
+    await userEvent.keyboard('{tab}');
+    expect(
+      await screen.findByRole('button', {
+        description: 'Tooltip content',
+      })
+    ).toBeInTheDocument();
   });
 });
