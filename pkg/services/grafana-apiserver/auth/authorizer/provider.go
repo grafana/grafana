@@ -28,7 +28,11 @@ func ProvideAuthorizer(
 		authorizers = append(authorizers, orgIDAuthorizer)
 	}
 
-	authorizers = append(authorizers, orgRoleAuthorizer)
+	authorizers = append(authorizers,
+		orgRoleAuthorizer,
 
+		// Add this last so that if nothing says authorizer.DecisionDeny, it will pass
+		authorizerfactory.NewAlwaysAllowAuthorizer(),
+	)
 	return union.New(authorizers...)
 }
