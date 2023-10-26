@@ -5555,7 +5555,7 @@
           },
           {
             "type": "string",
-            "description": "The parent folder UID",
+            "description": "The parent folder UID check",
             "name": "parentUid",
             "in": "query"
           }

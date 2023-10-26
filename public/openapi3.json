@@ -17905,7 +17905,7 @@
             }
           },
           {
-            "description": "The parent folder UID",
+            "description": "The parent folder UID check",
             "in": "query",
             "name": "parentUid",
             "schema": {

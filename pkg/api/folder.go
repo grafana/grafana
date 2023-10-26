@@ -482,7 +482,7 @@ type GetFoldersParams struct {
 	// required:false
 	// default:1
 	Page int64 `json:"page"`
-	// The parent folder UID
+	// The parent folder UID check
 	// in:query
 	// required:false
 	ParentUID string `json:"parentUid"`
