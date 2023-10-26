@@ -3,7 +3,6 @@ import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Switch, VerticalGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -78,7 +77,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     });
 
     const time = new Date().getTime();
-    saveAs(blob, `${dashboardJson.title}-${time}.json`);
+    let title = 'dashboard';
+    if ('title' in dashboardJson && dashboardJson.title) {
+      title = dashboardJson.title;
+    }
+    saveAs(blob, `${title}-${time}.json`);
     trackDashboardSharingActionPerType('save_export', shareDashboardType.export);
   }
 }

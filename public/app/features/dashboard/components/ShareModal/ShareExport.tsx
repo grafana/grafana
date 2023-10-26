@@ -1,11 +1,9 @@
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -92,8 +90,6 @@ export class ShareExport extends PureComponent<Props, State> {
     const { shareExternally } = this.state;
 
     const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
-
-    const exportDefaultTranslation = t('share-modal.export.share-default-label', `Export with default values removed`);
 
     return (
       <>
