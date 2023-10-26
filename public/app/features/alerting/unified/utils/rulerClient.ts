@@ -159,7 +159,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     }
 
     const newRule = formValuesToRulerGrafanaRuleDTO(values);
-    const namespace = folder.title;
+    const namespace = folder.uid;
     const groupSpec = { name: group, interval: evaluateEvery };
 
     if (!existingRule) {

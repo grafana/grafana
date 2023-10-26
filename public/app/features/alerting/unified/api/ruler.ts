@@ -36,10 +36,12 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
         params: params,
       };
     },
-    namespace: (namespace: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespace)}`,
-      params: Object.fromEntries(rulerSearchParams),
-    }),
+    namespace: (namespace: string): RulerRequestUrl => {
+      return {
+        path: `${rulerPath}/${encodeURIComponent(namespace)}`,
+        params: Object.fromEntries(rulerSearchParams),
+      };
+    },
     namespaceGroup: (namespace: string, group: string): RulerRequestUrl => ({
       path: `${rulerPath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
       params: Object.fromEntries(rulerSearchParams),

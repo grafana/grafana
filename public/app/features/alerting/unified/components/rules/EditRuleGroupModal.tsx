@@ -159,11 +159,12 @@ export interface ModalProps {
   onClose: (saved?: boolean) => void;
   intervalEditOnly?: boolean;
   folderUrl?: string;
+  folderUid?: string;
   hideFolder?: boolean;
 }
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
-  const { namespace, group, onClose, intervalEditOnly } = props;
+  const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -202,6 +203,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
         namespaceName: namespace.name,
         newNamespaceName: values.namespaceName,
         groupInterval: values.groupInterval || undefined,
+        folderUid,
       })
     );
   };

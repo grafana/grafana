@@ -738,6 +738,7 @@ interface UpdateNamespaceAndGroupOptions {
   newNamespaceName: string;
   newGroupName: string;
   groupInterval?: string;
+  folderUid?: string;
 }
 
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
@@ -761,13 +762,22 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
     return withAppEvents(
       withSerializedError(
         (async () => {
-          const { rulesSourceName, namespaceName, groupName, newNamespaceName, newGroupName, groupInterval } = options;
+          const {
+            rulesSourceName,
+            namespaceName,
+            groupName,
+            newNamespaceName,
+            newGroupName,
+            groupInterval,
+            folderUid,
+          } = options;
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           // fetch rules and perform sanity checks
           const rulesResult = await fetchRulerRules(rulerConfig);
 
           const existingNamespace = Boolean(rulesResult[namespaceName]);
+
           if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
@@ -827,19 +837,19 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
                   : group
               );
             }
-            await deleteNamespace(rulerConfig, namespaceName);
+            await deleteNamespace(rulerConfig, folderUid || namespaceName);
 
             // if only modifying group...
           } else {
             // save updated group
-            await setRulerRuleGroup(rulerConfig, namespaceName, {
+            await setRulerRuleGroup(rulerConfig, folderUid || namespaceName, {
               ...existingGroup,
               name: newGroupName,
               interval: groupInterval,
             });
             // if group name was changed, delete old group
             if (newGroupName !== groupName) {
-              await deleteRulerRulesGroup(rulerConfig, namespaceName, groupName);
+              await deleteRulerRulesGroup(rulerConfig, folderUid || namespaceName, groupName);
             }
           }
 
@@ -860,6 +870,7 @@ interface UpdateRulesOrderOptions {
   namespaceName: string;
   groupName: string;
   newRules: RulerRuleDTO[];
+  folderUid: string;
 }
 
 export const updateRulesOrder = createAsyncThunk(
@@ -868,7 +879,7 @@ export const updateRulesOrder = createAsyncThunk(
     return withAppEvents(
       withSerializedError(
         (async () => {
-          const { rulesSourceName, namespaceName, groupName, newRules } = options;
+          const { rulesSourceName, namespaceName, groupName, newRules, folderUid } = options;
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           const rulesResult = await fetchRulerRules(rulerConfig);
@@ -884,7 +895,7 @@ export const updateRulesOrder = createAsyncThunk(
             rules: newRules,
           };
 
-          await setRulerRuleGroup(rulerConfig, namespaceName, payload);
+          await setRulerRuleGroup(rulerConfig, folderUid, payload);
 
           await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()
