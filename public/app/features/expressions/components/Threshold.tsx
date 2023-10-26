@@ -9,6 +9,53 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
 
+export function isInvalid(condition: ClassicCondition) {
+  const { unloadEvaluator, evaluator } = condition;
+
+  if (unloadEvaluator?.params[0] === undefined) {
+    return { errorMsg: 'This value cannot be empty' };
+  }
+
+  if (!evaluator) {
+    return;
+  }
+
+  const { type, params } = evaluator;
+  const [firstParam, secondParam] = unloadEvaluator.params;
+
+  switch (type) {
+    case EvalFunction.IsAbove:
+      if (firstParam > params[0]) {
+        return { errorMsg: `Enter a number less than or equal to ${params[0]}` };
+      }
+      break;
+    case EvalFunction.IsBelow:
+      if (firstParam < params[0]) {
+        return { errorMsg: `Enter a number more than or equal to ${params[0]}` };
+      }
+      break;
+    case EvalFunction.IsOutsideRange:
+      if (firstParam < params[0]) {
+        return { errorMsgFrom: `Enter a number more than or equal to ${params[0]}` };
+      }
+      if (secondParam > params[1]) {
+        return { errorMsgTo: `Enter a number less than or equal to ${params[1]}` };
+      }
+      break;
+    case EvalFunction.IsWithinRange:
+      if (firstParam > params[0]) {
+        return { errorMsgFrom: `Enter a number less than or equal to ${params[0]}` };
+      }
+      if (secondParam < params[1]) {
+        return { errorMsgTo: `Enter a number be more than or equal to ${params[1]}` };
+      }
+      break;
+    default:
+      break;
+  }
+  return;
+}
+
 interface Props {
   labelWidth: number | 'auto';
   refIds: Array<SelectableValue<string>>;
@@ -307,61 +354,6 @@ function RecoveryThresholdRow({
     });
   };
 
-  const isInvalid = (condition: ClassicCondition) => {
-    if (condition.unloadEvaluator?.params[0] === undefined) {
-      return { errorMsg: 'This value cannot be empty' };
-    }
-    // evaluator is above, unload evaluator value should be
-    if (condition.evaluator?.type === EvalFunction.IsAbove) {
-      if (condition.unloadEvaluator?.params[0] > condition.evaluator.params[0]) {
-        return {
-          errorMsg: `Enter a number less than or equal to ${condition.evaluator.params[0]}`,
-        };
-      }
-      return;
-    }
-    // evaluator is below, unload evaluator value should be
-    if (condition.evaluator?.type === EvalFunction.IsBelow) {
-      if (condition.unloadEvaluator?.params[0] < condition.evaluator.params[0]) {
-        return {
-          errorMsg: `Enter a number more than or equal to ${condition.evaluator.params[0]}`,
-        };
-      }
-      return;
-    }
-    // evaluator is outside range, unload evaluator value should be
-    if (condition.evaluator?.type === EvalFunction.IsOutsideRange) {
-      // first param
-      if (condition.unloadEvaluator?.params[0] < condition.evaluator.params[0]) {
-        return {
-          errorMsgFrom: `Enter a number more than or equal to ${condition.evaluator.params[0]}`,
-        };
-      }
-      // second param
-      if (condition.unloadEvaluator?.params[1] > condition.evaluator.params[1]) {
-        return {
-          errorMsgTo: `Enter a number less than or equal to ${condition.evaluator.params[1]}`,
-        };
-      }
-      return;
-    }
-    // evaluator is inside range, unload evaluator value should be
-    if (condition.evaluator?.type === EvalFunction.IsWithinRange) {
-      // first param
-      if (condition.unloadEvaluator?.params[0] > condition.evaluator.params[0]) {
-        return { errorMsgFrom: `Enter a number less than or equal to ${condition.evaluator.params[0]}` };
-      }
-
-      // second param
-      if (condition.unloadEvaluator?.params[1] < condition.evaluator.params[1]) {
-        return {
-          errorMsgTo: `Enter a number be more than or equal to ${condition.evaluator.params[1]}`,
-        };
-      }
-    }
-    return;
-  };
-
   const error = isInvalid(condition);
 
   const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
@@ -471,29 +463,27 @@ function RecoveryThresholdRow({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSelectText: css`
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-transform: uppercase;
-    padding: 0 ${theme.spacing(1)};
-    left: -${theme.spacing(1)};
-  `,
-  button: css`
-    height: 32px;
-
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-transform: uppercase;
-
-    display: flex;
-    align-items: center;
-    border-radius: ${theme.shape.radius.default};
-    font-weight: ${theme.typography.fontWeightBold};
-    border: 1px solid ${theme.colors.border.medium};
-    white-space: nowrap;
-    padding: 0 ${theme.spacing(1)};
-    background-color: ${theme.colors.background.primary};
-  `,
+  buttonSelectText: css({
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textTransform: 'uppercase',
+    padding: `0 ${theme.spacing(1)}`,
+    left: `-${theme.spacing(1)}`,
+  }),
+  button: css({
+    height: '32px',
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textTransform: 'uppercase',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: theme.shape.radius.default,
+    fontWeight: theme.typography.fontWeightBold,
+    border: `1px solid ${theme.colors.border.medium}`,
+    whiteSpace: 'nowrap',
+    padding: `0 ${theme.spacing(1)}`,
+    backgroundColor: theme.colors.background.primary,
+  }),
   range: css({
     width: 'min-content',
   }),
