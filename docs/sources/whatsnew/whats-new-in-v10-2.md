@@ -287,7 +287,7 @@ We've added support for Azure Authentication (Service principal/MSI) on our MS S
 
 Enable this feature by setting the `managed_identity_enabled` property to `true` under the `Azure` heading in your configuration file (/conf/<your_config_file>.ini). Next, in your Microsoft SQL Server data source configuration UI, under **Authentication**, select **Azure AD Authentication** in the drop-down. This will reveal **Azure Authentication Settings**, under which you will then select either **Managed Identity** or **App Registration**, and enter the credentials accordingly.
 
-{{< figure src="media/docs/grafana/data-sources/screenshot-managed-identity-mssql.png" caption="Azure MSI Authentication" >}}
+{{< figure src="media/docs/grafana/data-sources/screenshot-managed-identity-mssql-ui.png" caption="Azure MSI Authentication" max-width="750px" >}}
 
 Learn more in the [Microsoft SQL Server documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/).
 
