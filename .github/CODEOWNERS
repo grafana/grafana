@@ -293,6 +293,7 @@
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
+/pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Backend code docs
@@ -410,7 +411,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
@@ -462,6 +463,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
+/public/views/openapi3.html @grafana/backend-platform
+/public/views/swagger.html @grafana/backend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
 
@@ -510,6 +513,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
+/scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
