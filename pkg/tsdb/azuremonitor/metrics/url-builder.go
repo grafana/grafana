@@ -31,7 +31,7 @@ func (params *urlBuilder) buildResourceURI() *string {
 
 	metricNamespace := params.MetricNamespace
 
-	if params.MetricNamespace == nil || *params.MetricNamespace == "" {
+	if metricNamespace == nil || *metricNamespace == "" {
 		metricNamespace = params.MetricDefinition
 	}
 
