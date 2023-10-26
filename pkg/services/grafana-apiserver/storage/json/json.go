@@ -27,9 +27,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-var _ storage.Interface = (*Storage)(nil)
-
 const MaxUpdateAttempts = 30
+
+var _ storage.Interface = (*Storage)(nil)
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
