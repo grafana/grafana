@@ -208,23 +208,22 @@ func calculateRateInterval(
 
 // interpolateVariables interpolates built-in variables
 // expr                         PromQL query
-// queryInterval                Requested interval. This value may be overridden by MinStep in query options
-// queryIntervalMs              Requested interval in milliseconds
+// queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
 // calculatedMinStep            Calculated final step value. It was calculated in calculatePrometheusInterval
 // timeRange                    Requested time range for query
 func interpolateVariables(
 	expr string,
-	queryIntervalMs time.Duration,
+	queryInterval time.Duration,
 	calculatedMinStep time.Duration,
 	timeRange time.Duration,
 ) string {
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
-	rateInterval := calculateRateInterval(queryIntervalMs, calculatedMinStep.String())
+	rateInterval := calculateRateInterval(queryInterval, calculatedMinStep.String())
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryIntervalMs/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(queryIntervalMs))
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(queryInterval))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -232,8 +231,8 @@ func interpolateVariables(
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(queryIntervalMs/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(queryIntervalMs))
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(queryInterval))
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
