@@ -18,12 +18,12 @@ import (
 
 func TestForwardIDMiddleware(t *testing.T) {
 	settingWithEnabled, err := json.Marshal(map[string]any{
-		"grafanaIdForward": true,
+		"forwardIdToken": true,
 	})
 	require.NoError(t, err)
 
 	settingWithDisabled, err := json.Marshal(map[string]any{
-		"grafanaIdForward": false,
+		"forwardIdToken": false,
 	})
 	require.NoError(t, err)
 
