@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
@@ -16,15 +15,16 @@ type storage struct {
 	*genericregistry.Store
 }
 
-func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, gv schema.GroupVersion) (*storage, error) {
+func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
 	store := &genericregistry.Store{
 		NewFunc:                   func() runtime.Object { return &Playlist{} },
 		NewListFunc:               func() runtime.Object { return &PlaylistList{} },
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  gv.WithResource("playlists").GroupResource(),
-		SingularQualifiedResource: gv.WithResource("playlist").GroupResource(),
+		DefaultQualifiedResource:  legacy.DefaultQualifiedResource,
+		SingularQualifiedResource: legacy.SingularQualifiedResource,
+		TableConvertor:            legacy.tableConverter,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
