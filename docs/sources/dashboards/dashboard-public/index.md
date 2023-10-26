@@ -42,12 +42,6 @@ If you are using Docker, use an environment variable to enable public dashboards
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
-
 ## Make a dashboard public
 
 1. Click the sharing icon in the dashboard header.
