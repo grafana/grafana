@@ -201,7 +201,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       AdHocFiltersVariable.create({
         name: 'filters',
         datasource: trailDS,
-        layout: 'simple',
+        layout: 'vertical',
         filters: initialFilters ?? [],
       }),
     ],

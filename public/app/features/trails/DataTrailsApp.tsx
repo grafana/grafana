@@ -121,7 +121,7 @@ export function getDataTrailsApp() {
             ],
           }).getRef(),
           new DataTrail({
-            initialDS: 'sedemo-prom',
+            initialDS: 'kCLEK-Cnk',
             metric: 'access_evaluation_duration_bucket',
             initialFilters: [
               { key: 'job', operator: '=', value: 'production/grafana' },
