@@ -52,7 +52,6 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       showRoot={false}
       rootName=""
       allowEmpty={true}
-      initialTitle={value?.title}
       initialFolderUid={value?.uid}
       searchQueryType={SearchQueryType.AlertFolder}
       {...props}
