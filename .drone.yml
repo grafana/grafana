@@ -1157,6 +1157,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
+  failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
 - commands:
@@ -4667,6 +4668,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 975f4bc4ea819f11b9abf46a1e17fc55161551ab02b5c6a905393def886ad4ae
+hmac: 4c04040e7890d9f1da64ff3e2c006db1b3de4276b57ce4401849ec4ceb665ea8
 
 ...
