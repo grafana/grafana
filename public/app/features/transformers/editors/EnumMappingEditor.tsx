@@ -41,7 +41,9 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   };
 
   const generateEnumValues = () => {
-    const targetField = input[0]?.fields?.find((field) => field.name === options.conversions[0].targetField);
+    const targetField = input[convertFieldTransformIndex]?.fields?.find(
+      (field) => field.name === options.conversions[convertFieldTransformIndex].targetField
+    );
 
     // create set of values for enum without any duplicate values (from targetField.values)
     // maybe this should run automatically on first render?
@@ -123,7 +125,11 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
               {(provided) => (
                 <tbody ref={provided.innerRef} {...provided.droppableProps}>
                   {enumRows.map((value: string, index: number) => (
-                    <Draggable key={value} draggableId={value} index={index}>
+                    <Draggable
+                      key={`${convertFieldTransformIndex}/${value}`}
+                      draggableId={`${convertFieldTransformIndex}/${value}`}
+                      index={index}
+                    >
                       {(provided) => (
                         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
                           <td>
