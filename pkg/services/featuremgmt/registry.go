@@ -301,9 +301,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -771,6 +772,13 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "alertingContactPointsV2",
+			Description:  "Show the new contacpoints list view",
+			FrontendOnly: true,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:        "externalCorePlugins",
