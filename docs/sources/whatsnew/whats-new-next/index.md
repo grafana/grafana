@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Export alert rules and notification resources to Terraform
+## Export alerting resources to Terraform
 
 <!-- Yuri Tseretyan -->
 <!-- OSS, Enterprise -->
@@ -27,7 +27,7 @@ October 30, 2023
 
 _Generally available in Grafana Cloud_
 
-This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new “Modify export” mode for alert rules enables you to edit provisioned alert rules and export a modified version.
 
 ## Alerting insights
 
@@ -38,6 +38,122 @@ October 30, 2023
 _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
+## Configure refresh token handling separately for OAuth providers
+
+<!-- Mihaly Gyongyosi -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
+
+With the current release, we've introduced a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh access tokens when they expire. In addition, to further improve security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It's enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
+
+For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
+
+{{% admonition type="note" %}}
+The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
+
+The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
+{{% /admonition %}}
+
+## Use AI to generate dashboard titles, descriptions, and change summaries
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+You can now use generative AI to assist you in your Grafana dashboards. So far generative AI can help you with the following tasks:
+
+- **Generate panel and dashboard titles and descriptions** - You can now generate a title and description for your panel or dashboard based on the data you've added to it. This is useful when you want to quickly visualize your data and don't want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary** - You can now generate a summary of the changes you've made to a dashboard when you save it. This is great for effortlessly tracking the history of a dashboard.
+
+To enable these features, you must first enable the `dashgpt` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles). Then install and configure Grafana's LLM app plugin. For more information, refer to the [Grafana LLM app plugin documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/).
+
+When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
+
+{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
+
+## Create interactive buttons in canvas visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
+
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
+
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
+
+## Zoom in on the y-axis of the time series and candlestick visualizations
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+You can now zoom in on the y-axis of your time series and candlestick visualizations. This is useful when you want to focus on a specific range of values. To zoom in on the y-axis on supported visualizations, hold the Shift key while clicking and dragging; double-click to reset the zoom.
+
+{{< video-embed src="/media/docs/grafana/screen-recording-10-2-y-axis-zoom-demo.mp4" max-width="750px" caption="Y-axis zooming demo" >}}
+
+## Data visualization quality of life improvements
+
+We've made a number of smaller improvements to the data visualization experience in Grafana.
+
+<!-- Nathan Marrs -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+**Geomap marker symbol alignment options**
+
+You can now offset geomap marker symbols from the underlying data point.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-geomap-marker-symbol-alignment.gif" max-width="750px" caption="Geomap marker symbol alignment" >}}
+
+**Gauge visualization overflow support**
+
+You can now visualize gauges in vertical and horizontal orientations with overflow. This resolves an issue where the design would break when the number of gauges exceeded the available space.
+
+{{< figure src="/media/docs/grafana/gif-grafana-10-2-gauge-overflow.gif" max-width="750px" caption="Gauge overflow" >}}
+
+**Bar chart axes improvements**
+
+You can now center bar chart axes on zero and configure axes border and color settings.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-2-bar-chart-axes-improvements.png" max-width="750px" caption="Bar chart improvements" >}}
+
+## Detect unusable transformations
+
+<!-- Kyle Cunningham -->
+<!-- OSS, Enterprise -->
+<!-- already in on-prem release notes -->
+
+October 24, 2023
+
+_Available in public preview in Grafana Cloud_
+
+We've added initial support to detect situations in which various transformations won't work appropriately based on current data. Previously, selecting the appropriate transformation and configuring it correctly required a process of trial and error or already knowing how a given transformation worked. Now, transformations that we've detected can't be used are shaded in the interface to indicate this, along with a helpful message explaining why.
+
+{{< figure src="/media/docs/grafana/transformations/disabled-transformation.png" caption="Transformation that has been disabled because it doesn't have the necessary data" >}}
 
 ## Tempo data source: "Aggregate By" Search option to compute RED metrics over spans aggregated by attribute
 

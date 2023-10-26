@@ -16,6 +16,7 @@ jest.mock('app/core/core', () => ({
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
+  const changePageMock = jest.fn();
   const changeQueryMock = jest.fn();
   const fetchACOptionsMock = jest.fn();
   const fetchServiceAccountsMock = jest.fn();
@@ -33,6 +34,7 @@ const setup = (propOverrides: Partial<Props>) => {
     showPaging: false,
     totalPages: 1,
     serviceAccounts: [],
+    changePage: changePageMock,
     changeQuery: changeQueryMock,
     fetchACOptions: fetchACOptionsMock,
     fetchServiceAccounts: fetchServiceAccountsMock,

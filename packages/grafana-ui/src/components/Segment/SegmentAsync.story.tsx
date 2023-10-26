@@ -22,7 +22,12 @@ const loadOptions = <T,>(options: T): Promise<T> => new Promise((res) => setTime
 const loadOptionsErr = (): Promise<Array<SelectableValue<string>>> =>
   new Promise((_, rej) => setTimeout(() => rej(Error('Could not find data')), 2000));
 
-const SegmentFrame = ({ loadOptions, children }: any) => (
+const SegmentFrame = ({
+  loadOptions,
+  children,
+}: React.PropsWithChildren<{
+  loadOptions: (options: Array<SelectableValue<string>>) => Promise<Array<SelectableValue<string>>>;
+}>) => (
   <>
     <SegmentSection label="Segment Name">
       {children}
