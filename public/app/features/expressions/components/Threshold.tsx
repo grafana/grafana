@@ -476,7 +476,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     text-transform: uppercase;
     padding: 0 ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.medium};
+    left: -${theme.spacing(1)};
   `,
   button: css`
     height: 32px;
