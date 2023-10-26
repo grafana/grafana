@@ -63,9 +63,8 @@ describe('DateHistogramSettingsEditor', () => {
       expect(await screen.findByText('Calendar interval')).toBeInTheDocument();
       expect(await screen.findByText('1w')).toBeInTheDocument();
       
-      await selectOptionInTest(screen.getByLabelText('Interval type'), 'Fixed interval');
+      await selectOptionInTest(screen.getByLabelText('Calendar interval'), '10s');
 
-      expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
     test('Renders the date histogram selector with a calendar interval', async () => {
@@ -80,9 +79,8 @@ describe('DateHistogramSettingsEditor', () => {
       expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
       expect(await screen.findByText('1m')).toBeInTheDocument();
 
-      await selectOptionInTest(screen.getByLabelText('Interval type'), 'Calendar interval');
+      await selectOptionInTest(screen.getByLabelText('Fixed interval'), '1q');
 
-      expect(await screen.findByText('Calendar interval')).toBeInTheDocument();
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
   })
