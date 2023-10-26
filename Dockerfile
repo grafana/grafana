@@ -184,4 +184,5 @@ ENTRYPOINT [ "/run.sh" ]
 
 FROM grafana/grafana:${GF_VERSION} as groundcover
 
+COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
