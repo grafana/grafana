@@ -144,7 +144,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, errRetrieve
 	}
 
-	if !cmd.Enabled || len(cmd.Permissions) == 0 {
+	if len(cmd.Permissions) == 0 {
 		if saID > 0 {
 			if err := esa.deleteExtSvcAccount(ctx, cmd.OrgID, cmd.ExtSvcSlug, saID); err != nil {
 				esa.logger.Error("Error occurred while deleting service account",
@@ -155,15 +155,15 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 			}
 			esa.metrics.deletedCount.Inc()
 		}
-		esa.logger.Info("Skipping service account creation",
+		esa.logger.Info("Skipping service account creation, no permission",
 			"service", cmd.ExtSvcSlug,
-			"enabled", cmd.Enabled,
 			"permission count", len(cmd.Permissions),
 			"saID", saID)
 		return 0, nil
 	}
 
 	saID, errSave := esa.saveExtSvcAccount(ctx, &saveCmd{
+		Enabled:     cmd.Enabled,
 		ExtSvcSlug:  cmd.ExtSvcSlug,
 		OrgID:       cmd.OrgID,
 		Permissions: cmd.Permissions,
@@ -192,6 +192,12 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 			return 0, err
 		}
 		cmd.SaID = sa.Id
+	}
+
+	// Enable or disable the service account
+	esa.logger.Debug("Set service account state", "service", cmd.ExtSvcSlug, "saID", cmd.SaID, "enabled", cmd.Enabled)
+	if err := esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, cmd.SaID, cmd.Enabled); err != nil {
+		return 0, err
 	}
 
 	// update the service account's permissions
