@@ -17,8 +17,8 @@ env:
   GO_VERSION: 1.21
   GO_LINT_VERSION: 1.51.1
   GRABPL_VERSION: 3.0.44
-  GCP_BUCKET: plugins-community-staging # integration-artifacts
-  GCOM_API: https://grafana-dev.com # https://grafana.com
+  GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
+  GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
 
 jobs:
   build-and-publish:
@@ -214,8 +214,8 @@ jobs:
               }
             }
           }"`
-          echo $result
           if [[ "$(echo $result | jq -r .version)" == "null" ]]; then
-            echo "Failed to publish plugin version"
+            echo "Failed to publish plugin version. Got:"
+            echo $result
             exit 1
           fi
