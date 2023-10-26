@@ -14,6 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
 
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -40,9 +43,6 @@ type K8sTestHelper struct {
 
 	// // Registered groups
 	groups []metav1.APIGroup
-
-	// Used to build the URL paths
-	selectedGVR schema.GroupVersionResource
 }
 
 func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
@@ -76,6 +76,47 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	return c
 }
 
+type ResourceClientArgs struct {
+	User      User
+	Namespace string
+	GVR       schema.GroupVersionResource
+}
+
+type K8sResourceClient struct {
+	t        *testing.T
+	Args     ResourceClientArgs
+	Resource dynamic.ResourceInterface
+}
+
+// This will set the expected Group/Version/Resource and return the discovery info if found
+func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
+	c.t.Helper()
+
+	if args.Namespace == "" {
+		args.Namespace = c.namespacer(args.User.Identity.GetOrgID())
+	}
+
+	addr := c.env.Server.HTTPServer.Listener.Addr()
+	baseUrl := fmt.Sprintf("http://%s", addr)
+	login := args.User.Identity.GetLogin()
+	if login != "" && args.User.password != "" {
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, args.User.password, addr)
+	}
+
+	config := &rest.Config{
+		Host: baseUrl,
+		//	BearerToken: "example",
+	}
+
+	client, err := dynamic.NewForConfig(config)
+	require.NoError(c.t, err)
+	return &K8sResourceClient{
+		t:        c.t,
+		Args:     args,
+		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
+	}
+}
+
 type OrgUsers struct {
 	Admin  User
 	Editor User
@@ -105,13 +146,6 @@ type K8sResponse[T any] struct {
 
 type AnyResourceResponse = K8sResponse[AnyResource]
 type AnyResourceListResponse = K8sResponse[AnyResourceList]
-
-// This will set the expected Group/Version/Resource and return the discovery info if found
-func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) {
-	c.t.Helper()
-
-	c.selectedGVR = gvr
-}
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
@@ -155,16 +189,16 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	}, &AnyResource{})
 }
 
-func (c *K8sTestHelper) List(user User, namespace string) AnyResourceListResponse {
+func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersionResource) AnyResourceListResponse {
 	c.t.Helper()
 
 	return doRequest(c, RequestParams{
 		User: user,
 		Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
-			c.selectedGVR.Group,
-			c.selectedGVR.Version,
+			gvr.Group,
+			gvr.Version,
 			namespace,
-			c.selectedGVR.Resource),
+			gvr.Resource),
 	}, &AnyResourceList{})
 }
 
