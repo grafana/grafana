@@ -32,14 +32,8 @@ func (c *K8sTestHelper) LoadAnyResource(fpath string) AnyResource {
 	//nolint:gosec
 	raw, err := os.ReadFile(fpath)
 	require.NoError(c.t, err)
-	return c.readAnyResource(raw)
-}
-
-func (c *K8sTestHelper) readAnyResource(raw []byte) AnyResource {
-	c.t.Helper()
 	require.NotEmpty(c.t, raw)
 
-	var err error
 	res := &AnyResource{}
 	if json.Valid(raw) {
 		err = json.Unmarshal(raw, res)

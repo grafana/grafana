@@ -15,32 +15,32 @@ func TestPlaylistCRUD(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t)
-
-	t.Run("Check API Setup", func(t *testing.T) {
-		gvr := schema.GroupVersionResource{
+	disco := helper.SetGroupVersionResource(
+		schema.GroupVersionResource{
 			Group:    "playlist.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "playlists",
-		}
-		g, ok := helper.Groups[gvr.Group]
-		require.True(t, ok)
-		require.Equal(t, gvr.Version, g.PreferredVersion.Version)
+		})
+	require.NotNil(t, disco)
+	require.Equal(t, "playlist", disco.SingularResource)
+	require.Equal(t, "Namespaced", string(disco.Scope))
 
+	t.Run("Check List from different org users", func(t *testing.T) {
 		// Check view permissions
-		rsp := helper.List(helper.Org1.Viewer, gvr, "default")
+		rsp := helper.List(helper.Org1.Viewer, "default")
 		require.Equal(t, 200, rsp.Response.StatusCode)
 		require.NotNil(t, rsp.Result)
 		require.Empty(t, rsp.Result.Items)
 		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, gvr, "default")
+		rsp = helper.List(helper.Org2.Viewer, "default")
 		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, gvr, "org-22")
+		rsp = helper.List(helper.Org2.Viewer, "org-22")
 		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)

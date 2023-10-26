@@ -39,7 +39,10 @@ type K8sTestHelper struct {
 	Org2 OrgUsers
 
 	// Registered groups
-	Groups map[string]metav1.APIGroup
+	groups []APIGroupDiscovery
+
+	// Used to build the URL paths
+	selectedGVR schema.GroupVersionResource
 }
 
 func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
@@ -57,7 +60,6 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	c := &K8sTestHelper{
 		env:        *env,
 		t:          t,
-		Groups:     make(map[string]metav1.APIGroup),
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
@@ -66,12 +68,11 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 
 	// Read the API groups
 	rsp := doRequest(c, RequestParams{
-		User: c.Org1.Viewer,
-		Path: "/apis",
-	}, &metav1.APIGroupList{})
-	for _, g := range rsp.Result.Groups {
-		c.Groups[g.Name] = g
-	}
+		User:   c.Org1.Viewer,
+		Path:   "/apis",
+		Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+	}, &APIGroupDiscoveryList{})
+	c.groups = rsp.Result.Items
 	return c
 }
 
@@ -88,10 +89,11 @@ type User struct {
 
 type RequestParams struct {
 	User        User
-	Method      string // GET/POST
+	Method      string // GET, POST, PATCH, etc
 	Path        string
 	Body        []byte
 	ContentType string
+	Accept      string
 }
 
 type K8sResponse[T any] struct {
@@ -103,6 +105,29 @@ type K8sResponse[T any] struct {
 
 type AnyResourceResponse = K8sResponse[AnyResource]
 type AnyResourceListResponse = K8sResponse[AnyResourceList]
+
+// This will set the expected Group/Version/Resource and return the discovery info if found
+func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) *APIResourceDiscovery {
+	c.t.Helper()
+
+	c.selectedGVR = gvr
+
+	for _, g := range c.groups {
+		if g.Name == gvr.Group {
+			for _, v := range g.Versions {
+				if v.Version == gvr.Version {
+					for _, r := range v.Resources {
+						if r.Resource == gvr.Resource {
+							return &r
+						}
+					}
+				}
+			}
+			return nil // matched group, but did not find version+resource
+		}
+	}
+	return nil // not found
+}
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
@@ -146,13 +171,16 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	}, &AnyResource{})
 }
 
-func (c *K8sTestHelper) List(user User, gvr schema.GroupVersionResource, namespace string) AnyResourceListResponse {
+func (c *K8sTestHelper) List(user User, namespace string) AnyResourceListResponse {
 	c.t.Helper()
 
 	return doRequest(c, RequestParams{
 		User: user,
 		Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
-			gvr.Group, gvr.Version, namespace, gvr.Resource),
+			c.selectedGVR.Group,
+			c.selectedGVR.Version,
+			namespace,
+			c.selectedGVR.Resource),
 	}, &AnyResourceList{})
 }
 
@@ -188,6 +216,9 @@ func doRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	require.NoError(c.t, err)
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
+	}
+	if params.Accept != "" {
+		req.Header.Set("Accept", params.Accept)
 	}
 	rsp, err := http.DefaultClient.Do(req)
 	require.NoError(c.t, err)
