@@ -20,15 +20,11 @@ import { DashboardMeta } from 'app/types';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import {
-  findVizPanelByKey,
-  forceRenderChildren,
-  getClosestVizPanel,
-  getDashboardUrl,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -95,6 +91,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    const clearKeyBindings = setupKeyboardShortcuts(this);
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error
@@ -103,6 +100,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = undefined;
+      clearKeyBindings();
       this.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();

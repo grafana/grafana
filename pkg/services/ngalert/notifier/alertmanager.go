@@ -381,7 +381,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
+func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.PostableAlerts) error {
 	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
 	for _, pa := range postableAlerts.PostableAlerts {
 		alerts = append(alerts, &alertingNotify.PostableAlert{
@@ -395,16 +395,13 @@ func (am *alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 	return am.Base.PutAlerts(alerts)
 }
 
-func (am *alertmanager) ConfigHash() [16]byte {
-	return am.Base.ConfigHash()
-}
-
 func (am *alertmanager) OrgID() int64 {
 	return am.orgID
 }
 
-func (am *alertmanager) FileStore() *FileStore {
-	return am.fileStore
+// CleanUp removes the directory containing the alertmanager files from disk.
+func (am *alertmanager) CleanUp() {
+	am.fileStore.CleanUp()
 }
 
 // AlertValidationError is the error capturing the validation errors
