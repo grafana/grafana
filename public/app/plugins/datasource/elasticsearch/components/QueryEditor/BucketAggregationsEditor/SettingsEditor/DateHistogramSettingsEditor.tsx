@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { GroupBase, OptionsOrGroups } from 'react-select';
 
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
@@ -23,18 +23,10 @@ const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: '20m', value: '20m' },
   { label: '1h', value: '1h' },
   { label: '1d', value: '1d' },
-];
-
-const defaultCalendarIntervalOptions: Array<SelectableValue<string>> = [
   { label: '1w', value: '1w' },
   { label: '1M', value: '1M' },
-  { label: '1q', value: '5q' },
+  { label: '1q', value: '1q' },
   { label: '1y', value: '1y' },
-];
-
-const intervalTypeOptions: Array<SelectableValue<string>> = [
-  { label: 'Fixed interval', value: 'fixed' },
-  { label: 'Calendar interval', value: 'calendar' },
 ];
 
 const hasValue =
@@ -62,45 +54,32 @@ interface Props {
 }
 
 const getIntervalType = (interval: string | undefined) => {
-  return interval && calendarIntervals.includes(interval) ? 'calendar' : 'fixed';
+  return interval && calendarIntervals.includes(interval) ? 'Calendar interval' : 'Fixed interval';
 };
 
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
-  const [intervalType, setIntervalType] = useState(getIntervalType(bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval));
   const { current: baseId } = useRef(uniqueId('es-date_histogram-'));
 
   const handleIntervalChange = useCallback(({ value }: SelectableValue<string>) =>
     dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: value })), [bucketAgg, dispatch]);
 
-  const handleIntervalTypeChange = useCallback(({ value }: SelectableValue<string>) => {
-    setIntervalType(value || 'fixed');
-    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: '' }))
-  }, [bucketAgg, dispatch]);
+  const intervalType = getIntervalType(bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval);
 
   return (
     <>
-      <InlineField label="Interval type" {...inlineFieldProps} tooltip={"Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes."}>
-          <Select
-            inputId={uniqueId('es-date_histogram-interval-type')}
-            options={intervalTypeOptions}
-            value={intervalType}
-            onChange={handleIntervalTypeChange}
-          />
-        </InlineField>
-      <InlineField label="Interval" {...inlineFieldProps}>
+      <InlineField label={intervalType} tooltip={"Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes."} {...inlineFieldProps}>
         <Select
           inputId={uniqueId('es-date_histogram-interval')}
           isValidNewOption={isValidNewOption}
           filterOption={optionStartsWithValue}
           {...useCreatableSelectPersistedBehaviour({
-            options: intervalType === 'fixed' ? defaultIntervalOptions : defaultCalendarIntervalOptions,
+            options: defaultIntervalOptions,
             value: bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval,
             onChange: handleIntervalChange,
           })}
         />
       </InlineField>
-
       <InlineField label="Min Doc Count" {...inlineFieldProps}>
         <Input
           id={`${baseId}-min_doc_count`}
