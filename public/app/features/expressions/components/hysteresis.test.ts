@@ -2,7 +2,7 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition } from '../types';
 
-import { getUnloadEvaluatorTypeFromCondition, isInvalid } from './Threshold';
+import { getUnloadEvaluatorTypeFromCondition, isInvalid, updateEvaluatorConditions } from './Threshold';
 
 describe('getUnloadEvaluatorTypeFromCondition', () => {
   it('should return IsBelow when given IsAbove', () => {
@@ -156,5 +156,160 @@ describe('isInvalid', () => {
       type: 'query',
     };
     expect(isInvalid(condition2)).toEqual({ errorMsgTo: 'Enter a number less than or equal to 20' });
+  });
+});
+
+describe('updateEvaluatorConditions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should update only the evaluator when type is not changed', () => {
+    const conditions: ClassicCondition[] = [
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [1, 2],
+        },
+        unloadEvaluator: {
+          type: EvalFunction.IsBelow,
+          params: [3, 4],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ];
+    const update = {
+      params: [5, 6],
+    };
+    const onError = jest.fn();
+
+    const result = updateEvaluatorConditions(conditions, update, onError);
+
+    expect(result).toEqual([
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [5, 6],
+        },
+        unloadEvaluator: {
+          type: EvalFunction.IsBelow,
+          params: [3, 4],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ]);
+    expect(onError).not.toHaveBeenCalled();
+  });
+  it('should update only the evaluator when type is not changed and unload evaluator is not defined', () => {
+    const conditions: ClassicCondition[] = [
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [1, 2],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ];
+    const update = {
+      params: [5, 6],
+    };
+    const onError = jest.fn();
+
+    const result = updateEvaluatorConditions(conditions, update, onError);
+
+    expect(result).toEqual([
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [5, 6],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ]);
+    expect(onError).not.toHaveBeenCalled();
+  });
+  it('should update the evaluator when type is changed and hysteresis is not checked', () => {
+    const conditions: ClassicCondition[] = [
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [1, 2],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ];
+    const update = {
+      type: EvalFunction.IsBelow,
+      params: [5, 6],
+    };
+    const onError = jest.fn();
+
+    const result = updateEvaluatorConditions(conditions, update, onError);
+
+    expect(result).toEqual([
+      {
+        evaluator: {
+          type: EvalFunction.IsBelow,
+          params: [5, 6],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ]);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('should update the unload evaluator when type is changed and hysteresis is checked', () => {
+    const conditions: ClassicCondition[] = [
+      {
+        evaluator: {
+          type: EvalFunction.IsAbove,
+          params: [1],
+        },
+        unloadEvaluator: {
+          type: EvalFunction.IsBelow,
+          params: [0],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ];
+    const update = {
+      type: EvalFunction.IsBelow,
+      params: [1],
+    };
+    const onError = jest.fn();
+
+    const result = updateEvaluatorConditions(conditions, update, onError);
+
+    expect(result).toEqual([
+      {
+        evaluator: {
+          type: EvalFunction.IsBelow,
+          params: [1],
+        },
+        unloadEvaluator: {
+          type: EvalFunction.IsAbove,
+          params: [1],
+        },
+        query: { params: ['A', 'B'] },
+        reducer: { type: 'avg', params: [] },
+        type: 'query',
+      },
+    ]);
+    // we set the call on error but with undefined
+    expect(onError).toHaveBeenCalledWith(undefined);
   });
 });

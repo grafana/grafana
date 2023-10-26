@@ -226,7 +226,7 @@ export function getUnloadEvaluatorTypeFromCondition(condition: ClassicCondition)
   return EvalFunction.IsBelow;
 }
 
-function updateEvaluatorConditions(
+export function updateEvaluatorConditions(
   conditions: ClassicCondition[],
   update: Partial<{
     params: number[];
