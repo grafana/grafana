@@ -75,7 +75,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * and then add your migration at the bottom of 'updateSchema'
  * hint: search "Add migration here"
  */
-const DASHBOARD_SCHEMA_VERSION = 39;
+export const DASHBOARD_SCHEMA_VERSION = 39;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
