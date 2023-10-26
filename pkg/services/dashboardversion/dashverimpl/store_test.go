@@ -21,8 +21,7 @@ type getStore func(db.DB) store
 func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	t.Helper()
 
-	ss := db.InitTestDB(t)
-	dashVerStore := fn(ss)
+	ss, _ := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
 		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, "", false, "diff")
