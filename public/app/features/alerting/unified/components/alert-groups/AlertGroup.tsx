@@ -55,34 +55,34 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    & + & {
-      margin-top: ${theme.spacing(2)};
-    }
-  `,
-  header: css`
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    padding: ${theme.spacing(1, 1, 1, 0)};
-    background-color: ${theme.colors.background.secondary};
-    width: 100%;
-  `,
-  group: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  `,
-  summary: css``,
-  [AlertState.Active]: css`
-    color: ${theme.colors.error.main};
-  `,
-  [AlertState.Suppressed]: css`
-    color: ${theme.colors.primary.main};
-  `,
-  [AlertState.Unprocessed]: css`
-    color: ${theme.colors.secondary.main};
-  `,
+  wrapper: css({
+    '& + &': {
+      marginTop: theme.spacing(2),
+    },
+  }),
+  header: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+    backgroundColor: theme.colors.background.secondary,
+    width: '100%',
+  }),
+  group: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  }),
+  summary: css({}),
+  [AlertState.Active]: css({
+    color: theme.colors.error.main,
+  }),
+  [AlertState.Suppressed]: css({
+    color: theme.colors.primary.main,
+  }),
+  [AlertState.Unprocessed]: css({
+    color: theme.colors.secondary.main,
+  }),
 });
