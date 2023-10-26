@@ -27,7 +27,7 @@ type ExtensionQueryLinksContext = {
 };
 
 /* Global promises to fetch pyroscope datasource settings by uid as encountered */
-const pyroscopeDatasourceSettingsByUid: Record<string, Promise<PyroscopeDatasourceSettings>> = {};
+const pyroscopeDatasourceSettingsByUid: Record<string, PyroscopeDatasourceSettings> = {};
 
 /* Reset promises for testing purposes */
 export function resetPyroscopeQueryLinkExtensionsFetches() {
@@ -47,7 +47,14 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
     range,
   } = props;
 
-  const [datasourceSettings, setDatasourceSettings] = useState<PyroscopeDatasourceSettings>();
+  const { value:datasourceSettings } = useAsync(async () => {
+    if (pyroscopeDatasourceSettingsByUid[datasourceUid]) {
+      return pyroscopeDatasourceSettingsByUid[datasourceUid];
+    }
+    const settings = await getBackendSrv().get<PyroscopeDatasourceSettings>(`/api/datasources/uid/${datasourceUid}`);
+    pyroscopeDatasourceSettingsByUid[datasourceUid] = settings;
+    return settings;
+  }, [datasourceUid]);
 
   const context: ExtensionQueryLinksContext = {
     datasourceUid,
