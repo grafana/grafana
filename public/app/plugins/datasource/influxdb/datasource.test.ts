@@ -161,12 +161,63 @@ describe('InfluxDataSource Frontend Mode', () => {
     const mockTemplateService = new TemplateSrv();
     mockTemplateService.getAdhocFilters = jest.fn((_: string) => adhocFilters);
     let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+
+    // const fetchMock = jest.fn().mockReturnValue(fetchResult);
+
     it('query should contain the ad-hoc variable', () => {
       ds.query(mockInfluxQueryRequest());
       const expected = encodeURIComponent(
         'SELECT mean("value") FROM "cpu" WHERE time >= 0ms and time <= 10ms AND "adhoc_key" = \'adhoc_val\' GROUP BY time($__interval) fill(null)'
       );
       expect(fetchMock.mock.calls[0][0].data).toBe(`q=${expected}`);
+    });
+
+    it('should make the fetch call for adhoc filter keys', () => {
+      fetchMock.mockReturnValue(
+        of({
+          results: [
+            {
+              statement_id: 0,
+              series: [
+                {
+                  name: 'cpu',
+                  columns: ['tagKey'],
+                  values: [['datacenter'], ['geohash'], ['source']],
+                },
+              ],
+            },
+          ],
+        })
+      );
+      ds.getTagKeys();
+      expect(fetchMock).toHaveBeenCalled();
+      const fetchReq = fetchMock.mock.calls[0][0];
+      expect(fetchReq).not.toBeNull();
+      expect(fetchReq.data).toMatch(encodeURIComponent(`SHOW TAG KEYS`));
+    });
+
+    it('should make the fetch call for adhoc filter values', () => {
+      fetchMock.mockReturnValue(
+        of({
+          results: [
+            {
+              statement_id: 0,
+              series: [
+                {
+                  name: 'mykey',
+                  columns: ['key', 'value'],
+                  values: [['mykey', 'value']],
+                },
+              ],
+            },
+          ],
+        })
+      );
+      ds.getTagValues({ key: 'mykey', filters: [] });
+      expect(fetchMock).toHaveBeenCalled();
+      const fetchReq = fetchMock.mock.calls[0][0];
+      expect(fetchReq).not.toBeNull();
+      expect(fetchReq.data).toMatch(encodeURIComponent(`SHOW TAG VALUES WITH KEY = "mykey"`));
     });
   });
 

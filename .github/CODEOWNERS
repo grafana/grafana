@@ -411,7 +411,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
