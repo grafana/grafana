@@ -1323,7 +1323,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						{
 							Label:        "Username",
 							Element:      ElementTypeInput,
-							Description:  "Name of the responder. Must be specified if id and name.",
+							Description:  "Name of the responder. Must be specified if id and name are empty.",
 							PropertyName: "username",
 						},
 					},
