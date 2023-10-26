@@ -434,7 +434,7 @@ function RecoveryThresholdRow({
       return (
         <InlineFieldRow>
           <InlineField
-            label="Stop alerting when bellow"
+            label="Stop alerting when below"
             labelWidth={labelWidth}
             invalid={Boolean(invalidErrorMsg)}
             error={invalidErrorMsg}
@@ -475,6 +475,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.primary.text};
     font-size: ${theme.typography.bodySmall.fontSize};
     text-transform: uppercase;
+    padding: 0 ${theme.spacing(1)};
+    border: 1px solid ${theme.colors.border.medium};
   `,
   button: css`
     height: 32px;
