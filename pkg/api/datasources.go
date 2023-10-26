@@ -387,7 +387,7 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 
 // TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
 // words separated by special characters
-// "namespace!=auth", "env="prod", "env!~dev"
+// namespace!="auth", env="prod", env!~"dev"
 func TeamHTTPHeaderValueRegexMatch(headervalue string) bool {
 	// link to regex: https://regex101.com/r/I8KhZz/1
 	// 1234:{ name!="value",foo!~"bar" }
