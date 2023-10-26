@@ -1044,7 +1044,6 @@
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",
-      "share-default-label": "Export mit entfernten Standardwerten",
       "share-externally-label": "Export für externe Freigabe",
       "view-button": "JSON anzeigen"
     },
