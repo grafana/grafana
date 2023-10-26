@@ -206,5 +206,5 @@ You can find more examples in `public/dashboards/` directory of your Grafana ins
 [HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/developer-resources/api-reference/http-api"
 
 [Grafana LLM plugin documentation]: "/docs/grafana/ -> "/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
-[Grafana LLM plugin documentation] "/docs/grafana-cloud/ -> "/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
+[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> "/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
 {{% /docs/reference %}}

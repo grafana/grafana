@@ -34,7 +34,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-1. In the modal that opens, do one of the following:
+1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources][].
@@ -61,6 +61,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about individual visualizations, refer to [Visualizations options][].
 
+1. Under **Panel options**, enter a title and description for your panel.
+
+   Alternatively, Grafana can generate a panel title and description for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
+
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
@@ -71,22 +75,22 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds][]
    - [Configure standard options][]
 
-1. When you've finished editing your panel, click **Save** to save the dashboard. If you have Grafana's LLM plugin installed and the `dashgpt` feature toggle enabled, Grafana can generate a
+1. When you've finished editing your panel, click **Save** to save the dashboard.
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
 1. Enter a summary of your dashboard changes.
 
-   Alternatively, Grafana can generate a summary for you using the OpenAI integration. For more information, refer to the [Set up generative AI features for dashboards][] and the [Grafana LLM plugin][] documentation. <!--to do, figure out which place to link to-->
+   Alternatively, Grafana can generate a summary for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
 
-1. Enter a name for your dashboard and select a folder, if applicable.
+1. Enter a title for your dashboard and select a folder, if applicable.
 
-   Alternatively, Grafana can generate a summary for you using the OpenAI integration. For more information, refer to the [Set up generative AI features for dashboards][] and the [Grafana LLM plugin][] documentation. <!--to do, figure out which place to link to-->
+   Alternatively, Grafana can generate a dashboard title for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
 
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
-   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
@@ -104,7 +108,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 1. Click **Dashboards** in the left-side menu.
 1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
+1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
    If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
 
@@ -177,4 +181,7 @@ You can size a dashboard panel to suits your needs.
 
 [Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
 [Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
+
+[Set up generative AI features for dashboards documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 {{% /docs/reference %}}
