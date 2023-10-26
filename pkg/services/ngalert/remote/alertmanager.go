@@ -301,10 +301,6 @@ func (am *Alertmanager) OrgID() int64 {
 	return am.orgID
 }
 
-func (am *Alertmanager) ConfigHash() [16]byte {
-	return [16]byte{}
-}
-
 type roundTripper struct {
 	tenantID          string
 	basicAuthPassword string
