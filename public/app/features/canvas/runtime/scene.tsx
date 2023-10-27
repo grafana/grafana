@@ -403,6 +403,7 @@ export class Scene {
       },
       origin: false,
       className: this.styles.selected,
+      // rootContainer: this.transformComponentRef?.current?.instance.contentComponent, // TODO why does this not work?
     })
       .on('click', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -465,7 +466,11 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(
+            undefined,
+            undefined,
+            this.transformComponentRef?.current?.instance.transformState.scale
+          );
         }
 
         this.moved.next(Date.now());
@@ -481,13 +486,17 @@ export class Scene {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(
+            undefined,
+            undefined,
+            this.transformComponentRef?.current?.instance.transformState.scale
+          );
         }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.applyResize(event);
+          targetedElement.applyResize(event, this.transformComponentRef?.current?.instance.transformState.scale);
 
           if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
@@ -523,7 +532,11 @@ export class Scene {
             targetedElement.tempConstraint = undefined;
           }
 
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(
+            undefined,
+            undefined,
+            this.transformComponentRef?.current?.instance.transformState.scale
+          );
         }
       });
 
