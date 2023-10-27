@@ -26,7 +26,7 @@ Grafana 2.0 shipped with a great feature that enables it to render any graph or 
 
 No matter what data source you are using, the PNG image of the Graph will look the same as it does in your browser.
 
-This guide will show you how to install and configure the [`hubot-grafana`](https://github.com/stephenyeargin/hubot-grafana) plugin. This plugin allows you to tell hubot to render any dashboard or graph right from a channel in Slack, Basecamp, or any other supported Hubot adapter. The bot will respond with an image of the graph and a link that will take you to the graph.
+This guide shows you how to install and configure the [Hubot-Grafana](https://github.com/stephenyeargin/hubot-grafana) plugin. This plugin allows you to tell Hubot to render any dashboard or graph right from a channel in Slack, Basecamp, or any other supported Hubot adapter. The bot will respond with an image of the graph and a link that will take you to the graph.
 
 {{< figure src="/static/img/docs/tutorials/hubot_grafana.png"  max-width="800px" >}}
 
@@ -38,7 +38,7 @@ This guide will show you how to install and configure the [`hubot-grafana`](http
 
 Hubot is very easy to install and host. If you do not already have a bot up and running please read the official [Getting Started With Hubot](https://hubot.github.com/docs/) guide.
 
-## Install `hubot-grafana` script
+## Install the Hubot-Grafana script 
 
 In your Hubot project repo install the Grafana plugin using `npm`:
 
@@ -54,7 +54,7 @@ Edit the file external-scripts.json, and add hubot-grafana to the list of plugin
 
 ## Configure
 
-The `hubot-grafana` plugin requires two environment variables to be set in order to work properly. 
+The Hubot-Grafana plugin requires two environment variables to be set in order to work properly. 
 
 ```bash
 export HUBOT_GRAFANA_HOST=https://play.grafana.org
@@ -75,7 +75,7 @@ To verify that this feature works try the `Direct link to rendered image` link i
 
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key. You can add these from the API Keys page which you find in the Organization dropdown.
 
-### Image Uploading
+### Image uploading
 
 There are several approaches to uploading the rendered graphs. If you are using Slack, Rocket.Chat, or Telegram, the adapter's native uploader will take care of sending it through their respective API. If your Hubot is hosted on a platform that doesn't support uploads (such as IRC), you can use the [built-in S3 uploader](https://github.com/stephenyeargin/hubot-grafana/wiki/Amazon-S3-Image-Hosting). Note if you configure S3, it will not use the adapter's upload features.
 
