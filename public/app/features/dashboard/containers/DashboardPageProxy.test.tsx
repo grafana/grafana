@@ -16,19 +16,7 @@ const dashMock: DashboardDTO = {
   dashboard: {
     id: 1,
     annotations: {
-      list: [
-        {
-          builtIn: 1,
-          datasource: {
-            type: 'grafana',
-            uid: '-- Grafana --',
-          },
-          enable: false,
-          iconColor: 'rgba(0, 211, 255, 1)',
-          name: 'Annotations & Alerts',
-          type: 'dashboard',
-        },
-      ],
+      list: [],
     },
     uid: 'uid',
     title: 'title',
@@ -48,6 +36,16 @@ const dashMockEditable = {
     canEdit: true,
   },
 };
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn().mockReturnValue({
+    getInstanceSettings: () => {
+      return { name: 'Grafana' };
+    },
+    get: jest.fn().mockResolvedValue({}),
+  }),
+}));
 
 function setup(props: Partial<DashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
