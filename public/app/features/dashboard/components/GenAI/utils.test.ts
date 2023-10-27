@@ -1,3 +1,4 @@
+import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { openai } from './llms';
@@ -18,7 +19,7 @@ describe('getDashboardChanges', () => {
     const deprecatedOptions = {
       legend: { displayMode: 'hidden', showLegend: false },
     };
-    const deprecatedVersion = 37;
+    const deprecatedVersion = DASHBOARD_SCHEMA_VERSION - 1;
     const dashboard = createDashboardModelFixture({
       schemaVersion: deprecatedVersion,
       panels: [createPanelSaveModel({ title: 'Panel 1', options: deprecatedOptions })],
@@ -45,8 +46,8 @@ describe('getDashboardChanges', () => {
         ' {\n' +
         '   "editable": true,\n' +
         '   "graphTooltip": 0,\n' +
-        '-  "schemaVersion": 37,\n' +
-        '+  "schemaVersion": 38,\n' +
+        `-  "schemaVersion": ${deprecatedVersion},\n` +
+        `+  "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n` +
         '   "timezone": "",\n' +
         '   "panels": [\n' +
         '     {\n' +
@@ -59,7 +60,7 @@ describe('getDashboardChanges', () => {
         '+++ After user changes\t\n' +
         '@@ -3,16 +3,17 @@\n' +
         '   "graphTooltip": 0,\n' +
-        '   "schemaVersion": 38,\n' +
+        `   "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n` +
         '   "timezone": "",\n' +
         '   "panels": [\n' +
         '     {\n' +
