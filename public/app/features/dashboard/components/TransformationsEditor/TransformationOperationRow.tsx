@@ -9,9 +9,7 @@ import {
   QueryOperationAction,
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import {
-  QueryOperationRow,
-} from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
