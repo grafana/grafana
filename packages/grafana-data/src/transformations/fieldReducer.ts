@@ -105,7 +105,6 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
       ...field.state.calcs,
       ...values,
     };
-    // console.log('EARLY RETURN? - ', values')
     return values;
   }
 
@@ -436,9 +435,7 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data[idx--];
-    console.log(v, isNaN(v));
     if (v != null && !Number.isNaN(v)) {
-      console.log('FOUND VALUE: ', v);
       return { lastNotNull: v };
     }
   }

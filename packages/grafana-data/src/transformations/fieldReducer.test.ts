@@ -192,7 +192,7 @@ describe('Stats Calculators', () => {
       field: createField('x', info[0].data),
       reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull, ReducerID.diffperc],
     });
-    console.log(stats);
+
     expect(stats[ReducerID.first]).toEqual(NaN);
     expect(stats[ReducerID.last]).toEqual(NaN);
     expect(stats[ReducerID.firstNotNull]).toEqual(200);
