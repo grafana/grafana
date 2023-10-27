@@ -3,6 +3,7 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
@@ -11,6 +12,8 @@ import {
   acOptionsLoaded,
   pageChanged,
   queryChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
@@ -51,6 +54,21 @@ export function fetchServiceAccounts(
             serviceAccountStateFilter
           )}&accesscontrol=true`
         );
+
+        if (contextSrv.licensedAccessControlEnabled()) {
+          dispatch(rolesFetchBegin());
+          const orgId = contextSrv.user.orgId;
+          const userIds = result?.serviceAccounts.map((u: ServiceAccountDTO) => u.id);
+          const roles = await getBackendSrv().get(
+            `/api/access-control/users/roles`,
+            accessControlQueryParam({ userIds, targetOrgId: orgId })
+          );
+          result.serviceAccounts.forEach((u: ServiceAccountDTO) => {
+            u.roles = roles ? roles[u.id] || [] : [];
+          });
+          dispatch(rolesFetchEnd());
+        }
+
         dispatch(serviceAccountsFetched(result));
       }
     } catch (error) {

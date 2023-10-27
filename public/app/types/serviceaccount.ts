@@ -36,6 +36,7 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   isDisabled: boolean;
   teams: string[];
   role: OrgRole;
+  roles?: Role[];
 }
 
 export interface ServiceAccountCreateApiResponse {
@@ -52,6 +53,7 @@ export interface ServiceAccountCreateApiResponse {
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
   isLoading: boolean;
+  rolesLoading?: boolean;
   tokens: ApiKey[];
 }
 
