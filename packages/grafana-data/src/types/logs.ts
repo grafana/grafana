@@ -142,7 +142,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   /** 
    * @deprecated Deprecated since 10.3. To display the context option and support the feature implement this interface instead.
    */
-  showContextToggle(row?: LogRowModel): boolean;
+  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * This method can be used to display a custom UI in the context view.
