@@ -22,6 +22,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		MetricQueryType: models.MetricQueryTypeQuery,
 		Id:              "i3",
 	}
+
 	s1 := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
 		MetricEditorMode: models.MetricEditorModeBuilder,
@@ -39,11 +40,23 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		Expression:       "PERIOD(m1)",
 		Id:               "m1",
 	}
-	i99_ref_m99 := models.CloudWatchQuery{
+	m99 := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
 		MetricEditorMode: models.MetricEditorModeRaw,
-		Expression:       "PERIOD(m1)",
-		Id:               "i99",
+		Expression:       "PERIOD(m98)",
+		Id:               "m99",
+	}
+	m98 := models.CloudWatchQuery{
+		MetricQueryType:  models.MetricQueryTypeSearch,
+		MetricEditorMode: models.MetricEditorModeRaw,
+		Expression:       "PERIOD(m88)",
+		Id:               "m98",
+	}
+	m88 := models.CloudWatchQuery{
+		MetricQueryType:  models.MetricQueryTypeSearch,
+		MetricEditorMode: models.MetricEditorModeRaw,
+		Expression:       "PERIOD(m98)",
+		Id:               "m88",
 	}
 	m2_ref_i1 := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
@@ -80,9 +93,11 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		assert.Equal(t, batch, result[0])
 	})
 
-	t.Run("leaf expression references parent", func(t *testing.T) {
+	t.Run("m99 ref m98 which ref m88 which ref m98", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
-			&m1_ref_m1,
+			&m99,
+			&m98,
+			&m88,
 		}
 
 		result := getMetricQueryBatches(batch, logger)
