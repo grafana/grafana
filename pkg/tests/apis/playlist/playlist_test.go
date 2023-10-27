@@ -202,13 +202,13 @@ func TestPlaylist(t *testing.T) {
 			GVR:  gvr,
 		})
 
-		// Create the playlist "abcdefgh"
+		// Create the playlist "test"
 		first, err := client.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-with-uid.yaml"),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
-		require.Equal(t, "abcdefgh", first.GetName())
+		require.Equal(t, "test", first.GetName())
 		uids := []string{first.GetName()}
 
 		// Create (with name generation) two playlists
@@ -247,39 +247,23 @@ func TestPlaylist(t *testing.T) {
 
 		// PUT :: Update the title (full payload)
 		updated, err := client.Resource.Update(context.Background(),
-			helper.LoadYAMLOrJSON(`
-apiVersion: playlist.grafana.app/v0alpha1
-kind: Playlist
-metadata:
-  name: abcdefgh #
-spec:
-  title: This one is updated and only has one item
-  interval: 222s
-  items:
-  - type: dashboard_by_tag
-    value: panel-tests
-`),
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-replace.yaml"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
 		require.Equal(t, first.GetName(), updated.GetName())
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		out := getFromBothAPIs(t, helper, client, "abcdefgh", &playlist.PlaylistDTO{
+		out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
 			Name:     "This one is updated and only has one item",
 			Interval: "222s",
 		})
 		require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
 
 		// PATCH :: apply only some fields
-		if false { // DOES NOT WORK YET????? :(
-			updated, err = client.Resource.Apply(context.Background(), "abcdefgh",
-				helper.LoadYAMLOrJSON(`
-apiVersion: playlist.grafana.app/v0alpha1
-kind: Playlist
-spec:
-  title: The patched title!
-`),
+		if true { // DOES NOT WORK YET????? :(
+			updated, err = client.Resource.Apply(context.Background(), "test",
+				helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
 				metav1.ApplyOptions{
 					Force:        true,
 					FieldManager: "testing",
@@ -289,7 +273,7 @@ spec:
 			require.Equal(t, first.GetName(), updated.GetName())
 			require.Equal(t, first.GetUID(), updated.GetUID())
 			require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-			getFromBothAPIs(t, helper, client, "abcdefgh", &playlist.PlaylistDTO{
+			getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
 				Name:     "The patched title!",
 				Interval: "222s", // has not changed from previous update
 			})
