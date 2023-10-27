@@ -137,7 +137,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
     name: 'Last *',
-    description: 'Last non-null value',
+    description: 'Last non-null value (also excludes NaNs)',
     standard: true,
     aliasIds: ['current'],
     reduce: calculateLastNotNull,
@@ -152,7 +152,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.firstNotNull,
     name: 'First *',
-    description: 'First non-null value',
+    description: 'First non-null value (also excludes NaNs)',
     standard: true,
     reduce: calculateFirstNotNull,
   },
@@ -418,7 +418,7 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
     const v = data[idx];
-    if (v != null && v !== undefined) {
+    if (v != null && v !== undefined && !isNaN(v)) {
       return { firstNotNull: v };
     }
   }
@@ -435,7 +435,7 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data[idx--];
-    if (v != null && v !== undefined) {
+    if (v != null && v !== undefined && !isNaN(v)) {
       return { lastNotNull: v };
     }
   }
