@@ -266,7 +266,7 @@ type AppDTO struct {
 	Path    string `json:"path"`
 	Version string `json:"version"`
 	Preload bool   `json:"preload"`
-	
+
 	AngularDetected        bool `json:"angularDetected"`
 	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 }
