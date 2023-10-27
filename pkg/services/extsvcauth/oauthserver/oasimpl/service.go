@@ -412,6 +412,7 @@ func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *extsvcauth
 func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
+	// Retrieve client associated to the plugin
 	slug := slugify.Slugify(event.PluginId)
 	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
 	if err != nil {
@@ -423,15 +424,21 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 		return err
 	}
 
+	// Since we will change the grants, clear cache entry
 	s.cache.Delete(client.ClientID)
 
 	if !event.Enabled {
+		// Plugin is disabled => remove all grant_types
 		return s.sqlstore.UpdateExternalServiceGrantTypes(ctx, client.ClientID, "")
 	}
 
-	s.setClientUser(ctx, client)
+	if err := s.setClientUser(ctx, client); err != nil {
+		return err
+	}
 
+	// The plugin declared self permissions (that weren't inherited from impersonation)
 	selfEnabled := len(client.SelfPermissions) > 1 || (len(client.SelfPermissions) == 0 && !(client.SelfPermissions[0].Action == ac.ActionUsersImpersonate))
+	// The plugin declared impersonate permissions
 	impersonateEnabled := len(client.ImpersonatePermissions) > 0
 
 	grantTypes := s.computeGrantTypes(selfEnabled, impersonateEnabled)
