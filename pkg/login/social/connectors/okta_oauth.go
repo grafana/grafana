@@ -141,6 +141,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}
 
 	var role roletype.RoleType
+	var orgRoles map[int64]roletype.RoleType
 	var isGrafanaAdmin *bool
 	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
@@ -151,6 +152,11 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 		if s.info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
+		}
+
+		orgRoles, err = s.extractOrgRoles(ctx, data.rawJSON, groups, role)
+		if err != nil {
+			return nil, err
 		}
 	}
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
@@ -163,6 +169,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		Email:          email,
 		Login:          email,
 		Role:           role,
+		OrgRoles:       orgRoles,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil

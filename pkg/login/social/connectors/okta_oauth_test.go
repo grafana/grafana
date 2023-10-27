@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -25,6 +27,7 @@ import (
 
 func TestSocialOkta_UserInfo(t *testing.T) {
 	var boolPointer *bool
+	orgService := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org1"}, {ID: 5, Name: "org2"}, {ID: 6, Name: "org3"}}}
 
 	tests := []struct {
 		name                    string
@@ -34,8 +37,11 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 		settingSkipOrgRoleSync  bool
 		allowAssignGrafanaAdmin bool
 		RoleAttributePath       string
+		OrgAttributePath        string
+		OrgMapping              []string
 		ExpectedEmail           string
 		ExpectedRole            roletype.RoleType
+		ExpectedOrgRoles        map[int64]roletype.RoleType
 		ExpectedGrafanaAdmin    *bool
 		ExpectedErr             error
 		wantErr                 bool
@@ -87,6 +93,24 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 			wantErr:              false,
 		},
+		{
+			name:              "Org mapping",
+			userRawJSON:       `{ "email": "okta-octopus@grafana.com", "orgs": ["Org1", "Org2", "AnotherOrg"] }`,
+			RoleAttributePath: "'None'",
+			OrgAttributePath:  "orgs",
+			OrgMapping:        []string{"Org1:org1:Editor", "Org2:org2:Admin", "*:org3:Viewer"},
+			OAuth2Extra: map[string]any{
+				// {
+				// "email": "okto.octopus@test.com"
+				// },
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
+			},
+			ExpectedEmail:        "okto.octopus@test.com",
+			ExpectedRole:         "None",
+			ExpectedOrgRoles:     map[int64]roletype.RoleType{4: "Editor", 5: "Admin", 6: "Viewer"},
+			ExpectedGrafanaAdmin: boolPointer,
+			wantErr:              false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -109,11 +133,13 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					RoleAttributePath:       tt.RoleAttributePath,
 					AllowAssignGrafanaAdmin: tt.allowAssignGrafanaAdmin,
 					SkipOrgRoleSync:         tt.settingSkipOrgRoleSync,
+					OrgAttributePath:        tt.OrgAttributePath,
+					OrgMapping:              tt.OrgMapping,
 				},
 				&setting.Cfg{
 					AutoAssignOrgRole: tt.autoAssignOrgRole,
 				},
-				nil,
+				orgService,
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -132,6 +158,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			}
 			require.Equal(t, tt.ExpectedEmail, got.Email)
 			require.Equal(t, tt.ExpectedRole, got.Role)
+			require.Equal(t, tt.ExpectedOrgRoles, got.OrgRoles)
 			require.Equal(t, tt.ExpectedGrafanaAdmin, got.IsGrafanaAdmin)
 		})
 	}
