@@ -26,7 +26,7 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId: string) => Promise<boolean>;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {

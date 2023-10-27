@@ -54,7 +54,7 @@ interface LogsContainerProps extends PropsFromRedux {
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
+  isFilterLabelActive: (key: string, value: string, refId: string) => Promise<boolean>;
 }
 
 interface LogsContainerState {
