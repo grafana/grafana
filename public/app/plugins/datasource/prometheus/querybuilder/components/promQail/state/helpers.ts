@@ -137,6 +137,21 @@ export async function promQailExplain(
 }
 
 /**
+ * Check if the LLM plugin is enabled.
+ * @returns true if the LLM plugin is enabled.
+ */
+export async function isLLMPluginEnabled(): Promise<boolean> {
+  // Check if the LLM plugin is enabled.
+  // If not, we won't be able to make requests, so return early.
+  const openaiEnabled = llms.openai.enabled().then((response) => response.ok);
+  const vectorEnabled = llms.vector.enabled().then((response) => response.ok);
+  // combine 2 promises
+  return Promise.all([openaiEnabled, vectorEnabled]).then((results) => {
+    return results.every((result) => result);
+  });
+}
+
+/**
  * Calls the API and adds suggestions to the interaction
  *
  * @param dispatch
@@ -154,11 +169,11 @@ export async function promQailSuggest(
 ) {
   // when you're not running promqail
   // @ts-ignore llms types issue
-  const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
+  const enabled = await isLLMPluginEnabled();
 
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
-  if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
+  if (!enabled || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
         let metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!) ?? '';
