@@ -51,6 +51,13 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
     const subDir = getIconSubDir(iconName, type);
     const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
 
+    const composedClassName = cx(
+      styles.icon,
+      className,
+      type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
+      iconName === 'spinner' && 'fa-spin'
+    );
+
     return (
       <SVG
         innerRef={ref}
@@ -58,7 +65,7 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
         width={svgWid}
         height={svgHgt}
         title={title}
-        className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
+        className={composedClassName}
         style={style}
         {...rest}
       />

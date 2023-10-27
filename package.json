@@ -442,9 +442,9 @@
     ]
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 20"
   },
-  "packageManager": "yarn@3.6.1",
+  "packageManager": "yarn@3.6.4",
   "dependenciesMeta": {
     "prettier@3.0.0": {
       "unplugged": true
