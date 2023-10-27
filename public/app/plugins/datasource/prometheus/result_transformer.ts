@@ -58,7 +58,11 @@ const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery
   return target?.format === 'table';
 };
 
-const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+const isCumulativeHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  if (dataFrame.meta?.type === DataFrameType.HeatmapCells) {
+    return false;
+  }
+
   const target = options.targets.find((target) => target.refId === dataFrame.refId);
   return target?.format === 'heatmap';
 };
@@ -114,7 +118,7 @@ export function transformV2(
 
   const [heatmapResults, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
     framesWithoutTableAndExemplars,
-    (df) => isHeatmapResult(df, request)
+    (df) => isCumulativeHeatmapResult(df, request)
   );
 
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
