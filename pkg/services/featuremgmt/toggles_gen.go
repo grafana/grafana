@@ -538,4 +538,8 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagEnableSSOSettingsAPI
+	// Enables the SSO settings API
+	FlagEnableSSOSettingsAPI = "enableSSOSettingsAPI"
 )

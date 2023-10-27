@@ -151,4 +151,5 @@ export interface FeatureToggles {
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  enableSSOSettingsAPI?: boolean;
 }

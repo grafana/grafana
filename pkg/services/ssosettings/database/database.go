@@ -2,7 +2,9 @@ package database
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -55,7 +57,33 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 }
 
 func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	panic("not implemented") // TODO: Implement
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		found, err := sess.Where("provider = ? AND is_deleted = false", provider).Exist(&models.SSOSetting{})
+
+		if err != nil {
+			return err
+		}
+
+		if found {
+			_, err = sess.Where("provider = ? AND is_deleted = false", provider).Update(&models.SSOSetting{
+				Settings: data,
+				Updated:  time.Now().UTC(),
+			})
+		} else {
+			_, err = sess.Insert(&models.SSOSetting{
+				ID:       uuid.New().String(),
+				Provider: provider,
+				Settings: data,
+				Created:  time.Now().UTC(),
+				Updated:  time.Now().UTC(),
+			})
+		}
+
+		return err
+	})
+
+	return err
 }
 
 func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
@@ -63,5 +91,11 @@ func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[
 }
 
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
-	panic("not implemented") // TODO: Implement
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Where("provider = ? AND is_deleted = false", provider).Update(&models.SSOSetting{
+			IsDeleted: true,
+		})
+		return err
+	})
+	return err
 }

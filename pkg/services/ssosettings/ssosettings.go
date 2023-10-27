@@ -3,12 +3,16 @@ package ssosettings
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
 type Service interface {
-	GetAuthSettingsForProvider(ctx context.Context, provider string, strategy FallbackStrategy) (map[string]interface{}, error)
-	Update(ctx context.Context, provider string, data map[string]interface{}) error
+	GetAll(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error)
+	GetForProvider(ctx context.Context, provider string, strategy FallbackStrategy) (*models.SSOSetting, error)
+	Upsert(ctx context.Context, provider string, data map[string]interface{}) error
+	Delete(ctx context.Context, provider string) error
+
 	Reload(ctx context.Context, provider string)
 	RegisterReloadable(ctx context.Context, provider string, reloadable Reloadable)
 }

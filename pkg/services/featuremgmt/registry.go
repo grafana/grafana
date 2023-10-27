@@ -934,5 +934,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "enableSSOSettingsAPI",
+			Description:  "Enables the SSO settings API",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
+		},
 	}
 )

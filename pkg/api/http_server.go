@@ -87,6 +87,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	ssoSettingsApi "github.com/grafana/grafana/pkg/services/ssosettings/api"
 	"github.com/grafana/grafana/pkg/services/star"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -205,6 +206,7 @@ type HTTPServer struct {
 	authnService         authn.Service
 	starApi              *starApi.API
 	promRegister         prometheus.Registerer
+	ssoSettingsApi       *ssoSettingsApi.Api
 }
 
 type ServerOptions struct {
@@ -246,7 +248,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API, promRegister prometheus.Registerer,
+	starApi *starApi.API, promRegister prometheus.Registerer, ssoSettingsApi *ssoSettingsApi.Api,
 
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -348,6 +350,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
+		ssoSettingsApi:               ssoSettingsApi,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
