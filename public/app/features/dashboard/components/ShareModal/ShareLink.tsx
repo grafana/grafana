@@ -30,6 +30,7 @@ export class ShareLink extends PureComponent<Props, State> {
       shareUrl: '',
       imageUrl: '',
     };
+    this.onCopy = this.onCopy.bind(this);
   }
 
   componentDidMount() {
