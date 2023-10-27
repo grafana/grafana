@@ -3359,17 +3359,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
+      [0, 0, 0, "Do not use any type assertions.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "25"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
-      [0, 0, 0, "Do not use any type assertions.", "28"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
       [0, 0, 0, "Do not use any type assertions.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
+      [0, 0, 0, "Do not use any type assertions.", "30"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
-      [0, 0, 0, "Do not use any type assertions.", "32"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
+      [0, 0, 0, "Do not use any type assertions.", "33"]
     ],
     "public/app/features/dashboard/state/DashboardModel.repeat.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

@@ -1,3 +1,4 @@
+import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { orderProperties, JSONArray, JSONValue, isObject, getDashboardStringDiff } from './jsonDiffText';
@@ -239,7 +240,7 @@ describe('isObject', () => {
 describe('getDashboardStringDiff', () => {
   const dashboard = {
     title: 'Original Title',
-    schemaVersion: 38,
+    schemaVersion: DASHBOARD_SCHEMA_VERSION,
     panels: [
       createPanelSaveModel({
         id: 1,
