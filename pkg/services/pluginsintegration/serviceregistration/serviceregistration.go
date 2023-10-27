@@ -35,7 +35,6 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	if svc.Impersonation != nil {
 		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
 		impersonation.Enabled = (settings != nil) && settings.Enabled
-
 		if svc.Impersonation.Groups != nil {
 			impersonation.Groups = *svc.Impersonation.Groups
 		} else {
