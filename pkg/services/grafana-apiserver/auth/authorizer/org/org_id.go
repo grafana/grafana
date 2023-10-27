@@ -48,7 +48,7 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 
 	// Quick check that the same org is used
 	if signedInUser.OrgID == info.OrgID {
-		return authorizer.DecisionAllow, "", nil
+		return authorizer.DecisionNoOpinion, "", nil
 	}
 
 	// Check if the user has access to the specified org
@@ -60,7 +60,7 @@ func (auth OrgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 
 	for _, org := range result {
 		if org.OrgID == info.OrgID {
-			return authorizer.DecisionAllow, "", nil
+			return authorizer.DecisionNoOpinion, "", nil
 		}
 	}
 

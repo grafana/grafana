@@ -2,14 +2,16 @@ package v0alpha1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -22,8 +24,12 @@ var (
 )
 
 type legacyStorage struct {
-	service    playlist.Service
-	namespacer namespaceMapper
+	service        playlist.Service
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
+
+	DefaultQualifiedResource  schema.GroupResource
+	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -45,13 +51,13 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +74,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
 		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			UID:   v.UID,
@@ -91,7 +92,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -100,11 +101,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		UID:   name,
 		OrgId: info.OrgID,
 	})
-	if err != nil {
+	if err != nil || dto == nil {
+		if errors.Is(err, playlist.ErrPlaylistNotFound) || err == nil {
+			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+		}
 		return nil, err
-	}
-	if dto == nil {
-		return nil, fmt.Errorf("not found?")
 	}
 
 	return convertToK8sResource(dto, s.namespacer), nil

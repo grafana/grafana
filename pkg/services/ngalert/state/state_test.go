@@ -253,14 +253,14 @@ func TestMaintain(t *testing.T) {
 	// the interval is less than the resend interval of 30 seconds
 	s := State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
 	s.Maintain(10, now.Add(10*time.Second))
-	// 10 seconds + 3 x 30 seconds is 100 seconds
-	assert.Equal(t, now.Add(100*time.Second), s.EndsAt)
+	// 10 seconds + 4 x 30 seconds is 130 seconds
+	assert.Equal(t, now.Add(130*time.Second), s.EndsAt)
 
 	// the interval is above the resend interval of 30 seconds
 	s = State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
 	s.Maintain(60, now.Add(10*time.Second))
-	// 10 seconds + 3 x 60 seconds is 190 seconds
-	assert.Equal(t, now.Add(190*time.Second), s.EndsAt)
+	// 10 seconds + 4 x 60 seconds is 250 seconds
+	assert.Equal(t, now.Add(250*time.Second), s.EndsAt)
 }
 
 func TestEnd(t *testing.T) {
@@ -273,14 +273,14 @@ func TestEnd(t *testing.T) {
 	}{
 		{
 			name:     "less than resend delay: for=unset,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
+			expected: evaluationTime.Add(ResendDelay * 4),
 			testRule: &ngmodels.AlertRule{
 				IntervalSeconds: 10,
 			},
 		},
 		{
 			name:     "less than resend delay: for=0s,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
+			expected: evaluationTime.Add(ResendDelay * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             0 * time.Second,
 				IntervalSeconds: 10,
@@ -288,7 +288,7 @@ func TestEnd(t *testing.T) {
 		},
 		{
 			name:     "less than resend delay: for=10s,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
+			expected: evaluationTime.Add(ResendDelay * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             10 * time.Second,
 				IntervalSeconds: 10,
@@ -296,7 +296,7 @@ func TestEnd(t *testing.T) {
 		},
 		{
 			name:     "less than resend delay: for=10s,interval=20s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
+			expected: evaluationTime.Add(ResendDelay * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             10 * time.Second,
 				IntervalSeconds: 20,
@@ -304,14 +304,14 @@ func TestEnd(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=unset,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 4),
 			testRule: &ngmodels.AlertRule{
 				IntervalSeconds: 60,
 			},
 		},
 		{
 			name:     "more than resend delay: for=0s,interval=1m - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             0 * time.Second,
 				IntervalSeconds: 60,
@@ -319,7 +319,7 @@ func TestEnd(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 300 * 3),
+			expected: evaluationTime.Add(time.Second * 300 * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             time.Minute,
 				IntervalSeconds: 300,
@@ -327,7 +327,7 @@ func TestEnd(t *testing.T) {
 		},
 		{
 			name:     "more than resend delay: for=5m,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
+			expected: evaluationTime.Add(time.Second * 60 * 4),
 			testRule: &ngmodels.AlertRule{
 				For:             300 * time.Second,
 				IntervalSeconds: 60,

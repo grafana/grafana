@@ -42,6 +42,8 @@ interface K8sPlaylistList {
 }
 
 interface K8sPlaylist {
+  apiVersion: string;
+  kind: 'Playlist';
   metadata: {
     name: string;
   };
@@ -53,12 +55,13 @@ interface K8sPlaylist {
 }
 
 class K8sAPI implements PlaylistAPI {
+  readonly apiVersion = 'playlist.grafana.app/v0alpha1';
   readonly url: string;
   readonly legacy: PlaylistAPI | undefined;
 
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/playlist.x.grafana.com/v0alpha1/namespaces/${ns}/playlists`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/playlists`;
 
     // When undefined, this will use k8s for all CRUD features
     // if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
@@ -81,35 +84,16 @@ class K8sAPI implements PlaylistAPI {
     if (this.legacy) {
       return this.legacy.createPlaylist(playlist);
     }
-    await withErrorHandling(() =>
-      getBackendSrv().post(this.url, {
-        apiVersion: 'playlists.grafana.com/v0alpha1',
-        kind: 'Playlist',
-        metadata: {
-          name: playlist.uid,
-        },
-        spec: playlist,
-      })
-    );
+    const body = this.playlistAsK8sResource(playlist);
+    await withErrorHandling(() => getBackendSrv().post(this.url, body));
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {
     if (this.legacy) {
       return this.legacy.updatePlaylist(playlist);
     }
-    await withErrorHandling(() =>
-      getBackendSrv().put(`${this.url}/${playlist.uid}`, {
-        apiVersion: 'playlists.grafana.com/v0alpha1',
-        kind: 'Playlist',
-        metadata: {
-          name: playlist.uid,
-        },
-        spec: {
-          ...playlist,
-          title: playlist.name,
-        },
-      })
-    );
+    const body = this.playlistAsK8sResource(playlist);
+    await withErrorHandling(() => getBackendSrv().put(`${this.url}/${playlist.uid}`, body));
   }
 
   async deletePlaylist(uid: string): Promise<void> {
@@ -118,6 +102,21 @@ class K8sAPI implements PlaylistAPI {
     }
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
+
+  playlistAsK8sResource = (playlist: Playlist): K8sPlaylist => {
+    return {
+      apiVersion: this.apiVersion,
+      kind: 'Playlist',
+      metadata: {
+        name: playlist.uid, // uid as k8s name
+      },
+      spec: {
+        title: playlist.name, // name becomes title
+        interval: playlist.interval,
+        items: playlist.items ?? [],
+      },
+    };
+  };
 }
 
 // This converts a saved k8s resource into a playlist object
