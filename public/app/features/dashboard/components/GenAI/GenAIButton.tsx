@@ -174,7 +174,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstHistoryEntry && <Spinner size={14} />}
+      {isFirstHistoryEntry && <Spinner size="sm" />}
       {!hasHistory && (
         <Tooltip
           show={error ? undefined : false}
