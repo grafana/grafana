@@ -18,7 +18,6 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { QueryOptions } from 'app/types';
 
 import {
   alignRange,
@@ -2053,333 +2052,333 @@ describe('PrometheusDatasource for POST', () => {
   });
 });
 
-function getPrepareTargetsContext({
-  targets,
-  app,
-  queryOptions,
-  languageProvider,
-}: {
-  targets: PromQuery[];
-  app?: CoreApp;
-  queryOptions?: Partial<QueryOptions>;
-  languageProvider?: PromQlLanguageProvider;
-}) {
-  const instanceSettings = {
-    url: 'proxied',
-    access: 'proxy',
-    user: 'test',
-    password: 'mupp',
-    jsonData: { httpMethod: 'POST' },
-  } as unknown as DataSourceInstanceSettings<PromOptions>;
-  const start = 0;
-  const end = 1;
-  const panelId = '2';
-  const options = {
-    targets,
-    interval: '1s',
-    panelId,
-    app,
-    ...queryOptions,
-  } as unknown as DataQueryRequest<PromQuery>;
+// function getPrepareTargetsContext({
+//   targets,
+//   app,
+//   queryOptions,
+//   languageProvider,
+// }: {
+//   targets: PromQuery[];
+//   app?: CoreApp;
+//   queryOptions?: Partial<QueryOptions>;
+//   languageProvider?: PromQlLanguageProvider;
+// }) {
+//   const instanceSettings = {
+//     url: 'proxied',
+//     access: 'proxy',
+//     user: 'test',
+//     password: 'mupp',
+//     jsonData: { httpMethod: 'POST' },
+//   } as unknown as DataSourceInstanceSettings<PromOptions>;
+//   const start = 0;
+//   const end = 1;
+//   const panelId = '2';
+//   const options = {
+//     targets,
+//     interval: '1s',
+//     panelId,
+//     app,
+//     ...queryOptions,
+//   } as unknown as DataQueryRequest<PromQuery>;
+//
+//   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
+//   if (languageProvider) {
+//     ds.languageProvider = languageProvider;
+//   }
+//   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
+//
+//   return {
+//     queries,
+//     activeTargets,
+//     start,
+//     end,
+//     panelId,
+//   };
+// }
 
-  const ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
-  if (languageProvider) {
-    ds.languageProvider = languageProvider;
-  }
-  const { queries, activeTargets } = ds.prepareTargets(options, start, end);
-
-  return {
-    queries,
-    activeTargets,
-    start,
-    end,
-    panelId,
-  };
-}
-
-describe('prepareTargets', () => {
-  describe('when run from a Panel', () => {
-    it('then it should just add targets', () => {
-      const target: PromQuery = {
-        refId: 'A',
-        expr: 'up',
-      };
-
-      const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({ targets: [target] });
-
-      expect(queries.length).toBe(1);
-      expect(activeTargets.length).toBe(1);
-      expect(queries[0]).toEqual({
-        end,
-        expr: 'up',
-        headers: {
-          'X-Dashboard-Id': undefined,
-          'X-Dashboard-UID': undefined,
-          'X-Panel-Id': panelId,
-        },
-        hinting: undefined,
-        instant: undefined,
-        refId: target.refId,
-        start,
-        step: 1,
-      });
-      expect(activeTargets[0]).toEqual(target);
-    });
-
-    it('should give back 3 targets when multiple queries with exemplar enabled and same metric', () => {
-      const targetA: PromQuery = {
-        refId: 'A',
-        expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-        exemplar: true,
-      };
-      const targetB: PromQuery = {
-        refId: 'B',
-        expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-        exemplar: true,
-      };
-
-      const { queries, activeTargets } = getPrepareTargetsContext({
-        targets: [targetA, targetB],
-        languageProvider: {
-          histogramMetrics: ['tns_request_duration_seconds_bucket'],
-        } as PromQlLanguageProvider,
-      });
-      expect(queries).toHaveLength(3);
-      expect(activeTargets).toHaveLength(3);
-    });
-
-    it('should give back 4 targets when multiple queries with exemplar enabled', () => {
-      const targetA: PromQuery = {
-        refId: 'A',
-        expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-        exemplar: true,
-      };
-      const targetB: PromQuery = {
-        refId: 'B',
-        expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
-        exemplar: true,
-      };
-
-      const { queries, activeTargets } = getPrepareTargetsContext({
-        targets: [targetA, targetB],
-        languageProvider: {
-          histogramMetrics: ['tns_request_duration_seconds_bucket'],
-        } as PromQlLanguageProvider,
-      });
-      expect(queries).toHaveLength(4);
-      expect(activeTargets).toHaveLength(4);
-    });
-
-    it('should give back 2 targets when exemplar enabled', () => {
-      const target: PromQuery = {
-        refId: 'A',
-        expr: 'up',
-        exemplar: true,
-      };
-
-      const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
-      expect(queries).toHaveLength(2);
-      expect(activeTargets).toHaveLength(2);
-      expect(activeTargets[0].exemplar).toBe(true);
-      expect(activeTargets[1].exemplar).toBe(false);
-    });
-    it('should give back 1 target when exemplar and instant are enabled', () => {
-      const target: PromQuery = {
-        refId: 'A',
-        expr: 'up',
-        exemplar: true,
-        instant: true,
-      };
-
-      const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
-      expect(queries).toHaveLength(1);
-      expect(activeTargets).toHaveLength(1);
-      expect(activeTargets[0].instant).toBe(true);
-    });
-  });
-
-  describe('when run from Explore', () => {
-    describe('when query type Both is selected', () => {
-      it('should give back 6 targets when multiple queries with exemplar enabled', () => {
-        const targetA: PromQuery = {
-          refId: 'A',
-          expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-          instant: true,
-          range: true,
-          exemplar: true,
-        };
-        const targetB: PromQuery = {
-          refId: 'B',
-          expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
-          exemplar: true,
-          instant: true,
-          range: true,
-        };
-
-        const { queries, activeTargets } = getPrepareTargetsContext({
-          targets: [targetA, targetB],
-          app: CoreApp.Explore,
-          languageProvider: {
-            histogramMetrics: ['tns_request_duration_seconds_bucket'],
-          } as PromQlLanguageProvider,
-        });
-        expect(queries).toHaveLength(6);
-        expect(activeTargets).toHaveLength(6);
-      });
-
-      it('should give back 5 targets when multiple queries with exemplar enabled and same metric', () => {
-        const targetA: PromQuery = {
-          refId: 'A',
-          expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-          instant: true,
-          range: true,
-          exemplar: true,
-        };
-        const targetB: PromQuery = {
-          refId: 'B',
-          expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-          exemplar: true,
-          instant: true,
-          range: true,
-        };
-
-        const { queries, activeTargets } = getPrepareTargetsContext({
-          targets: [targetA, targetB],
-          app: CoreApp.Explore,
-          languageProvider: {
-            histogramMetrics: ['tns_request_duration_seconds_bucket'],
-          } as PromQlLanguageProvider,
-        });
-        expect(queries).toHaveLength(5);
-        expect(activeTargets).toHaveLength(5);
-      });
-
-      it('then it should return both instant and time series related objects', () => {
-        const target: PromQuery = {
-          refId: 'A',
-          expr: 'up',
-          range: true,
-          instant: true,
-        };
-
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-          targets: [target],
-          app: CoreApp.Explore,
-        });
-
-        expect(queries.length).toBe(2);
-        expect(activeTargets.length).toBe(2);
-        expect(queries[0]).toEqual({
-          end,
-          expr: 'up',
-          headers: {
-            'X-Dashboard-Id': undefined,
-            'X-Dashboard-UID': undefined,
-            'X-Panel-Id': panelId,
-          },
-          hinting: undefined,
-          instant: true,
-          refId: target.refId,
-          start,
-          step: 1,
-        });
-        expect(activeTargets[0]).toEqual({
-          ...target,
-          format: 'table',
-          instant: true,
-          valueWithRefId: true,
-        });
-        expect(queries[1]).toEqual({
-          end,
-          expr: 'up',
-          headers: {
-            'X-Dashboard-Id': undefined,
-            'X-Dashboard-UID': undefined,
-            'X-Panel-Id': panelId,
-          },
-          hinting: undefined,
-          instant: false,
-          refId: target.refId,
-          start,
-          step: 1,
-        });
-        expect(activeTargets[1]).toEqual({
-          ...target,
-          format: 'time_series',
-          instant: false,
-        });
-      });
-    });
-
-    describe('when query type Instant is selected', () => {
-      it('then it should target and modify its format to table', () => {
-        const target: PromQuery = {
-          refId: 'A',
-          expr: 'up',
-          instant: true,
-          range: false,
-        };
-
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-          targets: [target],
-          app: CoreApp.Explore,
-        });
-
-        expect(queries.length).toBe(1);
-        expect(activeTargets.length).toBe(1);
-        expect(queries[0]).toEqual({
-          end,
-          expr: 'up',
-          headers: {
-            'X-Dashboard-Id': undefined,
-            'X-Dashboard-UID': undefined,
-            'X-Panel-Id': panelId,
-          },
-          hinting: undefined,
-          instant: true,
-          refId: target.refId,
-          start,
-          step: 1,
-        });
-        expect(activeTargets[0]).toEqual({ ...target, format: 'table' });
-      });
-    });
-  });
-
-  describe('when query type Range is selected', () => {
-    it('then it should just add targets', () => {
-      const target: PromQuery = {
-        refId: 'A',
-        expr: 'up',
-        range: true,
-        instant: false,
-      };
-
-      const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-        targets: [target],
-        app: CoreApp.Explore,
-      });
-
-      expect(queries.length).toBe(1);
-      expect(activeTargets.length).toBe(1);
-      expect(queries[0]).toEqual({
-        end,
-        expr: 'up',
-        headers: {
-          'X-Dashboard-Id': undefined,
-          'X-Dashboard-UID': undefined,
-          'X-Panel-Id': panelId,
-        },
-        hinting: undefined,
-        instant: false,
-        refId: target.refId,
-        start,
-        step: 1,
-      });
-      expect(activeTargets[0]).toEqual(target);
-    });
-  });
-});
+// describe('prepareTargets', () => {
+//   describe('when run from a Panel', () => {
+//     it('then it should just add targets', () => {
+//       const target: PromQuery = {
+//         refId: 'A',
+//         expr: 'up',
+//       };
+//
+//       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({ targets: [target] });
+//
+//       expect(queries.length).toBe(1);
+//       expect(activeTargets.length).toBe(1);
+//       expect(queries[0]).toEqual({
+//         end,
+//         expr: 'up',
+//         headers: {
+//           'X-Dashboard-Id': undefined,
+//           'X-Dashboard-UID': undefined,
+//           'X-Panel-Id': panelId,
+//         },
+//         hinting: undefined,
+//         instant: undefined,
+//         refId: target.refId,
+//         start,
+//         step: 1,
+//       });
+//       expect(activeTargets[0]).toEqual(target);
+//     });
+//
+//     it('should give back 3 targets when multiple queries with exemplar enabled and same metric', () => {
+//       const targetA: PromQuery = {
+//         refId: 'A',
+//         expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//         exemplar: true,
+//       };
+//       const targetB: PromQuery = {
+//         refId: 'B',
+//         expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//         exemplar: true,
+//       };
+//
+//       const { queries, activeTargets } = getPrepareTargetsContext({
+//         targets: [targetA, targetB],
+//         languageProvider: {
+//           histogramMetrics: ['tns_request_duration_seconds_bucket'],
+//         } as PromQlLanguageProvider,
+//       });
+//       expect(queries).toHaveLength(3);
+//       expect(activeTargets).toHaveLength(3);
+//     });
+//
+//     it('should give back 4 targets when multiple queries with exemplar enabled', () => {
+//       const targetA: PromQuery = {
+//         refId: 'A',
+//         expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//         exemplar: true,
+//       };
+//       const targetB: PromQuery = {
+//         refId: 'B',
+//         expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
+//         exemplar: true,
+//       };
+//
+//       const { queries, activeTargets } = getPrepareTargetsContext({
+//         targets: [targetA, targetB],
+//         languageProvider: {
+//           histogramMetrics: ['tns_request_duration_seconds_bucket'],
+//         } as PromQlLanguageProvider,
+//       });
+//       expect(queries).toHaveLength(4);
+//       expect(activeTargets).toHaveLength(4);
+//     });
+//
+//     it('should give back 2 targets when exemplar enabled', () => {
+//       const target: PromQuery = {
+//         refId: 'A',
+//         expr: 'up',
+//         exemplar: true,
+//       };
+//
+//       const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
+//       expect(queries).toHaveLength(2);
+//       expect(activeTargets).toHaveLength(2);
+//       expect(activeTargets[0].exemplar).toBe(true);
+//       expect(activeTargets[1].exemplar).toBe(false);
+//     });
+//     it('should give back 1 target when exemplar and instant are enabled', () => {
+//       const target: PromQuery = {
+//         refId: 'A',
+//         expr: 'up',
+//         exemplar: true,
+//         instant: true,
+//       };
+//
+//       const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
+//       expect(queries).toHaveLength(1);
+//       expect(activeTargets).toHaveLength(1);
+//       expect(activeTargets[0].instant).toBe(true);
+//     });
+//   });
+//
+//   describe('when run from Explore', () => {
+//     describe('when query type Both is selected', () => {
+//       it('should give back 6 targets when multiple queries with exemplar enabled', () => {
+//         const targetA: PromQuery = {
+//           refId: 'A',
+//           expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//           instant: true,
+//           range: true,
+//           exemplar: true,
+//         };
+//         const targetB: PromQuery = {
+//           refId: 'B',
+//           expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
+//           exemplar: true,
+//           instant: true,
+//           range: true,
+//         };
+//
+//         const { queries, activeTargets } = getPrepareTargetsContext({
+//           targets: [targetA, targetB],
+//           app: CoreApp.Explore,
+//           languageProvider: {
+//             histogramMetrics: ['tns_request_duration_seconds_bucket'],
+//           } as PromQlLanguageProvider,
+//         });
+//         expect(queries).toHaveLength(6);
+//         expect(activeTargets).toHaveLength(6);
+//       });
+//
+//       it('should give back 5 targets when multiple queries with exemplar enabled and same metric', () => {
+//         const targetA: PromQuery = {
+//           refId: 'A',
+//           expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//           instant: true,
+//           range: true,
+//           exemplar: true,
+//         };
+//         const targetB: PromQuery = {
+//           refId: 'B',
+//           expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
+//           exemplar: true,
+//           instant: true,
+//           range: true,
+//         };
+//
+//         const { queries, activeTargets } = getPrepareTargetsContext({
+//           targets: [targetA, targetB],
+//           app: CoreApp.Explore,
+//           languageProvider: {
+//             histogramMetrics: ['tns_request_duration_seconds_bucket'],
+//           } as PromQlLanguageProvider,
+//         });
+//         expect(queries).toHaveLength(5);
+//         expect(activeTargets).toHaveLength(5);
+//       });
+//
+//       it('then it should return both instant and time series related objects', () => {
+//         const target: PromQuery = {
+//           refId: 'A',
+//           expr: 'up',
+//           range: true,
+//           instant: true,
+//         };
+//
+//         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
+//           targets: [target],
+//           app: CoreApp.Explore,
+//         });
+//
+//         expect(queries.length).toBe(2);
+//         expect(activeTargets.length).toBe(2);
+//         expect(queries[0]).toEqual({
+//           end,
+//           expr: 'up',
+//           headers: {
+//             'X-Dashboard-Id': undefined,
+//             'X-Dashboard-UID': undefined,
+//             'X-Panel-Id': panelId,
+//           },
+//           hinting: undefined,
+//           instant: true,
+//           refId: target.refId,
+//           start,
+//           step: 1,
+//         });
+//         expect(activeTargets[0]).toEqual({
+//           ...target,
+//           format: 'table',
+//           instant: true,
+//           valueWithRefId: true,
+//         });
+//         expect(queries[1]).toEqual({
+//           end,
+//           expr: 'up',
+//           headers: {
+//             'X-Dashboard-Id': undefined,
+//             'X-Dashboard-UID': undefined,
+//             'X-Panel-Id': panelId,
+//           },
+//           hinting: undefined,
+//           instant: false,
+//           refId: target.refId,
+//           start,
+//           step: 1,
+//         });
+//         expect(activeTargets[1]).toEqual({
+//           ...target,
+//           format: 'time_series',
+//           instant: false,
+//         });
+//       });
+//     });
+//
+//     describe('when query type Instant is selected', () => {
+//       it('then it should target and modify its format to table', () => {
+//         const target: PromQuery = {
+//           refId: 'A',
+//           expr: 'up',
+//           instant: true,
+//           range: false,
+//         };
+//
+//         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
+//           targets: [target],
+//           app: CoreApp.Explore,
+//         });
+//
+//         expect(queries.length).toBe(1);
+//         expect(activeTargets.length).toBe(1);
+//         expect(queries[0]).toEqual({
+//           end,
+//           expr: 'up',
+//           headers: {
+//             'X-Dashboard-Id': undefined,
+//             'X-Dashboard-UID': undefined,
+//             'X-Panel-Id': panelId,
+//           },
+//           hinting: undefined,
+//           instant: true,
+//           refId: target.refId,
+//           start,
+//           step: 1,
+//         });
+//         expect(activeTargets[0]).toEqual({ ...target, format: 'table' });
+//       });
+//     });
+//   });
+//
+//   describe('when query type Range is selected', () => {
+//     it('then it should just add targets', () => {
+//       const target: PromQuery = {
+//         refId: 'A',
+//         expr: 'up',
+//         range: true,
+//         instant: false,
+//       };
+//
+//       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
+//         targets: [target],
+//         app: CoreApp.Explore,
+//       });
+//
+//       expect(queries.length).toBe(1);
+//       expect(activeTargets.length).toBe(1);
+//       expect(queries[0]).toEqual({
+//         end,
+//         expr: 'up',
+//         headers: {
+//           'X-Dashboard-Id': undefined,
+//           'X-Dashboard-UID': undefined,
+//           'X-Panel-Id': panelId,
+//         },
+//         hinting: undefined,
+//         instant: false,
+//         refId: target.refId,
+//         start,
+//         step: 1,
+//       });
+//       expect(activeTargets[0]).toEqual(target);
+//     });
+//   });
+// });
 
 describe('modifyQuery', () => {
   describe('when called with ADD_FILTER', () => {

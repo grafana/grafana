@@ -1,6 +1,6 @@
 import { cloneDeep, defaults } from 'lodash';
-import { lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { lastValueFrom, Observable, throwError } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
 
 import {
@@ -10,7 +10,6 @@ import {
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
-  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceGetTagKeysOptions,
@@ -30,7 +29,6 @@ import {
   BackendDataSourceResponse,
   BackendSrvRequest,
   DataSourceWithBackend,
-  FetchError,
   FetchResponse,
   getBackendSrv,
   isFetchError,
@@ -38,7 +36,6 @@ import {
   getTemplateSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { addLabelToQuery } from './add_label_to_query';
@@ -60,16 +57,10 @@ import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromApplication,
-  PromDataErrorResponse,
-  PromDataSuccessResponse,
   PrometheusCacheLevel,
-  PromExemplarData,
-  PromMatrixData,
   PromOptions,
   PromQuery,
   PromQueryRequest,
-  PromScalarData,
-  PromVectorData,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
@@ -347,86 +338,6 @@ export class PrometheusDatasource
     return this.templateSrv.containsTemplate(target.expr);
   }
 
-  prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
-    const queries: PromQueryRequest[] = [];
-    const activeTargets: PromQuery[] = [];
-    const clonedTargets = cloneDeep(options.targets);
-
-    for (const target of clonedTargets) {
-      if (!target.expr || target.hide) {
-        continue;
-      }
-
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
-
-      // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
-      if (options.app === CoreApp.Explore && target.range === target.instant) {
-        // Create instant target
-        const instantTarget: any = cloneDeep(target);
-        instantTarget.format = 'table';
-        instantTarget.instant = true;
-        instantTarget.range = false;
-        instantTarget.valueWithRefId = true;
-        delete instantTarget.maxDataPoints;
-
-        // Create range target
-        const rangeTarget: any = cloneDeep(target);
-        rangeTarget.format = 'time_series';
-        rangeTarget.instant = false;
-        instantTarget.range = true;
-
-        // Create exemplar query
-        if (target.exemplar) {
-          // Only create exemplar target for different metric names
-          if (
-            !metricName ||
-            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
-          ) {
-            const exemplarTarget = cloneDeep(target);
-            exemplarTarget.instant = false;
-            queries.push(this.createQuery(exemplarTarget, options, start, end));
-            activeTargets.push(exemplarTarget);
-          }
-          instantTarget.exemplar = false;
-          rangeTarget.exemplar = false;
-        }
-
-        // Add both targets to activeTargets and queries arrays
-        activeTargets.push(instantTarget, rangeTarget);
-        queries.push(
-          this.createQuery(instantTarget, options, start, end),
-          this.createQuery(rangeTarget, options, start, end)
-        );
-        // If running only instant query in Explore, format as table
-      } else if (target.instant && options.app === CoreApp.Explore) {
-        const instantTarget: any = cloneDeep(target);
-        instantTarget.format = 'table';
-        queries.push(this.createQuery(instantTarget, options, start, end));
-        activeTargets.push(instantTarget);
-      } else {
-        // It doesn't make sense to query for exemplars in dashboard if only instant is selected
-        if (target.exemplar && !target.instant) {
-          if (
-            !metricName ||
-            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
-          ) {
-            const exemplarTarget = cloneDeep(target);
-            queries.push(this.createQuery(exemplarTarget, options, start, end));
-            activeTargets.push(exemplarTarget);
-          }
-          target.exemplar = false;
-        }
-        queries.push(this.createQuery(target, options, start, end));
-        activeTargets.push(target);
-      }
-    }
-
-    return {
-      queries,
-      activeTargets,
-    };
-  };
-
   shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
     if (target.exemplar) {
       // We check all already processed targets and only create exemplar target for not used metric names
@@ -594,93 +505,6 @@ export class PrometheusDatasource
     return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
-  performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
-    if (start > end) {
-      throw { message: 'Invalid time range' };
-    }
-
-    const url = '/api/v1/query_range';
-    const data: any = {
-      query: query.expr,
-      start,
-      end,
-      step: query.step,
-    };
-
-    if (this.queryTimeout) {
-      data['timeout'] = this.queryTimeout;
-    }
-
-    return this._request<PromDataSuccessResponse<PromMatrixData>>(url, data, {
-      requestId: query.requestId,
-      headers: query.headers,
-    }).pipe(
-      catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
-        if (err.cancelled) {
-          return of(err);
-        }
-
-        return throwError(this.handleErrors(err, query));
-      })
-    );
-  }
-
-  performInstantQuery(
-    query: PromQueryRequest,
-    time: number
-  ): Observable<FetchResponse<PromDataSuccessResponse<PromVectorData | PromScalarData>> | FetchError> {
-    const url = '/api/v1/query';
-    const data: any = {
-      query: query.expr,
-      time,
-    };
-
-    if (this.queryTimeout) {
-      data['timeout'] = this.queryTimeout;
-    }
-
-    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
-      `/api/datasources/uid/${this.uid}/resources${url}`,
-      data,
-      {
-        requestId: query.requestId,
-        headers: query.headers,
-      }
-    ).pipe(
-      catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
-        if (err.cancelled) {
-          return of(err);
-        }
-
-        return throwError(this.handleErrors(err, query));
-      })
-    );
-  }
-
-  handleErrors = (err: any, target: PromQuery) => {
-    const error: DataQueryError = {
-      message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
-      refId: target.refId,
-    };
-
-    if (err.data) {
-      if (typeof err.data === 'string') {
-        error.message = err.data;
-      } else if (err.data.error) {
-        error.message = safeStringifyValue(err.data.error);
-      }
-    } else if (err.message) {
-      error.message = err.message;
-    } else if (typeof err === 'string') {
-      error.message = err;
-    }
-
-    error.status = err.status;
-    error.statusText = err.statusText;
-
-    return error;
-  };
-
   metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
@@ -839,15 +663,6 @@ export class PrometheusDatasource
 
     return eventList;
   };
-
-  getExemplars(query: PromQueryRequest) {
-    const url = '/api/v1/query_exemplars';
-    return this._request<PromDataSuccessResponse<PromExemplarData>>(
-      url,
-      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
-      { requestId: query.requestId, headers: query.headers }
-    );
-  }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
