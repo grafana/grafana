@@ -728,7 +728,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('calculates trailing moving variance with null', async () => {
+  it('calculates trailing moving variance with null in the middle', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -757,7 +757,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('calculates trailing moving variance with null', async () => {
+  it('calculates trailing moving variance with null in position 0', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {

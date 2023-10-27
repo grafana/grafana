@@ -1,5 +1,5 @@
 import { defaults } from 'lodash';
-import { map } from 'rxjs/operators';
+import { map, windowCount } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
@@ -220,6 +220,8 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     throw new Error('Add field from calculation transformation - Window size must be larger than 0');
   }
 
+  const window = options.windowSize!;
+
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
   });
@@ -256,44 +258,77 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     const vals: number[] = [];
 
     if (options.type === WindowType.Centered) {
+      let sum = 0;
+      let count = 0;
+      const boundaryForward = Math.floor(options.windowSize! / 2) - 1 + (options.windowSize! % 2);
+      const boundaryBack = Math.floor(options.windowSize! / 2);
       for (let i = 0; i < frame.length; i++) {
-        const boundary = options.windowSize! / 2;
-        const start = Math.ceil(Math.max(0, i - boundary));
-        const end = Math.ceil(Math.min(i + boundary, frame.length));
-
-        const nonNullWindowVals = selectedField.values.slice(start, end).filter((val) => val !== null);
+        const start = Math.max(0, i - boundaryBack);
+        const end = Math.min(i + boundaryForward, frame.length);
         if (options.reducer === ReducerID.mean) {
-          const total = nonNullWindowVals.reduce((total, val) => total + val, 0);
-          vals.push(total / nonNullWindowVals.length);
+          if (i === 0) {
+            // We're at the start and need to prime the leading part of the window
+            let x = 0;
+            while (count < boundaryForward + 1) {
+              console.log('boundary:', boundaryForward);
+              console.log('priming:', selectedField.values[x]);
+              sum += selectedField.values[x];
+              x++;
+              count++;
+            }
+          } else {
+            console.log('i:', i);
+            console.log('end:', end);
+            if (end < selectedField.values.length) {
+              console.log('adding:', selectedField.values[end]);
+              sum += selectedField.values[end];
+              count++;
+            } else {
+              console.log('removing:', selectedField.values[start - 1]);
+              sum -= selectedField.values[start - 1];
+              count--;
+            }
+
+            console.log('count:', count);
+            if (count > window) {
+              console.log('removing:', selectedField.values[start]);
+              sum -= selectedField.values[start];
+              count--;
+            }
+          }
+          vals.push(sum / count);
         } else if (options.reducer === ReducerID.variance) {
+          const nonNullWindowVals = selectedField.values.slice(start, end);
           vals.push(calculateVariance(nonNullWindowVals));
         } else if (options.reducer === ReducerID.stdDev) {
+          const nonNullWindowVals = selectedField.values.slice(start, end);
           vals.push(calculateStdDev(nonNullWindowVals));
         }
       }
     } else {
-      const values = [];
+      let sum = 0;
+      let count = 0;
       for (let i = 0; i < frame.length; i++) {
-        values.push(selectedField.values[i]);
-        if (values.length > options.windowSize!) {
-          values.shift();
-        }
-
         if (options.reducer === ReducerID.mean) {
-          const reduced = values.reduce<{ nonNullValueCount: number; total: number }>(
-            (res, val) => {
-              if (val !== null) {
-                return { nonNullValueCount: ++res.nonNullValueCount, total: res.total + val };
-              }
-              return res;
-            },
-            { nonNullValueCount: 0, total: 0 }
-          );
-          vals.push(reduced.total / reduced.nonNullValueCount);
+          const currentValue = selectedField.values[i];
+          if (currentValue !== null) {
+            count++;
+            sum += currentValue;
+
+            if (i > window - 1) {
+              sum -= selectedField.values[i - window];
+              count--;
+            }
+          }
+          vals.push(sum / count);
         } else if (options.reducer === ReducerID.variance) {
-          vals.push(calculateVariance(values.filter((val) => val !== null)));
+          const start = Math.max(0, i - window + 1);
+          const end = i + 1;
+          vals.push(calculateVariance(selectedField.values.slice(start, end)));
         } else if (options.reducer === ReducerID.stdDev) {
-          vals.push(calculateStdDev(values.filter((val) => val !== null)));
+          const start = Math.max(0, i - window + 1);
+          const end = i + 1;
+          vals.push(calculateStdDev(selectedField.values.slice(start, end)));
         }
       }
     }
@@ -308,13 +343,20 @@ function calculateVariance(vals: number[]): number {
   }
   let squareSum = 0;
   let runningMean = 0;
+  let nonNullCount = 0;
   for (let i = 0; i < vals.length; i++) {
     const currentValue = vals[i];
-    let _oldMean = runningMean;
-    runningMean += (currentValue - _oldMean) / (i + 1);
-    squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+    if (currentValue !== null) {
+      nonNullCount++;
+      let _oldMean = runningMean;
+      runningMean += (currentValue - _oldMean) / nonNullCount;
+      squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+    }
   }
-  const variance = squareSum / vals.length;
+  if (nonNullCount === 0) {
+    return 0;
+  }
+  const variance = squareSum / nonNullCount;
   return variance;
 }
 
