@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -284,7 +283,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Scopes:   []string{"profile", "groups"},
 			},
 			initTestEnv: func(env *testEnv) {
-				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFound("unknown-client-id")
+				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFoundFn("unknown-client-id")
 			},
 			orgID:   1,
 			want:    nil,
@@ -516,8 +515,9 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	signingKeysSvc := &signingkeystest.FakeSigningKeysService{ExpectedKeys: map[string]crypto.Signer{
-		signingkeys.ServerPrivateKeyID: pk},
+	signingKeysSvc := &signingkeystest.FakeSigningKeysService{
+		ExpectedSinger: pk,
+		ExpectedKeyID:  signingkeys.ServerPrivateKeyID,
 	}
 
 	userSvc := &usertest.FakeUserService{}

@@ -270,7 +270,12 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if !validation.IsValidShortUID(dashboardUid) {
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
+	}
+
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}

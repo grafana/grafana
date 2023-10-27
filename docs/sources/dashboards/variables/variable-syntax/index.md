@@ -135,12 +135,12 @@ Interpolation result: 'test1.|test2'
 
 ### Raw
 
-Turns off data source-specific formatting, such as single quotes in an SQL query.
+The raw format for a data source variable returns the UID (unique identifier) of the data source, rather than its name.
 
 ```bash
-servers = ['test.1', 'test2']
-String to interpolate: '${var_name:raw}'
-Interpolation result: 'test.1,test2'
+datasourceVariable = 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
+String to interpolate: '${datasourceVariable:raw}'
+Interpolation result: 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
 ```
 
 ### Regex

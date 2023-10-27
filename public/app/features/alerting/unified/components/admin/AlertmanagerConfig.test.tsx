@@ -2,8 +2,9 @@ import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
@@ -12,6 +13,7 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import {
   fetchAlertManagerConfig,
@@ -20,7 +22,7 @@ import {
   fetchStatus,
 } from '../../api/alertmanager';
 import {
-  disableRBAC,
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
@@ -81,18 +83,19 @@ const ui = {
   confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   resetButton: byRole('button', { name: /Reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
-  configInput: byLabelText(/Code editor container/),
+  configInput: byTestId(selectors.components.CodeEditor.container),
   readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Admin config', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    // FIXME: scope down
+    grantUserPermissions(Object.values(AccessControlAction));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     contextSrv.isGrafanaAdmin = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
-    disableRBAC();
   });
 
   it('Reset alertmanager config', async () => {

@@ -11,40 +11,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
-const idSignerKeyPrefix = "id"
+const (
+	keyPrefix   = "id"
+	headerKeyID = "kid"
+)
 
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
 func ProvideLocalSigner(keyService signingkeys.Service, features featuremgmt.FeatureToggles) (*LocalSigner, error) {
-	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
-		id, key, err := keyService.GetOrCreatePrivateKey(context.Background(), idSignerKeyPrefix, jose.ES256)
-		if err != nil {
-			return nil, err
-		}
-
-		// FIXME: Handle key rotation
-		signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
-			ExtraHeaders: map[jose.HeaderKey]interface{}{
-				"kid": id,
-			},
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		return &LocalSigner{
-			features: features,
-			signer:   signer,
-		}, nil
-	}
-
-	return &LocalSigner{features: features}, nil
+	return &LocalSigner{features, keyService}, nil
 }
 
 type LocalSigner struct {
-	signer   jose.Signer
-	features featuremgmt.FeatureToggles
+	features   featuremgmt.FeatureToggles
+	keyService signingkeys.Service
 }
 
 func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (string, error) {
@@ -52,7 +32,12 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 		return "", nil
 	}
 
-	builder := jwt.Signed(s.signer).Claims(claims.Claims)
+	signer, err := s.getSigner(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	builder := jwt.Signed(signer).Claims(claims.Claims)
 
 	token, err := builder.CompactSerialize()
 	if err != nil {
@@ -60,4 +45,21 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 	}
 
 	return token, nil
+}
+
+func (s *LocalSigner) getSigner(ctx context.Context) (jose.Signer, error) {
+	id, key, err := s.keyService.GetOrCreatePrivateKey(ctx, keyPrefix, jose.ES256)
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]any{headerKeyID: id},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return signer, nil
 }

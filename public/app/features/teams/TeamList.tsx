@@ -11,10 +11,10 @@ import {
   Icon,
   Tooltip,
   Column,
-  HorizontalGroup,
   Pagination,
-  VerticalGroup,
+  Avatar,
 } from '@grafana/ui';
+import { Stack, Flex } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -22,7 +22,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { Avatar } from '../admin/Users/Avatar';
+import { TableWrapper } from '../admin/Users/TableWrapper';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -66,7 +66,7 @@ export const TeamList = ({
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
       },
       {
         id: 'name',
@@ -92,12 +92,11 @@ export const TeamList = ({
               id: 'role',
               header: 'Role',
               cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
                   AccessControlAction.ActionTeamsRolesList,
-                  original,
-                  false
+                  original
                 );
-                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
+                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} width={40} />;
               },
             },
           ]
@@ -162,17 +161,24 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <VerticalGroup spacing={'md'}>
-              <InteractiveTable
-                columns={columns}
-                data={teams}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <HorizontalGroup justify="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
-              </HorizontalGroup>
-            </VerticalGroup>
+            <Stack gap={2}>
+              <TableWrapper>
+                <InteractiveTable
+                  columns={columns}
+                  data={teams}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Flex justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Flex>
+              </TableWrapper>
+            </Stack>
           </>
         )}
       </Page.Contents>

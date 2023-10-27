@@ -3,14 +3,16 @@ package migrations
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -75,9 +77,9 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 				ds.BasicAuth = true
 				ds.BasicAuthUser = u.User.Username()
 				if password, ok := u.User.Password(); ok {
-					ds.SecureJsonData = ualert.GetEncryptedJsonData(map[string]string{
+					ds.SecureJsonData = getEncryptedJsonData(map[string]string{
 						"basicAuthPassword": password,
-					})
+					}, log.New("securejsondata"))
 				}
 			}
 
@@ -123,4 +125,23 @@ func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
 	}
 
 	return "", datasources.ErrDataSourceFailedGenerateUniqueUid
+}
+
+// SecureJsonData is used to store encrypted data (for example in data_source table). Only values are separately
+// encrypted.
+type secureJsonData map[string][]byte
+
+// getEncryptedJsonData returns map where all keys are encrypted.
+func getEncryptedJsonData(sjd map[string]string, log log.Logger) secureJsonData {
+	encrypted := make(secureJsonData)
+	for key, data := range sjd {
+		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted
 }

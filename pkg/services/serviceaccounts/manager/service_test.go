@@ -25,6 +25,8 @@ type FakeServiceAccountStore struct {
 	ExpectedError                           error
 }
 
+var _ store = (*FakeServiceAccountStore)(nil)
+
 func newServiceAccountStoreFake() *FakeServiceAccountStore {
 	return &FakeServiceAccountStore{}
 }
@@ -42,6 +44,11 @@ func (f *FakeServiceAccountStore) RetrieveServiceAccountIdByName(ctx context.Con
 // CreateServiceAccount is a fake creating a service account.
 func (f *FakeServiceAccountStore) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return f.ExpectedServiceAccountDTO, f.ExpectedError
+}
+
+// EnableServiceAccount implements store.
+func (f *FakeServiceAccountStore) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
+	return f.ExpectedError
 }
 
 // SearchOrgServiceAccounts is a fake searching for service accounts.

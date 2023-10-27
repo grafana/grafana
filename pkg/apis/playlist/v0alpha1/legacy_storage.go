@@ -2,15 +2,16 @@ package v0alpha1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlistkind "github.com/grafana/grafana/pkg/kinds/playlist"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -23,13 +24,12 @@ var (
 )
 
 type legacyStorage struct {
-	service playlist.Service
-}
+	service        playlist.Service
+	namespacer     request.NamespaceMapper
+	tableConverter rest.TableConvertor
 
-func newLegacyStorage(s playlist.Service) *legacyStorage {
-	return &legacyStorage{
-		service: s,
-	}
+	DefaultQualifiedResource  schema.GroupResource
+	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -51,15 +51,15 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return rest.NewDefaultTableConvertor(Resource("playlists")).ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: handle fetching all available orgs when no namespace is specified
 	// To test: kubectl get playlists --all-namespaces
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	limit := 100
@@ -67,35 +67,23 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		limit = int(options.Limit)
 	}
 	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
-		OrgId: orgId,
+		OrgId: info.OrgID,
 		Limit: limit,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	list := &PlaylistList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
-		},
-	}
+	list := &PlaylistList{}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
-			},
-			Spec: playlistkind.Spec{
-				Name:     v.Name,
-				Uid:      v.UID,
-				Interval: v.Interval,
-			},
+		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+			UID:   v.UID,
+			OrgId: info.OrgID,
+		})
+		if err != nil {
+			return nil, err
 		}
-		list.Items = append(list.Items, p)
+		list.Items = append(list.Items, *convertToK8sResource(p, s.namespacer))
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -104,35 +92,21 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	orgId, ok := grafanarequest.OrgIDFrom(ctx)
-	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
-	}
-
-	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
-		UID:   name,
-		OrgId: orgId,
-	})
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
-		return nil, fmt.Errorf("not found?")
+
+	dto, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+		UID:   name,
+		OrgId: info.OrgID,
+	})
+	if err != nil || dto == nil {
+		if errors.Is(err, playlist.ErrPlaylistNotFound) || err == nil {
+			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+		}
+		return nil, err
 	}
 
-	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
-		},
-		Spec: playlistkind.Spec{
-			Name:     p.Name,
-			Uid:      p.Uid,
-			Interval: p.Interval,
-			Items:    p.Items,
-		},
-	}, nil
+	return convertToK8sResource(dto, s.namespacer), nil
 }

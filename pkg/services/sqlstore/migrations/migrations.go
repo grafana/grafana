@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
@@ -54,10 +55,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
-	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 
-	ualert.RerunDashAlertMigration(mg)
+	ualert.FixEarlyMigration(mg)
 	addSecretsMigration(mg)
 	addKVStoreMigrations(mg)
 	ualert.AddDashboardUIDPanelIDMigration(mg)
@@ -76,7 +76,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
-	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
@@ -89,6 +88,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
+	accesscontrol.AddManagedFolderLibraryPanelActionsMigration(mg)
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
@@ -101,6 +101,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	anonservice.AddMigration(mg)
 	signingkeys.AddMigration(mg)
+
+	ualert.MigrationServiceMigration(mg)
+	ualert.CreatedFoldersMigration(mg)
+
+	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
