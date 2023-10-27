@@ -19,8 +19,8 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 		queriesMap[q.Id] = q
 	}
 
-	metricInsightIndices := []int{}
-	mathQueries := make(map[string]bool)
+	metricInsightIndices := []int{}      // make this a count
+	mathQueries := make(map[string]bool) // can leave this as a slice
 	for i, query := range queries {
 		switch query.GetGetMetricDataAPIMode() {
 		case models.GMDApiModeSQLExpression:
