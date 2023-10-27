@@ -172,7 +172,7 @@ By default, Grafana queries your data source every 30 seconds. Setting a low ref
 
 We recommend the following:
 
-- Don't enable auto-refreshing on dashboards, panels, or variables unless you need it. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
+- Only enable auto-refreshing on dashboards, panels, or variables unless if necessary. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
 - If it's required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
 - If your dashboard has a longer time period (such as a week), then you really don't need automated refreshing.
 
