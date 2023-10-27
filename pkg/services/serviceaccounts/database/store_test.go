@@ -551,7 +551,6 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.desc, func(t *testing.T) {
-
 			err := store.EnableServiceAccount(ctx, orgID, tc.id, tc.enable)
 			require.NoError(t, err)
 
