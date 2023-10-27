@@ -64,8 +64,8 @@ type Props = {
   traceProp: Trace;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
-  topOfViewRef: RefObject<HTMLDivElement>;
-  topOfViewRefType: TopOfViewRefType;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
   createSpanLink?: SpanLinkFunc;
 };
 

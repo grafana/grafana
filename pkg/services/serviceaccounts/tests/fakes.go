@@ -33,6 +33,10 @@ func (f *FakeServiceAccountService) DeleteServiceAccount(ctx context.Context, or
 	return f.ExpectedErr
 }
 
+func (f *FakeServiceAccountService) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
+	return f.ExpectedErr
+}
+
 func (f *FakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
