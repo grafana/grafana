@@ -101,24 +101,10 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		args.Namespace = c.namespacer(args.User.Identity.GetOrgID())
 	}
 
-	addr := c.env.Server.HTTPServer.Listener.Addr()
-	baseUrl := fmt.Sprintf("http://%s", addr)
-	login := args.User.Identity.GetLogin()
-	if login != "" && args.User.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, args.User.password, addr)
-	}
-
-	config := &rest.Config{
-		Host: baseUrl,
-		//	BearerToken: "example",
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	require.NoError(c.t, err)
 	return &K8sResourceClient{
 		t:        c.t,
 		Args:     args,
-		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
+		Resource: args.User.Client.Resource(args.GVR).Namespace(args.Namespace),
 	}
 }
 
@@ -165,6 +151,7 @@ type OrgUsers struct {
 
 type User struct {
 	Identity identity.Requester
+	Client   *dynamic.DynamicClient
 	password string
 }
 
@@ -352,6 +339,7 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
+	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 	createUser := func(key string, role org.RoleType) User {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
@@ -372,8 +360,19 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		require.NoError(c.t, err)
 		require.Equal(c.t, orgId, s.OrgID)
 		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
+
+		config := &rest.Config{
+			Host:     baseUrl,
+			Username: s.Login,
+			Password: key,
+		}
+
+		client, err := dynamic.NewForConfig(config)
+		require.NoError(c.t, err)
+
 		return User{
 			Identity: s,
+			Client:   client,
 			password: key,
 		}
 	}
