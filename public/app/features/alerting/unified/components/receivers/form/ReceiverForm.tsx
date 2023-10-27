@@ -186,7 +186,7 @@ export function ReceiverForm<R extends ChannelValues>({
             {isEditable && (
               <>
                 {isSubmitting && (
-                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                  <Button disabled={true} icon="spinner" variant="primary">
                     Saving...
                   </Button>
                 )}

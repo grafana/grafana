@@ -12,7 +12,6 @@ import (
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -97,8 +96,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginerrs.SignatureErrorTracker), new(*pluginerrs.SignatureErrorRegistry)),
 	pluginerrs.ProvideStore,
 	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
-	manager.ProvideInstaller,
-	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
@@ -132,6 +129,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	finder.ProvideLocalFinder,
+	ProvideClientDecorator,
+	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 )
 
 func ProvideClientDecorator(
@@ -184,10 +183,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
-	}
-
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		middlewares = append(middlewares, clientmiddleware.NewTeamHTTPHeadersMiddleware())
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
