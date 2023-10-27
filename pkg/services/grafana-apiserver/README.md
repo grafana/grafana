@@ -37,7 +37,7 @@ Set storage type:
 
 ```ini
 [grafana-apiserver]
-storage_type = json
+storage_type = file
 ```
 
 Objects will be written to disk under the `{data.path}/grafana-apiserver/` directory.

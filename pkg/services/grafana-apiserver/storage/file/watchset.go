@@ -3,7 +3,7 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package json
+package file
 
 import (
 	"sync"
@@ -59,7 +59,6 @@ func (s *WatchSet) notifyWatchers(ev watch.Event) {
 
 type watchNode struct {
 	s        *WatchSet
-	p        storage.SelectionPredicate
 	id       int
 	updateCh chan watch.Event
 	outCh    chan watch.Event

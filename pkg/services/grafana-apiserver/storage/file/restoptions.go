@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-package json
+package file
 
 import (
 	"path"
@@ -30,7 +30,7 @@ func NewRESTOptionsGetter(path string, originalStorageConfig storagebackend.Conf
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
-			Type:                      "json",
+			Type:                      "file",
 			Prefix:                    r.path,
 			Transport:                 storagebackend.TransportConfig{},
 			Paging:                    false,

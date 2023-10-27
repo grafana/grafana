@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	jsonstorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/json"
+	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -41,7 +41,7 @@ import (
 type StorageType string
 
 const (
-	StorageTypeJson   StorageType = "json"
+	StorageTypeFile   StorageType = "file"
 	StorageTypeEtcd   StorageType = "etcd"
 	StorageTypeLegacy StorageType = "legacy"
 )
@@ -225,7 +225,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if StorageType(s.config.storageType) == StorageTypeEtcd {
+	if s.config.storageType == StorageTypeEtcd {
 		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -238,8 +238,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if StorageType(s.config.storageType) == StorageTypeJson {
-		serverConfig.RESTOptionsGetter = jsonstorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
+	if s.config.storageType == StorageTypeFile {
+		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer

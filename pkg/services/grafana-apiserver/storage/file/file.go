@@ -3,7 +3,7 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package json
+package file
 
 import (
 	"context"
@@ -218,7 +218,9 @@ func (s *Storage) Delete(
 		if err != nil {
 			return err
 		}
-		s.Versioner().UpdateObject(out, *generatedRV)
+		if err := s.Versioner().UpdateObject(out, *generatedRV); err != nil {
+			return err
+		}
 
 		if err := deleteFile(filename); err != nil {
 			return err
@@ -333,7 +335,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		if err != nil {
 			return err
 		}
-		s.Versioner().UpdateObject(listObj, resourceVersionInt)
+		if err := s.Versioner().UpdateObject(listObj, resourceVersionInt); err != nil {
+			return err
+		}
 	}
 
 	objs, err := readDirRecursive(s.codec, key, s.newFunc)
@@ -364,7 +368,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		if err == nil && ok {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
-
 	}
 
 	return nil
