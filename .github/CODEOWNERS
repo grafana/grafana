@@ -381,6 +381,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/grafana-bi-squad
+/public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
@@ -394,6 +395,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
+/public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
 /public/app/features/panel/ @grafana/dashboards-squad
