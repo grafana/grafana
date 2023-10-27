@@ -29,6 +29,17 @@ const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
   return { orgUsers: [] };
 };
 
+const getUsersRoles = async (orgId: number, users: OrgUser[]) => {
+  const userIds = users.map((u: OrgUser) => u.userId);
+  const roles = await getBackendSrv().get(
+    `/api/access-control/users/roles`,
+    accessControlQueryParam({ userIds, targetOrgId: orgId })
+  );
+  users.forEach((u: OrgUser) => {
+    u.roles = roles ? roles[u.userId] || [] : [];
+  });
+};
+
 const updateOrgUserRole = (orgUser: OrgUser, orgId: UrlQueryValue) => {
   return getBackendSrv().patch(`/api/orgs/${orgId}/users/${orgUser.userId}`, orgUser);
 };
@@ -51,6 +62,11 @@ const AdminEditOrgPage = ({ match }: Props) => {
   const [orgState, fetchOrg] = useAsyncFn(() => getOrg(orgId), []);
   const [, fetchOrgUsers] = useAsyncFn(async (page) => {
     const result = await getOrgUsers(orgId, page);
+
+    if (contextSrv.licensedAccessControlEnabled()) {
+      await getUsersRoles(orgId, result.orgUsers);
+    }
+
     const totalPages = result?.perPage !== 0 ? Math.ceil(result.totalCount / result.perPage) : 0;
     setTotalPages(totalPages);
     setUsers(result.orgUsers);
