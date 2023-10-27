@@ -79,7 +79,7 @@ export interface GrafanaLiveSrv {
    *
    * @alpha -- experimental
    */
-  publish(address: LiveChannelAddress, data: unknown): Promise<any>;
+  publish(address: LiveChannelAddress, data: unknown): Promise<unknown>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

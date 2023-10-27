@@ -32,10 +32,10 @@ var (
 
 type Alertmanager interface {
 	// Configuration
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
-	ApplyConfig(context.Context, *models.AlertConfiguration) error
 
 	// Silences
 	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)
@@ -44,12 +44,12 @@ type Alertmanager interface {
 	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
 
 	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-	PutAlerts(postableAlerts apimodels.PostableAlerts) error
+	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	PutAlerts(context.Context, apimodels.PostableAlerts) error
 
 	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
+	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
@@ -78,6 +78,7 @@ type MultiOrgAlertmanager struct {
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
+	factory     orgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
@@ -85,9 +86,19 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
+type orgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
+
+type Option func(*MultiOrgAlertmanager)
+
+func WithAlertmanagerOverride(f orgAlertmanagerFactory) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.factory = f
+	}
+}
+
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
 	kvStore kvstore.KVStore, provStore provisioningStore, decryptFn alertingNotify.GetDecryptedValueFn,
-	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
+	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service, opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		Crypto:    NewCrypto(s, configStore, l),
@@ -104,9 +115,21 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 		ns:            ns,
 		peer:          &NilPeer{},
 	}
+
 	if err := moa.setupClustering(cfg); err != nil {
 		return nil, err
 	}
+
+	// Set up the default per tenant Alertmanager factory.
+	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
+		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+		return newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+	}
+
+	for _, opt := range opts {
+		opt(moa)
+	}
+
 	return moa, nil
 }
 
@@ -244,8 +267,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
-			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+			am, err := moa.factory(ctx, orgID)
 			if err != nil {
 				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
 			}

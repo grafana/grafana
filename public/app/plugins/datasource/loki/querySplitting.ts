@@ -12,8 +12,8 @@ import {
   parseDuration,
   rangeUtil,
   TimeRange,
+  LoadingState,
 } from '@grafana/data';
-import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';

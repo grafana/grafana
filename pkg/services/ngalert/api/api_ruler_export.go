@@ -70,7 +70,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 			)
 		}
 		rulesGroup, err := srv.getRuleGroupWithFolderTitle(c, ngmodels.AlertRuleGroupKey{
-			OrgID:        c.OrgID,
+			OrgID:        c.SignedInUser.GetOrgID(),
 			NamespaceUID: folderUIDs[0],
 			RuleGroup:    group,
 		})
@@ -132,12 +132,12 @@ func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, rule
 // getRulesWithFolderTitleInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
 // If argument folderUIDs is not empty it intersects it with the list of folders available for user and then retrieves rules that are in those folders.
 func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderTitle, error) {
-	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
+	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
 	query := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.OrgID,
+		OrgID:         c.SignedInUser.GetOrgID(),
 		NamespaceUIDs: nil,
 	}
 	if len(folderUIDs) > 0 {

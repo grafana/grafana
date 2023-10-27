@@ -26,7 +26,7 @@ func DimensionKeysHandler(ctx context.Context, pluginCtx backend.PluginContext, 
 	var response []resources.ResourceResponse[string]
 	switch dimensionKeysRequest.Type() {
 	case resources.FilterDimensionKeysRequest:
-		response, err = service.GetDimensionKeysByDimensionFilter(dimensionKeysRequest)
+		response, err = service.GetDimensionKeysByDimensionFilter(ctx, dimensionKeysRequest)
 	default:
 		response, err = services.GetHardCodedDimensionKeysByNamespace(dimensionKeysRequest.Namespace)
 	}
