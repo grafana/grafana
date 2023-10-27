@@ -2,11 +2,11 @@ import React from 'react';
 
 import { LinkModel } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
+import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
 interface VizPanelLinksState extends SceneObjectState {
   links?: LinkModel[];
-  menu?: VizPanelLinksMenu;
+  menu: VizPanelLinksMenu;
 }
 
 export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
@@ -14,34 +14,16 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 }
 
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
-  const { links, menu } = model.useState();
+  const { menu } = model.useState();
 
-  if (menu) {
-    return (
-      <Dropdown
-        overlay={() => {
-          return <menu.Component model={menu} key={menu.state.key} />;
-        }}
-      >
-        <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" />
-      </Dropdown>
-    );
-  }
-
-  if (!links) {
-    return null;
-  }
-
-  const linkModel = links[0];
   return (
-    <PanelChrome.TitleItem
-      href={linkModel.href}
-      onClick={linkModel.onClick}
-      target={linkModel.target}
-      title={linkModel.title}
+    <Dropdown
+      overlay={() => {
+        return <menu.Component model={menu} key={menu.state.key} />;
+      }}
     >
-      <Icon name="external-link-alt" size="md" />
-    </PanelChrome.TitleItem>
+      <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" />
+    </Dropdown>
   );
 }
 
