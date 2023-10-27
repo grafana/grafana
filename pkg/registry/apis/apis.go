@@ -4,6 +4,7 @@ import (
 	"context"
 
 	examplev0alpha1 "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/playlist"
 	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
 )
@@ -18,6 +19,7 @@ type Service struct{}
 // and give each builder the chance to register itself with the main server
 func ProvideService(
 	_ *playlistsv0alpha1.PlaylistAPIBuilder,
+	_ *playlist.PlaylistAPIBuilder,
 	_ *examplev0alpha1.TestingAPIBuilder,
 ) *Service {
 	return &Service{}

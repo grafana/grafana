@@ -56,6 +56,9 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&Playlist{},
 		&PlaylistList{},
 	)
+	if err := RegisterConversions(scheme); err != nil {
+		return err
+	}
 	metav1.AddToGroupVersion(scheme, b.gv)
 	return scheme.SetVersionPriority(b.gv)
 }
