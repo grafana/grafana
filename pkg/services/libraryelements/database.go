@@ -60,6 +60,10 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 		return err
 	}
 
+	if modelLibraryElement == nil {
+		modelLibraryElement = make(map[string]any)
+	}
+
 	if model.LibraryElementKind(libraryElement.Kind) == model.VariableElement {
 		modelLibraryElement["name"] = libraryElement.Name
 	}

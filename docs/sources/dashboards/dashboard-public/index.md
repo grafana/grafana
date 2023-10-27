@@ -27,27 +27,6 @@ You can see a list of all your public dashboards in one place by navigating to *
 - Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
 
-## Enable the feature
-
-Add the `publicDashboards` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboards = true
-```
-
-If you are using Docker, use an environment variable to enable public dashboards:
-
-```
---env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
-```
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
-
 ## Make a dashboard public
 
 1. Click the sharing icon in the dashboard header.
