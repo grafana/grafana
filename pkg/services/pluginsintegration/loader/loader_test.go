@@ -1294,17 +1294,17 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		cfg                       *config.Cfg
 		expHideAngularDeprecation bool
 	}{
-		{name: "without hide angular deprecation setting", cfg: &config.Cfg{
+		{name: `without "hide_angular_deprecation" setting`, cfg: &config.Cfg{
 			AngularSupportEnabled: true,
 			PluginSettings:        setting.PluginSettings{},
 		}},
-		{name: "with hide angular deprecation setting = true", cfg: &config.Cfg{
+		{name: `with "hide_angular_deprecation" = true`, cfg: &config.Cfg{
 			AngularSupportEnabled: true,
 			PluginSettings: setting.PluginSettings{
 				"plugin-id": map[string]string{"hide_angular_deprecation": "true"},
 			}},
 		},
-		{name: "without hide angular deprecation setting = false", cfg: &config.Cfg{
+		{name: `with "hide_angular_deprecation" = false`, cfg: &config.Cfg{
 			AngularSupportEnabled: true,
 			PluginSettings: setting.PluginSettings{
 				"plugin-id": map[string]string{"hide_angular_deprecation": "false"},
