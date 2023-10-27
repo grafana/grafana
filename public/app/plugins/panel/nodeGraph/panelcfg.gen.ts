@@ -19,7 +19,7 @@ export interface ArcOption {
   field?: string;
 }
 
-export interface FieldNameOverrides {
+export interface NodeNameOverrides {
   arc?: string;
   color?: string;
   details?: string;
@@ -28,13 +28,22 @@ export interface FieldNameOverrides {
   mainStat?: string;
   nodeRadius?: string;
   secondaryStat?: string;
-  source?: string;
   subTitle?: string;
-  target?: string;
   title?: string;
 }
 
+export interface EdgeNameOverrides {
+  color?: string;
+  details?: string;
+  id?: string;
+  mainStat?: string;
+  secondaryStat?: string;
+  source?: string;
+  target?: string;
+}
+
 export interface Options {
+  edgeNameOverrides?: EdgeNameOverrides;
   edges?: {
     /**
      * Unit for the main stat to override what ever is set in the data frame.
@@ -45,7 +54,7 @@ export interface Options {
      */
     secondaryStatUnit?: string;
   };
-  fieldNameOverrides?: FieldNameOverrides;
+  nodeNameOverrides?: NodeNameOverrides;
   nodes?: {
     /**
      * Unit for the main stat to override what ever is set in the data frame.

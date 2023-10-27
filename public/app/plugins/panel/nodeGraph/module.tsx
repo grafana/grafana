@@ -1,7 +1,8 @@
-import { Field, NodeGraphDataFrameFieldNames, PanelPlugin } from '@grafana/data';
+import { Field, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
+import { RawFieldSelector } from './editor/RawFieldNameSelect';
 import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanelOptions((builder, context) => {
@@ -24,8 +25,8 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
         editor: ArcOptionsEditor,
         settings: {
           filter:
-            context.options?.fieldNameOverrides?.arc !== undefined
-              ? (field: Field) => field.name.includes(context.options?.fieldNameOverrides?.arc || '')
+            context.options?.nodeNameOverrides?.arc !== undefined
+              ? (field: Field) => field.name.includes(context.options?.nodeNameOverrides?.arc || '')
               : undefined,
         },
       });
@@ -46,68 +47,116 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
     },
   });
   builder.addNestedOptions({
-    category: ['Field names'],
-    path: 'fieldNameOverrides',
+    category: ['Node names'],
+    path: 'nodeNameOverrides',
     build: (builder) => {
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Id',
         path: 'id',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.id },
+        id: 'id',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Title',
         path: 'title',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.title },
+        id: 'title',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Sub title',
         path: 'subTitle',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.subTitle },
+        id: 'subTitle',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Main stat',
         path: 'mainStat',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.mainStat },
+        id: 'mainStat',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Secondary stat',
         path: 'secondaryStat',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.secondaryStat },
+        id: 'secondaryStat',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Arc prefix',
         path: 'arc',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.arc },
+        id: 'arc',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Details prefix',
         path: 'details',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.detail },
+        id: 'details',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Color',
         path: 'color',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.color },
+        id: 'color',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Icon',
         path: 'icon',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.icon },
+        id: 'icon',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Node radius',
         path: 'nodeRadius',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.nodeRadius },
+        id: 'nodeRadius',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+    },
+  });
+  builder.addNestedOptions({
+    category: ['Edge names'],
+    path: 'edgeNameOverrides',
+    build: (builder) => {
+      builder.addCustomEditor({
+        name: 'Id',
+        path: 'id',
+        id: 'id',
+        editor: RawFieldSelector,
+      });
+      builder.addCustomEditor({
+        name: 'Main stat',
+        path: 'mainStat',
+        id: 'mainStat',
+        editor: RawFieldSelector,
+      });
+      builder.addCustomEditor({
+        name: 'Secondary stat',
+        path: 'secondaryStat',
+        id: 'secondaryStat',
+        editor: RawFieldSelector,
+      });
+      builder.addCustomEditor({
+        name: 'Details prefix',
+        path: 'details',
+        id: 'details',
+        editor: RawFieldSelector,
+      });
+      builder.addCustomEditor({
+        name: 'Color',
+        path: 'color',
+        id: 'color',
+        editor: RawFieldSelector,
+      });
+      builder.addCustomEditor({
         name: 'Target',
         path: 'target',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.target },
+        id: 'target',
+        editor: RawFieldSelector,
       });
-      builder.addTextInput({
+      builder.addCustomEditor({
         name: 'Source',
         path: 'source',
-        settings: { placeholder: NodeGraphDataFrameFieldNames.source },
+        id: 'source',
+        editor: RawFieldSelector,
       });
     },
   });

@@ -14,7 +14,7 @@ import {
 
 describe('processNodes', () => {
   it('handles empty args', async () => {
-    expect(processNodes(undefined, undefined, undefined)).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, undefined, undefined)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -25,6 +25,7 @@ describe('processNodes', () => {
         { source: '0', target: '2' },
         { source: '1', target: '2' },
       ]),
+      undefined,
       undefined
     );
 
@@ -56,6 +57,7 @@ describe('processNodes', () => {
         { source: '0', target: '2', mainstat: 1, secondarystat: 1 },
         { source: '1', target: '2', mainstat: 1, secondarystat: 1 },
       ]),
+      undefined,
       undefined
     );
 
@@ -288,6 +290,7 @@ describe('finds connections', () => {
         { source: '0', target: '2' },
         { source: '1', target: '2' },
       ]),
+      undefined,
       undefined
     );
 
@@ -303,6 +306,7 @@ describe('finds connections', () => {
         { source: '0', target: '2' },
         { source: '1', target: '2' },
       ]),
+      undefined,
       undefined
     );
 

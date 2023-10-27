@@ -43,7 +43,7 @@ composableKinds: PanelCfg: {
 					// Unit for the secondary stat to override what ever is set in the data frame.
 					secondaryStatUnit?: string
 				}
-				FieldNameOverrides: {
+				NodeNameOverrides: {
 					id?:            string
 					title?:         string
 					subTitle?:      string
@@ -54,13 +54,21 @@ composableKinds: PanelCfg: {
 					color?:         string
 					icon?:          string
 					nodeRadius?:    string
+				} @cuetsy(kind="interface")
+				EdgeNameOverrides: {
+					id?:            string
+					mainStat?:      string
+					secondaryStat?: string
+					details?:       string
+					color?:         string
 					target?:        string
 					source?:        string
 				} @cuetsy(kind="interface")
 				Options: {
-					nodes?:              NodeOptions
-					edges?:              EdgeOptions
-					fieldNameOverrides?: FieldNameOverrides
+					nodes?:             NodeOptions
+					edges?:             EdgeOptions
+					nodeNameOverrides?: NodeNameOverrides
+					edgeNameOverrides?: EdgeNameOverrides
 				} @cuetsy(kind="interface")
 			}
 		}]
