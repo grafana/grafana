@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, dateTimeParse } from '@grafana/data';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
