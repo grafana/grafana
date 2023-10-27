@@ -1298,12 +1298,12 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{
 					Label:        "Responders",
 					PropertyName: "responders",
-					Description:  "If API key belongs to a team, this field is ignored.",
+					Description:  "If the API key belongs to a team, this field is ignored.",
 					Element:      ElementSubformArray,
 					SubformOptions: []NotifierOption{
 						{
 							Label:        "Type",
-							Description:  fmt.Sprintf("%s or a template", strings.Join(alertingOpsgenie.SupportedResponderTypes, ",")),
+							Description:  fmt.Sprintf("%s or a template", strings.Join(alertingOpsgenie.SupportedResponderTypes, ", ")),
 							Element:      ElementTypeInput,
 							Required:     true,
 							PropertyName: "type",
@@ -1323,7 +1323,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						{
 							Label:        "Username",
 							Element:      ElementTypeInput,
-							Description:  "Name of the responder. Must be specified if id and name are empty.",
+							Description:  "Username of the responder. Must be specified if id and name are empty.",
 							PropertyName: "username",
 						},
 					},
