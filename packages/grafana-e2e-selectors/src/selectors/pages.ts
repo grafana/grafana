@@ -249,6 +249,9 @@ export const Pages = {
     recipientInput: 'request-view-access-recipient-input',
     submitButton: 'request-view-access-submit-button',
   },
+  PublicDashboardConfirmAccess: {
+    submitButton: 'data-testid confirm-access-submit-button',
+  },
   Explore: {
     url: '/explore',
     General: {

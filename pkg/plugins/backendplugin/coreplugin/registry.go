@@ -176,3 +176,9 @@ func (l *logWrapper) With(args ...any) sdklog.Logger {
 	l.logger = l.logger.New(args...)
 	return l
 }
+
+func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
+	return &logWrapper{
+		logger: l.logger.FromContext(ctx),
+	}
+}

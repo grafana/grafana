@@ -374,6 +374,14 @@
       "placeholder": "Choose"
     }
   },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all {{length}}",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
+      "title": "Graph"
+    }
+  },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Dashboard",
@@ -413,6 +421,16 @@
       "zoom-out-time-range": "Zoom out time range"
     },
     "title": "Shortcuts"
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "Collapse all",
+      "copy-to-clipboard": "Copy to clipboard",
+      "description": "Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a new query. Click refresh button below to trigger a new query.",
+      "expand-all": "Expand all",
+      "no-data": "No request and response collected yet. Hit refresh button",
+      "refresh": "Refresh"
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -755,6 +773,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
+      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",

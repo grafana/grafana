@@ -1,7 +1,7 @@
 import React from 'react';
-import { Disable, Enable } from 'react-enable';
 import { Route, Switch } from 'react-router-dom';
 
+import { config } from '@grafana/runtime';
 import { withErrorBoundary } from '@grafana/ui';
 const ContactPointsV1 = SafeDynamicImport(() => import('./components/contact-points/ContactPoints.v1'));
 const ContactPointsV2 = SafeDynamicImport(() => import('./components/contact-points/ContactPoints.v2'));
@@ -17,13 +17,14 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
-import { AlertingFeature } from './features';
+
+const newContactPointsListView = config.featureToggles.alertingContactPointsV2 ?? false;
 
 // TODO add pagenav back in – that way we have correct breadcrumbs and page title
 const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
   <AlertmanagerPageWrapper pageId="receivers" accessType="notification">
-    <Enable feature={AlertingFeature.ContactPointsV2}>
-      {/* TODO do we want a "routes" component for each Alerting entity? */}
+    {/* TODO do we want a "routes" component for each Alerting entity? */}
+    {newContactPointsListView ? (
       <Switch>
         <Route exact={true} path="/alerting/notifications" component={ContactPointsV2} />
         <Route exact={true} path="/alerting/notifications/receivers/new" component={NewContactPoint} />
@@ -37,10 +38,9 @@ const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
         />
         <Route exact={true} path="/alerting/notifications/global-config" component={GlobalConfig} />
       </Switch>
-    </Enable>
-    <Disable feature={AlertingFeature.ContactPointsV2}>
+    ) : (
       <ContactPointsV1 {...props} />
-    </Disable>
+    )}
   </AlertmanagerPageWrapper>
 );
 

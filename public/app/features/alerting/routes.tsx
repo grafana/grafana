@@ -1,6 +1,5 @@
 import { uniq } from 'lodash';
 import React from 'react';
-import { Redirect } from 'react-router-dom';
 
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -189,6 +188,18 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/notifications/receivers/:id/edit',
+    roles: evaluateAccess([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+    ),
+  },
+  {
     path: '/alerting/notifications/:type/:id/edit',
     roles: evaluateAccess([
       AccessControlAction.AlertingNotificationsWrite,
@@ -247,15 +258,13 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:id/modify-export',
     pageClass: 'page-alerting',
-    roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate]),
-    component: config.featureToggles.alertingModifiedExport
-      ? SafeDynamicImport(
-          () =>
-            import(
-              /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
-            )
+    roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+    component: SafeDynamicImport(
+      () =>
+        import(
+          /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
         )
-      : () => <Redirect to="/alerting/List" />,
+    ),
   },
   {
     path: '/alerting/:sourceName/:id/view',

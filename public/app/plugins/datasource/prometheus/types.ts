@@ -1,8 +1,6 @@
 import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { PromApplication } from '../../../types/unified-alerting-dto';
-
 import { Prometheus as GenPromQuery } from './dataquery.gen';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
@@ -30,6 +28,13 @@ export enum PrometheusCacheLevel {
   None = 'None',
 }
 
+export enum PromApplication {
+  Cortex = 'Cortex',
+  Mimir = 'Mimir',
+  Prometheus = 'Prometheus',
+  Thanos = 'Thanos',
+}
+
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -46,6 +51,7 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
   sigV4Auth?: boolean;
+  oauthPassThru?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -158,12 +164,20 @@ export interface TransformOptions {
   meta: QueryResultMeta;
 }
 
-export interface PromLabelQueryResponse {
+export interface PromBuildInfoResponse {
   data: {
-    status: string;
-    data: string[];
+    application?: string;
+    version: string;
+    revision: string;
+    features?: {
+      ruler_config_api?: 'true' | 'false';
+      alertmanager_config_api?: 'true' | 'false';
+      query_sharding?: 'true' | 'false';
+      federated_rules?: 'true' | 'false';
+    };
+    [key: string]: unknown;
   };
-  cancelled?: boolean;
+  status: 'success';
 }
 
 /**

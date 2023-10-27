@@ -15,11 +15,10 @@ var _ authorizer.Authorizer = &OrgIDAuthorizer{}
 
 type OrgRoleAuthorizer struct {
 	log log.Logger
-	org org.Service
 }
 
 func ProvideOrgRoleAuthorizer(orgService org.Service) *OrgRoleAuthorizer {
-	return &OrgRoleAuthorizer{log: log.New("grafana-apiserver.authorizer.orgrole"), org: orgService}
+	return &OrgRoleAuthorizer{log: log.New("grafana-apiserver.authorizer.orgrole")}
 }
 
 func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
@@ -48,7 +47,7 @@ func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	case org.RoleNone:
 		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 	}
-	return authorizer.DecisionNoOpinion, "", nil
+	return authorizer.DecisionDeny, "", nil
 }
 
 func errorMessageForGrafanaOrgRole(grafanaOrgRole string, a authorizer.Attributes) string {
