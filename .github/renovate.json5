@@ -20,7 +20,7 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
-      "excludePackagePatterns": ["^@?storybook"],
+      "excludePackagePatterns": ["^@?storybook", "^@locker"],
       "extends": ["schedule:monthly"],
       "groupName": "Monthly patch updates"
     },
