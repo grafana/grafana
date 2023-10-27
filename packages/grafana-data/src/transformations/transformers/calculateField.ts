@@ -40,7 +40,7 @@ export interface CumulativeOptions {
 }
 
 export interface WindowOptions extends CumulativeOptions {
-  windowSize?: number;
+  windowSizePercent?: number;
   type?: WindowType;
 }
 
@@ -66,7 +66,7 @@ const defaultReduceOptions: ReduceOptions = {
 const defaultWindowOptions: WindowOptions = {
   reducer: ReducerID.mean,
   type: WindowType.Trailing,
-  windowSize: 10,
+  windowSizePercent: 10,
 };
 
 const defaultBinaryOptions: BinaryOptions = {
@@ -216,11 +216,9 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 };
 
 function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): ValuesCreator {
-  if (options.windowSize! < 1) {
+  if (options.windowSizePercent! < 1) {
     throw new Error('Add field from calculation transformation - Window size must be larger than 0');
   }
-
-  const window = options.windowSize!;
 
   let matcher = getFieldMatcher({
     id: FieldMatcherID.numeric,
@@ -242,6 +240,8 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
   }
 
   return (frame: DataFrame) => {
+    const window = Math.ceil((options.windowSizePercent! / 100) * frame.length);
+
     // Find the columns that should be examined
     let selectedField: Field | null = null;
     for (const field of frame.fields) {
@@ -262,8 +262,8 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
       let count = 0;
       // Current value (i) is included in the leading part of the window. Which means if the window size is odd,
       // the leading part of the window will be larger than the trailing part.
-      const leadingPartOfWindow = Math.ceil(options.windowSize! / 2) - 1;
-      const trailingPartOfWindow = Math.floor(options.windowSize! / 2);
+      const leadingPartOfWindow = Math.ceil(window / 2) - 1;
+      const trailingPartOfWindow = Math.floor(window / 2);
       for (let i = 0; i < frame.length; i++) {
         const first = i - trailingPartOfWindow;
         const last = i + leadingPartOfWindow;

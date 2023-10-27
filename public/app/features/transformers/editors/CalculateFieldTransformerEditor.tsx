@@ -286,7 +286,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { window } = this.props.options;
     this.updateWindowOptions({
       ...window!,
-      windowSize: v,
+      windowSizePercent: v,
     });
   };
 
@@ -342,8 +342,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         <InlineField label="Type" labelWidth={labelWidth}>
           <RadioButtonGroup value={options.type ?? 'trailing'} options={typeOptions} onChange={this.onTypeChange} />
         </InlineField>
-        <InlineField label="Window size" labelWidth={labelWidth}>
-          <NumberInput min={1} value={options.windowSize} onChange={this.onWindowSizeChange}></NumberInput>
+        <InlineField
+          label="Window size %"
+          labelWidth={labelWidth}
+          tooltip="Set the window size as a percentage of the total data"
+        >
+          <NumberInput min={1} value={options.windowSizePercent} onChange={this.onWindowSizeChange}></NumberInput>
         </InlineField>
       </>
     );
