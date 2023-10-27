@@ -18,8 +18,8 @@ type Service struct{}
 // ProvideService is an entry point for each service that will force initialization
 // and give each builder the chance to register itself with the main server
 func ProvideService(
-	_ *playlistsv0alpha1.PlaylistAPIBuilder,
 	_ *playlist.PlaylistAPIBuilder,
+	_ *playlistsv0alpha1.PlaylistAPIBuilder,
 	_ *examplev0alpha1.TestingAPIBuilder,
 ) *Service {
 	return &Service{}
