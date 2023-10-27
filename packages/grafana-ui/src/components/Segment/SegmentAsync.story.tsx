@@ -35,6 +35,7 @@ const SegmentFrame = ({
         Component={AddButton}
         onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
+        inputMinWidth={100}
       />
     </SegmentSection>
   </>
