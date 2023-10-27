@@ -3,6 +3,7 @@ package playlist
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"net/http"
 	"slices"
 	"strings"
@@ -239,25 +240,9 @@ func TestPlaylist(t *testing.T) {
 			return item.UID
 		})))
 
-		// Get works for both apis
+		// Check all playlists
 		for _, uid := range uids {
-			found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-			require.NoError(t, err)
-			require.Equal(t, uid, found.GetName())
-
-			dto := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
-				Method: http.MethodGet,
-				Path:   "/api/playlists/" + uid,
-			}, &playlist.PlaylistDTO{})
-			require.NotNil(t, dto.Result)
-			require.Equal(t, uid, dto.Result.Uid)
-
-			// Check same values
-			spec, ok := found.Object["spec"].(map[string]any)
-			require.True(t, ok)
-			require.Equal(t, dto.Result.Name, spec["title"]) // Name <> Title
-			require.Equal(t, dto.Result.Interval, spec["interval"])
+			getFromBothAPIs(t, helper, client, uid, nil)
 		}
 
 		// PUT :: Update the title (full payload)
@@ -269,7 +254,7 @@ metadata:
   name: abcdefgh #
 spec:
   title: This one is updated and only has one item
-  interval: 20s
+  interval: 222s
   items:
   - type: dashboard_by_tag
     value: panel-tests
@@ -280,13 +265,14 @@ spec:
 		require.Equal(t, first.GetName(), updated.GetName())
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		spec, ok := updated.Object["spec"].(map[string]any)
-		require.True(t, ok)
-		require.Equal(t, "This one is updated and only has one item", spec["title"])
-		require.Equal(t, "20s", spec["interval"])
+		out := getFromBothAPIs(t, helper, client, "abcdefgh", &playlist.PlaylistDTO{
+			Name:     "This one is updated and only has one item",
+			Interval: "222s",
+		})
+		require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
 
 		// PATCH :: apply only some fields
-		if false { // DOES NOT WORK YET?????
+		if false { // DOES NOT WORK YET????? :(
 			updated, err = client.Resource.Apply(context.Background(), "abcdefgh",
 				helper.LoadYAMLOrJSON(`
 apiVersion: playlist.grafana.app/v0alpha1
@@ -303,10 +289,10 @@ spec:
 			require.Equal(t, first.GetName(), updated.GetName())
 			require.Equal(t, first.GetUID(), updated.GetUID())
 			require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-			spec, ok = updated.Object["spec"].(map[string]any)
-			require.True(t, ok)
-			require.Equal(t, "The patched title!", spec["title"])
-			require.Equal(t, "20s", spec["interval"])
+			getFromBothAPIs(t, helper, client, "abcdefgh", &playlist.PlaylistDTO{
+				Name:     "The patched title!",
+				Interval: "222s", // has not changed from previous update
+			})
 		}
 
 		// Now delete all playlist (three)
@@ -344,4 +330,55 @@ func Map[A any, B any](input []A, m func(A) B) []B {
 func SortSlice[A cmp.Ordered](input []A) []A {
 	slices.Sort(input)
 	return input
+}
+
+// This does a get with both k8s and legacy API, and verifies the results are the same
+func getFromBothAPIs(t *testing.T,
+	helper *apis.K8sTestHelper,
+	client *apis.K8sResourceClient,
+	uid string,
+	// Optionally match some expect some values
+	expect *playlist.PlaylistDTO,
+) *unstructured.Unstructured {
+	t.Helper()
+
+	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, uid, found.GetName())
+
+	dto := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/playlists/" + uid,
+	}, &playlist.PlaylistDTO{}).Result
+	require.NotNil(t, dto)
+	require.Equal(t, uid, dto.Uid)
+
+	spec, ok := found.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, dto.Uid, found.GetName())
+	require.Equal(t, dto.Name, spec["title"])
+	require.Equal(t, dto.Interval, spec["interval"])
+
+	a, errA := json.Marshal(spec["items"])
+	b, errB := json.Marshal(dto.Items)
+	require.NoError(t, errA)
+	require.NoError(t, errB)
+	require.JSONEq(t, string(a), string(b))
+
+	if expect != nil {
+		if expect.Name != "" {
+			require.Equal(t, expect.Name, dto.Name)
+			require.Equal(t, expect.Name, spec["title"])
+		}
+		if expect.Interval != "" {
+			require.Equal(t, expect.Interval, dto.Interval)
+			require.Equal(t, expect.Interval, spec["interval"])
+		}
+		if expect.Uid != "" {
+			require.Equal(t, expect.Uid, dto.Uid)
+			require.Equal(t, expect.Uid, found.GetName())
+		}
+	}
+	return found
 }
