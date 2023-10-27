@@ -146,6 +146,8 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	}
 }
 
+var _ serviceaccounts.Service = (*ServiceAccountsService)(nil)
+
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
