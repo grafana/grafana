@@ -205,7 +205,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string, refId: string) => {
+  isFilterLabelActive = async (key: string, value: string, refId?: string) => {
     const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
