@@ -54,7 +54,7 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: ['first', 'last', 'mean', 'count'],
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
     });
 
     expect(stats.first).toEqual(10);
@@ -67,7 +67,7 @@ describe('Stats Calculators', () => {
     basicTable.fields[0].state = undefined; // clear the cache
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: ['first'],
+      reducers: [ReducerID.first],
     });
 
     // Should do the simple version that just looks up value
