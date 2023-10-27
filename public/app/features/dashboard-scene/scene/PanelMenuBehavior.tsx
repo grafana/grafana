@@ -86,7 +86,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 }
 
 /**
- * Behavior is called when VizPanelMenu is activated (ie when it's opened).
+ * Behavior is called when VizPanelLinksMenu is activated (ie when it's opened).
  */
 export function getPanelLinksBehavior(panel: PanelModel) {
   return (panelLinksMenu: VizPanelLinks) => {
