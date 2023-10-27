@@ -786,6 +786,7 @@ def build_docs_website_step():
         "name": "build-docs-website",
         # Use latest revision here, since we want to catch if it breaks
         "image": images["docs"],
+        "pull": "always",
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
             "echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /hugo/content/docs/grafana/_index.md",
