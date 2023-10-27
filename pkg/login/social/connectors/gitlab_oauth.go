@@ -50,9 +50,10 @@ type userData struct {
 	Name   string   `json:"name"`
 	Groups []string `json:"groups_direct"`
 
-	EmailVerified  bool              `json:"email_verified"`
-	Role           roletype.RoleType `json:"-"`
-	IsGrafanaAdmin *bool             `json:"-"`
+	EmailVerified  bool                   `json:"email_verified"`
+	Role           roletype.RoleType      `json:"-"`
+	OrgRoles       map[int64]org.RoleType `json:"-"`
+	IsGrafanaAdmin *bool                  `json:"-"`
 }
 
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
@@ -202,6 +203,7 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 		Email:          data.Email,
 		Groups:         data.Groups,
 		Role:           data.Role,
+		OrgRoles:       data.OrgRoles,
 		IsGrafanaAdmin: data.IsGrafanaAdmin,
 	}
 
@@ -256,6 +258,12 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		}
 
 		idData.Role = role
+
+		orgRoles, err := s.extractOrgRoles(ctx, response.Body, idData.Groups, idData.Role)
+		if err != nil {
+			return nil, err
+		}
+		idData.OrgRoles = orgRoles
 	}
 
 	if s.cfg.Env == setting.Dev {
@@ -312,6 +320,12 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		}
 
 		data.Role = role
+
+		orgRoles, err := s.extractOrgRoles(ctx, rawJSON, data.Groups, data.Role)
+		if err != nil {
+			return nil, err
+		}
+		data.OrgRoles = orgRoles
 	}
 
 	s.log.Debug("Resolved user data", "data", fmt.Sprintf("%+v", data))
