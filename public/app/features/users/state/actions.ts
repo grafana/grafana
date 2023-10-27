@@ -8,11 +8,21 @@ import { OrgUser } from 'app/types';
 
 import { ThunkResult } from '../../../types';
 
-import { usersLoaded, pageChanged, usersFetchBegin, usersFetchEnd, searchQueryChanged, sortChanged } from './reducers';
+import {
+  usersLoaded,
+  pageChanged,
+  usersFetchBegin,
+  usersFetchEnd,
+  searchQueryChanged,
+  sortChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
+} from './reducers';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
+      dispatch(usersFetchBegin());
       const { perPage, page, searchQuery, sort } = getState().users;
       const users = await getBackendSrv().get(
         `/api/org/users/search`,
@@ -20,6 +30,7 @@ export function loadUsers(): ThunkResult<void> {
       );
 
       if (contextSrv.licensedAccessControlEnabled()) {
+        dispatch(rolesFetchBegin());
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
         const roles = await getBackendSrv().get(
@@ -29,8 +40,8 @@ export function loadUsers(): ThunkResult<void> {
         users.orgUsers.forEach((u: OrgUser) => {
           u.roles = roles ? roles[u.userId] || [] : [];
         });
+        dispatch(rolesFetchEnd());
       }
-      console.log('usersLoaded');
       dispatch(usersLoaded(users));
     } catch (error) {
       usersFetchEnd();
@@ -56,7 +67,6 @@ export function removeUser(userId: number): ThunkResult<void> {
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(loadUsers());
   };
@@ -65,7 +75,6 @@ export function changePage(page: number): ThunkResult<void> {
 export function changeSort({ sortBy }: FetchDataArgs<OrgUser>): ThunkResult<void> {
   const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(sortChanged(sort));
     dispatch(loadUsers());
   };
@@ -73,7 +82,6 @@ export function changeSort({ sortBy }: FetchDataArgs<OrgUser>): ThunkResult<void
 
 export function changeSearchQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(searchQueryChanged(query));
     fetchUsersWithDebounce(dispatch);
   };

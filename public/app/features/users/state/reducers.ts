@@ -13,6 +13,7 @@ export const initialState: UsersState = {
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
   isLoading: false,
+  rolesLoading: false,
 };
 
 export interface UsersFetchResult {
@@ -67,6 +68,12 @@ const usersSlice = createSlice({
     usersFetchEnd: (state) => {
       return { ...state, isLoading: false };
     },
+    rolesFetchBegin: (state) => {
+      return { ...state, rolesLoading: true };
+    },
+    rolesFetchEnd: (state) => {
+      return { ...state, rolesLoading: false };
+    },
   },
 });
 
@@ -78,6 +85,8 @@ export const {
   usersFetchEnd,
   pageChanged,
   sortChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
 } = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;

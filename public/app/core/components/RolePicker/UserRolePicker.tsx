@@ -53,7 +53,7 @@ export const UserRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
+  const [{ loading, value: appliedRoles = roles || [] }, getUserRoles] = useAsyncFn(async () => {
     try {
       if (roles) {
         return roles;

@@ -80,6 +80,7 @@ export interface UsersState {
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
   isLoading: boolean;
+  rolesLoading?: boolean;
   page: number;
   perPage: number;
   totalPages: number;

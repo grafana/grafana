@@ -38,6 +38,7 @@ const setup = (propOverrides?: object) => {
     changePage: mockToolkitActionCreator(pageChanged),
     changeSort: mockToolkitActionCreator(sortChanged),
     isLoading: false,
+    rolesLoading: false,
   };
 
   Object.assign(props, propOverrides);
