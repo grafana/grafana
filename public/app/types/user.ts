@@ -12,6 +12,8 @@ export interface OrgUser extends WithAccessControlMetadata {
   name: string;
   orgId: number;
   role: OrgRole;
+  // RBAC roles
+  roles?: Role[];
   userId: number;
   isDisabled: boolean;
   authLabels?: string[];
@@ -73,7 +75,6 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
-  usersRoles?: Record<number, Role[]>;
   searchQuery: string;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;

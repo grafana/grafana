@@ -1,11 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import config from 'app/core/config';
-import { OrgUser, UsersState, Role } from 'app/types';
+import { OrgUser, UsersState } from 'app/types';
 
 export const initialState: UsersState = {
   users: [] as OrgUser[],
-  usersRoles: undefined,
   searchQuery: '',
   page: 0,
   perPage: 30,
@@ -47,9 +46,6 @@ const usersSlice = createSlice({
         totalPages,
       };
     },
-    usersRolesLoaded: (state, action: PayloadAction<Record<number, Role[]> | undefined>): UsersState => {
-      return { ...state, usersRoles: action.payload };
-    },
     searchQueryChanged: (state, action: PayloadAction<string>): UsersState => {
       // reset searchPage otherwise search results won't appear
       return { ...state, searchQuery: action.payload, page: initialState.page };
@@ -78,7 +74,6 @@ export const {
   searchQueryChanged,
   setUsersSearchPage,
   usersLoaded,
-  usersRolesLoaded,
   usersFetchBegin,
   usersFetchEnd,
   pageChanged,

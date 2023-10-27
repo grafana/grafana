@@ -2,22 +2,15 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser } from 'app/types';
 
 import { ThunkResult } from '../../../types';
 
-import {
-  usersLoaded,
-  pageChanged,
-  usersFetchBegin,
-  usersFetchEnd,
-  searchQueryChanged,
-  sortChanged,
-  usersRolesLoaded,
-} from './reducers';
+import { usersLoaded, pageChanged, usersFetchBegin, usersFetchEnd, searchQueryChanged, sortChanged } from './reducers';
 
-export function loadUsers(withRoles = false, orgId?: number): ThunkResult<void> {
+export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       const { perPage, page, searchQuery, sort } = getState().users;
@@ -25,28 +18,22 @@ export function loadUsers(withRoles = false, orgId?: number): ThunkResult<void> 
         `/api/org/users/search`,
         accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
       );
-      dispatch(usersLoaded(users));
 
-      if (withRoles) {
+      if (contextSrv.licensedAccessControlEnabled()) {
+        const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
-        dispatch(loadUsersRoles(userIds, orgId));
+        const roles = await getBackendSrv().get(
+          `/api/access-control/users/roles`,
+          accessControlQueryParam({ userIds, targetOrgId: orgId })
+        );
+        users.orgUsers.forEach((u: OrgUser) => {
+          u.roles = roles ? roles[u.userId] || [] : [];
+        });
       }
+      console.log('usersLoaded');
+      dispatch(usersLoaded(users));
     } catch (error) {
       usersFetchEnd();
-    }
-  };
-}
-
-export function loadUsersRoles(userIds: number[], orgId?: number): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    try {
-      const roles = await getBackendSrv().get(
-        `/api/access-control/users/roles`,
-        accessControlQueryParam({ userIds, targetOrgId: orgId })
-      );
-      dispatch(usersRolesLoaded(roles));
-    } catch (error) {
-      console.log(error);
     }
   };
 }

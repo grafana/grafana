@@ -49,7 +49,6 @@ const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
 
 export interface Props {
   users: OrgUser[];
-  usersRoles?: Record<number, Role[]>;
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
@@ -61,7 +60,6 @@ export interface Props {
 
 export const OrgUsersTable = ({
   users,
-  usersRoles,
   orgId,
   onRoleChange,
   onRemoveUser,
@@ -128,8 +126,7 @@ export const OrgUsersTable = ({
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
-              roles={usersRoles ? usersRoles[original.userId] || [] : []}
-              isLoading={!usersRoles}
+              roles={original.roles || []}
               orgId={orgId}
               roleOptions={roleOptions}
               basicRole={value}
@@ -214,7 +211,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, usersRoles, onRoleChange]
+    [orgId, roleOptions, onRoleChange]
   );
 
   return (
