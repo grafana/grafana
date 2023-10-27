@@ -78,9 +78,13 @@ type TeamHTTPHeader struct {
 }
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
-	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
-	if ds.JsonData != nil {
-		jsonData, err := ds.JsonData.MarshalJSON()
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +94,7 @@ func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 		}
 	}
 
-	return teamHTTPHeadersJSON.TeamHTTPHeaders, nil
+	return teamHTTPHeadersJSON, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
