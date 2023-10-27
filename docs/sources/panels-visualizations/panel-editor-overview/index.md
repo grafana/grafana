@@ -54,7 +54,7 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
   - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels][] instead.
   - **Copy**: Copy the panel to the clipboard.
   - **Create library panel**: Create a panel that can be imported into other dashboards.
-  - **Create alert**: [Create an alert][] directly from the panel.
+  - **Create alert**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert] based on the panel queries. 
   - **Hide legend**: Hide the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Remove the panel from the dashboard.
@@ -124,6 +124,6 @@ The panel inspector consists of the following options:
 [share the same query results across panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/share-query"
 [share the same query results across panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/share-query"
 
-[Create an alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels"
-[Create an alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
+[create a Grafana-managed alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels"
+[create a Grafana-managed alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
 {{% /docs/reference %}}
