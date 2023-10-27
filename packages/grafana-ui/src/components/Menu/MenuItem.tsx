@@ -17,6 +17,8 @@ export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivEle
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
+  /** Description of item */
+  description?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Aria checked for accessibility support */
@@ -57,6 +59,7 @@ export const MenuItem = React.memo(
       url,
       icon,
       label,
+      description,
       ariaLabel,
       ariaChecked,
       target,
@@ -162,7 +165,7 @@ export const MenuItem = React.memo(
         <>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
-
+          {description && <div>{description}</div>}
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
