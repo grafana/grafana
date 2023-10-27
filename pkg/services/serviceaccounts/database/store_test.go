@@ -501,8 +501,8 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 
 	initUsers := []tests.TestUser{
 		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
-		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
-		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
+		{Name: "satest-2", Role: string(org.RoleEditor), Login: "sa-satest-2", IsServiceAccount: true},
+		{Name: "usertest-3", Role: string(org.RoleEditor), Login: "usertest-3", IsServiceAccount: false},
 	}
 
 	db, store := setupTestDatabase(t)
