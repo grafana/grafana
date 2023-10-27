@@ -437,7 +437,7 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 	}
 
 	// The plugin declared self permissions (that weren't inherited from impersonation)
-	selfEnabled := len(client.SelfPermissions) > 1 || (len(client.SelfPermissions) == 0 && !(client.SelfPermissions[0].Action == ac.ActionUsersImpersonate))
+	selfEnabled := len(client.SelfPermissions) > 1 || (len(client.SelfPermissions) == 1 && !(client.SelfPermissions[0].Action == ac.ActionUsersImpersonate))
 	// The plugin declared impersonate permissions
 	impersonateEnabled := len(client.ImpersonatePermissions) > 0
 
