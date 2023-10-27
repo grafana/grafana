@@ -40,11 +40,13 @@ title: NodeGraphPanelCfg kind
 |-----------------|--------|----------|---------|-------------|
 | `color`         | string | No       |         |             |
 | `details`       | string | No       |         |             |
+| `highlighted`   | string | No       |         |             |
 | `id`            | string | No       |         |             |
 | `mainStat`      | string | No       |         |             |
 | `secondaryStat` | string | No       |         |             |
 | `source`        | string | No       |         |             |
 | `target`        | string | No       |         |             |
+| `thickness`     | string | No       |         |             |
 
 ### EdgeOptions
 
@@ -60,6 +62,7 @@ title: NodeGraphPanelCfg kind
 | `arc`           | string | No       |         |             |
 | `color`         | string | No       |         |             |
 | `details`       | string | No       |         |             |
+| `highlighted`   | string | No       |         |             |
 | `icon`          | string | No       |         |             |
 | `id`            | string | No       |         |             |
 | `mainStat`      | string | No       |         |             |

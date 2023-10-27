@@ -1,4 +1,4 @@
-import { Field, PanelPlugin } from '@grafana/data';
+import { Field, NodeGraphDataFrameFieldNames, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
@@ -55,60 +55,73 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
         path: 'id',
         id: 'id',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.id },
       });
       builder.addCustomEditor({
         name: 'Title',
         path: 'title',
         id: 'title',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.title },
       });
       builder.addCustomEditor({
         name: 'Sub title',
         path: 'subTitle',
         id: 'subTitle',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.subTitle },
       });
       builder.addCustomEditor({
         name: 'Main stat',
         path: 'mainStat',
         id: 'mainStat',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.mainStat },
       });
       builder.addCustomEditor({
         name: 'Secondary stat',
         path: 'secondaryStat',
         id: 'secondaryStat',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.secondaryStat },
       });
-      builder.addCustomEditor({
+      builder.addTextInput({
         name: 'Arc prefix',
         path: 'arc',
-        id: 'arc',
-        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.arc },
       });
-      builder.addCustomEditor({
+      builder.addTextInput({
         name: 'Details prefix',
         path: 'details',
-        id: 'details',
-        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.detail },
       });
       builder.addCustomEditor({
         name: 'Color',
         path: 'color',
         id: 'color',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.color },
       });
       builder.addCustomEditor({
         name: 'Icon',
         path: 'icon',
         id: 'icon',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.icon },
       });
       builder.addCustomEditor({
         name: 'Node radius',
         path: 'nodeRadius',
         id: 'nodeRadius',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.nodeRadius },
+      });
+      builder.addCustomEditor({
+        name: 'Highlighted',
+        path: 'highlighted',
+        id: 'highlighted',
+        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.highlighted },
       });
     },
   });
@@ -121,42 +134,61 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
         path: 'id',
         id: 'id',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.id },
       });
       builder.addCustomEditor({
         name: 'Main stat',
         path: 'mainStat',
         id: 'mainStat',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.mainStat },
       });
       builder.addCustomEditor({
         name: 'Secondary stat',
         path: 'secondaryStat',
         id: 'secondaryStat',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.secondaryStat },
       });
-      builder.addCustomEditor({
+      builder.addTextInput({
         name: 'Details prefix',
         path: 'details',
-        id: 'details',
-        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.detail },
       });
       builder.addCustomEditor({
         name: 'Color',
         path: 'color',
         id: 'color',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.color },
       });
       builder.addCustomEditor({
         name: 'Target',
         path: 'target',
         id: 'target',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.target },
       });
       builder.addCustomEditor({
         name: 'Source',
         path: 'source',
         id: 'source',
         editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.source },
+      });
+      builder.addCustomEditor({
+        name: 'Highlighted',
+        path: 'highlighted',
+        id: 'highlighted',
+        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.highlighted },
+      });
+      builder.addCustomEditor({
+        name: 'Thickness',
+        path: 'thickness',
+        id: 'thickness',
+        editor: RawFieldSelector,
+        settings: { placeholder: NodeGraphDataFrameFieldNames.thickness },
       });
     },
   });

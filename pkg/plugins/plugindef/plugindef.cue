@@ -425,9 +425,6 @@ schemas: [{
 		}
 
 		#Impersonation: {
-			// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
-			// Defaults to true.
-			enabled?: bool
 			// Groups allows the service to list the impersonated user's teams.
 			// Defaults to true.
 			groups?: bool

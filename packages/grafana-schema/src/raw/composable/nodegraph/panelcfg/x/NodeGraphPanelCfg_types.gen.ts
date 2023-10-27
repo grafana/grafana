@@ -26,6 +26,7 @@ export interface NodeNameOverrides {
   arc?: string;
   color?: string;
   details?: string;
+  highlighted?: string;
   icon?: string;
   id?: string;
   mainStat?: string;
@@ -38,11 +39,13 @@ export interface NodeNameOverrides {
 export interface EdgeNameOverrides {
   color?: string;
   details?: string;
+  highlighted?: string;
   id?: string;
   mainStat?: string;
   secondaryStat?: string;
   source?: string;
   target?: string;
+  thickness?: string;
 }
 
 export interface Options {

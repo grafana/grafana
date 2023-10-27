@@ -132,4 +132,5 @@ type FeatureToggleDTO struct {
 
 type FeatureManagerState struct {
 	RestartRequired bool `json:"restartRequired"`
+	AllowEditing    bool `json:"allowEditing"`
 }

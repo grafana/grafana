@@ -31,6 +31,7 @@ export interface Props {
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
   maxWidth?: string | number;
+  width?: string | number;
 }
 
 export const UserRolePicker = ({
@@ -46,6 +47,7 @@ export const UserRolePicker = ({
   onApplyRoles,
   pendingRoles,
   maxWidth,
+  width,
 }: Props) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
@@ -98,6 +100,7 @@ export const UserRolePicker = ({
       apply={apply}
       canUpdateRoles={canUpdateRoles}
       maxWidth={maxWidth}
+      width={width}
     />
   );
 };

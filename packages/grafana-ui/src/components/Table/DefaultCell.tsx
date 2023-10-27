@@ -52,7 +52,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue);
 
   if (isStringValue && cellProps.style?.justifyContent === 'flex-end') {
-    cellProps.style!.textAlign = 'right';
+    cellProps.style = { ...cellProps.style, textAlign: 'right' };
   }
 
   return (

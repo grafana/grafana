@@ -54,6 +54,7 @@ composableKinds: PanelCfg: {
 					color?:         string
 					icon?:          string
 					nodeRadius?:    string
+					highlighted?:   string
 				} @cuetsy(kind="interface")
 				EdgeNameOverrides: {
 					id?:            string
@@ -63,6 +64,8 @@ composableKinds: PanelCfg: {
 					color?:         string
 					target?:        string
 					source?:        string
+					highlighted?:   string
+					thickness?:     string
 				} @cuetsy(kind="interface")
 				Options: {
 					nodes?:             NodeOptions

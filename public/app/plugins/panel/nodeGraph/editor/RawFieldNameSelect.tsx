@@ -5,7 +5,8 @@ import { Select } from '@grafana/ui';
 
 import { NodeGraphOptions } from '../types';
 
-type RawFieldNameSelectProps = StandardEditorProps<string, NodeGraphOptions, undefined>;
+type Settings = { placeholder?: string };
+type RawFieldNameSelectProps = StandardEditorProps<string, Settings, NodeGraphOptions, undefined>;
 
 export const RawFieldSelector = ({ value, onChange, context, item }: RawFieldNameSelectProps) => {
   const fieldOptions = [];
@@ -18,6 +19,7 @@ export const RawFieldSelector = ({ value, onChange, context, item }: RawFieldNam
       onChange={(v) => {
         onChange(v?.value);
       }}
+      placeholder={item.settings?.placeholder}
       options={fieldOptions}
       isClearable={true}
     />
