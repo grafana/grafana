@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,11 +37,20 @@ func validateTimeRange(item *annotations.Item) error {
 
 type xormRepositoryImpl struct {
 	cfg               *setting.Cfg
-	features          featuremgmt.FeatureToggles
 	db                db.DB
 	log               log.Logger
 	maximumTagsLength int64
 	tagService        tag.Service
+}
+
+func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+	return &xormRepositoryImpl{
+		cfg:               cfg,
+		db:                db,
+		log:               l.New("store", "xorm"),
+		tagService:        tagService,
+		maximumTagsLength: cfg.AnnotationMaximumTagsLength,
+	}
 }
 
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
@@ -363,34 +371,31 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources annotations.AccessResources) (string, error) {
 	var filters []string
 
-	for t := range accessResources.Types {
-		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
-		if t == annotations.Organization.String() {
-			filters = append(filters, "a.dashboard_id = 0")
+	if _, ok := accessResources.ScopeTypes[annotations.Organization.String()]; ok {
+		filters = append(filters, "a.dashboard_id = 0")
+	}
+
+	if _, ok := accessResources.ScopeTypes[annotations.Dashboard.String()]; ok {
+		var dashboardIDs []int64
+		for _, id := range accessResources.Dashboards {
+			dashboardIDs = append(dashboardIDs, id)
 		}
-		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
-		if t == annotations.Dashboard.String() {
-			var dashboardIDs []int64
-			for _, v := range accessResources.Dashboards {
-				dashboardIDs = append(dashboardIDs, v.ID)
+
+		var inClause string
+		if len(dashboardIDs) == 0 {
+			inClause = "SELECT * FROM (SELECT 0 LIMIT 0) tt" // empty set
+		} else {
+			b := make([]byte, 0, 3*len(dashboardIDs))
+
+			b = strconv.AppendInt(b, dashboardIDs[0], 10)
+			for _, num := range dashboardIDs[1:] {
+				b = append(b, ',')
+				b = strconv.AppendInt(b, num, 10)
 			}
 
-			var inClause string
-			if len(dashboardIDs) == 0 {
-				inClause = "SELECT * FROM (SELECT 0 LIMIT 0) tt" // empty set
-			} else {
-				b := make([]byte, 0, 3*len(dashboardIDs))
-
-				b = strconv.AppendInt(b, dashboardIDs[0], 10)
-				for _, num := range dashboardIDs[1:] {
-					b = append(b, ',')
-					b = strconv.AppendInt(b, num, 10)
-				}
-
-				inClause = string(b)
-			}
-			filters = append(filters, fmt.Sprintf("a.dashboard_id IN (%s)", inClause))
+			inClause = string(b)
 		}
+		filters = append(filters, fmt.Sprintf("a.dashboard_id IN (%s)", inClause))
 	}
 
 	return strings.Join(filters, " OR "), nil
@@ -515,7 +520,7 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
 	var totalAffected int64
 	if cfg.MaxAge > 0 {
-		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
+		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
 

@@ -3,7 +3,7 @@ package annotationsimpl
 import (
 	"context"
 	"errors"
-	"time"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,16 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var timeNow = time.Now
+var ErrMissingPermissions = errors.New("missing permissions")
 
 type RepositoryImpl struct {
-	store            store
-	dashboardService dashboards.DashboardService
+	db       db.DB
+	features featuremgmt.FeatureToggles
+	store    store
 }
 
 func ProvideService(
@@ -29,18 +31,13 @@ func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
-	dashboardService dashboards.DashboardService,
 ) *RepositoryImpl {
+	l := log.New("annotations")
+
 	return &RepositoryImpl{
-		store: &xormRepositoryImpl{
-			cfg:               cfg,
-			features:          features,
-			db:                db,
-			log:               log.New("annotations"),
-			tagService:        tagService,
-			maximumTagsLength: cfg.AnnotationMaximumTagsLength,
-		},
-		dashboardService: dashboardService,
+		db:       db,
+		features: features,
+		store:    NewXormStore(cfg, l, db, tagService),
 	}
 }
 
@@ -58,76 +55,87 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 	return r.store.Update(ctx, item)
 }
 
-func (r *RepositoryImpl) getAllowedTypes(user identity.Requester) (map[any]struct{}, error) {
+func getScopeTypes(user identity.Requester) (map[any]struct{}, error) {
 	if user == nil || user.IsNil() {
-		return nil, errors.New("missing permissions")
+		return nil, fmt.Errorf("missing user")
 	}
 
 	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
 	if !has {
-		return nil, errors.New("missing permissions")
+		return nil, fmt.Errorf("%w: %s", ErrMissingPermissions, ac.ActionAnnotationsRead)
 	}
 
 	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
 	if hasWildcardScope {
 		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
 	}
-	return types, nil
-}
 
-func (r *RepositoryImpl) getAllowedDashboards(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.DashboardProjection, error) {
-	allowed := []*annotations.DashboardProjection{}
-
-	dbQuery := dashboards.FindPersistedDashboardsQuery{
-		OrgId:        query.OrgID,
-		SignedInUser: query.SignedInUser,
-		Limit:        -1,
-		Permission:   dashboards.PERMISSION_VIEW,
-		Sort:         model.SortOption{},
+	// if the user has access to any of the scopes necessary, we can return
+	for _, t := range []string{annotations.Dashboard.String(), annotations.Organization.String()} {
+		if _, ok := types[t]; ok {
+			return types, nil
+		}
 	}
 
+	return nil, fmt.Errorf("%w: no applicable scopes", ErrMissingPermissions)
+}
+
+func (r *RepositoryImpl) getUserVisibleDashboards(ctx context.Context, orgID int64, user identity.Requester) (map[string]int64, error) {
+	recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	filters := []any{
+		permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported),
+	}
+
+	sb := &searchstore.Builder{Dialect: r.db.GetDialect(), Filters: filters}
+
+	visibleDashboards := make(map[string]int64, 0)
 	var page int64 = 1
+	var limit int64 = 1000
 	for {
-		q := dbQuery
-		q.Page = page
-		proj, err := r.dashboardService.FindDashboards(ctx, &q)
+		var res []annotations.DashboardProjection
+		sql, params := sb.ToSQL(limit, page)
+
+		err = r.db.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(sql, params...).Find(&res)
+		})
 		if err != nil {
-			return nil, errors.New("could not fetch dashboards")
+			return nil, err
 		}
 
-		if len(proj) == 0 {
+		if len(res) == 0 {
 			break
 		}
 
-		for _, p := range proj {
-			allowed = append(allowed, &annotations.DashboardProjection{
-				ID:  p.ID,
-				UID: p.UID,
-			})
+		for _, p := range res {
+			visibleDashboards[p.UID] = p.ID
 		}
 
 		page++
 	}
 
-	return allowed, nil
+	return visibleDashboards, nil
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	items := make([]*annotations.ItemDTO, 0)
 
-	allowedTypes, err := r.getAllowedTypes(query.SignedInUser)
+	scopeTypes, err := getScopeTypes(query.SignedInUser)
 	if err != nil {
 		return items, err
 	}
 
-	allowedDashboards, err := r.getAllowedDashboards(ctx, query)
+	visibleDashboards, err := r.getUserVisibleDashboards(ctx, query.OrgID, query.SignedInUser)
 	if err != nil {
 		return items, err
 	}
 
 	accessResources := annotations.AccessResources{
-		Dashboards: allowedDashboards,
-		Types:      allowedTypes,
+		Dashboards: visibleDashboards,
+		ScopeTypes: scopeTypes,
 	}
 
 	return r.store.Get(ctx, query, accessResources)
