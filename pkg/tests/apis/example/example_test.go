@@ -2,11 +2,11 @@ package playlist
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -18,23 +18,35 @@ func TestExampleApp(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t)
-	gvr := schema.GroupVersionResource{
-		Group:    "example.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "runtime",
-	}
 
-	t.Run("Check runtime info", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
-			GVR:  gvr,
+	t.Run("Check runtime info resource", func(t *testing.T) {
+		// Resource is not namespaced!
+		client := helper.Org1.Admin.Client.Resource(schema.GroupVersionResource{
+			Group:    "example.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "runtime",
 		})
-		rsp, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		rsp, err := client.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 
-		vvv, err := json.MarshalIndent(rsp, "", "  ")
-		fmt.Printf("%s\n", vvv)
+		v, ok := rsp.Object["startupTime"].(int64)
+		require.True(t, ok)
+		require.Greater(t, v, time.Now().Add(-1*time.Hour).UnixMilli()) // should be within the last hour
+	})
 
-		require.Equal(t, 1, 2)
+	t.Run("Check discovery client", func(t *testing.T) {
+		global := helper.NewDiscoveryClient(&schema.GroupVersion{
+			Group:   "playlist.grafana.app", // example running in dev mode?
+			Version: "v0alpha1",
+		})
+		paths, err := global.OpenAPIV3().Paths()
+		require.NoError(t, err)
+
+		keys := []string{}
+		for k := range paths {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+		require.Equal(t, []string{"a"}, keys)
 	})
 }
