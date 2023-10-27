@@ -87,10 +87,29 @@ describe('MySQL datasource', () => {
       cy.get("[aria-label='Macros value selector']").should('be.visible').click();
       selectOption('timeFilter');
 
-      e2e.components.CodeEditor.container().get('textarea').should(
-        'have.value',
-        `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
-      );
+      // Validate that the timeFilter macro was added
+
+      e2e.components.CodeEditor.container()
+        .get('textarea')
+        .should(
+          'have.value',
+          `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
+        );
+
+      // Validate that the timeFilter macro was removed when changed to equals operator
+
+      // For some reason the input is not visible the second time so we need to force the click
+      cy.get("[aria-label='Operator']").click({ force: true });
+      selectOption('==');
+
+      e2e.components.DateTimePicker.input().should('be.visible').click().blur();
+
+      e2e.components.CodeEditor.container()
+        .get('textarea')
+        .should(
+          'not.have.value',
+          `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
+        );
     });
   });
 });

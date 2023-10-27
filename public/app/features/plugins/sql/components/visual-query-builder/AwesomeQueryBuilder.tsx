@@ -29,6 +29,8 @@ export const emptyInitTree: JsonTree = {
 };
 
 const TIME_FILTER = 'timeFilter';
+const macros = [TIME_FILTER];
+
 export const widgets: Widgets = {
   ...BasicConfig.widgets,
   text: {
@@ -65,39 +67,40 @@ export const widgets: Widgets = {
             id={props.id}
             aria-label="Macros value selector"
             menuShouldPortal
-            options={[TIME_FILTER].map(toOption)}
+            options={macros.map(toOption)}
             value={props?.value}
             onChange={(val) => props.setValue(val.value)}
           />
         );
       }
+      const dateValue = dateTime(props?.value).isValid() ? dateTime(props?.value).utc() : undefined;
       return (
         <DateTimePicker
           onChange={(e) => {
             props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
           }}
-          date={dateTime(props?.value).utc()}
+          date={dateValue}
         />
       );
     },
     sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
+      if (operator === Op.MACROS) {
+        if (macros.includes(val)) {
+          return val;
+        }
+        return undefined;
+      }
+
+      // This is just satisfying the type checker, this should never happen
       if (
-        val === TIME_FILTER ||
         typeof BasicConfig.widgets.datetime.sqlFormatValue === 'string' ||
         typeof BasicConfig.widgets.datetime.sqlFormatValue === 'object'
       ) {
-        return val;
+        return undefined;
       }
-      return (
-        BasicConfig.widgets.datetime.sqlFormatValue?.(
-          val,
-          field,
-          widget,
-          operator,
-          operatorDefinition,
-          rightFieldDef
-        ) || ''
-      );
+      const func = BasicConfig.widgets.datetime.sqlFormatValue;
+      // We need to pass the ctx to this function this way so *this* is correct
+      return func?.call(BasicConfig.ctx, val, field, widget, operator, operatorDefinition, rightFieldDef) || '';
     },
   },
 };
