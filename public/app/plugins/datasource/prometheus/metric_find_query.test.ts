@@ -20,7 +20,6 @@ const instanceSettings = {
   url: 'proxied',
   id: 1,
   uid: 'ABCDEF',
-  directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },

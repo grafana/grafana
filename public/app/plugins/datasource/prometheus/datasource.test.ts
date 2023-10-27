@@ -78,7 +78,6 @@ describe('PrometheusDatasource', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
-    directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: {
@@ -134,7 +133,6 @@ describe('PrometheusDatasource', () => {
     it('throws if using direct access', async () => {
       const instanceSettings = {
         url: 'proxied',
-        directUrl: 'direct',
         user: 'test',
         password: 'mupp',
         access: 'direct',
@@ -881,7 +879,8 @@ describe('PrometheusDatasource2', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
-    directUrl: 'direct',
+    // FIXME do we need this?
+    // directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.None },
@@ -1945,7 +1944,6 @@ describe('PrometheusDatasource2', () => {
 describe('PrometheusDatasource for POST', () => {
   const instanceSettings = {
     url: 'proxied',
-    directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
@@ -2013,7 +2011,6 @@ describe('PrometheusDatasource for POST', () => {
     } as PromQueryRequest;
     const instanceSettings = {
       url: 'proxied',
-      directUrl: 'direct',
       user: 'test',
       password: 'mupp',
       access: 'proxy',
@@ -2038,7 +2035,6 @@ describe('PrometheusDatasource for POST', () => {
     it('with direct access tracing headers should not be added', () => {
       const instanceSettings = {
         url: 'proxied',
-        directUrl: 'direct',
         user: 'test',
         password: 'mupp',
         jsonData: { httpMethod: 'POST' },
@@ -2070,7 +2066,6 @@ function getPrepareTargetsContext({
 }) {
   const instanceSettings = {
     url: 'proxied',
-    directUrl: 'direct',
     access: 'proxy',
     user: 'test',
     password: 'mupp',
