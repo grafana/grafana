@@ -407,7 +407,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 100,
           reducer: ReducerID.mean,
         },
       },
@@ -435,7 +435,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 2,
+          windowSizePercent: 50,
           reducer: ReducerID.mean,
         },
       },
@@ -463,7 +463,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 10,
+          windowSizePercent: 500,
           reducer: ReducerID.mean,
         },
       },
@@ -491,7 +491,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 100,
           reducer: ReducerID.mean,
         },
       },
@@ -519,7 +519,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 0,
+          windowSizePercent: 0,
           reducer: ReducerID.mean,
         },
       },
@@ -622,7 +622,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.mean,
         },
       },
@@ -651,7 +651,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 100,
           reducer: ReducerID.variance,
         },
       },
@@ -679,7 +679,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 100,
           reducer: ReducerID.stdDev,
         },
       },
@@ -707,7 +707,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.stdDev,
         },
       },
@@ -736,7 +736,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.mean,
         },
       },
@@ -765,7 +765,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.mean,
         },
       },
@@ -794,7 +794,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Centered,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.mean,
         },
       },
@@ -823,7 +823,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.variance,
         },
       },
@@ -852,7 +852,7 @@ describe('calculateField transformer w/ timeseries', () => {
         window: {
           type: WindowType.Trailing,
           field: 'x',
-          windowSize: 3,
+          windowSizePercent: 75,
           reducer: ReducerID.variance,
         },
       },
