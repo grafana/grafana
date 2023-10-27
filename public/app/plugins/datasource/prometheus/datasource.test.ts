@@ -38,6 +38,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
+  getTemplateSrv: () => templateSrvStub,
 }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
