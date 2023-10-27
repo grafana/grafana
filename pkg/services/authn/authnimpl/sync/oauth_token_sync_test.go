@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -75,7 +76,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
 		{
-			desc:                        "should refresh access token when is has expired",
+			desc:                        "should refresh access token when it has expired",
 			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:        true,
 			expectTryRefreshTokenCalled: true,
@@ -155,6 +156,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				service:        service,
 				sessionService: sessionService,
 				socialService:  socialService,
+				sf:             new(singleflight.Group),
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
