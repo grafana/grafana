@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -29,20 +30,19 @@ func TestGet(t *testing.T) {
 		alias    = "alias"
 	)
 
+	preg := registry.NewInMemory()
+	require.NoError(t, preg.Add(context.Background(), &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID:       pluginID,
+			AliasIDs: []string{alias},
+		},
+	}))
+
 	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
-		&pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:       pluginID,
-						AliasIDs: []string{alias},
-					},
-				},
-			},
-		},
+		pluginstore.New(preg, &pluginFakes.FakeLoader{}),
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	identity := &user.SignedInUser{OrgID: int64(1), Login: "admin"}

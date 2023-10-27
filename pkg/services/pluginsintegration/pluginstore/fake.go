@@ -12,11 +12,6 @@ type FakePluginStore struct {
 
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, bool) {
 	for _, v := range pr.PluginList {
-		for _, alias := range v.AliasIDs {
-			if alias == pluginID {
-				return v, true
-			}
-		}
 		if v.ID == pluginID {
 			return v, true
 		}
