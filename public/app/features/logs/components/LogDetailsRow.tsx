@@ -4,7 +4,7 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
