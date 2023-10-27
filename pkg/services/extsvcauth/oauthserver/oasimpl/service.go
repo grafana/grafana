@@ -417,7 +417,7 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
 	if err != nil {
 		if oauthserver.IsErrClientNotFound(err) {
-			s.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId)
+			s.logger.Debug("No external service linked to this plugin", "pluginId", event.PluginId)
 			return nil
 		}
 		s.logger.Error("Error fetching service", "pluginId", event.PluginId, "error", err)
@@ -436,8 +436,9 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 		return err
 	}
 
-	// The plugin declared self permissions (that weren't inherited from impersonation)
-	selfEnabled := len(client.SelfPermissions) > 1 || (len(client.SelfPermissions) == 1 && !(client.SelfPermissions[0].Action == ac.ActionUsersImpersonate))
+	// The plugin has self permissions (not only impersonate)
+	canOnlyImpersonate := len(client.SelfPermissions) == 1 && (client.SelfPermissions[0].Action == ac.ActionUsersImpersonate)
+	selfEnabled := len(client.SelfPermissions) > 0 && !canOnlyImpersonate
 	// The plugin declared impersonate permissions
 	impersonateEnabled := len(client.ImpersonatePermissions) > 0
 
