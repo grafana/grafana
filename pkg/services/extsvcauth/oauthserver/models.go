@@ -42,12 +42,13 @@ type OAuth2Server interface {
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
 }
 
-//go:generate mockery --name Store --structname MockStore --outpkg oauthtest --filename store_mock.go --output ./oauthtest/
+//go:generate mockery --name Store --structname MockStore --outpkg oastest --filename store_mock.go --output ./oastest/
 
 type Store interface {
-	RegisterExternalService(ctx context.Context, client *OAuthExternalService) error
-	SaveExternalService(ctx context.Context, client *OAuthExternalService) error
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
 	GetExternalServiceByName(ctx context.Context, name string) (*OAuthExternalService, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
+	RegisterExternalService(ctx context.Context, client *OAuthExternalService) error
+	SaveExternalService(ctx context.Context, client *OAuthExternalService) error
+	UpdateExternalServiceGrantTypes(ctx context.Context, clientID, grantTypes string) error
 }
