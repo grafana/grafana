@@ -13,8 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODEJS_VERSION: 20.x
-  GO_VERSION: 1.21
   GRABPL_VERSION: 3.0.44
   GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
   GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
@@ -42,7 +40,7 @@ jobs:
       - name: Setup nodejs environment
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODEJS_VERSION }}
+          node-version-file: .nvmrc
           cache: yarn
       - name: Find plugin directory
         shell: bash
@@ -75,7 +73,7 @@ jobs:
         uses: actions/setup-go@v4
         if: steps.check_backend.outputs.has_backend == 'true'
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
       - name: Install Mage
         shell: bash
         if: steps.check_backend.outputs.has_backend == 'true'
