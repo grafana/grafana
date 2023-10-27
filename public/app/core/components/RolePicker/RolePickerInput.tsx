@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon, Spinner } from '@grafana/ui';
 
 import { Role } from '../../../types';
 
@@ -19,6 +19,7 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
   isFocused?: boolean;
   disabled?: boolean;
   width?: string;
+  isLoading?: boolean;
   onQueryChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   onClose: () => void;
@@ -32,6 +33,7 @@ export const RolePickerInput = ({
   query,
   showBasicRole,
   width,
+  isLoading,
   onOpen,
   onClose,
   onQueryChange,
@@ -63,6 +65,11 @@ export const RolePickerInput = ({
         numberOfRoles={appliedRoles.length}
         showBuiltInRole={showBasicRoleOnLabel}
       />
+      {isLoading && (
+        <div className={styles.spinner}>
+          <Spinner size={16} inline />
+        </div>
+      )}
     </div>
   ) : (
     <div className={styles.wrapper}>
@@ -141,22 +148,22 @@ const getRolePickerInputStyles = (
           ${styleMixins.focusCss(theme.v1)}
         `,
       disabled && styles.inputDisabled,
-      css`
-        min-width: ${width || ROLE_PICKER_WIDTH + 'px'};
-        width: ${width};
-        min-height: 32px;
-        height: auto;
-        flex-direction: row;
-        padding-right: 24px;
-        max-width: 100%;
-        align-items: center;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        position: relative;
-        box-sizing: border-box;
-        cursor: default;
-      `,
+      css({
+        minWidth: width || ROLE_PICKER_WIDTH + 'px',
+        width: width,
+        minHeight: '32px',
+        height: 'auto',
+        flexDirection: 'row',
+        paddingRight: theme.spacing(1),
+        maxWidth: '100%',
+        alignItems: 'center',
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+        position: 'relative',
+        boxSizing: 'border-box',
+        cursor: 'default',
+      }),
       withPrefix &&
         css`
           padding-left: 0;
@@ -184,6 +191,11 @@ const getRolePickerInputStyles = (
         margin-bottom: ${theme.spacing(0.5)};
       }
     `,
+    spinner: css({
+      display: 'flex',
+      flexGrow: 1,
+      justifyContent: 'flex-end',
+    }),
   };
 };
 
