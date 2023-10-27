@@ -258,31 +258,34 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
 				{
 					Header: "X-Prom-Label-Policy",
-					Value:  "Could be anything",
+					Value:  "Bad value",
 				},
 			},
 			},
 			want: 400,
 		},
-		// TODO: complete valid case, with team id, header name and header value
-		// {
-		// 	desc: "Allowed header and header values ",
-		// 	data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
-		// 		{
-		// 			Header: "X-Prom-Label-Policy",
-		// 			Value:  `1234:{ name!="value",foo!~"bar" }`,
-		// 		},
-		// 	},
-		// 	},
-		// 	want: 500,
-		// },
+		// Complete valid case, with team id, header name and header value
+		{
+			desc: "Allowed header and header values ",
+			data: datasources.TeamHTTPHeaders{tenantID: []datasources.TeamHTTPHeader{
+				{
+					Header: "X-Prom-Label-Policy",
+					Value:  `1234:{ name!="value",foo!~"bar" }`,
+				},
+			},
+			},
+			want: 200,
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
 			hs := &HTTPServer{
-				DataSourcesService: &dataSourcesServiceMock{},
-				Cfg:                setting.NewCfg(),
-				Features:           featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+				DataSourcesService: &dataSourcesServiceMock{
+					expectedDatasource: &datasources.DataSource{},
+				},
+				Cfg:                  setting.NewCfg(),
+				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+				accesscontrolService: actest.FakeService{},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 			hs.Cfg.AuthProxyEnabled = true

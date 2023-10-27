@@ -371,21 +371,29 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 		return errors.New("validation error, invalid format of TeamHTTPHeaders")
 	}
 	// whitelisting ValidHeaders
-	for _, headers := range teamHTTPHeadersJSON {
-		for _, header := range headers {
-			for _, name := range validHeaders {
-				if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
-					datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
-					return errors.New("validation error, invalid header name specified")
-				}
-				if !teamHTTPHeaderValueRegexMatch(header.Value) {
-					datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
-					return errors.New("validation error, invalid header value syntax")
-				}
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON {
+		for _, header := range teamheaders {
+			if !contains(validHeaders, header.Header) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
+				return errors.New("validation error, invalid header name specified")
+			}
+			if !teamHTTPHeaderValueRegexMatch(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
 			}
 		}
 	}
 	return nil
+}
+
+func contains(slice []string, value string) bool {
+	for _, v := range slice {
+		if http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(value) {
+			return true
+		}
+	}
+	return false
 }
 
 // teamHTTPHeaderValueRegexMatch returns true if the header value matches the regex
