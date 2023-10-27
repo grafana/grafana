@@ -113,7 +113,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					}
 				}
 				return map[string][]string{
-					fakeActions.Create: {
+					ruleCreate: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
@@ -137,7 +137,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
 				return map[string][]string{
-					fakeActions.Delete: {
+					ruleDelete: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: getDatasourceScopesForRules(c.AffectedGroups[c.GroupKey]),
@@ -176,7 +176,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					return update.New
 				})...))
 				return map[string][]string{
-					fakeActions.Update: {
+					ruleUpdate: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
@@ -232,8 +232,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return map[string][]string{
-					fakeActions.Delete: deleteScopes,
-					fakeActions.Create: {
+					ruleDelete: deleteScopes,
+					ruleCreate: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
@@ -305,7 +305,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return map[string][]string{
-					fakeActions.Update: {
+					ruleUpdate: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
@@ -325,8 +325,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				for _, missing := range permissionCombinations {
 					ac := &recordingAccessControlFake{}
 					srv := RuleService{
-						ac:      ac,
-						actions: fakeActions,
+						ac: ac,
 					}
 					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
 					require.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v", missing, permissions)
@@ -343,8 +342,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				},
 			}
 			srv := RuleService{
-				ac:      ac,
-				actions: fakeActions,
+				ac: ac,
 			}
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
@@ -384,8 +382,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac:      ac,
-			actions: fakeActions,
+			ac: ac,
 		}
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
@@ -401,8 +398,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 			},
 		}
 		svc := RuleService{
-			ac:      ac,
-			actions: fakeActions,
+			ac: ac,
 		}
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
@@ -426,8 +422,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		}
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
-			ac:      ac,
-			actions: fakeActions,
+			ac: ac,
 		}
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
@@ -453,19 +448,11 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		ac := &recordingAccessControlFake{}
 
 		svc := RuleService{
-			ac:      ac,
-			actions: fakeActions,
+			ac: ac,
 		}
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
 		require.False(t, result)
 	})
-}
-
-var fakeActions = ActionsProvider{
-	Create: "fake-create",
-	Read:   "fake-read",
-	Update: "fake-update",
-	Delete: "fake-delete",
 }

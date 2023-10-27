@@ -83,7 +83,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
-	regularAuthzService := accesscontrol.NewRuleService(api.AccessControl, regularApiActions)
+	regularAuthzService := accesscontrol.NewRuleService(api.AccessControl)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -178,11 +178,4 @@ func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (
 	}
 
 	return u, nil
-}
-
-var regularApiActions = accesscontrol.ActionsProvider{
-	Create: ac.ActionAlertingRuleCreate,
-	Read:   ac.ActionAlertingRuleRead,
-	Update: ac.ActionAlertingRuleUpdate,
-	Delete: ac.ActionAlertingRuleDelete,
 }

@@ -215,7 +215,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			srv := &TestingApiSrv{
 				authz: accesscontrol.NewRuleService(acMock.New().WithPermissions([]ac.Permission{
 					{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
-				}), regularApiActions),
+				})),
 				tracer: tracing.InitializeTracerForTest(),
 			}
 
@@ -275,7 +275,7 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 
 	return &TestingApiSrv{
 		DatasourceCache: ds,
-		authz:           accesscontrol.NewRuleService(ac, regularApiActions),
+		authz:           accesscontrol.NewRuleService(ac),
 		evaluator:       evaluator,
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),

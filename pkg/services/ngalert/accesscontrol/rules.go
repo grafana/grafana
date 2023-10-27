@@ -15,17 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+const (
+	ruleCreate = accesscontrol.ActionAlertingRuleCreate
+	ruleRead   = accesscontrol.ActionAlertingRuleRead
+	ruleUpdate = accesscontrol.ActionAlertingRuleUpdate
+	ruleDelete = accesscontrol.ActionAlertingRuleDelete
+)
+
 var logger = log.New("ngalert.accesscontrol")
 
 type RuleService struct {
-	ac      accesscontrol.AccessControl
-	actions ActionsProvider
+	ac accesscontrol.AccessControl
 }
 
-func NewRuleService(ac accesscontrol.AccessControl, actions ActionsProvider) *RuleService {
+func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		ac:      ac,
-		actions: actions,
+		ac: ac,
 	}
 }
 
@@ -80,7 +85,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 	}
 
 	if len(change.Delete) > 0 {
-		allowed := r.hasAccess(ctx, user, accesscontrol.EvalPermission(r.actions.Delete, namespaceScope))
+		allowed := r.hasAccess(ctx, user, accesscontrol.EvalPermission(ruleDelete, namespaceScope))
 		if !allowed {
 			return fmt.Errorf("%w to delete alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
 		}
@@ -94,7 +99,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 	var addAuthorized, updateAuthorized bool
 
 	if len(change.New) > 0 {
-		addAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(r.actions.Create, namespaceScope))
+		addAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(ruleCreate, namespaceScope))
 		if !addAuthorized {
 			return fmt.Errorf("%w to create alert rules in the folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
 		}
@@ -112,19 +117,19 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 
 		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
-			allowed := r.hasAccess(ctx, user, accesscontrol.EvalPermission(r.actions.Delete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID)))
+			allowed := r.hasAccess(ctx, user, accesscontrol.EvalPermission(ruleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID)))
 			if !allowed {
 				return fmt.Errorf("%w to delete alert rules from folder UID %s", ErrAuthorization, rule.Existing.NamespaceUID)
 			}
 
 			if !addAuthorized {
-				addAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(r.actions.Create, namespaceScope))
+				addAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(ruleCreate, namespaceScope))
 				if !addAuthorized {
 					return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, change.GroupKey.NamespaceUID)
 				}
 			}
 		} else if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
-			updateAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(r.actions.Update, namespaceScope))
+			updateAuthorized = r.hasAccess(ctx, user, accesscontrol.EvalPermission(ruleUpdate, namespaceScope))
 			if !updateAuthorized {
 				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
 			}

@@ -603,7 +603,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz: accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg()), regularApiActions),
+		authz: accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 	}
 }
 

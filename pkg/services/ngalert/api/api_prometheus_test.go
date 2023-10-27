@@ -1260,7 +1260,7 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
-		authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg()), regularApiActions),
+		authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 	}
 
 	return fakeStore, fakeAIM, api
