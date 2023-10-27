@@ -3451,7 +3451,7 @@ __metadata:
     ol: 7.4.0
     prismjs: 1.29.0
     process: ^0.11.10
-    rc-cascader: 3.19.0
+    rc-cascader: 3.20.0
     rc-drawer: 6.5.2
     rc-slider: 10.3.1
     rc-time-picker: ^3.7.3
@@ -18029,7 +18029,7 @@ __metadata:
     prismjs: 1.29.0
     prop-types: 15.8.1
     pseudoizer: ^0.1.0
-    rc-cascader: 3.19.0
+    rc-cascader: 3.20.0
     rc-drawer: 6.5.2
     rc-slider: 10.3.1
     rc-time-picker: 3.7.3
@@ -24843,20 +24843,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.19.0":
-  version: 3.19.0
-  resolution: "rc-cascader@npm:3.19.0"
+"rc-cascader@npm:3.20.0":
+  version: 3.20.0
+  resolution: "rc-cascader@npm:3.20.0"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
-    rc-select: ~14.9.0
-    rc-tree: ~5.8.0
+    rc-select: ~14.10.0
+    rc-tree: ~5.8.1
     rc-util: ^5.37.0
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: d4afadd601f652a9ce1679ea0f069eb53bed608ba8b89dab7d815faee65cbb47f45325378f36941e3d30424ea407dd48d79db6b06ca8f1f258856b0471e0bcec
+  checksum: fd85091f90c7a82ff8e240c356de9f1070e6371217a7ab852908b64746488586d8c9b2893ce5895373e1e8d55c36d5cd899808ec6d7938bfe81d19be2ceee94a
   languageName: node
   linkType: hard
 
@@ -24920,9 +24920,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-select@npm:~14.9.0":
-  version: 14.9.1
-  resolution: "rc-select@npm:14.9.1"
+"rc-select@npm:~14.10.0":
+  version: 14.10.0
+  resolution: "rc-select@npm:14.10.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/trigger": ^1.5.0
@@ -24934,7 +24934,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 914e6ae273c6916e321710e6eaa69d3a5a50ce2a36fc91c22bd1c42d95cd8083d6f10fe0c2324f07829c60b9ad30b481910703d11638885e6ee29429d4c4f8e5
+  checksum: 1f922000e64338b7c43ba0e67429e482291f4e8d9e2d1977e0414171ff388050de4802c780baaa4e48c299b025c2334227382d3c47ca1f2888dbef83c73ab43e
   languageName: node
   linkType: hard
 
@@ -24980,7 +24980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.0, rc-tree@npm:~5.8.0":
+"rc-tree@npm:5.8.0":
   version: 5.8.0
   resolution: "rc-tree@npm:5.8.0"
   dependencies:
@@ -24993,6 +24993,22 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 69ed9f2adc2271b2789ec95159c6cfb5435e57ff1554f729934297512bfa73f2158054c7d80e2daa426ed3987d42b13a02ff2e3c882f6336d8458442053897ee
+  languageName: node
+  linkType: hard
+
+"rc-tree@npm:~5.8.1":
+  version: 5.8.2
+  resolution: "rc-tree@npm:5.8.2"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: 2.x
+    rc-motion: ^2.0.1
+    rc-util: ^5.16.1
+    rc-virtual-list: ^3.5.1
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 74802b2e670fd6696e294ba6eeb20381feab5704e8f92de981725e56b00070c87ef0c2ece2846566715ee7420878743cd22d3443235732282400b6e475ecff36
   languageName: node
   linkType: hard
 
