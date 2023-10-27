@@ -205,10 +205,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string, refId?: string) => {
-    if (!config.featureToggles.toggleLabelsInLogsUI) {
-      return false;
-    }
+  isFilterLabelActive = async (key: string, value: string, refId: string) => {
     const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
@@ -254,7 +251,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasToggleableQueryFiltersSupport(ds) && config.featureToggles.toggleLabelsInLogsUI) {
+      if (hasToggleableQueryFiltersSupport(ds)) {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},

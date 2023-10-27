@@ -257,8 +257,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-    const refIdTooltip =
-      config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const refIdTooltip = ` in query ${row.dataFrame?.refId}`;
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -277,17 +276,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
-                  {config.featureToggles.toggleLabelsInLogsUI ? (
-                    // If we are using the new label toggling, we want to use the async icon button
-                    <AsyncIconButton
-                      name="search-plus"
-                      onClick={this.filterLabel}
-                      isActive={this.isFilterLabelActive}
-                      tooltipSuffix={refIdTooltip}
-                    />
-                  ) : (
-                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
-                  )}
+                  <AsyncIconButton
+                    name="search-plus"
+                    onClick={this.filterLabel}
+                    isActive={this.isFilterLabelActive}
+                    tooltipSuffix={refIdTooltip}
+                  />
                   <IconButton
                     name="search-minus"
                     tooltip={`Filter out value${refIdTooltip}`}
