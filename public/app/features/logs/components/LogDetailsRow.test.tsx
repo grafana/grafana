@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { LogLevel } from '@grafana/data';
-
 import { LogDetailsRow } from './LogDetailsRow';
+import { createLogRow } from './__mocks__/logRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
 
@@ -19,27 +18,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onClickShowField: () => {},
     onClickHideField: () => {},
     displayedFields: [],
-    row: {
-      dataFrame: {
-        fields: [],
-        length: 0,
-        refId: 'A',
-      },
-      entryFieldIndex: 1,
-      rowIndex: 1,
-      entry: 'log',
-      hasAnsi: false,
-      hasUnescapedContent: false,
-      labels: {},
-      logLevel: LogLevel.info,
-      raw: 'log',
-      timeFromNow: '123456789',
-      timeEpochMs: 123456789,
-      timeEpochNs: '1234567890000',
-      timeLocal: '',
-      timeUtc: '',
-      uid: '',
-    },
+    row: createLogRow(),
     disableActions: false,
   };
 
