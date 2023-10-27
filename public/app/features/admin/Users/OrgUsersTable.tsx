@@ -89,7 +89,6 @@ export const OrgUsersTable = ({
     }
   }, [orgId]);
 
-  console.log(usersRoles);
   const columns: Array<Column<OrgUser>> = useMemo(
     () => [
       {

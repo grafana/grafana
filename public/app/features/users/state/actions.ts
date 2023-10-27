@@ -17,7 +17,7 @@ import {
   usersRolesLoaded,
 } from './reducers';
 
-export function loadUsers(withRoles = false): ThunkResult<void> {
+export function loadUsers(withRoles = false, orgId?: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       const { perPage, page, searchQuery, sort } = getState().users;
@@ -25,22 +25,25 @@ export function loadUsers(withRoles = false): ThunkResult<void> {
         `/api/org/users/search`,
         accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
       );
+      dispatch(usersLoaded(users));
 
       if (withRoles) {
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
-        dispatch(loadUsersRoles(userIds));
+        dispatch(loadUsersRoles(userIds, orgId));
       }
-      dispatch(usersLoaded(users));
     } catch (error) {
       usersFetchEnd();
     }
   };
 }
 
-export function loadUsersRoles(userIds: number[]): ThunkResult<void> {
+export function loadUsersRoles(userIds: number[], orgId?: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const roles = await getBackendSrv().get(`/api/access-control/users/roles`, accessControlQueryParam({ userIds }));
+      const roles = await getBackendSrv().get(
+        `/api/access-control/users/roles`,
+        accessControlQueryParam({ userIds, targetOrgId: orgId })
+      );
       dispatch(usersRolesLoaded(roles));
     } catch (error) {
       console.log(error);

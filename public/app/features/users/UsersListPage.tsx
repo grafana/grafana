@@ -67,7 +67,7 @@ export const UsersListPageUnconnected = ({
 
   useEffect(() => {
     const withRoles = contextSrv.licensedAccessControlEnabled();
-    loadUsers(withRoles);
+    loadUsers(withRoles, contextSrv.user.orgId);
     fetchInvitees();
   }, [fetchInvitees, loadUsers]);
 
