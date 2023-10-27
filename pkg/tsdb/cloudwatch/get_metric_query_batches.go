@@ -40,7 +40,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 
 	// Find and track which queries are referenced by math queries
 	queryReferences := make([][]int, len(queries))
-	isReferenced := make([]bool, len(queries))
+	isReferenced := make(map[*models.CloudWatchQuery]bool)
 	for _, idx := range mathIndices {
 		tokens := nonWordRegex.Split(queries[idx].Expression, -1)
 		references := []int{}
@@ -48,7 +48,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 			ref, found := idToIndex[token]
 			if found {
 				references = append(references, ref)
-				isReferenced[ref] = true
+				isReferenced[queries[ref]] = true
 			}
 		}
 		queryReferences[idx] = references
@@ -57,8 +57,8 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 	// root query
 	// Create a new batch for every query not used in another query
 	batches := [][]*models.CloudWatchQuery{}
-	for i, used := range isReferenced {
-		if !used {
+	for i, query := range queries {
+		if _, ok := isReferenced[query]; !ok {
 			batches = append(batches, getReferencedQueries(queries, queryReferences, i))
 		}
 	}
