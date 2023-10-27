@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"

@@ -8,9 +8,10 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/grafana/grafana/pkg/components/loki/logproto"
 	"github.com/prometheus/common/model"
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana/pkg/components/loki/logproto"
 )
 
 type JsonEncoder struct{}

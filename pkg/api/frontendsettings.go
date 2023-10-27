@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
