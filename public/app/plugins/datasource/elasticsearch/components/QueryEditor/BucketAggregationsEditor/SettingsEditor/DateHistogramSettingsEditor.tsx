@@ -53,8 +53,8 @@ interface Props {
   bucketAgg: DateHistogram;
 }
 
-const getIntervalType = (interval: string | undefined) => {
-  return interval && calendarIntervals.includes(interval) ? 'Calendar interval' : 'Fixed interval';
+const getIntervalType = (interval: string | undefined): 'calendar' | 'fixed' => {
+  return interval && calendarIntervals.includes(interval) ? 'calendar' : 'fixed';
 };
 
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
@@ -74,9 +74,11 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   return (
     <>
       <InlineField
-        label={intervalType}
+        label={intervalType === 'calendar' ? 'Calendar interval' : 'Fixed interval'}
         tooltip={
-          'Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context. Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes.'
+          intervalType === 'calendar' ?
+          'Calendar-aware intervals adapt to varying day lengths, month durations, and leap seconds, considering the calendar context.' :
+          'Fixed intervals remain constant, always being multiples of SI units, independent of calendar changes.'
         }
         {...inlineFieldProps}
       >
