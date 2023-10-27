@@ -20,7 +20,7 @@ const Loader = () => {
     <HorizontalGroup className={styles.loadingContainer}>
       <>
         Loading configuration
-        <Spinner size={20} className={styles.spinner} />
+        <Spinner size="lg" className={styles.spinner} />
       </>
     </HorizontalGroup>
   );

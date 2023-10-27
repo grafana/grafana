@@ -52,5 +52,5 @@ func (auth StackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, "user must be in org 1", nil
 	}
 
-	return authorizer.DecisionAllow, "", nil
+	return authorizer.DecisionNoOpinion, "", nil
 }

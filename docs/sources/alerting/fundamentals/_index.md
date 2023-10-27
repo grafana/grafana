@@ -11,7 +11,7 @@ labels:
     - oss
 menuTitle: Introduction
 title: Introduction to Alerting
-weight: 105
+weight: 100
 ---
 
 # Introduction to Alerting
