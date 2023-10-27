@@ -328,7 +328,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
-	if err := s.Versioner().UpdateObject(listObj, *generatedRV); err != nil {
+	remainingItems := int64(0)
+	if err := s.Versioner().UpdateList(listObj, *generatedRV, "", &remainingItems); err != nil {
 		return err
 	}
 
@@ -337,7 +338,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		if err != nil {
 			return err
 		}
-		if err := s.Versioner().UpdateObject(listObj, resourceVersionInt); err != nil {
+		if err := s.Versioner().UpdateList(listObj, resourceVersionInt, "", &remainingItems); err != nil {
 			return err
 		}
 	}
