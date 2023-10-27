@@ -10,7 +10,7 @@ import {
   PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
   isDateTime,
-  dateTimeFormatISO,
+  dateTime,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -161,10 +161,11 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
 
       const value = Reflect.get(target, prop, receiver);
 
+      // This will create a clone of the date time object
+      // instead of creating a proxy because the underlying
+      // momentjs object needs to be able to mutate itself.
       if (isDateTime(value)) {
-        return dateTimeFormatISO(value, {
-          timeZone: 'UTC',
-        });
+        return dateTime(value);
       }
 
       if (isObject(value) || isArray(value)) {

@@ -313,22 +313,14 @@ describe('Plugin Extensions / Utils', () => {
       expect(proxy.a()).toBe('testing');
     });
 
-    it('should return a moment/datetime object as ISO string', () => {
+    it('should return a clone of moment/datetime in context', () => {
+      const source = dateTime('2023-10-26T18:25:01Z');
       const proxy = getReadOnlyProxy({
-        a: dateTime('2023-10-26T18:25:01Z'),
+        a: source,
       });
 
-      expect(proxy.a).toBe('2023-10-26T18:25:01Z');
-    });
-
-    it('should return a moment/datetime object as ISO string', () => {
-      const proxy = getReadOnlyProxy({
-        a: dateTimeParse('2023-10-26T11:52:36', {
-          timeZone: 'MST',
-        }),
-      });
-
-      expect(proxy.a).toBe('2023-10-26T18:52:36Z');
+      expect(source.isSame(proxy.a)).toBe(true);
+      expect(source).not.toBe(proxy.a);
     });
   });
 
