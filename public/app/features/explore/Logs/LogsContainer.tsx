@@ -103,7 +103,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     // Mixed mode.
     const dsPromises: Array<Promise<{ ds: DataSourceApi, refId: string}>> = [];
     for (const query of logsQueries) {
-      if (query.datasource && !newState.logContextSupport[query.refId]) {
+      const mustCheck = !newState.logContextSupport[query.refId] || newState.logContextSupport[query.refId].uid !== query.datasource?.uid;
+      if (mustCheck) {
         dsPromises.push(new Promise((resolve) => {
           getDataSourceSrv().get(query.datasource).then(ds => {
             resolve({ ds, refId: query.refId });
@@ -121,6 +122,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
         newState.logDetailsFilterAvailable = newState.logDetailsFilterAvailable || Boolean(ds.modifyQuery) || hasToggleableQueryFiltersSupport(ds);
         if (hasLogsContextSupport(ds)) {
           newState.logContextSupport[refId] = ds;
+        } else {
+          delete newState.logContextSupport[refId];
         }
       });
 
