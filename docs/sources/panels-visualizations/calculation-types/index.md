@@ -29,9 +29,9 @@ The following table contains a list of calculations you can perform in Grafana. 
 | Difference percent | Percentage change between first and last value of a field |
 | Distinct count     | Number of unique values in a field                        |
 | First              | First value in a field                                    |
-| First\* (not null) | First, not null value in a field                          |
+| First\* (not null) | First, not null value in a field (also excludes NaNs)     |
 | Last               | Last value in a field                                     |
-| Last\* (not null)  | Last, not null value in a field                           |
+| Last\* (not null)  | Last, not null value in a field (also excludes NaNs)      |
 | Max                | Maximum value of a field                                  |
 | Mean               | Mean value of all values in a field                       |
 | Variance           | Variance of all values in a field                         |
