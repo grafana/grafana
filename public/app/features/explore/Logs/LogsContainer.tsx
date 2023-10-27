@@ -60,10 +60,6 @@ interface LogsContainerProps extends PropsFromRedux {
 
 interface LogsContainerState {
   logDetailsFilterAvailable: boolean;
-  /**
-   * LogContext support for mixed data sources.
-   * @alpha
-   */
   logContextSupport: Record<string, DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>>;
 }
 
