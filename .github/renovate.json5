@@ -7,8 +7,8 @@
     "commander", // this can be removed once @grafana/e2e is removed
     "execa", // this can be removed once @grafana/e2e is removed
     "ts-loader", // this can be removed once @grafana/e2e is removed
-    "history", // we should bump this together with react-router-dom
-    "react-router-dom", // we should bump this together with history
+    "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
+    "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
     "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
