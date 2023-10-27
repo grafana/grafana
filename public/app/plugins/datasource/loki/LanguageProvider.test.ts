@@ -233,7 +233,10 @@ describe('Language completion provider', () => {
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
-      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        start: 1560153109000,
+      });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
@@ -242,7 +245,11 @@ describe('Language completion provider', () => {
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
-      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        query: '%7Bfoo%3D%22bar%22%7D',
+        start: 1560153109000,
+      });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
@@ -256,6 +263,10 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        start: 1560153109000,
+      });
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
@@ -265,6 +276,11 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
       expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        query: '%7Bfoo%3D%22bar%22%7D',
+        start: 1560153109000,
+      });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
 
       const nextLabelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
