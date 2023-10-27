@@ -190,12 +190,11 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const body: any = { queries };
-
-    if (range) {
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body = {
+      queries,
+      from: range?.from.valueOf().toString(),
+      to: range?.to.valueOf().toString(),
+    };
 
     if (config.featureToggles.queryOverLive) {
       return getGrafanaLiveSrv().getQueryData({

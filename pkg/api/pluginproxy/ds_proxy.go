@@ -19,6 +19,7 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -269,17 +270,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) && auth.IsIDForwardingEnabledForDataSource(proxy.ds) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
-	}
-
-	if proxy.features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		err := proxyutil.ApplyTeamHTTPHeaders(req, proxy.ds, proxy.ctx.Teams)
-		if err != nil {
-			// NOTE: could downgrade the errors to warnings
-			ctxLogger.Error("Error applying teamHTTPHeaders", "error", err)
-			return
-		}
 	}
 }
 
