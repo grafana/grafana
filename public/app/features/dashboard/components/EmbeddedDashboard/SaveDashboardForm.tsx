@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
+import { Dashboard } from '@grafana/schema';
 import { Button, Form } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -10,7 +11,7 @@ import { SaveDashboardData } from '../SaveDashboard/types';
 interface SaveDashboardProps {
   dashboard: DashboardModel;
   onCancel: () => void;
-  onSubmit?: (clone: DashboardModel) => Promise<unknown>;
+  onSubmit?: (clone: Dashboard) => Promise<unknown>;
   onSuccess: () => void;
   saveModel: SaveDashboardData;
 }

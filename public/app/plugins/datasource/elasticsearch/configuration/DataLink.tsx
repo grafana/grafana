@@ -3,12 +3,19 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
-import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
+import {
+  Button,
+  DataLinkInput,
+  stylesFactory,
+  InlineField,
+  InlineSwitch,
+  InlineFieldRow,
+  InlineLabel,
+  Input,
+} from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DataLinkConfig } from '../types';
-
-const { FormField, Switch } = LegacyForms;
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -25,6 +32,7 @@ const getStyles = stylesFactory(() => ({
     align-items: baseline;
   `,
   urlField: css`
+    display: flex;
     flex: 1;
   `,
   urlDisplayLabelField: css`
@@ -53,18 +61,21 @@ export const DataLink = (props: Props) => {
 
   return (
     <div className={className}>
-      <div className={styles.firstRow + ' gf-form'}>
-        <FormField
-          className={styles.nameField}
-          labelWidth={6}
-          // A bit of a hack to prevent using default value for the width from FormField
-          inputWidth={null}
+      <div className={styles.firstRow}>
+        <InlineField
           label="Field"
-          type="text"
-          value={value.field}
+          htmlFor="elasticsearch-datasource-config-field"
+          labelWidth={12}
           tooltip={'Can be exact field name or a regex pattern that will match on the field name.'}
-          onChange={handleChange('field')}
-        />
+        >
+          <Input
+            type="text"
+            id="elasticsearch-datasource-config-field"
+            value={value.field}
+            onChange={handleChange('field')}
+            width={100}
+          />
+        </InlineField>
         <Button
           variant={'destructive'}
           title="Remove field"
@@ -75,52 +86,58 @@ export const DataLink = (props: Props) => {
           }}
         />
       </div>
-      <div className="gf-form">
-        <FormField
-          label={showInternalLink ? 'Query' : 'URL'}
-          labelWidth={6}
-          inputEl={
-            <DataLinkInput
-              placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
-              value={value.url || ''}
-              onChange={(newValue) =>
-                onChange({
-                  ...value,
-                  url: newValue,
-                })
-              }
-              suggestions={suggestions}
-            />
-          }
-          className={styles.urlField}
-        />
-        <FormField
-          className={styles.urlDisplayLabelField}
-          inputWidth={null}
-          labelWidth={7}
-          label="URL Label"
-          type="text"
-          value={value.urlDisplayLabel}
-          onChange={handleChange('urlDisplayLabel')}
-          tooltip={'Use to override the button label.'}
-        />
-      </div>
 
-      <div className={styles.row}>
-        <Switch
-          labelClass={'width-6'}
-          label="Internal link"
-          checked={showInternalLink}
-          onChange={() => {
-            if (showInternalLink) {
+      <InlineFieldRow>
+        <div className={styles.urlField}>
+          <InlineLabel htmlFor="elasticsearch-datasource-internal-link" width={12}>
+            {showInternalLink ? 'Query' : 'URL'}
+          </InlineLabel>
+          <DataLinkInput
+            placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
+            value={value.url || ''}
+            onChange={(newValue) =>
               onChange({
                 ...value,
-                datasourceUid: undefined,
-              });
+                url: newValue,
+              })
             }
-            setShowInternalLink(!showInternalLink);
-          }}
-        />
+            suggestions={suggestions}
+          />
+        </div>
+
+        <div className={styles.urlDisplayLabelField}>
+          <InlineField
+            label="URL Label"
+            htmlFor="elasticsearch-datasource-url-label"
+            labelWidth={14}
+            tooltip={'Use to override the button label.'}
+          >
+            <Input
+              type="text"
+              id="elasticsearch-datasource-url-label"
+              value={value.urlDisplayLabel}
+              onChange={handleChange('urlDisplayLabel')}
+            />
+          </InlineField>
+        </div>
+      </InlineFieldRow>
+
+      <div className={styles.row}>
+        <InlineField label="Internal link" labelWidth={12}>
+          <InlineSwitch
+            label="Internal link"
+            value={showInternalLink || false}
+            onChange={() => {
+              if (showInternalLink) {
+                onChange({
+                  ...value,
+                  datasourceUid: undefined,
+                });
+              }
+              setShowInternalLink(!showInternalLink);
+            }}
+          />
+        </InlineField>
 
         {showInternalLink && (
           <DataSourcePicker

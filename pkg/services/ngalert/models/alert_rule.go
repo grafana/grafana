@@ -108,6 +108,7 @@ const (
 
 const (
 	StateReasonMissingSeries = "MissingSeries"
+	StateReasonNoData        = "NoData"
 	StateReasonError         = "Error"
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
@@ -354,6 +355,11 @@ type AlertRuleKeyWithVersion struct {
 type AlertRuleKeyWithVersionAndPauseStatus struct {
 	IsPaused                bool
 	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
+type AlertRuleKeyWithId struct {
+	AlertRuleKey
+	ID int64
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts

@@ -46,7 +46,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
     }
 
     if (contextSrv.isSignedIn && config.snapshotEnabled) {
-      tabs.push(new ShareSnapshotTab({ panelRef, modalRef: this.getRef() }));
+      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
     }
 
     this.setState({ tabs });

@@ -72,7 +72,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Run("And the user has the admin role", func(t *testing.T) {
 			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgID:        1,
-				SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 			}
 			queryResult, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
@@ -168,7 +168,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 
 		query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgID:        1,
-			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 		}
 		queryResult, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
@@ -181,7 +181,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 
 		query = dashboardsnapshots.GetDashboardSnapshotsQuery{
 			OrgID:        1,
-			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleAdmin, UserID: 1000, OrgID: 1},
 		}
 		queryResult, err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)

@@ -9,15 +9,15 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneQueryRunner,
-  SceneTimeRange,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
+import { InsightsRatingModal } from '../RatingModal';
 
-export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -27,8 +27,6 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
         instant: true,
       },
     ],
-
-    $timeRange: timeRange,
   });
 
   const createRuleLink = (field: Field<string>, frame: DataFrame) => {
@@ -90,7 +88,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
           },
           renameByName: {
             labels_alertname: 'Alert rule name',
-            'Value #A': 'Fires this week',
+            'Value #A': 'Number of fires',
           },
         },
       },
@@ -101,9 +99,10 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
     ...PANEL_STYLES,
     body: PanelBuilders.table()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The alert rule instances that have fired the most')
       .setData(transformation)
       .setNoValue('No new alerts fired last week')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

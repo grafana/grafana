@@ -1,10 +1,14 @@
+import { Monaco, monacoTypes } from '@grafana/ui/src';
+
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
 import { createLokiDatasource } from '../../../mocks';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { getAfterSelectorCompletions, getCompletions } from './completions';
-import { Label, Situation } from './situation';
+import { getSituation, Label, Situation } from './situation';
+
+import { calculateRange } from './index';
 
 jest.mock('../../../querybuilder/operations', () => ({
   explainOperator: () => 'Operator docs',
@@ -532,11 +536,13 @@ describe('IN_LOGFMT completions', () => {
       hasPack: false,
     });
   });
-  it('autocompleting logfmt should return flags, parsers, pipe operations, and labels', async () => {
+  it('autocompleting logfmt should return flags, pipe operations, and labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
-      logQuery: `{job="grafana"} | logfmt`,
+      logQuery: `{job="grafana"} | logfmt `,
       flags: false,
+      trailingSpace: true,
+      trailingComma: false,
       otherLabels: [],
     };
 
@@ -556,34 +562,70 @@ describe('IN_LOGFMT completions', () => {
         },
         {
           "documentation": "Operator docs",
-          "insertText": "| json",
-          "label": "json",
-          "type": "PARSER",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
         },
         {
           "documentation": "Operator docs",
-          "insertText": "| logfmt",
-          "label": "logfmt",
-          "type": "PARSER",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
         },
         {
           "documentation": "Operator docs",
-          "insertText": "| pattern",
-          "label": "pattern",
-          "type": "PARSER",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
         },
         {
           "documentation": "Operator docs",
-          "insertText": "| regexp",
-          "label": "regexp",
-          "type": "PARSER",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
         },
         {
           "documentation": "Operator docs",
-          "insertText": "| unpack",
-          "label": "unpack",
-          "type": "PARSER",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
         },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "insertText": "label1",
+          "label": "label1",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt with flags and trailing space should return pipe operations, and labels', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt`,
+      flags: true,
+      trailingSpace: true,
+      trailingComma: false,
+      otherLabels: [],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
         {
           "documentation": "Operator docs",
           "insertText": "| line_format "{{.$0}}"",
@@ -638,84 +680,18 @@ describe('IN_LOGFMT completions', () => {
     `);
   });
 
-  it('autocompleting logfmt with flags should return parser, pipe operations, and labels', async () => {
+  it('autocompleting logfmt with labels and trailing comma should only return labels', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
-      logQuery: `{job="grafana"} | logfmt`,
-      flags: true,
+      logQuery: `{job="grafana"} | logfmt,`,
+      flags: false,
+      trailingComma: true,
+      trailingSpace: false,
       otherLabels: [],
     };
 
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
-        {
-          "documentation": "Operator docs",
-          "insertText": "| json",
-          "label": "json",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| logfmt",
-          "label": "logfmt",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| pattern",
-          "label": "pattern",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| regexp",
-          "label": "regexp",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| unpack",
-          "label": "unpack",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| line_format "{{.$0}}"",
-          "isSnippet": true,
-          "label": "line_format",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| label_format",
-          "isSnippet": true,
-          "label": "label_format",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| unwrap",
-          "label": "unwrap",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| decolorize",
-          "label": "decolorize",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| drop",
-          "label": "drop",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| keep",
-          "label": "keep",
-          "type": "PIPE_OPERATION",
-        },
         {
           "insertText": "label1",
           "label": "label1",
@@ -735,90 +711,60 @@ describe('IN_LOGFMT completions', () => {
   it('autocompleting logfmt should exclude already used labels from the suggestions', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
-      logQuery: `{job="grafana"} | logfmt`,
+      logQuery: `{job="grafana"} | logfmt label1, label2`,
       flags: true,
+      trailingSpace: true,
+      trailingComma: false,
       otherLabels: ['label1', 'label2'],
     };
+    const completions = await getCompletions(situation, completionProvider);
+    const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
 
-    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
-      [
-        {
-          "documentation": "Operator docs",
-          "insertText": "| json",
-          "label": "json",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| logfmt",
-          "label": "logfmt",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| pattern",
-          "label": "pattern",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| regexp",
-          "label": "regexp",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| unpack",
-          "label": "unpack",
-          "type": "PARSER",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| line_format "{{.$0}}"",
-          "isSnippet": true,
-          "label": "line_format",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| label_format",
-          "isSnippet": true,
-          "label": "label_format",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| unwrap",
-          "label": "unwrap",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| decolorize",
-          "label": "decolorize",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| drop",
-          "label": "drop",
-          "type": "PIPE_OPERATION",
-        },
-        {
-          "documentation": "Operator docs",
-          "insertText": "| keep",
-          "label": "keep",
-          "type": "PIPE_OPERATION",
-        },
-      ]
-    `);
+    expect(labelCompletions).toHaveLength(0);
   });
+
+  it.each([
+    // {label="value"} | logfmt ^
+    [true, false, [], false],
+    // {label="value"} | logfmt otherLabel ^
+    [true, false, ['otherLabel'], true],
+    // {label="value"} | logfmt otherLabel^
+    [false, false, ['otherLabel'], false],
+    // {label="value"} | logfmt lab^
+    [false, false, ['lab'], false],
+    // {label="value"} | logfmt otherLabel,^
+    [false, true, ['otherLabel'], false],
+    // {label="value"} | logfmt lab, ^
+    [true, true, ['otherLabel'], false],
+    // {label="value"} | logfmt otherLabel ^
+    [true, false, ['otherLabel'], true],
+  ])(
+    'when space is %p, comma %p, and other labels %o => inserting a comma should be %p',
+    async (trailingSpace: boolean, trailingComma: boolean, otherLabels: string[], shouldHaveComma: boolean) => {
+      const situation: Situation = {
+        type: 'IN_LOGFMT',
+        logQuery: `does not matter`,
+        flags: true,
+        trailingComma,
+        trailingSpace,
+        otherLabels,
+      };
+      const completions = await getCompletions(situation, completionProvider);
+      const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
+
+      expect(labelCompletions).toHaveLength(2);
+      expect(labelCompletions[0].insertText.startsWith(',')).toBe(shouldHaveComma);
+      expect(labelCompletions[1].insertText.startsWith(',')).toBe(shouldHaveComma);
+    }
+  );
 
   it('autocompleting logfmt without flags should only offer labels when the user has a trailing comma', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: false,
+      trailingComma: true,
+      trailingSpace: false,
       otherLabels: ['label1'],
     };
 
@@ -839,6 +785,8 @@ describe('IN_LOGFMT completions', () => {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: true,
+      trailingComma: true,
+      trailingSpace: false,
       otherLabels: ['label1'],
     };
 
@@ -852,5 +800,102 @@ describe('IN_LOGFMT completions', () => {
         },
       ]
     `);
+  });
+
+  describe('calculateRange', () => {
+    let monaco: Monaco;
+    beforeEach(() => {
+      monaco = {
+        Range: {
+          lift(range: monacoTypes.Range): monacoTypes.Range {
+            return range;
+          },
+        },
+      } as Monaco;
+    });
+
+    it('getSituation fails to return autocomplete when inserting before any other labels', () => {
+      // Ideally we'd be able to autocomplete in this situation as well, but currently not supported to insert labels at the start.
+      //{^label1="value1",label2="value2"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 1);
+      expect(situation).toBe(null);
+    });
+    it('tests inserting new label before existing label name', () => {
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2"}', 17);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_NO_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2"',
+        startColumn: 17,
+        endColumn: 32,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: '',
+        startColumn: 17,
+        endColumn: 17,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 17,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 17,
+        endColumn: 32,
+      });
+    });
+    it('tests inserting new label within existing label value', () => {
+      //{label1="value1",label2="^value2"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value"}', 25);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_WITH_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2"',
+        startColumn: 18,
+        endColumn: 33,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="',
+        startColumn: 18,
+        endColumn: 26,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 25,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 26,
+        endColumn: 32,
+      });
+    });
+    it('tests inserting new label within existing label value containing dashes', () => {
+      // {label1="value1",label2="value2^-value"}
+      const situation: Situation | null = getSituation('{label1="value1",label2="value2-value"}', 30);
+      expect(situation?.type).toBe('IN_LABEL_SELECTOR_WITH_LABEL_NAME');
+      const word: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2-value"',
+        startColumn: 18,
+        endColumn: 39,
+      };
+      const wordUntil: monacoTypes.editor.IWordAtPosition = {
+        word: 'label2="value2',
+        startColumn: 18,
+        endColumn: 32,
+      };
+      const position: monacoTypes.Position = {
+        lineNumber: 1,
+        column: 25,
+      } as monacoTypes.Position;
+
+      expect(calculateRange(situation, word, wordUntil, monaco, position)).toMatchObject({
+        startLineNumber: 1,
+        endLineNumber: 1,
+        startColumn: 26,
+        endColumn: 38,
+      });
+    });
   });
 });

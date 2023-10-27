@@ -815,8 +815,9 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 
 	// create dashboard under parent folder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: parent.ID,
+		OrgID:     orgID,
+		FolderID:  parent.ID,
+		FolderUID: parent.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under parent folder",
 		}),
@@ -825,8 +826,9 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 
 	// create dashboard under subfolder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: subfolder.ID,
+		OrgID:     orgID,
+		FolderID:  subfolder.ID,
+		FolderUID: subfolder.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under subfolder",
 		}),

@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.2.0-pre";
+export const pluginVersion = "10.3.0-pre";
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
@@ -34,7 +34,7 @@ export interface TempoQuery extends common.DataQuery {
   /**
    * TraceQL query or trace ID
    */
-  query: string;
+  query?: string;
   /**
    * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */

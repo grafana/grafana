@@ -1,13 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import React from 'react';
+
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
-export function getGrafanaInstancesByStateScene(
-  timeRange: SceneTimeRange,
-  datasource: DataSourceRef,
-  panelTitle: string
-) {
+export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -18,7 +17,19 @@ export function getGrafanaInstancesByStateScene(
         legendFormat: '{{state}}',
       },
     ],
-    $timeRange: timeRange,
+  });
+
+  const transformation = new SceneDataTransformer({
+    $data: query,
+    transformations: [
+      {
+        id: 'renameByRegex',
+        options: {
+          regex: 'alerting',
+          renamePattern: 'firing',
+        },
+      },
+    ],
   });
 
   return new SceneFlexItem({
@@ -26,14 +37,14 @@ export function getGrafanaInstancesByStateScene(
     height: '400px',
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
-      .setData(query)
+      .setDescription('A breakdown of all of your alert rule instances based on state')
+      .setData(transformation)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) =>
         b
-          .matchFieldsWithName('alerting')
-          .overrideColor(overrideToFixedColor('alerting'))
+          .matchFieldsWithName('firing')
+          .overrideColor(overrideToFixedColor('firing'))
           .matchFieldsWithName('normal')
           .overrideColor(overrideToFixedColor('normal'))
           .matchFieldsWithName('pending')
@@ -43,6 +54,7 @@ export function getGrafanaInstancesByStateScene(
           .matchFieldsWithName('nodata')
           .overrideColor(overrideToFixedColor('nodata'))
       )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
