@@ -25,10 +25,17 @@ func ProvideService(reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginse
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
-	settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: svcName})
-	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-		return nil, err
+func (s *Service) RegisterExternalService(ctx context.Context, svcName string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+	// Datasource plugins can only be enabled
+	enabled := true
+	// App plugins can be disabled
+	if pType == plugindef.TypeApp {
+		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: svcName})
+		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return nil, err
+		}
+
+		enabled = (settings != nil) && settings.Enabled
 	}
 
 	impersonation := extsvcauth.ImpersonationCfg{}
@@ -43,7 +50,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	self := extsvcauth.SelfCfg{}
-	self.Enabled = (settings != nil) && settings.Enabled
+	self.Enabled = enabled
 	if len(svc.Permissions) > 0 {
 		self.Permissions = toAccessControlPermissions(svc.Permissions)
 	}
