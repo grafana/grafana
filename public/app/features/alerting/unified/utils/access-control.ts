@@ -49,9 +49,9 @@ export const notificationsPermissions = {
 };
 
 export const provisioningPermissions = {
-  // read: AccessControlAction.AlertingProvisioningRead,
+  read: AccessControlAction.AlertingProvisioningRead,
   readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  // write: AccessControlAction.AlertingProvisioningWrite,
+  write: AccessControlAction.AlertingProvisioningWrite,
 };
 
 const rulesPermissions = {

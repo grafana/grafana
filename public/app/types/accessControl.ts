@@ -119,6 +119,8 @@ export enum AccessControlAction {
 
   // Alerting provisioning actions
   AlertingProvisioningReadSecrets = 'alert.provisioning.secrets:read',
+  AlertingProvisioningRead = 'alert.provisioning:read',
+  AlertingProvisioningWrite = 'alert.provisioning:write',
 
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
