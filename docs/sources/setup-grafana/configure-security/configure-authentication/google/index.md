@@ -204,6 +204,8 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
+You can use the `org_attribute_path` and `org_mapping` configuration options to add roles to other orgs. For more information, refer to [Org roles mapping examples]({{< relref "#org-roles-mapping-examples" >}}).
+
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
 > By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
@@ -252,4 +254,25 @@ In this example, all users will be assigned `Viewer` role regardless of the user
 ```ini
 role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
+```
+
+#### Org roles mapping examples
+
+This section includes examples of configuration settings used for org to role mapping.
+
+##### Map organization roles
+
+Let's say we have the following Google groups: `example-group1@google.com` and `example-group2@google.com`.
+
+In this example, the user has been granted the role of a `Viewer` in the `team1` org, and the role of an `Editor` in the `team2` and `team3` orgs.
+
+If the user was a member of the `admin@google.com` Google group, they would be granted the Grafana server administrator role.
+
+Config:
+
+```ini
+role_attribute_path = contains(groups[*], 'admin@google.com') && 'GrafanaAdmin' || 'None'
+allow_assign_grafana_admin = true
+org_attribute_path = groups
+org_mapping = example-group1@google.com:team1:Viewer example-group2@google.com:team2:Editor *:team3:Editor
 ```
