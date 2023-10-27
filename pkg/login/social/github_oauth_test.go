@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
 
 const testGHUserTeamsJSON = `[
@@ -239,7 +240,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			defer server.Close()
 
 			s := &SocialGithub{
-				SocialBase: newSocialBase("github", &oauth2.Config{},
+				SocialBase: newSocialBase("github", &oauth2.Config{}, &orgtest.FakeOrgService{},
 					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
 				allowedOrganizations: []string{},
 				apiUrl:               server.URL + "/user",

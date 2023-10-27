@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
 
 func TestSocialOkta_UserInfo(t *testing.T) {
@@ -96,7 +97,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 			provider := &SocialOkta{
-				SocialBase: newSocialBase("okta", &oauth2.Config{},
+				SocialBase: newSocialBase("okta", &oauth2.Config{}, &orgtest.FakeOrgService{},
 					&OAuthInfo{RoleAttributePath: tt.RoleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
 				apiUrl:          server.URL + "/user",
 				skipOrgRoleSync: tt.settingSkipOrgRoleSync,

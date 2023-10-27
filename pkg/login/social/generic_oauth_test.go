@@ -14,7 +14,9 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
 
 func newLogger(name string, lev string) log.Logger {
@@ -240,7 +242,8 @@ func TestSearchJSONForRole(t *testing.T) {
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := SocialGenericOAuth{
 		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
+			log:        newLogger("generic_oauth_test", "debug"),
+			orgService: &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 4}},
 		},
 		emailAttributePath: "email",
 	}
@@ -252,8 +255,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		ResponseBody            any
 		OAuth2Extra             any
 		RoleAttributePath       string
+		OrgRolesAttributePath   string
 		ExpectedEmail           string
 		ExpectedRole            org.RoleType
+		ExpectedOrgRoles        map[int64]org.RoleType
 		ExpectedError           error
 		ExpectedGrafanaAdmin    *bool
 	}{
@@ -467,10 +472,25 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedEmail:     "john.doe@example.com",
 			ExpectedRole:      "",
 		},
+		{
+			Name:                    "Given a valid id_token, a valid advanced JMESPath role path, a valid advanced JMESPath org roles path, a valid API response, prefer ID token",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra:             map[string]any{"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:       "'Viewer'",
+			OrgRolesAttributePath:   "[{\"OrgId\": '2', \"Role\": 'Editor'},{\"OrgName\": 'Org 4', \"Role\": 'Viewer'}]",
+			ExpectedEmail:           "john.doe@example.com",
+			ExpectedRole:            "Viewer",
+			ExpectedOrgRoles:        map[int64]roletype.RoleType{2: org.RoleEditor, 4: org.RoleViewer},
+			ExpectedError:           nil,
+			ExpectedGrafanaAdmin:    nil,
+		},
 	}
 
 	for _, test := range tests {
 		provider.roleAttributePath = test.RoleAttributePath
+		provider.orgRolesAttributePath = test.OrgRolesAttributePath
 		provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
 		provider.skipOrgRoleSync = test.SkipOrgRoleSync
 
@@ -501,6 +521,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			require.Equal(t, test.ExpectedEmail, actualResult.Email)
 			require.Equal(t, test.ExpectedEmail, actualResult.Login)
 			require.Equal(t, test.ExpectedRole, actualResult.Role)
+			require.Equal(t, test.ExpectedOrgRoles, actualResult.OrgRoles)
 			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}

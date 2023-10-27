@@ -151,6 +151,13 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
 			}
+
+			orgRoles, err := s.extractOrgRoles(ctx, data.rawJSON)
+			if err != nil {
+				s.log.Warn("Failed to extract org roles", "err", err)
+			} else {
+				userInfo.OrgRoles = orgRoles
+			}
 		}
 
 		if len(userInfo.Groups) == 0 {

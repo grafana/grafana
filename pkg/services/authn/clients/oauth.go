@@ -139,6 +139,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		}
 		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
 	})
+	if !c.cfg.OAuthSkipOrgRoleUpdateSync {
+		for orgId, orgRole := range userInfo.OrgRoles {
+			orgRoles[orgId] = orgRole
+		}
+	}
 
 	lookupParams := login.UserLookupParams{}
 	if c.cfg.OAuthAllowInsecureEmailLookup {

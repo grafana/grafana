@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -73,6 +74,7 @@ type OAuthInfo struct {
 	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
 	UsePKCE                 bool     `toml:"use_pkce"`
 	UseRefreshToken         bool     `toml:"use_refresh_token"`
+	OrgRolesAttributePath   string   `toml:"org_roles_attribute_path"`
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -80,6 +82,7 @@ func ProvideService(cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
 	cache remotecache.CacheStorage,
+	orgService org.Service,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
@@ -106,6 +109,7 @@ func ProvideService(cfg *setting.Cfg,
 			EmailAttributePath:      sec.Key("email_attribute_path").String(),
 			RoleAttributePath:       sec.Key("role_attribute_path").String(),
 			RoleAttributeStrict:     sec.Key("role_attribute_strict").MustBool(),
+			OrgRolesAttributePath:   sec.Key("org_roles_attribute_path").String(),
 			GroupsAttributePath:     sec.Key("groups_attribute_path").String(),
 			TeamIdsAttributePath:    sec.Key("team_ids_attribute_path").String(),
 			AllowedDomains:          util.SplitString(sec.Key("allowed_domains").String()),
@@ -167,7 +171,7 @@ func ProvideService(cfg *setting.Cfg,
 		// GitHub.
 		if name == "github" {
 			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:           newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
@@ -178,7 +182,7 @@ func ProvideService(cfg *setting.Cfg,
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:      newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:          info.ApiUrl,
 				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
@@ -190,7 +194,7 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Warn("Using legacy Google API URL, please update your configuration")
 			}
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:      newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain:    info.HostedDomain,
 				apiUrl:          info.ApiUrl,
 				skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
@@ -200,7 +204,7 @@ func ProvideService(cfg *setting.Cfg,
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:           newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				cache:                cache,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
@@ -214,7 +218,7 @@ func ProvideService(cfg *setting.Cfg,
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:      newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:          info.ApiUrl,
 				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
 				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
@@ -227,7 +231,7 @@ func ProvideService(cfg *setting.Cfg,
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:           newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:               info.ApiUrl,
 				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
@@ -258,7 +262,7 @@ func ProvideService(cfg *setting.Cfg,
 			}
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				SocialBase:           newSocialBase(name, &config, orgService, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
@@ -277,6 +281,7 @@ type BasicUserInfo struct {
 	Email          string
 	Login          string
 	Role           org.RoleType
+	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
 	Groups         []string
 }
@@ -302,17 +307,25 @@ type SocialConnector interface {
 type SocialBase struct {
 	*oauth2.Config
 	log                     log.Logger
+	orgService              org.Service
 	allowSignup             bool
 	allowAssignGrafanaAdmin bool
 	allowedDomains          []string
 	allowedGroups           []string
 
-	roleAttributePath   string
-	roleAttributeStrict bool
-	autoAssignOrgRole   string
-	skipOrgRoleSync     bool
-	features            featuremgmt.FeatureManager
-	useRefreshToken     bool
+	roleAttributePath     string
+	roleAttributeStrict   bool
+	orgRolesAttributePath string
+	autoAssignOrgRole     string
+	skipOrgRoleSync       bool
+	features              featuremgmt.FeatureManager
+	useRefreshToken       bool
+}
+
+type OrgRoleMapping struct {
+	OrgID   int64             `json:",string"`
+	OrgName string            `type:"string"`
+	Role    roletype.RoleType `type:"string" required:"true"`
 }
 
 type Error struct {
@@ -344,6 +357,7 @@ type Service interface {
 
 func newSocialBase(name string,
 	config *oauth2.Config,
+	orgService org.Service,
 	info *OAuthInfo,
 	autoAssignOrgRole string,
 	skipOrgRoleSync bool,
@@ -354,12 +368,14 @@ func newSocialBase(name string,
 	return &SocialBase{
 		Config:                  config,
 		log:                     logger,
+		orgService:              orgService,
 		allowSignup:             info.AllowSignup,
 		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
 		allowedDomains:          info.AllowedDomains,
 		allowedGroups:           info.AllowedGroups,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
+		orgRolesAttributePath:   info.OrgRolesAttributePath,
 		autoAssignOrgRole:       autoAssignOrgRole,
 		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
@@ -436,6 +452,41 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 	}
 
 	return "", false
+}
+
+func (s *SocialBase) extractOrgRoles(ctx context.Context, rawJSON []byte) (map[int64]org.RoleType, error) {
+	if s.orgRolesAttributePath != "" {
+		orgRoles := make(map[int64]org.RoleType, 0)
+		val, err := s.searchJSONForAttr(s.orgRolesAttributePath, rawJSON)
+		if err != nil {
+			return orgRoles, err
+		}
+		orgRolesRaw, err := json.Marshal(val)
+		if err != nil {
+			return orgRoles, err
+		}
+		orgRoleMappings := []OrgRoleMapping{}
+		err = json.Unmarshal(orgRolesRaw, &orgRoleMappings)
+		if err != nil {
+			return orgRoles, err
+		}
+		for _, orgRoleMapping := range orgRoleMappings {
+			if orgRoleMapping.OrgID == 0 && orgRoleMapping.OrgName != "" {
+				getOrgQuery := &org.GetOrgByNameQuery{Name: orgRoleMapping.OrgName}
+				res, err := s.orgService.GetByName(ctx, getOrgQuery)
+				if err != nil {
+					return orgRoles, err
+				}
+				orgRoleMapping.OrgID = res.ID
+			} else if orgRoleMapping.OrgID <= 0 {
+				orgRoleMapping.OrgID = 1
+			}
+			orgRoles[orgRoleMapping.OrgID] = orgRoleMapping.Role
+		}
+		return orgRoles, nil
+	}
+
+	return nil, nil
 }
 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
