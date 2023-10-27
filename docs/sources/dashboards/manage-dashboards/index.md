@@ -144,7 +144,7 @@ Find dashboards for common server applications at [Grafana.com/dashboards](https
 
 ## Set up generative AI features for dashboards
 
-{{< docs/public-preview product="Generative-AI-in-dashboards" featureFlag="dashgpt" >}}
+{{< docs/public-preview product="Generative AI in dashboards" featureFlag="dashgpt" >}}
 
 You can use generative AI to help you with the following tasks:
 
