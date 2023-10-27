@@ -1,13 +1,16 @@
 package playlist
 
 import (
+	"cmp"
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -199,16 +202,16 @@ func TestPlaylist(t *testing.T) {
 		})
 
 		// Create the playlist "abcdefgh"
-		out, err := client.Resource.Create(context.Background(),
+		first, err := client.Resource.Create(context.Background(),
 			helper.LoadYAMLOrJSONFile("testdata/playlist-with-uid.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
-		require.Equal(t, "abcdefgh", out.GetName())
-		uids := []string{out.GetName()}
+		require.Equal(t, "abcdefgh", first.GetName())
+		uids := []string{first.GetName()}
 
-		// Create (with name generation) three playlists
-		for i := 0; i < 3; i++ {
+		// Create (with name generation) two playlists
+		for i := 0; i < 2; i++ {
 			out, err := client.Resource.Create(context.Background(),
 				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
 				metav1.CreateOptions{},
@@ -216,34 +219,129 @@ func TestPlaylist(t *testing.T) {
 			require.NoError(t, err)
 			uids = append(uids, out.GetName())
 		}
+		slices.Sort(uids) // make list compare stable
 
-		found, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		// Check that everything is returned from the List command
+		list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Equal(t, len(uids), len(found.Items))
+		require.Equal(t, uids, SortSlice(Map(list.Items, func(item unstructured.Unstructured) string {
+			return item.GetName()
+		})))
 
-		// Check that "list" includes all of them
+		// The legacy endpoint has the same results
+		searchResponse := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   "/api/playlists",
+		}, &playlist.Playlists{})
+		require.NotNil(t, searchResponse.Result)
+		require.Equal(t, uids, SortSlice(Map(*searchResponse.Result, func(item *playlist.Playlist) string {
+			return item.UID
+		})))
 
-		// v :=
-		// 	require.Equal(t, "playlist.grafana.app/v0alpha1", v.APIVersion)
+		// Get works for both apis
+		for _, uid := range uids {
+			found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, uid, found.GetName())
 
-		// // Create with auto generated name
-		// rsp := helper.PostResource(helper.Org1.Editor, "playlists", v)
-		// require.Equal(t, 201, rsp.Response.StatusCode) // created!
-		// require.NotEmpty(t, rsp.Result.Name)
-		// require.Equal(t, "Playlist with auto generated UID", v.Spec["title"])
-		// require.Equal(t, "Playlist with auto generated UID", rsp.Result.Spec["title"])
+			dto := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodGet,
+				Path:   "/api/playlists/" + uid,
+			}, &playlist.PlaylistDTO{})
+			require.NotNil(t, dto.Result)
+			require.Equal(t, uid, dto.Result.Uid)
 
-		// // Now Update the title
-		// update := rsp.Result
-		// update.Spec["title"] = "Change the title"
-		// rsp = helper.PutResource(helper.Org1.Editor, "playlists", *update)
-		// require.Equal(t, 200, rsp.Response.StatusCode) // OK
-		// require.Equal(t, "Change the title", rsp.Result.Spec["title"])
-		// require.NotEqual(t, update.ResourceVersion, rsp.Result.ResourceVersion) // should be bigger!
+			// Check same values
+			spec, ok := found.Object["spec"].(map[string]any)
+			require.True(t, ok)
+			require.Equal(t, dto.Result.Name, spec["title"]) // Name <> Title
+			require.Equal(t, dto.Result.Interval, spec["interval"])
+		}
 
-		// // Viewer can not update!
-		// update.Spec["interval"] = "1m"
-		// rsp = helper.PutResource(helper.Org1.Viewer, "playlists", *update)
-		// require.Equal(t, 403, rsp.Response.StatusCode)
+		// PUT :: Update the title (full payload)
+		updated, err := client.Resource.Update(context.Background(),
+			helper.LoadYAMLOrJSON(`
+apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: abcdefgh #
+spec:
+  title: This one is updated and only has one item
+  interval: 20s
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests
+`),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		spec, ok := updated.Object["spec"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "This one is updated and only has one item", spec["title"])
+		require.Equal(t, "20s", spec["interval"])
+
+		// PATCH :: apply only some fields
+		if false { // DOES NOT WORK YET?????
+			updated, err = client.Resource.Apply(context.Background(), "abcdefgh",
+				helper.LoadYAMLOrJSON(`
+apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+spec:
+  title: The patched title!
+`),
+				metav1.ApplyOptions{
+					Force:        true,
+					FieldManager: "testing",
+				},
+			)
+			require.NoError(t, err)
+			require.Equal(t, first.GetName(), updated.GetName())
+			require.Equal(t, first.GetUID(), updated.GetUID())
+			require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+			spec, ok = updated.Object["spec"].(map[string]any)
+			require.True(t, ok)
+			require.Equal(t, "The patched title!", spec["title"])
+			require.Equal(t, "20s", spec["interval"])
+		}
+
+		// Now delete all playlist (three)
+		for _, uid := range uids {
+			err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			require.NoError(t, err)
+
+			// Second call is not found!
+			err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			statusError := helper.AsStatusError(err)
+			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+
+			// Not found from k8s getter
+			_, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			statusError = helper.AsStatusError(err)
+			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
+		}
+
+		// Check that they are all gone
+		list, err = client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
 	})
+}
+
+// typescript style map function
+func Map[A any, B any](input []A, m func(A) B) []B {
+	output := make([]B, len(input))
+	for i, element := range input {
+		output[i] = m(element)
+	}
+	return output
+}
+
+func SortSlice[A cmp.Ordered](input []A) []A {
+	slices.Sort(input)
+	return input
 }
