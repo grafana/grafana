@@ -370,6 +370,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     width: '280px',
-    padding: theme.spacing(0.5),
   }),
 });
