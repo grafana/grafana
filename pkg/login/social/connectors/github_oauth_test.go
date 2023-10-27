@@ -12,8 +12,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -129,6 +132,8 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		settingAllowGrafanaAdmin bool
 		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
+		orgAttributePath         string
+		orgMapping               []string
 		autoAssignOrgRole        string
 		want                     *social.BasicUserInfo
 		wantErr                  bool
@@ -225,6 +230,23 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
+		{
+			name:              "Org Mapping",
+			roleAttributePath: "'None'",
+			orgAttributePath:  "groups",
+			orgMapping:        []string{"@github/justice-league:Org4:Editor", "*:Org5:Viewer"},
+			userRawJSON:       testGHUserJSON,
+			userTeamsRawJSON:  testGHUserTeamsJSON,
+			want: &social.BasicUserInfo{
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				Role:     "None",
+				OrgRoles: map[int64]roletype.RoleType{4: "Editor", 5: "Viewer"},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -249,6 +271,8 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				&social.OAuthInfo{
 					ApiUrl:            server.URL + "/user",
 					RoleAttributePath: tt.roleAttributePath,
+					OrgAttributePath:  tt.orgAttributePath,
+					OrgMapping:        tt.orgMapping,
 					SkipOrgRoleSync:   tt.settingSkipOrgRoleSync,
 					Extra: map[string]string{
 						"allowed_organizations": "",
@@ -256,7 +280,9 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 					},
 				}, &setting.Cfg{
 					AutoAssignOrgRole: tt.autoAssignOrgRole,
-				}, nil, &ssosettingstests.MockService{},
+				},
+				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}},
+				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
