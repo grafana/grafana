@@ -51,7 +51,7 @@ export interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
-  isFilterLabelActive?: (key: string, value: string, refId: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
   /**

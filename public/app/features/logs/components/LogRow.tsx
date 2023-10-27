@@ -42,7 +42,7 @@ interface Props extends Themeable2 {
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
-  isFilterLabelActive?: (key: string, value: string, refId: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
