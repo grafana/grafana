@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,6 +15,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -29,7 +31,7 @@ type ExtSvcAccountsService struct {
 	skvStore kvstore.SecretsKVStore
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, db db.DB, features *featuremgmt.FeatureManager, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features *featuremgmt.FeatureManager, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	esa := &ExtSvcAccountsService{
 		acSvc:    acSvc,
@@ -39,12 +41,27 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, db db.DB, features *featurem
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
 
-	// Register the metrics
 	if features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		// Register the metrics
 		esa.metrics = newMetrics(reg, saSvc, logger)
+
+		// Register a listener to enable/disable service accounts
+		bus.AddEventListener(esa.handlePluginStateChanged)
 	}
 
 	return esa
+}
+
+// EnableExtSvcAccount enables or disables the service account associated to an external service
+func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *sa.EnableExtSvcAccountCmd) error {
+	saName := sa.ExtSvcPrefix + slugify.Slugify(cmd.ExtSvcSlug)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, saName)
+	if errRetrieve != nil {
+		return errRetrieve
+	}
+
+	return esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, saID, cmd.Enabled)
 }
 
 // RetrieveExtSvcAccount fetches an external service account by ID
@@ -265,4 +282,21 @@ func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
 	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	return esa.skvStore.Del(ctx, orgID, extSvcSlug, kvStoreType)
+}
+
+func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
+	esa.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+
+	errEnable := esa.EnableExtSvcAccount(ctx, &sa.EnableExtSvcAccountCmd{
+		ExtSvcSlug: event.PluginId,
+		Enabled:    event.Enabled,
+		OrgID:      extsvcauth.TmpOrgID,
+	})
+
+	// Ignore service account not found error
+	if errors.Is(errEnable, sa.ErrServiceAccountNotFound) {
+		esa.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId)
+		return nil
+	}
+	return errEnable
 }
