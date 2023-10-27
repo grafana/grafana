@@ -139,7 +139,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    */
   getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
 
-  /** 
+  /**
    * @deprecated Deprecated since 10.3. To display the context option and support the feature implement DataSourceWithLogsContextSupport interface instead.
    */
   showContextToggle?(row?: LogRowModel): boolean;
