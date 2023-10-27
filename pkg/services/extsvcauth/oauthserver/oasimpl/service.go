@@ -195,7 +195,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	// Check if the client already exists in store
 	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.Name)
-	if errFetchExtSvc != nil && !oauthserver.IsErrClientNotFound(errFetchExtSvc) {
+	if errFetchExtSvc != nil && !errors.Is(errFetchExtSvc, oauthserver.ErrClientNotFound) {
 		s.logger.Error("Error fetching service", "external service", registration.Name, "error", errFetchExtSvc)
 		return nil, errFetchExtSvc
 	}
@@ -415,7 +415,7 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 	slug := slugify.Slugify(event.PluginId)
 	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
 	if err != nil {
-		if oauthserver.IsErrClientNotFound(err) {
+		if errors.Is(err, oauthserver.ErrClientNotFound) {
 			s.logger.Debug("No external service linked to this plugin", "pluginId", event.PluginId)
 			return nil
 		}

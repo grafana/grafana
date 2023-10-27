@@ -116,7 +116,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			name: "should create a new client without permissions",
 			init: func(env *TestEnv) {
 				// No client at the beginning
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFoundFn(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 
 				// Return a service account ID
@@ -141,7 +141,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			name: "should allow client credentials grant with correct permissions",
 			init: func(env *TestEnv) {
 				// No client at the beginning
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFoundFn(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 
 				// Return a service account ID
@@ -177,7 +177,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			name: "should allow jwt bearer grant and set default permissions",
 			init: func(env *TestEnv) {
 				// No client at the beginning
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFoundFn(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				// The service account needs to be created with a permission to impersonate users
 				env.SAService.On("ManageExtSvcAccount", mock.Anything, mock.Anything).Return(int64(10), nil)
@@ -312,7 +312,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should return error when the client was not found",
 			init: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFoundFn(serviceName))
 			},
 			wantErr: true,
 		},
@@ -517,7 +517,7 @@ func TestOAuth2ServiceImpl_handlePluginStateChanged(t *testing.T) {
 		{
 			name: "should do nothing with not found",
 			init: func(te *TestEnv) {
-				te.OAuthStore.On("GetExternalServiceByName", mock.Anything, "unknown").Return(nil, oauthserver.ErrClientNotFound("unknown"))
+				te.OAuthStore.On("GetExternalServiceByName", mock.Anything, "unknown").Return(nil, oauthserver.ErrClientNotFoundFn("unknown"))
 			},
 			cmd: &pluginsettings.PluginStateChangedEvent{PluginId: "unknown", OrgId: 1, Enabled: false},
 		},

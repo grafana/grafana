@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"errors"
 
 	"gopkg.in/square/go-jose.v2"
 
@@ -99,7 +100,7 @@ func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.OAu
 	}
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		previous, errFetchExtSvc := getExternalServiceByName(sess, client.Name)
-		if errFetchExtSvc != nil && !oauthserver.IsErrClientNotFound(errFetchExtSvc) {
+		if errFetchExtSvc != nil && !errors.Is(errFetchExtSvc, oauthserver.ErrClientNotFound) {
 			return errFetchExtSvc
 		}
 		if previous == nil {
@@ -125,7 +126,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 			return err
 		}
 		if !found {
-			return oauthserver.ErrClientNotFound(id)
+			return oauthserver.ErrClientNotFoundFn(id)
 		}
 
 		impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
@@ -150,7 +151,7 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string
 			return err
 		}
 		if !found {
-			return oauthserver.ErrClientNotFound(clientID)
+			return oauthserver.ErrClientNotFoundFn(clientID)
 		}
 		return nil
 	}); err != nil {
@@ -202,7 +203,7 @@ func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.OAuth
 		return nil, err
 	}
 	if !found {
-		return nil, oauthserver.ErrClientNotFound(name)
+		return nil, oauthserver.ErrClientNotFoundFn(name)
 	}
 
 	impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
