@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -69,9 +68,6 @@ func ProvideServiceAccountsService(
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
-
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
-	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
