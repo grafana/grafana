@@ -21,7 +21,9 @@ type ProtoClient interface {
 	grpcplugin.StreamClient
 
 	PluginID() string
-	Exit(context.Context) error
+	Logger() log.Logger
+	Start(context.Context) error
+	Stop(context.Context) error
 }
 
 type protoClient struct {
@@ -38,7 +40,7 @@ func NewProtoClient(pluginID, executablePath string, executableArgs ...string) (
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 	}
-	logger := log.New(descriptor.pluginID)
+	logger := log.New(pluginID)
 	p := &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
@@ -47,12 +49,23 @@ func NewProtoClient(pluginID, executablePath string, executableArgs ...string) (
 		},
 	}
 
-	err := p.Start(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	return &protoClient{plugin: p}, nil
+}
+
+func (r *protoClient) PluginID() string {
+	return r.plugin.descriptor.pluginID
+}
+
+func (r *protoClient) Logger() log.Logger {
+	return r.plugin.logger
+}
+
+func (r *protoClient) Start(ctx context.Context) error {
+	return r.plugin.Start(ctx)
+}
+
+func (r *protoClient) Stop(ctx context.Context) error {
+	return r.plugin.Stop(ctx)
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
@@ -81,12 +94,4 @@ func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamReque
 
 func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStreamRequest, opts ...grpc.CallOption) (*pluginv2.PublishStreamResponse, error) {
 	return r.plugin.pluginClient.StreamClient.PublishStream(ctx, in, opts...)
-}
-
-func (r *protoClient) PluginID() string {
-	return r.plugin.descriptor.pluginID
-}
-
-func (r *protoClient) Exit(ctx context.Context) error {
-	return r.plugin.Stop(ctx)
 }
