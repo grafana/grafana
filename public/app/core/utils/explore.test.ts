@@ -1,5 +1,6 @@
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
@@ -24,12 +25,36 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
 };
 
 const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
-
+const interpolateMockLoki = jest
+  .fn()
+  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]) as unknown as DataQuery[];
+const interpolateMockProm = jest
+  .fn()
+  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]) as unknown as DataQuery[];
 const datasourceSrv = new DatasourceSrvMock(defaultDs, {
   'generate empty query': new MockDataSourceApi('generateEmptyQuery'),
   ds1: {
     name: 'testDs',
     type: 'loki',
+    meta: { mixed: false },
+    interpolateVariablesInQueries: interpolateMockLoki,
+    getRef: () => {
+      return 'ds1';
+    },
+  } as unknown as DataSourceApi,
+  ds2: {
+    name: 'testDs2',
+    type: 'prom',
+    meta: { mixed: false },
+    interpolateVariablesInQueries: interpolateMockProm,
+    getRef: () => {
+      return 'ds2';
+    },
+  } as unknown as DataSourceApi,
+  dsMixed: {
+    name: 'testDSMixed',
+    type: 'mixed',
+    meta: { mixed: true },
   } as MockDataSourceApi,
 });
 
@@ -70,6 +95,10 @@ describe('state functions', () => {
 });
 
 describe('getExploreUrl', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const args = {
     queries: [
       { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
@@ -85,6 +114,40 @@ describe('getExploreUrl', () => {
   });
   it('should omit expression target in explore url', async () => {
     expect(await getExploreUrl(args)).not.toMatch(/__expr__/g);
+  });
+  it('should interpolate queries with variables in a non-mixed datasource scenario', async () => {
+    // this is not actually valid (see root and query DS being different) but it will test the root DS mock was called
+    const nonMixedArgs = {
+      queries: [{ refId: 'A', expr: 'query1', datasource: { type: 'prom', uid: 'ds2' } }],
+      dsRef: {
+        uid: 'ds1',
+        meta: { mixed: false },
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+      scopedVars: {},
+    };
+    expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs2%20prom/g);
+    expect(interpolateMockLoki).not.toBeCalled();
+    expect(interpolateMockProm).toBeCalled();
+  });
+  it('should interpolate queries with variables in a mixed datasource scenario', async () => {
+    const nonMixedArgs = {
+      queries: [
+        { refId: 'A', expr: 'query1', datasource: { type: 'loki', uid: 'ds1' } },
+        { refId: 'B', expr: 'query2', datasource: { type: 'prom', uid: 'ds2' } },
+      ],
+      dsRef: {
+        uid: 'dsMixed',
+        meta: { mixed: true },
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+      scopedVars: {},
+    };
+    const url = await getExploreUrl(nonMixedArgs);
+    expect(url).toMatch(/replaced%20testDs%20loki/g);
+    expect(url).toMatch(/replaced%20testDs2%20prom/g);
+    expect(interpolateMockLoki).toBeCalled();
+    expect(interpolateMockProm).toBeCalled();
   });
 });
 
