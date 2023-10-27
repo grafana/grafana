@@ -328,7 +328,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
-	s.Versioner().UpdateObject(listObj, *generatedRV)
+	if err := s.Versioner().UpdateObject(listObj, *generatedRV); err != nil {
+		return err
+	}
 
 	if opts.ResourceVersion != "" {
 		resourceVersionInt, err := s.Versioner().ParseResourceVersion(opts.ResourceVersion)
