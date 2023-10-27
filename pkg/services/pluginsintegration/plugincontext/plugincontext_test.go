@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestGetAlias(t *testing.T) {
+func TestGet(t *testing.T) {
 	const (
 		pluginID = "plugin-id"
 		alias    = "alias"
@@ -51,8 +51,8 @@ func TestGetAlias(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"by id", pluginID},
-		{"by alias", alias},
+		{"with id", pluginID},
+		{"with alias", alias},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("Get", func(t *testing.T) {
