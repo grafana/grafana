@@ -1311,19 +1311,19 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						{
 							Label:        "Name",
 							Element:      ElementTypeInput,
-							Description:  "Name of the responder. Must be specified if id and username are empty or if the type is 'teams'.",
+							Description:  "Name of the responder. Must be specified if ID and Username are empty or if the type is 'teams'.",
 							PropertyName: "name",
 						},
 						{
 							Label:        "ID",
 							Element:      ElementTypeInput,
-							Description:  "ID of the responder. Must be specified if name and username are empty.",
+							Description:  "ID of the responder. Must be specified if name and Username are empty.",
 							PropertyName: "id",
 						},
 						{
 							Label:        "Username",
 							Element:      ElementTypeInput,
-							Description:  "Username of the responder. Must be specified if id and name are empty.",
+							Description:  "User name of the responder. Must be specified if ID and Name are empty.",
 							PropertyName: "username",
 						},
 					},
