@@ -437,7 +437,7 @@ type FakeAuthService struct {
 	Result *auth.ExternalService
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, name string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
