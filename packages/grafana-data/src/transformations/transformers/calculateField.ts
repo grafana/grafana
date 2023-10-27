@@ -292,7 +292,7 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
               }
             }
           }
-          vals.push(sum / count);
+          vals.push(count === 0 ? 0 : sum / count);
         } else if (options.reducer === ReducerID.variance) {
           const windowVals = selectedField.values.slice(
             Math.max(0, first),
@@ -322,7 +322,7 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
               count--;
             }
           }
-          vals.push(sum / count);
+          vals.push(count === 0 ? 0 : sum / count);
         } else if (options.reducer === ReducerID.variance) {
           const start = Math.max(0, i - window + 1);
           const end = i + 1;
