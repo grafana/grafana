@@ -340,6 +340,14 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		userInfo.Name = data.Name
 	}
 
+	if !s.info.SkipOrgRoleSync {
+		orgRoles, err := s.extractOrgRoles(ctx, response.Body, teams, userInfo.Role)
+		if err != nil {
+			return nil, err
+		}
+		userInfo.OrgRoles = orgRoles
+	}
+
 	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
 
 	if !s.isTeamMember(ctx, client) {
