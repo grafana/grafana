@@ -60,8 +60,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
-	ProvideClientDecorator,
-	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	wire.Bind(new(client.Registry), new(*client.BackendClientRegistry)),
 	client.ProvideBackendClientRegistry,
 	process.ProvideService,
