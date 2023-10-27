@@ -87,7 +87,7 @@ describe('MySQL datasource', () => {
       cy.get("[aria-label='Macros value selector']").should('be.visible').click();
       selectOption('timeFilter');
 
-      cy.get('[aria-label="Code editor container"] textarea').should(
+      e2e.components.CodeEditor.container().get('textarea').should(
         'have.value',
         `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
       );
