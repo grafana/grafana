@@ -1058,6 +1058,7 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
+  pull: always
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1412,6 +1413,7 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
+  pull: always
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -4668,6 +4670,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a45bf36baf7b013438483a8d13e1dc8169a38a65c59a7440d6d1d70b6df12101
+hmac: 64de498d74f13b64f233fe5d37751903a0efb03b3cab28e046797dc80d390965
 
 ...
