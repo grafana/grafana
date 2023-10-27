@@ -270,22 +270,26 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
         if (options.reducer === ReducerID.mean) {
           if (i === 0) {
             // We're at the start and need to prime the leading part of the window
-            let x = 0;
-            while (count < leadingPartOfWindow + 1 && x < selectedField.values.length) {
-              sum += selectedField.values[x];
-              x++;
-              count++;
+            for (let x = 0; x < leadingPartOfWindow + 1 && x < selectedField.values.length; x++) {
+              if (selectedField.values[x] !== null) {
+                sum += selectedField.values[x];
+                count++;
+              }
             }
           } else {
             if (last < selectedField.values.length) {
               // Last is inside the data and should be added.
-              sum += selectedField.values[last];
-              count++;
+              if (selectedField.values[last] !== null) {
+                sum += selectedField.values[last];
+                count++;
+              }
             }
             if (first > 0) {
               // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
-              sum -= selectedField.values[first - 1];
-              count--;
+              if (selectedField.values[first - 1] !== null) {
+                sum -= selectedField.values[first - 1];
+                count--;
+              }
             }
           }
           vals.push(sum / count);

@@ -728,6 +728,64 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('calculates centered moving average with nulls', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Centered,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.mean,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, null, 2, 7] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(1);
+      expect(data.fields[1].values[1]).toEqual(1.5);
+      expect(data.fields[1].values[2]).toEqual(4.5);
+      expect(data.fields[1].values[3]).toEqual(4.5);
+    });
+  });
+
+  it('calculates centered moving average with 4 values', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          type: WindowType.Centered,
+          field: 'x',
+          windowSize: 3,
+          reducer: ReducerID.mean,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, 2, 3, 4] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(1.5);
+      expect(data.fields[1].values[1]).toEqual(2);
+      expect(data.fields[1].values[2]).toEqual(3);
+      expect(data.fields[1].values[3]).toEqual(3.5);
+    });
+  });
+
   it('calculates trailing moving variance with null in the middle', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
