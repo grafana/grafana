@@ -361,6 +361,9 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 	return nil
 }
 
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
 func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
 	if err != nil {
@@ -370,12 +373,12 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	// whitelisting ValidHeaders
 	for _, headers := range teamHTTPHeadersJSON {
 		for _, header := range headers {
-			for _, name := range ValidHeaders() {
+			for _, name := range validHeaders {
 				if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
 					datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
 					return errors.New("validation error, invalid header name specified")
 				}
-				if !TeamHTTPHeaderValueRegexMatch(header.Value) {
+				if !teamHTTPHeaderValueRegexMatch(header.Value) {
 					datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
 					return errors.New("validation error, invalid header value syntax")
 				}
@@ -385,10 +388,10 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	return nil
 }
 
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
+// teamHTTPHeaderValueRegexMatch returns true if the header value matches the regex
 // words separated by special characters
 // namespace!="auth", env="prod", env!~"dev"
-func TeamHTTPHeaderValueRegexMatch(headervalue string) bool {
+func teamHTTPHeaderValueRegexMatch(headervalue string) bool {
 	// link to regex: https://regex101.com/r/I8KhZz/1
 	// 1234:{ name!="value",foo!~"bar" }
 	exp := `^\d+:{(?:\s*\w+\s*(?:=|!=|=~|!~)\s*\"\w+\"\s*,*)+}$`
@@ -397,10 +400,6 @@ func TeamHTTPHeaderValueRegexMatch(headervalue string) bool {
 		return false
 	}
 	return reg.Match([]byte(strings.TrimSpace(headervalue)))
-}
-
-func ValidHeaders() []string {
-	return []string{"X-Prom-Label-Policy"}
 }
 
 // swagger:route POST /datasources datasources addDataSource

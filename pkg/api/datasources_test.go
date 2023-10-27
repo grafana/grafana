@@ -498,7 +498,7 @@ func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, TeamHTTPHeaderValueRegexMatch(tc.teamHeaderValue))
+			assert.Equal(t, tc.want, teamHTTPHeaderValueRegexMatch(tc.teamHeaderValue))
 		})
 	}
 }
