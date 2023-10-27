@@ -260,49 +260,47 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     if (options.type === WindowType.Centered) {
       let sum = 0;
       let count = 0;
-      const boundaryForward = Math.floor(options.windowSize! / 2) - 1 + (options.windowSize! % 2);
-      const boundaryBack = Math.floor(options.windowSize! / 2);
+      // Current value (i) is included in the leading part of the window. Which means if the window size is odd,
+      // the leading part of the window will be larger than the trailing part.
+      const leadingPartOfWindow = Math.ceil(options.windowSize! / 2) - 1;
+      const trailingPartOfWindow = Math.floor(options.windowSize! / 2);
       for (let i = 0; i < frame.length; i++) {
-        const start = Math.max(0, i - boundaryBack);
-        const end = Math.min(i + boundaryForward, frame.length);
+        const first = i - trailingPartOfWindow;
+        const last = i + leadingPartOfWindow;
         if (options.reducer === ReducerID.mean) {
           if (i === 0) {
             // We're at the start and need to prime the leading part of the window
             let x = 0;
-            while (count < boundaryForward + 1) {
-              console.log('boundary:', boundaryForward);
-              console.log('priming:', selectedField.values[x]);
+            while (count < leadingPartOfWindow + 1 && x < selectedField.values.length) {
               sum += selectedField.values[x];
               x++;
               count++;
             }
           } else {
-            console.log('i:', i);
-            console.log('end:', end);
-            if (end < selectedField.values.length) {
-              console.log('adding:', selectedField.values[end]);
-              sum += selectedField.values[end];
+            if (last < selectedField.values.length) {
+              // Last is inside the data and should be added.
+              sum += selectedField.values[last];
               count++;
-            } else {
-              console.log('removing:', selectedField.values[start - 1]);
-              sum -= selectedField.values[start - 1];
-              count--;
             }
-
-            console.log('count:', count);
-            if (count > window) {
-              console.log('removing:', selectedField.values[start]);
-              sum -= selectedField.values[start];
+            if (first > 0) {
+              // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
+              sum -= selectedField.values[first - 1];
               count--;
             }
           }
           vals.push(sum / count);
         } else if (options.reducer === ReducerID.variance) {
-          const nonNullWindowVals = selectedField.values.slice(start, end);
-          vals.push(calculateVariance(nonNullWindowVals));
+          const windowVals = selectedField.values.slice(
+            Math.max(0, first),
+            Math.min(last + 1, selectedField.values.length)
+          );
+          vals.push(calculateVariance(windowVals));
         } else if (options.reducer === ReducerID.stdDev) {
-          const nonNullWindowVals = selectedField.values.slice(start, end);
-          vals.push(calculateStdDev(nonNullWindowVals));
+          const windowVals = selectedField.values.slice(
+            Math.max(0, first),
+            Math.min(last + 1, selectedField.values.length)
+          );
+          vals.push(calculateStdDev(windowVals));
         }
       }
     } else {
