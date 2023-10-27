@@ -41,11 +41,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, p
 	impersonation := extsvcauth.ImpersonationCfg{}
 	if svc.Impersonation != nil {
 		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
-		if svc.Impersonation.Enabled != nil {
-			impersonation.Enabled = *svc.Impersonation.Enabled
-		} else {
-			impersonation.Enabled = true
-		}
+		impersonation.Enabled = enabled
 		if svc.Impersonation.Groups != nil {
 			impersonation.Groups = *svc.Impersonation.Groups
 		} else {
