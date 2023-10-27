@@ -1,5 +1,5 @@
 import { defaults } from 'lodash';
-import { map, windowCount } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';

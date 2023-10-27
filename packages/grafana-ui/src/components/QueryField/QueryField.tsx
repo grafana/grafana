@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
-import React, { Context, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor, EventHook, Plugin } from 'slate-react';
@@ -67,8 +67,8 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   mounted = false;
   editor: Editor | null = null;
 
-  constructor(props: QueryFieldProps, context: Context<any>) {
-    super(props, context);
+  constructor(props: QueryFieldProps) {
+    super(props);
 
     this.runOnChangeDebounced = debounce(this.runOnChange, 500);
 

@@ -45,7 +45,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 }
 
 func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	compatOpts, err := repoCompatOpts(opts)
+	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins
 	return p, true
 }
 
-func repoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
+func RepoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
 	os := opts.OS()
 	arch := opts.Arch()
 	if len(os) == 0 || len(arch) == 0 {

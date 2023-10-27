@@ -63,7 +63,7 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 
 // GetPluginArchiveInfo returns the options for downloading the requested plugin (with optional `version`)
 func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
-	v, err := m.pluginVersion(pluginID, version, compatOpts)
+	v, err := m.PluginVersion(pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +75,8 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 	}, nil
 }
 
-// pluginVersion will return plugin version based on the requested information
-func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
+// PluginVersion will return plugin version based on the requested information
+func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
 	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
 	if err != nil {
 		return VersionData{}, err

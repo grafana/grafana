@@ -270,9 +270,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
-
 		whereConditions := make([]string, 0)
 		whereParams := make([]any, 0)
 
@@ -312,9 +309,37 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				whereConditions,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
+		case serviceaccounts.FilterOnlyExternal:
+			whereConditions = append(
+				whereConditions,
+				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
+			whereParams = append(whereParams, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix+"%")
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
+
+		// Count the number of accounts
+		serviceaccount := serviceaccounts.ServiceAccountDTO{}
+		countSess := dbSession.Table("org_user")
+		countSess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+		count, err := countSess.Count(&serviceaccount)
+		if err != nil {
+			return err
+		}
+		searchResult.TotalCount = count
+
+		// Stop here if we only wanted to count the number of accounts
+		if query.CountOnly {
+			return nil
+		}
+
+		// Fetch service accounts
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
@@ -338,21 +363,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
-
-		// get total
-		serviceaccount := serviceaccounts.ServiceAccountDTO{}
-		countSess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
-
-		if len(whereConditions) > 0 {
-			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-		}
-		count, err := countSess.Count(&serviceaccount)
-		if err != nil {
-			return err
-		}
-		searchResult.TotalCount = count
-
 		return nil
 	})
 	if err != nil {
