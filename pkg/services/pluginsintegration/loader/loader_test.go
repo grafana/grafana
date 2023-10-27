@@ -1280,6 +1280,49 @@ func TestLoader_Load_Angular(t *testing.T) {
 	}
 }
 
+func TestLoader_HideAngularDeprecation(t *testing.T) {
+	fakePluginSource := &fakes.FakePluginSource{
+		PluginClassFunc: func(ctx context.Context) plugins.Class {
+			return plugins.ClassExternal
+		},
+		PluginURIsFunc: func(ctx context.Context) []string {
+			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
+		},
+	}
+	for _, tc := range []struct {
+		name                      string
+		cfg                       *config.Cfg
+		expHideAngularDeprecation bool
+	}{
+		{name: "without hide angular deprecation setting", cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings:        setting.PluginSettings{},
+		}},
+		{name: "with hide angular deprecation setting = true", cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings: setting.PluginSettings{
+				"plugin-id": map[string]string{"hide_angular_deprecation": "true"},
+			}},
+		},
+		{name: "without hide angular deprecation setting = false", cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings: setting.PluginSettings{
+				"plugin-id": map[string]string{"hide_angular_deprecation": "false"},
+			}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
+				angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			require.Equal(t, tc.expHideAngularDeprecation, p[0].HideAngularDeprecation)
+		})
+	}
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
