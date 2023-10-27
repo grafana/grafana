@@ -157,7 +157,6 @@ func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserv
 			Name:        client.Name,
 			Permissions: map[int64]map[string][]string{oauthserver.TmpOrgID: {}},
 		}
-		s.cache.Set(client.ClientID, *client, cacheExpirationTime)
 		return nil
 	}
 
