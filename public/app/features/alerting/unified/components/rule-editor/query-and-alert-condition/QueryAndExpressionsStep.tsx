@@ -488,7 +488,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             {config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
             {isPreviewLoading && (
-              <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
+              <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
                 Cancel
               </Button>
             )}

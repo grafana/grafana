@@ -28,6 +28,12 @@ var (
 	boolArray   []*bool
 )
 
+const (
+	graphVisType data.VisType = "graph"
+	tableVisType data.VisType = "table"
+	logsVisType  data.VisType = "logs"
+)
+
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
 	return parse(buf, statusCode, query)
 }
@@ -164,7 +170,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField)
+	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
@@ -186,10 +192,11 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	return data.NewFrame(row.Name, field)
 }
 
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
 	frame := data.NewFrame(name, timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString: queryString,
+		ExecutedQueryString:    queryString,
+		PreferredVisualization: visType,
 	}
 
 	return frame
@@ -197,7 +204,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 
 func formatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column, frameName)
+		return buildFrameNameFromQuery(row, column, frameName, query.ResultFormat)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -208,7 +215,7 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
 
 		if aliasFormat == "m" || aliasFormat == "measurement" {
-			return []byte(query.Measurement)
+			return []byte(row.Name)
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
@@ -235,9 +242,11 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 	return result
 }
 
-func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []byte {
-	frameName = append(frameName, row.Name...)
-	frameName = append(frameName, '.')
+func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, resultFormat string) []byte {
+	if resultFormat != "table" {
+		frameName = append(frameName, row.Name...)
+		frameName = append(frameName, '.')
+	}
 	frameName = append(frameName, column...)
 
 	if len(row.Tags) > 0 {
@@ -309,4 +318,15 @@ func parseNumber(value any) *float64 {
 	}
 
 	return &fvalue
+}
+
+func getVisType(resFormat string) data.VisType {
+	switch resFormat {
+	case "table":
+		return tableVisType
+	case "logs":
+		return logsVisType
+	default:
+		return graphVisType
+	}
 }
