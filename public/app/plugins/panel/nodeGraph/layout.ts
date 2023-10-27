@@ -5,7 +5,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { Field } from '@grafana/data';
 import { config as grafanaConfig } from '@grafana/runtime';
 
-import { createWorker, createDOTWorker } from './createLayoutWorker';
+import { createWorker, createDOTWorker, createMsaglWorker } from './createLayoutWorker';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { useNodeLimit } from './useNodeLimit';
 import { graphBounds } from './utils';
@@ -159,7 +159,8 @@ function layout(
   engine: 'default' | 'dot',
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  const worker = engine === 'default' ? createWorker() : createDOTWorker();
+  // const worker = engine === 'default' ? createWorker() : createDOTWorker();
+  const worker = createMsaglWorker();
 
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {

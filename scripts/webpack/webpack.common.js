@@ -119,6 +119,12 @@ module.exports = {
         test: /(unicons|mono|custom)[\\/].*\.svg$/,
         type: 'asset/source',
       },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
