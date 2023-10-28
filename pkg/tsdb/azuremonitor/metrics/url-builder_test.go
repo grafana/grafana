@@ -105,7 +105,11 @@ func TestBuildResourceURI(t *testing.T) {
 				ResourceName:        strPtr("rn1"),
 			}
 
-			url := *ub.buildResourceURI()
+			result, err := ub.buildResourceURI()
+			if err != nil {
+				return
+			}
+			url := *result
 			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Web/serverFarms/rn1", url)
 		})
 
@@ -117,8 +121,26 @@ func TestBuildResourceURI(t *testing.T) {
 				ResourceName:        strPtr("rn1"),
 			}
 
-			url := *ub.buildResourceURI()
+			result, err := ub.buildResourceURI()
+			if err != nil {
+				return
+			}
+			url := *result
 			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
+		})
+
+		t.Run("when metricDefinition or metricNamespace is not defined an error is thrown", func(t *testing.T) {
+			ub := &urlBuilder{}
+
+			_, err := ub.buildResourceURI()
+			if err == nil {
+				t.Errorf("Expected an error, but got nil")
+			} else {
+				expectedErrorMessage := "no metricNamespace or metricDefiniton provided"
+				if err.Error() != expectedErrorMessage {
+					t.Errorf("Expected error message %s, but got %s", expectedErrorMessage, err.Error())
+				}
+			}
 		})
 	})
 }

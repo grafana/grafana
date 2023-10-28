@@ -18,9 +18,9 @@ type urlBuilder struct {
 	MetricDefinition    *string
 }
 
-func (params *urlBuilder) buildResourceURI() *string {
+func (params *urlBuilder) buildResourceURI() (*string, error) {
 	if params.ResourceURI != nil && *params.ResourceURI != "" {
-		return params.ResourceURI
+		return params.ResourceURI, nil
 	}
 
 	subscription := params.Subscription
@@ -33,6 +33,7 @@ func (params *urlBuilder) buildResourceURI() *string {
 
 	if metricNamespace == nil || *metricNamespace == "" {
 		metricNamespace = params.MetricDefinition
+		return metricNamespace, fmt.Errorf("no metricNamespace or metricDefiniton provided")
 	}
 
 	metricNamespaceArray := strings.Split(*metricNamespace, "/")
@@ -67,7 +68,7 @@ func (params *urlBuilder) buildResourceURI() *string {
 	}
 
 	resourceURI := strings.Join(urlArray, "/")
-	return &resourceURI
+	return &resourceURI, nil
 }
 
 // BuildMetricsURL checks the metric properties to see which form of the url
@@ -77,7 +78,7 @@ func (params *urlBuilder) BuildMetricsURL() string {
 
 	// Prior to Grafana 9, we had a legacy query object rather than a resourceURI, so we manually create the resource URI
 	if resourceURI == nil || *resourceURI == "" {
-		resourceURI = params.buildResourceURI()
+		resourceURI, _ = params.buildResourceURI()
 	}
 
 	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceURI)
