@@ -78,10 +78,6 @@ export interface PromMetricsMetadata {
   [metric: string]: PromMetricsMetadataItem;
 }
 
-export interface Labels {
-  [index: string]: any;
-}
-
 export type PromValue = [number, any];
 
 export interface PromMetric {
