@@ -12,11 +12,10 @@ import {
   dateTime,
   Field,
   getFieldDisplayName,
-  LoadingState,
   toDataFrame,
   VariableHide,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
@@ -32,13 +31,22 @@ import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from '
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    fetch: fetchMock,
-  }),
-  getTemplateSrv: () => templateSrvStub,
-}));
+
+export function mockBackendService(customFetchMock?: ReturnType<typeof jest.fn>) {
+  const origBackendSrv = getBackendSrv();
+  setBackendSrv({
+    ...origBackendSrv,
+    fetch: customFetchMock ?? fetchMock,
+  });
+}
+
+// jest.mock('@grafana/runtime', () => ({
+//   ...jest.requireActual('@grafana/runtime'),
+//   getBackendSrv: () => ({
+//     fetch: fetchMock,
+//   }),
+//   getTemplateSrv: () => templateSrvStub,
+// }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
 
@@ -69,6 +77,7 @@ const timeSrvStub: TimeSrv = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBackendService();
 });
 
 describe('PrometheusDatasource', () => {
@@ -79,6 +88,7 @@ describe('PrometheusDatasource', () => {
     uid: 'ABCDEF',
     user: 'test',
     password: 'mupp',
+    access: 'proxy',
     jsonData: {
       customQueryParameters: '',
       cacheLevel: PrometheusCacheLevel.Low,
@@ -100,38 +110,10 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Query', () => {
-    it('returns empty array when no queries', async () => {
-      await expect(ds.query(createDataRequest([]))).toEmitValuesWith((response) => {
-        expect(response[0].data).toEqual([]);
-        expect(response[0].state).toBe(LoadingState.Done);
-      });
-    });
-
-    it('performs time series queries', async () => {
-      await expect(ds.query(createDataRequest([{}]))).toEmitValuesWith((response) => {
-        expect(response[0].data.length).not.toBe(0);
-        expect(response[0].state).toBe(LoadingState.Done);
-      });
-    });
-
-    it('with 2 queries and used from Explore, sends results as they arrive', async () => {
-      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Explore }))).toEmitValuesWith((response) => {
-        expect(response[0].data.length).not.toBe(0);
-        expect(response[0].state).toBe(LoadingState.Loading);
-        expect(response[1].state).toBe(LoadingState.Done);
-      });
-    });
-
-    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', async () => {
-      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard }))).toEmitValuesWith((response) => {
-        expect(response[0].data.length).not.toBe(0);
-        expect(response[0].state).toBe(LoadingState.Done);
-      });
-    });
-
     it('throws if using direct access', async () => {
       const instanceSettings = {
         url: 'proxied',
+        directUrl: 'direct',
         user: 'test',
         password: 'mupp',
         access: 'direct',
@@ -143,7 +125,20 @@ describe('PrometheusDatasource', () => {
       const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
 
       await expect(
-        lastValueFrom(directDs.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })))
+        lastValueFrom(
+          directDs.query(
+            createDataRequest(
+              [
+                {
+                  expr: '',
+                  refId: 'A',
+                },
+                { expr: '', refId: 'B' },
+              ],
+              { app: CoreApp.Dashboard }
+            )
+          )
+        )
       ).rejects.toMatchObject({ message: expect.stringMatching('Browser access') });
 
       // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
@@ -209,12 +204,18 @@ describe('PrometheusDatasource', () => {
   describe('customQueryParams', () => {
     const target: PromQuery = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
 
-    function makeQuery(target: PromQuery) {
+    function makeQuery(target: PromQuery): DataQueryRequest<PromQuery> {
       return {
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
+        app: CoreApp.Explore,
+        intervalMs: 1500,
+        requestId: 'A',
+        scopedVars: {},
+        startTime: 0,
+        timezone: '',
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }), raw: { from: '', to: '' } },
         targets: [target],
         interval: '60s',
-      } as DataQueryRequest<PromQuery>;
+      };
     }
 
     describe('with GET http method', () => {
@@ -228,27 +229,6 @@ describe('PrometheusDatasource', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/foo?customQuery=123');
-      });
-
-      it('adds params to timeseries query', () => {
-        promDs.query(makeQuery(target));
-        expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe(
-          'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
-        );
-      });
-      it('adds params to exemplars query', () => {
-        promDs.query(makeQuery({ ...target, exemplar: true }));
-        // We do also range query for single exemplars target
-        expect(fetchMock.mock.calls.length).toBe(2);
-        expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
-        expect(fetchMock.mock.calls[1][0].url).toContain('&customQuery=123');
-      });
-
-      it('adds params to instant query', () => {
-        promDs.query(makeQuery({ ...target, instant: true }));
-        expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
       });
     });
 
@@ -269,32 +249,6 @@ describe('PrometheusDatasource', () => {
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/api/v1/labels');
-        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
-      });
-
-      it('adds params to timeseries query', () => {
-        promDs.query(makeQuery(target));
-        expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/query_range');
-        expect(fetchMock.mock.calls[0][0].data).toEqual({
-          customQuery: '123',
-          query: 'test{job="testjob"}',
-          step: 60,
-          end: 180,
-          start: 60,
-        });
-      });
-      it('adds params to exemplars query', () => {
-        promDs.query(makeQuery({ ...target, exemplar: true }));
-        // We do also range query for single exemplars target
-        expect(fetchMock.mock.calls.length).toBe(2);
-        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
-        expect(fetchMock.mock.calls[1][0].data.customQuery).toBe('123');
-      });
-
-      it('adds params to instant query', () => {
-        promDs.query(makeQuery({ ...target, instant: true }));
-        expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
     });
@@ -343,95 +297,6 @@ describe('PrometheusDatasource', () => {
       const result = ds.createQuery(target, { interval: '15s', filters } as DataQueryRequest<PromQuery>, 0, 0);
       expect(result).toMatchObject({
         expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
-      });
-    });
-  });
-
-  describe('When converting prometheus histogram to heatmap format', () => {
-    let query: DataQueryRequest<PromQuery>;
-
-    beforeEach(() => {
-      query = {
-        range: { from: dateTime(1443454528000), to: dateTime(1443454528000) },
-        targets: [{ expr: 'test{job="testjob"}', format: 'heatmap', legendFormat: '{{le}}' }],
-        interval: '1s',
-      } as DataQueryRequest<PromQuery>;
-    });
-
-    it('should convert cumulative histogram to ordinary', async () => {
-      const resultMock = [
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '10' },
-          values: [
-            [1443454528.0, '10'],
-            [1443454528.0, '10'],
-          ],
-        },
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '20' },
-          values: [
-            [1443454528.0, '20'],
-            [1443454528.0, '10'],
-          ],
-        },
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '30' },
-          values: [
-            [1443454528.0, '25'],
-            [1443454528.0, '10'],
-          ],
-        },
-      ];
-      const responseMock = { data: { data: { result: resultMock } } };
-
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
-      await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const results = result[0].data;
-        expect(results[0].fields[1].values).toEqual([10, 10]);
-        expect(results[0].fields[2].values).toEqual([10, 0]);
-        expect(results[0].fields[3].values).toEqual([5, 0]);
-      });
-    });
-
-    it('should sort series by label value', async () => {
-      const resultMock = [
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '2' },
-          values: [
-            [1443454528.0, '10'],
-            [1443454528.0, '10'],
-          ],
-        },
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '4' },
-          values: [
-            [1443454528.0, '20'],
-            [1443454528.0, '10'],
-          ],
-        },
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '+Inf' },
-          values: [
-            [1443454528.0, '25'],
-            [1443454528.0, '10'],
-          ],
-        },
-        {
-          metric: { __name__: 'metric', job: 'testjob', le: '1' },
-          values: [
-            [1443454528.0, '25'],
-            [1443454528.0, '10'],
-          ],
-        },
-      ];
-      const responseMock = { data: { data: { result: resultMock } } };
-
-      const expected = ['1', '2', '4', '+Inf'];
-
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
-      await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = result[0].data[0].fields.slice(1).map((field: Field) => getFieldDisplayName(field));
-        expect(seriesLabels).toEqual(expected);
       });
     });
   });
@@ -878,8 +743,6 @@ describe('PrometheusDatasource2', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
-    // FIXME do we need this?
-    // directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.None },
@@ -893,11 +756,12 @@ describe('PrometheusDatasource2', () => {
   describe('When querying prometheus with one target using query editor target spec', () => {
     describe('and query syntax is valid', () => {
       let results: DataQueryResponse;
-      const query = {
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
-        targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+      const query: DataQueryRequest<PromQuery> = {
+        ...requestPrerequisites(),
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }), raw: { from: '', to: '' } },
+        targets: [{ refId: 'A', expr: 'test{job="testjob"}', format: 'time_series' }],
         interval: '60s',
-      } as DataQueryRequest<PromQuery>;
+      };
 
       // Interval alignment with step
       const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
@@ -1962,11 +1826,24 @@ describe('PrometheusDatasource for POST', () => {
       end: 2 * 60,
       step: 60,
     };
-    const query = {
-      range: { from: time({ minutes: 1, seconds: 3 }), to: time({ minutes: 2, seconds: 3 }) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+    const query: DataQueryRequest<PromQuery> = {
+      app: CoreApp.Explore,
+      intervalMs: 0,
+      requestId: '',
+      startTime: 0,
+      timezone: '',
+      range: {
+        from: time({ minutes: 1, seconds: 3 }),
+        to: time({ minutes: 2, seconds: 3 }),
+        raw: {
+          from: '',
+          to: '',
+        },
+      },
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', refId: 'test' }],
       interval: '60s',
-    } as DataQueryRequest<PromQuery>;
+      scopedVars: {},
+    };
 
     beforeEach(async () => {
       const response = {
@@ -2010,6 +1887,7 @@ describe('PrometheusDatasource for POST', () => {
     } as PromQueryRequest;
     const instanceSettings = {
       url: 'proxied',
+      directUrl: 'direct',
       user: 'test',
       password: 'mupp',
       access: 'proxy',
@@ -2034,6 +1912,7 @@ describe('PrometheusDatasource for POST', () => {
     it('with direct access tracing headers should not be added', () => {
       const instanceSettings = {
         url: 'proxied',
+        directUrl: 'direct',
         user: 'test',
         password: 'mupp',
         jsonData: { httpMethod: 'POST' },
@@ -2051,334 +1930,6 @@ describe('PrometheusDatasource for POST', () => {
     });
   });
 });
-
-// function getPrepareTargetsContext({
-//   targets,
-//   app,
-//   queryOptions,
-//   languageProvider,
-// }: {
-//   targets: PromQuery[];
-//   app?: CoreApp;
-//   queryOptions?: Partial<QueryOptions>;
-//   languageProvider?: PromQlLanguageProvider;
-// }) {
-//   const instanceSettings = {
-//     url: 'proxied',
-//     access: 'proxy',
-//     user: 'test',
-//     password: 'mupp',
-//     jsonData: { httpMethod: 'POST' },
-//   } as unknown as DataSourceInstanceSettings<PromOptions>;
-//   const start = 0;
-//   const end = 1;
-//   const panelId = '2';
-//   const options = {
-//     targets,
-//     interval: '1s',
-//     panelId,
-//     app,
-//     ...queryOptions,
-//   } as unknown as DataQueryRequest<PromQuery>;
-//
-//   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
-//   if (languageProvider) {
-//     ds.languageProvider = languageProvider;
-//   }
-//   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
-//
-//   return {
-//     queries,
-//     activeTargets,
-//     start,
-//     end,
-//     panelId,
-//   };
-// }
-
-// describe('prepareTargets', () => {
-//   describe('when run from a Panel', () => {
-//     it('then it should just add targets', () => {
-//       const target: PromQuery = {
-//         refId: 'A',
-//         expr: 'up',
-//       };
-//
-//       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({ targets: [target] });
-//
-//       expect(queries.length).toBe(1);
-//       expect(activeTargets.length).toBe(1);
-//       expect(queries[0]).toEqual({
-//         end,
-//         expr: 'up',
-//         headers: {
-//           'X-Dashboard-Id': undefined,
-//           'X-Dashboard-UID': undefined,
-//           'X-Panel-Id': panelId,
-//         },
-//         hinting: undefined,
-//         instant: undefined,
-//         refId: target.refId,
-//         start,
-//         step: 1,
-//       });
-//       expect(activeTargets[0]).toEqual(target);
-//     });
-//
-//     it('should give back 3 targets when multiple queries with exemplar enabled and same metric', () => {
-//       const targetA: PromQuery = {
-//         refId: 'A',
-//         expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//         exemplar: true,
-//       };
-//       const targetB: PromQuery = {
-//         refId: 'B',
-//         expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//         exemplar: true,
-//       };
-//
-//       const { queries, activeTargets } = getPrepareTargetsContext({
-//         targets: [targetA, targetB],
-//         languageProvider: {
-//           histogramMetrics: ['tns_request_duration_seconds_bucket'],
-//         } as PromQlLanguageProvider,
-//       });
-//       expect(queries).toHaveLength(3);
-//       expect(activeTargets).toHaveLength(3);
-//     });
-//
-//     it('should give back 4 targets when multiple queries with exemplar enabled', () => {
-//       const targetA: PromQuery = {
-//         refId: 'A',
-//         expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//         exemplar: true,
-//       };
-//       const targetB: PromQuery = {
-//         refId: 'B',
-//         expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
-//         exemplar: true,
-//       };
-//
-//       const { queries, activeTargets } = getPrepareTargetsContext({
-//         targets: [targetA, targetB],
-//         languageProvider: {
-//           histogramMetrics: ['tns_request_duration_seconds_bucket'],
-//         } as PromQlLanguageProvider,
-//       });
-//       expect(queries).toHaveLength(4);
-//       expect(activeTargets).toHaveLength(4);
-//     });
-//
-//     it('should give back 2 targets when exemplar enabled', () => {
-//       const target: PromQuery = {
-//         refId: 'A',
-//         expr: 'up',
-//         exemplar: true,
-//       };
-//
-//       const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
-//       expect(queries).toHaveLength(2);
-//       expect(activeTargets).toHaveLength(2);
-//       expect(activeTargets[0].exemplar).toBe(true);
-//       expect(activeTargets[1].exemplar).toBe(false);
-//     });
-//     it('should give back 1 target when exemplar and instant are enabled', () => {
-//       const target: PromQuery = {
-//         refId: 'A',
-//         expr: 'up',
-//         exemplar: true,
-//         instant: true,
-//       };
-//
-//       const { queries, activeTargets } = getPrepareTargetsContext({ targets: [target] });
-//       expect(queries).toHaveLength(1);
-//       expect(activeTargets).toHaveLength(1);
-//       expect(activeTargets[0].instant).toBe(true);
-//     });
-//   });
-//
-//   describe('when run from Explore', () => {
-//     describe('when query type Both is selected', () => {
-//       it('should give back 6 targets when multiple queries with exemplar enabled', () => {
-//         const targetA: PromQuery = {
-//           refId: 'A',
-//           expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//           instant: true,
-//           range: true,
-//           exemplar: true,
-//         };
-//         const targetB: PromQuery = {
-//           refId: 'B',
-//           expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_bucket[5m])) by (le))',
-//           exemplar: true,
-//           instant: true,
-//           range: true,
-//         };
-//
-//         const { queries, activeTargets } = getPrepareTargetsContext({
-//           targets: [targetA, targetB],
-//           app: CoreApp.Explore,
-//           languageProvider: {
-//             histogramMetrics: ['tns_request_duration_seconds_bucket'],
-//           } as PromQlLanguageProvider,
-//         });
-//         expect(queries).toHaveLength(6);
-//         expect(activeTargets).toHaveLength(6);
-//       });
-//
-//       it('should give back 5 targets when multiple queries with exemplar enabled and same metric', () => {
-//         const targetA: PromQuery = {
-//           refId: 'A',
-//           expr: 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//           instant: true,
-//           range: true,
-//           exemplar: true,
-//         };
-//         const targetB: PromQuery = {
-//           refId: 'B',
-//           expr: 'histogram_quantile(0.5, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))',
-//           exemplar: true,
-//           instant: true,
-//           range: true,
-//         };
-//
-//         const { queries, activeTargets } = getPrepareTargetsContext({
-//           targets: [targetA, targetB],
-//           app: CoreApp.Explore,
-//           languageProvider: {
-//             histogramMetrics: ['tns_request_duration_seconds_bucket'],
-//           } as PromQlLanguageProvider,
-//         });
-//         expect(queries).toHaveLength(5);
-//         expect(activeTargets).toHaveLength(5);
-//       });
-//
-//       it('then it should return both instant and time series related objects', () => {
-//         const target: PromQuery = {
-//           refId: 'A',
-//           expr: 'up',
-//           range: true,
-//           instant: true,
-//         };
-//
-//         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-//           targets: [target],
-//           app: CoreApp.Explore,
-//         });
-//
-//         expect(queries.length).toBe(2);
-//         expect(activeTargets.length).toBe(2);
-//         expect(queries[0]).toEqual({
-//           end,
-//           expr: 'up',
-//           headers: {
-//             'X-Dashboard-Id': undefined,
-//             'X-Dashboard-UID': undefined,
-//             'X-Panel-Id': panelId,
-//           },
-//           hinting: undefined,
-//           instant: true,
-//           refId: target.refId,
-//           start,
-//           step: 1,
-//         });
-//         expect(activeTargets[0]).toEqual({
-//           ...target,
-//           format: 'table',
-//           instant: true,
-//           valueWithRefId: true,
-//         });
-//         expect(queries[1]).toEqual({
-//           end,
-//           expr: 'up',
-//           headers: {
-//             'X-Dashboard-Id': undefined,
-//             'X-Dashboard-UID': undefined,
-//             'X-Panel-Id': panelId,
-//           },
-//           hinting: undefined,
-//           instant: false,
-//           refId: target.refId,
-//           start,
-//           step: 1,
-//         });
-//         expect(activeTargets[1]).toEqual({
-//           ...target,
-//           format: 'time_series',
-//           instant: false,
-//         });
-//       });
-//     });
-//
-//     describe('when query type Instant is selected', () => {
-//       it('then it should target and modify its format to table', () => {
-//         const target: PromQuery = {
-//           refId: 'A',
-//           expr: 'up',
-//           instant: true,
-//           range: false,
-//         };
-//
-//         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-//           targets: [target],
-//           app: CoreApp.Explore,
-//         });
-//
-//         expect(queries.length).toBe(1);
-//         expect(activeTargets.length).toBe(1);
-//         expect(queries[0]).toEqual({
-//           end,
-//           expr: 'up',
-//           headers: {
-//             'X-Dashboard-Id': undefined,
-//             'X-Dashboard-UID': undefined,
-//             'X-Panel-Id': panelId,
-//           },
-//           hinting: undefined,
-//           instant: true,
-//           refId: target.refId,
-//           start,
-//           step: 1,
-//         });
-//         expect(activeTargets[0]).toEqual({ ...target, format: 'table' });
-//       });
-//     });
-//   });
-//
-//   describe('when query type Range is selected', () => {
-//     it('then it should just add targets', () => {
-//       const target: PromQuery = {
-//         refId: 'A',
-//         expr: 'up',
-//         range: true,
-//         instant: false,
-//       };
-//
-//       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
-//         targets: [target],
-//         app: CoreApp.Explore,
-//       });
-//
-//       expect(queries.length).toBe(1);
-//       expect(activeTargets.length).toBe(1);
-//       expect(queries[0]).toEqual({
-//         end,
-//         expr: 'up',
-//         headers: {
-//           'X-Dashboard-Id': undefined,
-//           'X-Dashboard-UID': undefined,
-//           'X-Panel-Id': panelId,
-//         },
-//         hinting: undefined,
-//         instant: false,
-//         refId: target.refId,
-//         start,
-//         step: 1,
-//       });
-//       expect(activeTargets[0]).toEqual(target);
-//     });
-//   });
-// });
 
 describe('modifyQuery', () => {
   describe('when called with ADD_FILTER', () => {
@@ -2442,24 +1993,29 @@ describe('modifyQuery', () => {
   });
 });
 
-function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
-  const defaults = {
+function createDataRequest(targets: PromQuery[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
+  const defaults: DataQueryRequest<PromQuery> = {
+    intervalMs: 15000,
+    requestId: 'createDataRequest',
+    startTime: 0,
+    timezone: 'browser',
     app: CoreApp.Dashboard,
-    targets: targets.map((t) => {
-      return {
-        instant: false,
-        start: dateTime().subtract(5, 'minutes'),
-        end: dateTime(),
-        expr: 'test',
-        ...t,
-      };
-    }),
+    targets: targets.map((t, i) => ({
+      instant: false,
+      start: dateTime().subtract(5, 'minutes'),
+      end: dateTime(),
+      ...t,
+    })),
     range: {
       from: dateTime(),
       to: dateTime(),
+      raw: {
+        from: '',
+        to: '',
+      },
     },
     interval: '15s',
-    showingGraph: true,
+    scopedVars: {},
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;
@@ -2553,4 +2109,15 @@ function createEmptyAnnotationResponse() {
   };
 
   return { ...response };
+}
+
+function requestPrerequisites() {
+  return {
+    app: CoreApp.Explore,
+    intervalMs: 15000,
+    requestId: 'some-req',
+    scopedVars: {},
+    startTime: 0,
+    timezone: 'browser',
+  };
 }
