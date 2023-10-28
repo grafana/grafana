@@ -59,7 +59,7 @@ const getPartClass = (theme: GrafanaTheme2) => {
   );
 };
 
-const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
+const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
   const theme = useTheme2();
   const partClass = useMemo(() => getPartClass(theme), [theme]);
 
@@ -70,9 +70,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
   };
   return (
     <div className={partClass}>
-      <button className={cx('gf-form-label', noRightMarginPaddingClass)} onClick={onRemove}>
-        {name}
-      </button>
+      <button className={cx('gf-form-label', noRightMarginPaddingClass)}>{name}</button>
       {params.map((p, i) => {
         const { value, options } = p;
         const isLast = i === params.length - 1;
