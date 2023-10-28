@@ -1,5 +1,6 @@
 import { llms } from '@grafana/experimental';
 
+import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
@@ -21,7 +22,7 @@ describe('getDashboardChanges', () => {
     const deprecatedOptions = {
       legend: { displayMode: 'hidden', showLegend: false },
     };
-    const deprecatedVersion = 37;
+    const deprecatedVersion = DASHBOARD_SCHEMA_VERSION - 1;
     const dashboard = createDashboardModelFixture({
       schemaVersion: deprecatedVersion,
       panels: [createPanelSaveModel({ title: 'Panel 1', options: deprecatedOptions })],
@@ -40,7 +41,9 @@ describe('getDashboardChanges', () => {
     const result = getDashboardChanges(dashboard);
 
     // Assertions
-    expect(result.migrationChanges).toContain('-  "schemaVersion": 37,\n' + '+  "schemaVersion": 38,\n');
+    expect(result.migrationChanges).toContain(
+      `-  "schemaVersion": ${deprecatedVersion},\n+  "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n`
+    );
 
     expect(result.migrationChanges).not.toContain(
       '   "panels": [\n' +

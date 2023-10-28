@@ -13,6 +13,8 @@ import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
+import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+
 jest.mock('app/core/services/context_srv', () => ({}));
 
 const dataSources = {
@@ -228,7 +230,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(38);
+      expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
     });
 
     it('graph thresholds should be migrated', () => {
