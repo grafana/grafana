@@ -320,8 +320,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     calcs.count++;
 
-    if (currentValue != null) {
-      // null || undefined
+    if (currentValue != null && !Number.isNaN(currentValue)) {
+      // null || undefined || NaN
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
