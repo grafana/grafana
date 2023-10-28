@@ -90,7 +90,7 @@ You can use the Text mode option to control what text the visualization renders.
 
 ### Wide layout
 
-Set if wide layout is enabled or not. Wide layout is enabled by default.
+Set whether wide layout is enabled or not. Wide layout is enabled by default.
 
 - **On -** Wide layout is enabled.
 - **Off -** Wide layout is disabled.
