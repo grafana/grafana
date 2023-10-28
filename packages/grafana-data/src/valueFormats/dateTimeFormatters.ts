@@ -56,11 +56,11 @@ export function toNanoSeconds(size: number, decimals?: DecimalCount): FormattedV
   } else if (Math.abs(size) < 60000000000) {
     return toFixedScaled(size / 1000000000, decimals, ' s');
   } else if (Math.abs(size) < 3600000000000) {
-    return toFixedScaled(size / 60000000000, decimals, ' min');
+    return toFixedScaled(size / 60000000000, decimals, size === 1 ? ' min' : ' mins');
   } else if (Math.abs(size) < 86400000000000) {
-    return toFixedScaled(size / 3600000000000, decimals, ' hour');
+    return toFixedScaled(size / 3600000000000, decimals, size === 1 ? ' hour' : ' hours');
   } else {
-    return toFixedScaled(size / 86400000000000, decimals, ' day');
+    return toFixedScaled(size / 86400000000000, decimals, size === 1 ? ' day' : ' days');
   }
 }
 
@@ -90,16 +90,16 @@ export function toMilliSeconds(size: number, decimals?: DecimalCount, scaledDeci
     return toFixedScaled(size / 1000, decimals, ' s');
   } else if (Math.abs(size) < 3600000) {
     // Less than 1 hour, divide in minutes
-    return toFixedScaled(size / 60000, decimals, ' min');
+    return toFixedScaled(size / 60000, decimals, size === 1 ? ' min' : ' mins');
   } else if (Math.abs(size) < 86400000) {
     // Less than one day, divide in hours
-    return toFixedScaled(size / 3600000, decimals, ' hour');
+    return toFixedScaled(size / 3600000, decimals, size === 1 ? ' hour' : ' hours');
   } else if (Math.abs(size) < 31536000000) {
     // Less than one year, divide in days
-    return toFixedScaled(size / 86400000, decimals, ' day');
+    return toFixedScaled(size / 86400000, decimals, size === 1 ? ' day' : ' days');
   }
 
-  return toFixedScaled(size / 31536000000, decimals, ' year');
+  return toFixedScaled(size / 31536000000, decimals, size === 1 ? ' year' : ' years');
 }
 
 export function trySubstract(value1: DecimalCount, value2: DecimalCount): DecimalCount {
@@ -136,19 +136,19 @@ export function toSeconds(size: number, decimals?: DecimalCount): FormattedValue
     return { text: toFixed(size, decimals), suffix: ' s' };
   } else if (Math.abs(size) < 3600) {
     // Less than 1 hour, divide in minutes
-    return toFixedScaled(size / 60, decimals, ' min');
+    return toFixedScaled(size / 60, decimals, size === 1 ? ' min' : ' mins');
   } else if (Math.abs(size) < 86400) {
     // Less than one day, divide in hours
-    return toFixedScaled(size / 3600, decimals, ' hour');
+    return toFixedScaled(size / 3600, decimals, size === 1 ? ' hour' : ' hours');
   } else if (Math.abs(size) < 604800) {
     // Less than one week, divide in days
-    return toFixedScaled(size / 86400, decimals, ' day');
+    return toFixedScaled(size / 86400, decimals, size === 1 ? ' day' : ' days');
   } else if (Math.abs(size) < 31536000) {
     // Less than one year, divide in week
-    return toFixedScaled(size / 604800, decimals, ' week');
+    return toFixedScaled(size / 604800, decimals, size === 1 ? ' week' : ' weeks');
   }
 
-  return toFixedScaled(size / 3.15569e7, decimals, ' year');
+  return toFixedScaled(size / 3.15569e7, decimals, size === 1 ? ' year' : ' years');
 }
 
 export function toMinutes(size: number, decimals?: DecimalCount): FormattedValue {
@@ -157,15 +157,15 @@ export function toMinutes(size: number, decimals?: DecimalCount): FormattedValue
   }
 
   if (Math.abs(size) < 60) {
-    return { text: toFixed(size, decimals), suffix: ' min' };
+    return { text: toFixed(size, decimals), suffix: ' mins' };
   } else if (Math.abs(size) < 1440) {
-    return toFixedScaled(size / 60, decimals, ' hour');
+    return toFixedScaled(size / 60, decimals, size === 1 ? ' hour' : ' hours');
   } else if (Math.abs(size) < 10080) {
-    return toFixedScaled(size / 1440, decimals, ' day');
+    return toFixedScaled(size / 1440, decimals, size === 1 ? ' day' : ' days');
   } else if (Math.abs(size) < 604800) {
-    return toFixedScaled(size / 10080, decimals, ' week');
+    return toFixedScaled(size / 10080, decimals, size === 1 ? ' week' : ' weeks');
   } else {
-    return toFixedScaled(size / 5.25948e5, decimals, ' year');
+    return toFixedScaled(size / 5.25948e5, decimals, size === 1 ? ' year' : ' years');
   }
 }
 
@@ -175,13 +175,13 @@ export function toHours(size: number, decimals?: DecimalCount): FormattedValue {
   }
 
   if (Math.abs(size) < 24) {
-    return { text: toFixed(size, decimals), suffix: ' hour' };
+    return { text: toFixed(size, decimals), suffix: ' hours' };
   } else if (Math.abs(size) < 168) {
-    return toFixedScaled(size / 24, decimals, ' day');
+    return toFixedScaled(size / 24, decimals, size === 1 ? ' day' : ' days');
   } else if (Math.abs(size) < 8760) {
-    return toFixedScaled(size / 168, decimals, ' week');
+    return toFixedScaled(size / 168, decimals, size === 1 ? ' week' : ' weeks');
   } else {
-    return toFixedScaled(size / 8760, decimals, ' year');
+    return toFixedScaled(size / 8760, decimals, size === 1 ? ' year' : ' years');
   }
 }
 
@@ -191,11 +191,11 @@ export function toDays(size: number, decimals?: DecimalCount): FormattedValue {
   }
 
   if (Math.abs(size) < 7) {
-    return { text: toFixed(size, decimals), suffix: ' day' };
+    return { text: toFixed(size, decimals), suffix: ' days' };
   } else if (Math.abs(size) < 365) {
-    return toFixedScaled(size / 7, decimals, ' week');
+    return toFixedScaled(size / 7, decimals, size === 1 ? ' week' : ' weeks');
   } else {
-    return toFixedScaled(size / 365, decimals, ' year');
+    return toFixedScaled(size / 365, decimals, size === 1 ? ' year' : ' years');
   }
 }
 
