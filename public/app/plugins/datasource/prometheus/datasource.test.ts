@@ -1,21 +1,16 @@
 import { cloneDeep } from 'lodash';
-import { lastValueFrom, of, throwError } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
   DataQueryRequest,
-  DataQueryResponse,
-  DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
-  Field,
-  getFieldDisplayName,
-  toDataFrame,
   VariableHide,
 } from '@grafana/data';
-import { getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
@@ -32,21 +27,13 @@ const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
 
-export function mockBackendService(customFetchMock?: ReturnType<typeof jest.fn>) {
-  const origBackendSrv = getBackendSrv();
-  setBackendSrv({
-    ...origBackendSrv,
-    fetch: customFetchMock ?? fetchMock,
-  });
-}
-
-// jest.mock('@grafana/runtime', () => ({
-//   ...jest.requireActual('@grafana/runtime'),
-//   getBackendSrv: () => ({
-//     fetch: fetchMock,
-//   }),
-//   getTemplateSrv: () => templateSrvStub,
-// }));
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    fetch: fetchMock,
+  }),
+  getTemplateSrv: () => templateSrvStub,
+}));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
 
@@ -77,7 +64,6 @@ const timeSrvStub: TimeSrv = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockBackendService();
 });
 
 describe('PrometheusDatasource', () => {
@@ -202,22 +188,6 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('customQueryParams', () => {
-    const target: PromQuery = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
-
-    function makeQuery(target: PromQuery): DataQueryRequest<PromQuery> {
-      return {
-        app: CoreApp.Explore,
-        intervalMs: 1500,
-        requestId: 'A',
-        scopedVars: {},
-        startTime: 0,
-        timezone: '',
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }), raw: { from: '', to: '' } },
-        targets: [target],
-        interval: '60s',
-      };
-    }
-
     describe('with GET http method', () => {
       const promDs = new PrometheusDatasource(
         { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } },
@@ -753,203 +723,6 @@ describe('PrometheusDatasource2', () => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
   });
 
-  describe('When querying prometheus with one target using query editor target spec', () => {
-    describe('and query syntax is valid', () => {
-      let results: DataQueryResponse;
-      const query: DataQueryRequest<PromQuery> = {
-        ...requestPrerequisites(),
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }), raw: { from: '', to: '' } },
-        targets: [{ refId: 'A', expr: 'test{job="testjob"}', format: 'time_series' }],
-        interval: '60s',
-      };
-
-      // Interval alignment with step
-      const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
-        'test{job="testjob"}'
-      )}&start=60&end=180&step=60`;
-
-      beforeEach(async () => {
-        const response = {
-          data: {
-            status: 'success',
-            data: {
-              resultType: 'matrix',
-              result: [
-                {
-                  metric: { __name__: 'test', job: 'testjob' },
-                  values: [[60, '3846']],
-                },
-              ],
-            },
-          },
-        };
-        fetchMock.mockImplementation(() => of(response));
-        ds.query(query).subscribe((data) => {
-          results = data;
-        });
-      });
-
-      it('should generate the correct query', () => {
-        const res = fetchMock.mock.calls[0][0];
-        expect(res.method).toBe('GET');
-        expect(res.url).toBe(urlExpected);
-      });
-
-      it('should return series list', async () => {
-        const frame = toDataFrame(results.data[0]);
-        expect(results.data.length).toBe(1);
-        expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
-      });
-    });
-
-    describe('and query syntax is invalid', () => {
-      let results: string;
-      const query = {
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
-        targets: [{ expr: 'tes;;t{job="testjob"}', format: 'time_series' }],
-        interval: '60s',
-      } as DataQueryRequest<PromQuery>;
-
-      const errMessage = 'parse error at char 25: could not parse remaining input';
-      const response = {
-        data: {
-          status: 'error',
-          errorType: 'bad_data',
-          error: errMessage,
-        },
-      };
-
-      it('should generate an error', () => {
-        fetchMock.mockImplementation(() => throwError(response));
-        ds.query(query).subscribe((e: any) => {
-          results = e.message;
-          expect(results).toBe(`"${errMessage}"`);
-        });
-      });
-    });
-  });
-
-  describe('When querying prometheus with one target which returns multiple series', () => {
-    let results: DataQueryResponse;
-    const start = 60;
-    const end = 360;
-    const step = 60;
-
-    const query = {
-      range: { from: time({ seconds: start }), to: time({ seconds: end }) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
-      interval: '60s',
-    } as DataQueryRequest<PromQuery>;
-
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
-        data: {
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: { __name__: 'test', job: 'testjob', series: 'series 1' },
-                values: [
-                  [start + step * 1, '3846'],
-                  [start + step * 3, '3847'],
-                  [end - step * 1, '3848'],
-                ],
-              },
-              {
-                metric: { __name__: 'test', job: 'testjob', series: 'series 2' },
-                values: [[start + step * 2, '4846']],
-              },
-            ],
-          },
-        },
-      };
-
-      fetchMock.mockImplementation(() => of(response));
-
-      ds.query(query).subscribe((data) => {
-        results = data;
-      });
-    });
-
-    it('should be same length', () => {
-      expect(results.data.length).toBe(2);
-      expect(results.data[0].length).toBe((end - start) / step + 1);
-      expect(results.data[1].length).toBe((end - start) / step + 1);
-    });
-
-    it('should fill null until first datapoint in response', () => {
-      expect(results.data[0].fields[0].values[0]).toBe(start * 1000);
-      expect(results.data[0].fields[1].values[0]).toBe(null);
-      expect(results.data[0].fields[0].values[1]).toBe((start + step * 1) * 1000);
-      expect(results.data[0].fields[1].values[1]).toBe(3846);
-    });
-
-    it('should fill null after last datapoint in response', () => {
-      const length = (end - start) / step + 1;
-      expect(results.data[0].fields[0].values[length - 2]).toBe((end - step * 1) * 1000);
-      expect(results.data[0].fields[1].values[length - 2]).toBe(3848);
-      expect(results.data[0].fields[0].values[length - 1]).toBe(end * 1000);
-      expect(results.data[0].fields[1].values[length - 1]).toBe(null);
-    });
-
-    it('should fill null at gap between series', () => {
-      expect(results.data[0].fields[0].values[2]).toBe((start + step * 2) * 1000);
-      expect(results.data[0].fields[1].values[2]).toBe(null);
-      expect(results.data[1].fields[0].values[1]).toBe((start + step * 1) * 1000);
-      expect(results.data[1].fields[1].values[1]).toBe(null);
-      expect(results.data[1].fields[0].values[3]).toBe((start + step * 3) * 1000);
-      expect(results.data[1].fields[1].values[3]).toBe(null);
-    });
-  });
-
-  describe('When querying prometheus with one target and instant = true', () => {
-    let results: DataQueryResponse;
-    const urlExpected = `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=${encodeURIComponent(
-      'test{job="testjob"}'
-    )}&time=123`;
-    const query = {
-      range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
-      interval: '60s',
-    } as DataQueryRequest<PromQuery>;
-
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
-        data: {
-          data: {
-            resultType: 'vector',
-            result: [
-              {
-                metric: { __name__: 'test', job: 'testjob' },
-                value: [123, '3846'],
-              },
-            ],
-          },
-        },
-      };
-
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query).subscribe((data) => {
-        results = data;
-      });
-    });
-
-    it('should generate the correct query', () => {
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should return series list', () => {
-      const frame = toDataFrame(results.data[0]);
-      expect(results.data.length).toBe(1);
-      expect(frame.name).toBe('test{job="testjob"}');
-      expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
-    });
-  });
-
   describe('annotationQuery', () => {
     let results: AnnotationEvent[];
     const options = {
@@ -1164,569 +937,6 @@ describe('PrometheusDatasource2', () => {
     });
   });
 
-  describe('When resultFormat is table and instant = true', () => {
-    let results: DataQueryResponse;
-    const query = {
-      range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
-      interval: '60s',
-    } as DataQueryRequest<PromQuery>;
-
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
-        data: {
-          data: {
-            resultType: 'vector',
-            result: [
-              {
-                metric: { __name__: 'test', job: 'testjob' },
-                value: [123, '3846'],
-              },
-            ],
-          },
-        },
-      };
-
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query).subscribe((data: any) => {
-        results = data;
-      });
-    });
-
-    it('should return result', () => {
-      expect(results).not.toBe(null);
-    });
-  });
-
-  describe('The "step" query parameter', () => {
-    const response = {
-      status: 'success',
-      data: {
-        data: {
-          resultType: 'matrix',
-          result: [] as DataQueryResponseData[],
-        },
-      },
-    };
-
-    it('should be min interval when greater than auto interval', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'test',
-            interval: '10s',
-          },
-        ],
-        interval: '5s',
-      } as DataQueryRequest<PromQuery>;
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
-
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('step should be fractional for sub second intervals', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [{ expr: 'test' }],
-        interval: '100ms',
-      } as DataQueryRequest<PromQuery>;
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=0.1';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should be auto interval when greater than min interval', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'test',
-            interval: '5s',
-          },
-        ],
-        interval: '10s',
-      } as DataQueryRequest<PromQuery>;
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should result in querying fewer than 11000 data points', async () => {
-      const query = {
-        // 6 hour range
-        range: { from: time({ hours: 1 }), to: time({ hours: 7 }) },
-        targets: [{ expr: 'test' }],
-        interval: '1s',
-      } as DataQueryRequest<PromQuery>;
-      const end = 7 * 60 * 60;
-      const start = 60 * 60;
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=' + start + '&end=' + end + '&step=2';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should not apply min interval when interval * intervalFactor greater', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'test',
-            interval: '10s',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '5s',
-      } as DataQueryRequest<PromQuery>;
-      // times get rounded up to interval
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=400&step=50';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should apply min interval when interval * intervalFactor smaller', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'test',
-            interval: '15s',
-            intervalFactor: 2,
-          },
-        ],
-        interval: '5s',
-      } as DataQueryRequest<PromQuery>;
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=60&end=420&step=15';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should apply intervalFactor to auto interval when greater', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'test',
-            interval: '5s',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '10s',
-      } as DataQueryRequest<PromQuery>;
-      // times get aligned to interval
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=400&step=100';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should not not be affected by the 11000 data points limit when large enough', async () => {
-      const query = {
-        // 1 week range
-        range: { from: time({}), to: time({ hours: 7 * 24 }) },
-        targets: [
-          {
-            expr: 'test',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '10s',
-      } as DataQueryRequest<PromQuery>;
-      const end = 7 * 24 * 60 * 60;
-      const start = 0;
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=100';
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-
-    it('should be determined by the 11000 data points limit when too small', async () => {
-      const query = {
-        // 1 week range
-        range: { from: time({}), to: time({ hours: 7 * 24 }) },
-        targets: [
-          {
-            expr: 'test',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '5s',
-      } as DataQueryRequest<PromQuery>;
-      let end = 7 * 24 * 60 * 60;
-      end -= end % 55;
-      const start = 0;
-      const step = 55;
-      const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
-      const urlExpected =
-        'proxied/api/v1/query_range?query=test' +
-        '&start=' +
-        adjusted.start +
-        '&end=' +
-        (adjusted.end + step) +
-        '&step=' +
-        step;
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-  });
-
-  describe('The __interval and __interval_ms template variables', () => {
-    const response = {
-      status: 'success',
-      data: {
-        data: {
-          resultType: 'matrix',
-          result: [] as DataQueryResponseData[],
-        },
-      },
-    };
-
-    it('should be unchanged when auto interval is greater than min interval', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            interval: '5s',
-          },
-        ],
-        interval: '10s',
-        scopedVars: {
-          __interval: { text: '10s', value: '10s' },
-          __interval_ms: { text: 10 * 1000, value: 10 * 1000 },
-        },
-      };
-
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=60&end=420&step=10';
-
-      replaceMock.mockImplementation((str) => str);
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '10s',
-          value: '10s',
-        },
-        __interval_ms: {
-          text: 10000,
-          value: 10000,
-        },
-      });
-    });
-
-    it('should be min interval when it is greater than auto interval', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            interval: '10s',
-          },
-        ],
-        interval: '5s',
-        scopedVars: {
-          __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
-        },
-      };
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=60&end=420&step=10';
-      fetchMock.mockImplementation(() => of(response));
-      replaceMock.mockImplementation((str) => str);
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '5s',
-          value: '5s',
-        },
-        __interval_ms: {
-          text: 5000,
-          value: 5000,
-        },
-      });
-    });
-
-    it('should account for intervalFactor', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            interval: '5s',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '10s',
-        scopedVars: {
-          __interval: { text: '10s', value: '10s' },
-          __interval_ms: { text: 10 * 1000, value: 10 * 1000 },
-        },
-      };
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=0&end=400&step=100';
-      fetchMock.mockImplementation(() => of(response));
-      replaceMock.mockImplementation((str) => str);
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '10s',
-          value: '10s',
-        },
-        __interval_ms: {
-          text: 10000,
-          value: 10000,
-        },
-      });
-
-      expect(query.scopedVars.__interval.text).toBe('10s');
-      expect(query.scopedVars.__interval.value).toBe('10s');
-      expect(query.scopedVars.__interval_ms.text).toBe(10 * 1000);
-      expect(query.scopedVars.__interval_ms.value).toBe(10 * 1000);
-    });
-
-    it('should be interval * intervalFactor when greater than min interval', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            interval: '10s',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '5s',
-        scopedVars: {
-          __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
-        },
-      };
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=50&end=400&step=50';
-
-      replaceMock.mockImplementation((str) => str);
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '5s',
-          value: '5s',
-        },
-        __interval_ms: {
-          text: 5000,
-          value: 5000,
-        },
-      });
-    });
-
-    it('should be min interval when greater than interval * intervalFactor', async () => {
-      const query = {
-        // 6 minute range
-        range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            interval: '15s',
-            intervalFactor: 2,
-          },
-        ],
-        interval: '5s',
-        scopedVars: {
-          __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
-        },
-      };
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=60&end=420&step=15';
-
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '5s',
-          value: '5s',
-        },
-        __interval_ms: {
-          text: 5000,
-          value: 5000,
-        },
-      });
-    });
-
-    it('should be determined by the 11000 data points limit, accounting for intervalFactor', async () => {
-      const query = {
-        // 1 week range
-        range: { from: time({}), to: time({ hours: 7 * 24 }) },
-        targets: [
-          {
-            expr: 'rate(test[$__interval])',
-            intervalFactor: 10,
-          },
-        ],
-        interval: '5s',
-        scopedVars: {
-          __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
-        },
-      };
-      let end = 7 * 24 * 60 * 60;
-      end -= end % 55;
-      const start = 0;
-      const step = 55;
-      const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
-      const urlExpected =
-        'proxied/api/v1/query_range?query=' +
-        encodeURIComponent('rate(test[$__interval])') +
-        '&start=' +
-        adjusted.start +
-        '&end=' +
-        (adjusted.end + step) +
-        '&step=' +
-        step;
-      fetchMock.mockImplementation(() => of(response));
-      replaceMock.mockImplementation((str) => str);
-      ds.query(query as any);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[0][1]).toEqual({
-        __interval: {
-          text: '5s',
-          value: '5s',
-        },
-        __interval_ms: {
-          text: 5000,
-          value: 5000,
-        },
-      });
-    });
-  });
-
-  describe('The __range, __range_s and __range_ms variables', () => {
-    const response = {
-      status: 'success',
-      data: {
-        data: {
-          resultType: 'matrix',
-          result: [] as DataQueryResponseData[],
-        },
-      },
-    };
-
-    it('should use overridden ranges, not dashboard ranges', async () => {
-      const expectedRangeSecond = 3600;
-      const expectedRangeString = '3600s';
-      const query = {
-        range: {
-          from: time({}),
-          to: time({ hours: 1 }),
-        },
-        targets: [
-          {
-            expr: 'test[${__range_s}s]',
-          },
-        ],
-        interval: '60s',
-      } as DataQueryRequest<PromQuery>;
-      const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
-        query.targets[0].expr
-      )}&start=0&end=3600&step=60`;
-
-      replaceMock.mockImplementation((str) => str);
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query);
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.url).toBe(urlExpected);
-
-      expect(replaceMock.mock.calls[1][1]).toEqual({
-        __range_s: {
-          text: expectedRangeSecond,
-          value: expectedRangeSecond,
-        },
-        __range: {
-          text: expectedRangeString,
-          value: expectedRangeString,
-        },
-        __range_ms: {
-          text: expectedRangeSecond * 1000,
-          value: expectedRangeSecond * 1000,
-        },
-        __rate_interval: {
-          text: '75s',
-          value: '75s',
-        },
-      });
-    });
-  });
-
   describe('The __rate_interval variable', () => {
     const target = { expr: 'rate(process_cpu_seconds_total[$__rate_interval])', refId: 'A' };
 
@@ -1804,130 +1014,53 @@ describe('PrometheusDatasource2', () => {
   });
 });
 
-describe('PrometheusDatasource for POST', () => {
+describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
+  const options = { panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
+  const httpOptions = {
+    headers: {} as { [key: string]: number | undefined },
+  } as PromQueryRequest;
   const instanceSettings = {
     url: 'proxied',
+    directUrl: 'direct',
     user: 'test',
     password: 'mupp',
+    access: 'proxy',
     jsonData: { httpMethod: 'POST' },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
   beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
+    ds = new PrometheusDatasource(
+      instanceSettings,
+      templateSrvStub as unknown as TemplateSrv,
+      timeSrvStub as unknown as TimeSrv
+    );
   });
 
-  describe('When querying prometheus with one target using query editor target spec', () => {
-    let results: DataQueryResponse;
-    const urlExpected = 'proxied/api/v1/query_range';
-    const dataExpected = {
-      query: 'test{job="testjob"}',
-      start: 1 * 60,
-      end: 2 * 60,
-      step: 60,
-    };
-    const query: DataQueryRequest<PromQuery> = {
-      app: CoreApp.Explore,
-      intervalMs: 0,
-      requestId: '',
-      startTime: 0,
-      timezone: '',
-      range: {
-        from: time({ minutes: 1, seconds: 3 }),
-        to: time({ minutes: 2, seconds: 3 }),
-        raw: {
-          from: '',
-          to: '',
-        },
-      },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', refId: 'test' }],
-      interval: '60s',
-      scopedVars: {},
-    };
-
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
-        data: {
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: { __name__: 'test', job: 'testjob' },
-                values: [[2 * 60, '3846']],
-              },
-            ],
-          },
-        },
-      };
-      fetchMock.mockImplementation(() => of(response));
-      ds.query(query).subscribe((data) => {
-        results = data;
-      });
-    });
-
-    it('should generate the correct query', () => {
-      const res = fetchMock.mock.calls[0][0];
-      expect(res.method).toBe('POST');
-      expect(res.url).toBe(urlExpected);
-      expect(res.data).toEqual(dataExpected);
-    });
-
-    it('should return series list', () => {
-      const frame = toDataFrame(results.data[0]);
-      expect(results.data.length).toBe(1);
-      expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
-    });
+  it('with proxy access tracing headers should be added', () => {
+    ds._addTracingHeaders(httpOptions, options);
+    expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
+    expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
   });
 
-  describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
-    const options = { panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
-    const httpOptions = {
-      headers: {} as { [key: string]: number | undefined },
-    } as PromQueryRequest;
+  it('with direct access tracing headers should not be added', () => {
     const instanceSettings = {
       url: 'proxied',
       directUrl: 'direct',
       user: 'test',
       password: 'mupp',
-      access: 'proxy',
       jsonData: { httpMethod: 'POST' },
     } as unknown as DataSourceInstanceSettings<PromOptions>;
 
-    let ds: PrometheusDatasource;
-    beforeEach(() => {
-      ds = new PrometheusDatasource(
-        instanceSettings,
-        templateSrvStub as unknown as TemplateSrv,
-        timeSrvStub as unknown as TimeSrv
-      );
-    });
-
-    it('with proxy access tracing headers should be added', () => {
-      ds._addTracingHeaders(httpOptions, options);
-      expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
-      expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
-    });
-
-    it('with direct access tracing headers should not be added', () => {
-      const instanceSettings = {
-        url: 'proxied',
-        directUrl: 'direct',
-        user: 'test',
-        password: 'mupp',
-        jsonData: { httpMethod: 'POST' },
-      } as unknown as DataSourceInstanceSettings<PromOptions>;
-
-      const mockDs = new PrometheusDatasource(
-        { ...instanceSettings, url: 'http://127.0.0.1:8000' },
-        templateSrvStub,
-        timeSrvStub
-      );
-      mockDs._addTracingHeaders(httpOptions, options);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
-      expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
-      expect(httpOptions.headers['X-Dashboard-UID']).toBe(undefined);
-    });
+    const mockDs = new PrometheusDatasource(
+      { ...instanceSettings, url: 'http://127.0.0.1:8000' },
+      templateSrvStub,
+      timeSrvStub
+    );
+    mockDs._addTracingHeaders(httpOptions, options);
+    expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
+    expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+    expect(httpOptions.headers['X-Dashboard-UID']).toBe(undefined);
   });
 });
 
@@ -2109,15 +1242,4 @@ function createEmptyAnnotationResponse() {
   };
 
   return { ...response };
-}
-
-function requestPrerequisites() {
-  return {
-    app: CoreApp.Explore,
-    intervalMs: 15000,
-    requestId: 'some-req',
-    scopedVars: {},
-    startTime: 0,
-    timezone: 'browser',
-  };
 }
