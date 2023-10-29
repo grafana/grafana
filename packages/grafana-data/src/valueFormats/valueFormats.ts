@@ -100,6 +100,9 @@ function getDecimalsForValue(value: number): number {
 }
 
 export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
+  if ((ext === ' min' || ext === ' hour' || ext === ' day' || ext === ' week' || ext === ' year') && value !== 1) {
+    ext += 's';
+  }
   return {
     text: toFixed(value, decimals),
     suffix: ext,
