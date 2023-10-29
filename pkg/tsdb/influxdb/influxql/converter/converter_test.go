@@ -9,11 +9,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/converter"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -42,6 +40,10 @@ var files = []testFile{
 		fileName: "select_multiple_from_cpu_group_by_tag",
 		rawQuery: "select_multiple values from cpu grouped by a tag",
 	},
+	{
+		fileName: "select_value_from_measurement_with_labels",
+		rawQuery: "SELECT_value from measurement grouped by tag",
+	},
 }
 
 func TestReadPromFrames(t *testing.T) {
@@ -61,28 +63,29 @@ func runScenario(tf testFile) func(t *testing.T) {
 		shouldUpdate := update
 		var rsp backend.DataResponse
 
+		query := &models.Query{
+			Measurement:  "",
+			Policy:       "",
+			Tags:         nil,
+			GroupBy:      nil,
+			Selects:      nil,
+			RawQuery:     tf.rawQuery,
+			UseRawQuery:  true,
+			Alias:        "",
+			Interval:     0,
+			Tz:           "",
+			Limit:        "",
+			Slimit:       "",
+			OrderByTime:  "",
+			RefID:        "",
+			ResultFormat: "time_series",
+		}
+
 		if streamParser {
-			shouldUpdate = false
-			iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
-			rsp = converter.ReadInfluxQLStyleResult(iter)
+			// shouldUpdate = false
+			rsp = influxql.StreamParse(f, 200, query)
 		} else {
-			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, &models.Query{
-				Measurement:  "",
-				Policy:       "",
-				Tags:         nil,
-				GroupBy:      nil,
-				Selects:      nil,
-				RawQuery:     tf.rawQuery,
-				UseRawQuery:  true,
-				Alias:        "",
-				Interval:     0,
-				Tz:           "",
-				Limit:        "",
-				Slimit:       "",
-				OrderByTime:  "",
-				RefID:        "",
-				ResultFormat: "time_series",
-			})
+			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, query)
 		}
 
 		if strings.Contains(tf.fileName, "error") {
