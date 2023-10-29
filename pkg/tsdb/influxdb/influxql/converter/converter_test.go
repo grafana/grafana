@@ -16,7 +16,6 @@ const update = true
 var files = []string{
 	"influx_select_all_from_cpu",
 	"influx_select_value_from_any",
-	// "big_response",
 }
 
 func TestReadPromFrames(t *testing.T) {
