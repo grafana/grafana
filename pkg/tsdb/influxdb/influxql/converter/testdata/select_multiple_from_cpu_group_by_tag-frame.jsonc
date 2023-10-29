@@ -29,14 +29,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[1] 
 //  Name: cpu.usage_idle { cpu: cpu-total }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-----------------------+
@@ -58,14 +51,7 @@
 //  
 //  
 //  
-//  Frame[2] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[2] 
 //  Name: cpu.usage_iowait { cpu: cpu0 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+---------------------+
@@ -87,14 +73,7 @@
 //  
 //  
 //  
-//  Frame[3] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[3] 
 //  Name: cpu.usage_idle { cpu: cpu0 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-------------------+
@@ -116,14 +95,7 @@
 //  
 //  
 //  
-//  Frame[4] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[4] 
 //  Name: cpu.usage_iowait { cpu: cpu1 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+---------------------+
@@ -145,14 +117,7 @@
 //  
 //  
 //  
-//  Frame[5] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[5] 
 //  Name: cpu.usage_idle { cpu: cpu1 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-------------------+
@@ -174,14 +139,7 @@
 //  
 //  
 //  
-//  Frame[6] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[6] 
 //  Name: cpu.usage_iowait { cpu: cpu2 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+---------------------+
@@ -203,14 +161,7 @@
 //  
 //  
 //  
-//  Frame[7] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[7] 
 //  Name: cpu.usage_idle { cpu: cpu2 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-------------------+
@@ -232,14 +183,7 @@
 //  
 //  
 //  
-//  Frame[8] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[8] 
 //  Name: cpu.usage_iowait { cpu: cpu3 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+---------------------+
@@ -261,14 +205,7 @@
 //  
 //  
 //  
-//  Frame[9] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[9] 
 //  Name: cpu.usage_idle { cpu: cpu3 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-------------------+
@@ -290,14 +227,7 @@
 //  
 //  
 //  
-//  Frame[10] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[10] 
 //  Name: cpu.usage_iowait { cpu: cpu4 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+---------------------+
@@ -319,14 +249,7 @@
 //  
 //  
 //  
-//  Frame[11] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
-//  }
+//  Frame[11] 
 //  Name: cpu.usage_idle { cpu: cpu4 }
 //  Dimensions: 2 Fields by 30 Rows
 //  +-------------------------------+-------------------+
@@ -458,14 +381,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu-total }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -562,14 +477,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait { cpu: cpu0 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -666,14 +573,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu0 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -770,14 +669,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait { cpu: cpu1 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -874,14 +765,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu1 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -978,14 +861,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait { cpu: cpu2 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -1082,14 +957,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu2 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -1186,14 +1053,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait { cpu: cpu3 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -1290,14 +1149,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu3 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -1394,14 +1245,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait { cpu: cpu4 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",
@@ -1498,14 +1341,6 @@
     {
       "schema": {
         "name": "cpu.usage_idle { cpu: cpu4 }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
-        },
         "fields": [
           {
             "name": "Time",

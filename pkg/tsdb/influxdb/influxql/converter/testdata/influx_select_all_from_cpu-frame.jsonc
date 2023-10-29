@@ -23,14 +23,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_all from cpu"
-//  }
+//  Frame[1] 
 //  Name: cpu.mean_usage_nice
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+------------------+
@@ -46,14 +39,7 @@
 //  
 //  
 //  
-//  Frame[2] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_all from cpu"
-//  }
+//  Frame[2] 
 //  Name: cpu.mean_usage_idle
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+------------------+
@@ -124,14 +110,6 @@
     {
       "schema": {
         "name": "cpu.mean_usage_nice",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_all from cpu"
-        },
         "fields": [
           {
             "name": "Time",
@@ -173,14 +151,6 @@
     {
       "schema": {
         "name": "cpu.mean_usage_idle",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "select_all from cpu"
-        },
         "fields": [
           {
             "name": "Time",
