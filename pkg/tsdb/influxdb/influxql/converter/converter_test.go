@@ -42,7 +42,11 @@ var files = []testFile{
 	},
 	{
 		fileName: "select_value_from_measurement_with_labels",
-		rawQuery: "SELECT_value from measurement grouped by tag",
+		rawQuery: "select_value from measurement grouped by tag",
+	},
+	{
+		fileName: "select_value_from_measurement_with_multiple_labels",
+		rawQuery: "select_value from measurement grouped by multiple tag",
 	},
 }
 
