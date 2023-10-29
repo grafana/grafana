@@ -82,6 +82,7 @@ l1Fields:
 func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
 	var rsp backend.DataResponse
 	var measurement string
+	var tags map[string]string
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
@@ -96,13 +97,14 @@ func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
 				if measurement, err = iter.ReadString(); err != nil {
 					return rspErr(err)
 				}
+			case "tags":
+				if tags, err = readTags(iter); err != nil {
+					return rspErr(err)
+				}
 			case "columns":
 				rsp = readColumns(measurement, iter, rsp)
 			case "values":
-				rsp = readValues(iter, rsp)
-			case "tags":
-				// FIXME support tags
-				_ = iter.Skip()
+				rsp = readValues(tags, iter, rsp)
 			default:
 				v, err := iter.Read()
 				if err != nil {
@@ -115,6 +117,21 @@ func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
 	}
 
 	return rsp
+}
+
+func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
+	tags := make(map[string]string)
+	for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
+		if err != nil {
+			return nil, err
+		}
+		value, err := iter.ReadString()
+		if err != nil {
+			return nil, err
+		}
+		tags[l1Field] = value
+	}
+	return tags, nil
 }
 
 func readColumns(measurement string, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
@@ -136,7 +153,7 @@ func readColumns(measurement string, iter *jsonitere.Iterator, rsp backend.DataR
 	return rsp
 }
 
-func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
+func readValues(tags map[string]string, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
 	timeFields := make(data.Fields, 0)
 	valueFields := make(data.Fields, 0)
 	var timeFieldDidRead bool
@@ -216,6 +233,7 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse) backend.Data
 	}
 
 	for i, v := range valueFields {
+		v.Labels = tags
 		v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[i].Name}
 		rsp.Frames[i] = data.NewFrame(rsp.Frames[i].Name, timeFields[i], v)
 	}
