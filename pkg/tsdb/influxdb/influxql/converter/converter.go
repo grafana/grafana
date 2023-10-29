@@ -216,6 +216,7 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse) backend.Data
 	}
 
 	for i, v := range valueFields {
+		v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[i].Name}
 		rsp.Frames[i] = data.NewFrame(rsp.Frames[i].Name, timeFields[i], v)
 	}
 

@@ -28,7 +28,7 @@ func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) backend
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
 		if i == 0 {
-			frame.Meta = &data.FrameMeta{ExecutedQueryString: query.RawQuery}
+			frame.Meta = &data.FrameMeta{ExecutedQueryString: query.RawQuery, PreferredVisualization: getVisType(query.ResultFormat)}
 		}
 	}
 
