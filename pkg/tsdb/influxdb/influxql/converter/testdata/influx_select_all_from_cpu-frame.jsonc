@@ -1,50 +1,71 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] 
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "select_all from cpu"
+//  }
 //  Name: cpu.mean_usage_guest
 //  Dimensions: 2 Fields by 4 Rows
-//  +-------------------------------+-----------------+
-//  | Name: Time                    | Name: Value     |
-//  | Labels:                       | Labels:         |
-//  | Type: []time.Time             | Type: []float64 |
-//  +-------------------------------+-----------------+
-//  | 2023-10-22 14:20:00 +0000 UTC | 1111            |
-//  | 2023-10-22 14:25:00 +0000 UTC | 2221            |
-//  | 2023-10-22 14:30:00 +0000 UTC | 3331            |
-//  | 2023-10-22 14:35:00 +0000 UTC | 4441            |
-//  +-------------------------------+-----------------+
+//  +-------------------------------+------------------+
+//  | Name: Time                    | Name: Value      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 2023-10-22 14:20:00 +0000 UTC | 1111             |
+//  | 2023-10-22 14:25:00 +0000 UTC | 2221             |
+//  | 2023-10-22 14:30:00 +0000 UTC | 3331             |
+//  | 2023-10-22 14:35:00 +0000 UTC | 4441             |
+//  +-------------------------------+------------------+
 //  
 //  
 //  
-//  Frame[1] 
+//  Frame[1] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "select_all from cpu"
+//  }
 //  Name: cpu.mean_usage_nice
 //  Dimensions: 2 Fields by 4 Rows
-//  +-------------------------------+-----------------+
-//  | Name: Time                    | Name: Value     |
-//  | Labels:                       | Labels:         |
-//  | Type: []time.Time             | Type: []float64 |
-//  +-------------------------------+-----------------+
-//  | 2023-10-22 14:20:00 +0000 UTC | 1112            |
-//  | 2023-10-22 14:25:00 +0000 UTC | 2222            |
-//  | 2023-10-22 14:30:00 +0000 UTC | 3332            |
-//  | 2023-10-22 14:35:00 +0000 UTC | 4442            |
-//  +-------------------------------+-----------------+
+//  +-------------------------------+------------------+
+//  | Name: Time                    | Name: Value      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 2023-10-22 14:20:00 +0000 UTC | 1112             |
+//  | 2023-10-22 14:25:00 +0000 UTC | 2222             |
+//  | 2023-10-22 14:30:00 +0000 UTC | 3332             |
+//  | 2023-10-22 14:35:00 +0000 UTC | 4442             |
+//  +-------------------------------+------------------+
 //  
 //  
 //  
-//  Frame[2] 
+//  Frame[2] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "select_all from cpu"
+//  }
 //  Name: cpu.mean_usage_idle
 //  Dimensions: 2 Fields by 4 Rows
-//  +-------------------------------+-----------------+
-//  | Name: Time                    | Name: Value     |
-//  | Labels:                       | Labels:         |
-//  | Type: []time.Time             | Type: []float64 |
-//  +-------------------------------+-----------------+
-//  | 2023-10-22 14:20:00 +0000 UTC | 1113            |
-//  | 2023-10-22 14:25:00 +0000 UTC | 2223            |
-//  | 2023-10-22 14:30:00 +0000 UTC | 3333            |
-//  | 2023-10-22 14:35:00 +0000 UTC | 4443            |
-//  +-------------------------------+-----------------+
+//  +-------------------------------+------------------+
+//  | Name: Time                    | Name: Value      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 2023-10-22 14:20:00 +0000 UTC | 1113             |
+//  | 2023-10-22 14:25:00 +0000 UTC | 2223             |
+//  | 2023-10-22 14:30:00 +0000 UTC | 3333             |
+//  | 2023-10-22 14:35:00 +0000 UTC | 4443             |
+//  +-------------------------------+------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -54,6 +75,14 @@
     {
       "schema": {
         "name": "cpu.mean_usage_guest",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "select_all from cpu"
+        },
         "fields": [
           {
             "name": "Time",
@@ -66,7 +95,11 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "displayNameFromDS": "cpu.mean_usage_guest"
             }
           }
         ]
@@ -91,6 +124,14 @@
     {
       "schema": {
         "name": "cpu.mean_usage_nice",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "select_all from cpu"
+        },
         "fields": [
           {
             "name": "Time",
@@ -103,7 +144,11 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "displayNameFromDS": "cpu.mean_usage_nice"
             }
           }
         ]
@@ -128,6 +173,14 @@
     {
       "schema": {
         "name": "cpu.mean_usage_idle",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "select_all from cpu"
+        },
         "fields": [
           {
             "name": "Time",
@@ -140,7 +193,11 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "displayNameFromDS": "cpu.mean_usage_idle"
             }
           }
         ]
