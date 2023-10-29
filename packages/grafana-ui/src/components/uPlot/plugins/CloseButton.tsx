@@ -16,14 +16,7 @@ type Props = {
 export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) => {
   const styles = useStyles2(getStyles);
   return (
-    <IconButton
-      aria-label={ariaLabel ?? 'Close'}
-      className={styles}
-      name="times"
-      onClick={onClick}
-      style={style}
-      tooltip="Close"
-    />
+    <IconButton aria-label={ariaLabel ?? 'Close'} className={styles} name="times" onClick={onClick} style={style} />
   );
 };
 

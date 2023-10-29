@@ -347,10 +347,6 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagToggleLabelsInLogsUI
-	// Enable toggleable filters in log details view
-	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
-
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
@@ -446,6 +442,10 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagAlertingContactPointsV2
+	// Show the new contacpoints list view
+	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
 
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external

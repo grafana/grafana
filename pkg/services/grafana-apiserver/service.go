@@ -28,12 +28,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+type StorageType string
+
+const (
+	StorageTypeFile   StorageType = "file"
+	StorageTypeEtcd   StorageType = "etcd"
+	StorageTypeLegacy StorageType = "legacy"
 )
 
 var (
@@ -89,6 +99,8 @@ type service struct {
 	handler  web.Handler
 	builders []APIGroupBuilder
 
+	tracing *tracing.TracingService
+
 	authorizer authorizer.Authorizer
 }
 
@@ -96,6 +108,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
+	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
 		config:     newConfig(cfg),
@@ -103,6 +116,7 @@ func ProvideService(
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
 		authorizer: authz,
+		tracing:    tracing,
 	}
 
 	// This will be used when running as a dskit service
@@ -179,17 +193,9 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = s.config.port
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 
 	o.Admission = nil
 	o.CoreAPI = nil
-	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
-		o.Etcd = nil
-	}
-
-	if err := o.Validate(); len(err) > 0 {
-		return err[0]
-	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 	serverConfig.ExternalAddress = s.config.host
@@ -219,13 +225,21 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if o.Etcd != nil {
+	if s.config.storageType == StorageTypeEtcd {
+		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
+		if err := o.Etcd.Validate(); len(err) > 0 {
+			return err[0]
+		}
 		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
 			return err
 		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
+	}
+
+	if s.config.storageType == StorageTypeFile {
+		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
@@ -257,6 +271,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
+
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
