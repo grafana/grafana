@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const update = false
+const update = true
 
 var files = []string{
-	// "influx_select_*_from_cpu",
-	// "influx_select_value_from_*",
-	"big_response",
+	"influx_select_all_from_cpu",
+	"influx_select_value_from_any",
+	// "big_response",
 }
 
 func TestReadPromFrames(t *testing.T) {
