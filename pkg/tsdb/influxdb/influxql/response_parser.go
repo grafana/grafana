@@ -97,7 +97,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 				if column == "time" {
 					continue
 				}
-				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
+				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName, len(frames))
 				frames = append(frames, newFrame)
 			}
 		}
@@ -106,7 +106,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 	return frames
 }
 
-func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
+func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte, frameIndex int) *data.Frame {
 	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
@@ -161,7 +161,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
+	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat), frameIndex)
 }
 
 func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
@@ -204,11 +204,13 @@ func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValu
 	return data.NewFrame(row.Name, field)
 }
 
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType, frameIndex int) *data.Frame {
 	frame := data.NewFrame(name, timeField, valueField)
-	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString:    queryString,
-		PreferredVisualization: visType,
+	if frameIndex == 0 {
+		frame.Meta = &data.FrameMeta{
+			ExecutedQueryString:    queryString,
+			PreferredVisualization: visType,
+		}
 	}
 
 	return frame
