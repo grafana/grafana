@@ -538,4 +538,8 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagInfluxqlStreamingParser
+	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
+	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
 )

@@ -934,5 +934,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "influxqlStreamingParser",
+			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
 	}
 )
