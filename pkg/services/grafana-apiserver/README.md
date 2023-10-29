@@ -23,19 +23,41 @@ Start `etcd`:
 make devenv sources=etcd
 ```
 
-Enable dual write to `etcd`:
+Set storage type and etcd server address in `custom.ini`:
 
 ```ini
 [grafana-apiserver]
+storage_type = etcd
 etcd_servers = 127.0.0.1:2379
+```
+
+## Enable dual write to JSON files:
+
+Set storage type:
+
+```ini
+[grafana-apiserver]
+storage_type = file
+```
+
+Objects will be written to disk under the `{data.path}/grafana-apiserver/` directory.
+
+For example:
+
+```
+data/grafana-apiserver
+├── grafana.kubeconfig
+└── playlist.grafana.app
+    └── playlists
+        └── default
+            └── hi.json
 ```
 
 ### `kubectl` access
 
-From the root of the repository:
-
+From the root of the Grafanaa repository, run the following:
 ```bash
-export KUBECONFIG=$PWD/data/k8s/grafana.kubeconfig
+export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
 kubectl api-resources
 ```
 

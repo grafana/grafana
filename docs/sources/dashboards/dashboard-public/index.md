@@ -13,12 +13,6 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="note" %}}
-
-This feature is in [public preview](/docs/release-life-cycle/).
-
-{{% /admonition %}}
-
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
@@ -32,27 +26,6 @@ You can see a list of all your public dashboards in one place by navigating to *
 - Public dashboards are read-only.
 - Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
-
-## Enable the feature
-
-Add the `publicDashboards` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboards = true
-```
-
-If you are using Docker, use an environment variable to enable public dashboards:
-
-```
---env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
-```
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
 
 ## Make a dashboard public
 

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG BASE_IMAGE=alpine:3.18.3
-ARG JS_IMAGE=node:18-alpine3.18
+ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.20.10-alpine3.18
 
@@ -18,6 +18,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
+COPY public public
 
 RUN yarn install --immutable
 

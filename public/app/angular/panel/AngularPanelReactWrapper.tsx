@@ -3,6 +3,7 @@ import { Observable, ReplaySubject } from 'rxjs';
 
 import { EventBusSrv, PanelData, PanelPlugin, PanelProps, FieldConfigSource } from '@grafana/data';
 import { AngularComponent, getAngularLoader, RefreshEvent } from '@grafana/runtime';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModelCompatibilityWrapper } from 'app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { RenderEvent } from 'app/types/events';
@@ -37,7 +38,7 @@ export function getAngularPanelReactWrapper(plugin: PanelPlugin): ComponentType<
         // @ts-ignore
         panel: fakePanel,
         // @ts-ignore
-        dashboard: new DashboardModelCompatibilityWrapper(),
+        dashboard: getDashboardSrv().getCurrent(),
         size: { width: props.width, height: props.height },
         queryRunner: queryRunner,
       };

@@ -30,7 +30,6 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
-    "ignore_failure",
     "pipeline",
     "with_deps",
 )
@@ -74,6 +73,17 @@ tag_trigger = {
             "refs/tags/*-cloud*",
         ],
     },
+}
+
+main_trigger = {
+    "event": [
+        "push",
+    ],
+    "branch": "main",
+    "paths": docs_paths,
+    "repo": [
+        "grafana/grafana",
+    ],
 }
 
 nightly_trigger = {
@@ -208,21 +218,10 @@ def rgm_publish_packages(bucket = "grafana-packages"):
 
 def rgm_main():
     # Runs a package / build process (with some distros) when commits are merged to main
-    trigger = {
-        "event": [
-            "push",
-        ],
-        "branch": "main",
-        "paths": docs_paths,
-        "repo": [
-            "grafana/grafana",
-        ],
-    }
-
     return pipeline(
         name = "rgm-main-prerelease",
-        trigger = trigger,
-        steps = rgm_run("rgm-build", "drone_publish_main.sh"),
+        trigger = main_trigger,
+        steps = rgm_run("rgm-build", "drone_build_main.sh"),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
@@ -231,7 +230,7 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
@@ -239,11 +238,9 @@ def rgm_tag_windows():
     return pipeline(
         name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = ignore_failure(
-            get_windows_steps(
-                ver_mode = "release",
-                bucket = "grafana-prerelease",
-            ),
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease",
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
@@ -254,7 +251,7 @@ def rgm_version_branch():
     return pipeline(
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 

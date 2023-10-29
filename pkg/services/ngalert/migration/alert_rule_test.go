@@ -2,6 +2,7 @@ package migration
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -127,17 +129,22 @@ func TestAddMigrationInfo(t *testing.T) {
 
 func TestMakeAlertRule(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
+	info := migmodels.DashboardUpgradeInfo{
+		DashboardUID:  "dashboarduid",
+		DashboardName: "dashboardname",
+		NewFolderUID:  "ewfolderuid",
+		NewFolderName: "newfoldername",
+	}
 	t.Run("when mapping rule names", func(t *testing.T) {
 		t.Run("leaves basic names untouched", func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
 			da := createTestDashAlert()
 
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
-			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
 
 		t.Run("truncates very long names to max length", func(t *testing.T) {
@@ -146,7 +153,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da := createTestDashAlert()
 			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
 
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
@@ -158,7 +165,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da := createTestDashAlert()
 			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
 
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
@@ -166,7 +173,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da = createTestDashAlert()
 			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
 
-			ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+			ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
@@ -174,7 +181,6 @@ func TestMakeAlertRule(t *testing.T) {
 			require.Len(t, parts, 2)
 			require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
 			require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
-			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
 	})
 
@@ -183,7 +189,7 @@ func TestMakeAlertRule(t *testing.T) {
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 		require.NoError(t, err)
 		require.False(t, ar.IsPaused)
 	})
@@ -194,7 +200,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.State = "paused"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
@@ -205,7 +211,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.ParsedSettings.NoDataState = uuid.NewString()
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 		require.Nil(t, err)
 		require.Equal(t, models.NoData, ar.NoDataState)
 	})
@@ -216,7 +222,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.ParsedSettings.ExecutionErrorState = uuid.NewString()
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 		require.Nil(t, err)
 		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
@@ -227,12 +233,77 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.Message = "Instance ${instance} is down"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, "dashboard", "folder")
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
 		require.Nil(t, err)
 		expected :=
 			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
 				"Instance {{$mergedLabels.instance}} is down"
 		require.Equal(t, expected, ar.Annotations["message"])
+	})
+
+	t.Run("create unique group from dashboard title and panel", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.PanelID = 42
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		require.NoError(t, err)
+		require.Equal(t, fmt.Sprintf("%s - %d", info.DashboardName, da.PanelID), ar.RuleGroup)
+	})
+
+	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.PanelID = 42
+		info := migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		require.NoError(t, err)
+		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
+		require.Equal(t, fmt.Sprintf("%s - %d", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-5), da.PanelID), ar.RuleGroup)
+	})
+
+	t.Run("deduplicate rule group name if truncation is not unique", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.PanelID = 42
+		info := migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		_, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		require.NoError(t, err)
+
+		da = createTestDashAlert()
+		da.PanelID = 42
+		info = migmodels.DashboardUpgradeInfo{
+			DashboardUID:  "dashboarduid",
+			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
+			NewFolderUID:  "newfolderuid",
+			NewFolderName: "newfoldername",
+		}
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+		require.NoError(t, err)
+		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
+		parts := strings.SplitN(ar.RuleGroup, "_", 2)
+		require.Len(t, parts, 2)
+		require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
+		require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 	})
 }
 

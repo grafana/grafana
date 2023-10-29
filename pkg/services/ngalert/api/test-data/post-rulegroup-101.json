@@ -3,6 +3,7 @@
   "interval": "10s",
   "rules": [
     {
+      "for": "2m",
       "grafana_alert": {
         "title": "prom query with SSE - 2",
         "condition": "condition",

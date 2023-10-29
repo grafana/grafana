@@ -316,6 +316,10 @@ List of comma- or space-separated organizations. Each user must be a member of a
 
 List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Admin`, `Editor` ,`Viewer` or `None`.
 
+### role_values_none
+
+List of comma- or space-separated roles that will be mapped to the None role.
+
 ### role_values_editor
 
 List of comma- or space-separated roles that will be mapped to the Editor role.

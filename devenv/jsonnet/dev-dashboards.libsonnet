@@ -387,6 +387,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('loki_query_splitting', import '../dev-dashboards/datasource-loki/loki_query_splitting.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -703,6 +710,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries', import '../dev-dashboards/panel-timeseries/timeseries.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeseries-bars-high-density', import '../dev-dashboards/panel-timeseries/timeseries-bars-high-density.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
