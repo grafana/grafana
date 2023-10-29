@@ -22,6 +22,10 @@ func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator) backend.DataResponse {
 	// influxErrString := ""
 	// warnings := []data.Notice{}
 
+	// frameName is pre-allocated. So we can reuse it, saving memory.
+	// It's sized for a reasonably-large name, but will grow if needed.
+	frameName := make([]byte, 0, 128)
+
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
@@ -29,7 +33,7 @@ l1Fields:
 		}
 		switch l1Field {
 		case "results":
-			rsp = readResults(iter)
+			rsp = readResults(frameName, iter)
 			if rsp.Error != nil {
 				return rsp
 			}
@@ -51,7 +55,7 @@ l1Fields:
 	return rsp
 }
 
-func readResults(iter *jsonitere.Iterator) backend.DataResponse {
+func readResults(frameName []byte, iter *jsonitere.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -64,7 +68,7 @@ l1Fields:
 			}
 			switch l1Field {
 			case "series":
-				rsp = readSeries(iter)
+				rsp = readSeries(frameName, iter)
 			case "":
 				break l1Fields
 			default:
@@ -79,7 +83,7 @@ l1Fields:
 	return rsp
 }
 
-func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
+func readSeries(frameName []byte, iter *jsonitere.Iterator) backend.DataResponse {
 	var rsp backend.DataResponse
 	var measurement string
 	var tags map[string]string
@@ -102,7 +106,7 @@ func readSeries(iter *jsonitere.Iterator) backend.DataResponse {
 					return rspErr(err)
 				}
 			case "columns":
-				rsp = readColumns(measurement, iter, rsp)
+				rsp = readColumns(measurement, tags, frameName[:], iter, rsp)
 			case "values":
 				rsp = readValues(tags, iter, rsp)
 			default:
@@ -134,7 +138,7 @@ func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
 	return tags, nil
 }
 
-func readColumns(measurement string, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
+func readColumns(measurement string, tags map[string]string, frameName []byte, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
@@ -145,6 +149,7 @@ func readColumns(measurement string, iter *jsonitere.Iterator, rsp backend.DataR
 			return rspErr(err)
 		}
 		if l1Field != "time" {
+			// TODO create frame name with tags
 			frame := data.NewFrame(measurement + "." + l1Field)
 			rsp.Frames = append(rsp.Frames, frame)
 		}
@@ -235,7 +240,7 @@ func readValues(tags map[string]string, iter *jsonitere.Iterator, rsp backend.Da
 	for i, v := range valueFields {
 		v.Labels = tags
 		v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[i].Name}
-		rsp.Frames[i] = data.NewFrame(rsp.Frames[i].Name, timeFields[i], v)
+		rsp.Frames[i].Fields = append(rsp.Frames[i].Fields, timeFields[i], v)
 	}
 
 	return rsp

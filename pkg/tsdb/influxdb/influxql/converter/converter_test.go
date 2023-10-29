@@ -41,11 +41,11 @@ var files = []testFile{
 		rawQuery: "select_multiple values from cpu grouped by a tag",
 	},
 	{
-		fileName: "select_value_from_measurement_with_labels",
+		fileName: "select_value_from_measurement_with_one_tag",
 		rawQuery: "select_value from measurement grouped by tag",
 	},
 	{
-		fileName: "select_value_from_measurement_with_multiple_labels",
+		fileName: "select_value_from_measurement_with_multiple_tags",
 		rawQuery: "select_value from measurement grouped by multiple tag",
 	},
 }
