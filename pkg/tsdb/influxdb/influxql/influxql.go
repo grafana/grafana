@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
@@ -22,7 +23,7 @@ var (
 	glog               = log.New("tsdb.influx_influxql")
 )
 
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	response := backend.NewQueryDataResponse()
 
@@ -49,7 +50,7 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.Quer
 			return &backend.QueryDataResponse{}, err
 		}
 
-		resp, err := execute(dsInfo, logger, query, request)
+		resp, err := execute(dsInfo, logger, query, request, features.IsEnabled(featuremgmt.FlagInfluxqlStreamingParser))
 
 		if err != nil {
 			response.Responses[query.RefID] = backend.DataResponse{Error: err}
@@ -110,7 +111,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	return req, nil
 }
 
-func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request) (backend.DataResponse, error) {
+func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return backend.DataResponse{}, err
@@ -120,6 +121,14 @@ func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Que
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	resp := ResponseParse(res.Body, res.StatusCode, query)
-	return *resp, nil
+
+	logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info", isStreamingParserEnabled)
+
+	var resp backend.DataResponse
+	if isStreamingParserEnabled {
+		resp = StreamParse(res.Body, res.StatusCode, query)
+	} else {
+		resp = *ResponseParse(res.Body, res.StatusCode, query)
+	}
+	return resp, nil
 }

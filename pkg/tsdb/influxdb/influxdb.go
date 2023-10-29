@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
@@ -21,12 +23,14 @@ import (
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
-	im instancemgmt.InstanceManager
+	im       instancemgmt.InstanceManager
+	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(httpClient httpclient.Provider) *Service {
+func ProvideService(httpClient httpclient.Provider, _ *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		features: features,
 	}
 }
 
@@ -101,7 +105,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	case influxVersionFlux:
 		return flux.Query(ctx, dsInfo, *req)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, dsInfo, req)
+		return influxql.Query(ctx, dsInfo, req, s.features)
 	case influxVersionSQL:
 		return fsql.Query(ctx, dsInfo, *req)
 	default:
