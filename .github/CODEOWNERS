@@ -255,7 +255,7 @@
 
 # BI backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
-/pkg/tsdb/postgres/ @grafana/oss-big-tent
+/pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /pkg/tsdb/mssql/ @grafana/grafana-bi-squad
 
 # Database migrations

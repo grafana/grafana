@@ -132,6 +132,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		fallthrough
 	case "grafana-testdata-datasource":
 		fallthrough
+	case "grafana-postgresql-datasource":
+		fallthrough
 	case "annolist":
 		fallthrough
 	case "debug":
