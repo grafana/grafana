@@ -86,33 +86,29 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 }
 
 /**
- * Behavior is called when VizPanelLinksMenu is activated (ie when it's opened).
+ * Behavior is called when VizPanelLinksMenu is activated (when it's opened).
  */
 export function getPanelLinksBehavior(panel: PanelModel) {
   return (panelLinksMenu: VizPanelLinks) => {
-    const asyncFunc = async () => {
-      const interpolate: InterpolateFunction = (v, scopedVars) => {
-        return sceneGraph.interpolate(panelLinksMenu, v, scopedVars);
-      };
-
-      const linkSupplier = getPanelLinksSupplier(panel, interpolate);
-
-      if (!linkSupplier) {
-        return;
-      }
-
-      const panelLinks = linkSupplier && linkSupplier.getLinks(interpolate);
-
-      const links = panelLinks.map((panelLink) => ({
-        ...panelLink,
-        onClick: (e: any, origin: any) => {
-          reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
-          panelLink.onClick?.(e, origin);
-        },
-      }));
-      panelLinksMenu.setState({ links });
+    const interpolate: InterpolateFunction = (v, scopedVars) => {
+      return sceneGraph.interpolate(panelLinksMenu, v, scopedVars);
     };
 
-    asyncFunc();
+    const linkSupplier = getPanelLinksSupplier(panel, interpolate);
+
+    if (!linkSupplier) {
+      return;
+    }
+
+    const panelLinks = linkSupplier && linkSupplier.getLinks(interpolate);
+
+    const links = panelLinks.map((panelLink) => ({
+      ...panelLink,
+      onClick: (e: any, origin: any) => {
+        reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+        panelLink.onClick?.(e, origin);
+      },
+    }));
+    panelLinksMenu.setState({ links });
   };
 }
