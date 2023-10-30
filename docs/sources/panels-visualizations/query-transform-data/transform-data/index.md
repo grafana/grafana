@@ -135,7 +135,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
     - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
     - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
-  - **Cumulative functions** - Apply functions on the current row and all preceeding rows.
+  - **Cumulative functions** - Apply functions on the current row and all preceding rows.
     - **Total** - Calculates the cumulative total up to and including the current row.
     - **Mean** - Calculates the mean up to and including the current row.
   - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**. With a trailing window the current row will be the last row in the window. With a centered window the window will be centered on the current row. For even window sizes, the window will be centered between the current row, and the previous row.
