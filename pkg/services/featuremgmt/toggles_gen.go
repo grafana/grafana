@@ -534,4 +534,16 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagAlertmanagerRemoteSecondary
+	// Enable Grafana to sync configuration and state with a remote Alertmanager.
+	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
+
+	// FlagAlertmanagerRemotePrimary
+	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
+	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
+
+	// FlagAlertmanagerRemoteOnly
+	// Disable the internal Alertmanager and only use the external one defined.
+	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 )
