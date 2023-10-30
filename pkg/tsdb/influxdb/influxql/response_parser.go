@@ -83,6 +83,10 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 		}
 	}
 
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
 	// Preallocate for the worst-case scenario
 	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
 
@@ -254,6 +258,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, re
 		first := true
 		for k, v := range row.Tags {
 			if !first {
+				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
 			} else {
 				first = false

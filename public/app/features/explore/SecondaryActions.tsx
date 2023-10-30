@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -36,32 +37,32 @@ export function SecondaryActions(props: Props) {
       {!props.addQueryRowButtonHidden && (
         <ToolbarButton
           variant="canvas"
-          aria-label="Add query"
+          aria-label={t('explore.secondary-actions.query-add-button-aria-label', 'Add query')}
           onClick={props.onClickAddQueryRowButton}
           disabled={props.addQueryRowButtonDisabled}
           icon="plus"
         >
-          Add query
+          <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
         </ToolbarButton>
       )}
       {!props.richHistoryRowButtonHidden && (
         <ToolbarButton
           variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
-          aria-label="Query history"
+          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
           onClick={props.onClickRichHistoryButton}
           data-testid={Components.QueryTab.queryHistoryButton}
           icon="history"
         >
-          Query history
+          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
         </ToolbarButton>
       )}
       <ToolbarButton
         variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
-        aria-label="Query inspector"
+        aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}
         onClick={props.onClickQueryInspectorButton}
         icon="info-circle"
       >
-        Query inspector
+        <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>
       </ToolbarButton>
     </div>
   );
