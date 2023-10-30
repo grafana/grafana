@@ -11,8 +11,8 @@ import {
   QueryHint,
   TimeRange,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { TemplateSrv } from '../../../../../features/templating/template_srv';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
