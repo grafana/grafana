@@ -614,7 +614,10 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
       Drone step.
     """
     commands = [
-        "yarn wait-on http://$HOST:$PORT",
+        "node --version",
+        "npm --version",
+        "npx --version",
+        "npx wait-on@7.0.1 http://$HOST:$PORT",
     ]
     failure = "ignore"
     if ver_mode == "pr":
