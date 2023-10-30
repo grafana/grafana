@@ -251,16 +251,23 @@ const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number)
   // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
   // enough to automatically detect that there are some characters before the cursor and to take them into
   // account when providing suggestions.
-  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
-  if (endOfPathNode && text[pos - 1] !== ' ') {
-    const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+  const getAttributeFieldUpToDot = (node: SyntaxNode) => {
+    const attributeFieldParent = walk(node, [['firstChild', [AttributeField]]]);
     const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
     const indexOfDot = attributeFieldParentText.indexOf('.');
-    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+    return attributeFieldParentText.slice(0, indexOfDot);
+  };
 
+  // If there is a space, for sure the attribute is completed and no suggestions to complete it should be provided
+  if (text[pos - 1] === ' ') {
+    return;
+  }
+
+  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
+  if (endOfPathNode) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
-      scope: attributeFieldUpToDot,
+      scope: getAttributeFieldUpToDot(endOfPathNode),
     };
   }
 
@@ -268,15 +275,11 @@ const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number)
     ['parent', [SpansetFilter]],
     ['firstChild', [FieldExpression]],
   ]);
-  if (endOfPathNode2 && text[pos] !== ' ' && text[pos - 1] !== ' ') {
-    const attributeFieldParent = walk(endOfPathNode2, [['firstChild', [AttributeField]]]);
-    const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
-    const indexOfDot = attributeFieldParentText.indexOf('.');
-    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
-
+  // In this case, we also need to check the character at `pos`
+  if (endOfPathNode2 && text[pos] !== ' ') {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
-      scope: attributeFieldUpToDot,
+      scope: getAttributeFieldUpToDot(endOfPathNode2),
     };
   }
 };
