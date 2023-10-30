@@ -314,13 +314,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 
 func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
 	foldersDedup := make([]*folder.Folder, 0)
-
 	for _, f := range folders {
-		if f.ParentUID == "" {
-			foldersDedup = append(foldersDedup, f)
-			continue
-		}
-
 		isSubfolder := slices.ContainsFunc(folders, func(folder *folder.Folder) bool {
 			return f.ParentUID == folder.UID
 		})
@@ -342,11 +336,11 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 				}
 			}
 		}
+
 		if !isSubfolder {
 			foldersDedup = append(foldersDedup, f)
 		}
 	}
-
 	return foldersDedup
 }
 
