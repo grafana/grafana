@@ -3965,8 +3965,7 @@
         "operationId": "getPublicDashboard",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "dashboardUid",
             "in": "path",
             "required": true
@@ -4004,8 +4003,7 @@
         "operationId": "createPublicDashboard",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "dashboardUid",
             "in": "path",
             "required": true
@@ -4047,15 +4045,13 @@
         "operationId": "deletePublicDashboard",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "dashboardUid",
             "in": "path",
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "uid",
             "in": "path",
             "required": true
@@ -4090,15 +4086,13 @@
         "operationId": "updatePublicDashboard",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "dashboardUid",
             "in": "path",
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "uid",
             "in": "path",
             "required": true
