@@ -136,7 +136,7 @@ func TestBuildResourceURI(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected an error, but got nil")
 			} else {
-				expectedErrorMessage := "no metricNamespace or metricDefiniton provided"
+				expectedErrorMessage := "no metricNamespace or metricDefiniton value provided"
 				if err.Error() != expectedErrorMessage {
 					t.Errorf("Expected error message %s, but got %s", expectedErrorMessage, err.Error())
 				}
