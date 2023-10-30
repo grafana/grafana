@@ -449,9 +449,13 @@
               "text": "Malaysian Ringgit (RM)",
               "value": "currencyMYR"
             },
-	    {
+	          {
               "text": "CFP franc (XPF)",
               "value": "currencyXPF"
+            }
+            {
+              "text": "Bulgarian Lev (BGN)",
+              "value": "currencyBGN"
             }
           ],
           "text": "currency"
@@ -1612,6 +1616,10 @@
               "text": "Malaysian Ringgit (RM)",
               "value": "currencyMYR"
             }
+            {
+              "text": "Bulgarian Lev (BGN)",
+              "value": "currencyBGN"
+            }
           ],
           "text": "currency"
         },
@@ -2706,6 +2714,10 @@
             {
               "text": "Malaysian Ringgit (RM)",
               "value": "currencyMYR"
+            }
+            {
+              "text": "Bulgarian Lev (BGN)",
+              "value": "currencyBGN"
             }
           ],
           "text": "currency"

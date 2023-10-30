@@ -5,6 +5,7 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -57,7 +58,14 @@ export async function addToRichHistory(
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
         } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+          dispatch(
+            notifyApp(
+              createErrorNotification(
+                t('explore.rich-history-utils-notification.update-failed', 'Rich History update failed'),
+                error.message
+              )
+            )
+          );
         }
       }
       // Saving failed. Do not add new entry.
@@ -98,7 +106,14 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
     return await getRichHistoryStorage().updateStarred(id, starred);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -109,7 +124,14 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
     return await getRichHistoryStorage().updateComment(id, newComment);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -121,7 +143,14 @@ export async function deleteQueryInRichHistory(id: string) {
     return id;
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -130,7 +159,10 @@ export async function deleteQueryInRichHistory(id: string) {
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
-    range: { from: 'now-1h', to: 'now' },
+    range: {
+      from: t('explore.rich-history-utils.default-from', 'now-1h'),
+      to: t('explore.rich-history-utils.default-to', 'now'),
+    },
     datasource: query.datasourceName,
     queries: query.queries,
   };
@@ -146,19 +178,19 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   let str;
   switch (num) {
     case 0:
-      str = 'today';
+      str = t('explore.rich-history-utils.today', 'today');
       break;
     case 1:
-      str = 'yesterday';
+      str = t('explore.rich-history-utils.yesterday', 'yesterday');
       break;
     case 7:
-      str = 'a week ago';
+      str = t('explore.rich-history-utils.a-week-ago', 'a week ago');
       break;
     case 14:
-      str = 'two weeks ago';
+      str = t('explore.rich-history-utils.two-weeks-ago', 'two weeks ago');
       break;
     default:
-      str = `${num} days ago`;
+      str = t('explore.rich-history-utils.days-ago', '{{num}} days ago', { num: `${num}` });
   }
 
   return str;

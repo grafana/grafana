@@ -6,7 +6,7 @@ import { llms } from '@grafana/experimental';
 import { logError } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
+import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
@@ -22,7 +22,7 @@ export const TIMEOUT = 10000;
 
 // TODO: Add tests
 export function useOpenAIStream(
-  model = OPEN_AI_MODEL,
+  model = DEFAULT_OAI_MODEL,
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;

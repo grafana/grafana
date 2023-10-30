@@ -183,6 +183,16 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
+func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return err
+	}
+	return sa.store.EnableServiceAccount(ctx, orgID, serviceAccountID, enable)
+}
+
 func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
