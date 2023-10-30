@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const SharedFolderUID = "sharedwithme"
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -182,6 +184,10 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	if cmd.UID == SharedFolderUID {
+		return s.GetSharedWithMe(ctx, cmd)
+	}
+
 	if cmd.UID != "" {
 		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 		if err != nil {
@@ -208,25 +214,9 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		childrenUIDs = append(childrenUIDs, f.UID)
 	}
 
-	availableNonRootFolders := make([]*folder.Folder, 0)
-	if cmd.UID == "" {
-		availableNonRootFolders, err = s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-		}
-
-		for _, f := range availableNonRootFolders {
-			childrenUIDs = append(childrenUIDs, f.UID)
-		}
-	}
-
 	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	if cmd.UID == "" {
-		children = append(children, availableNonRootFolders...)
 	}
 
 	filtered := make([]*folder.Folder, 0, len(children))
@@ -261,11 +251,29 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 	}
 
-	if cmd.UID == "" {
-		filtered = s.deduplicateAvailableFolders(ctx, filtered)
+	if len(filtered) < len(children) {
+		// add "shared with me" folder
+		sharedWithMe := &folder.Folder{
+			Title:       "Shared with me",
+			Description: "Dashboards and folders shared with me",
+			UID:         SharedFolderUID,
+			ParentUID:   "",
+			ID:          -1,
+			OrgID:       cmd.OrgID,
+		}
+		filtered = append(filtered, sharedWithMe)
 	}
 
 	return filtered, nil
+}
+
+func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+	}
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders)
+	return availableNonRootFolders, nil
 }
 
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
