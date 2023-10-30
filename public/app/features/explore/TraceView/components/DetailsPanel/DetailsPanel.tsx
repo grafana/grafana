@@ -33,7 +33,7 @@ type Props = {
   defaultDetailsPanelHeight: number;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
-  topOfViewRefType: TopOfViewRefType;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 enum TabLabels {

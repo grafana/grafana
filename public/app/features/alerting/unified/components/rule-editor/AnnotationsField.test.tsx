@@ -296,37 +296,37 @@ describe('AnnotationsField', function () {
       expect(annotationKeyElements[1]).toHaveTextContent('Panel ID');
       expect(annotationValueElements[1]).toHaveTextContent('3');
     });
-
-    it('should render warning icon for panels of type other than graph and timeseries', async function () {
-      mockSearchApiResponse(server, [
-        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
-      ]);
-
-      mockGetDashboardResponse(
-        mockDashboardDto({
-          title: 'My dashboard',
-          uid: 'dash-test-uid',
-          panels: [
-            { id: 1, title: 'First panel', type: 'bar' },
-            { id: 2, title: 'Second panel', type: 'graph' },
-          ],
-        })
-      );
-
-      const user = userEvent.setup();
-
-      render(<FormWrapper formValues={{ annotations: [] }} />);
-
-      const { dialog } = ui.dashboardPicker;
-
-      await user.click(ui.setDashboardButton.get());
-      await user.click(await findByTitle(dialog.get(), 'My dashboard'));
-
-      const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
-
-      expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
-    });
   });
+});
+
+it('should render warning icon for panels of type other than graph and timeseries', async function () {
+  mockSearchApiResponse(server, [
+    mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+  ]);
+
+  mockGetDashboardResponse(
+    mockDashboardDto({
+      title: 'My dashboard',
+      uid: 'dash-test-uid',
+      panels: [
+        { id: 1, title: 'First panel', type: 'bar' },
+        { id: 2, title: 'Second panel', type: 'graph' },
+      ],
+    })
+  );
+
+  const user = userEvent.setup();
+
+  render(<FormWrapper formValues={{ annotations: [] }} />);
+
+  const { dialog } = ui.dashboardPicker;
+
+  await user.click(ui.setDashboardButton.get());
+  await user.click(await findByTitle(dialog.get(), 'My dashboard'));
+
+  const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+
+  expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
 });
 
 function mockGetDashboardResponse(dashboard: DashboardDTO) {

@@ -22,7 +22,7 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanBarOptions } from '../settings/SpanBarSettings';
-import { SpanLinkFunc, TNil } from '../types';
+import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
@@ -102,12 +102,14 @@ export type TProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
+  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
   setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
   selectedSpanId?: string;
+  criticalPath: CriticalPathSection[];
 };
 
 type State = {

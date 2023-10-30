@@ -11,10 +11,6 @@ import (
 
 func TestPlaylistClone(t *testing.T) {
 	src := Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "TheUID",
 			ResourceVersion:   "12345",

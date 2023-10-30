@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,7 +14,7 @@ import (
 )
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(pluginCtx backend.PluginContext, region string,
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string,
 	client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery, tagValueCache *cache.Cache, logger log.Logger) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, e.cfg)
 	service := services.NewListMetricsService(metricsClient)
@@ -50,7 +51,7 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(pluginCtx backend.Pl
 				DimensionKey: dimensionKey,
 			}
 
-			dimensions, err := service.GetDimensionValuesByDimensionFilter(request)
+			dimensions, err := service.GetDimensionValuesByDimensionFilter(ctx, request)
 			if err != nil {
 				return nil, err
 			}

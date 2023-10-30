@@ -19,7 +19,6 @@
   },
   "externalServiceRegistration": {
     "impersonation": {
-      "enabled" : true,
       "groups" : true,
       "permissions" :  [
         {
