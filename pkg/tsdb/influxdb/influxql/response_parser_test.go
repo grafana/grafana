@@ -323,6 +323,88 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
+	t.Run("Influxdb response parser with $measurement alias when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"dc.region.name": "Northeast",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"dc.region.name": "Northeast",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{Alias: "alias $measurement"}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.Equal(t, "alias cpu.upc", result.Frames[0].Name)
+		assert.Equal(t, "alias logins.count", result.Frames[1].Name)
+	})
+
+	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.True(t, strings.Contains(result.Frames[0].Name, ","))
+		assert.True(t, strings.Contains(result.Frames[1].Name, ","))
+	})
+
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 		response := `
 		{
