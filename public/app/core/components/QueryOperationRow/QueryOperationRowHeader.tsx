@@ -15,7 +15,7 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<SVGElement>;
+  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
@@ -76,14 +76,9 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center" wrap={false}>
         {actionsElement}
         {draggable && (
-          <Icon
-            title="Drag and drop to reorder"
-            name="draggabledots"
-            size="lg"
-            className={styles.dragIcon}
-            onMouseMove={reportDragMousePosition}
-            {...dragHandleProps}
-          />
+          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
+            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+          </div>
         )}
       </Stack>
     </div>
