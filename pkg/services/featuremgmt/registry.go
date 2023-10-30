@@ -301,9 +301,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -589,14 +590,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "toggleLabelsInLogsUI",
-			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "mlExpressions",
 			Description:  "Enable support for Machine Learning in server-side expressions",
 			Stage:        FeatureStageExperimental,
@@ -697,6 +690,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -771,6 +765,13 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "alertingContactPointsV2",
+			Description:  "Show the new contacpoints list view",
+			FrontendOnly: true,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -925,6 +926,24 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteSecondary",
+			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemotePrimary",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteOnly",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
 		},
 	}
 )

@@ -63,7 +63,7 @@ A time interval is a definition for a moment in time. If an alert fires during t
 
 Supported time interval options are:
 
-- Time range: The time inclusive of the starting time and exclusive of the end time in UTC.
+- Time range: The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time).
 - Days of the week: The day or range of days of the week. Example: `monday:thursday`.
 - Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month.
 - Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.

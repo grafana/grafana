@@ -3,6 +3,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import {
   DataFrame,
+  FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
@@ -47,7 +48,12 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values[0] - frame.fields[0].values[0];
+  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[0] - frame.fields[0].values[0];
+}
+
+export function getBucketSize1(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[1] - frame.fields[0].values[1];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -59,8 +65,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let builder = new UPlotConfigBuilder();
 
+  let isOrdinalX = frame.fields[0].type === FieldType.string;
+
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
+  let bucketSize1 = getBucketSize1(frame);
+
+  let bucketFactor = bucketSize1 / bucketSize;
+
+  let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -84,35 +97,44 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   builder.addScale({
     scaleKey: 'x', // bukkits
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: isOrdinalX
+      ? ScaleDistribution.Ordinal
+      : useLogScale
+      ? ScaleDistribution.Log
+      : ScaleDistribution.Linear,
+    log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, wantedMin, wantedMax) => {
-      // these settings will prevent zooming, probably okay?
-      if (xScaleMin != null) {
-        wantedMin = xScaleMin;
-      }
-      if (xScaleMax != null) {
-        wantedMax = xScaleMax;
-      }
+    range: useLogScale
+      ? (u, wantedMin, wantedMax) => {
+          return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+        }
+      : (u, wantedMin, wantedMax) => {
+          // these settings will prevent zooming, probably okay?
+          if (xScaleMin != null) {
+            wantedMin = xScaleMin;
+          }
+          if (xScaleMax != null) {
+            wantedMax = xScaleMax;
+          }
 
-      let fullRangeMin = u.data[0][0];
-      let fullRangeMax = u.data[0][u.data[0].length - 1];
+          let fullRangeMin = u.data[0][0];
+          let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-      // snap to bucket divisors...
+          // snap to bucket divisors...
 
-      if (wantedMax === fullRangeMax) {
-        wantedMax += bucketSize;
-      } else {
-        wantedMax = incrRoundUp(wantedMax, bucketSize);
-      }
+          if (wantedMax === fullRangeMax) {
+            wantedMax += bucketSize;
+          } else {
+            wantedMax = incrRoundUp(wantedMax, bucketSize);
+          }
 
-      if (wantedMin > fullRangeMin) {
-        wantedMin = incrRoundDn(wantedMin, bucketSize);
-      }
+          if (wantedMin > fullRangeMin) {
+            wantedMin = incrRoundDn(wantedMin, bucketSize);
+          }
 
-      return [wantedMin, wantedMax];
-    },
+          return [wantedMin, wantedMax];
+        },
   });
 
   builder.addScale({
@@ -132,22 +154,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
-    incrs: histogramBucketSizes,
-    splits: xSplits,
-    values: (u: uPlot, splits: any[]) => {
-      const tickLabels = splits.map(xAxisFormatter);
+    incrs: isOrdinalX ? [1] : useLogScale ? undefined : histogramBucketSizes,
+    splits: useLogScale || isOrdinalX ? undefined : xSplits,
+    values: isOrdinalX
+      ? (u: uPlot, splits: any[]) => splits
+      : (u: uPlot, splits: any[]) => {
+          const tickLabels = splits.map(xAxisFormatter);
 
-      const maxWidth = tickLabels.reduce(
-        (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
-        0
-      );
+          const maxWidth = tickLabels.reduce(
+            (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
+            0
+          );
 
-      const labelSpacing = 10;
-      const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
-      const keepMod = Math.ceil(tickLabels.length / maxCount);
+          const labelSpacing = 10;
+          const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
+          const keepMod = Math.ceil(tickLabels.length / maxCount);
 
-      return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
-    },
+          return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
+        },
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,

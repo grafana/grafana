@@ -4,7 +4,7 @@ import { DataFrame, TimeRange } from '@grafana/data';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
-import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { PanelContextRoot } from '../PanelChrome/PanelContext';
 import { hasVisibleLegendSeries, PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
@@ -16,10 +16,10 @@ type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'render
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
-  panelContext: PanelContext = {} as PanelContext;
+  declare context: React.ContextType<typeof PanelContextRoot>;
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { eventBus, eventsScope, sync } = this.context as PanelContext;
+    const { eventBus, eventsScope, sync } = this.context;
     const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({

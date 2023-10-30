@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	PluginInstallToken               string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -1629,7 +1630,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	// Extended JWT auth
-	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
 	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")

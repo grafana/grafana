@@ -347,10 +347,6 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagToggleLabelsInLogsUI
-	// Enable toggleable filters in log details view
-	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
-
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
@@ -447,6 +443,10 @@ const (
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
 
+	// FlagAlertingContactPointsV2
+	// Show the new contacpoints list view
+	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
+
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -534,4 +534,16 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagAlertmanagerRemoteSecondary
+	// Enable Grafana to sync configuration and state with a remote Alertmanager.
+	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
+
+	// FlagAlertmanagerRemotePrimary
+	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
+	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
+
+	// FlagAlertmanagerRemoteOnly
+	// Disable the internal Alertmanager and only use the external one defined.
+	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 )
