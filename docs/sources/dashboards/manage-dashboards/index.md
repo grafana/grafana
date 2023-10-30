@@ -46,10 +46,10 @@ For more information about creating dashboards, refer to [Add and organize panel
 On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
 
 - Create folders and dashboards
-- Move dashboards between folders
-- Delete multiple dashboards and folders
-- Navigate to a folder
-- Manage folder permissions. For more information, refer to [Dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/#dashboard-permissions).
+- Move dashboards between folders.
+- Delete multiple dashboards and folders.
+- Navigate to a folder.
+- Manage folder permissions. For more information, refer to [Dashboard permissions][].
 
 {{% admonition type="note" %}}
 As of Grafana 10.2, there is no longer a special **General** folder. Dashboards without a folder are now shown at the top level alongside folders.
@@ -70,7 +70,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
 {{% admonition type="note" %}}
-Alerts cannot be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, do not use slashes in the folder name.
+Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
 {{% /admonition %}}
 
 **To edit the name of a folder:**
@@ -83,7 +83,7 @@ The new folder name is automatically saved.
 
 ### Folder permissions
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. You can assign permissions to organization roles, teams, and users.
+You can assign permissions to a folder. Dashboards in the folder inherit any permissions that you've assigned to the folder. You can assign permissions to organization roles, teams, and users.
 
 **To modify permissions for a folder:**
 
@@ -119,7 +119,7 @@ Grafana downloads a JSON file to your local machine.
 
 If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
 
-A template variable of the type `Constant` will automatically be hidden in the dashboard, and will also be added as a required input when the dashboard is imported.
+A template variable of the type `Constant` is automatically hidden in the dashboard, and is also added as a required input when the dashboard is imported.
 
 ### Import a dashboard
 
@@ -136,11 +136,24 @@ A template variable of the type `Constant` will automatically be hidden in the d
 
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 
-### Discover dashboards on Grafana.com
+### Discover dashboards on grafana.com
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" >}}
+
+## Set up generative AI features for dashboards
+
+{{< docs/public-preview product="Generative AI in dashboards" featureFlag="`dashgpt`" >}}
+
+You can use generative AI to help you with the following tasks:
+
+- **Generate panel and dashboard titles and descriptions**: Generate a title and description based on the data you’ve added for your panel or dashboard. This is useful when you want to visualize your data quickly and don’t want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
+
+To access these features, enable the `dashgpt` feature toggle. Then install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
+
+When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 ## Troubleshoot dashboards
 
@@ -159,15 +172,15 @@ By default, Grafana queries your data source every 30 seconds. Setting a low ref
 
 We recommend the following:
 
-- Do not enable auto-refreshing on dashboards, panels, or variables unless you need it. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
-- If it is required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
+- Only enable auto-refreshing on dashboards, panels, or variables unless if necessary. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
+- If it's required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
 - If your dashboard has a longer time period (such as a week), then you really don't need automated refreshing.
 
 #### Handling or rendering null data is wrong or confusing
 
 Some applications publish data intermittently; for example, they only post a metric when an event occurs. By default, Grafana graphs connect lines between the data points. This can be very deceiving.
 
-In the picture below we have enabled:
+In the picture below we've enabled:
 
 - Points and 3-point radius to highlight where data points are actually present.
 - **Connect null values\* is set to **Always\*\*.
@@ -187,8 +200,11 @@ You can find more examples in `public/dashboards/` directory of your Grafana ins
 [Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
 
 [panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
-[panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+[panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations"
 
 [HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
-[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/developer-resources/api-reference/http-api"
+
+[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
+[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
 {{% /docs/reference %}}

@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -57,16 +56,10 @@ describe('LogDetails', () => {
         },
         { labels: { key1: 'label1' } }
       );
-      expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
-      expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter for value in query A')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter out value in query A')).toBeInTheDocument();
     });
-    describe('With toggleLabelsInLogsUI=true', () => {
-      beforeAll(() => {
-        config.featureToggles.toggleLabelsInLogsUI = true;
-      });
-      afterAll(() => {
-        config.featureToggles.toggleLabelsInLogsUI = false;
-      });
+    describe('Toggleable filters', () => {
       it('should provide the log row to Explore filter functions', async () => {
         const onClickFilterLabelMock = jest.fn();
         const onClickFilterOutLabelMock = jest.fn();

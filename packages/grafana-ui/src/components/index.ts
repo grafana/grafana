@@ -214,6 +214,7 @@ export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
 export { TextLink } from './Link/TextLink';
 export { Text } from './Text/Text';
+export { Box } from './Layout/Box/Box';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';

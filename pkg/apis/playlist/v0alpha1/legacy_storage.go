@@ -2,11 +2,13 @@ package v0alpha1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -25,6 +27,9 @@ type legacyStorage struct {
 	service        playlist.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+
+	DefaultQualifiedResource  schema.GroupResource
+	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -96,11 +101,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		UID:   name,
 		OrgId: info.OrgID,
 	})
-	if err != nil {
+	if err != nil || dto == nil {
+		if errors.Is(err, playlist.ErrPlaylistNotFound) || err == nil {
+			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+		}
 		return nil, err
-	}
-	if dto == nil {
-		return nil, fmt.Errorf("not found?")
 	}
 
 	return convertToK8sResource(dto, s.namespacer), nil
