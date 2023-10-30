@@ -34,7 +34,7 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 		},
 		{
 			desc:        "search specific panel with panel title feature enabled",
-			url:         "/api/search?type=dash-db&panelTitle=panel_99999",
+			url:         "/api/search?type=dash-db&panelTitle=apple",
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
 				featuremgmt.FlagNestedFolders,

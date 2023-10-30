@@ -92,10 +92,19 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 		if err != nil {
 			return err
 		}
-		for _, d := range dashboards {
-			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(d), d.ID)
-			if err != nil {
-				return err
+
+		// #TODO refactor
+		for _, dash := range dashboards {
+			if d.store.GetDialect().DriverName() == migrator.Postgres {
+				_, err = sess.Exec("UPDATE dashboard SET panel_titles = to_tsvector(?) WHERE id = ?", getPanelTitles(dash), dash.ID)
+				if err != nil {
+					return err
+				}
+			} else {
+				_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(dash), dash.ID)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

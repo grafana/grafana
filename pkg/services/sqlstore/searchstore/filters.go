@@ -59,6 +59,9 @@ func (f PanelTitleFilter) Where() (string, []any) {
 	if f.Dialect.DriverName() == migrator.MySQL {
 		return "MATCH(dashboard.panel_titles) AGAINST (? IN NATURAL LANGUAGE MODE)", []any{f.PanelTitle}
 	}
+	if f.Dialect.DriverName() == migrator.Postgres {
+		return "public.dashboard.panel_titles @@ to_tsquery('english', ?)", []any{f.PanelTitle}
+	}
 	return fmt.Sprintf("dashboard.panel_titles %s ?", f.Dialect.LikeStr()), []any{"%" + f.PanelTitle + "%"}
 }
 

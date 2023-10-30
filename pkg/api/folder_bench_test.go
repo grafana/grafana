@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
@@ -436,16 +437,15 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 		str := fmt.Sprintf("dashboard_%d", j)
 		dashID := generateID(IDs)
 		dashs = append(dashs, &dashboards.Dashboard{
-			ID:          dashID,
-			OrgID:       signedInUser.OrgID,
-			IsFolder:    false,
-			UID:         str,
-			Slug:        str,
-			Title:       str,
-			Data:        simplejson.New(),
-			Created:     now,
-			Updated:     now,
-			PanelTitles: fmt.Sprintf(lorem+"panel_%d", j),
+			ID:       dashID,
+			OrgID:    signedInUser.OrgID,
+			IsFolder: false,
+			UID:      str,
+			Slug:     str,
+			Title:    str,
+			Data:     simplejson.New(),
+			Created:  now,
+			Updated:  now,
 		})
 
 	}
@@ -453,6 +453,14 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err = sess.BulkInsert("dashboard", dashs, opts)
 		require.NoError(b, err)
+
+		// #TODO refactor
+		if db.GetDialect().DriverName() == migrator.Postgres {
+			_, err = sess.Exec(fmt.Sprintf(`UPDATE dashboard SET panel_titles = to_tsvector('%s');`, lorem))
+
+			// panel title to search for
+			_, err = sess.Exec(fmt.Sprintf(`UPDATE dashboard SET panel_titles = to_tsvector('%s apple') WHERE title = 'dashboard_99999';`, lorem))
+		}
 
 		return err
 	})
