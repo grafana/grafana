@@ -690,6 +690,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",

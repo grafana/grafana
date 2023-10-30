@@ -100,17 +100,25 @@ type OnCallIntegration struct {
 	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 }
 
+type OpsgenieIntegrationResponder struct {
+	ID       *string `json:"id,omitempty" yaml:"id,omitempty" hcl:"id"`
+	Name     *string `json:"name,omitempty" yaml:"name,omitempty" hcl:"name"`
+	Username *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Type     string  `json:"type" yaml:"type" hcl:"type"`
+}
+
 type OpsgenieIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
 	APIKey Secret `json:"apiKey" yaml:"apiKey" hcl:"api_key"`
 
-	APIUrl           *string `json:"apiUrl,omitempty" yaml:"apiUrl,omitempty" hcl:"url"`
-	Message          *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	Description      *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
-	AutoClose        *bool   `json:"autoClose,omitempty" yaml:"autoClose,omitempty" hcl:"auto_close"`
-	OverridePriority *bool   `json:"overridePriority,omitempty" yaml:"overridePriority,omitempty" hcl:"override_priority"`
-	SendTagsAs       *string `json:"sendTagsAs,omitempty" yaml:"sendTagsAs,omitempty" hcl:"send_tags_as"`
+	APIUrl           *string                        `json:"apiUrl,omitempty" yaml:"apiUrl,omitempty" hcl:"url"`
+	Message          *string                        `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Description      *string                        `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+	AutoClose        *bool                          `json:"autoClose,omitempty" yaml:"autoClose,omitempty" hcl:"auto_close"`
+	OverridePriority *bool                          `json:"overridePriority,omitempty" yaml:"overridePriority,omitempty" hcl:"override_priority"`
+	SendTagsAs       *string                        `json:"sendTagsAs,omitempty" yaml:"sendTagsAs,omitempty" hcl:"send_tags_as"`
+	Responders       []OpsgenieIntegrationResponder `json:"responders,omitempty" yaml:"responders,omitempty" hcl:"responders,block"`
 }
 
 type PagerdutyIntegration struct {
