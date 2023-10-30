@@ -15,6 +15,9 @@ import {
 
 const MERGE_DEFAULT = true;
 
+
+
+
 /**
  * Maps a refId to a Field which can contain
  * different types of data. In our case we
@@ -22,6 +25,27 @@ const MERGE_DEFAULT = true;
  */
 interface RefFieldMap<T> {
   [index: string]: Field<T>;
+}
+
+/**
+ * A map of RefIds to labels where each 
+ * label maps to a field of the given
+ * type. It's technically possible
+ * to use the above type to achieve
+ * this in combination with another mapping
+ * but the RefIds are on the outer map
+ * in this case, so we use a different type
+ * to avoid future issues.
+ * 
+ *  RefId: {
+ *     label1: Field<T>
+ *     label2: Field<T>
+ *  }
+ */
+interface RefLabelFieldMap<T> {
+  [index: string]: {
+    [index: string]: Field<T>;
+  }
 }
 
 /**
@@ -112,6 +136,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // Retreive the refIds of all the data
   let refIdMap = getRefData(data);
 
+  // Retrieve label fields
+  let labelFields = getLabelFields(data);
+
   // If we're merging data then rather
   // than creating a series per source
   // series we initialize fields here
@@ -125,6 +152,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
 
+
+
+
       // If it's not a time series frame we add
       // it unmodified to the result
       if (!isTimeSeriesFrame(frame)) {
@@ -132,11 +162,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         continue;
       }
 
-      // If we're not dealing with a frame
-      // of the current refId skip it
-      if (frame.refId !== refId) {
-        continue;
-      }
 
       // Retrieve the time field that's been configured
       // If one isn't configured then use the first found
@@ -174,16 +199,17 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         // Add the name of the field
         labelParts.push(field.name);
 
-        // If there is any labeled data add it here
+        // If there are labels add them to the appropriate fields
         if (field.labels !== undefined) {
           for (const [labelKey, labelValue] of Object.entries(field.labels)) {
-            labelParts.push(`${labelKey}=${labelValue}`);
+            labelFields[refId][labelKey].values.push(labelValue);
           }
         }
 
         // Add the label parts to the label field
-        const label = labelParts.join(' : ');
-        refId2LabelField[refId].values.push(label);
+        // const label = labelParts.join(' : ');
+        // refId2LabelField[refId].values.push(label);
+
 
         // Calculate the reduction of the current field
         // and push the frame with reduction
@@ -214,9 +240,14 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       // Set the refId
       table.refId = refId;
 
+      // Add label fields to the the resulting frame
+      for (const labelField of Object.values(labelFields[refId])) {
+        table.addField(labelField);
+      }
+
       // Add the label, sparkline, and value fields
       // into the new frame
-      table.addField(refId2LabelField[refId]);
+      // table.addField(refId2LabelField[refId]);
       table.addField(refId2FrameField[refId]);
       table.addField(refId2ValueField[refId]);
 
@@ -265,4 +296,43 @@ export function getRefData(data: DataFrame[]) {
   }
 
   return refMap;
+}
+
+
+/**
+ * Return a collection of fields per refId and also per label.
+ */ 
+function getLabelFields(frames: DataFrame[]): RefLabelFieldMap<string> {
+  const labelFields: RefLabelFieldMap<string> = {};
+
+  for (const frame of frames) {
+    if (!isTimeSeriesFrame(frame)) {
+      continue;
+    }
+
+    const refId = frame.refId ?? '';
+
+    if (!labelFields[refId]) {
+      labelFields[refId] = {};
+    }
+
+    for (const field of frame.fields) {
+      if (!field.labels) {
+        continue;
+      }
+
+      for (const labelName of Object.keys(field.labels)) {
+        if (!labelFields[refId][labelName]) {
+          labelFields[refId][labelName] = {
+            name: labelName,
+            type: FieldType.string,
+            config: {},
+            values: [],
+          };
+        }
+      }
+    }
+  }
+
+  return labelFields;
 }
