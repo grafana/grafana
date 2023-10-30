@@ -75,7 +75,7 @@ func (api *Api) GetSettingsForProvider(c *contextmodel.ReqContext) response.Resp
 		return response.Error(400, "Missing key", nil)
 	}
 
-	settings, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key, nil)
+	settings, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
 	if err != nil {
 		return response.Error(404, "The provider was not found", err)
 	}

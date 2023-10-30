@@ -90,7 +90,7 @@ func ProvideService(cfg *setting.Cfg,
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
-	for _, name := range allOauthes {
+	for _, name := range AllOauthes {
 		sec := cfg.Raw.Section("auth." + name)
 
 		info := &OAuthInfo{
@@ -331,7 +331,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
+	AllOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
 type Service interface {
@@ -468,7 +468,7 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 		return result
 	}
 
-	for _, name := range allOauthes {
+	for _, name := range AllOauthes {
 		if name == "grafananet" {
 			name = grafanaCom
 		}

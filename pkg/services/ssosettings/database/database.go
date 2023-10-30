@@ -36,7 +36,7 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		sess.Table("sso_setting")
-		found, err := sess.Get(&result)
+		found, err := sess.AllCols().Get(&result)
 
 		if err != nil {
 			return err
@@ -54,6 +54,26 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	}
 
 	return &result, nil
+}
+
+func (s *SSOSettingsStore) GetAll(ctx context.Context) ([]*models.SSOSetting, error) {
+	result := make([]*models.SSOSetting, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Table("sso_setting")
+		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&result)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
@@ -92,9 +112,20 @@ func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[
 
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Where("provider = ? AND is_deleted = false", provider).Update(&models.SSOSetting{
-			IsDeleted: true,
-		})
+		existing := new(models.SSOSetting)
+		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Get(existing)
+		if err != nil {
+			return err
+		}
+
+		if !found {
+			return nil // nothing to delete
+		}
+
+		existing.Updated = time.Now().UTC()
+		existing.IsDeleted = true
+
+		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)
 		return err
 	})
 	return err

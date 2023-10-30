@@ -9,46 +9,50 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
+	// TODO: make sure that grafana com only available to server admins and org admins should not be able to update the settings of it
 	grafanaCom = "grafana_com"
 	allOauthes = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
 type SSOSettingsService struct {
-	log   log.Logger
-	cfg   *setting.Cfg
-	store ssosettings.Store
-	ac    ac.AccessControl
+	log          log.Logger
+	cfg          *setting.Cfg
+	store        ssosettings.Store
+	ac           ac.AccessControl
+	fbStrategies []ssosettings.FallbackStrategy
 }
 
 func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessControl) *SSOSettingsService {
+	strategies := []ssosettings.FallbackStrategy{
+		strategies.NewOAuthStrategy(cfg),
+		// register other strategies here, for example SAML
+	}
 	return &SSOSettingsService{
-		log:   log.New("ssosettings.service"),
-		cfg:   cfg,
-		store: store,
-		ac:    ac,
+		log:          log.New("ssosettings.service"),
+		cfg:          cfg,
+		store:        store,
+		ac:           ac,
+		fbStrategies: strategies,
 	}
 }
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
-func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string, strategy ssosettings.FallbackStrategy) (*models.SSOSetting, error) {
+func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSetting, error) {
 	dto, err := s.store.Get(ctx, provider)
 
 	if errors.Is(err, ssosettings.ErrNotFound) {
-		fallbackConfig, err := strategy.ParseConfigFromSystem(ctx)
+		setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 		if err != nil {
 			return nil, err
 		}
 
-		return &models.SSOSetting{
-			Settings: fallbackConfig,
-			Provider: provider,
-			Source:   models.System,
-		}, nil
+		return setting, nil
 	}
 
 	if err != nil {
@@ -61,25 +65,51 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 }
 
 func (s *SSOSettingsService) GetAll(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
-	panic("not implemented") // TODO: Implement
+	result := make([]*models.SSOSetting, 0, len(allOauthes))
+	storedSettings, err := s.store.GetAll(ctx)
 
-	// for _, provider := range allOauthes {
-	// 	ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", fmt.Sprintf("auth.%s", provider)))
-	// 	if hasAccess, _ := s.ac.Evaluate(ctx, requester, ev); !hasAccess{
-	// 		continue
-	// 	}
-	// }
+	if err != nil {
+		return nil, err
+	}
+
+	for _, provider := range allOauthes {
+		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider, "*"))
+		hasAccess, err := s.ac.Evaluate(ctx, requester, ev)
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasAccess {
+			continue
+		}
+
+		settings := getSettingsByProvider(provider, storedSettings)
+		if len(settings) == 0 {
+			// If there is no data in the DB then we need to load the settings using the fallback strategy
+			setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+			if err != nil {
+				return nil, err
+			}
+
+			settings = append(settings, setting)
+		}
+		result = append(result, settings...)
+	}
+
+	return result, nil
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	// Validate first
-
-	// Update
+	// TODO: validation
 	err := s.store.Upsert(ctx, provider, data)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
+	panic("not implemented") // TODO: Implement
 }
 
 func (s *SSOSettingsService) Delete(ctx context.Context, provider string) error {
@@ -92,4 +122,45 @@ func (s *SSOSettingsService) Reload(ctx context.Context, provider string) {
 
 func (s *SSOSettingsService) RegisterReloadable(ctx context.Context, provider string, reloadable ssosettings.Reloadable) {
 	panic("not implemented") // TODO: Implement
+}
+
+func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {
+	s.fbStrategies = append(s.fbStrategies, strategy)
+}
+
+func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSetting, error) {
+	loadStrategy, ok := s.getFallBackstrategyFor(provider)
+	if !ok {
+		return nil, errors.New("no fallback strategy found for provider: " + provider)
+	}
+
+	settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.SSOSetting{
+		Provider: provider,
+		Source:   models.System,
+		Settings: settingsFromSystem,
+	}, nil
+}
+
+func getSettingsByProvider(provider string, settings []*models.SSOSetting) []*models.SSOSetting {
+	result := make([]*models.SSOSetting, 0)
+	for _, setting := range settings {
+		if setting.Provider == provider {
+			result = append(result, setting)
+		}
+	}
+	return result
+}
+
+func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+	for _, strategy := range s.fbStrategies {
+		if strategy.IsMatch(provider) {
+			return strategy, true
+		}
+	}
+	return nil, false
 }
