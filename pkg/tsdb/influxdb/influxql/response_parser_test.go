@@ -455,7 +455,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			query = models.Query{Alias: "alias $m $measurement", Measurement: "10m"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
 
-			name := "alias 10m 10m"
+			name := "alias cpu.upc cpu.upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -563,7 +563,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			query = models.Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
-			name = "alias 10m 10m"
+			name = "alias cpu.upc cpu.upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
