@@ -968,6 +968,10 @@ export class LokiDatasource
     return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
   }
 
+  showContextToggle(row?: LogRowModel): boolean {
+    return true;
+  }
+
   /**
    * Implemented as part of the DataSourceAPI, this method allows the datasource to serve as a source of annotations for a dashboard.
    * @returns A promise that resolves to an array of AnnotationEvent objects representing the annotations for the dashboard.
