@@ -319,7 +319,6 @@ function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptio
       ...options,
     } as DataSourceInstanceSettings<PromOptions>,
     mockTemplateSrv(),
-    undefined,
     languageProvider
   );
   return { datasource, languageProvider };

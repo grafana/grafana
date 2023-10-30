@@ -120,10 +120,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshMetrics = async () => {
     const {
+      range,
       datasource: { languageProvider },
     } = this.props;
 
-    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
+    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start(range));
 
     try {
       const remainingTasks = await this.languageProviderInitializationPromise.promise;
@@ -253,6 +254,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    timeRange={this.props.range}
                   />
                 </div>
               )}

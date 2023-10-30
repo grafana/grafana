@@ -24,7 +24,6 @@ function createDatasource() {
       meta: {} as DataSourcePluginMeta,
     } as DataSourceInstanceSettings,
     undefined,
-    undefined,
     languageProvider
   );
   return { datasource, languageProvider };
