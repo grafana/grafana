@@ -134,6 +134,7 @@ func ProvideService(
 			}
 
 			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+				fmt.Printf("K8s proxyHandler: %s\n", c.Req.URL)
 				handle(c)
 				return
 			}

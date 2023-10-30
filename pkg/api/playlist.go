@@ -1,16 +1,75 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"net/http/httptest"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ValidateOrgPlaylist(c *contextmodel.ReqContext) {
+func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
+
+	gvr := schema.GroupVersionResource{
+		Group:    v0alpha1.GroupName,
+		Version:  v0alpha1.VersionID,
+		Resource: "playlists",
+	}
+
+	// Playlist
+	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
+		playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
+		playlistRoute.Get("/:uid", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
+		playlistRoute.Get("/:uid/items", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
+		playlistRoute.Delete("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
+		playlistRoute.Put("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
+		playlistRoute.Post("/", middleware.ReqEditorRole, routing.Wrap(hs.CreatePlaylist))
+
+		playlistRoute.Get("/test", func(c *contextmodel.ReqContext) response.Response {
+
+			fmt.Printf("OUTSIDE: %s\n", c.SignedInUser.Login)
+
+			config := &rest.Config{
+				Transport: &roundTripperFunc{
+					fn: func(req *http.Request) (*http.Response, error) {
+						w := httptest.NewRecorder() // test package????
+						ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+						fmt.Printf("INSIDE! %s\n", req.URL)
+						hs.httpSrv.Handler.ServeHTTP(w, req.WithContext(ctx))
+						return w.Result(), nil
+					},
+				},
+			}
+
+			dyn, err := dynamic.NewForConfig(config)
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "config", err)
+			}
+
+			out, err := dyn.Resource(gvr).List(c.Req.Context(), v1.ListOptions{})
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "config", err)
+			}
+
+			return response.JSON(http.StatusOK, out)
+		})
+	})
+}
+
+func (hs *HTTPServer) validateOrgPlaylist(c *contextmodel.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
 	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.SignedInUser.GetOrgID()}
 	p, err := hs.playlistService.GetWithoutItems(c.Req.Context(), &query)
@@ -278,4 +337,12 @@ type CreatePlaylistResponse struct {
 	// The response message
 	// in: body
 	Body *playlist.Playlist `json:"body"`
+}
+
+type roundTripperFunc struct {
+	fn func(req *http.Request) (*http.Response, error)
+}
+
+func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f.fn(req)
 }
