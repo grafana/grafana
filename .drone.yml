@@ -695,7 +695,7 @@ steps:
     HOST: grafana-server
     PORT: 3001
   failure: always
-  image: ghcr.io/puppeteer/puppeteer:20.9.0
+  image: grafana/docker-puppeteer:pre-node-20
   name: test-a11y-frontend
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
@@ -1946,7 +1946,7 @@ steps:
     HOST: grafana-server
     PORT: 3001
   failure: ignore
-  image: ghcr.io/puppeteer/puppeteer:20.9.0
+  image: grafana/docker-puppeteer:pre-node-20
   name: test-a11y-frontend
 - commands:
   - ./bin/build store-storybook --deployment canary
@@ -4406,7 +4406,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/package-publish:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM osixia/openldap:1.4.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ghcr.io/puppeteer/puppeteer:20.9.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:pre-node-20
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
@@ -4440,7 +4440,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/package-publish:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL osixia/openldap:1.4.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
-  - trivy --exit-code 1 --severity HIGH,CRITICAL ghcr.io/puppeteer/puppeteer:20.9.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:pre-node-20
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
@@ -4670,6 +4670,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 659a6466d069af48f980cf387708f14b5e305e14915562c9a5ada4def8c8ad8d
+hmac: 0413e93a53555c89cb7c7fb6c7b078dc58d00219fc9c85588ab7e0dd062e6363
 
 ...
