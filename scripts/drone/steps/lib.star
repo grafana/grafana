@@ -614,9 +614,6 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
       Drone step.
     """
     commands = [
-        "node --version",
-        "npm --version",
-        "npx --version",
         "npx wait-on@7.0.1 http://$HOST:$PORT",
     ]
     failure = "ignore"
