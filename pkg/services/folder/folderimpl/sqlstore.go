@@ -328,32 +328,20 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 }
 
 func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+	if len(uids) == 0 {
+		return []*folder.Folder{}, nil
+	}
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}
-		args := make([]any, 0, len(uids)+1)
-
-		b.WriteString("SELECT * FROM folder WHERE org_id=? ")
-		args = append(args, orgID)
-		for i, uid := range uids {
-			if i == 0 {
-				b.WriteString("  AND (")
-			}
-
-			if i > 0 {
-				b.WriteString(" OR ")
-			}
-			b.WriteString(" uid=? ")
+		b.WriteString(`SELECT * FROM folder WHERE org_id=? AND uid IN (?` + strings.Repeat(", ?", len(uids)-1) + `)`)
+		args := []any{orgID}
+		for _, uid := range uids {
 			args = append(args, uid)
-
-			if i == len(uids)-1 {
-				b.WriteString(")")
-			}
 		}
 		return sess.SQL(b.String(), args...).Find(&folders)
 	}); err != nil {
 		return nil, err
 	}
-
 	return folders, nil
 }
