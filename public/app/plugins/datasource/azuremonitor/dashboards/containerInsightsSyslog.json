@@ -86,7 +86,7 @@
             "showLineNumbers": false,
             "showMiniMap": false
           },
-          "content": "This dashboard visualizes Syslog collected by Azure Monitor - Container Insights. Read more in the Syslog documentation here:   [aka.ms/CISyslog](https://aka.ms/CISyslog). \n\nIn case of issues, please ensure that \n1. The [Azure Monitor data source is enabled](https://learn.microsoft.com/azure/managed-grafana/how-to-data-source-plugins-managed-identity?tabs=azure-portal).\n2. [Syslog is enabled](https://aka.ms/cisyslog#how-to-enable-syslog) in Container Insights  \n3. You have chosen an *LAWorkspace* and *ClusterName* above which have Syslog data flowing. *Subscription* is selected automatically. \n4. The time range is correct \n\nRead more here: [aka.ms/CISyslogGrafana](https://aka.ms/CISyslogGrafana)",
+          "content": "This dashboard visualizes Syslog data collected by Azure Monitor - Container Insights. Read more in the Syslog documentation here:   [aka.ms/CISyslog](https://aka.ms/CISyslog). \n\nIn case of issues, please ensure that \n1. An [Azure Monitor data source is configured](https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-the-data-source).\n2. [Syslog is enabled](https://aka.ms/cisyslog#how-to-enable-syslog) in Container Insights  \n3. You have chosen an *LAWorkspace* and *ClusterName* above which have Syslog data flowing. *Subscription* is selected automatically. \n4. The time range is correct \n\nRead more here: [aka.ms/CISyslogGrafana](https://aka.ms/CISyslogGrafana)",
           "mode": "markdown"
         },
         "title": "Syslog ",
