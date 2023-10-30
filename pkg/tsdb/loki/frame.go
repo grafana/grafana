@@ -168,6 +168,9 @@ func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	stringTimeField := fields[3]
 	if len(fields) == 5 {
 		labelTypesField := fields[4]
+		if labelTypesField.Type() != data.FieldTypeJSON {
+			return fmt.Errorf("invalid field types in logs frame. expected json, got %s", labelTypesField.Type())
+		}
 		labelTypesField.Name = "labelTypes"
 		labelTypesField.Config = &data.FieldConfig{
 			Custom: map[string]interface{}{
