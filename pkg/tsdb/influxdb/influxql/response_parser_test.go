@@ -681,6 +681,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
+
+	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"statement_id": 0
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.NotNil(t, result.Frames)
+		assert.Equal(t, 0, len(result.Frames))
+	})
 }
 
 func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
