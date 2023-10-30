@@ -17,6 +17,11 @@ env:
   GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
   GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
 
+# These permissions are needed to assume roles from Github's OIDC.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build-and-publish:
     name: Build and publish ${{ inputs.plugin_id }}
