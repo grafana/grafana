@@ -202,9 +202,7 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, SpansetFilter],
-    fun: () => ({
-      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
-    }),
+    fun: resolveSpansetWithNoClosedBrace,
   },
   {
     path: [ERROR_NODE_ID, Aggregate],
@@ -256,6 +254,22 @@ const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number)
   const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
   if (endOfPathNode && text[pos - 1] !== ' ') {
     const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+    const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
+    const indexOfDot = attributeFieldParentText.indexOf('.');
+    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+
+    return {
+      type: 'SPANSET_IN_NAME_SCOPE',
+      scope: attributeFieldUpToDot,
+    };
+  }
+
+  const endOfPathNode2 = walk(node, [
+    ['parent', [SpansetFilter]],
+    ['firstChild', [FieldExpression]],
+  ]);
+  if (endOfPathNode2 && text[pos] !== ' ' && text[pos - 1] !== ' ') {
+    const attributeFieldParent = walk(endOfPathNode2, [['firstChild', [AttributeField]]]);
     const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
     const indexOfDot = attributeFieldParentText.indexOf('.');
     const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
@@ -413,5 +427,16 @@ function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): Situa
   }
   return {
     type: 'NEW_SPANSET',
+  };
+}
+
+function resolveSpansetWithNoClosedBrace(node: SyntaxNode, text: string, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
+  return {
+    type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
   };
 }
