@@ -17,7 +17,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -206,9 +206,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * @alpha
    */
   isFilterLabelActive = async (key: string, value: string, refId?: string) => {
-    if (!config.featureToggles.toggleLabelsInLogsUI) {
-      return false;
-    }
     const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
@@ -254,7 +251,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasToggleableQueryFiltersSupport(ds) && config.featureToggles.toggleLabelsInLogsUI) {
+      if (hasToggleableQueryFiltersSupport(ds)) {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
@@ -504,7 +501,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
             queryResponse={queryResponse}
-            topOfViewRef={this.topOfViewRef}
           />
         </ContentOutlineItem>
       )

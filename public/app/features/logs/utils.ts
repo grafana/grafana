@@ -243,13 +243,14 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
     levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
     levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
 
-    for (const time in aggregated[level]) {
-      const value = aggregated[level][time];
-      levelDataFrame.add({
-        Time: Number(time),
-        Value: value,
+    Object.entries(aggregated[level])
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .forEach(([time, value]) => {
+        levelDataFrame.add({
+          Time: Number(time),
+          Value: value,
+        });
       });
-    }
 
     results.push(levelDataFrame);
   });
