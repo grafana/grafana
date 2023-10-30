@@ -83,6 +83,10 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 		}
 	}
 
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
 	// Preallocate for the worst-case scenario
 	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
 
