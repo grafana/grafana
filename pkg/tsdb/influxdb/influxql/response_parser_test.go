@@ -407,6 +407,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
+
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -575,6 +576,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = models.Query{Alias: "alias words with no brackets"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
