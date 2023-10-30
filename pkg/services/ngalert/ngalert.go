@@ -175,10 +175,45 @@ func (ng *AlertNG) init() error {
 
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID)
-		})
+		// NOTE: remote.alertmanager enable = true must go with one of these.
+		remoteSecondary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteSecondary)
+		fmt.Println("RemoteSecondary?", remoteSecondary)
+
+		remotePrimary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemotePrimary)
+		fmt.Println("RemotePrimary?", remotePrimary)
+
+		remoteOnly := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteOnly)
+		fmt.Println("RemoteOnly?", remoteOnly)
+
+		if !remoteSecondary && !remotePrimary && !remoteOnly {
+			return fmt.Errorf("at least one mode should be enabled to use the remote Alertmanager")
+		}
+
+		// If we're using RemoteOnly there's no need for the forked Alertmanager
+		var override notifier.Option
+		if remoteOnly {
+			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+				externalAMCfg := remote.AlertmanagerConfig{}
+				return remote.NewAlertmanager(externalAMCfg, orgID)
+			})
+		} else {
+			// If we're using other mode, we need to use the forked Alertmanager.
+			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+				externalAMCfg := remote.AlertmanagerConfig{}
+				am, err := remote.NewAlertmanager(externalAMCfg, orgID)
+				if err != nil {
+					return nil, err
+				}
+				// TODO: inject internal Alertmanager.
+				var mode remote.Mode
+				if remoteSecondary {
+					mode = remote.ModeRemoteSecondary
+				} else {
+					mode = remote.ModeRemotePrimary
+				}
+				return remote.NewForkedAlertmanager(am, am, mode), nil
+			})
+		}
 
 		overrides = append(overrides, override)
 	}
