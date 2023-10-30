@@ -540,10 +540,10 @@ const (
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
 
 	// FlagAlertmanagerRemotePrimary
-	// Enable a remote Alertmanager instance as the primary Alertmanager.
+	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
 	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and use an external one instead.
+	// Disable the internal Alertmanager and only use the external one defined.
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 )

@@ -935,13 +935,13 @@ var (
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
-			Description: "Enable a remote Alertmanager instance as the primary Alertmanager.",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:        "alertmanagerRemoteOnly",
-			Description: "Disable the internal Alertmanager and use an external one instead.",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 		},
