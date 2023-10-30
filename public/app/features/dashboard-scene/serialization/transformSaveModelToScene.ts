@@ -371,7 +371,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    panelLinks,
+    titleItems: panelLinks,
 
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
