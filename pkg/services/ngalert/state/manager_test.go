@@ -2279,9 +2279,12 @@ func TestProcessEvalResults(t *testing.T) {
 						EvaluationDuration: evaluationDuration,
 					},
 					eval.Result{
-						Instance:           data.Labels{},
-						State:              eval.Error,
-						Error:              expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error")),
+						Instance: data.Labels{},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
