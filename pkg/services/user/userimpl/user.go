@@ -230,7 +230,7 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 
 	// if login is still empty both email and login field is missing
 	if len(cmd.Login) == 0 {
-		return user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
+		return user.ErrEmptyUsernameAndEmail.Errorf("user cannot be updated with empty username and email")
 	}
 
 	if s.cfg.CaseInsensitiveLogin {
