@@ -58,18 +58,33 @@ The `datasource.languageProvider.fetchLabelValues()` method is designed for fetc
  * It returns a promise that resolves to an array of strings containing the label values.
  *
  * @param labelName - The name of the label for which you want to retrieve values.
+ * @param options - (Optional) An object containing additional options - currently only stream selector.
+ * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
  * @returns A promise containing an array of label values.
  * @throws An error if the fetch operation fails.
  */
-async function fetchLabelValues(labelName: string): Promise<string[]>;
+async function fetchLabelValues(labelName: string, options?: { streamSelector?: string }): Promise<string[]>;
 
 /**
- * Example usage:
+ * Example usage without stream selector:
  */
 
 const labelName = 'job';
 try {
   const values = await fetchLabelValues(labelName);
+  console.log(values);
+} catch (error) {
+  console.error(`Error fetching label values: ${error.message}`);
+}
+
+/**
+ * Example usage with stream selector:
+ */
+
+const labelName = 'job';
+const streamSelector = '{app="grafana"}';
+try {
+  const values = await fetchLabelValues(labelName, { streamSelector });
   console.log(values);
 } catch (error) {
   console.error(`Error fetching label values: ${error.message}`);
