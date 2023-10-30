@@ -363,10 +363,14 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 }
 
 export const copyStringToClipboard = (string: string) => {
-  const el = document.createElement('textarea');
-  el.value = string;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(string);
+  } else {
+    const el = document.createElement('textarea');
+    el.value = string;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
 };

@@ -1,34 +1,39 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { urlUtil } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { ButtonSelect } from '@grafana/ui';
+import { ButtonSelect, useStyles2, ToolbarButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { useSelector } from 'app/types';
-
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 
 import { getUrlStateFromPaneState } from './hooks/useStateSync';
 import { selectPanes } from './state/selectors';
 
 export function ShortLinkButtonMenu() {
+  const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
   const onCopyShortLink = (url?: string) => {
-    console.log(url || global.location.href);
     createAndCopyShortLink(url || global.location.href);
     reportInteraction('grafana_explore_shortened_link_clicked');
   };
-
+  // we need the Toolbar button click to be an action separate from opening/closing the menu
   return (
-    <>
-      <DashNavButton
+    <Stack gap={0} direction="row" alignItems="baseline" wrap={false}>
+      <ToolbarButton
+        className={styles.buttonContainer}
         tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
         icon="share-alt"
+        iconOnly={true}
+        narrow={true}
         onClick={() => onCopyShortLink()}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
       />
       <ButtonSelect
+        className={styles.buttonContainer}
+        narrow={true}
         value={undefined}
         options={[
           { icon: 'link', label: 'Copy shortened URL', value: 'short-url' },
@@ -48,7 +53,10 @@ export function ShortLinkButtonMenu() {
               .map((pane, i) => {
                 if (pane) {
                   const urlState = getUrlStateFromPaneState(pane);
-                  urlState.range = { to: pane.range.to.valueOf().toString(), from: pane.range.to.valueOf().toString() };
+                  urlState.range = {
+                    to: pane.range.to.valueOf().toString(),
+                    from: pane.range.from.valueOf().toString(),
+                  };
                   return JSON.stringify({ [exploreIds[i]]: { ...urlState } });
                 } else {
                   return undefined;
@@ -59,6 +67,14 @@ export function ShortLinkButtonMenu() {
           }
         }}
       />
-    </>
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    buttonContainer: css`
+      background-color: ${theme.colors.background.canvas};
+    `,
+  };
+};
