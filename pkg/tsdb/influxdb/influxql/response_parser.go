@@ -75,7 +75,7 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 }
 
 func transformRows(rows []models.Row, query models.Query) data.Frames {
-	// // Create a map for faster column name lookups
+	// Create a map for faster column name lookups
 	columnToLowerCase := make(map[string]string)
 	for _, row := range rows {
 		for _, column := range row.Columns {
