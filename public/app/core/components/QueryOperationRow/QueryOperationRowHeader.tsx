@@ -15,7 +15,7 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
+  reportDragMousePosition: MouseEventHandler<SVGElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
