@@ -4,8 +4,9 @@ export function getTransformationContent(id: string): { name: string; helperDocs
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
 
-    // Remove the anchor links from the markdown.
-    const cleansedMarkdown = removeMarkdownAnchorLinks(getHelperDocs(ImageRenderType.UIImage));
+    const helperDocs = getHelperDocs(ImageRenderType.UIImage);
+
+    const cleansedMarkdown = cleanMarkdownOfUnwantedSyntax(helperDocs);
 
     if (links?.length) {
       const renderedLinks = links
@@ -44,12 +45,12 @@ export function getTransformationContent(id: string): { name: string; helperDocs
   };
 }
 
-const removeMarkdownAnchorLinks = (markdown: string) => {
-  // Define the regular expression pattern to match the [text](#text-text-text) pattern
-  const pattern = /\[(.*?)\]\(#.*?\)/g;
+const cleanMarkdownOfUnwantedSyntax = (markdown: string) => {
+  // Remove anchor links: [text](#link)
+  const markdownWithoutAnchorLinks = markdown.replace(/\[(.*?)\]\(#.*?\)/g, '$1');
 
-  // Replace all occurrences of the pattern with the captured "text" part
-  const result = markdown.replace(pattern, '$1');
+  // Remove shortcode syntax: [text][]
+  const markdownWithoutShortcodeSyntax = markdownWithoutAnchorLinks.replace(/\[[^\]]*\]\[\]/g, '');
 
-  return result;
+  return markdownWithoutShortcodeSyntax;
 };
