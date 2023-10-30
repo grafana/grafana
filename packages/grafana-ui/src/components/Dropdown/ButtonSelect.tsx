@@ -5,7 +5,7 @@ import { useMenuTrigger } from '@react-aria/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
 import React, { HTMLAttributes } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ButtonGroup } from '../Button';
@@ -76,7 +76,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                     ariaChecked={item.value === value?.value}
                     ariaLabel={item.ariaLabel || item.label}
                     role="menuitemradio"
-                    icon={item.icon ? toIconName(item.icon) : undefined}
                   />
                 ))}
               </Menu>

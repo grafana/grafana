@@ -162,10 +162,9 @@ export const MenuItem = React.memo(
         tabIndex={tabIndex}
         {...disabledProps}
       >
-        <>
+        <div>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
-          {description && <div>{description}</div>}
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
@@ -184,7 +183,8 @@ export const MenuItem = React.memo(
               />
             )}
           </div>
-        </>
+        </div>
+        {description && <div className={styles.description}>{description}</div>}
       </ItemElement>
     );
   })
@@ -207,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       width: '100%',
       position: 'relative',
+      flexDirection: 'column',
 
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
@@ -268,6 +269,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: theme.spacing(2),
       color: theme.colors.text.secondary,
       opacity: 0.7,
+    }),
+    description: css({
+      fontStyle: 'italic',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
     }),
   };
 };
