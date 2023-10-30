@@ -51,7 +51,7 @@ export function ShortLinkButtonMenu() {
                   return undefined;
                 }
               })
-              .filter((urlState) => urlState !== undefined) as string[];
+              .filter((urlState): urlState is string => urlState !== undefined);
             onCopyShortLink(urlUtil.renderUrl('/explore', { panes: urlStates, schemaVersion: 1 }));
           }}
           className={styles.menuItem}
