@@ -223,16 +223,18 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			return response.Error(http.StatusBadRequest, "Validation error, need to specify either username or email", nil)
-		}
+	}
+
+	// if login is still empty both email and login field is missing
+	if len(cmd.Login) == 0 {
+		return response.Err(user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email"))
 	}
 
 	if err := hs.userService.Update(ctx, &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to update user", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update user", err)
 	}
 
 	return response.Success("User updated")

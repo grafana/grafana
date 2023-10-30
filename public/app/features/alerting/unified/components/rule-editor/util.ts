@@ -3,11 +3,11 @@ import { ValidateResult } from 'react-hook-form';
 
 import {
   DataFrame,
+  isTimeSeriesFrames,
+  LoadingState,
+  PanelData,
   ThresholdsConfig,
   ThresholdsMode,
-  isTimeSeriesFrames,
-  PanelData,
-  LoadingState,
 } from '@grafana/data';
 import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';

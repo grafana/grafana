@@ -492,9 +492,6 @@ func addAlertImageMigrations(mg *migrator.Migrator) {
 }
 
 func extractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
-	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
-		return
-	}
 	// Since it's not always consistent as to what state the org ID indexes are in, just drop them all and rebuild from scratch.
 	// This is not expensive since this table is guaranteed to have a small number of rows.
 	mg.AddMigration("drop non-unique orgID index on alert_configuration", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))

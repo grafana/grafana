@@ -129,13 +129,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   }
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
-  const tree = getTraceSpanIdsAsTree(data);
+  const tree = getTraceSpanIdsAsTree(data, spanMap);
   const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
 
-  // Eslint complains about number type not needed but then TS complains it is implicitly any.
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  tree.walk((spanID: string | number | undefined, node: TreeNode, depth: number = 0) => {
+  tree.walk((spanID: string, node: TreeNode<string>, depth = 0) => {
     if (spanID === '__root__') {
       return;
     }
@@ -155,6 +153,16 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.warnings = span.warnings || [];
     span.tags = span.tags || [];
     span.references = span.references || [];
+
+    span.childSpanIds = node.children
+      .slice()
+      .sort((a, b) => {
+        const spanA = spanMap.get(a.value)!;
+        const spanB = spanMap.get(b.value)!;
+        return spanB.startTime + spanB.duration - (spanA.startTime + spanA.duration);
+      })
+      .map((each) => each.value);
+
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.dedupedTags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);

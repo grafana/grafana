@@ -205,7 +205,7 @@ This section includes examples of JMESPath expressions used for role mapping.
 
 #### Map user organization role
 
-In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Viewer`, `Editor` or `Admin`.
+In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Admin`, `Editor`, `Viewer` or `None`.
 
 Payload:
 

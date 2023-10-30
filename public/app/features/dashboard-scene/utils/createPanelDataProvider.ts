@@ -25,6 +25,7 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
       datasource: panel.datasource ?? undefined,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints ?? undefined,
+      maxDataPointsFromWidth: true,
       dataLayerFilter: {
         panelId: panel.id,
       },

@@ -243,10 +243,13 @@ type AlertRuleExport struct {
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
 	For          model.Duration      `json:"for" yaml:"for"`
-	ForSeconds   *int64              `json:"-" yaml:"-" hcl:"for"`
-	Annotations  *map[string]string  `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
-	Labels       *map[string]string  `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
-	IsPaused     bool                `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
+	// ForString is used to:
+	// - Only export the for field for HCL if it is non-zero.
+	// - Format the Prometheus model.Duration type properly for HCL.
+	ForString   *string            `json:"-" yaml:"-" hcl:"for"`
+	Annotations *map[string]string `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
+	Labels      *map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
+	IsPaused    bool               `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.

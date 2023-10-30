@@ -1,7 +1,9 @@
 package channels_config
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -1292,6 +1294,40 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
 				},
+				// New in 10.3
+				{
+					Label:        "Responders",
+					PropertyName: "responders",
+					Description:  "If the API key belongs to a team, this field is ignored.",
+					Element:      ElementSubformArray,
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Type",
+							Description:  fmt.Sprintf("%s or a template", strings.Join(alertingOpsgenie.SupportedResponderTypes, ", ")),
+							Element:      ElementTypeInput,
+							Required:     true,
+							PropertyName: "type",
+						},
+						{
+							Label:        "Name",
+							Element:      ElementTypeInput,
+							Description:  "Name of the responder. Must be specified if ID and Username are empty or if the type is 'teams'.",
+							PropertyName: "name",
+						},
+						{
+							Label:        "ID",
+							Element:      ElementTypeInput,
+							Description:  "ID of the responder. Must be specified if name and Username are empty.",
+							PropertyName: "id",
+						},
+						{
+							Label:        "Username",
+							Element:      ElementTypeInput,
+							Description:  "User name of the responder. Must be specified if ID and Name are empty.",
+							PropertyName: "username",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -1339,4 +1375,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 	}
+}
+
+// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
+func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == contactPointType {
+			var secureFields []string
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
 }
