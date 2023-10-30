@@ -133,7 +133,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
-    const isSelected = !!panel.id && Number(selectedPanelId) === panel.id;
+    const isSelected = Boolean(panel.id) && selectedPanelId === panel.id;
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
     const disabled = !isValidPanelIdentifier(panel);
 
@@ -175,11 +175,11 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && (
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
         <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
           <div>
-            Dashboard: {dashboardModel?.title} ({dashboardModel?.uid}) in folder{' '}
-            {dashboardModel?.meta?.folderTitle ?? 'General'}
+            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
+            {dashboardModel.meta?.folderTitle ?? 'General'}
           </div>
           {currentPanel && (
             <div>
