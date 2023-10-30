@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -41,12 +42,15 @@ var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, data
 
 func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	start := time.Now()
+	response := backend.NewQueryDataResponse()
 	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
 	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return &backend.QueryDataResponse{}, err
+		err := errorsource.PluginError(err, false)
+		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
+		return response, err
 	}
 
 	ms := e.client.MultiSearch()
@@ -57,7 +61,9 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			return &backend.QueryDataResponse{}, err
+			err := errorsource.PluginError(err, false)
+			response.Responses[q.RefID] = errorsource.Response(err)
+			return response, err
 		}
 	}
 
@@ -65,13 +71,16 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return &backend.QueryDataResponse{}, err
+		err := errorsource.PluginError(err, false)
+		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
+		return response, err
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
+		return response, err
 	}
 
 	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger, e.tracer)

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -78,6 +79,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 		httpCliOpts, err := settings.HTTPClientOptions(ctx)
+		httpCliOpts.Middlewares = append(httpCliOpts.Middlewares, errorsource.Middleware("elasticsearch"))
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
