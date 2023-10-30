@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -32,11 +32,7 @@ interface Params {
  * and the initial value when it is not present in the option array.
  */
 export const useCreatableSelectPersistedBehaviour = ({ options: initialOptions, value, onChange }: Params) => {
-  const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
-
-  useEffect(() => {
-    setOptions(getInitialState(initialOptions, value));
-  }, [initialOptions, value]);
+  const [options, setOptions] = useState(getInitialState(initialOptions, value));
 
   const addOption = (newValue: string) => setOptions([...options, { value: newValue, label: newValue }]);
 
