@@ -147,7 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	element := model.LibraryElement{
 		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID,
+		FolderID: cmd.FolderID, // nolint:staticcheck
 		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    updatedModel,
@@ -175,6 +175,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 				return err
 			}
 		} else {
+			// nolint:staticcheck
 			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 				return err
 			}
