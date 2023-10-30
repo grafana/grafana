@@ -19,6 +19,8 @@ type config struct {
 	host   string
 	apiURL string
 
+	storageType StorageType
+
 	etcdServers []string
 	dataPath    string
 
@@ -52,6 +54,7 @@ func newConfig(cfg *setting.Cfg) *config {
 		host:        host,
 		logLevel:    cfg.SectionWithEnvOverrides("grafana-apiserver").Key("log_level").MustInt(defaultLogLevel),
 		etcdServers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		storageType: StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(StorageTypeLegacy))),
 		apiURL:      apiURL,
 	}
 }

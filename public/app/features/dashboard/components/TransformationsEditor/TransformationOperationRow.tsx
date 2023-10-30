@@ -8,10 +8,7 @@ import {
   QueryOperationAction,
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import {
-  QueryOperationRow,
-  QueryOperationRowRenderProps,
-} from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -91,7 +88,7 @@ export const TransformationOperationRow = ({
     [configs, index]
   );
 
-  const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
+  const renderActions = () => {
     return (
       <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
@@ -112,7 +109,6 @@ export const TransformationOperationRow = ({
         )}
         <QueryOperationToggleAction
           title="Debug"
-          disabled={!isOpen}
           icon="bug"
           onClick={instrumentToggleCallback(toggleShowDebug, 'debug', showDebug)}
           active={showDebug}
@@ -170,6 +166,7 @@ export const TransformationOperationRow = ({
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}
+          toggleShowDebug={toggleShowDebug}
         />
       </QueryOperationRow>
       <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />

@@ -20,8 +20,7 @@ import {
   FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
-import { Button, RadioButtonGroup, InlineField } from '@grafana/ui';
-import { Box } from '@grafana/ui/src/unstable';
+import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

@@ -42,7 +42,7 @@ type LogGroupsProvider interface {
 }
 
 type AccountsProvider interface {
-	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[resources.Account], error)
+	GetAccountsForCurrentUserOrRole(ctx context.Context) ([]resources.ResourceResponse[resources.Account], error)
 }
 
 type RegionsAPIProvider interface {
@@ -65,8 +65,8 @@ type CloudWatchLogsAPIProvider interface {
 }
 
 type OAMAPIProvider interface {
-	ListSinks(*oam.ListSinksInput) (*oam.ListSinksOutput, error)
-	ListAttachedLinks(*oam.ListAttachedLinksInput) (*oam.ListAttachedLinksOutput, error)
+	ListSinksWithContext(ctx context.Context, in *oam.ListSinksInput, opts ...request.Option) (*oam.ListSinksOutput, error)
+	ListAttachedLinksWithContext(ctx context.Context, in *oam.ListAttachedLinksInput, opts ...request.Option) (*oam.ListAttachedLinksOutput, error)
 }
 
 type EC2APIProvider interface {

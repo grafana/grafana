@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
 import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -21,6 +23,10 @@ interface Props {
 const MAX_DEPTH = 2;
 
 export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  const menuIsDocked = state.megaMenu === 'docked';
+  const location = useLocation();
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
@@ -38,16 +44,16 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     if (hasActiveChild) {
       setSectionExpanded(true);
     }
-  }, [hasActiveChild, setSectionExpanded]);
+  }, [hasActiveChild, location, menuIsDocked, setSectionExpanded]);
 
   // scroll active element into center if it's offscreen
   useEffect(() => {
-    if (isActive && item.current && isElementOffscreen(item.current)) {
+    if (menuIsDocked && isActive && item.current && isElementOffscreen(item.current)) {
       item.current.scrollIntoView({
         block: 'center',
       });
     }
-  }, [isActive]);
+  }, [isActive, menuIsDocked]);
 
   if (!link.url) {
     return null;
