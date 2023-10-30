@@ -17,7 +17,6 @@ const NS_IN_MS = 1000000;
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  labelFetchTs: number;
   started = false;
   datasource: LokiDatasource;
 
@@ -34,7 +33,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
-    this.labelFetchTs = 0;
 
     Object.assign(this, initialValues);
   }
@@ -63,6 +61,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  /**
+   * Returns the label keys that have been fetched.
+   * If labels have not been fetched yet, it will return an empty array.
+   * For updated labels (which should not happen often), use fetchLabels.
+   * @todo This seems quite complicated to know when to use fetchLabels and when to use getLabelKeys.
+   * We should consider simplifying this and use caching in the same way as with seriesCache and labelsCache
+   * and just always use fetchLabels.
+   *
+   * @returns {string[]} An array of label keys or an empty array if labels have not been fetched.
+   */
   getLabelKeys(): string[] {
     return this.labelKeys;
   }
@@ -89,7 +97,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   /**
    * Wrapper method over fetchSeriesLabels to retrieve series labels and handle errors.
-   * @todo do we need this? It's just a wrapper around fetchSeriesLabels. Maybe we can just use that directly?
+   * @todo remove this in favor of fetchSeriesLabels as we already in this.request do the same thing
    */
   async getSeriesLabels(selector: string) {
     try {
@@ -112,7 +120,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchLabels(): Promise<string[]> {
     const url = 'labels';
     const timeRange = this.datasource.getTimeRangeParams();
-    this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, timeRange);
     if (Array.isArray(res)) {
@@ -169,12 +176,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
   // millisecond while still actually getting all the keys for the correct interval. This still can create problems
   // when user does not the newest values for a minute if already cached.
-  generateCacheKey(url: string, start: number, end: number, param: string): string {
+  private generateCacheKey(url: string, start: number, end: number, param: string): string {
     return [url, this.roundTime(start), this.roundTime(end), param].join();
   }
 
   // Round nanoseconds epoch to nearest 5 minute interval
-  roundTime(nanoseconds: number): number {
+  private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
   }
 
