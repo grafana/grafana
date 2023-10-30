@@ -208,6 +208,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       position: 'relative',
       flexDirection: 'column',
+      alignContent: 'flex-start',
+      flexWrap: 'wrap',
 
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
@@ -216,6 +218,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus-visible': getFocusStyles(theme),
+
+      '>div': {
+        display: 'flex',
+        width: '100%',
+      },
     }),
     active: css({
       background: theme.colors.action.hover,

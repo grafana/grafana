@@ -65,10 +65,10 @@ it('renders with all buttons enabled except paste a panel', () => {
 
   setup();
 
-  expect(screen.getByText('visualization', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('row', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('library', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('paste panel', { exact: false })).toBeDisabled();
+  expect(screen.getByText('visualization', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('row', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('library', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('paste panel', { exact: false }).parentElement).toBeDisabled();
 });
 
 it('renders with all buttons enabled', () => {
@@ -97,10 +97,10 @@ it('renders with all buttons enabled', () => {
 
   setup();
 
-  expect(screen.getByText('visualization', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('row', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('library', { exact: false })).not.toBeDisabled();
-  expect(screen.getByText('paste panel', { exact: false })).not.toBeDisabled();
+  expect(screen.getByText('visualization', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('row', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('library', { exact: false }).parentElement).not.toBeDisabled();
+  expect(screen.getByText('paste panel', { exact: false }).parentElement).not.toBeDisabled();
 });
 
 it('creates new visualization when clicked on menu item Visualization', () => {
