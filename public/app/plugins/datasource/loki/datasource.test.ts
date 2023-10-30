@@ -1579,6 +1579,14 @@ describe('Variable support', () => {
   });
 });
 
+describe('showContextToggle()', () => {
+  it('always displays logs context', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.showContextToggle()).toBe(true);
+  });
+});
+
 describe('queryHasFilter()', () => {
   let ds: LokiDatasource;
   beforeEach(() => {
