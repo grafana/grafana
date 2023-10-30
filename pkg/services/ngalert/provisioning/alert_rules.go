@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type RuleAccessControlService interface {
+type ruleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
@@ -43,7 +43,7 @@ type AlertRuleService struct {
 	xact                   TransactionManager
 	log                    log.Logger
 	nsValidatorProvider    NotificationSettingsValidatorProvider
-	authz                  RuleAccessControlService
+	authz                  ruleAccessControlService
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -71,7 +71,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		xact:                   xact,
 		log:                    log,
 		nsValidatorProvider:    ns,
-		authz:                  authz,
+		authz:                  newRuleAccessControlService(authz),
 	}
 }
 
