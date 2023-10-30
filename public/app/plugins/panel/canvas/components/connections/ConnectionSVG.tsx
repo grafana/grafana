@@ -116,7 +116,10 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
-      const parentRect = parent?.getBoundingClientRect();
+      const transformRef = scene.transformComponentRef?.current;
+
+      const parentRect = transformRef?.instance.contentComponent?.getBoundingClientRect();
+      const transformScale = transformRef?.instance.transformState.scale ?? 1;
 
       if (!sourceRect || !parent || !parentRect) {
         return;
@@ -127,8 +130,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
       // Convert from connection coords to DOM coords
       // TODO: Break this out into util function and add tests
-      const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
-      const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
+      const x1 = (sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2) / transformScale;
+      const y1 = (sourceVerticalCenter - (info.source.y * sourceRect.height) / 2) / transformScale;
 
       let x2;
       let y2;
@@ -148,6 +151,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
+      x2 = x2 / transformScale;
+      y2 = y2 / transformScale;
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
