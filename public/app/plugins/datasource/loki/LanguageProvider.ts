@@ -1,7 +1,7 @@
 import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 
-import { LanguageProvider, AbstractQuery } from '@grafana/data';
+import { LanguageProvider, AbstractQuery, KeyValue } from '@grafana/data';
 import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { LokiDatasource } from './datasource';
@@ -192,18 +192,29 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * It returns a promise that resolves to an array of strings containing the label values.
    *
    * @param labelName - The name of the label for which you want to retrieve values.
+   * @param options - (Optional) An object containing additional options - currently only stream selector.
+   * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
    * @returns A promise containing an array of label values.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabelValues(labelName: string): Promise<string[]> {
-    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(labelName));
+  async fetchLabelValues(labelName: string, options?: { streamSelector?: string }): Promise<string[]> {
+    const label = encodeURIComponent(this.datasource.interpolateString(labelName));
+    const streamParam = options?.streamSelector
+      ? encodeURIComponent(this.datasource.interpolateString(options.streamSelector))
+      : undefined;
 
-    const url = `label/${interpolatedKey}/values`;
+    const url = `label/${label}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end };
+    let paramCacheKey = label;
 
-    const cacheKey = this.generateCacheKey(url, start, end, interpolatedKey);
-    const params = { start, end };
+    if (streamParam) {
+      params.query = streamParam;
+      paramCacheKey += streamParam;
+    }
+
+    const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
 
     let labelValues = this.labelsCache.get(cacheKey);
     if (!labelValues) {
