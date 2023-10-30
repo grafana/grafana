@@ -1,5 +1,6 @@
 import { llms } from '@grafana/experimental';
 
+import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
@@ -21,7 +22,7 @@ describe('getDashboardChanges', () => {
     const deprecatedOptions = {
       legend: { displayMode: 'hidden', showLegend: false },
     };
-    const deprecatedVersion = 37;
+    const deprecatedVersion = DASHBOARD_SCHEMA_VERSION - 1;
     const dashboard = createDashboardModelFixture({
       schemaVersion: deprecatedVersion,
       panels: [createPanelSaveModel({ title: 'Panel 1', options: deprecatedOptions })],
@@ -40,49 +41,48 @@ describe('getDashboardChanges', () => {
     const result = getDashboardChanges(dashboard);
 
     // Assertions
-    expect(result.migrationChanges).toEqual(
-      '===================================================================\n' +
-        '--- Before migration changes\t\n' +
-        '+++ After migration changes\t\n' +
-        '@@ -1,9 +1,9 @@\n' +
-        ' {\n' +
-        '   "editable": true,\n' +
-        '   "graphTooltip": 0,\n' +
-        '-  "schemaVersion": 37,\n' +
-        '+  "schemaVersion": 38,\n' +
-        '   "timezone": "",\n' +
-        '   "panels": [\n' +
-        '     {\n' +
-        '       "type": "timeseries",\n' +
-        '       "title": "Panel 1",\n'
+    expect(result.migrationChanges).toContain(
+      `-  "schemaVersion": ${deprecatedVersion},\n+  "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n`
     );
-    expect(result.userChanges).toEqual(
-      '===================================================================\n' +
-        '--- Before user changes\t\n' +
-        '+++ After user changes\t\n' +
-        '@@ -3,16 +3,17 @@\n' +
-        '   "graphTooltip": 0,\n' +
-        '   "schemaVersion": 38,\n' +
-        '   "timezone": "",\n' +
-        '   "panels": [\n' +
+
+    expect(result.migrationChanges).not.toContain(
+      '   "panels": [\n' +
         '     {\n' +
         '-      "type": "timeseries",\n' +
         '-      "title": "Panel 1",\n' +
-        '+      "id": 1,\n' +
-        '       "options": {\n' +
-        '         "legend": {\n' +
-        '           "displayMode": "hidden",\n' +
-        '           "showLegend": false\n' +
-        '         }\n' +
-        '-      }\n' +
+        '+      "id": 1,\n'
+    );
+
+    expect(result.migrationChanges).not.toContain(
+      '-      }\n' +
         '+      },\n' +
         '+      "title": "New title",\n' +
         '+      "type": "timeseries"\n' +
         '     }\n' +
         '   ]\n' +
-        ' }\n' +
-        '\\ No newline at end of file\n'
+        ' }\n'
     );
+
+    expect(result.userChanges).not.toContain('-  "schemaVersion": 37,\n' + '+  "schemaVersion": 38,\n');
+
+    expect(result.userChanges).toContain(
+      '   "panels": [\n' +
+        '     {\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "title": "Panel 1",\n' +
+        '+      "id": 1,\n'
+    );
+
+    expect(result.userChanges).toContain(
+      '-      }\n' +
+        '+      },\n' +
+        '+      "title": "New title",\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n'
+    );
+
     expect(result.migrationChanges).toBeDefined();
   });
 });

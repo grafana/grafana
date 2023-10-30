@@ -407,6 +407,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
+
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -575,6 +576,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = models.Query{Alias: "alias words with no brackets"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
@@ -681,6 +683,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
+
+	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"statement_id": 0
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.NotNil(t, result.Frames)
+		assert.Equal(t, 0, len(result.Frames))
+	})
 }
 
 func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
@@ -739,7 +758,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 		query := models.Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"}
 		policyFrame := data.NewFrame("",
 			data.NewField("Value", nil, []string{
-				"bar", "autogen", "5m_avg", "1m_avg",
+				"autogen", "bar", "5m_avg", "1m_avg",
 			}),
 		)
 
@@ -870,4 +889,28 @@ func TestResponseParser_Parse(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseTimestamp(t *testing.T) {
+	validValue := json.Number("1609459200000") // Milliseconds since epoch (January 1, 2021)
+	invalidValue := "invalid"
+
+	t.Run("ValidTimestamp", func(t *testing.T) {
+		parsedTime, err := parseTimestamp(validValue)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
+		}
+
+		expectedTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
+		if !parsedTime.Equal(expectedTime) {
+			t.Errorf("Expected time: %v, got: %v", expectedTime, parsedTime)
+		}
+	})
+
+	t.Run("InvalidTimestamp", func(t *testing.T) {
+		_, err := parseTimestamp(invalidValue)
+		if err == nil {
+			t.Errorf("Expected an error, got nil")
+		}
+	})
 }

@@ -48,7 +48,7 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <CustomScrollbar>
+    <CustomScrollbar hideVerticalTrack>
       <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
         <Explore exploreId={exploreId} eventBus={eventBus.current} />
       </div>

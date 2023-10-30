@@ -27,6 +27,7 @@ func TestNewConfig(t *testing.T) {
 	expected := &config{
 		enabled:     true,
 		devMode:     false,
+		storageType: StorageTypeLegacy,
 		etcdServers: []string{"http://localhost:2379"},
 		apiURL:      "http://test:4000",
 		ip:          net.ParseIP("10.0.0.1"),
