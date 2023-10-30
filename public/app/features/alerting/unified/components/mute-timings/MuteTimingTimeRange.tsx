@@ -35,7 +35,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <Field
         className={styles.field}
         label="Time range"
-        description="The time inclusive of the starting time and exclusive of the end time in UTC"
+        description="The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)"
         invalid={timeRangeInvalid}
       >
         <>
