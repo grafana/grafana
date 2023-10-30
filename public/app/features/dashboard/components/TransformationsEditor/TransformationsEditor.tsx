@@ -26,15 +26,17 @@ import {
   CustomScrollbar,
   FilterPill,
   Themeable,
-  VerticalGroup,
   withTheme,
   Input,
-  Icon,
   IconButton,
   useStyles2,
   Card,
-  Switch,
+  Drawer,
+  Box,
+  Text,
 } from '@grafana/ui';
+import { Flex } from '@grafana/ui/src/unstable';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import config from 'app/core/config';
 import { getDocsLink } from 'app/core/utils/docsLinks';
@@ -151,25 +153,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
   }
 
-  componentDidUpdate(prevProps: Readonly<TransformationsEditorProps>, prevState: Readonly<State>): void {
-    if (config.featureToggles.transformationsRedesign) {
-      const prevHasTransforms = prevState.transformations.length > 0;
-      const prevShowPicker = !prevHasTransforms || prevState.showPicker;
-
-      const currentHasTransforms = this.state.transformations.length > 0;
-      const currentShowPicker = !currentHasTransforms || this.state.showPicker;
-
-      if (prevShowPicker !== currentShowPicker) {
-        // kindOfZero will be a random number between 0 and 0.5. It will be rounded to 0 by the scrollable component.
-        // We cannot always use 0 as it will not trigger a rerender of the scrollable component consistently
-        // due to React changes detection algo.
-        const kindOfZero = Math.random() / 2;
-
-        this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
-      }
-    }
-  }
-
   onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
     this.props.panel.setTransformations(transformations.map((t) => t.transformation));
@@ -177,7 +160,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
   // Transformation UIDs are stored in a name-X form. name is NOT unique hence we need to parse the IDs and increase X
   // for transformations with the same name
-  getTransformationNextId = (name: string) => {
+  getTransformationNextId(name: string) {
     const { transformations } = this.state;
     let nextId = 0;
     const existingIds = transformations.filter((t) => t.id.startsWith(name)).map((t) => t.id);
@@ -189,7 +172,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     return `${name}-${nextId}`;
   };
 
-  onTransformationAdd = (selectable: SelectableValue<string>) => {
+  onTransformationAdd(selectable: SelectableValue<string>) {
     let eventName = 'panel_editor_tabs_transformations_management';
     if (config.featureToggles.transformationsRedesign) {
       eventName = 'transformations_redesign_' + eventName;
@@ -271,34 +254,30 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformationEditors = () => {
-    const styles = getStyles(config.theme2);
-    const { data, transformations, showPicker } = this.state;
-    const hide = config.featureToggles.transformationsRedesign && showPicker;
+    const { data, transformations } = this.state;
 
     return (
-      <div className={cx({ [styles.hide]: hide })}>
-        <DragDropContext onDragEnd={this.onDragEnd}>
-          <Droppable droppableId="transformations-list" direction="vertical">
-            {(provided) => {
-              return (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  <TransformationOperationRows
-                    configs={transformations}
-                    data={data}
-                    onRemove={this.onTransformationRemove}
-                    onChange={this.onTransformationChange}
-                  />
-                  {provided.placeholder}
-                </div>
-              );
-            }}
-          </Droppable>
-        </DragDropContext>
-      </div>
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <TransformationOperationRows
+                  configs={transformations}
+                  data={data}
+                  onRemove={this.onTransformationRemove}
+                  onChange={this.onTransformationChange}
+                />
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     );
   };
 
-  renderTransformsPicker() {
+  renderTransformsPicker = () => {
     const styles = getStyles(config.theme2);
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
@@ -337,7 +316,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
 
     const noTransforms = !transformations?.length;
-    const showPicker = noTransforms || this.state.showPicker;
+    const { showPicker } = this.state;
 
     if (!suffix && showPicker && !noTransforms) {
       suffix = (
@@ -351,9 +330,75 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
+    const oldPicker = 
+      <>
+        <Box marginBottom={1}>
+          <Input
+            data-testid={selectors.components.Transforms.searchInput}
+            value={search ?? ''}
+            autoFocus={!noTransforms}
+            placeholder="Search for transformation"
+            onChange={this.onSearchChange}
+            onKeyDown={this.onSearchKeyDown}
+            suffix={suffix} 
+          />
+        </Box>
+        <Flex direction='column' gap={1}>
+          {
+            xforms.map((t) => {
+              return (
+                <TransformationCard
+                  key={t.name}
+                  transform={t}
+                  onClick={() => {
+                    this.onTransformationAdd({ value: t.id });
+                  }}
+                />
+              );
+            })
+          }
+        </Flex>
+      </>;
+
+    const newPicker = 
+      <>
+        <div className={styles.searchWrapper}>
+          <Input
+            data-testid={selectors.components.Transforms.searchInput}
+            className={styles.searchInput}
+            value={search ?? ''}
+            autoFocus={!noTransforms}
+            placeholder="Search for transformation"
+            onChange={this.onSearchChange}
+            onKeyDown={this.onSearchKeyDown}
+            suffix={suffix}
+          />
+        </div>
+        <div className={styles.filterWrapper}>
+          {filterCategoriesLabels.map(([slug, label]) => {
+            return (
+              <FilterPill
+                key={slug}
+                onClick={() => this.setState({ selectedFilter: slug })}
+                label={label}
+                selected={this.state.selectedFilter === slug}
+              />
+            );
+          })}
+        </div>
+        <TransformationsGrid
+          showIllustrations={this.state.showIllustrations}
+          transformations={xforms}
+          data={this.state.data}
+          onClick={(id) => { this.onTransformationAdd({ value: id }) }} 
+        />
+      </>;
+
+    const transformPicker = config.featureToggles.transformationsRedesign ? newPicker : oldPicker;
+
     return (
       <>
-        {noTransforms && !config.featureToggles.transformationsRedesign && (
+        {noTransforms && (
           <Container grow={1}>
             <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
@@ -390,129 +435,79 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             </LocalStorageValueProvider>
           </Container>
         )}
-        {showPicker ? (
+        {showPicker && (
+          <Drawer onClose={() => { this.setState({ showPicker: false}) }}>
+            {transformPicker}
+          </Drawer>
+        )}
+        {noTransforms && (
+
+          <Box
+            alignItems="center"
+            padding={4}>
+            <Flex direction="column" alignItems="center" gap={2}>
+              <Text element='h3' textAlignment='center'>
+                <Trans key='transformations.empty.add-transformation-header'>
+                  Start transforming data
+                </Trans>
+              </Text>
+              <Text element='p' textAlignment='center'>
+                <Trans key='transformations.empty.add-transformation-body'>
+                  Transformations allow data to be changed in various ways before your visualization is shown.<br/> 
+                  This includes joining data together, renaming fields, making calculations, formatting data for display, and more.
+                </Trans>
+              </Text>
+              <Button
+              icon="plus"
+              variant="primary"
+              size="md"
+              onClick={() => {
+                this.setState({ showPicker: true });
+              }}
+              data-testid={selectors.components.Transforms.addTransformationButton}>
+
+                Add transformation
+              </Button>
+            </Flex>
+          </Box>
+        )}
+        {!noTransforms && (
           <>
-            {config.featureToggles.transformationsRedesign && (
-              <>
-                {!noTransforms && (
-                  <Button
-                    variant="secondary"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() => {
-                      this.setState({ showPicker: false });
-                    }}
-                  >
-                    Go back to&nbsp;<i>Transformations in use</i>
-                  </Button>
-                )}
-                <div className={styles.pickerInformationLine}>
-                  <a
-                    href={getDocsLink(DocsId.Transformations)}
-                    className="external-link"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
-                    <Icon name="external-link-alt" />
-                  </a>
-                  &nbsp;allow you to manipulate your data before a visualization is applied.
-                </div>
-              </>
-            )}
-            <VerticalGroup>
-              {!config.featureToggles.transformationsRedesign && (
-                <Input
-                  data-testid={selectors.components.Transforms.searchInput}
-                  value={search ?? ''}
-                  autoFocus={!noTransforms}
-                  placeholder="Search for transformation"
-                  onChange={this.onSearchChange}
-                  onKeyDown={this.onSearchKeyDown}
-                  suffix={suffix}
-                />
-              )}
-
-              {!config.featureToggles.transformationsRedesign &&
-                xforms.map((t) => {
-                  return (
-                    <TransformationCard
-                      key={t.name}
-                      transform={t}
-                      onClick={() => {
-                        this.onTransformationAdd({ value: t.id });
-                      }}
-                    />
-                  );
-                })}
-
-              {config.featureToggles.transformationsRedesign && (
-                <div className={styles.searchWrapper}>
-                  <Input
-                    data-testid={selectors.components.Transforms.searchInput}
-                    className={styles.searchInput}
-                    value={search ?? ''}
-                    autoFocus={!noTransforms}
-                    placeholder="Search for transformation"
-                    onChange={this.onSearchChange}
-                    onKeyDown={this.onSearchKeyDown}
-                    suffix={suffix}
-                  />
-                  <div className={styles.showImages}>
-                    <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
-                    <Switch
-                      value={this.state.showIllustrations}
-                      onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {config.featureToggles.transformationsRedesign && (
-                <div className={styles.filterWrapper}>
-                  {filterCategoriesLabels.map(([slug, label]) => {
-                    return (
-                      <FilterPill
-                        key={slug}
-                        onClick={() => this.setState({ selectedFilter: slug })}
-                        label={label}
-                        selected={this.state.selectedFilter === slug}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {config.featureToggles.transformationsRedesign && (
-                <TransformationsGrid
-                  showIllustrations={this.state.showIllustrations}
-                  transformations={xforms}
-                  data={this.state.data}
-                  onClick={(id) => {
-                    this.onTransformationAdd({ value: id });
-                  }}
-                />
-              )}
-            </VerticalGroup>
+            <Flex gap={1}>
+              <Button
+                icon="plus"
+                variant="secondary"
+                onClick={() => {
+                  this.setState({ showPicker: true });
+                }}
+                data-testid={selectors.components.Transforms.addTransformationButton}
+              >
+                Add another transformation
+              </Button>
+              <Button
+                  variant="secondary"
+                  icon="trash-alt"
+                  onClick={() => {
+                    this.setState({ showRemoveAllModal: true });
+                  }}>
+                  Delete all transformations
+              </Button>
+            </Flex>
+            <ConfirmModal
+              isOpen={Boolean(this.state.showRemoveAllModal)}
+              title="Delete all transformations?"
+              body="By deleting all transformations, you will go back to the main selection screen."
+              confirmText="Delete all"
+              onConfirm={() => this.onTransformationRemoveAll()}
+              onDismiss={() => this.setState({ showRemoveAllModal: false })}
+            />
           </>
-        ) : (
-          <Button
-            icon="plus"
-            variant="secondary"
-            onClick={() => {
-              this.setState({ showPicker: true });
-            }}
-            data-testid={selectors.components.Transforms.addTransformationButton}
-          >
-            Add{config.featureToggles.transformationsRedesign ? ' another ' : ' '}transformation
-          </Button>
         )}
       </>
     );
   }
 
   render() {
-    const styles = getStyles(config.theme2);
     const {
       panel: { alert },
     } = this.props;
@@ -534,29 +529,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
-            {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
-              <div className={styles.listInformationLineWrapper}>
-                <span className={styles.listInformationLineText}>Transformations in use</span>{' '}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    this.setState({ showRemoveAllModal: true });
-                  }}
-                >
-                  Delete all transformations
-                </Button>
-                <ConfirmModal
-                  isOpen={Boolean(this.state.showRemoveAllModal)}
-                  title="Delete all transformations?"
-                  body="By deleting all transformations, you will go back to the main selection screen."
-                  confirmText="Delete all"
-                  onConfirm={() => this.onTransformationRemoveAll()}
-                  onDismiss={() => this.setState({ showRemoveAllModal: false })}
-                />
-              </div>
-            )}
-            {hasTransforms && this.renderTransformationEditors()}
+            {this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
         </Container>
@@ -591,9 +564,6 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    hide: css({
-      display: 'none',
-    }),
     card: css({
       margin: '0',
       padding: `${theme.spacing(1)}`,
@@ -666,11 +636,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       rowGap: `${theme.spacing(1)}`,
       columnGap: `${theme.spacing(0.5)}`,
-    }),
-    listInformationLineWrapper: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginBottom: '24px',
     }),
     listInformationLineText: css({
       fontSize: '16px',
