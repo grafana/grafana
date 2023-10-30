@@ -309,7 +309,7 @@ type ListPublicDashboardsResponse struct {
 // swagger:parameters getPublicDashboard
 type GetPublicDashboardParams struct {
 	// in:path
-	DashboardUid int64 `json:"dashboardUid"`
+	DashboardUid string `json:"dashboardUid"`
 }
 
 // swagger:response getPublicDashboardResponse
@@ -322,7 +322,7 @@ type GetPublicDashboardResponse struct {
 type CreatePublicDashboardParams struct {
 	// in:path
 	// required:true
-	DashboardUid int64 `json:"dashboardUid"`
+	DashboardUid string `json:"dashboardUid"`
 	// in:body
 	// required:true
 	Body PublicDashboardDTO
@@ -338,10 +338,10 @@ type CreatePublicDashboardResponse struct {
 type UpdatePublicDashboardParams struct {
 	// in:path
 	// required:true
-	DashboardUid int64 `json:"dashboardUid"`
+	DashboardUid string `json:"dashboardUid"`
 	// in:path
 	// required:true
-	Uid int64 `json:"uid"`
+	Uid string `json:"uid"`
 	// in:body
 	// required:true
 	Body PublicDashboardDTO
@@ -357,8 +357,8 @@ type UpdatePublicDashboardResponse struct {
 type DeletePublicDashboardParams struct {
 	// in:path
 	// required:true
-	DashboardUid int64 `json:"dashboardUid"`
+	DashboardUid string `json:"dashboardUid"`
 	// in:path
 	// required:true
-	Uid int64 `json:"uid"`
+	Uid string `json:"uid"`
 }
