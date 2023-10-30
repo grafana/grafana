@@ -23,6 +23,11 @@ export enum CalculateFieldMode {
   Index = 'index',
 }
 
+export enum WindowSizeMode {
+  Percentage = 'percentage',
+  Fixed = 'fixed',
+}
+
 export enum WindowType {
   Trailing = 'trailing',
   Centered = 'centered',
@@ -40,7 +45,8 @@ export interface CumulativeOptions {
 }
 
 export interface WindowOptions extends CumulativeOptions {
-  windowSizePercent?: number;
+  windowSize?: number;
+  windowSizeMode?: WindowSizeMode;
   type?: WindowType;
 }
 
@@ -63,10 +69,11 @@ const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
 
-const defaultWindowOptions: WindowOptions = {
+export const defaultWindowOptions: WindowOptions = {
   reducer: ReducerID.mean,
   type: WindowType.Trailing,
-  windowSizePercent: 10,
+  windowSizeMode: WindowSizeMode.Percentage,
+  windowSize: 0.1,
 };
 
 const defaultBinaryOptions: BinaryOptions = {
@@ -216,7 +223,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 };
 
 function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): ValuesCreator {
-  if (options.windowSizePercent! < 1) {
+  if (options.windowSize! <= 0) {
     throw new Error('Add field from calculation transformation - Window size must be larger than 0');
   }
 
@@ -240,7 +247,9 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
   }
 
   return (frame: DataFrame) => {
-    const window = Math.ceil((options.windowSizePercent! / 100) * frame.length);
+    const window = Math.ceil(
+      options.windowSize! * (options.windowSizeMode === WindowSizeMode.Percentage ? frame.length : 1)
+    );
 
     // Find the columns that should be examined
     let selectedField: Field | null = null;

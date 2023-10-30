@@ -31,6 +31,8 @@ import {
   ReduceOptions,
   CumulativeOptions,
   WindowOptions,
+  WindowSizeMode,
+  defaultWindowOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import {
@@ -200,6 +202,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
+    if (mode === CalculateFieldMode.WindowFunctions) {
+      options.window = options.window ?? defaultWindowOptions;
+    }
     onChange({
       ...options,
       mode,
@@ -267,6 +272,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   updateWindowOptions = (v: WindowOptions) => {
     const { options, onChange } = this.props;
+    console.log(v);
     onChange({
       ...options,
       mode: CalculateFieldMode.WindowFunctions,
@@ -286,7 +292,22 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { window } = this.props.options;
     this.updateWindowOptions({
       ...window!,
-      windowSizePercent: v,
+      windowSize: v && window?.windowSizeMode === WindowSizeMode.Percentage ? v / 100 : v,
+    });
+  };
+
+  onWindowSizeModeChange = (val: string) => {
+    const { window } = this.props.options;
+    // eslint-disable-next-line
+    const mode = val as WindowSizeMode;
+    this.updateWindowOptions({
+      ...window!,
+      windowSize: window?.windowSize
+        ? mode === WindowSizeMode.Percentage
+          ? window!.windowSize! / 100
+          : window!.windowSize! * 100
+        : undefined,
+      windowSizeMode: mode,
     });
   };
 
@@ -315,6 +336,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       { label: 'Trailing', value: WindowType.Trailing },
       { label: 'Centered', value: WindowType.Centered },
     ];
+    const windowSizeModeOptions = [
+      { label: 'Percentage', value: WindowSizeMode.Percentage },
+      { label: 'Fixed', value: WindowSizeMode.Fixed },
+    ];
 
     return (
       <>
@@ -333,21 +358,45 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             className="width-18"
             stats={[options.reducer]}
             onChange={this.onWindowStatsChange}
-            defaultStat={ReducerID.sum}
+            defaultStat={ReducerID.mean}
             filterOptions={(ext) =>
               ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
             }
           />
         </InlineField>
         <InlineField label="Type" labelWidth={labelWidth}>
-          <RadioButtonGroup value={options.type ?? 'trailing'} options={typeOptions} onChange={this.onTypeChange} />
+          <RadioButtonGroup
+            value={options.type ?? WindowType.Trailing}
+            options={typeOptions}
+            onChange={this.onTypeChange}
+          />
+        </InlineField>
+        <InlineField label="Window size mode">
+          <RadioButtonGroup
+            value={options.windowSizeMode ?? WindowSizeMode.Percentage}
+            options={windowSizeModeOptions}
+            onChange={this.onWindowSizeModeChange}
+          ></RadioButtonGroup>
         </InlineField>
         <InlineField
-          label="Window size %"
+          label={options.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
           labelWidth={labelWidth}
-          tooltip="Set the window size as a percentage of the total data"
+          tooltip={
+            options.windowSizeMode === WindowSizeMode.Percentage
+              ? 'Set the window size as a percentage of the total data'
+              : 'Window size'
+          }
         >
-          <NumberInput min={1} value={options.windowSizePercent} onChange={this.onWindowSizeChange}></NumberInput>
+          <NumberInput
+            placeholder="Auto"
+            min={0.1}
+            value={
+              options.windowSize && options.windowSizeMode === WindowSizeMode.Percentage
+                ? options.windowSize * 100
+                : options.windowSize
+            }
+            onChange={this.onWindowSizeChange}
+          ></NumberInput>
         </InlineField>
       </>
     );
