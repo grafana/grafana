@@ -87,13 +87,6 @@ enable = [
   "revive",
 ]
 
-# Disabled linters (might want them later)
-# "unparam"
-# "rowserrcheck" # The linter doesn't detect that both Scan and Close also returns the error message returned by Err.
-
-[issues]
-exclude-use-default = false
-
 [[issues.exclude-rules]]
 path = "_test\\.go"
 linters = [ "gosec" ]
@@ -128,19 +121,7 @@ text = "use fake service and real access control evaluator instead"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
-text = "G108"
-
-[[issues.exclude-rules]]
-linters = ["gosec"]
 text = "G110"
-
-[[issues.exclude-rules]]
-linters = ["gosec"]
-text = "G201"
-
-[[issues.exclude-rules]]
-linters = ["gosec"]
-text = "G202"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
@@ -164,23 +145,4 @@ text = "404"
 
 [[issues.exclude-rules]]
 linters = ["misspell"]
-text = "Unknwon` is a misspelling of `Unknown"
-
-[[issues.exclude-rules]]
-linters = ["errorlint"]
-text = "non-wrapping format verb for fmt.Errorf"
-
-# TODO: Enable
-[[issues.exclude-rules]]
-linters = ["stylecheck"]
-text = "ST1000"
-
-# TODO: Enable
-[[issues.exclude-rules]]
-linters = ["stylecheck"]
-text = "ST1020"
-
-# TODO: Enable
-[[issues.exclude-rules]]
-linters = ["stylecheck"]
-text = "ST1021"
+source = "^// Copyright 2014 Unknwon"
