@@ -27,20 +27,14 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 		features    *featuremgmt.FeatureManager
 	}{
 		{
-			desc:        "search for specific dashboard nested folders feature enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search specific dashboard with nested folders feature disabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			desc:        "search specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_99999",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "search specific panel with nested folders feature disabled and panel title feature enabled / temporary nested feature flag enabled",
-			url:         "/api/search?type=dash-db&panelTitle=panel_0_0_0_0",
+			desc:        "search specific panel with panel title feature enabled",
+			url:         "/api/search?type=dash-db&panelTitle=panel_99999",
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
 				featuremgmt.FlagNestedFolders,
