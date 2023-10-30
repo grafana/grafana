@@ -28,6 +28,14 @@ import (
 
 const SharedFolderUID = "sharedwithme"
 
+var SharedWithMeFolder folder.Folder = folder.Folder{
+	Title:       "Shared with me",
+	Description: "Dashboards and folders shared with me",
+	UID:         SharedFolderUID,
+	ParentUID:   "",
+	ID:          -1,
+}
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -115,6 +123,10 @@ func (s *Service) DBMigration(db db.DB) {
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if *cmd.UID == SharedFolderUID {
+		return &SharedWithMeFolder, nil
 	}
 
 	var dashFolder *folder.Folder
@@ -253,15 +265,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 	if len(filtered) < len(children) {
 		// add "shared with me" folder
-		sharedWithMe := &folder.Folder{
-			Title:       "Shared with me",
-			Description: "Dashboards and folders shared with me",
-			UID:         SharedFolderUID,
-			ParentUID:   "",
-			ID:          -1,
-			OrgID:       cmd.OrgID,
-		}
-		filtered = append(filtered, sharedWithMe)
+		filtered = append(filtered, &SharedWithMeFolder)
 	}
 
 	return filtered, nil

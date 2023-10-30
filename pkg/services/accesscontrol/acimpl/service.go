@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +34,8 @@ var _ plugins.RoleRegistry = &Service{}
 const (
 	cacheTTL = 10 * time.Second
 )
+
+var SharedWithMeFolderPermission = accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:" + folderimpl.SharedFolderUID}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
@@ -115,6 +118,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
+
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	namespace, identifier := user.GetNamespacedID()
 
