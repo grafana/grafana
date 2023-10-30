@@ -119,7 +119,9 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	permissions = append(permissions, SharedWithMeFolderPermission)
+	if options.WithSharedFolderPermission {
+		permissions = append(permissions, SharedWithMeFolderPermission)
+	}
 
 	namespace, identifier := user.GetNamespacedID()
 

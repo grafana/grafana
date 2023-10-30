@@ -48,7 +48,8 @@ type RoleRegistry interface {
 }
 
 type Options struct {
-	ReloadCache bool
+	ReloadCache                bool
+	WithSharedFolderPermission bool
 }
 
 type SearchOptions struct {
