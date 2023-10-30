@@ -1232,5 +1232,5 @@ function buildImageContent(source: string, imageRenderType: ImageRenderType, ima
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
       `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
-      `![${imageName} helper image](${source})`;
+      `![${imageName} helper image](https://grafana.com${source})`;
 }
