@@ -2,9 +2,8 @@ import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
 
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
+import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';

@@ -18,7 +18,7 @@ import {
   toDataFrame,
   VariableHide,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { QueryOptions } from 'app/types';
 
 import {
@@ -39,6 +39,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
+  getTemplateSrv: () => templateSrvStub,
 }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
