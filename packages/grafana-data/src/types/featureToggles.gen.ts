@@ -103,7 +103,6 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
-  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
@@ -151,4 +150,7 @@ export interface FeatureToggles {
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  alertmanagerRemoteSecondary?: boolean;
+  alertmanagerRemotePrimary?: boolean;
+  alertmanagerRemoteOnly?: boolean;
 }

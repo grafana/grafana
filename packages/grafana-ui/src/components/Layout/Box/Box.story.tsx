@@ -9,8 +9,17 @@ import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius, BoxShadow
 import mdx from './Box.mdx';
 
 const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas', 'error', 'success', 'warning', 'info'];
-const borderColorOptions: BorderColor[] = ['weak', 'medium', 'strong', 'error', 'success', 'warning', 'info'];
-const borderStyleOptions: BorderStyle[] = ['dashed', 'solid'];
+const borderColorOptions: Array<BorderColor | undefined> = [
+  'weak',
+  'medium',
+  'strong',
+  'error',
+  'success',
+  'warning',
+  'info',
+  undefined,
+];
+const borderStyleOptions: Array<BorderStyle | undefined> = ['dashed', 'solid', undefined];
 const borderRadiusOptions: BorderRadius[] = ['default', 'pill', 'circle'];
 const boxShadowOptions: BoxShadow[] = ['z1', 'z2', 'z3'];
 
@@ -39,11 +48,11 @@ const Item = ({ background }: { background?: string }) => {
 
 export const Basic: StoryFn<typeof Box> = (args) => {
   return (
-    <div style={{ backgroundColor: 'green' }}>
-      <Box {...args}>
-        <Item background="red" />
+    <Flex>
+      <Box borderColor="medium" {...args}>
+        Box
       </Box>
-    </div>
+    </Flex>
   );
 };
 
@@ -70,6 +79,11 @@ Basic.argTypes = {
   borderColor: { control: 'select', options: borderColorOptions },
   borderRadius: { control: 'select', options: borderRadiusOptions },
   boxShadow: { control: 'select', options: boxShadowOptions },
+};
+
+Basic.args = {
+  borderColor: 'medium',
+  borderStyle: 'solid',
 };
 
 export const Background: StoryFn<typeof Box> = () => {

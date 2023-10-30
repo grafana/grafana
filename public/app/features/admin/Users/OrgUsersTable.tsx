@@ -14,8 +14,9 @@ import {
   FetchDataFunc,
   Pagination,
   Avatar,
+  Box,
 } from '@grafana/ui';
-import { Flex, Stack, Box } from '@grafana/ui/src/unstable';
+import { Flex, Stack } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
