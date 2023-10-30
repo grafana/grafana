@@ -940,6 +940,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
 		},
 	}
 )
