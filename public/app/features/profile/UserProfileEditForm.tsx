@@ -31,58 +31,57 @@ export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
-          <FieldSet>
-            <Field
-              label={t('user-profile.fields.name-label', 'Name') + lockMessage}
-              invalid={!!errors.name}
-              error={<Trans i18nKey="user-profile.fields.name-error">Name is required</Trans>}
-              disabled={disabledEdit}
-            >
-              <Input
-                {...register('name', { required: true })}
-                id="edit-user-profile-name"
-                placeholder={t('user-profile.fields.name-label', 'Name')}
-                defaultValue={user?.name ?? ''}
-                suffix={<InputSuffix />}
-              />
-            </Field>
-
-            <Field
-              label={t('user-profile.fields.email-label', 'Email') + lockMessage}
-              invalid={!!errors.email}
-              error={<Trans i18nKey="user-profile.fields.email-error">Email is required</Trans>}
-              disabled={disabledEdit}
-            >
-              <Input
-                {...register('email', { required: true })}
-                id="edit-user-profile-email"
-                placeholder={t('user-profile.fields.email-label', 'Email')}
-                defaultValue={user?.email ?? ''}
-                suffix={<InputSuffix />}
-              />
-            </Field>
-
-            <Field label={t('user-profile.fields.username-label', 'Username') + lockMessage} disabled={disabledEdit}>
-              <Input
-                {...register('login')}
-                id="edit-user-profile-username"
-                defaultValue={user?.login ?? ''}
-                placeholder={t('user-profile.fields.username-label', 'Username') + lockMessage}
-                suffix={<InputSuffix />}
-              />
-            </Field>
-
-            <div className="gf-form-button-row">
-              <Button
-                variant="primary"
-                disabled={isSavingUser || disabledEdit}
-                data-testid={selectors.components.UserProfile.profileSaveButton}
-                type="submit"
+          <>
+            <FieldSet>
+              <Field
+                label={t('user-profile.fields.name-label', 'Name') + lockMessage}
+                invalid={!!errors.name}
+                error={<Trans i18nKey="user-profile.fields.name-error">Name is required</Trans>}
+                disabled={disabledEdit}
               >
-                <Trans i18nKey="common.save">Save</Trans>
-              </Button>
-            </div>
-          </FieldSet>
+                <Input
+                  {...register('name', { required: true })}
+                  id="edit-user-profile-name"
+                  placeholder={t('user-profile.fields.name-label', 'Name')}
+                  defaultValue={user?.name ?? ''}
+                  suffix={<InputSuffix />}
+                />
+              </Field>
+
+              <Field
+                label={t('user-profile.fields.email-label', 'Email') + lockMessage}
+                invalid={!!errors.email}
+                error={<Trans i18nKey="user-profile.fields.email-error">Email is required</Trans>}
+                disabled={disabledEdit}
+              >
+                <Input
+                  {...register('email', { required: true })}
+                  id="edit-user-profile-email"
+                  placeholder={t('user-profile.fields.email-label', 'Email')}
+                  defaultValue={user?.email ?? ''}
+                  suffix={<InputSuffix />}
+                />
+              </Field>
+
+              <Field label={t('user-profile.fields.username-label', 'Username') + lockMessage} disabled={disabledEdit}>
+                <Input
+                  {...register('login')}
+                  id="edit-user-profile-username"
+                  defaultValue={user?.login ?? ''}
+                  placeholder={t('user-profile.fields.username-label', 'Username') + lockMessage}
+                  suffix={<InputSuffix />}
+                />
+              </Field>
+            </FieldSet>
+            <Button
+              variant="primary"
+              disabled={isSavingUser || disabledEdit}
+              data-testid={selectors.components.UserProfile.profileSaveButton}
+              type="submit"
+            >
+              <Trans i18nKey="common.save">Save</Trans>
+            </Button>
+          </>
         );
       }}
     </Form>

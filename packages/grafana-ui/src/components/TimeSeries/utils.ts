@@ -296,12 +296,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
       const axisDisplayOptions = {
         border: {
-          show: customConfig.axisShow || false,
-          width: 1,
+          show: customConfig.axisBorderShow || false,
+          width: 1 / devicePixelRatio,
           stroke: axisColor || theme.colors.text.primary,
         },
         ticks: {
-          show: customConfig.axisShow || false,
+          show: customConfig.axisBorderShow || false,
           stroke: axisColor || theme.colors.text.primary,
         },
         color: axisColor || theme.colors.text.primary,

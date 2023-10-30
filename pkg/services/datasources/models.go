@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -28,7 +29,7 @@ const (
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
 	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
-	DS_TESTDATA       = "testdata"
+	DS_TESTDATA       = "grafana-testdata-datasource"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
@@ -63,6 +64,37 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+}
+
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
+}
+
+type TeamHTTPHeaders map[string][]TeamHTTPHeader
+
+type TeamHTTPHeader struct {
+	Header string `json:"header"`
+	Value  string `json:"value"`
+}
+
+func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return teamHTTPHeadersJSON, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
@@ -149,6 +181,12 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 
 	UpdateSecretFn UpdateSecretFn
+
+	// Optional way to skip publishing delete event for data sources that are
+	// deleted just to be re-created with the same UID during provisioning.
+	// In such case we don't want to publish the event that triggers clean-up
+	// of related resources (like correlations)
+	SkipPublish bool
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity
@@ -166,8 +204,9 @@ type GetDataSourcesQuery struct {
 type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgID int64 // optional: filter by org_id
-	Type  string
+	OrgID    int64 // optional: filter by org_id
+	Type     string
+	AliasIDs []string
 }
 
 type GetDefaultDataSourceQuery struct {

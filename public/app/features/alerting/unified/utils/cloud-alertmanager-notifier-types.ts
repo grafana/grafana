@@ -1,26 +1,6 @@
 import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types';
 
-function option(
-  propertyName: string,
-  label: string,
-  description: string,
-  rest: Partial<NotificationChannelOption> = {}
-): NotificationChannelOption {
-  return {
-    propertyName,
-    label,
-    description,
-    element: 'input',
-    inputType: '',
-    required: false,
-    secure: false,
-    placeholder: '',
-    validationRule: '',
-    showWhen: { field: '', is: '' },
-    dependsOn: '',
-    ...rest,
-  };
-}
+import { option } from './notifier-types';
 
 const basicAuthOption: NotificationChannelOption = option(
   'basic_auth',
@@ -508,6 +488,22 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('to_tag', 'to tag', '', {
         placeholder: '{{ template "wechat.default.to_tag" . }}',
+      }),
+    ],
+  },
+  {
+    name: 'Microsoft Teams',
+    description: 'Sends notifications to Microsoft Teams',
+    type: 'msteams',
+    info: '',
+    heading: 'Microsoft Teams settings',
+    options: [
+      option('webhook_url', 'Webhook URL', 'The incoming webhook URL.'),
+      option('title', 'Title', 'Message title template.', {
+        placeholder: '{{ template "teams.default.title" . }}',
+      }),
+      option('text', 'Text', 'Message body template.', {
+        placeholder: '{{ template "teams.default.text" . }}',
       }),
     ],
   },

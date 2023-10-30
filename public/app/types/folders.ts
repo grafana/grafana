@@ -35,10 +35,11 @@ export interface FolderState {
 }
 
 export interface DescendantCountDTO {
-  folder: number;
+  // TODO: make this required once nestedFolders is enabled by default
+  folder?: number;
   dashboard: number;
-  libraryPanel: number;
-  alertrule?: number;
+  librarypanel: number;
+  alertrule: number;
 }
 
 export interface DescendantCount {

@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
@@ -27,7 +28,7 @@ import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
+export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -43,13 +44,18 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
   const groupOptions = folderGroups
-    .map<SelectableValue<string>>((group) => ({
-      label: group.name,
-      value: group.name,
-      description: group.interval ?? MINUTE,
-      // we include provisioned folders, but disable the option to select them
-      isDisabled: isProvisionedGroup(group),
-    }))
+    .map<SelectableValue<string>>((group) => {
+      const isProvisioned = isProvisionedGroup(group);
+      return {
+        label: group.name,
+        value: group.name,
+        description: group.interval ?? MINUTE,
+        // we include provisioned folders, but disable the option to select them
+        isDisabled: !enableProvisionedGroups ? isProvisioned : false,
+        isProvisioned: isProvisioned,
+      };
+    })
+
     .sort(sortByLabel);
 
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
@@ -69,7 +75,13 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
-export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGrafana?: RulerRulesConfigDTO | null }) {
+export function FolderAndGroup({
+  groupfoldersForGrafana,
+  enableProvisionedGroups,
+}: {
+  groupfoldersForGrafana?: RulerRulesConfigDTO | null;
+  enableProvisionedGroups: boolean;
+}) {
   const {
     formState: { errors },
     watch,
@@ -82,7 +94,7 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -122,7 +134,7 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
 
   return (
     <div className={styles.container}>
-      <div className={styles.evaluationGroupsContainer}>
+      <div>
         {
           <Field
             label={
@@ -135,50 +147,53 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
             invalid={!!errors.folder?.message}
             data-testid="folder-picker"
           >
-            {(!isCreatingFolder && (
-              <InputControl
-                render={({ field: { ref, ...field } }) => (
-                  <RuleFolderPicker
-                    inputId="folder"
-                    {...field}
-                    enableReset={true}
-                    onChange={({ title, uid }) => {
-                      field.onChange({ title, uid });
-                      resetGroup();
+            <Stack direction="row" alignItems="center">
+              {(!isCreatingFolder && (
+                <>
+                  <InputControl
+                    render={({ field: { ref, ...field } }) => (
+                      <div style={{ width: 420 }}>
+                        <RuleFolderPicker
+                          inputId="folder"
+                          {...field}
+                          enableReset={true}
+                          onChange={({ title, uid }) => {
+                            field.onChange({ title, uid });
+                            resetGroup();
+                          }}
+                        />
+                      </div>
+                    )}
+                    name="folder"
+                    rules={{
+                      required: { value: true, message: 'Select a folder' },
+                      validate: {
+                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                      },
                     }}
                   />
-                )}
-                name="folder"
-                rules={{
-                  required: { value: true, message: 'Select a folder' },
-                  validate: {
-                    pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-                  },
-                }}
-              />
-            )) || <div>Creating new folder...</div>}
+                  <Text color="secondary">or</Text>
+                  <Button
+                    onClick={onOpenFolderCreationModal}
+                    type="button"
+                    icon="plus"
+                    fill="outline"
+                    variant="secondary"
+                    disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                  >
+                    New folder
+                  </Button>
+                </>
+              )) || <div>Creating new folder...</div>}
+            </Stack>
           </Field>
         }
-
-        <div className={styles.addButton}>
-          <span>or</span>
-          <Button
-            onClick={onOpenFolderCreationModal}
-            type="button"
-            icon="plus"
-            fill="outline"
-            variant="secondary"
-            disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-          >
-            New folder
-          </Button>
-        </div>
         {isCreatingFolder && (
           <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
         )}
       </div>
 
-      <div className={styles.evaluationGroupsContainer}>
+      <div>
         <Field
           label="Evaluation group"
           data-testid="group-picker"
@@ -187,62 +202,62 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
           error={errors.group?.message}
           invalid={!!errors.group?.message}
         >
-          <InputControl
-            render={({ field: { ref, ...field }, fieldState }) => (
-              <AsyncSelect
-                disabled={!folder || loading}
-                inputId="group"
-                key={uniqueId()}
-                {...field}
-                onChange={(group) => {
-                  field.onChange(group.label ?? '');
-                }}
-                isLoading={loading}
-                invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-                loadOptions={debouncedSearch}
-                cacheOptions
-                loadingMessage={'Loading groups...'}
-                defaultValue={defaultGroupValue}
-                defaultOptions={groupOptions}
-                getOptionLabel={(option: SelectableValue<string>) => (
-                  <div>
-                    <span>{option.label}</span>
-                    {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
-                    {option.isDisabled && (
-                      <>
-                        {' '}
-                        <ProvisioningBadge />
-                      </>
+          <Stack direction="row" alignItems="center">
+            <InputControl
+              render={({ field: { ref, ...field }, fieldState }) => (
+                <div style={{ width: 420 }}>
+                  <AsyncSelect
+                    disabled={!folder || loading}
+                    inputId="group"
+                    key={uniqueId()}
+                    {...field}
+                    onChange={(group) => {
+                      field.onChange(group.label ?? '');
+                    }}
+                    isLoading={loading}
+                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                    loadOptions={debouncedSearch}
+                    cacheOptions
+                    loadingMessage={'Loading groups...'}
+                    defaultValue={defaultGroupValue}
+                    defaultOptions={groupOptions}
+                    getOptionLabel={(option: SelectableValue<string>) => (
+                      <div>
+                        <span>{option.label}</span>
+                        {option['isProvisioned'] && (
+                          <>
+                            {' '}
+                            <ProvisioningBadge />
+                          </>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-                placeholder={'Select an evaluation group...'}
-              />
-            )}
-            name="group"
-            control={control}
-            rules={{
-              required: { value: true, message: 'Must enter a group name' },
-              validate: {
-                pathSeparator: (group_: string) => checkForPathSeparator(group_),
-              },
-            }}
-          />
+                    placeholder={'Select an evaluation group...'}
+                  />
+                </div>
+              )}
+              name="group"
+              control={control}
+              rules={{
+                required: { value: true, message: 'Must enter a group name' },
+                validate: {
+                  pathSeparator: (group_: string) => checkForPathSeparator(group_),
+                },
+              }}
+            />
+            <Text color="secondary">or</Text>
+            <Button
+              onClick={onOpenEvaluationGroupCreationModal}
+              type="button"
+              icon="plus"
+              fill="outline"
+              variant="secondary"
+              disabled={!folder}
+            >
+              New evaluation group
+            </Button>
+          </Stack>
         </Field>
-
-        <div className={styles.addButton}>
-          <span>or</span>
-          <Button
-            onClick={onOpenEvaluationGroupCreationModal}
-            type="button"
-            icon="plus"
-            fill="outline"
-            variant="secondary"
-            disabled={!folder}
-          >
-            New evaluation group
-          </Button>
-        </div>
         {isCreatingEvaluationGroup && (
           <EvaluationGroupCreationModal
             onCreate={handleEvalGroupCreation}
@@ -407,40 +422,18 @@ function EvaluationGroupCreationModal({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-top: ${theme.spacing(1)};
     display: flex;
     flex-direction: column;
     align-items: baseline;
     max-width: ${theme.breakpoints.values.lg}px;
     justify-content: space-between;
   `,
-  evaluationGroupsContainer: css`
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(2)};
-  `,
-
-  addButton: css`
-    display: flex;
-    direction: row;
-    gap: ${theme.spacing(2)};
-    line-height: 2;
-    margin-top: 35px;
-  `,
   formInput: css`
-    max-width: ${theme.breakpoints.values.sm}px;
     flex-grow: 1;
-
-    label {
-      width: ${theme.breakpoints.values.sm}px;
-    }
   `,
-
   modal: css`
     width: ${theme.breakpoints.values.sm}px;
   `,
-
   modalTitle: css`
     color: ${theme.colors.text.secondary};
     margin-bottom: ${theme.spacing(2)};

@@ -1,9 +1,8 @@
-import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
-import { TextArea, InlineFormLabel } from '@grafana/ui';
+import { EditorField, EditorRow } from '@grafana/experimental';
+import { TextArea, Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
 import { PromQLQuery } from '../types/query';
@@ -61,32 +60,20 @@ export function PromQLQueryEditor({
           onKeyDown={onReturnKeyDown}
           onChange={(e) => onChange({ ...query, expr: e.currentTarget.value })}
         />
-        <div
-          className={cx(
-            'gf-form',
-            css`
-              flex-wrap: nowrap;
-            `
-          )}
-          aria-label="Step field"
+        <EditorField
+          label="Min step"
+          tooltip={
+            'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: 10s)'
+          }
         >
-          <InlineFormLabel
-            width={6}
-            tooltip={
-              'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: 10s)'
-            }
-          >
-            Min step
-          </InlineFormLabel>
-          <input
+          <Input
             type={'string'}
-            className="gf-form-input width-4"
             placeholder={'auto'}
             onChange={(e) => onChange({ ...query, step: e.currentTarget.value })}
             onKeyDown={onReturnKeyDown}
             value={query.step ?? ''}
           />
-        </div>
+        </EditorField>
       </EditorRow>
     </>
   );

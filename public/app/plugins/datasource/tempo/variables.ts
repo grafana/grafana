@@ -1,7 +1,7 @@
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { DataQueryRequest, DataQueryResponse, CustomVariableSupport } from '@grafana/data';
+import { DataQueryRequest, CustomVariableSupport, MetricFindValue } from '@grafana/data';
 
 import { TempoVariableQuery, TempoVariableQueryEditor } from './VariableQueryEditor';
 import { TempoDatasource } from './datasource';
@@ -11,10 +11,9 @@ export class TempoVariableSupport extends CustomVariableSupport<TempoDatasource,
 
   constructor(private datasource: TempoDatasource) {
     super();
-    this.query = this.query.bind(this);
   }
 
-  query(request: DataQueryRequest<TempoVariableQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<TempoVariableQuery>): Observable<{ data: MetricFindValue[] }> {
     if (!this.datasource) {
       throw new Error('Datasource not initialized');
     }

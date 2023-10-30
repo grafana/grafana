@@ -163,7 +163,7 @@ func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultFiel
 	return fieldValuesAsStrings
 }
 
-func groupResults(results *data.Frame, groupingFieldNames []string, removeNonTime bool) ([]*data.Frame, error) {
+func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuery bool) ([]*data.Frame, error) {
 	groupingFields := make([]*data.Field, 0)
 	removeFieldIndices := make([]int, 0)
 
@@ -180,7 +180,7 @@ func groupResults(results *data.Frame, groupingFieldNames []string, removeNonTim
 					field = newField
 				}
 				// For expressions and alerts to work properly we need to remove non-time grouping fields
-				if removeNonTime && !field.Type().Time() {
+				if fromSyncQuery && !field.Type().Time() {
 					removeFieldIndices = append(removeFieldIndices, i)
 				}
 
@@ -202,8 +202,20 @@ func groupResults(results *data.Frame, groupingFieldNames []string, removeNonTim
 			newFrame := results.EmptyCopy()
 			newFrame.Name = groupKey
 			newFrame.Meta = results.Meta
-			// remove grouping indices
-			newFrame.Fields = removeFieldsByIndex(newFrame.Fields, removeFieldIndices)
+			if fromSyncQuery {
+				// remove grouping indices
+				newFrame.Fields = removeFieldsByIndex(newFrame.Fields, removeFieldIndices)
+
+				// set the group key as the display name for sync queries
+				for i := 1; i < len(newFrame.Fields); i++ {
+					valueField := newFrame.Fields[i]
+					if valueField.Config == nil {
+						valueField.Config = &data.FieldConfig{}
+					}
+					valueField.Config.DisplayNameFromDS = groupKey
+				}
+			}
+
 			groupedDataFrames[groupKey] = newFrame
 		}
 

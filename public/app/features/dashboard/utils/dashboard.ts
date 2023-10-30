@@ -1,6 +1,7 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -41,6 +42,10 @@ export function onCreateNewRow(dashboard: DashboardModel) {
   };
 
   dashboard.addPanel(newRow);
+}
+
+export function onImportDashboard() {
+  locationService.push('/dashboard/import');
 }
 
 export function onAddLibraryPanel(dashboard: DashboardModel) {

@@ -59,6 +59,7 @@ TableBarGaugeCellOptions: {
 TableSparklineCellOptions: {
 	GraphFieldConfig
 	type: TableCellDisplayMode & "sparkline"
+  hideValue?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options
@@ -86,7 +87,7 @@ TableFieldOptions: {
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
-	// Hides any header for a column, usefull for columns that show some static content or buttons.
+	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 } @cuetsy(kind="interface")
 

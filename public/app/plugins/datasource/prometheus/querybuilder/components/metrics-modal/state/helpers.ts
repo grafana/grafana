@@ -206,6 +206,8 @@ export function tracking(event: string, state?: MetricsModalState | null, metric
         fuzzySearchQuery: state?.fuzzySearchQuery,
         fullMetaSearch: state?.fullMetaSearch,
         selectedTypes: state?.selectedTypes,
+        useRegexSearch: state?.useBackend,
+        includeResultsWithoutMetadata: state?.includeNullMetadata,
       });
     case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
       reportInteraction(event, {

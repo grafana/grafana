@@ -92,7 +92,7 @@ func (a *pathFilterFileGuardian) can(action string, path string) bool {
 
 	allow = pathFilter.IsAllowed(path)
 	if !allow {
-		a.log.Warn("denying", "action", action, "path", path)
+		a.log.Warn("Denying", "action", action, "path", path)
 	}
 	return allow
 }

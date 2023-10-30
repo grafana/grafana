@@ -55,8 +55,8 @@ type datasourceInfo struct {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions()
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -143,17 +143,18 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	defer span.End()
 
 	targetStr := strings.Join(formData["target"], ",")
-	span.SetAttributes("target", targetStr, attribute.Key("target").String(targetStr))
-	span.SetAttributes("from", from, attribute.Key("from").String(from))
-	span.SetAttributes("until", until, attribute.Key("until").String(until))
-	span.SetAttributes("datasource_id", dsInfo.Id, attribute.Key("datasource_id").Int64(dsInfo.Id))
-	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
-
+	span.SetAttributes(
+		attribute.String("target", targetStr),
+		attribute.String("from", from),
+		attribute.String("until", until),
+		attribute.Int64("datasource_id", dsInfo.Id),
+		attribute.Int64("org_id", req.PluginContext.OrgID),
+	)
 	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
 	res, err := dsInfo.HTTPClient.Do(graphiteReq)
 	if res != nil {
-		span.SetAttributes("graphite.response.code", res.StatusCode, attribute.Key("graphite.response.code").Int(res.StatusCode))
+		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
 	}
 	if err != nil {
 		span.RecordError(err)
@@ -164,7 +165,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -206,7 +207,7 @@ func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		logger.Debug("graphite", "query", model)
+		logger.Debug("Graphite", "query", model)
 		currTarget := ""
 		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
 			currTarget = fullTarget
@@ -214,7 +215,7 @@ func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery)
 			currTarget = model.Get(TargetModelField).MustString()
 		}
 		if currTarget == "" {
-			logger.Debug("graphite", "empty query target", model)
+			logger.Debug("Graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}

@@ -10,6 +10,12 @@ import (
 // Results is a container for Value interfaces.
 type Results struct {
 	Values Values
+	Error  error
+}
+
+// IsNoData checks whether the result contains NoData value
+func (r Results) IsNoData() bool {
+	return len(r.Values) == 0 || len(r.Values) == 1 && r.Values[0].Type() == parse.TypeNoData
 }
 
 // Values is a slice of Value interfaces

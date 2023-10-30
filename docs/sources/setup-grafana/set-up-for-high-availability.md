@@ -19,6 +19,12 @@ weight: 900
 
 # Set up Grafana for high availability
 
+{{% admonition type="note" %}}
+To prevent duplicate alerts in Grafana high availability, additional steps are required.
+
+Please refer to [Alerting high availability](#alerting-high-availability) for more information.
+{{% /admonition %}}
+
 Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data by default. For high availability, you must use a shared database to store this data. This shared database can be either MySQL or Postgres.
 
 <div class="text-center">

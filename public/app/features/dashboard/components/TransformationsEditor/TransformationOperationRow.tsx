@@ -3,7 +3,7 @@ import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -103,7 +103,7 @@ export const TransformationOperationRow = ({
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
-      <HorizontalGroup align="center" width="auto">
+      <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationToggleAction
           title="Show transform help"
@@ -152,7 +152,7 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-      </HorizontalGroup>
+      </>
     );
   };
 
@@ -160,13 +160,17 @@ export const TransformationOperationRow = ({
     <QueryOperationRow
       id={id}
       index={index}
-      title={uiConfig.name}
+      title={`${index + 1} - ${uiConfig.name}`}
       draggable
       actions={renderActions}
       disabled={disabled}
       isOpen={toggleExpand()}
       // Assure that showHelp is untoggled when the row becomes collapsed.
       onClose={() => toggleShowHelp(false)}
+      expanderMessages={{
+        close: 'Collapse transformation row',
+        open: 'Expand transformation row',
+      }}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (

@@ -12,12 +12,12 @@ describe('DashboardScenePageStateManager', () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
 
       expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
 
       // should use cache second time
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
       expect(loadDashboardMock.mock.calls.length).toBe(1);
     });
 
@@ -25,7 +25,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: undefined, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
@@ -36,7 +36,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
 
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
       expect(loader.state.loadError).toBe(undefined);
@@ -47,7 +47,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
@@ -59,7 +59,7 @@ describe('DashboardScenePageStateManager', () => {
       locationService.partial({ from: 'now-5m', to: 'now' });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
       const dash = loader.state.dashboard;
 
       expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
@@ -69,7 +69,7 @@ describe('DashboardScenePageStateManager', () => {
       // try loading again (and hitting cache)
       locationService.partial({ from: 'now-10m', to: 'now' });
 
-      await loader.loadAndInit('fake-dash');
+      await loader.loadDashboard('fake-dash');
       const dash2 = loader.state.dashboard;
 
       expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');

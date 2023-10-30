@@ -182,3 +182,10 @@ func (c TestContext) createCorrelation(cmd correlations.CreateCorrelationCommand
 	require.NoError(c.t, err)
 	return correlation
 }
+
+func (c TestContext) createOrUpdateCorrelation(cmd correlations.CreateCorrelationCommand) {
+	c.t.Helper()
+	err := c.env.Server.HTTPServer.CorrelationsService.CreateOrUpdateCorrelation(context.Background(), cmd)
+
+	require.NoError(c.t, err)
+}

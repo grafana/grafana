@@ -1,6 +1,7 @@
 package channels_config
 
 import (
+	"fmt"
 	"os"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
@@ -844,6 +845,18 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "parse_mode",
 				},
 				{
+					Label:        "Disable Web Page Preview",
+					Description:  "Disables link previews for links in this message",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_web_page_preview",
+				},
+				{
+					Label:        "Protect Content",
+					Description:  "Protects the contents of the sent message from forwarding and saving",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "protect_content",
+				},
+				{
 					Label:        "Disable Notification",
 					Description:  "Sends the message silently. Users will receive a notification with no sound.",
 					Element:      ElementTypeCheckbox,
@@ -1096,15 +1109,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		},
 		{
 			Type:        "googlechat",
-			Name:        "Google Hangouts Chat",
-			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
-			Heading:     "Google Hangouts Chat settings",
+			Name:        "Google Chat",
+			Description: "Sends notifications to Google Chat via webhooks based on the official JSON message format",
+			Heading:     "Google Chat settings",
 			Options: []NotifierOption{
 				{
 					Label:        "URL",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "Google Hangouts Chat incoming webhook url",
+					Placeholder:  "Google Chat incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
 				},
@@ -1327,4 +1340,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 	}
+}
+
+// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
+func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == contactPointType {
+			var secureFields []string
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
 }

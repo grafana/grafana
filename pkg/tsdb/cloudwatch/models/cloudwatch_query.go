@@ -84,7 +84,7 @@ func (q *CloudWatchQuery) GetGetMetricDataAPIMode() GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	q.logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	q.logger.Warn("Could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 

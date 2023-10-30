@@ -28,11 +28,12 @@ var (
 
 type Provider interface {
 	registry.BackgroundService
+	registry.CanBeDisabled
 	GetServer() *grpc.Server
 	GetAddress() string
 }
 
-type GPRCServerService struct {
+type gPRCServerService struct {
 	cfg     *setting.Cfg
 	logger  log.Logger
 	server  *grpc.Server
@@ -40,7 +41,7 @@ type GPRCServerService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	s := &GPRCServerService{
+	s := &gPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
 	}
@@ -90,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	return s, nil
 }
 
-func (s *GPRCServerService) Run(ctx context.Context) error {
+func (s *gPRCServerService) Run(ctx context.Context) error {
 	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
@@ -121,17 +122,17 @@ func (s *GPRCServerService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *GPRCServerService) IsDisabled() bool {
+func (s *gPRCServerService) IsDisabled() bool {
 	if s.cfg == nil {
 		return true
 	}
 	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
 }
 
-func (s *GPRCServerService) GetServer() *grpc.Server {
+func (s *gPRCServerService) GetServer() *grpc.Server {
 	return s.server
 }
 
-func (s *GPRCServerService) GetAddress() string {
+func (s *gPRCServerService) GetAddress() string {
 	return s.address
 }

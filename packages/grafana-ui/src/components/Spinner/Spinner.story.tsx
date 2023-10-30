@@ -3,15 +3,12 @@ import React from 'react';
 
 import { Spinner } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { Props } from './Spinner';
 import mdx from './Spinner.mdx';
 
 const meta: Meta = {
   title: 'Visualizations/Spinner',
   component: Spinner,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

@@ -54,6 +54,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 				Historian:               nil,
 				MaxStateSaveConcurrency: 1,
 				Tracer:                  tracer,
+				Log:                     log.New("ngalert.state.manager"),
 			}
 			return state.NewManager(cfg)
 		},

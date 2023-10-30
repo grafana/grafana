@@ -18,7 +18,7 @@ jest.unmock('app/features/plugins/plugin_loader');
 
 for (const pluginId of panelsToCheckFirst) {
   config.panels[pluginId] = {
-    module: `app/plugins/panel/${pluginId}/module`,
+    module: `core:plugin/${pluginId}`,
   } as PanelPluginMeta;
 }
 

@@ -73,7 +73,9 @@ type JsonData struct {
 	TimeInterval            string `json:"timeInterval"`
 	Database                string `json:"database"`
 	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
+	SecureDSProxyUsername   string `json:"secureSocksProxyUsername"`
 	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	AuthenticationType      string `json:"authenticationType"`
 }
 
 type DataSourceInfo struct {

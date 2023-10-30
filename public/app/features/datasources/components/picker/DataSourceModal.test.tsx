@@ -95,7 +95,7 @@ describe('DataSourceDropdown', () => {
       await user.click(searchBox!);
       await user.keyboard('foobarbaz'); //Search for a DS that should not exist
 
-      expect(screen.queryAllByText('Connect data')).toHaveLength(2);
+      expect(screen.queryAllByText('Configure a new data source')).toHaveLength(2);
     });
 
     it('only displays the file drop area when the the ff is enabled', async () => {

@@ -23,7 +23,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -439,7 +439,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
-      <HorizontalGroup width="auto">
+      <>
         {hasEditorHelp && (
           <QueryOperationToggleAction
             title="Show data source help"
@@ -468,7 +468,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         ) : null}
         <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
-      </HorizontalGroup>
+      </>
     );
   };
 

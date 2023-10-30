@@ -5,7 +5,7 @@ import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 import { getAggregationOptionsByMetric } from '../functions';
-import { MetricKind, ValueTypes } from '../types/query';
+import { ValueTypes } from '../types/query';
 import { MetricDescriptor } from '../types/types';
 
 export interface Props {
@@ -55,7 +55,7 @@ const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<Selec
       return [];
     }
 
-    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map((a) => ({
+    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind).map((a) => ({
       ...a,
       label: a.text,
     }));

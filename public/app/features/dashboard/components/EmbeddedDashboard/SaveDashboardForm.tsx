@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
+import { Dashboard } from '@grafana/schema';
 import { Button, Form } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -10,7 +11,7 @@ import { SaveDashboardData } from '../SaveDashboard/types';
 interface SaveDashboardProps {
   dashboard: DashboardModel;
   onCancel: () => void;
-  onSubmit?: (clone: DashboardModel) => Promise<unknown>;
+  onSubmit?: (clone: Dashboard) => Promise<unknown>;
   onSuccess: () => void;
   saveModel: SaveDashboardData;
 }
@@ -44,7 +45,7 @@ export const SaveDashboardForm = ({ dashboard, onCancel, onSubmit, onSuccess, sa
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
               </Button>
-              <Button type="submit" disabled={!hasChanges} icon={saving ? 'fa fa-spinner' : undefined}>
+              <Button type="submit" disabled={!hasChanges} icon={saving ? 'spinner' : undefined}>
                 Save
               </Button>
               {!hasChanges && <div>No changes to save</div>}

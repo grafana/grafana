@@ -8,14 +8,14 @@ import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
-import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { trackDashboardSharingActionPerType } from '../../analytics';
 import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables, getUnsupportedDashboardDatasources } from '../SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables } from '../SharePublicDashboardUtils';
+import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
 
@@ -29,11 +29,11 @@ export type SharePublicDashboardAcknowledgmentInputs = {
 
 const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const styles = useStyles2(getStyles);
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
 
   const disableInputs = !hasWritePermissions || isSaveLoading || isError;
@@ -46,7 +46,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   return (
     <div className={styles.container}>
       <div>
-        <p className={styles.title}>Welcome to public dashboards public preview!</p>
+        <p className={styles.title}>Welcome to public dashboards!</p>
         <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
       </div>
 

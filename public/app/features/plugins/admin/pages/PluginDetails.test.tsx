@@ -52,8 +52,8 @@ jest.mock('../helpers.ts', () => ({
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: (action: string, fallBack: boolean) => true,
-    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+    hasPermission: (action: string) => true,
+    hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
 }));
 
@@ -324,12 +324,13 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /install/i })).toBeInTheDocument();
     });
 
-    it('should not display install button for enterprise plugins if license is invalid', async () => {
+    it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
-      expect(await queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
       expect(queryByText(/no valid Grafana Enterprise license detected/i)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
@@ -724,6 +725,63 @@ describe('Plugin details page', () => {
       expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
+    });
+
+    it('shows a "angular warning" if the plugin uses Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: true,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).toBeInTheDocument);
+    });
+
+    it('does not show an "angular warning" if the plugin is not using Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: false,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
+    });
+
+    it('should display a deprecation warning if the plugin is deprecated', async () => {
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+      });
+
+      await waitFor(() =>
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
+      );
+    });
+
+    it('should not display a deprecation warning in the plugin is not deprecated', async () => {
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: false,
+      });
+
+      await waitFor(() =>
+        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
+      );
+    });
+
+    it('should display a custom deprecation message if the plugin has it set', async () => {
+      const statusContext = 'A detailed explanation of why this plugin is deprecated.';
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+
+      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
     });
   });
 

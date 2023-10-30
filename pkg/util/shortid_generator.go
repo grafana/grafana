@@ -1,6 +1,8 @@
 package util
 
 import (
+	"errors"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"sync"
@@ -9,9 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const MaxUIDLength = 40
+
 var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var alphaRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 var hexLetters = []rune("abcdef")
+
+var (
+	ErrUIDTooLong       = fmt.Errorf("UID is longer than %d symbols", MaxUIDLength)
+	ErrUIDFormatInvalid = errors.New("invalid format of UID. Only letters, numbers, '-' and '_' are allowed")
+	ErrUIDEmpty         = fmt.Errorf("UID is empty")
+)
 
 // We want to protect our number generator as they are not thread safe. Not using
 // the mutex could result in panics in certain cases where UIDs would be generated
@@ -29,7 +39,7 @@ func IsValidShortUID(uid string) bool {
 
 // IsShortUIDTooLong checks if short unique identifier is too long
 func IsShortUIDTooLong(uid string) bool {
-	return len(uid) > 40
+	return len(uid) > MaxUIDLength
 }
 
 // GenerateShortUID will generate a UUID that can also be a k8s name
@@ -50,4 +60,18 @@ func GenerateShortUID() string {
 		return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 	}
 	return uuid
+}
+
+// ValidateUID checks the format and length of the string and returns error if it does not pass the condition
+func ValidateUID(uid string) error {
+	if len(uid) == 0 {
+		return ErrUIDEmpty
+	}
+	if IsShortUIDTooLong(uid) {
+		return ErrUIDTooLong
+	}
+	if !IsValidShortUID(uid) {
+		return ErrUIDFormatInvalid
+	}
+	return nil
 }

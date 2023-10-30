@@ -142,8 +142,10 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       size: 16,
     },
     placement: {
-      top: 100,
-      left: 100,
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 100,
+      top: options?.placement?.top,
+      left: options?.placement?.left,
     },
   }),
 

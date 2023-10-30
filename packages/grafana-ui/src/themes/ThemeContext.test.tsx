@@ -2,16 +2,36 @@ import { css } from '@emotion/css';
 import { render, renderHook } from '@testing-library/react';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { mockThemeContext, useStyles2 } from './ThemeContext';
 
 describe('useStyles', () => {
   it('memoizes the passed in function correctly', () => {
-    const stylesCreator = () => ({});
-    const { rerender, result } = renderHook(() => useStyles2(stylesCreator));
-    const storedReference = result.current;
+    // implementation has extra arguments to implicitly test the typescript definition of useStyles2
+    const getStyles = jest.fn((theme: GrafanaTheme2, isOdd: boolean) => ({ row: 'row-class-name' }));
 
-    rerender();
-    expect(storedReference).toBe(result.current);
+    function Row({ isOdd }: { isOdd: boolean }) {
+      const styles = useStyles2(getStyles, isOdd);
+      return <div className={styles.row} />;
+    }
+
+    function TestUseStyles() {
+      return (
+        <>
+          <Row isOdd={true} />
+          <Row isOdd={false} />
+          <Row isOdd={true} />
+          <Row isOdd={false} />
+          <Row isOdd={true} />
+          <Row isOdd={false} />
+        </>
+      );
+    }
+
+    render(<TestUseStyles />);
+
+    expect(getStyles).toHaveBeenCalledTimes(2);
   });
 
   it('does not memoize if the passed in function changes every time', () => {

@@ -234,7 +234,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		if len(cmd.Properties) != 0 {
 			if err = upsertProperties(s.db.GetDialect(), sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
-					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
+					s.log.Error("Failed while rolling back upsert", "path", cmd.Path)
 				}
 				return err
 			}
@@ -543,7 +543,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 		}
 
 		if int64(len(rawHashes)) != accessibleFilesCount {
-			s.log.Error("force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
+			s.log.Error("Force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
 			return fmt.Errorf("force folder delete: unauthorized access for path %s", lowerFolderPath)
 		}
 

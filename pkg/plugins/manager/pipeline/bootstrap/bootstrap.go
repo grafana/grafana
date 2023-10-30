@@ -48,7 +48,7 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 	}
 
 	if opts.DecorateFuncs == nil {
-		opts.DecorateFuncs = DefaultDecorateFuncs
+		opts.DecorateFuncs = DefaultDecorateFuncs(cfg)
 	}
 
 	return &Bootstrap{

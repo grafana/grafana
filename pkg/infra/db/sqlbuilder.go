@@ -3,11 +3,11 @@ package db
 import (
 	"bytes"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,7 +63,7 @@ func (sb *SQLBuilder) AddParams(params ...any) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user identity.Requester, permission dashboards.PermissionType, queryType string) {
 	var (
 		sql          string
 		params       []any

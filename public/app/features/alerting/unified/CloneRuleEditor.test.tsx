@@ -71,7 +71,7 @@ afterAll(() => {
 
 const ui = {
   inputs: {
-    name: byRole('textbox', { name: /rule name name for the alert rule\./i }),
+    name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),

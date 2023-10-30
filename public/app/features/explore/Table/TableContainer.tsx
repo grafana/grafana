@@ -2,8 +2,10 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -49,6 +51,15 @@ export class TableContainer extends PureComponent<Props> {
     return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
+  getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
+    let name = data.name;
+    if (!name && (dataFrames?.length ?? 0) > 1) {
+      name = data.refId || `${i}`;
+    }
+
+    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
+  }
+
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
 
@@ -62,7 +73,7 @@ export class TableContainer extends PureComponent<Props> {
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
@@ -78,8 +89,8 @@ export class TableContainer extends PureComponent<Props> {
     return (
       <>
         {frames && frames.length === 0 && (
-          <PanelChrome title={'Table'} width={width} height={200}>
-            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
         {frames &&
@@ -87,7 +98,7 @@ export class TableContainer extends PureComponent<Props> {
           frames.map((data, i) => (
             <PanelChrome
               key={data.refId || `table-${i}`}
-              title={dataFrames && dataFrames.length > 1 ? `Table - ${data.name || data.refId || i}` : 'Table'}
+              title={this.getTableTitle(dataFrames, data, i)}
               width={width}
               height={this.getTableHeight(data.length, this.hasSubFrames(data))}
               loadingState={loading ? LoadingState.Loading : undefined}

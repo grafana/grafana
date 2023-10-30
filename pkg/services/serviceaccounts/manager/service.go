@@ -81,7 +81,7 @@ func ProvideServiceAccountsService(
 		s.secretScanService, errSecret = secretscan.NewService(s.store, cfg)
 		if errSecret != nil {
 			s.secretScanEnabled = false
-			s.log.Warn("failed to initialize secret scan service. secret scan is disabled",
+			s.log.Warn("Failed to initialize secret scan service. secret scan is disabled",
 				"error", errSecret.Error())
 		}
 	}
@@ -90,7 +90,7 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) Run(ctx context.Context) error {
-	sa.backgroundLog.Debug("service initialized")
+	sa.backgroundLog.Debug("Service initialized")
 
 	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
@@ -101,7 +101,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	// Enforce a minimum interval of 1 minute.
 	if sa.secretScanEnabled && sa.secretScanInterval < time.Minute {
-		sa.backgroundLog.Warn("secret scan interval is too low, increasing to " +
+		sa.backgroundLog.Warn("Secret scan interval is too low, increasing to " +
 			defaultSecretScanInterval.String())
 
 		sa.secretScanInterval = defaultSecretScanInterval
@@ -112,7 +112,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	if !sa.secretScanEnabled {
 		tokenCheckTicker.Stop()
 	} else {
-		sa.backgroundLog.Debug("enabled token secret check and executing first check")
+		sa.backgroundLog.Debug("Enabled token secret check and executing first check")
 		if err := sa.secretScanService.CheckTokens(ctx); err != nil {
 			sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())
 		}
@@ -127,17 +127,17 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 				return fmt.Errorf("context error in service account background service: %w", ctx.Err())
 			}
 
-			sa.backgroundLog.Debug("stopped service account background service")
+			sa.backgroundLog.Debug("Stopped service account background service")
 
 			return nil
 		case <-updateStatsTicker.C:
-			sa.backgroundLog.Debug("updating usage metrics")
+			sa.backgroundLog.Debug("Updating usage metrics")
 
 			if _, err := sa.getUsageMetrics(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to get usage metrics", "error", err.Error())
 			}
 		case <-tokenCheckTicker.C:
-			sa.backgroundLog.Debug("checking for leaked tokens")
+			sa.backgroundLog.Debug("Checking for leaked tokens")
 
 			if err := sa.secretScanService.CheckTokens(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())

@@ -35,20 +35,11 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
-		Name:     "read-only",
-		Type:     "loki",
-		ReadOnly: true,
-		OrgID:    adminUser.User.OrgID,
-	}
-	dataSource := ctx.createDs(createDsCommand)
-	readOnlyDS := dataSource.UID
-
-	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
 		OrgID: adminUser.User.OrgID,
 	}
-	dataSource = ctx.createDs(createDsCommand)
+	dataSource := ctx.createDs(createDsCommand)
 	writableDs := dataSource.UID
 	writableDsOrgId := dataSource.OrgID
 
@@ -137,9 +128,16 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("updating a correlation originating from a read-only data source should result in a 403", func(t *testing.T) {
+	t.Run("updating a read-only correlation should result in a 403", func(t *testing.T) {
+		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   writableDs,
+			TargetUID:   &writableDs,
+			OrgId:       writableDsOrgId,
+			Provisioned: true,
+		})
+
 		res := ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 			body: `{
 				"label": "some-label"
@@ -154,8 +152,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Data source is read only", response.Message)
-		require.Equal(t, correlations.ErrSourceDataSourceReadOnly.Error(), response.Error)
+		require.Equal(t, "Correlation can only be edited via provisioning", response.Message)
+		require.Equal(t, correlations.ErrCorrelationReadOnly.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})

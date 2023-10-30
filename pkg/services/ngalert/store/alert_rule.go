@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -53,19 +53,19 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert rules", "count", rows)
+		logger.Debug("Deleted alert rules", "count", rows)
 
 		rows, err = sess.Table("alert_rule_version").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert rule versions", "count", rows)
+		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert instances", "count", rows)
+		logger.Debug("Deleted alert instances", "count", rows)
 		return nil
 	})
 }
@@ -116,8 +116,9 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 }
 
 // InsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) (map[string]int64, error) {
-	ids := make(map[string]int64, len(rules))
+// Returns the UID and ID of rules that were created in the same order as the input rules.
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
@@ -167,7 +168,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
-				ids[newRules[i].UID] = newRules[i].ID
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{
+					AlertRuleKey: newRules[i].GetKey(),
+					ID:           newRules[i].ID,
+				})
 			}
 		}
 
@@ -265,7 +269,7 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 	if !newTitlesOverlapExisting(titleUpdates) {
 		return nil
 	}
-	st.Logger.Debug("detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
+	st.Logger.Debug("Detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
 
 	for _, update := range titleUpdates {
 		r := update.Existing
@@ -312,7 +316,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -477,7 +481,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid, SignedInUser: user})
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
@@ -537,10 +541,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		}
 		defer func() {
 			if err := rows.Close(); err != nil {
-				st.Logger.Error("unable to close rows session", "error", err)
+				st.Logger.Error("Unable to close rows session", "error", err)
 			}
 		}()
-		lokiRangeToInstantEnabled := st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingLokiRangeToInstant)
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(ngmodels.AlertRule)
@@ -553,13 +556,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			// In previous versions of Grafana, Loki datasources would default to range queries
 			// instead of instant queries, sometimes creating unnecessary load. This is only
 			// done for Grafana Cloud.
-			if lokiRangeToInstantEnabled {
-				if indices, migratable := canBeInstant(rule); migratable {
-					if err := migrateToInstant(rule, indices); err != nil {
-						st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-					} else {
-						st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(indices))
-					}
+			if optimizations, migratable := canBeInstant(rule); migratable {
+				if err := migrateToInstant(rule, optimizations); err != nil {
+					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+				} else {
+					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
 				}
 			}
 			rules = append(rules, rule)
@@ -588,7 +589,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},

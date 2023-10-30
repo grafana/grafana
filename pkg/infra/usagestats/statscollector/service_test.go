@@ -20,10 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -355,8 +355,8 @@ func (m *mockSocial) GetOAuthProviders() map[string]bool {
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
-	s.plugins = &fakes.FakePluginStore{
-		PluginList: []plugins.PluginDTO{
+	s.plugins = &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: datasources.DS_ES}, Signature: "internal"},
 			{JSONData: plugins.JSONData{ID: datasources.DS_PROMETHEUS}, Signature: "internal"},
 			{JSONData: plugins.JSONData{ID: datasources.DS_GRAPHITE}, Signature: "internal"},
@@ -381,7 +381,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		cfg,
 		store,
 		&mockSocial{},
-		&fakes.FakePluginStore{},
+		&pluginstore.FakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(),

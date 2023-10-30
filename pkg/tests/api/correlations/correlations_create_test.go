@@ -166,7 +166,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("creating a correlation originating from a read-only data source should result in a 403", func(t *testing.T) {
+	t.Run("creating a correlation originating from a read-only data source should work", func(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", readOnlyDS),
 			body: fmt.Sprintf(`{
@@ -179,17 +179,20 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 				}`, readOnlyDS),
 			user: adminUser,
 		})
-		require.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.Equal(t, http.StatusOK, res.StatusCode)
 
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
-		var response errorResponseBody
+		var response correlations.CreateCorrelationResponseBody
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Data source is read only", response.Message)
-		require.Equal(t, correlations.ErrSourceDataSourceReadOnly.Error(), response.Error)
+		require.Equal(t, "Correlation created", response.Message)
+		require.Equal(t, readOnlyDS, response.Result.SourceUID)
+		require.Equal(t, readOnlyDS, *response.Result.TargetUID)
+		require.Equal(t, "", response.Result.Description)
+		require.Equal(t, "", response.Result.Label)
 
 		require.NoError(t, res.Body.Close())
 	})

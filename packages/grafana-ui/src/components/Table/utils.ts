@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 import { Row } from 'react-table';
 
 import {
@@ -15,7 +15,10 @@ import {
   reduceField,
   GrafanaTheme2,
   isDataFrame,
+  isDataFrameWithValue,
   isTimeSeriesFrame,
+  DisplayValueAlignmentFactors,
+  DisplayValue,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -49,7 +52,7 @@ export function getTextAlign(field?: Field): Property.JustifyContent {
   }
 
   if (field.config.custom) {
-    const custom = field.config.custom as TableFieldOptions;
+    const custom: TableFieldOptions = field.config.custom;
 
     switch (custom.align) {
       case 'right':
@@ -101,7 +104,7 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+    const fieldTableOptions: TableFieldOptions = field.config.custom || {};
     if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }
@@ -115,6 +118,7 @@ export function getColumns(
     const selectSortType = (type: FieldType) => {
       switch (type) {
         case FieldType.number:
+        case FieldType.frame:
           return 'number';
         case FieldType.time:
           return 'basic';
@@ -131,13 +135,11 @@ export function getColumns(
       id: fieldIndex.toString(),
       field: field,
       Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
-      accessor: (_row: any, i: number) => {
-        return field.values[i];
-      },
+      accessor: (_row, i) => field.values[i],
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
-      filter: memoizeOne(filterByValue(field)),
+      filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
@@ -255,7 +257,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
   return value;
 }
 
-export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
+export function valuesToOptions(unique: Record<string, unknown>): SelectableValue[] {
   return Object.keys(unique)
     .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
     .sort(sortOptions);
@@ -293,18 +295,22 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
 }
 
-export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
+export function sortCaseInsensitive(a: Row, b: Row, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
 
 // sortNumber needs to have great performance as it is called a lot
-export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+export function sortNumber(rowA: Row, rowB: Row, id: string) {
   const a = toNumber(rowA.values[id]);
   const b = toNumber(rowB.values[id]);
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
 function toNumber(value: any): number {
+  if (isDataFrameWithValue(value)) {
+    return value.value ?? Number.NEGATIVE_INFINITY;
+  }
+
   if (value === null || value === undefined || value === '' || isNaN(value)) {
     return Number.NEGATIVE_INFINITY;
   }
@@ -485,4 +491,45 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
 
   // Recurse
   addMissingColumnIndex(columns);
+}
+
+/**
+ * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
+ * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
+ * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
+ * unaligned gauges but it should a lot less common.
+ **/
+export function getAlignmentFactor(
+  field: Field,
+  displayValue: DisplayValue,
+  rowIndex: number
+): DisplayValueAlignmentFactors {
+  let alignmentFactor = field.state?.alignmentFactors;
+
+  if (alignmentFactor) {
+    // check if current alignmentFactor is still the longest
+    if (alignmentFactor.text.length < displayValue.text.length) {
+      alignmentFactor.text = displayValue.text;
+    }
+    return alignmentFactor;
+  } else {
+    // look at the next 1000 rows
+    alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
+
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
+      const nextDisplayValue = field.display!(field.values[i]);
+      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
+        alignmentFactor.text = displayValue.text;
+      }
+    }
+
+    if (field.state) {
+      field.state.alignmentFactors = alignmentFactor;
+    } else {
+      field.state = { alignmentFactors: alignmentFactor };
+    }
+
+    return alignmentFactor;
+  }
 }

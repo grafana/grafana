@@ -1,11 +1,14 @@
 //go:build wireinject && oss
 // +build wireinject,oss
 
+// This file should contain wiresets which contain OSS-specific implementations.
 package server
 
 import (
 	"github.com/google/wire"
+
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -16,10 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -87,6 +93,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
+	idimpl.ProvideLocalSigner,
+	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
 var wireExtsSet = wire.NewSet(
@@ -102,4 +112,23 @@ var wireExtsCLISet = wire.NewSet(
 var wireExtsTestSet = wire.NewSet(
 	wireTestSet,
 	wireExtsBasicSet,
+)
+
+// The wireExtsBaseCLISet is a simplified set of dependencies for the OSS CLI,
+// suitable for running background services and targeted dskit modules without
+// starting up the full Grafana server.
+var wireExtsBaseCLISet = wire.NewSet(
+	NewModuleRunner,
+
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	hooks.ProvideService,
+	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
+	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+)
+
+// wireModuleServerSet is a wire set for the ModuleServer.
+var wireExtsModuleServerSet = wire.NewSet(
+	NewModule,
+	wireExtsBaseCLISet,
 )

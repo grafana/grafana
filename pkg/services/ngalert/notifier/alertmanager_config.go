@@ -66,10 +66,10 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
-		moa.logger.Error("unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
+		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
-	moa.logger.Info("applied historical alertmanager configuration", "org", orgId, "id", id)
+	moa.logger.Info("Applied historical alertmanager configuration", "org", orgId, "id", id)
 
 	return nil
 }
@@ -184,7 +184,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
+		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 

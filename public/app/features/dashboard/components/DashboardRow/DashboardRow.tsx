@@ -5,7 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
+import { Icon, TextLink } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
@@ -47,10 +47,20 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
     const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
     if (isAnyPanelUsingDashboardDS) {
       return (
-        <p>
-          Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in the
-          original row, not the ones in the repeated rows.
-        </p>
+        <div>
+          <p>
+            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
+            the original row, not the ones in the repeated rows.
+          </p>
+          <TextLink
+            external
+            href={
+              'https://grafana.com/docs/grafana/next/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
+            }
+          >
+            Learn more
+          </TextLink>
+        </div>
       );
     }
 

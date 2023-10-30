@@ -172,7 +172,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	} else {
 		err := dn.embedImage(cmd, evalContext.ImageOnDiskPath, json)
 		if err != nil {
-			dn.log.Error("failed to embed image", "error", err)
+			dn.log.Error("Failed to embed image", "error", err)
 			return err
 		}
 	}

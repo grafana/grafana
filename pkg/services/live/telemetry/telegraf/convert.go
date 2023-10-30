@@ -237,7 +237,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 		if index, ok := s.fieldCache[f.Key]; ok {
 			field := s.fields[index]
 			if ft != field.Type() {
-				logger.Warn("error appending values", "type", field.Type(), "expect", ft, "value", v, "key", f.Key, "line", m)
+				logger.Warn("Error appending values", "type", field.Type(), "expect", ft, "value", v, "key", f.Key, "line", m)
 				if field.Type() == data.FieldTypeNullableString && v != nil {
 					str := fmt.Sprintf("%v", f.Value)
 					v = &str

@@ -30,7 +30,7 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("support bundle collector panic", "err", err, "stack", string(debug.Stack()))
+				s.log.Error("Support bundle collector panic", "err", err, "stack", string(debug.Stack()))
 				result <- bundleResult{err: ErrCollectorPanicked}
 			}
 		}()
@@ -47,19 +47,19 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 	case <-ctx.Done():
 		s.log.Warn("Context cancelled while collecting support bundle")
 		if err := s.store.Update(ctx, uid, supportbundles.StateTimeout, nil); err != nil {
-			s.log.Error("failed to update bundle after timeout")
+			s.log.Error("Failed to update bundle after timeout")
 		}
 		return
 	case r := <-result:
 		if r.err != nil {
-			s.log.Error("failed to make bundle", "error", r.err, "uid", uid)
+			s.log.Error("Failed to make bundle", "error", r.err, "uid", uid)
 			if err := s.store.Update(ctx, uid, supportbundles.StateError, nil); err != nil {
-				s.log.Error("failed to update bundle after error")
+				s.log.Error("Failed to update bundle after error")
 			}
 			return
 		}
 		if err := s.store.Update(ctx, uid, supportbundles.StateComplete, r.tarBytes); err != nil {
-			s.log.Error("failed to update bundle after completion")
+			s.log.Error("Failed to update bundle after completion")
 		}
 		return
 	}

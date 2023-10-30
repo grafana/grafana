@@ -31,7 +31,9 @@ interface State {
   uploadModalOpen: boolean;
 }
 
-const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceqlSearch';
+// This needs to default to traceql for data sources like Splunk, where clicking on a
+// data link should open the traceql tab and run a search based on the configured query.
+const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   constructor(props: Props) {

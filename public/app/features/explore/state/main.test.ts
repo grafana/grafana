@@ -1,6 +1,6 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { ExploreUrlState } from '@grafana/data';
+import { dateTime, ExploreUrlState } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { locationService } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -20,20 +20,18 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
   };
   const datasource = new MockDataSourceApi(panel.datasource!.uid!);
   const get = jest.fn().mockResolvedValue(datasource);
-  const getDataSourceSrv = jest.fn().mockReturnValue({ get });
-  const getTimeSrv = jest.fn();
   const getExploreUrl = jest.fn().mockResolvedValue(url);
+  const timeRange = { from: dateTime(), to: dateTime() };
 
   const dispatchedActions = await thunkTester({})
     .givenThunk(navigateToExplore)
-    .whenThunkIsDispatched(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow });
+    .whenThunkIsDispatched(panel, { timeRange, getExploreUrl, openInNewWindow });
 
   return {
     url,
     panel,
     get,
-    getDataSourceSrv,
-    getTimeSrv,
+    timeRange,
     getExploreUrl,
     dispatchedActions,
   };
@@ -47,26 +45,14 @@ describe('navigateToExplore', () => {
         expect(locationService.getLocation().pathname).toEqual(url);
       });
 
-      it('then getDataSourceSrv should have been once', async () => {
-        const { getDataSourceSrv } = await getNavigateToExploreContext();
-
-        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
-      });
-
-      it('then getTimeSrv should have been called once', async () => {
-        const { getTimeSrv } = await getNavigateToExploreContext();
-
-        expect(getTimeSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext();
+        const { getExploreUrl, panel, timeRange } = await getNavigateToExploreContext();
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
-          panel,
-          datasourceSrv: getDataSourceSrv(),
-          timeSrv: getTimeSrv(),
+          queries: panel.targets,
+          timeRange,
+          dsRef: panel.datasource,
         });
       });
     });
@@ -79,28 +65,14 @@ describe('navigateToExplore', () => {
         expect(dispatchedActions).toEqual([]);
       });
 
-      it('then getDataSourceSrv should have been once', async () => {
-        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
-
-        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
-      });
-
-      it('then getTimeSrv should have been called once', async () => {
-        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
-
-        expect(getTimeSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
-          openInNewWindow
-        );
+        const { getExploreUrl, panel, timeRange } = await getNavigateToExploreContext(openInNewWindow);
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
-          panel,
-          datasourceSrv: getDataSourceSrv(),
-          timeSrv: getTimeSrv(),
+          queries: panel.targets,
+          timeRange,
+          dsRef: panel.datasource,
         });
       });
 

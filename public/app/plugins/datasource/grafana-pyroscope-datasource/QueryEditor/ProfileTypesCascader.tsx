@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { Cascader, CascaderOption } from '@grafana/ui';
 
-import { PhlareDataSource } from '../datasource';
+import { PyroscopeDataSource } from '../datasource';
 import { ProfileTypeMessage } from '../types';
 
 type Props = {
   initialProfileTypeId?: string;
   profileTypes?: ProfileTypeMessage[];
   onChange: (value: string) => void;
+  placeholder?: string;
 };
 
 export function ProfileTypesCascader(props: Props) {
@@ -16,6 +17,7 @@ export function ProfileTypesCascader(props: Props) {
 
   return (
     <Cascader
+      placeholder={props.placeholder}
       separator={'-'}
       displayAllSelectedLevels={true}
       initialValue={props.initialProfileTypeId}
@@ -37,14 +39,9 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
     // Classify profile types by name then sample type.
     // The profileTypes are something like cpu:sample:nanoseconds:sample:count or app.something.something
     for (let profileType of profileTypes) {
-      let parts: string[];
-      // Phlare uses : as delimiter while Pyro uses .
+      let parts: string[] = [];
       if (profileType.id.indexOf(':') > -1) {
         parts = profileType.id.split(':');
-      } else {
-        parts = profileType.id.split('.');
-        const last = parts.pop()!;
-        parts = [parts.join('.'), last];
       }
 
       const [name, type] = parts;
@@ -72,7 +69,7 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
  * the profileTypes before rendering the cascader.
  * @param datasource
  */
-export function useProfileTypes(datasource: PhlareDataSource) {
+export function useProfileTypes(datasource: PyroscopeDataSource) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
 
   useEffect(() => {

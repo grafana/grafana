@@ -30,7 +30,7 @@ describe('PromQueryBuilderContainer', () => {
     await userEvent.click(screen.getByTestId('operations.0.add-rest-param'));
 
     waitFor(() => {
-      expect(container.querySelector(`${getOperationParamId(0, 0)}`)).toBeInTheDocument();
+      expect(container.querySelector(`${getOperationParamId('0', 0)}`)).toBeInTheDocument();
     });
   });
 });

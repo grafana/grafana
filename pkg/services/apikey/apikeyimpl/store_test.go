@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,7 +21,7 @@ type getStore func(db.DB, *setting.Cfg) store
 
 type getApiKeysTestCase struct {
 	desc               string
-	user               *user.SignedInUser
+	user               identity.Requester
 	expectedNumKeys    int
 	expectedAllNumKeys int
 }

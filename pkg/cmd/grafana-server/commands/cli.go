@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
+	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
@@ -23,33 +24,40 @@ import (
 )
 
 type ServerOptions struct {
-	Version     string
-	Commit      string
-	BuildBranch string
-	BuildStamp  string
-	Context     *cli.Context
+	Version          string
+	Commit           string
+	EnterpriseCommit string
+	BuildBranch      string
+	BuildStamp       string
+	Context          *cli.Context
 }
 
-func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
+func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "server",
 		Usage: "run the grafana server",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
 			return RunServer(ServerOptions{
-				Version:     version,
-				Commit:      commit,
-				BuildBranch: buildBranch,
-				BuildStamp:  buildstamp,
-				Context:     context,
+				Version:          version,
+				Commit:           commit,
+				EnterpriseCommit: enterpriseCommit,
+				BuildBranch:      buildBranch,
+				BuildStamp:       buildstamp,
+				Context:          context,
 			})
 		},
+		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
 	}
 }
 
 func RunServer(opts ServerOptions) error {
 	if Version || VerboseVersion {
-		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		if opts.EnterpriseCommit != gcli.DefaultCommitValue && opts.EnterpriseCommit != "" {
+			fmt.Printf("Version %s (commit: %s, branch: %s, enterprise-commit: %s)\n", opts.Version, opts.Commit, opts.BuildBranch, opts.EnterpriseCommit)
+		} else {
+			fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
+		}
 		if VerboseVersion {
 			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
@@ -93,14 +101,18 @@ func RunServer(opts ServerOptions) error {
 	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   ConfigFile,
+		HomePath: HomePath,
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, opts.Context.Args().Slice()...),
+	})
+	if err != nil {
+		return err
+	}
 
 	s, err := server.Initialize(
-		setting.CommandLineArgs{
-			Config:   ConfigFile,
-			HomePath: HomePath,
-			// tailing arguments have precedence over the options string
-			Args: append(configOptions, opts.Context.Args().Slice()...),
-		},
+		cfg,
 		server.Options{
 			PidFile:     PidFile,
 			Version:     opts.Version,
@@ -114,9 +126,7 @@ func RunServer(opts ServerOptions) error {
 	}
 
 	ctx := context.Background()
-
 	go listenToSystemSignals(ctx, s)
-
 	return s.Run()
 }
 
@@ -130,7 +140,12 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.Server) {
+// a small interface satisfied by the server and moduleserver
+type gserver interface {
+	Shutdown(context.Context, string) error
+}
+
+func listenToSystemSignals(ctx context.Context, s gserver) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 

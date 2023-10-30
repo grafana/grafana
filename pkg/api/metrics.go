@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,10 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,9 +23,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
-	}
-	if errors.Is(err, plugincontext.ErrPluginNotFound) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
@@ -60,10 +58,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return hs.toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(c.Req.Context(), resp)
 }
 
-func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
 	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
@@ -74,6 +72,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		if res.Error != nil {
 			statusCode = statusWhenError
 		}
+	}
+
+	if statusCode == statusWhenError {
+		// an error in the response we treat as downstream.
+		requestmeta.WithDownstreamStatusSource(ctx)
 	}
 
 	return response.JSONStreaming(statusCode, qdr)

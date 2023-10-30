@@ -60,4 +60,8 @@ export class TemplateSrvMock implements TemplateSrv {
   }
 
   updateTimeRange(timeRange: TimeRange) {}
+
+  getAdhocFilters(dsName: string) {
+    return [{ key: 'key', operator: '=', value: 'a' }];
+  }
 }

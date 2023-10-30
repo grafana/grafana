@@ -105,7 +105,7 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       }
       return 'label_names()';
     case QueryType.LabelValues:
-      if (QueryVariable.metric) {
+      if (QueryVariable.metric || (QueryVariable.labelFilters && QueryVariable.labelFilters.length !== 0)) {
         const visualQueryQuery = {
           metric: QueryVariable.metric,
           labels: QueryVariable.labelFilters ?? [],
@@ -123,7 +123,9 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       const varQuery = removeLineBreaks(QueryVariable.varQuery);
       return `query_result(${varQuery})`;
     case QueryType.SeriesQuery:
-      return '' + QueryVariable.seriesQuery;
+      return QueryVariable.seriesQuery ?? '';
+    case QueryType.ClassicQuery:
+      return QueryVariable.classicQuery ?? '';
   }
 
   return '';

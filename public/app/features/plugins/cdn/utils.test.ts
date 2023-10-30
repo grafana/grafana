@@ -1,19 +1,12 @@
-import { config } from '@grafana/runtime';
-
-import { extractPluginIdVersionFromUrl, transformPluginSourceForCDN } from './utils';
+import { transformPluginSourceForCDN } from './utils';
 
 describe('Plugin CDN Utils', () => {
-  describe('transformPluginSourceForCdn', () => {
-    // const localUrl =
-    //   'http://localhost:3000/public/plugin-cdn/grafana-worldmap-panel/0.3.3/grafana-worldmap-panel/module.js';
-    const pluginId = 'grafana-worldmap-panel';
-    const version = '0.3.3';
-    config.pluginsCDNBaseURL = 'http://my-host.com';
+  const url = 'http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js';
 
+  describe('transformPluginSourceForCdn', () => {
     it('should update the default local path to use the CDN path', () => {
       const translatedLoad = transformPluginSourceForCDN({
-        pluginId,
-        version,
+        url,
         source: 'public/plugins/grafana-worldmap-panel/template.html',
       });
       expect(translatedLoad).toBe(
@@ -30,7 +23,7 @@ describe('Plugin CDN Utils', () => {
         const a = "http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
         const img = "<img src='http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
-      const translatedLoad = transformPluginSourceForCDN({ pluginId, version, source });
+      const translatedLoad = transformPluginSourceForCDN({ url, source });
       expect(translatedLoad).toBe(expectedSource);
     });
 
@@ -43,7 +36,7 @@ describe('Plugin CDN Utils', () => {
         const a = "http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
         const img = "<img src='http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
-      const translatedLoad = transformPluginSourceForCDN({ pluginId, version, source });
+      const translatedLoad = transformPluginSourceForCDN({ url, source });
       expect(translatedLoad).toBe(expectedSource);
     });
 
@@ -62,12 +55,12 @@ describe('Plugin CDN Utils', () => {
             ".json"
         )
       `;
-      const translatedLoad = transformPluginSourceForCDN({ pluginId, version, source });
+      const translatedLoad = transformPluginSourceForCDN({ url, source });
 
       expect(translatedLoad).toBe(expectedSource);
     });
 
-    it('should replace sourcemap locations', () => {
+    it('should only replace sourcemap locations if transformSourceMapUrl is true', () => {
       const source = `
         Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
         //# sourceMappingURL=module.js.map
@@ -76,29 +69,21 @@ describe('Plugin CDN Utils', () => {
         Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
         //# sourceMappingURL=http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js.map
       `;
-      const translatedLoad = transformPluginSourceForCDN({ pluginId, version, source });
+      const translatedLoad = transformPluginSourceForCDN({ url, source });
 
-      expect(translatedLoad).toBe(expectedSource);
+      expect(translatedLoad).toBe(source);
+
+      const translatedLoadWithSourceMapUrl = transformPluginSourceForCDN({ url, source, transformSourceMapURL: true });
+
+      expect(translatedLoadWithSourceMapUrl).toBe(expectedSource);
     });
 
     it('should replace css paths', () => {
       const source = `(0,o.loadPluginCss)({dark:"plugins/grafana-worldmap-panel/css/worldmap.dark.css",light:"plugins/grafana-worldmap-panel/css/worldmap.light.css"}),`;
       const expectedSource = `(0,o.loadPluginCss)({dark:"http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/css/worldmap.dark.css",light:"http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/css/worldmap.light.css"}),`;
-      const translatedLoad = transformPluginSourceForCDN({ pluginId, version, source });
+      const translatedLoad = transformPluginSourceForCDN({ url, source });
 
       expect(translatedLoad).toBe(expectedSource);
-    });
-  });
-  describe('extractPluginIdVersionFromUrl', () => {
-    it('should extract the plugin id and version from a path', () => {
-      const source =
-        'http://localhost:3000/public/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js';
-      const expected = {
-        id: 'grafana-worldmap-panel',
-        version: '0.3.3',
-      };
-      const expectedExtractedPluginDeets = extractPluginIdVersionFromUrl(source);
-      expect(expectedExtractedPluginDeets).toEqual(expected);
     });
   });
 });

@@ -62,7 +62,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 | Tool      | Project                                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------------------------- |
 | Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
-| Ansible   | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)             |
+| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection) |
 | Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
 | Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
 | Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
@@ -343,7 +343,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
-> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+> **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -371,8 +371,8 @@ By default, Grafana deletes dashboards in the database if the file is removed. Y
 
 {{% admonition type="note" %}}
 Provisioning allows you to overwrite existing dashboards
-which leads to problems if you re-use settings that are supposed to be unique.
-Be careful not to re-use the same `title` multiple times within a folder
+which leads to problems if you reuse settings that are supposed to be unique.
+Be careful not to reuse the same `title` multiple times within a folder
 or `uid` within the same installation as this will cause weird behaviors.
 {{% /admonition %}}
 
@@ -413,7 +413,7 @@ providers:
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-To provision dashboards to the General folder, store them in the root of your `path`.
+To provision dashboards to the root level, store them in the root of your `path`.
 {{% /admonition %}}
 
 ## Alerting

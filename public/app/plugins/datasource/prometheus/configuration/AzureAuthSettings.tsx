@@ -50,6 +50,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
       <h6>Azure authentication</h6>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}

@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -26,8 +27,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/util"
 )
-
-var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics()
 
 // Not for parallel tests.
 type CountingImageService struct {
@@ -310,9 +309,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	executeTest := func(t *testing.T, alertRule *ngmodels.AlertRule, resultsAtTime map[time.Time]eval.Results, expectedTransitionsAtTime map[time.Time][]StateTransition, applyNoDataErrorToAllStates bool) {
 		clk := clock.NewMock()
 
+		testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics()
 		cfg := ManagerCfg{
 			Metrics:                 testMetrics,
 			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
 			ExternalURL:             nil,
 			InstanceStore:           &FakeInstanceStore{},
 			Images:                  &NotAvailableImageService{},

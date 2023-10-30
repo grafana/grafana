@@ -43,14 +43,14 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
   const [expandQuery, setExpandQuery] = useToggle(false);
 
-  const { id } = match.params;
   const identifier = useMemo(() => {
+    const id = ruleId.getRuleIdFromPathname(match.params);
     if (!id) {
       throw new Error('Rule ID is required');
     }
 
     return ruleId.parse(id, true);
-  }, [id]);
+  }, [match.params]);
 
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
@@ -255,7 +255,7 @@ function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
 
   return (
     <DetailsField label="Rule UID" childrenWrapperClassName={styles.ruleUid}>
-      {rule.uid} <IconButton name="copy" onClick={copyUID} tooltip="Copy rule" />
+      {rule.uid} <IconButton name="copy" onClick={copyUID} tooltip="Copy rule UID" />
     </DetailsField>
   );
 }

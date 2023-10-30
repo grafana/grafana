@@ -46,7 +46,10 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 			return nil, errors.New("could not find backend factory for plugin")
 		}
 
-		if backendClient, err := backendFactory(p.ID, p.Logger(), b.envVarProvider.Get(ctx, p)); err != nil {
+		// this will ensure that the env variables are calculated every time a plugin is started
+		envFunc := func() []string { return b.envVarProvider.Get(ctx, p) }
+
+		if backendClient, err := backendFactory(p.ID, p.Logger(), envFunc); err != nil {
 			return nil, err
 		} else {
 			p.RegisterClient(backendClient)

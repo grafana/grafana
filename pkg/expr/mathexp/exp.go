@@ -307,7 +307,7 @@ func (e *State) union(aResults, bResults Results, biNode *parse.BinaryNode) []*U
 }
 
 func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
-	res := Results{Values{}}
+	res := Results{Values: Values{}}
 	ar, err := e.walk(node.Args[0])
 	if err != nil {
 		return res, err

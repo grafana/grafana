@@ -64,9 +64,10 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.tags.length > 1 ||
       search.tags.some((tag) => {
         return tag.key;
-      })
+      }) ||
+      showSpanFilterMatchesOnly
     );
-  }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, showSpanFilterMatchesOnly]);
 
   return (
     <div className={styles.container}>
@@ -88,12 +89,14 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 value={showSpanFilterMatchesOnly}
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
+                disabled={!spanFilterMatches?.size}
               />
               <Button
                 onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
                 className={styles.clearMatchesButton}
                 variant="secondary"
                 fill="text"
+                disabled={!spanFilterMatches?.size}
               >
                 Show matches only
               </Button>
@@ -138,16 +141,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: 0 0 0 25px;
       vertical-align: middle;
       align-items: center;
-
-      span {
-        cursor: pointer;
-      }
     `,
     clearMatchesButton: css`
       color: ${theme.colors.text.primary};
+
       &:hover {
         background: inherit;
-        color: inherit;
       }
     `,
     nextPrevResult: css`

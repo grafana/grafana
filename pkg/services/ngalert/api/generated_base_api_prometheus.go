@@ -47,6 +47,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/alerts"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceUID}/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -58,6 +59,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/alerts"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -69,6 +71,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -80,6 +83,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,

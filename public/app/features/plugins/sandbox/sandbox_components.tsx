@@ -26,9 +26,9 @@ import { isSandboxedPluginObject } from './utils';
  *
  */
 export async function sandboxPluginComponents(
-  pluginExports: unknown,
+  pluginExports: System.Module,
   meta: PluginMeta
-): Promise<SandboxedPluginObject | unknown> {
+): Promise<SandboxedPluginObject | System.Module> {
   if (!isSandboxedPluginObject(pluginExports)) {
     // we should monitor these cases. There should not be any plugins without a plugin export loaded inside the sandbox
     return pluginExports;
@@ -92,7 +92,10 @@ const withSandboxWrapper = <P extends object>(
 ): React.MemoExoticComponent<FC<P>> => {
   const WithWrapper = React.memo((props: P) => {
     return (
-      <div data-plugin-sandbox={pluginMeta.id} style={{ height: pluginMeta.type === PluginType.app ? '100%' : 'auto' }}>
+      <div
+        data-plugin-sandbox={pluginMeta.id}
+        style={{ height: pluginMeta.type === PluginType.app || pluginMeta.type === PluginType.panel ? '100%' : 'auto' }}
+      >
         <WrappedComponent {...props} />
       </div>
     );

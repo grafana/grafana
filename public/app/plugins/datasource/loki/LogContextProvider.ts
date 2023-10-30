@@ -14,7 +14,7 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
-import { LabelParser, LabelFilter, LineFilters, PipelineStage } from '@grafana/lezer-logql';
+import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -249,6 +249,8 @@ export class LogContextProvider {
     const allNodePositions = getNodePositionsFromQuery(origExpr, [
       PipelineStage,
       LabelParser,
+      Logfmt,
+      Json,
       LineFilters,
       LabelFilter,
     ]);

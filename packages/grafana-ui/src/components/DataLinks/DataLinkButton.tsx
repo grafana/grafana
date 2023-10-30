@@ -29,7 +29,12 @@ export function DataLinkButton({ link, buttonProps }: DataLinkButtonProps) {
           : undefined
       }
     >
-      <Button icon="external-link-alt" variant="primary" size="sm" {...buttonProps}>
+      <Button
+        icon={link.target === '_blank' ? 'external-link-alt' : undefined}
+        variant="primary"
+        size="sm"
+        {...buttonProps}
+      >
         {link.title}
       </Button>
     </a>

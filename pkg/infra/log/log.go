@@ -51,6 +51,14 @@ func init() {
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
+
+	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
+		pFromCtx := ctx.Value(logParamsContextKey{})
+		if pFromCtx != nil {
+			return pFromCtx.([]any), true
+		}
+		return nil, false
+	})
 }
 
 // logManager manage loggers
@@ -268,6 +276,18 @@ type ContextualLogProviderFunc func(ctx context.Context) ([]any, bool)
 // that will be used to provide context when Logger.FromContext is called.
 func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
 	ctxLogProviders = append(ctxLogProviders, mw)
+}
+
+type logParamsContextKey struct{}
+
+// WithContextualAttributes adds contextual attributes to the logger based on the given context.
+// That allows loggers further down the chain to automatically log those attributes.
+func WithContextualAttributes(ctx context.Context, logParams []any) context.Context {
+	p := logParams
+	if ctx.Value(logParamsContextKey{}) != nil {
+		p = append(ctx.Value(logParamsContextKey{}).([]any), logParams...)
+	}
+	return context.WithValue(ctx, logParamsContextKey{}, p)
 }
 
 var logLevels = map[string]level.Option{
