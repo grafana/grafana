@@ -94,8 +94,7 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
 ) {
   builder.addRadio({
     path: 'orientation',
-    name: 'Orientation',
-    description: 'Layout orientation',
+    name: 'Layout',
     category,
     settings: {
       options: [

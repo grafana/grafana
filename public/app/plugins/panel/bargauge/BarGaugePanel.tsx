@@ -12,11 +12,12 @@ import {
   DisplayValue,
   VizOrientation,
 } from '@grafana/data';
+import { BarGaugeSizing } from '@grafana/schema';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { Options } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -96,6 +97,11 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   render() {
     const { height, width, options, data, renderCounter } = this.props;
 
+    const isAutoSizing = options.sizing === BarGaugeSizing.Auto || options.orientation === VizOrientation.Auto;
+    const maxVizHeight = isAutoSizing ? defaultOptions.maxVizHeight : options.maxVizHeight;
+    const minVizWidth = isAutoSizing ? defaultOptions.minVizWidth : options.minVizWidth;
+    const minVizHeight = isAutoSizing ? defaultOptions.minVizHeight : options.minVizHeight;
+
     return (
       <VizRepeater
         source={data}
@@ -105,9 +111,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         renderCounter={renderCounter}
         width={width}
         height={height}
-        maxVizHeight={options.maxVizHeight}
-        minVizWidth={options.minVizWidth}
-        minVizHeight={options.minVizHeight}
+        maxVizHeight={maxVizHeight}
+        minVizWidth={minVizWidth}
+        minVizHeight={minVizHeight}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />
