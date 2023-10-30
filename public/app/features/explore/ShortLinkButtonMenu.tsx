@@ -91,6 +91,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       alignItems: 'start',
+      '>:nth-child(2)': {
+        marginLeft: theme.spacing(3),
+      },
     }),
   };
 };
