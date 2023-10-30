@@ -62,8 +62,11 @@ export const Expression: FC<ExpressionProps> = ({
 
   const onQueriesValidationError = useCallback(
     (errorMsg: string | undefined) => {
-      errorMsg && setError('queries', { type: 'custom', message: errorMsg });
-      !errorMsg && clearErrors('queries');
+      if (errorMsg) {
+        setError('queries', { type: 'custom', message: errorMsg });
+      } else {
+        clearErrors('queries');
+      }
     },
     [setError, clearErrors]
   );

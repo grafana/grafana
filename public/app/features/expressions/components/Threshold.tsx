@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { produce } from 'immer';
 import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -104,13 +105,13 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
   };
 
   const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
-    const newValue = parseFloat(event.currentTarget.value);
-    const newParams = [...condition.evaluator.params];
-    newParams[index] = newValue;
+    const newCondition = produce(condition, (draft) => {
+      draft.evaluator.params[index] = parseFloat(event.currentTarget.value);
+    });
 
     onChange({
       ...query,
-      conditions: updateEvaluatorConditions(conditions, { params: newParams }, onError),
+      conditions: updateEvaluatorConditions(conditions, { params: newCondition.evaluator.params }, onError),
     });
   };
 
