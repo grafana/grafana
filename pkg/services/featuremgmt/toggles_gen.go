@@ -491,6 +491,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagKubernetesPlaylistsAPI
+	// Route /api/playlist/* API to k8s handlers
+	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"

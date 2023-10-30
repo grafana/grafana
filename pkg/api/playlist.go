@@ -1,71 +1,71 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"net/http/httptest"
+	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
+	searchHandler := routing.Wrap(hs.SearchPlaylists)
+	if hs.Features.IsEnabled(featuremgmt.FlagKubernetesPlaylistsAPI) {
+		namespacer := request.GetNamespaceMapper(hs.Cfg)
+		gvr := schema.GroupVersionResource{
+			Group:    v0alpha1.GroupName,
+			Version:  v0alpha1.VersionID,
+			Resource: "playlists",
+		}
 
-	gvr := schema.GroupVersionResource{
-		Group:    v0alpha1.GroupName,
-		Version:  v0alpha1.VersionID,
-		Resource: "playlists",
+		// For now -- test a single endpoint
+		searchHandler = func(c *contextmodel.ReqContext) response.Response {
+			dyn, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "config", err)
+			}
+			client := dyn.Resource(gvr).Namespace(namespacer(c.OrgID))
+			out, err := client.List(c.Req.Context(), v1.ListOptions{})
+			if err != nil {
+				return response.Error(http.StatusBadRequest, "list error", err)
+			}
+
+			query := strings.ToUpper(c.Query("query"))
+			playlists := []playlist.Playlist{}
+			for _, item := range out.Items {
+				p := v0alpha1.UnstructuredToLegacyPlaylist(&item)
+				if p == nil {
+					continue
+				}
+				if query != "" && !strings.Contains(strings.ToUpper(p.Name), query) {
+					continue // query filter
+				}
+				playlists = append(playlists, *p)
+			}
+			return response.JSON(http.StatusOK, playlists)
+		}
 	}
 
-	// Playlist
+	// Playlist API
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
+		playlistRoute.Get("/", searchHandler)
 		playlistRoute.Get("/:uid", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
 		playlistRoute.Get("/:uid/items", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
 		playlistRoute.Delete("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
 		playlistRoute.Put("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
 		playlistRoute.Post("/", middleware.ReqEditorRole, routing.Wrap(hs.CreatePlaylist))
-
-		playlistRoute.Get("/test", func(c *contextmodel.ReqContext) response.Response {
-
-			fmt.Printf("OUTSIDE: %s\n", c.SignedInUser.Login)
-
-			config := &rest.Config{
-				Transport: &roundTripperFunc{
-					fn: func(req *http.Request) (*http.Response, error) {
-						w := httptest.NewRecorder() // test package????
-						ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
-						fmt.Printf("INSIDE! %s\n", req.URL)
-						hs.httpSrv.Handler.ServeHTTP(w, req.WithContext(ctx))
-						return w.Result(), nil
-					},
-				},
-			}
-
-			dyn, err := dynamic.NewForConfig(config)
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "config", err)
-			}
-
-			out, err := dyn.Resource(gvr).List(c.Req.Context(), v1.ListOptions{})
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "config", err)
-			}
-
-			return response.JSON(http.StatusOK, out)
-		})
 	})
 }
 
@@ -337,12 +337,4 @@ type CreatePlaylistResponse struct {
 	// The response message
 	// in: body
 	Body *playlist.Playlist `json:"body"`
-}
-
-type roundTripperFunc struct {
-	fn func(req *http.Request) (*http.Response, error)
-}
-
-func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f.fn(req)
 }
