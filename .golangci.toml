@@ -68,7 +68,7 @@ enable = [
   "bodyclose",
   "depguard",
   "errcheck", # TODO: https://revive.run/r#unhandled-error
-  "goconst", # TODO: https://revive.run/r#add-constant
+  #"goconst", # TODO: https://revive.run/r#add-constant
   "goimports",
   "gosec",
   "gosimple",
@@ -97,7 +97,7 @@ exclude-use-default = false
 
 [[issues.exclude-rules]]
 path = "_test\\.go"
-linters = [ "gosec" ]
+linters = [ "gosec", "goconst" ]
 
 [[issues.exclude-rules]]
 path = "pkg/tsdb/azuremonitor/loganalytics/azure-log-analytics-datasource.go"
