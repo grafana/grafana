@@ -125,7 +125,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if *cmd.UID == SharedFolderUID {
+	if cmd.UID != nil && *cmd.UID == SharedFolderUID {
 		return &SharedWithMeFolder, nil
 	}
 
