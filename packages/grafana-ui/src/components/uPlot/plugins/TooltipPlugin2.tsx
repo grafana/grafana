@@ -128,6 +128,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       let isOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
 
       if (isOutside) {
@@ -284,7 +285,7 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={styles.tooltipWrapper} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
+        {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
       </div>,
       plot.over
@@ -299,7 +300,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
-    padding: '8px',
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'absolute',
