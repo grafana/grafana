@@ -168,20 +168,40 @@ http {
         default upgrade;
         '' close;
     }
+    
+    # Define a mapping to handle HTTP upgrade headers. 
+    # If $http_upgrade is not set or empty, set $connection_upgrade to "upgrade".
+    # If $http_upgrade is empty, set $connection_upgrade to "close".
 
     upstream grafana {
         server 127.0.0.1:3000;
     }
 
+    # Create an upstream server group named "grafana" that points to the Grafana server running on 127.0.0.1:3000.
+
     server {
         listen 8000;
+        
+        # Configure NGINX to listen on port 8000 for incoming requests.
 
         location / {
             proxy_http_version 1.1;
+            
+            # Set the HTTP version for the proxied request to 1.1, which is important for certain features.
+            
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
             proxy_set_header Host $http_host;
+            
+            # Set request headers for proper proxying. 
+            # "Upgrade" header is set to the value of $http_upgrade.
+            # "Connection" header is set to the value of $connection_upgrade.
+            # "Host" header is set to the value of $http_host.
+            
             proxy_pass http://grafana;
+            
+            # Proxy the request to the "grafana" upstream server group.
+
         }
     }
 }
