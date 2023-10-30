@@ -10,12 +10,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type RuleAccessControlService interface {
+	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
+	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
+}
 
 type NotificationSettingsValidatorProvider interface {
 	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
@@ -33,6 +40,7 @@ type AlertRuleService struct {
 	xact                   TransactionManager
 	log                    log.Logger
 	nsValidatorProvider    NotificationSettingsValidatorProvider
+	authz                  RuleAccessControlService
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -46,6 +54,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 	rulesPerRuleGroupLimit int64,
 	log log.Logger,
 	ns NotificationSettingsValidatorProvider,
+	authz RuleAccessControlService,
 ) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
@@ -59,6 +68,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		xact:                   xact,
 		log:                    log,
 		nsValidatorProvider:    ns,
+		authz:                  authz,
 	}
 }
 
@@ -78,23 +88,90 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 			return nil, nil, err
 		}
 	}
-	return rules, provenances, nil
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, nil, err
+	}
+	if can {
+		return rules, provenances, nil
+	}
+	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
+	groups := models.GroupByAlertRuleGroupKey(rules)
+	result := make([]*models.AlertRule, 0, len(rules))
+	for _, group := range groups {
+		if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				// remove provenances for rules that will not be added to the output
+				for _, rule := range group {
+					delete(provenances, rule.ResourceID())
+				}
+				continue
+			}
+			return nil, nil, err
+		}
+		result = append(result, group...)
+	}
+	return result, provenances, nil
+}
+
+func (service *AlertRuleService) getAlertRuleAuthorized(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, error) {
+	// check if the user can read all rules. If it cannot, pull the entire group and verify access to the entire group.
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	// if user has blanket access to all rules, just read a single rule from database
+	if can {
+		// otherwise, just pull the specific rule by UID
+		query := &models.GetAlertRuleByUIDQuery{
+			OrgID: user.GetOrgID(),
+			UID:   ruleUID,
+		}
+		rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		if rule == nil {
+			return models.AlertRule{}, models.ErrAlertRuleNotFound
+		}
+		return *rule, nil
+	}
+
+	// if user does not have privilege to access all rules, check that the user can read this rule by fetching entire group and
+	// checking that user has access to it.
+	q := &models.GetAlertRulesGroupByRuleUIDQuery{
+		UID:   ruleUID,
+		OrgID: user.GetOrgID(),
+	}
+	group, err := service.ruleStore.GetAlertRulesGroupByRuleUID(ctx, q)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if len(group) == 0 {
+		return models.AlertRule{}, models.ErrAlertRuleNotFound
+	}
+	if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+		return models.AlertRule{}, err
+	}
+	for _, rule := range group {
+		if rule.UID == ruleUID {
+			return *rule, nil
+		}
+	}
+	return models.AlertRule{}, models.ErrAlertRuleNotFound
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, models.Provenance, error) {
-	query := &models.GetAlertRuleByUIDQuery{
-		OrgID: user.GetOrgID(),
-		UID:   ruleUID,
-	}
-	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	provenance, err := service.provenanceStore.GetProvenance(ctx, rule, user.GetOrgID())
+	provenance, err := service.provenanceStore.GetProvenance(ctx, &rule, user.GetOrgID())
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	return *rule, provenance, nil
+	return rule, provenance, nil
 }
 
 type AlertRuleWithFolderTitle struct {
@@ -104,11 +181,7 @@ type AlertRuleWithFolderTitle struct {
 
 // GetAlertRuleWithFolderTitle returns a single alert rule with its folder title.
 func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context, user identity.Requester, ruleUID string) (AlertRuleWithFolderTitle, error) {
-	query := &models.GetAlertRuleByUIDQuery{
-		OrgID: user.GetOrgID(),
-		UID:   ruleUID,
-	}
-	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
 	if err != nil {
 		return AlertRuleWithFolderTitle{}, err
 	}
@@ -124,7 +197,7 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 	}
 
 	return AlertRuleWithFolderTitle{
-		AlertRule:   *rule,
+		AlertRule:   rule,
 		FolderTitle: dash.Title,
 	}, nil
 }
@@ -209,11 +282,21 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 	if len(ruleList) == 0 {
 		return models.AlertRuleGroup{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return models.AlertRuleGroup{}, err
+	}
+	if !can {
+		if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, ruleList); err != nil {
+			return models.AlertRuleGroup{}, err
+		}
+	}
 	res := models.AlertRuleGroup{
 		Title:     ruleList[0].RuleGroup,
 		FolderUID: ruleList[0].NamespaceUID,
 		Interval:  ruleList[0].IntervalSeconds,
-		Rules:     []models.AlertRule{},
+		Rules:     make([]models.AlertRule, 0, len(ruleList)),
 	}
 	for _, r := range ruleList {
 		if r != nil {
@@ -536,17 +619,9 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 
 // GetAlertRuleGroupWithFolderTitle returns the alert rule group with folder title.
 func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Context, user identity.Requester, namespaceUID, group string) (models.AlertRuleGroupWithFolderTitle, error) {
-	q := models.ListAlertRulesQuery{
-		OrgID:         user.GetOrgID(),
-		NamespaceUIDs: []string{namespaceUID},
-		RuleGroup:     group,
-	}
-	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	ruleList, err := service.GetRuleGroup(ctx, user, namespaceUID, group)
 	if err != nil {
 		return models.AlertRuleGroupWithFolderTitle{}, err
-	}
-	if len(ruleList) == 0 {
-		return models.AlertRuleGroupWithFolderTitle{}, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
 	dq := dashboards.GetDashboardQuery{
@@ -558,7 +633,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 
-	res := models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, dash.Title)
+	res := models.NewAlertRuleGroupWithFolderTitle(ruleList.Rules[0].GetGroupKey(), ruleList.Rules, dash.Title)
 	return res, nil
 }
 
@@ -576,16 +651,26 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
+	groups := models.GroupByAlertRuleGroupKey(ruleList)
 
-	groups := make(map[models.AlertRuleGroupKey][]models.AlertRule)
+	if can, err := service.authz.CanReadAllRules(ctx, user); !can || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		for key, group := range groups {
+			if err := service.authz.AuthorizeAccessToRuleGroup(ctx, user, group); err != nil {
+				if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+					delete(groups, key)
+					continue
+				}
+				return nil, err
+			}
+		}
+	}
+
 	namespaces := make(map[string][]*models.AlertRuleGroupKey)
-	for _, r := range ruleList {
-		groupKey := r.GetGroupKey()
-		group := groups[groupKey]
-		group = append(group, *r)
-		groups[groupKey] = group
-
-		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
+	for groupKey := range groups {
+		namespaces[groupKey.NamespaceUID] = append(namespaces[groupKey.NamespaceUID], util.Pointer(groupKey))
 	}
 
 	if len(namespaces) == 0 {
@@ -615,7 +700,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		if !ok {
 			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, models.NewAlertRuleGroupWithFolderTitle(groupKey, rules, title))
+		result = append(result, models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey, rules, title))
 	}
 
 	// Return results in a stable manner.
