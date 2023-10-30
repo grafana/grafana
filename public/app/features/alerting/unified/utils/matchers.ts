@@ -109,34 +109,3 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
 };
 
 export type Label = [string, string];
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
-  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
-};
-
-function isLabelMatch(matcher: ObjectMatcher, label: Label) {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  // not interested, keys don't match
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
-// check if every matcher returns "true" for the set of labels
-export function labelsMatchObjectMatchers(matchers: ObjectMatcher[], labels: Label[]) {
-  return matchers.every((matcher) => {
-    return labels.some((label) => isLabelMatch(matcher, label));
-  });
-}
