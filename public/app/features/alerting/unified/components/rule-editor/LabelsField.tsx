@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { flattenDeep, compact } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
 
@@ -18,7 +17,6 @@ import {
   LoadingPlaceholder,
 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
@@ -30,7 +28,7 @@ interface Props {
   dataSourceName?: string | null;
 }
 
-const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
+const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -38,33 +36,45 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
   }, [dispatch, dataSourceName]);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  const result = rulerRequest?.result || {};
+  const labelsByKeyResult = useMemo<Record<string, Set<string>>>(() => {
+    const labelsByKey: Record<string, Set<string>> = {};
 
-  //store all labels in a flat array and remove empty values
-  const labels = compact(
-    flattenDeep(
-      Object.keys(result).map((ruleGroupKey) =>
-        result[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
-      )
-    )
-  );
+    const rulerRulesConfig = rulerRequest?.result;
+    if (!rulerRulesConfig) {
+      return labelsByKey;
+    }
 
-  const labelsByKey: Record<string, string[]> = {};
+    const allRules = Object.values(rulerRulesConfig)
+      .flatMap((groups) => groups)
+      .flatMap((group) => group.rules);
 
-  labels.forEach((label: Record<string, string>) => {
-    Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
+    allRules.forEach((rule) => {
+      if (rule.labels) {
+        Object.entries(rule.labels).forEach(([key, value]) => {
+          if (!value) {
+            return;
+          }
+
+          const labelEntry = labelsByKey[key];
+          if (labelEntry) {
+            labelEntry.add(value);
+          } else {
+            labelsByKey[key] = new Set([value]);
+          }
+        });
+      }
     });
-  });
 
-  return { loading: rulerRequest?.loading, labelsByKey };
+    return labelsByKey;
+  }, [rulerRequest]);
+
+  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
-function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
-  return items.map((item) => ({ label: item, value: item }));
+function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue<string>> {
+  return Array.from(items, (item) => ({ label: item, value: item }));
 }
 
 const RemoveButton: FC<{

@@ -5,7 +5,7 @@ import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 
-interface GridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'className'> {
+interface GridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'className' | 'style'> {
   children: NonNullable<React.ReactNode>;
 
   /** Specifies the gutters between columns and rows. It is overwritten when a column or row gap has a value */

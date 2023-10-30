@@ -9,6 +9,7 @@ import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { Trans, t } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -214,7 +215,11 @@ export function RichHistoryCard(props: Props) {
       .join('\n');
 
     copyStringToClipboard(queriesText);
-    dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
+    dispatch(
+      notifyApp(
+        createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))
+      )
+    );
   };
 
   const onCreateShortLink = async () => {
@@ -225,7 +230,9 @@ export function RichHistoryCard(props: Props) {
   const onDeleteQuery = () => {
     const performDelete = (queryId: string) => {
       deleteHistoryItem(queryId);
-      dispatch(notifyApp(createSuccessNotification('Query deleted')));
+      dispatch(
+        notifyApp(createSuccessNotification(t('explore.rich-history-notification.query-deleted', 'Query deleted')))
+      );
       reportInteraction('grafana_explore_query_history_deleted', {
         queryHistoryEnabled: config.queryHistoryEnabled,
       });
@@ -235,9 +242,12 @@ export function RichHistoryCard(props: Props) {
     if (query.starred) {
       getAppEvents().publish(
         new ShowConfirmModalEvent({
-          title: 'Delete',
-          text: 'Are you sure you want to permanently delete your starred query?',
-          yesText: 'Delete',
+          title: t('explore.rich-history-card.delete-query-confirmation-title', 'Delete'),
+          text: t(
+            'explore.rich-history-card.delete-starred-query-confirmation-text',
+            'Are you sure you want to permanently delete your starred query?'
+          ),
+          yesText: t('explore.rich-history-card.confirm-delete', 'Delete'),
           icon: 'trash-alt',
           onConfirm: () => performDelete(query.id),
         })
@@ -281,18 +291,31 @@ export function RichHistoryCard(props: Props) {
   };
 
   const updateComment = (
-    <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
+    <div
+      className={styles.updateCommentContainer}
+      aria-label={
+        comment
+          ? t('explore.rich-history-card.update-comment-form', 'Update comment form')
+          : t('explore.rich-history-card.add-comment-form', 'Add comment form')
+      }
+    >
       <TextArea
         onKeyDown={onKeyDown}
         value={comment}
-        placeholder={comment ? undefined : 'An optional description of what the query does.'}
+        placeholder={
+          comment
+            ? undefined
+            : t('explore.rich-history-card.optional-description', 'An optional description of what the query does.')
+        }
         onChange={(e) => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Button onClick={onUpdateComment}>Save comment</Button>
+        <Button onClick={onUpdateComment}>
+          <Trans i18nKey="explore.rich-history-card.save-comment">Save comment</Trans>
+        </Button>
         <Button variant="secondary" onClick={onCancelUpdateComment}>
-          Cancel
+          <Trans i18nKey="explore.rich-history-card.cancel">Cancel</Trans>
         </Button>
       </div>
     </div>
@@ -303,18 +326,43 @@ export function RichHistoryCard(props: Props) {
       <IconButton
         name="comment-alt"
         onClick={toggleActiveUpdateComment}
-        tooltip={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
+        tooltip={
+          query.comment?.length > 0
+            ? t('explore.rich-history-card.edit-comment-tooltip', 'Edit comment')
+            : t('explore.rich-history-card.add-comment-tooltip', 'Add comment')
+        }
       />
-      <IconButton name="copy" onClick={onCopyQuery} tooltip="Copy query to clipboard" />
+      <IconButton
+        name="copy"
+        onClick={onCopyQuery}
+        tooltip={t('explore.rich-history-card.copy-query-tooltip', 'Copy query to clipboard')}
+      />
       {value?.dsInstance && (
-        <IconButton name="share-alt" onClick={onCreateShortLink} tooltip="Copy shortened link to clipboard" />
+        <IconButton
+          name="share-alt"
+          onClick={onCreateShortLink}
+          tooltip={
+            <Trans i18nKey="explore.rich-history-card.copy-shortened-link-tooltip">
+              Copy shortened link to clipboard
+            </Trans>
+          }
+        />
       )}
-      <IconButton name="trash-alt" title="Delete query" tooltip="Delete query" onClick={onDeleteQuery} />
+      <IconButton
+        name="trash-alt"
+        title={t('explore.rich-history-card.delete-query-title', 'Delete query')}
+        tooltip={t('explore.rich-history-card.delete-query-tooltip', 'Delete query')}
+        onClick={onDeleteQuery}
+      />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
         iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
-        tooltip={query.starred ? 'Unstar query' : 'Star query'}
+        tooltip={
+          query.starred
+            ? t('explore.rich-history-card.unstar-query-tooltip', 'Unstar query')
+            : t('explore.rich-history-card.star-query-tooltip', 'Star query')
+        }
       />
     </div>
   );
@@ -332,7 +380,10 @@ export function RichHistoryCard(props: Props) {
             return <Query query={q} key={`${q}-${i}`} showDsInfo={value?.dsInstance?.meta.mixed} />;
           })}
           {!activeUpdateComment && query.comment && (
-            <div aria-label="Query comment" className={styles.comment}>
+            <div
+              aria-label={t('explore.rich-history-card.query-comment-label', 'Query comment')}
+              className={styles.comment}
+            >
               {query.comment}
             </div>
           )}
@@ -345,12 +396,23 @@ export function RichHistoryCard(props: Props) {
               onClick={onRunQuery}
               disabled={!value?.dsInstance || value.queries.some((query) => !query.datasource)}
             >
-              {datasourceInstance?.uid === query.datasourceUid ? 'Run query' : 'Switch data source and run query'}
+              {datasourceInstance?.uid === query.datasourceUid ? (
+                <Trans i18nKey="explore.rich-history-card.run-query-button">Run query</Trans>
+              ) : (
+                <Trans i18nKey="explore.rich-history-card.switch-datasource-button">
+                  Switch data source and run query
+                </Trans>
+              )}
             </Button>
           </div>
         )}
       </div>
-      {loading && <LoadingPlaceholder text="loading..." className={styles.loader} />}
+      {loading && (
+        <LoadingPlaceholder
+          text={t('explore.rich-history-card.loading-text', 'loading...')}
+          className={styles.loader}
+        />
+      )}
     </div>
   );
 }
@@ -395,7 +457,7 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
           {': '}
         </div>
       )}
-      <span aria-label="Query text" className={styles.queryText}>
+      <span aria-label={t('explore.rich-history-card.query-text-label', 'Query text')} className={styles.queryText}>
         {createQueryText(query.query, query.datasource)}
       </span>
     </div>
@@ -418,10 +480,12 @@ function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | '
     <div className={styles}>
       <img
         src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
-        alt={dsApi?.type || 'Data source does not exist anymore'}
-        aria-label="Data source icon"
+        alt={dsApi?.type || t('explore.rich-history-card.datasource-not-exist', 'Data source does not exist anymore')}
+        aria-label={t('explore.rich-history-card.datasource-icon-label', 'Data source icon')}
       />
-      <div aria-label="Data source name">{dsApi?.name || 'Data source does not exist anymore'}</div>
+      <div aria-label={t('explore.rich-history-card.datasource-name-label', 'Data source name')}>
+        {dsApi?.name || t('explore.rich-history-card.datasource-not-exist', 'Data source does not exist anymore')}
+      </div>
     </div>
   );
 }

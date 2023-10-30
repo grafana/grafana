@@ -51,6 +51,15 @@ beforeAll(() => {
 describe('useStructureRev', () => {
   afterEach(() => resetCounters());
 
+  // mirrors the logic in componentDidUpdate in packages/grafana-ui/src/components/GraphNG/GraphNG.tsx,
+  // which treats all falsy values for structureRev as a signal to reconfig the graph
+  it('should start from a thruthy value', () => {
+    let frames: DataFrame[] = [toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }] })];
+    const { result } = renderHook((frames) => useStructureRev(frames), { initialProps: frames });
+
+    expect(result.current).not.toBeFalsy();
+  });
+
   it('should increment only when relevant fields in frame change', () => {
     let frames: DataFrame[] = [toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }] })];
     const { result, rerender } = renderHook((frames) => useStructureRev(frames), { initialProps: frames });

@@ -6,37 +6,42 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
-func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
+func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
 			return next
 		}
 
 		return &LoggerMiddleware{
-			next:   next,
-			logger: logger,
+			next:     next,
+			logger:   logger,
+			features: features,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next   plugins.Client
-	logger plog.Logger
+	next     plugins.Client
+	logger   plog.Logger
+	features featuremgmt.FeatureToggles
 }
 
-func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
+func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) error) error {
 	status := statusOK
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
+
 	err := fn(ctx)
 	if err != nil {
 		status = statusError
@@ -44,35 +49,19 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pluginCtx backend.Plu
 			status = statusCancelled
 		}
 	}
-
 	logParams := []any{
 		"status", status,
 		"duration", time.Since(start),
-		"pluginId", pluginCtx.PluginID,
-		"endpoint", endpoint,
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
 	}
-
-	if pluginCtx.User != nil {
-		logParams = append(logParams, "uname", pluginCtx.User.Login)
-	}
-
-	traceID := tracing.TraceIDFromContext(ctx, false)
-	if traceID != "" {
-		logParams = append(logParams, "traceID", traceID)
-	}
-
-	if pluginCtx.DataSourceInstanceSettings != nil {
-		logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
-		logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-	}
-
 	if status == statusError {
 		logParams = append(logParams, "error", err)
 	}
-
-	m.logger.Info("Plugin Request Completed", logParams...)
+	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		logParams = append(logParams, "status_source", pluginrequestmeta.StatusSourceFromContext(ctx))
+	}
+	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
 	return err
 }
 
@@ -82,9 +71,21 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.logRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		return innerErr
+
+		if innerErr != nil {
+			return innerErr
+		}
+
+		ctxLogger := m.logger.FromContext(ctx)
+		for refID, dr := range resp.Responses {
+			if dr.Error != nil {
+				ctxLogger.Error("Partial data response error", "refID", refID, "error", dr.Error)
+			}
+		}
+
+		return nil
 	})
 
 	return resp, err
@@ -95,7 +96,7 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		innerErr = m.next.CallResource(ctx, req, sender)
 		return innerErr
 	})
@@ -109,7 +110,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return innerErr
 	})
@@ -123,7 +124,7 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := m.logRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (innerErr error) {
+	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
 		return innerErr
 	})

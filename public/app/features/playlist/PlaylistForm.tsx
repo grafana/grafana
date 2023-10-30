@@ -29,7 +29,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const doSubmit = (list: Playlist) => {
     setSaving(true);
-    onSubmit({ ...list, items });
+    onSubmit({ ...list, items, uid: playlist.uid });
   };
 
   return (
@@ -92,12 +92,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
               </div>
 
               <HorizontalGroup>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={isDisabled}
-                  icon={saving ? 'fa fa-spinner' : undefined}
-                >
+                <Button type="submit" variant="primary" disabled={isDisabled} icon={saving ? 'spinner' : undefined}>
                   <Trans i18nKey="playlist-edit.form.save">Save</Trans>
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>

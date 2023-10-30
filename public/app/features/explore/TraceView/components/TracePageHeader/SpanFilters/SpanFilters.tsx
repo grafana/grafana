@@ -37,6 +37,8 @@ export type SpanFilterProps = {
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  showCriticalPathSpansOnly: boolean;
+  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
 };
@@ -50,6 +52,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
+    showCriticalPathSpansOnly,
+    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -338,9 +342,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField
-            label="Duration"
+            label="Span Duration"
             labelWidth={16}
-            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+            tooltip="Filter by span duration. Accepted units are ns, us, ms, s, m, h"
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select
@@ -456,6 +460,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+          showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+          setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           focusedSpanIndexForSearch={focusedSpanIndexForSearch}
           setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}

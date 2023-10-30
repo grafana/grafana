@@ -3,11 +3,10 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src/themes';
 import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
 import { CallToActionCard, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
-import { LogMessages } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 
 export const NoRulesSplash = () => {

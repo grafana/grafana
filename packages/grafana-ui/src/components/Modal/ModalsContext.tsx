@@ -33,7 +33,7 @@ export class ModalsProvider extends Component<ModalsProviderProps, ModalsContext
     };
   }
 
-  showModal = (component: React.ComponentType<any>, props: any) => {
+  showModal = <T,>(component: React.ComponentType<T>, props: T) => {
     this.setState({
       component,
       props,

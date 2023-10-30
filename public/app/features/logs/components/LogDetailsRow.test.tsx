@@ -1,10 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { LogRowModel } from '@grafana/data';
-import config from 'app/core/config';
-
 import { LogDetailsRow } from './LogDetailsRow';
+import { createLogRow } from './__mocks__/logRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
 
@@ -20,7 +18,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onClickShowField: () => {},
     onClickHideField: () => {},
     displayedFields: [],
-    row: {} as LogRowModel,
+    row: createLogRow(),
     disableActions: false,
   };
 
@@ -55,32 +53,18 @@ describe('LogDetailsRow', () => {
     expect(screen.getAllByRole('button', { name: 'Ad-hoc statistics' })).toHaveLength(1);
   });
 
-  describe('if props is a label', () => {
-    it('should render filter label button', () => {
+  describe('toggleable filters', () => {
+    it('should render filter buttons', () => {
       setup();
-      expect(screen.getAllByRole('button', { name: 'Filter for value' })).toHaveLength(1);
-      expect(screen.queryByRole('button', { name: 'Remove filter' })).not.toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Filter for value in query A' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Filter out value in query A' })).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Remove filter in query A' })).not.toBeInTheDocument();
     });
-    it('should render filter out label button', () => {
-      setup();
-      expect(screen.getAllByRole('button', { name: 'Filter out value' })).toHaveLength(1);
-    });
-    it('should render filter buttons when toggleLabelsInLogsUI false', async () => {
+    it('should render remove filter button when the filter is active', async () => {
       setup({
         isFilterLabelActive: jest.fn().mockResolvedValue(true),
       });
-      expect(screen.getByRole('button', { name: 'Filter for value' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Filter out value' })).toBeInTheDocument();
-    });
-
-    it('should render remove filter button when toggleLabelsInLogsUI true', async () => {
-      const defaultValue = config.featureToggles.toggleLabelsInLogsUI;
-      config.featureToggles.toggleLabelsInLogsUI = true;
-      setup({
-        isFilterLabelActive: jest.fn().mockResolvedValue(true),
-      });
-      expect(await screen.findByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
-      config.featureToggles.toggleLabelsInLogsUI = defaultValue;
+      expect(await screen.findByRole('button', { name: 'Remove filter in query A' })).toBeInTheDocument();
     });
   });
 

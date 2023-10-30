@@ -15,6 +15,7 @@ import {
   isEmptyObject,
   MappingType,
   PanelPlugin,
+  ReducerID,
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -42,6 +43,10 @@ import {
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import {
+  RefIdTransformerOptions,
+  TimeSeriesTableTransformerOptions,
+} from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
@@ -63,6 +68,14 @@ standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
+
+/**
+ * The current version of the dashboard schema.
+ * To add a dashboard migration increment this number
+ * and then add your migration at the bottom of 'updateSchema'
+ * hint: search "Add migration here"
+ */
+export const DASHBOARD_SCHEMA_VERSION = 39;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -79,7 +92,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 38;
+    this.dashboard.schemaVersion = DASHBOARD_SCHEMA_VERSION;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -848,6 +861,46 @@ export class DashboardMigrator {
         return panel;
       });
     }
+
+    // Update the configuration of the Timeseries to table transformation
+    // to support multiple options per query
+    if (oldVersion < 39) {
+      panelUpgrades.push((panel: PanelModel) => {
+        panel.transformations?.forEach((transformation) => {
+          // If we run into a timeSeriesTable transformation
+          // and it doesn't have undefined options then we migrate
+          if (
+            transformation.id === 'timeSeriesTable' &&
+            transformation.options !== undefined &&
+            transformation.options.refIdToStat !== undefined
+          ) {
+            let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
+
+            // For each {refIdtoStat} record which maps refId to a statistic
+            // we add that to the stat property of the the new
+            // RefIdTransformerOptions interface which includes multiple settings
+            for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
+              let newSettings: RefIdTransformerOptions = {};
+              // In this case the easiest way is just to do a type
+              // assertion as iterated entries have unknown types
+              newSettings.stat = stat as ReducerID;
+              tableTransformOptions[refId] = newSettings;
+            }
+
+            // Update the options
+            transformation.options = tableTransformOptions;
+          }
+        });
+
+        return panel;
+      });
+    }
+
+    /**
+     * -==- Add migration here -==-
+     * Your migration should go below the previous
+     * block and above this (hopefully) helpful message.
+     */
 
     if (panelUpgrades.length === 0) {
       return;
