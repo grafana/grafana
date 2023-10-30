@@ -87,6 +87,9 @@ type RestConfigProvider interface {
 }
 
 type DirectRestConfigProvider interface {
+	// GetDirectRestConfig returns a k8s client configuration that will use the same
+	// logged logged in user as the current request context.  This is useful when
+	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 }
 
@@ -319,7 +322,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	// Used
+	// Used by the proxy wrapper registered in ProvideService
 	s.handler = server.Handler
 
 	// skip starting the server in prod mode
