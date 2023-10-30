@@ -29,7 +29,7 @@ images = {
     "openldap": "osixia/openldap:1.4.0",
     "drone_downstream": "grafana/drone-downstream",
     "docker_puppeteer": "grafana/docker-puppeteer:1.1.0",
-    "docs": "grafana/docs-base:dbd975af06",
+    "docs": "grafana/docs-base:latest",
     "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",

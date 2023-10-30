@@ -16,7 +16,16 @@ import (
 )
 
 var (
+	timeColumn      = "time"
+	timeColumnName  = "Time"
+	valueColumnName = "Value"
+
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
+
+	timeArray   []time.Time
+	floatArray  []*float64
+	stringArray []*string
+	boolArray   []*bool
 )
 
 const (
@@ -66,35 +75,38 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 }
 
 func transformRows(rows []models.Row, query models.Query) data.Frames {
-	// pre-allocate frames - this can save many allocations
-	cols := 0
+	// Create a map for faster column name lookups
+	columnToLowerCase := make(map[string]string)
 	for _, row := range rows {
-		cols += len(row.Columns)
+		for _, column := range row.Columns {
+			columnToLowerCase[column] = strings.ToLower(column)
+		}
 	}
-	frames := make([]*data.Frame, 0, len(rows)+cols)
+
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
+	// Preallocate for the worst-case scenario
+	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
 
 	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
 	frameName := make([]byte, 0, 128)
 
-	retentionPolicyQuery := isRetentionPolicyQuery(query)
-	tagValuesQuery := isTagValuesQuery(query)
-
 	for _, row := range rows {
 		var hasTimeCol = false
 
-		for _, column := range row.Columns {
-			if strings.ToLower(column) == "time" {
-				hasTimeCol = true
-			}
+		if _, ok := columnToLowerCase[timeColumn]; ok {
+			hasTimeCol = true
 		}
 
 		if !hasTimeCol {
-			newFrame := newFrameWithoutTimeField(row, retentionPolicyQuery, tagValuesQuery)
+			newFrame := newFrameWithoutTimeField(row, query)
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
-				if column == "time" {
+				if columnToLowerCase[column] == timeColumn {
 					continue
 				}
 				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
@@ -107,20 +119,21 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 }
 
 func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
-	var timeArray []time.Time
-	var floatArray []*float64
-	var stringArray []*string
-	var boolArray []*bool
+	timeArray = timeArray[:0]
+	floatArray = floatArray[:0]
+	stringArray = stringArray[:0]
+	boolArray = boolArray[:0]
+
 	valType := typeof(row.Values, colIndex)
 
 	for _, valuePair := range row.Values {
 		timestamp, timestampErr := parseTimestamp(valuePair[0])
-		// we only add this row if the timestamp is valid
 		if timestampErr != nil {
 			continue
 		}
 
 		timeArray = append(timeArray, timestamp)
+
 		switch valType {
 		case "string":
 			value, ok := valuePair[colIndex].(string)
@@ -144,19 +157,19 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 		}
 	}
 
-	timeField := data.NewField("Time", nil, timeArray)
+	timeField := data.NewField(timeColumnName, nil, timeArray)
 
 	var valueField *data.Field
 
 	switch valType {
 	case "string":
-		valueField = data.NewField("Value", row.Tags, stringArray)
+		valueField = data.NewField(valueColumnName, row.Tags, stringArray)
 	case "json.Number":
-		valueField = data.NewField("Value", row.Tags, floatArray)
+		valueField = data.NewField(valueColumnName, row.Tags, floatArray)
 	case "bool":
-		valueField = data.NewField("Value", row.Tags, boolArray)
+		valueField = data.NewField(valueColumnName, row.Tags, boolArray)
 	case "null":
-		valueField = data.NewField("Value", row.Tags, floatArray)
+		valueField = data.NewField(valueColumnName, row.Tags, floatArray)
 	}
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
@@ -164,34 +177,13 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
-func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []string
 
-	if retentionPolicyQuery {
-		values = make([]string, 1, len(row.Values))
-	} else {
-		values = make([]string, 0, len(row.Values))
-	}
-
 	for _, valuePair := range row.Values {
-		if tagValuesQuery {
+		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
 				values = append(values, valuePair[1].(string))
-			}
-		} else if retentionPolicyQuery {
-			// We want to know whether the given retention policy is the default one or not.
-			// If it is default policy then we should add it to the beginning.
-			// The index 4 gives us if that policy is default or not.
-			// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-			// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-			// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-			// Since it is always the last value we will check that last value always.
-			if len(valuePair) >= 1 {
-				if valuePair[len(row.Columns)-1].(bool) {
-					values[0] = valuePair[0].(string)
-				} else {
-					values = append(values, valuePair[0].(string))
-				}
 			}
 		} else {
 			if len(valuePair) >= 1 {
@@ -266,6 +258,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, re
 		first := true
 		for k, v := range row.Tags {
 			if !first {
+				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
 			} else {
 				first = false
@@ -341,12 +334,4 @@ func getVisType(resFormat string) data.VisType {
 	default:
 		return graphVisType
 	}
-}
-
-func isTagValuesQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
-}
-
-func isRetentionPolicyQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
 }

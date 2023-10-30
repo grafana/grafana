@@ -20,7 +20,8 @@ import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { getFeedbackMessage, Message, OPEN_AI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+import { getFeedbackMessage, Message, DEFAULT_OAI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+
 
 export interface GenAIHistoryProps {
   history: string[];
@@ -45,7 +46,7 @@ export const GenAIHistory = ({
   const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 

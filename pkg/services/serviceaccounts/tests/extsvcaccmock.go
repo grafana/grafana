@@ -14,6 +14,20 @@ type MockExtSvcAccountsService struct {
 	mock.Mock
 }
 
+// EnableExtSvcAccount provides a mock function with given fields: ctx, cmd
+func (_m *MockExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *serviceaccounts.EnableExtSvcAccountCmd) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.EnableExtSvcAccountCmd) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ManageExtSvcAccount provides a mock function with given fields: ctx, cmd
 func (_m *MockExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *serviceaccounts.ManageExtSvcAccountCmd) (int64, error) {
 	ret := _m.Called(ctx, cmd)

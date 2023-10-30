@@ -318,7 +318,6 @@ function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptio
       ...options,
     } as DataSourceInstanceSettings<PromOptions>,
     undefined,
-    undefined,
     languageProvider
   );
   return { datasource, languageProvider };
