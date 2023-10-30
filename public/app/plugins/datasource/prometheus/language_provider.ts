@@ -7,8 +7,10 @@ import {
   AbstractLabelOperator,
   AbstractQuery,
   dateTime,
+  getDefaultTimeRange,
   HistoryItem,
   LanguageProvider,
+  TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
@@ -107,7 +109,7 @@ interface AutocompleteContext {
 const secondsInDay = 86400;
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
-  timeRange?: { start: number; end: number };
+  timeRange: TimeRange;
   metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
   declare startTask: Promise<any>;
@@ -120,7 +122,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.histogramMetrics = [];
-    this.timeRange = { start: 0, end: 0 };
+    this.timeRange = getDefaultTimeRange();
     this.metrics = [];
 
     Object.assign(this, initialValues);
@@ -155,7 +157,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return defaultValue;
   };
 
-  start = async (): Promise<any[]> => {
+  start = async (timeRange?: TimeRange): Promise<any[]> => {
+    this.timeRange = timeRange ?? getDefaultTimeRange();
+
     if (this.datasource.lookupsDisabled) {
       return [];
     }
@@ -504,7 +508,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param key
    */
   fetchLabelValues = async (key: string): Promise<string[]> => {
-    const params = this.datasource.getAdjustedInterval();
+    const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -518,9 +522,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  async fetchLabels(): Promise<string[]> {
+  async fetchLabels(timeRange?: TimeRange): Promise<string[]> {
+    if (timeRange) {
+      this.timeRange = timeRange;
+    }
     const url = '/api/v1/labels';
-    const params = this.datasource.getAdjustedInterval();
+    const params = this.datasource.getAdjustedInterval(this.timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -554,7 +561,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
@@ -603,7 +610,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -623,7 +630,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -641,7 +648,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/api/v1/series';
-    const range = this.datasource.getTimeRangeParams();
+    const range = this.datasource.getTimeRangeParams(this.timeRange);
     const params = { ...range, 'match[]': match };
     return await this.request(url, {}, params, this.getDefaultCacheHeaders());
   };

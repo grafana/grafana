@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &OrgIDAuthorizer{}
@@ -46,7 +47,7 @@ func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	case org.RoleNone:
 		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 	}
-	return authorizer.DecisionNoOpinion, "", nil
+	return authorizer.DecisionDeny, "", nil
 }
 
 func errorMessageForGrafanaOrgRole(grafanaOrgRole string, a authorizer.Attributes) string {
