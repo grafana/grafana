@@ -29,7 +29,7 @@ const SegmentFrame = ({
   loadOptions: (options: Array<SelectableValue<string>>) => Promise<Array<SelectableValue<string>>>;
 }>) => (
   <>
-    <SegmentSection label="Segment Name">
+    <SegmentSection label="Segment">
       {children}
       <SegmentAsync
         Component={AddButton}
