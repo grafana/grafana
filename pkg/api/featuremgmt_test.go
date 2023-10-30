@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -261,7 +260,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, fmt.Sprintf("invalid toggle passed in"), p["message"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 
 		t.Run("because it is not GA or Deprecated", func(t *testing.T) {
