@@ -22,7 +22,7 @@ const (
 type LibraryElement struct {
 	ID    int64 `xorm:"pk autoincr 'id'"`
 	OrgID int64 `xorm:"org_id"`
-	// Deprecated: use FolderUID instead.
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	UID         string `xorm:"uid"`
 	Name        string
