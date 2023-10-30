@@ -31,7 +31,7 @@ export const SegmentSection = ({
   return (
     <>
       <InlineFieldRow>
-        <InlineLabel htmlFor={htmlFor} width={14} className={styles.label}>
+        <InlineLabel htmlFor={htmlFor} width={12} className={styles.label}>
           {label}
         </InlineLabel>
         {children}
