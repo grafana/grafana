@@ -451,7 +451,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   Start transforming data
                 </Trans>
               </Text>
-              <Text element='p' textAlignment='center'>
+              <Text 
+                element='p' 
+                textAlignment='center' 
+                data-testid={selectors.components.Transforms.noTransformationsMessage}>
                 <Trans key='transformations.empty.add-transformation-body'>
                   Transformations allow data to be changed in various ways before your visualization is shown.<br/> 
                   This includes joining data together, renaming fields, making calculations, formatting data for display, and more.

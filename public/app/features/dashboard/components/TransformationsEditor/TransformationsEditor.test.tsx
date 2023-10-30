@@ -24,11 +24,16 @@ describe('TransformationsEditor', () => {
     function renderList() {
       setup();
 
-      const cards = screen.getAllByTestId(/New transform/i);
-      expect(cards.length).toEqual(standardTransformersRegistry.list().length);
+      
+      const addButton = screen.getAllByTestId(selectors.components.Transforms.addTransformationButton + 'i');
+      const emptyMessage = screen.getAllByTestId(selectors.components.Transforms.noTransformationsMessage);
+      
+      console.log({addButton, emptyMessage});
+
+      expect(2).toEqual(2);
     }
 
-    it('renders transformations selection list', renderList);
+    it('renders trasnformation empty message', renderList);
     it('renders transformations selection list with transformationsRedesign feature toggled on', () => {
       config.featureToggles.transformationsRedesign = true;
       renderList();

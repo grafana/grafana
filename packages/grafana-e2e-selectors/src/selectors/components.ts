@@ -224,6 +224,7 @@ export const Components = {
   },
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
+    noTransformationsMessage: 'no transformations message',
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
