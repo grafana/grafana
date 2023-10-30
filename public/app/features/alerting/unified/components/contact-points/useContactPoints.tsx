@@ -83,7 +83,7 @@ export function useContactPointsWithStatus() {
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
 
-  const contactPoints = fetchAlertmanagerConfiguration.contactPoints;
+  const contactPoints = fetchAlertmanagerConfiguration.contactPoints.sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     error,
