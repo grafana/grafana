@@ -402,20 +402,12 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 
 	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
 	for _, f := range parents {
-		// Hide parent folders user has no access to
-		parentGuardian, err := guardian.NewByFolder(ctx, f, f.OrgID, c.SignedInUser)
+		DTO, err := toDTO(f, true)
 		if err != nil {
-			hs.log.Error("failed to check folder permissions", "folder", f.UID, "org", f.OrgID, "error", err)
+			hs.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
 			continue
 		}
-		if canView, _ := parentGuardian.CanView(); canView {
-			DTO, err := toDTO(f, true)
-			if err != nil {
-				hs.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
-				continue
-			}
-			folderDTO.Parents = append(folderDTO.Parents, DTO)
-		}
+		folderDTO.Parents = append(folderDTO.Parents, DTO)
 	}
 
 	return folderDTO, nil
