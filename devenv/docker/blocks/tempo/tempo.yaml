@@ -1,8 +1,6 @@
 server:
   http_listen_port: 3200
 
-stream_over_http_enabled: true
-
 distributor:
   receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
     jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
