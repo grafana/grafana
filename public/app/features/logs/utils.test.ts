@@ -407,6 +407,33 @@ describe('mergeLogsVolumeDataFrames', () => {
     ]);
     expect(maximum).toBe(6);
   });
+
+  it('produces merged results order by time', () => {
+    const frame1 = mockLogVolume('info', [1600000000001, 1600000000009], [1, 1]);
+    const frame2 = mockLogVolume('info', [1600000000000, 1600000000005], [1, 1]);
+
+    const { dataFrames: merged } = mergeLogsVolumeDataFrames([frame1, frame2]);
+
+    expect(merged).toMatchObject([
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [1600000000000, 1600000000001, 1600000000005, 1600000000009],
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 1, 1, 1],
+            config: {
+              displayNameFromDS: 'info',
+            },
+          },
+        ],
+      },
+    ]);
+  });
 });
 
 describe('getLogsVolumeDimensions', () => {
