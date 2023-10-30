@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -73,9 +74,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = backend.DataResponse{
-				Error: errors.New(errResult),
-			}
+			result.Responses[target.RefID] = errorsource.Response(errorsource.PluginError(errors.New(errResult), false))
 			continue
 		}
 

@@ -48,9 +48,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		err := errorsource.PluginError(err, false)
-		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
-		return response, err
+		return addPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
 	}
 
 	ms := e.client.MultiSearch()
@@ -61,9 +59,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			err := errorsource.PluginError(err, false)
-			response.Responses[q.RefID] = errorsource.Response(err)
-			return response, err
+			return addPluginErrorToResponse(q.RefID, response, err), err
 		}
 	}
 
@@ -71,14 +67,13 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		err := errorsource.PluginError(err, false)
-		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
-		return response, err
+		return addPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
+		// We are returning error containing the source that was added trough errorsource.Middleware
 		response.Responses[e.dataQueries[0].RefID] = errorsource.Response(err)
 		return response, err
 	}
@@ -501,4 +496,10 @@ func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
 		value = defaultValue
 	}
 	return value
+}
+
+func addPluginErrorToResponse(refID string, response *backend.QueryDataResponse, err error) *backend.QueryDataResponse {
+	pluginErr := errorsource.PluginError(err, false)
+	response.Responses[refID] = errorsource.Response(pluginErr)
+	return response
 }
