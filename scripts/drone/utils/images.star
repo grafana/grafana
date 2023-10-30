@@ -28,7 +28,7 @@ images = {
     "package_publish": "us.gcr.io/kubernetes-dev/package-publish:latest",
     "openldap": "osixia/openldap:1.4.0",
     "drone_downstream": "grafana/drone-downstream",
-    "docker_puppeteer": "grafana/docker-puppeteer:1.1.0",
+    "docker_puppeteer": "ghcr.io/puppeteer/puppeteer:20.9.0",
     "docs": "grafana/docs-base:latest",
     "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
