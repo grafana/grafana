@@ -65,9 +65,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Returns the label keys that have been fetched.
    * If labels have not been fetched yet, it will return an empty array.
    * For updated labels (which should not happen often), use fetchLabels.
-   * @todo This seems quite complicated to know when to use fetchLabels and when to use getLabelKeys.
+   * @todo It is quite complicated to know when to use fetchLabels and when to use getLabelKeys.
    * We should consider simplifying this and use caching in the same way as with seriesCache and labelsCache
    * and just always use fetchLabels.
+   * Caching should be thought out properly, so we are not fetching this often, as labelKeys should not be changing often.
    *
    * @returns {string[]} An array of label keys or an empty array if labels have not been fetched.
    */
