@@ -1,222 +1,202 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { ReactNode } from 'react';
+import React from 'react';
 
+import { ThemeSpacingTokens } from '@grafana/data';
+
+import { useTheme2 } from '../../../themes';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
-import { Alert } from '../../Alert/Alert';
-import { Button } from '../../Button';
-import { Card } from '../../Card/Card';
-import { Text } from '../../Text/Text';
 
-import { HorizontalStack } from './HorizontalStack';
-import { Stack } from './Stack';
-import mdx from './Stack.mdx';
+import mdx from './Flex.mdx';
+import { Stack, JustifyContent, Wrap, Direction } from './Stack';
+
+const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
+  return (
+    <div
+      style={{
+        width: '5em',
+        height: height,
+        backgroundColor: color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {text && <h3 style={{ color: 'black' }}>{text}</h3>}
+    </div>
+  );
+};
 
 const meta: Meta<typeof Stack> = {
-  title: 'General/Layout/Stack',
+  title: 'General/Layout/Flex',
   component: Stack,
   parameters: {
     docs: {
       page: mdx,
     },
   },
-  argTypes: {
-    gap: SpacingTokenControl,
-    direction: { control: 'select', options: ['row', 'column'] },
-  },
 };
 
-const Item = ({ children }: { children: ReactNode }) => (
-  <div style={{ backgroundColor: 'lightgrey', width: '100px', height: '50px' }}>{children}</div>
-);
-
-export const Basic: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
+export const Basic: StoryFn<typeof Stack> = ({ direction, wrap, alignItems, justifyContent, gap }) => {
+  const theme = useTheme2();
   return (
-    <Stack direction={direction} gap={gap}>
-      <Item>Item 1</Item>
-      <Item>Item 2</Item>
-      <Item>Item 3</Item>
-    </Stack>
-  );
-};
-
-export const TestCases: StoryFn<typeof Stack> = () => {
-  return (
-    <div style={{ width: '100%' }}>
-      <Stack gap={4}>
-        <h2>Comparisons Stack vs No stack</h2>
-        <HorizontalStack>
-          <Example title="No stack">
-            <Button>A button</Button>
-            <Button>Longer button button</Button>
-          </Example>
-
-          <Example title="Horizontal stack">
-            <HorizontalStack>
-              <Button>A button</Button>
-              <Button>Longer button button</Button>
-            </HorizontalStack>
-          </Example>
-
-          <Example title="Vertical stack">
-            <Stack>
-              <Button>A button</Button>
-              <Button>Longer button button</Button>
-            </Stack>
-          </Example>
-        </HorizontalStack>
-
-        <HorizontalStack>
-          <Example title="No stack, mismatched heights">
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-            </Card>
-
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-              <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
-              <Card.Actions>
-                <Button variant="secondary">Settings</Button>
-                <Button variant="secondary">Explore</Button>
-              </Card.Actions>
-            </Card>
-
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-              <Card.Description>Ohhhhh - and now a description!</Card.Description>
-            </Card>
-            <Button>Please press me!</Button>
-          </Example>
-          <Example title="Vertical stack, mismatched heights">
-            <Stack>
-              <Card>
-                <Card.Heading>I am a card heading</Card.Heading>
-              </Card>
-
-              <Card>
-                <Card.Heading>I am a card heading</Card.Heading>
-                <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
-                <Card.Actions>
-                  <Button variant="secondary">Settings</Button>
-                  <Button variant="secondary">Explore</Button>
-                </Card.Actions>
-              </Card>
-
-              <Card>
-                <Card.Heading>I am a card heading</Card.Heading>
-                <Card.Description>Ohhhhh - and now a description!</Card.Description>
-              </Card>
-              <Button>Please press me!</Button>
-            </Stack>
-          </Example>
-        </HorizontalStack>
-
-        <div style={{ width: 500 }}>
-          <Example title="No stack, too many items">
-            <Button>A button</Button>
-            <Button>Longer button button</Button>
-            <Button>Another button</Button>
-            <Button>And another</Button>
-            <Button>Why not - one last button!</Button>
-          </Example>
-
-          <Example title="Horizontal stack, too many items">
-            <HorizontalStack>
-              <Button>A button</Button>
-              <Button>Longer button button</Button>
-              <Button>Another button</Button>
-              <Button>And another</Button>
-              <Button>Why not - one last button!</Button>
-            </HorizontalStack>
-          </Example>
-        </div>
-
-        <h2>Child alignment</h2>
-
-        <div style={{ width: 500 }}>
-          <Example title="Row, mismatched heights">
-            <HorizontalStack>
-              <MyComponent>
-                <div style={{ height: 50, width: 100, background: 'blue' }} />
-              </MyComponent>
-              <MyComponent>
-                <div style={{ height: 150, width: 100, background: 'orange' }} />
-              </MyComponent>
-            </HorizontalStack>
-          </Example>
-        </div>
-
-        <Example title="Horizontal stack, mismatched heights">
-          <HorizontalStack>
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-            </Card>
-
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-              <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
-              <Card.Actions>
-                <Button variant="secondary">Settings</Button>
-                <Button variant="secondary">Explore</Button>
-              </Card.Actions>
-            </Card>
-
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-              <Card.Description>Ohhhhh - and now a description!</Card.Description>
-            </Card>
-          </HorizontalStack>
-        </Example>
-
-        <Example title="Horizontal stack, mismatched heights with different components">
-          <HorizontalStack>
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-            </Card>
-
-            <Card>
-              <Card.Heading>I am a card heading</Card.Heading>
-              <Card.Description>Ohhhhh - and now a description!</Card.Description>
-            </Card>
-
-            <Alert severity="info" title="Plus an alert!" />
-          </HorizontalStack>
-        </Example>
-
-        <Example title="Horizontal stack, alerts with even heights">
-          <HorizontalStack>
-            <Alert severity="info" title="Plus an alert!" />
-            <Alert severity="success" title="Plus an alert!" />
-            <Alert severity="warning" title="Plus an alert!" />
-            <Alert severity="error" title="Plus an alert!" />
-          </HorizontalStack>
-        </Example>
-
-        <Example title="Horizontal stack, alerts with mismatched heights">
-          <HorizontalStack>
-            <Alert severity="info" title="Plus an alert!" />
-            <Alert severity="success" title="Plus an alert!" />
-            <Alert severity="warning" title="Plus an alert!">
-              Surprise - a description! What will happen to the height of all the other alerts?
-            </Alert>
-            <Alert severity="error" title="Plus an alert!" />
-          </HorizontalStack>
-        </Example>
+    <div style={{ width: '600px', height: '600px', border: '1px solid grey' }}>
+      <Stack direction={direction} wrap={wrap} alignItems={alignItems} justifyContent={justifyContent} gap={gap}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+        ))}
       </Stack>
     </div>
   );
 };
 
-function Example({ title, children }: { title: string; children: React.ReactNode }) {
+Basic.argTypes = {
+  gap: SpacingTokenControl,
+  direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
+  wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
+  alignItems: {
+    control: 'select',
+    options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
+  },
+  justifyContent: {
+    control: 'select',
+    options: [
+      'flex-start',
+      'flex-end',
+      'center',
+      'space-between',
+      'space-around',
+      'space-evenly',
+      'start',
+      'end',
+      'left',
+      'right',
+    ],
+  },
+};
+
+export const AlignItemsExamples: StoryFn<typeof Stack> = () => {
+  const theme = useTheme2();
+
   return (
-    <div>
-      <Text variant="h3">{title}</Text>
-      <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px dashed green' }}>{children}</div>
+    <div style={{ width: '600px' }}>
+      <p>Align items flex-start</p>
+      <Stack direction="row" wrap="wrap" alignItems="flex-start" justifyContent="start" gap={2}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Item key={i} color={theme.colors.error.main} text={i + 1} />
+        ))}
+      </Stack>
+      <p>Align items flex-end</p>
+      <Stack direction="row" wrap="wrap" alignItems="flex-end" justifyContent="end" gap={2}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Item key={i} color={theme.colors.error.main} text={i + 1} />
+        ))}
+      </Stack>
+      <p>Align items baseline</p>
+      <Stack direction="row" wrap="nowrap" alignItems="baseline" justifyContent="center" gap={2}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Item key={i} color={theme.colors.error.main} text={i + 1} />
+        ))}
+      </Stack>
+      <p>Align items center</p>
+      <Stack direction="row" wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Item key={i} color={theme.colors.error.main} text={i + 1} />
+        ))}
+      </Stack>
+      <p>Align items stretch</p>
+      <Stack direction="row" wrap="wrap" alignItems="stretch" justifyContent="center" gap={2}>
+        <Item color={theme.colors.error.main} height="10em" />
+        <Item color={theme.colors.error.main} />
+        <Item color={theme.colors.error.main} height="3em" />
+        <Item color={theme.colors.error.main} />
+        <Item color={theme.colors.error.main} />
+      </Stack>
     </div>
   );
-}
+};
 
-function MyComponent({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: 'rgba(0,255,255, 0.2)', padding: 16 }}>{children}</div>;
-}
+export const JustifyContentExamples: StoryFn<typeof Stack> = () => {
+  const theme = useTheme2();
+  const justifyContentOptions: JustifyContent[] = [
+    'space-between',
+    'space-around',
+    'space-evenly',
+    'flex-start',
+    'flex-end',
+    'center',
+  ];
+
+  return (
+    <div style={{ width: '600px' }}>
+      {justifyContentOptions.map((justifyContent) => (
+        <>
+          <p>Justify Content {justifyContent}</p>
+          <Stack direction="row" wrap="wrap" alignItems="center" justifyContent={justifyContent} gap={2}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Stack>
+        </>
+      ))}
+    </div>
+  );
+};
+
+export const GapExamples: StoryFn<typeof Stack> = () => {
+  const theme = useTheme2();
+  const gapOptions: ThemeSpacingTokens[] = [2, 8, 10];
+  return (
+    <div style={{ width: '800px' }}>
+      {gapOptions.map((gap) => (
+        <>
+          <p>Gap with spacingToken set to {gap}</p>
+          <Stack direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={gap}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.error.main} text={i + 1} />
+            ))}
+          </Stack>
+        </>
+      ))}
+    </div>
+  );
+};
+
+export const WrapExamples: StoryFn<typeof Stack> = () => {
+  const theme = useTheme2();
+  const wrapOptions: Wrap[] = ['nowrap', 'wrap', 'wrap-reverse'];
+  return (
+    <div style={{ width: '600px' }}>
+      {wrapOptions.map((wrap) => (
+        <>
+          <p>Wrap examples with {wrap} and gap set to spacingToken 2 (16px)</p>
+          <Stack direction="row" wrap={wrap} alignItems="center" justifyContent="center" gap={2}>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Stack>
+        </>
+      ))}
+    </div>
+  );
+};
+
+export const DirectionExamples: StoryFn<typeof Stack> = () => {
+  const theme = useTheme2();
+  const directionOptions: Direction[] = ['row', 'row-reverse', 'column', 'column-reverse'];
+  return (
+    <div style={{ width: '600px' }}>
+      {directionOptions.map((direction) => (
+        <>
+          <p>Direction {direction}</p>
+          <Stack direction={direction} wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Stack>
+        </>
+      ))}
+    </div>
+  );
+};
 
 export default meta;

@@ -1,44 +1,138 @@
-import { Meta, ArgTypes, Canvas } from '@storybook/blocks';
-import { Stack, HorizontalStack } from './index';
-import * as Stories from './Stack.internal.story';
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Stack } from './Stack';
 
 <Meta title="MDX|Stack" component={Stack} />
 
 # Stack
 
-The `Stack` component is designed to assist with layout and positioning of elements within a container, offering a simple and flexible way to stack elements vertically or horizontally. This documentation outlines the proper usage of the Stack component and provides guidance on when to use it over the Grid or Flex components.
-
-There is also a `HorizontalStack` component, which is a thin wrapper around Stack, equivalent to `<Stack direction="row">`.
+The Stack Component aims at providing a more efficient way to lay out, align and distribute space among items in a container and
+the decision to create it is to ensure consistency in design across Grafana.
 
 ### Usage
 
 #### When to use
 
-Use the Stack component when you need to arrange elements in a linear format, either vertically or horizontally. It's particularly useful when you want to maintain consistent spacing between items.
+Use when in need to align components and small parts of the application. Use as parent container to wrap elements that you wish to align in a certain way.
 
-Use the Stack component when:
+Also:
 
-- You need a simple way to stack elements with predictable spacing.
-- You want to ensure consistent alignment.
+    * when working with one dimension layout
+    * to display the direction of the elements
+    * to set the elements to wrap
+    * to align items (vertically or horizontally)
 
 #### When not to use
 
-Use the `Grid` component instead for these use cases:
+When you need to lay out bigger parts of the application or when you want to create page lay out.
 
-- **Intricate Layouts:** Grids are ideal for complex dashboard and magazine-style designs with rows and columns.
-- **Structured Grid:** Use Grids when items need to span multiple rows/columns, creating structured layouts.
+Also:
 
-Use the `Flex` component instead for these use cases:
+    * for complex grid layouts with various rows and columns
+    * bidirectional layouts
+    * complex nesting
+    * equal height columns
 
-- **Alignment:** More options for item alignment.
-- **Flex items:** Custom flex basis or configure how items stretch and wrap.
+### Variants
 
-## Props
+Stack component has few variants that can be used based on the desired alignment you need for your case.
 
-### Stack
+Some examples of how to use the Stack component can be seen below:
+
+- AlignItems stretch
+
+```ts
+import { Stack } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Stack component to align-items stretch and justify-content to be center</h1>
+</header>
+<Stack direction="row" wrap="wrap"  alignItems="stretch" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main} height="10em" />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} height="3em" />
+    <Item color={theme.colors.warning.main} />
+</Stack>
+```
+
+- Wrap items wrap-reverse
+
+```ts
+import { Stack } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Stack component to align-items with wrap-reverse property</h1>
+</header>
+<Stack direction="row" wrap="wrap-reverse"  alignItems="center" justifyContent="center" gap={4}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Stack>
+```
+
+- JustifyContent flex-start
+
+```ts
+import { Stack } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Stack component to align-items with justify-content property</h1>
+</header>
+<Stack direction="row" wrap="wrap"  alignItems="center" justifyContent="flex-start" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Stack>
+```
+
+- Gap of 16px using the ThemeSpacingTokens
+
+```ts
+import { Stack } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Stack component to align-items with gap of 16px</h1>
+</header>
+<Stack direction="row" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Stack>
+```
+
+- Direction column
+
+```ts
+import { Stack } from '@grafana/ui'
+import { useTheme2 } from '../../themes';
+
+const theme = useTheme2();
+
+<header>
+    <h1>Using Stack component to align-items with direction column</h1>
+</header>
+<Stack direction="column" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
+    <Item color={theme.colors.warning.main}  />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+    <Item color={theme.colors.warning.main} />
+ </Stack>
+```
+
+### Props
 
 <ArgTypes of={Stack} />
-
-### HorizontalStack
-
-<ArgTypes of={HorizontalStack} />
