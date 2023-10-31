@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, EmptySearchResult, useStyles2, LinkButton } from '@grafana/ui';
+import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 
 import { filterPluginList, getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from '../../state/util';

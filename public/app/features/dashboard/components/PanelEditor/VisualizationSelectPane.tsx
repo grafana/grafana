@@ -150,12 +150,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
-              <PanelLibraryOptionsGroup
-                searchQuery={searchQuery}
-                panel={panel}
-                key="Panel Library"
-                isWidget={isWidget}
-              />
+              <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
         </CustomScrollbar>
