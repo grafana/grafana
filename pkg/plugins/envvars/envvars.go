@@ -79,6 +79,11 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
+	if s.cfg.GrafanaAppURL != "" {
+		// TODO: Replace key with plugin SDK backend.AppURL once released
+		m["GF_APP_URL"] = s.cfg.GrafanaAppURL
+	}
+
 	// TODO add support via plugin SDK
 	//if externalService != nil {
 	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
