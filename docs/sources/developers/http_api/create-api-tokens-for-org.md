@@ -62,7 +62,7 @@ The task is to create a new organization and then add a Token that can be used b
 1. [Create a Service Account token]({{< relref "./serviceaccount/#create-service-account-tokens" >}}) for the service account created in the previous step:
 
    ```bash
-   curl -X POST -H "Content-Type: application/json" -d '{"name":"test-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/2/tokens
+   curl -X POST -H "Content-Type: application/json" -d '{"name":"test-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/<service account id>/tokens
    ```
 
    This should return a response:
