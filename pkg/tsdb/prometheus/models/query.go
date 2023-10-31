@@ -241,6 +241,9 @@ func interpolateVariables(
 	if requestedMinStep == varRateInterval || requestedMinStep == varRateIntervalAlt {
 		rateInterval = calculatedMinStep
 	} else {
+		if requestedMinStep == varInterval || requestedMinStep == varIntervalAlt {
+			requestedMinStep = calculatedMinStep.String()
+		}
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 

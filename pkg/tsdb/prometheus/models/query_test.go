@@ -615,7 +615,7 @@ func TestRateInterval(t *testing.T) {
 				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
 				interval:         "$__interval",
 				intervalMs:       120000,
-				dsScrapeInterval: "10s",
+				dsScrapeInterval: "15s",
 				timeRange: &backend.TimeRange{
 					From: now,
 					To:   now.Add(2 * 24 * time.Hour),
@@ -647,6 +647,7 @@ func mockQuery(expr string, interval string, intervalMs int64, timeRange *backen
 		}
 	}
 	return backend.DataQuery{
+		Interval: 2 * time.Minute,
 		JSON: []byte(fmt.Sprintf(`{
 			"expr": "%s",
 			"format": "time_series",
