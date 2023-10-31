@@ -66,7 +66,7 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 
 func (s *SSOSettingsService) GetAll(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
 	result := make([]*models.SSOSetting, 0, len(allOauthes))
-	storedSettings, err := s.store.GetAll(ctx)
+	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err

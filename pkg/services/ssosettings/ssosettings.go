@@ -50,7 +50,7 @@ type FallbackStrategy interface {
 //go:generate mockery --name Store --structname MockStore --outpkg ssosettingstests --filename store_mock.go --output ./ssosettingstests/
 type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSetting, error)
-	GetAll(ctx context.Context) ([]*models.SSOSetting, error)
+	List(ctx context.Context) ([]*models.SSOSetting, error)
 	Upsert(ctx context.Context, provider string, data map[string]interface{}) error
 	Patch(ctx context.Context, provider string, data map[string]interface{}) error
 	Delete(ctx context.Context, provider string) error

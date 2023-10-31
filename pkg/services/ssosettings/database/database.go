@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,15 +16,12 @@ type SSOSettingsStore struct {
 	sqlStore db.DB
 	log      log.Logger
 	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
 }
 
-func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *SSOSettingsStore {
+func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 	return &SSOSettingsStore{
 		sqlStore: sqlStore,
 		log:      log.New("ssosettings.store"),
-		cfg:      cfg,
-		features: features,
 	}
 }
 
@@ -36,7 +32,7 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		sess.Table("sso_setting")
-		found, err := sess.AllCols().Get(&result)
+		found, err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Get(&result)
 
 		if err != nil {
 			return err
@@ -56,7 +52,7 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	return &result, nil
 }
 
-func (s *SSOSettingsStore) GetAll(ctx context.Context) ([]*models.SSOSetting, error) {
+func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, error) {
 	result := make([]*models.SSOSetting, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("sso_setting")
