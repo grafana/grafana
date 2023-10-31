@@ -11,6 +11,7 @@ import {
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import {
   PublicDashboardListWithPagination,
   PublicDashboardListWithPaginationResponse,
@@ -69,10 +70,12 @@ export const publicDashboardApi = createApi({
     }),
     createPublicDashboard: builder.mutation<
       PublicDashboard,
-      { dashboard: DashboardModel; payload: Partial<PublicDashboardSettings> }
+      { dashboard: DashboardModel | DashboardScene; payload: Partial<PublicDashboardSettings> }
     >({
       query: (params) => ({
-        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards`,
+        url: `/dashboards/uid/${
+          params.dashboard instanceof DashboardScene ? params.dashboard.state.uid : params.dashboard.uid
+        }/public-dashboards`,
         method: 'POST',
         data: params.payload,
       }),
@@ -80,29 +83,46 @@ export const publicDashboardApi = createApi({
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
 
-        // Update runtime meta flag
-        dashboard.updateMeta({
-          publicDashboardUid: data.uid,
-          publicDashboardEnabled: data.isEnabled,
-        });
+        if (dashboard instanceof DashboardScene) {
+          dashboard.setState({
+            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled, publicDashboardUid: data.uid },
+          });
+        } else {
+          // Update runtime meta flag
+          dashboard.updateMeta({
+            publicDashboardUid: data.uid,
+            publicDashboardEnabled: data.isEnabled,
+          });
+        }
       },
-      invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
+      invalidatesTags: (result, error, { dashboard }) => [
+        { type: 'PublicDashboard', id: dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid },
+      ],
     }),
     updatePublicDashboard: builder.mutation<
       PublicDashboard,
-      { dashboard: Partial<DashboardModel>; payload: Partial<PublicDashboard> }
+      {
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        payload: Partial<PublicDashboard>;
+      }
     >({
-      query: (params) => ({
-        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
+      query: ({ payload, dashboard }) => ({
+        url: `/dashboards/uid/${
+          dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid
+        }/public-dashboards/${payload.uid}`,
         method: 'PATCH',
-        data: params.payload,
+        data: payload,
       }),
-      async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
-        if (dashboard.updateMeta) {
-          dashboard.updateMeta({
+        if (dashboard instanceof DashboardScene) {
+          dashboard.setState({
+            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled, publicDashboardUid: data.uid },
+          });
+        } else {
+          dashboard.updateMeta?.({
             publicDashboardUid: data.uid,
             publicDashboardEnabled: data.isEnabled,
           });
@@ -150,7 +170,10 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),
-    deletePublicDashboard: builder.mutation<void, { dashboard?: DashboardModel; dashboardUid: string; uid: string }>({
+    deletePublicDashboard: builder.mutation<
+      void,
+      { dashboard?: DashboardModel | DashboardScene; dashboardUid: string; uid: string }
+    >({
       query: (params) => ({
         url: `/dashboards/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
@@ -159,10 +182,16 @@ export const publicDashboardApi = createApi({
         await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
 
-        dashboard?.updateMeta({
-          publicDashboardUid: uid,
-          publicDashboardEnabled: false,
-        });
+        if (dashboard instanceof DashboardScene) {
+          dashboard.setState({
+            meta: { ...dashboard.state.meta, publicDashboardUid: uid, publicDashboardEnabled: false },
+          });
+        } else {
+          dashboard?.updateMeta({
+            publicDashboardUid: uid,
+            publicDashboardEnabled: false,
+          });
+        }
       },
       invalidatesTags: (result, error, { dashboardUid }) => [
         { type: 'PublicDashboard', id: dashboardUid },

@@ -5,7 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import {
+  useDeletePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import ConfigPublicDashboardComponent from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
+import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types';
 
 import { ShareModal } from '../ShareModal';
@@ -14,17 +19,23 @@ import { ConfirmModal } from './ConfirmModal';
 import { SharePublicDashboardTab } from './SharePublicDashboardTab';
 import { useUnsupportedDatasources } from './hooks';
 
-export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublicDashboardTab>) {
+interface Props extends SceneComponentProps<SharePublicDashboardTab> {
+  publicDashboard?: PublicDashboard;
+  isGetLoading?: boolean;
+}
+
+export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: Props) {
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const { dashboardRef, publicDashboard, isGetLoading, isUpdateLoading } = model.useState();
+  const { dashboardRef } = model.useState();
   const dashboard = dashboardRef.resolve();
   const { isDirty } = dashboard.useState();
-
+  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
   const hasTemplateVariables = (dashboard.state.$variables?.state.variables.length ?? 0) > 0;
   const unsupportedDataSources = useUnsupportedDatasources(dashboard);
-  const isDataLoading = isUpdateLoading || isGetLoading;
+  const isDataLoading = isUpdateLoading || isGetLoading || isDeleteLoading;
   const timeRangeState = sceneGraph.getTimeRange(model);
   const timeRange = timeRangeState.useState();
 
@@ -33,7 +44,9 @@ export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublic
       publicDashboard={publicDashboard}
       unsupportedDatasources={unsupportedDataSources}
       isLoading={isDataLoading}
-      onUpdate={model.onUpdate}
+      onUpdate={(updatedPublicDashboard) => {
+        update({ dashboard, payload: updatedPublicDashboard });
+      }}
       onRevoke={() => {
         dashboard.showModal(
           new ConfirmModal({
@@ -50,7 +63,7 @@ export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublic
               dashboard.showModal(new ShareModal({ dashboardRef, activeTab: 'Public Dashboard' }));
             },
             onConfirm: () => {
-              model.onDelete();
+              deletePublicDashboard({ dashboard, dashboardUid: dashboard.state.uid!, uid: publicDashboard!.uid });
               dashboard.closeModal();
             },
           })
