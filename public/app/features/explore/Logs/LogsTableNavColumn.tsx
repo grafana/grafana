@@ -43,7 +43,6 @@ export const LogsTableNavColumn = (props: {
   const styles = getStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].percentOfLinesWithLabel));
   if (labelKeys.length) {
-    console.log('labels', labels);
     return (
       <div className={styles.columnWrapper}>
         {labelKeys
