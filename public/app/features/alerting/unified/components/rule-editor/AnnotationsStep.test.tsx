@@ -1,20 +1,18 @@
 import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import 'core-js/stable/structured-clone';
 import { setBackendSrv } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardDTO } from '../../../../../types';
-import { DashboardSearchItem, DashboardSearchItemType } from '../../../../search/types';
-import { mockStore } from '../../mocks';
-import { mockSearchApiResponse } from '../../mocks/grafanaApi';
+import { DashboardSearchItemType } from '../../../../search/types';
+import { mockDashboardApi } from '../../mockApi';
+import { mockDashboardDto, mockDashboardSearchItem, mockStore } from '../../mocks';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
@@ -36,6 +34,8 @@ const ui = {
   setDashboardButton: byRole('button', { name: 'Link dashboard and panel' }),
   annotationKeys: byTestId('annotation-key-', { exact: false }),
   annotationValues: byTestId('annotation-value-', { exact: false }),
+  dashboardAnnotation: byTestId('dashboard-annotation'),
+  panelAnnotation: byTestId('panel-annotation'),
   dashboardPicker: {
     dialog: byRole('dialog'),
     heading: byRole('heading', { name: 'Select dashboard and panel' }),
@@ -85,7 +85,7 @@ describe('AnnotationsField', function () {
 
   describe('Dashboard and panel picker', function () {
     it('should display dashboard and panel selector when select button clicked', async function () {
-      mockSearchApiResponse(server, []);
+      mockDashboardApi(server).search([]);
 
       const user = userEvent.setup();
 
@@ -98,11 +98,11 @@ describe('AnnotationsField', function () {
     });
 
     it('should enable Confirm button only when dashboard and panel selected', async function () {
-      mockSearchApiResponse(server, [
+      mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
@@ -128,11 +128,11 @@ describe('AnnotationsField', function () {
     });
 
     it('should add selected dashboard and panel as annotations', async function () {
-      mockSearchApiResponse(server, [
+      mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
@@ -164,11 +164,11 @@ describe('AnnotationsField', function () {
     });
 
     it('should not show rows as panels', async function () {
-      mockSearchApiResponse(server, [
+      mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
@@ -193,11 +193,11 @@ describe('AnnotationsField', function () {
     });
 
     it('should show panels within collapsed rows', async function () {
-      mockSearchApiResponse(server, [
+      mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
@@ -231,7 +231,7 @@ describe('AnnotationsField', function () {
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
     // to trigger "handleDashboardChange" – skipping it for now but has been manually tested.
     it.skip('should update existing dashboard and panel identifies', async function () {
-      mockSearchApiResponse(server, [
+      mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
         mockDashboardSearchItem({
           title: 'My other dashboard',
@@ -240,7 +240,7 @@ describe('AnnotationsField', function () {
         }),
       ]);
 
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
@@ -250,7 +250,7 @@ describe('AnnotationsField', function () {
           ],
         })
       );
-      mockGetDashboardResponse(
+      mockDashboardApi(server).dashboard(
         mockDashboardDto({
           title: 'My other dashboard',
           uid: 'dash-other-uid',
@@ -297,67 +297,64 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[1]).toHaveTextContent('3');
     });
   });
+
+  it('should render warning icon for panels of type other than graph and timeseries', async function () {
+    mockDashboardApi(server).search([
+      mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+    ]);
+
+    mockDashboardApi(server).dashboard(
+      mockDashboardDto({
+        title: 'My dashboard',
+        uid: 'dash-test-uid',
+        panels: [
+          { id: 1, title: 'First panel', type: 'bar' },
+          { id: 2, title: 'Second panel', type: 'graph' },
+          { type: 'timeseries' }, // Panels might NOT have id and title fields
+        ],
+      })
+    );
+
+    const user = userEvent.setup();
+
+    render(<FormWrapper formValues={{ annotations: [] }} />);
+
+    const { dialog } = ui.dashboardPicker;
+
+    await user.click(ui.setDashboardButton.get());
+    await user.click(await findByTitle(dialog.get(), 'My dashboard'));
+
+    const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+
+    expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
+  });
+
+  it('should render when panels do not contain certain fields', async () => {
+    mockDashboardApi(server).search([
+      mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+    ]);
+
+    mockDashboardApi(server).dashboard(
+      mockDashboardDto({
+        title: 'My dashboard',
+        uid: 'dash-test-uid',
+        panels: [{ type: 'row' }, { type: 'timeseries' }, { id: 4, type: 'graph' }, { title: 'Graph', type: 'graph' }],
+      })
+    );
+
+    render(
+      <FormWrapper
+        formValues={{
+          annotations: [
+            { key: Annotation.dashboardUID, value: 'dash-test-uid' },
+            { key: Annotation.panelID, value: '1' },
+          ],
+        }}
+      />
+    );
+
+    expect(await ui.dashboardAnnotation.find()).toBeInTheDocument();
+    expect(ui.dashboardAnnotation.get()).toHaveTextContent('My dashboard');
+    expect(ui.panelAnnotation.query()).not.toBeInTheDocument();
+  });
 });
-
-it('should render warning icon for panels of type other than graph and timeseries', async function () {
-  mockSearchApiResponse(server, [
-    mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
-  ]);
-
-  mockGetDashboardResponse(
-    mockDashboardDto({
-      title: 'My dashboard',
-      uid: 'dash-test-uid',
-      panels: [
-        { id: 1, title: 'First panel', type: 'bar' },
-        { id: 2, title: 'Second panel', type: 'graph' },
-      ],
-    })
-  );
-
-  const user = userEvent.setup();
-
-  render(<FormWrapper formValues={{ annotations: [] }} />);
-
-  const { dialog } = ui.dashboardPicker;
-
-  await user.click(ui.setDashboardButton.get());
-  await user.click(await findByTitle(dialog.get(), 'My dashboard'));
-
-  const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
-
-  expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
-});
-
-function mockGetDashboardResponse(dashboard: DashboardDTO) {
-  server.use(
-    rest.get(`/api/dashboards/uid/${dashboard.dashboard.uid}`, (req, res, ctx) =>
-      res(ctx.json<DashboardDTO>(dashboard))
-    )
-  );
-}
-
-function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
-  return {
-    title: '',
-    uid: '',
-    type: DashboardSearchItemType.DashDB,
-    url: '',
-    uri: '',
-    items: [],
-    tags: [],
-    slug: '',
-    isStarred: false,
-    ...searchItem,
-  };
-}
-
-function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>): DashboardDTO {
-  return {
-    dashboard: {
-      ...defaultDashboard,
-      ...dashboard,
-    } as DashboardDTO['dashboard'],
-    meta: {},
-  };
-}
