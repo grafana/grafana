@@ -6,8 +6,8 @@ import { ThemeSpacingTokens } from '@grafana/data';
 import { useTheme2 } from '../../../themes';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 
-import mdx from './Flex.mdx';
 import { Stack, JustifyContent, Wrap, Direction } from './Stack';
+import mdx from './Stack.mdx';
 
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
   return (
