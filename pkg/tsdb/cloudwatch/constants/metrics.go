@@ -421,7 +421,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/AutoScaling":             {"AutoScalingGroupName"},
 	"AWS/Backup":                  {"BackupVaultName", "ResourceType"},
 	"AWS/Billing":                 {"Currency", "LinkedAccount", "ServiceName"},
-	"AWS/CertificateManager":      {},
+	"AWS/CertificateManager":      {"CertificateArn"},
 	"AWS/Chatbot":                 {"ConfigurationName"},
 	"AWS/ClientVPN":               {"Endpoint"},
 	"AWS/CloudFront":              {"DistributionId", "Region"},

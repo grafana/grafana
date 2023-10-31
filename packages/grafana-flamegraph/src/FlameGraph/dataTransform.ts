@@ -25,8 +25,16 @@ export type LevelItem = {
   // node.
   itemIndexes: number[];
   children: LevelItem[];
+  level: number;
   parents?: LevelItem[];
 };
+
+export type CollapseConfig = {
+  items: LevelItem[];
+  collapsed: boolean;
+};
+
+export type CollapsedMap = Map<LevelItem, CollapseConfig>;
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
@@ -65,6 +73,7 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       start: offset,
       parents: parent && [parent],
       children: [],
+      level: currentLevel,
     };
 
     if (uniqueLabels[container.getLabel(i)]) {

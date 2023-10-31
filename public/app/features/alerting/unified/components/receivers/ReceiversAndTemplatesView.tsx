@@ -25,7 +25,7 @@ export const ReceiversAndTemplatesView = ({ config, alertManagerName }: Props) =
   return (
     <Stack direction="column" gap={4}>
       <ReceiversTable config={config} alertManagerName={alertManagerName} />
-      {/* Vanilla flavored Alertmanager does not support editing message templates via the UI */}
+      {/* Vanilla flavored Alertmanager does not support editing notification templates via the UI */}
       {!isVanillaAM && <TemplatesView config={config} alertManagerName={alertManagerName} />}
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={alertManagerName} />}

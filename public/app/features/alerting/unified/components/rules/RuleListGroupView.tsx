@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 
-import { logInfo } from '@grafana/runtime';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { AlertSourceAction } from '../../hooks/useAbilities';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../Authorize';

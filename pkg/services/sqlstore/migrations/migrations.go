@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
@@ -103,6 +104,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.MigrationServiceMigration(mg)
 	ualert.CreatedFoldersMigration(mg)
+
+	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
