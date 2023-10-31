@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -43,19 +42,17 @@ type ProtoClientOpts struct {
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
-	p := &grpcPlugin{
-		descriptor: PluginDescriptor{
+	p := newGrpcPlugin(
+		PluginDescriptor{
 			pluginID:         opts.PluginID,
 			managed:          true,
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
 		},
-		logger: opts.Logger,
-		clientFactory: func() *goplugin.Client {
-			return goplugin.NewClient(newClientConfig(opts.ExecutablePath, opts.ExecutableArgs, opts.Env, opts.Logger, pluginSet))
-		},
-	}
+		opts.Logger,
+		func() []string { return opts.Env },
+	)
 
 	return &protoClient{plugin: p}, nil
 }
