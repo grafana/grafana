@@ -163,8 +163,8 @@ export class LokiDatasource
   }
 
   /**
-   * This method is implemented for DataSourceWithSupplementaryQueriesSupport and it retrieves a data provider
-   * for a specific supplementary query type.
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It retrieves a data provider for a specific supplementary query type.
    * @returns An Observable of DataQueryResponse or undefined if the specified query type is not supported.
    */
   getDataProvider(
@@ -185,8 +185,8 @@ export class LokiDatasource
   }
 
   /**
-   * This method is implemented for DataSourceWithSupplementaryQueriesSupport
-   * and it returns the supplementary types that the data source supports.
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It returns the supplementary types that the data source supports.
    * @returns An array of supported supplementary query types.
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
@@ -194,8 +194,8 @@ export class LokiDatasource
   }
 
   /**
-   * This method is implemented for DataSourceWithSupplementaryQueriesSupport and
-   * it retrieves supplementary queries based on the provided options and Loki query.
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It retrieves supplementary queries based on the provided options and Loki query.
    * @returns A supplemented Loki query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
@@ -337,7 +337,7 @@ export class LokiDatasource
   }
 
   /**
-   * Executes requests through the backend using the `super.query()` method, as part of the `query` method in DataSourceWithBackend.
+   * Executes requests through the backend using the `super.query()`, as part of the `query` method in DataSourceWithBackend.
    * @returns An Observable of transformed DataQueryResponse results from the backend.
    */
   runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {
@@ -351,8 +351,8 @@ export class LokiDatasource
   }
 
   /**
-   * Used within the `query` method to execute live queries
-   * This method is intended for explore-mode and logs-queries, not metric queries.
+   * Used within the `query` to execute live queries.
+   * It is intended for explore-mode and logs-queries, not metric queries.
    * @returns An Observable of DataQueryResponse with live query results or an empty response if no suitable queries are found.
    * @todo: The name says "backend" but it's actually running the query through the frontend. We should fix this.
    */
@@ -378,7 +378,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used within the `runLiveQuery` method to create a live target for a Loki query.
+   * Used within the `runLiveQuery` to create a live target for a Loki query.
    * @returns A LokiLiveTarget object containing the necessary information for a live query.
    */
   private createLiveTarget(target: LokiQuery, maxDataPoints: number): LokiLiveTarget {
@@ -396,7 +396,7 @@ export class LokiDatasource
 
   /**
    * Runs live queries, which involves creating a WebSocket connection to listen for new logs.
-   * This method returns a slightly different DataQueryResponse compared to runQueries. It provides a single DataFrame
+   * It returns a slightly different DataQueryResponse compared to runQueries. It provides a single DataFrame
    * even if there are multiple Loki streams. Common labels are set on dataFrame.labels, and unique labels per row are
    * available in dataFrame.fields.labels.
    * @returns An Observable of DataQueryResponse with streaming data or an error message if live tailing encounters an issue.
@@ -443,7 +443,7 @@ export class LokiDatasource
   }
 
   /**
-   * Method to retrieve the current time range.
+   * Retrieve the current time range.
    * @returns The current time range as provided by the timeSrv.
    */
   getTimeRange() {
@@ -451,7 +451,7 @@ export class LokiDatasource
   }
 
   /**
-   * Method to retrieve the current time range as Loki parameters.
+   * Retrieve the current time range as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
   getTimeRangeParams() {
@@ -505,7 +505,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used in `getQueryStats` method. It wraps `getResource` from DataSourceWithBackend to perform a stats request
+   * Used in `getQueryStats`. It wraps `getResource` from DataSourceWithBackend to perform a stats request
    * Specifically designed for the stats endpoint, which does not return data but includes stats directly in the response object.
    * @returns A Promise that resolves to a QueryStats object containing the statistics retrieved from the stats request.
    */
@@ -522,7 +522,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used in `getStats` method. Retrieves statistics for a Loki query and processes them into a QueryStats object.
+   * Used in `getStats`. Retrieves statistics for a Loki query and processes them into a QueryStats object.
    * @returns A Promise that resolves to a QueryStats object containing the query statistics or undefined if the query is invalid.
    */
   async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
@@ -567,7 +567,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used within the `getQueryStats` method. Retrieves the time range for a Loki stats query, adjusting it to cover the requested period.
+   * Used within the `getQueryStats`. Retrieves the time range for a Loki stats query, adjusting it to cover the requested period.
    * In metric queries, this means extending it over the range interval.
    * @returns An object containing the start and end time in nanoseconds (NS_IN_MS) or undefined if the time range cannot be estimated.
    */
@@ -654,7 +654,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used within the `metricFindQuery` method. Retrieves the correct variable results based on the provided LokiVariableQuery.
+   * Used within the `metricFindQuery`. Retrieves the correct variable results based on the provided LokiVariableQuery.
    * @returns A Promise that resolves to an array of variable results based on the query type and parameters.
    */
 
@@ -678,7 +678,7 @@ export class LokiDatasource
   /**
    * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) and return variable results.
    * @returns A Promise that resolves to an array of variables based on the legacy query string.
-   * @todo This method can be refactored in the future to return a LokiVariableQuery and be used in `processMetricFindQuery`
+   * @todo It can be refactored in the future to return a LokiVariableQuery and be used in `processMetricFindQuery`
    * to not duplicate querying logic.
    */
   async legacyProcessMetricFindQuery(query: string) {
@@ -702,7 +702,7 @@ export class LokiDatasource
   /**
    * Private method used in `processMetricFindQuery`, `legacyProcessMetricFindQuery` and `getTagKeys` to fetch label names.
    * @returns A Promise that resolves to an array of label names as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabels()` method to avoid duplicating logic.
+   * @todo Future exploration may involve using the `languageProvider.fetchLabels()` to avoid duplicating logic.
    */
   async labelNamesQuery() {
     const url = 'labels';
@@ -748,7 +748,7 @@ export class LokiDatasource
 
   /**
    * Used to fetch data samples, typically for autocompletion and query building to recommend parsers, labels, and values based on sampled data.
-   * Currently, this method works for logs data only.
+   * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
@@ -787,7 +787,7 @@ export class LokiDatasource
   }
 
   /**
-   * Used for interpolation logic, applied in methods like `interpolateVariablesInQueries` and `applyTemplateVariables`.
+   * Used for interpolation logic in `interpolateVariablesInQueries` and `applyTemplateVariables`.
    * Handles escaping of special characters based on variable type and value.
    * @returns The interpolated value with appropriate character escaping.
    */
@@ -807,7 +807,7 @@ export class LokiDatasource
 
   /**
    * Implemented for `DataSourceWithToggleableQueryFiltersSupport`. Toggles a filter on or off based on the provided filter action.
-   * This method is used for example in Explore to toggle fields on and off trough log details.
+   * It is used for example in Explore to toggle fields on and off trough log details.
    * @returns A new LokiQuery with the filter toggled as specified.
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
@@ -858,7 +858,7 @@ export class LokiDatasource
 
   /**
    * Implemented as part of `DataSourceApi`. Used to modify a query based on the provided action.
-   * This method is used, for example, in the Query Builder to apply hints such as parsers, operations, etc.
+   * It is used, for example, in the Query Builder to apply hints such as parsers, operations, etc.
    * @returns A new LokiQuery with the specified modification applied.
    */
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
@@ -973,7 +973,7 @@ export class LokiDatasource
   }
 
   /**
-   * Implemented as part of the DataSourceAPI, this method allows the datasource to serve as a source of annotations for a dashboard.
+   * Implemented as part of the DataSourceAPI. It allows the datasource to serve as a source of annotations for a dashboard.
    * @returns A promise that resolves to an array of AnnotationEvent objects representing the annotations for the dashboard.
    * @todo This is deprecated and it is recommended to use the `AnnotationSupport` feature for annotations.
    */
@@ -1098,7 +1098,7 @@ export class LokiDatasource
   }
 
   /**
-   * Interpolates template variables in a given string.
+   * Interpolates template variables in a given string. Template variables are passed trough scopedVars.
    * @returns The string with template variables replaced by their values.
    */
   interpolateString(string: string, scopedVars?: ScopedVars) {
@@ -1115,7 +1115,7 @@ export class LokiDatasource
   }
   /**
    * Retrieves query hints for query improvements based on a Loki query and its result data.
-   * Used by the Query builder to provide hints for query suggestions, such as adding a parser, etc.
+   * Used in Query builder to provide hints for query improvements, such as adding a parser, etc.
    * @returns An array of query hints for potential query improvements.
    */
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
