@@ -16,9 +16,9 @@ type Props = {
 const getStyles = () => ({
   // set fixed position from the top instead of centring as the container
   // may get bigger when the for is invalid
-  removeButton: css`
-    margin-top: 25px;
-  `,
+  removeButton: css({
+    marginTop: '25px',
+  }),
 });
 
 const TransformationEditorRow = (props: Props) => {
