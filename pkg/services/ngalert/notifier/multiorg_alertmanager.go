@@ -30,6 +30,7 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mocks
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, *models.AlertConfiguration) error
@@ -121,7 +122,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-		return newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
 	}
 
 	for _, opt := range opts {

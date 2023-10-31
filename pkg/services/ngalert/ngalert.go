@@ -175,43 +175,47 @@ func (ng *AlertNG) init() error {
 
 	var overrides []notifier.Option
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		// NOTE: remote.alertmanager enable = true must go with one of these.
 		remoteSecondary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteSecondary)
-		fmt.Println("RemoteSecondary?", remoteSecondary)
-
 		remotePrimary := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemotePrimary)
-		fmt.Println("RemotePrimary?", remotePrimary)
-
 		remoteOnly := ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertmanagerRemoteOnly)
-		fmt.Println("RemoteOnly?", remoteOnly)
-
 		if !remoteSecondary && !remotePrimary && !remoteOnly {
 			return fmt.Errorf("at least one mode should be enabled to use the remote Alertmanager")
 		}
 
 		// If we're using RemoteOnly there's no need for the forked Alertmanager
+		externalAMCfg := remote.AlertmanagerConfig{
+			URL:               ng.store.Cfg.RemoteAlertmanager.URL,
+			TenantID:          ng.store.Cfg.RemoteAlertmanager.TenantID,
+			BasicAuthPassword: ng.store.Cfg.RemoteAlertmanager.Password,
+		}
+
 		var override notifier.Option
 		if remoteOnly {
 			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				externalAMCfg := remote.AlertmanagerConfig{}
 				return remote.NewAlertmanager(externalAMCfg, orgID)
 			})
 		} else {
-			// If we're using other mode, we need to use the forked Alertmanager.
+			// If we're using either RemotePrimary or RemoteSecondary, we need the forked Alertmanager.
 			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				externalAMCfg := remote.AlertmanagerConfig{}
-				am, err := remote.NewAlertmanager(externalAMCfg, orgID)
+				var mode remote.Mode
+				if remotePrimary {
+					mode = remote.ModeRemotePrimary
+				} else {
+					mode = remote.ModeRemoteSecondary
+				}
+
+				external, err := remote.NewAlertmanager(externalAMCfg, orgID)
 				if err != nil {
 					return nil, err
 				}
-				// TODO: inject internal Alertmanager.
-				var mode remote.Mode
-				if remoteSecondary {
-					mode = remote.ModeRemoteSecondary
-				} else {
-					mode = remote.ModeRemotePrimary
+
+				m := metrics.NewAlertmanagerMetrics(multiOrgMetrics.GetOrCreateOrgRegistry(orgID))
+				internal, err := notifier.NewAlertmanager(ctx, orgID, ng.Cfg, ng.store, ng.KVStore, &notifier.NilPeer{}, decryptFn, ng.NotificationService, m)
+				if err != nil {
+					return nil, err
 				}
-				return remote.NewForkedAlertmanager(am, am, mode), nil
+
+				return remote.NewForkedAlertmanager(internal, external, mode), nil
 			})
 		}
 

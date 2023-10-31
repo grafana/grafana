@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -21,12 +20,12 @@ const (
 type forkedAlertmanager struct {
 	log        log.Logger
 	internal   notifier.Alertmanager
-	remote     *Alertmanager
+	remote     notifier.Alertmanager
 	configSent bool
 	mode       Mode
 }
 
-func NewForkedAlertmanager(internal notifier.Alertmanager, remote *Alertmanager, m Mode) *forkedAlertmanager {
+func NewForkedAlertmanager(internal, remote notifier.Alertmanager, m Mode) *forkedAlertmanager {
 	return &forkedAlertmanager{
 		internal: internal,
 		remote:   remote,
@@ -36,17 +35,18 @@ func NewForkedAlertmanager(internal notifier.Alertmanager, remote *Alertmanager,
 }
 
 // Note: this is called on startup and on sync.
+// TODO: send state?
 func (fam *forkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if fam.mode == ModeRemoteSecondary && !fam.configSent {
-		// If we're in Internal Primary mode we just send the config on startup.
+		// If we're in Remote Secondary mode we just send the config on startup.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			return err
 		}
 		fam.configSent = true
 	} else {
-		// TODO: delet
-		fmt.Println("tried to send config but config was already sent")
+		fam.log.Debug("Configuration already sent to the remote Alertmanager on startup")
 	}
+
 	return fam.internal.ApplyConfig(ctx, config)
 }
 
@@ -67,6 +67,7 @@ func (fam *forkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) er
 	//	- RouteDeleteAlertingConfig
 	//	- SyncAlertmanagersForOrgs when no db config is found
 	if fam.mode != ModeRemoteSecondary {
+		// TODO: do we have to use this method in the remote AM?
 		if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
 			return err
 		}
@@ -165,6 +166,7 @@ func (fam *forkedAlertmanager) CleanUp() {
 	fam.internal.CleanUp()
 }
 
+// TODO: send state and config?
 func (fam *forkedAlertmanager) StopAndWait() {
 	fam.internal.StopAndWait()
 	// Stop senders.
