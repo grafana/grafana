@@ -9,7 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { placeHolderScopedVars, validateQuery } from 'app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation';
+import {
+  placeHolderScopedVars,
+  validateQuery,
+} from 'app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -97,7 +100,7 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange, datasource} = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange, datasource } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -297,7 +300,7 @@ const MonacoQueryField = (props: Props) => {
                   model.getLinesContent(),
                   parser
                 ) || [];
-  
+
               const markers = errors.map(({ error, ...boundary }) => ({
                 message: `${
                   error ? `Error parsing "${error}"` : 'Parse error'
@@ -305,7 +308,7 @@ const MonacoQueryField = (props: Props) => {
                 severity: monaco.MarkerSeverity.Error,
                 ...boundary,
               }));
-  
+
               monaco.editor.setModelMarkers(model, 'owner', markers);
             });
           }
