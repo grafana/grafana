@@ -48,7 +48,6 @@ const AddPanelMenu = ({ dashboard }: Props) => {
             const id = onCreateNewWidgetPanel(dashboard);
             reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_widget' });
             locationService.partial({ editPanel: id });
-            // locationService.partial({ addWidget: true });
           }}
         />
       )}
