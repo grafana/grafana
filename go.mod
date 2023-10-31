@@ -61,7 +61,7 @@ require (
 	github.com/google/uuid v1.3.1 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20231017091417-a53b5db2235d // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20231026192550-079966731bbe // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
@@ -123,7 +123,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // @grafana/backend-platform
+	xorm.io/builder v0.3.6 // indirect; @grafana/backend-platform
 	xorm.io/core v0.7.3 // @grafana/backend-platform
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -175,7 +175,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
+	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/alerting-squad
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
@@ -299,12 +299,13 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
+	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
+	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
@@ -335,8 +336,7 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/google/cel-go v0.12.6 // indirect
-	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/cel-go v0.16.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
@@ -396,20 +396,20 @@ require (
 	github.com/yuin/gopher-lua v1.1.0 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.7 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.9 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.9 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	k8s.io/api v0.27.1 // indirect
 	k8s.io/kms v0.27.1 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
@@ -425,7 +425,7 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
+	sigs.k8s.io/yaml v1.3.0 // @grafana-app-platform-squad
 )
 
 require (
@@ -450,7 +450,7 @@ require (
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
-	github.com/coreos/go-semver v0.3.0 // indirect
+	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/docker/docker v23.0.4+incompatible // @grafana/grafana-delivery
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
@@ -481,6 +481,8 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+require github.com/google/gnostic v0.6.9 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c

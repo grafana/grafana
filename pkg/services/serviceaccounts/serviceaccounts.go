@@ -12,12 +12,15 @@ ServiceAccountService is the service that manages service accounts.
 Service accounts are used to authenticate API requests. They are not users and
 do not have a password.
 */
+
+//go:generate mockery --name Service --structname MockServiceAccountService --output tests --outpkg tests --filename mocks.go
 type Service interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
+	EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 
@@ -34,6 +37,8 @@ type Service interface {
 
 //go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
 type ExtSvcAccountsService interface {
+	// EnableExtSvcAccount enables or disables the service account associated to an external service
+	EnableExtSvcAccount(ctx context.Context, cmd *EnableExtSvcAccountCmd) error
 	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
 	// RetrieveExtSvcAccount fetches an external service account by ID
