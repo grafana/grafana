@@ -609,6 +609,23 @@ func TestRateInterval(t *testing.T) {
 				Step: time.Second * 150,
 			},
 		},
+		{
+			name: "minStep is $__rate_interval and ds scrape interval 15s and time range 2 days",
+			args: args{
+				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
+				interval:         "$__interval",
+				intervalMs:       120000,
+				dsScrapeInterval: "10s",
+				timeRange: &backend.TimeRange{
+					From: now,
+					To:   now.Add(2 * 24 * time.Hour),
+				},
+			},
+			want: &models.Query{
+				Expr: "rate(rpc_durations_seconds_count[8m0s])",
+				Step: time.Second * 120,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
