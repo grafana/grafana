@@ -3,6 +3,8 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (

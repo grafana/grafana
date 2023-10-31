@@ -3,10 +3,11 @@ package annotationsimpl
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/annotations/testutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 
