@@ -297,7 +297,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   onWindowSizeModeChange = (val: string) => {
     const { window } = this.props.options;
-    // eslint-disable-next-line
     const mode = val as WindowSizeMode;
     this.updateWindowOptions({
       ...window!,
@@ -311,8 +310,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   };
 
   onWindowStatsChange = (stats: string[]) => {
-    // TODO: try to fix this type assertion
-    // eslint-disable-next-line
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
     const { window } = this.props.options;
@@ -406,8 +403,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   //---------------------------------------------------------
 
   onReducerStatsChange = (stats: string[]) => {
-    // TODO: try to fix this type assertion
-    // eslint-disable-next-line
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
     const { reduce } = this.props.options;
