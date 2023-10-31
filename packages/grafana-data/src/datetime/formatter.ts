@@ -18,7 +18,7 @@ export interface DateTimeOptionsWithFormat extends DateTimeOptions {
   /**
    * Set this value to `true` if you want to include milliseconds when formatting date and time
    */
-  // defaultWithMS?: boolean;
+  defaultWithMS: boolean;
 }
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
@@ -86,9 +86,9 @@ export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
   toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
-  /* if (options?.defaultWithMS) {
+  if (options?.defaultWithMS) {
     return options?.format ?? systemDateFormats.fullDateMS;
-  } */
+  }
   return options?.format ?? systemDateFormats.fullDate;
 };
 
