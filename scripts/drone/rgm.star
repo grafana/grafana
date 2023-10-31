@@ -89,12 +89,12 @@ main_trigger = {
 nightly_trigger = {
     "event": {
         "include": [
-            "cron",
+            "promote",
         ],
     },
-    "cron": {
+    "target": {
         "include": [
-            "nightly-release",
+            "nightly",
         ],
     },
 }
@@ -140,7 +140,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:main",
+        "image": "grafana/grafana-build:dev-c4266f9",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
@@ -278,7 +278,7 @@ def rgm_nightly_publish():
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
-    package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
+    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
 
     return pipeline(
         name = "rgm-nightly-publish",

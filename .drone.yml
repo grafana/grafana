@@ -2865,7 +2865,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-c4266f9
   name: rgm-build
   pull: always
   volumes:
@@ -3114,7 +3114,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-c4266f9
   name: rgm-build
   pull: always
   volumes:
@@ -3292,7 +3292,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-c4266f9
   name: rgm-build
   pull: always
   volumes:
@@ -3386,12 +3386,12 @@ steps:
   image: node:20.9.0-alpine
   name: test-frontend
 trigger:
-  cron:
-    include:
-    - nightly-release
   event:
     include:
-    - cron
+    - promote
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3461,12 +3461,12 @@ steps:
   image: golang:1.20.10-alpine
   name: test-backend-integration
 trigger:
-  cron:
-    include:
-    - nightly-release
   event:
     include:
-    - cron
+    - promote
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3522,7 +3522,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-c4266f9
   name: rgm-build
   pull: always
   volumes:
@@ -3567,12 +3567,12 @@ steps:
   image: google/cloud-sdk:alpine
   name: rgm-copy
 trigger:
-  cron:
-    include:
-    - nightly-release
   event:
     include:
-    - cron
+    - promote
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3666,7 +3666,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-c4266f9
   name: rgm-publish
   pull: always
   volumes:
@@ -3691,7 +3691,7 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages
+    target_bucket: grafana-packages-testing
 - depends_on:
   - rgm-publish
   image: us.gcr.io/kubernetes-dev/package-publish:latest
@@ -3711,14 +3711,14 @@ steps:
       from_secret: packages_secret_access_key
     service_account_json:
       from_secret: packages_service_account
-    target_bucket: grafana-packages
+    target_bucket: grafana-packages-testing
 trigger:
-  cron:
-    include:
-    - nightly-release
   event:
     include:
-    - cron
+    - promote
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -4670,6 +4670,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 920b57d70a96a29872ce77dc83ca26e2d141ba37627eee58c9d3beebf9ec4055
+hmac: 17c64cc31f7bb86e031805ef848108437a44d3cbc92bfddc2f063b9d7ca65b31
 
 ...
