@@ -70,7 +70,7 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
   };
   return (
     <div className={partClass}>
-      <button className={cx('gf-form-label', noRightMarginPaddingClass)}>{name}</button>
+      <button className={cx('gf-form-label', noRightMarginPaddingClass)}>{name}</button>(
       {params.map((p, i) => {
         const { value, options } = p;
         const isLast = i === params.length - 1;
