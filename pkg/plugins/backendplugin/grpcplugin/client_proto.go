@@ -7,7 +7,6 @@ import (
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -40,24 +39,21 @@ type ProtoClientOpts struct {
 	ExecutablePath string
 	ExecutableArgs []string
 	Env            []string
+	Logger         log.Logger
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
-	d := PluginDescriptor{
-		pluginID:       opts.PluginID,
-		executablePath: opts.ExecutablePath,
-		executableArgs: opts.ExecutableArgs,
-		managed:        true,
-		versionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
-		},
-	}
-	logger := log.New(opts.PluginID)
 	p := &grpcPlugin{
-		descriptor: d,
-		logger:     logger,
+		descriptor: PluginDescriptor{
+			pluginID:         opts.PluginID,
+			managed:          true,
+			executablePath:   opts.ExecutablePath,
+			executableArgs:   opts.ExecutableArgs,
+			versionedPlugins: pluginSet,
+		},
+		logger: opts.Logger,
 		clientFactory: func() *goplugin.Client {
-			return goplugin.NewClient(newClientConfig(opts.ExecutablePath, opts.ExecutableArgs, opts.Env, logger, d.versionedPlugins))
+			return goplugin.NewClient(newClientConfig(opts.ExecutablePath, opts.ExecutableArgs, opts.Env, opts.Logger, pluginSet))
 		},
 	}
 
