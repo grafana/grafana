@@ -40,12 +40,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   });
 
   const loadOptions = useCallback(
-    async (name: string, query = '') => {
+    async (name: string, query = '', traceql = '') => {
       const lpName = name === 'serviceName' ? 'service.name' : 'name';
       setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
 
       try {
-        const options = await languageProvider.getOptionsV1(lpName);
+        let options
+        if (lpName === 'name' && traceql) {
+          options = await languageProvider.getOptionsV2(lpName, traceql);
+        } else {
+          options = await languageProvider.getOptionsV1(lpName);
+        }
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
@@ -63,13 +68,34 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   );
 
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchServiceOptions = async () => {
       try {
-        const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
+        const services = await loadOptions('serviceName');
         if (query.serviceName && getTemplateSrv().containsTemplate(query.serviceName)) {
           services.push(toOption(query.serviceName));
         }
         setServiceOptions(services);
+      } catch (error) {
+        // Display message if Tempo is connected but search 404's
+        if (isFetchError(error) && error?.status === 404) {
+          setError(error);
+        } else if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+      }
+    };
+    fetchServiceOptions();
+  }, [languageProvider, loadOptions, query.serviceName]);
+
+  useEffect(() => {
+    const fetchNameOptions = async () => {
+      try {
+        let traceql = ''
+        if (query.serviceName) {
+          traceql = `{resource.service.name="${query.serviceName}"}`
+        }
+
+        const spans = await loadOptions('spanName', traceql=traceql);
         if (query.spanName && getTemplateSrv().containsTemplate(query.spanName)) {
           spans.push(toOption(query.spanName));
         }
@@ -83,7 +109,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         }
       }
     };
-    fetchOptions();
+    fetchNameOptions();
   }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
@@ -141,7 +167,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               inputId="spanName"
               options={spanOptions}
               onOpenMenu={() => {
-                loadOptions('spanName');
+                loadOptions('spanName', '', query.serviceName ? `{resource.service.name="${query.serviceName}"}` : "");
               }}
               isLoading={isLoading.spanName}
               value={spanOptions?.find((v) => v?.value === query.spanName) || query.spanName}
