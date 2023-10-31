@@ -262,88 +262,96 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
       throw new Error(`Add field from calculation transformation - Unsupported reducer: ${options.reducer}`);
     }
 
-    const vals: number[] = [];
-
     if (options.windowAlignment === WindowAlignment.Centered) {
-      let sum = 0;
-      let count = 0;
-      // Current value (i) is included in the leading part of the window. Which means if the window size is odd,
-      // the leading part of the window will be larger than the trailing part.
-      const leadingPartOfWindow = Math.ceil(window / 2) - 1;
-      const trailingPartOfWindow = Math.floor(window / 2);
-      for (let i = 0; i < frame.length; i++) {
-        const first = i - trailingPartOfWindow;
-        const last = i + leadingPartOfWindow;
-        if (options.reducer === ReducerID.mean) {
-          if (i === 0) {
-            // We're at the start and need to prime the leading part of the window
-            for (let x = 0; x < leadingPartOfWindow + 1 && x < selectedField.values.length; x++) {
-              if (selectedField.values[x] !== null) {
-                sum += selectedField.values[x];
-                count++;
-              }
-            }
-          } else {
-            if (last < selectedField.values.length) {
-              // Last is inside the data and should be added.
-              if (selectedField.values[last] !== null) {
-                sum += selectedField.values[last];
-                count++;
-              }
-            }
-            if (first > 0) {
-              // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
-              if (selectedField.values[first - 1] !== null) {
-                sum -= selectedField.values[first - 1];
-                count--;
-              }
-            }
-          }
-          vals.push(count === 0 ? 0 : sum / count);
-        } else if (options.reducer === ReducerID.variance) {
-          const windowVals = selectedField.values.slice(
-            Math.max(0, first),
-            Math.min(last + 1, selectedField.values.length)
-          );
-          vals.push(calculateVariance(windowVals));
-        } else if (options.reducer === ReducerID.stdDev) {
-          const windowVals = selectedField.values.slice(
-            Math.max(0, first),
-            Math.min(last + 1, selectedField.values.length)
-          );
-          vals.push(calculateStdDev(windowVals));
-        }
-      }
+      return getCenteredWindowValues(frame, options.reducer, selectedField, window);
     } else {
-      let sum = 0;
-      let count = 0;
-      for (let i = 0; i < frame.length; i++) {
-        if (options.reducer === ReducerID.mean) {
-          const currentValue = selectedField.values[i];
-          if (currentValue !== null) {
-            count++;
-            sum += currentValue;
+      return getTrailingWindowValues(frame, options.reducer, selectedField, window);
+    }
+  };
+}
 
-            if (i > window - 1) {
-              sum -= selectedField.values[i - window];
-              count--;
-            }
-          }
-          vals.push(count === 0 ? 0 : sum / count);
-        } else if (options.reducer === ReducerID.variance) {
-          const start = Math.max(0, i - window + 1);
-          const end = i + 1;
-          vals.push(calculateVariance(selectedField.values.slice(start, end)));
-        } else if (options.reducer === ReducerID.stdDev) {
-          const start = Math.max(0, i - window + 1);
-          const end = i + 1;
-          vals.push(calculateStdDev(selectedField.values.slice(start, end)));
+function getTrailingWindowValues(frame: DataFrame, reducer: ReducerID, selectedField: Field, window: number) {
+  const vals: number[] = [];
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < frame.length; i++) {
+    if (reducer === ReducerID.mean) {
+      const currentValue = selectedField.values[i];
+      if (currentValue !== null) {
+        count++;
+        sum += currentValue;
+
+        if (i > window - 1) {
+          sum -= selectedField.values[i - window];
+          count--;
         }
       }
+      vals.push(count === 0 ? 0 : sum / count);
+    } else if (reducer === ReducerID.variance) {
+      const start = Math.max(0, i - window + 1);
+      const end = i + 1;
+      vals.push(calculateVariance(selectedField.values.slice(start, end)));
+    } else if (reducer === ReducerID.stdDev) {
+      const start = Math.max(0, i - window + 1);
+      const end = i + 1;
+      vals.push(calculateStdDev(selectedField.values.slice(start, end)));
     }
+  }
+  return vals;
+}
 
-    return vals;
-  };
+function getCenteredWindowValues(frame: DataFrame, reducer: ReducerID, selectedField: Field, window: number) {
+  const vals: number[] = [];
+  let sum = 0;
+  let count = 0;
+  // Current value (i) is included in the leading part of the window. Which means if the window size is odd,
+  // the leading part of the window will be larger than the trailing part.
+  const leadingPartOfWindow = Math.ceil(window / 2) - 1;
+  const trailingPartOfWindow = Math.floor(window / 2);
+  for (let i = 0; i < frame.length; i++) {
+    const first = i - trailingPartOfWindow;
+    const last = i + leadingPartOfWindow;
+    if (reducer === ReducerID.mean) {
+      if (i === 0) {
+        // We're at the start and need to prime the leading part of the window
+        for (let x = 0; x < leadingPartOfWindow + 1 && x < selectedField.values.length; x++) {
+          if (selectedField.values[x] !== null) {
+            sum += selectedField.values[x];
+            count++;
+          }
+        }
+      } else {
+        if (last < selectedField.values.length) {
+          // Last is inside the data and should be added.
+          if (selectedField.values[last] !== null) {
+            sum += selectedField.values[last];
+            count++;
+          }
+        }
+        if (first > 0) {
+          // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
+          if (selectedField.values[first - 1] !== null) {
+            sum -= selectedField.values[first - 1];
+            count--;
+          }
+        }
+      }
+      vals.push(count === 0 ? 0 : sum / count);
+    } else if (reducer === ReducerID.variance) {
+      const windowVals = selectedField.values.slice(
+        Math.max(0, first),
+        Math.min(last + 1, selectedField.values.length)
+      );
+      vals.push(calculateVariance(windowVals));
+    } else if (reducer === ReducerID.stdDev) {
+      const windowVals = selectedField.values.slice(
+        Math.max(0, first),
+        Math.min(last + 1, selectedField.values.length)
+      );
+      vals.push(calculateStdDev(windowVals));
+    }
+  }
+  return vals;
 }
 
 function calculateVariance(vals: number[]): number {
