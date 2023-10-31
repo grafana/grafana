@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -407,4 +408,30 @@ func (ss *sqlStore) getFullpath(ctx context.Context, f *folder.Folder) (string, 
 		fullpath += f.Title
 	}
 	return fullpath, nil
+}
+
+func SplitFullpath(s string) []string {
+	re := regexp.MustCompile(`[^\\]/`)
+	splitStrings := re.Split(s, -1)
+
+	result := make([]string, 0)
+	escaped := false
+	current := ""
+
+	for _, str := range splitStrings {
+		if escaped {
+			current += "\\" + str
+			escaped = false
+		} else {
+			if str == "\\" {
+				escaped = true
+			} else {
+				current += str
+				result = append(result, current)
+				current = ""
+			}
+		}
+	}
+
+	return result
 }

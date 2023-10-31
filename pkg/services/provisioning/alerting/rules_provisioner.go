@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,12 +20,12 @@ type AlertRuleProvisioner interface {
 
 func NewAlertRuleProvisioner(
 	logger log.Logger,
-	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 	dashboardProvService dashboards.DashboardProvisioningService,
 	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
 	return &defaultAlertRuleProvisioner{
 		logger:               logger,
-		dashboardService:     dashboardService,
+		folderService:        folderService,
 		dashboardProvService: dashboardProvService,
 		ruleService:          ruleService,
 	}
@@ -31,7 +33,7 @@ func NewAlertRuleProvisioner(
 
 type defaultAlertRuleProvisioner struct {
 	logger               log.Logger
-	dashboardService     dashboards.DashboardService
+	folderService        folder.Service
 	dashboardProvService dashboards.DashboardProvisioningService
 	ruleService          provisioning.AlertRuleService
 }
@@ -40,13 +42,13 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			folderUID, err := prov.getOrCreateFolderUID(ctx, group.FolderTitle, group.OrgID)
+			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
 				return err
 			}
 			prov.logger.Debug("provisioning alert rule group",
 				"org", group.OrgID,
-				"folder", group.FolderTitle,
+				"folder", group.FolderFullpath,
 				"folderUID", folderUID,
 				"name", group.Title)
 			for _, rule := range group.Rules {
@@ -93,27 +95,46 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	return err
 }
 
-func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
-	ctx context.Context, folderName string, orgID int64) (string, error) {
-	cmd := &dashboards.GetDashboardQuery{
-		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
-		OrgID:    orgID,
+func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
+	ctx context.Context, folderFullpath string, orgID int64) (string, error) {
+	folderTitles := folderimpl.SplitFullpath(folderFullpath)
+	if len(folderTitles) == 0 {
+		return "", fmt.Errorf("invalid folder fullpath: %s", folderFullpath)
 	}
-	cmdResult, err := prov.dashboardService.GetDashboard(ctx, cmd)
+
+	var folderUID *string
+	for i := range folderTitles {
+		uid, err := prov.getOrCreateFolderByTitle(ctx, folderTitles[i], orgID, *folderUID)
+		if err != nil {
+			prov.logger.Error("failed to get or create folder", "folder", folderTitles[i], "org", orgID, "err", err)
+			return "", err
+		}
+		folderUID = &uid
+	}
+	return *folderUID, nil
+}
+
+func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
+	ctx context.Context, folderName string, orgID int64, parentUID string) (string, error) {
+	cmd := &folder.GetFolderQuery{
+		Title:     &folderName,
+		ParentUID: &parentUID,
+		OrgID:     orgID,
+	}
+	f, err := prov.folderService.Get(ctx, cmd)
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return "", err
 	}
 
 	// dashboard folder not found. create one.
-	if errors.Is(err, dashboards.ErrDashboardNotFound) {
+	if errors.Is(err, folder.ErrFolderNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgID = orgID
 		dash.Dashboard.SetUID(util.GenerateShortUID())
-		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash)
+		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash) //nolint:staticcheck
 		if err != nil {
 			return "", err
 		}
@@ -121,9 +142,5 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 		return dbDash.UID, nil
 	}
 
-	if !cmdResult.IsFolder {
-		return "", fmt.Errorf("got invalid response. expected folder, found dashboard")
-	}
-
-	return cmdResult.UID, nil
+	return f.UID, nil
 }

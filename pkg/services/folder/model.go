@@ -130,10 +130,11 @@ type DeleteFolderCommand struct {
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {
-	UID   *string
-	ID    *int64
-	Title *string
-	OrgID int64
+	UID       *string
+	ID        *int64
+	Title     *string
+	OrgID     int64
+	ParentUID *string
 
 	SignedInUser    identity.Requester `json:"-"`
 	IncludeFullpath bool               `json:"-"`
