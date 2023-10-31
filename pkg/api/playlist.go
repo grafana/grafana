@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -62,7 +64,14 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 		}
 
 		errorWriter := func(c *contextmodel.ReqContext, err error) {
-			c.JsonApiErr(500, "TODO, convert k8s error", err)
+			//nolint:errorlint
+			statusError, ok := err.(*errors.StatusError)
+			if ok {
+				c.JsonApiErr(int(statusError.Status().Code),
+					statusError.Status().Message, err)
+				return
+			}
+			errhttp.Write(c.Req.Context(), err, c.Resp)
 		}
 
 		handler.SearchPlaylists = []web.Handler{func(c *contextmodel.ReqContext) {
